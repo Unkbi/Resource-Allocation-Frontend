@@ -1,21 +1,24 @@
 import "./styles/globals.css";
-import StoreProvide from "./StoreProvider";
-import {AppRouterCacheProvider} from '@mui/material-nextjs/v15-appRouter';
+import StoreProvider from "./StoreProvider"; // Corrected the name
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import ThemeRegistry from "./theme/ThemeRegistry";
 
 export const metadata = {
-  title: "resorce allocations",
-  description: "Resorce Allocations",
+  title: "Resource Allocations", // Corrected spelling of "Resource"
+  description: "Resource Allocations",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <StoreProvide>
-          <AppRouterCacheProvider> 
-        {children}
-      </AppRouterCacheProvider>
-        </StoreProvide>
+        <StoreProvider>
+          <AppRouterCacheProvider>
+            <ThemeRegistry>
+              {children} 
+            </ThemeRegistry>
+          </AppRouterCacheProvider>
+        </StoreProvider>
       </body>
     </html>
   );
