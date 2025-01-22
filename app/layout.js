@@ -1,10 +1,10 @@
 import "./styles/globals.css";
-import StoreProvider from "./StoreProvider"; // Corrected the name
+import StoreProvider from "./StoreProvider";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import ThemeRegistry from "./theme/ThemeRegistry";
 
 export const metadata = {
-  title: "Resource Allocations", // Corrected spelling of "Resource"
+  title: "Resource Allocations", 
   description: "Resource Allocations",
 };
 
