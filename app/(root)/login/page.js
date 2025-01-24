@@ -24,7 +24,7 @@ export default function LoginPage() {
             {user ? (
                 <>
                     <h1>Welcome, {user.name}</h1>
-                    <button onClick={handleLogout}>Logout</button>
+                    <button onClick={handleLogout} button="true">Logout</button>
                 </>
             ) : (
                 <form onSubmit={handleLogin}>
@@ -40,7 +40,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
-                    <button type="submit" disabled={loading}>
+                    <button type="submit" disabled={loading} button="true">
                         {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>

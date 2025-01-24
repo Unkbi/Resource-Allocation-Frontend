@@ -1,0 +1,23 @@
+/* styles/header.css */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .header .MuiToolbar-root {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .header .user-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
