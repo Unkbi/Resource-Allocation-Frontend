@@ -4,13 +4,13 @@
     background-color: #00274d;
     height: 100vh;
     position: fixed;
-    color: white;
+    color: #ffffff;
     display: flex;
     flex-direction: column;
     padding: 20px 0;
   }
   
-  .sidebar .menu-item {
+ .menuItem {
     padding: 10px 20px;
     display: flex;
     align-items: center;

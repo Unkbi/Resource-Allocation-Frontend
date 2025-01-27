@@ -10,7 +10,7 @@ export const getTheme = (mode, primaryColor, fontSize) => {
       },
     },
     typography: {
-      fontSize: parseInt(fontSize),
+      fontSize: Number(fontSize),
     },
   });
 };

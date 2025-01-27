@@ -1,11 +1,20 @@
 "use client";
-import React, { useContext } from 'react';
-import { List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { List, ListItem, ListItemIcon, ListItemText, styled } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import './sidebar.css';
-// import { ThemeContext } from '../../../theme/ThemeRegistry';
+import styles from './Sidebar.module.css';
+
+const MenuItem = styled(ListItem)({
+  padding: '10px 20px',
+  display: 'flex',
+  alignItems: 'center',
+  cursor: 'pointer',
+  color: 'white',
+  '&:hover': {
+    backgroundColor: '#0057a4',
+  },
+});
 
 const Sidebar = () => {
   const menuItems = [
@@ -16,18 +25,14 @@ const Sidebar = () => {
     { text: 'Reports', icon: <BarChartIcon /> },
   ];
 
-  // const { toggleMode, changePrimaryColor, changeFontSize, mode, primaryColor, fontSize } =
-  //   useContext(ThemeContext);
-
-
   return (
-    <div className="sidebar">
+    <div className={styles.sidebar}>
       <List>
         {menuItems.map((item, index) => (
-          <ListItem button key={index} className="menu-item">
+          <MenuItem key={index}>
             <ListItemIcon style={{ color: 'white' }}>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
-          </ListItem>
+          </MenuItem>
         ))}
       </List>
     </div>
