@@ -1,9 +1,11 @@
-import React from 'react';
+"use client";
+import React, { useContext } from 'react';
 import { List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import './sidebar.css';
+// import { ThemeContext } from '../../../theme/ThemeRegistry';
 
 const Sidebar = () => {
   const menuItems = [
@@ -13,6 +15,10 @@ const Sidebar = () => {
     { text: 'People', icon: <PeopleIcon /> },
     { text: 'Reports', icon: <BarChartIcon /> },
   ];
+
+  // const { toggleMode, changePrimaryColor, changeFontSize, mode, primaryColor, fontSize } =
+  //   useContext(ThemeContext);
+
 
   return (
     <div className="sidebar">
