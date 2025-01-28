@@ -4,6 +4,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import ThemeRegistry from "./theme/ThemeRegistry";
 import SideBar from "./components/Shared/Sidebar/Sidebar";
 import Header from "./components/Shared/Header/Header";
+import Wrapper from "./components/Shared/Wrapper/Wrapper";
 
 export const metadata = {
   title: "Resource Allocations", 
@@ -17,9 +18,11 @@ export default function CommonLayout({ children }) {
         <StoreProvider>
           <AppRouterCacheProvider>
             <ThemeRegistry>
-            <Header />
             <SideBar/>
+            <Wrapper>
+              <Header />
               {children} 
+            </Wrapper>
             </ThemeRegistry>
           </AppRouterCacheProvider>
         </StoreProvider>
