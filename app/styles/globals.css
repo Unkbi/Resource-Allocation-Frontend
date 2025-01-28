@@ -64,27 +64,3 @@ a {
     color-scheme: dark;
   }
 }
-
-
-.sidebar {
-  width: 250px;
-  background-color: #00274d;
-  height: 100vh;
-  position: fixed;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 0;
-}
-
-.menuItem {
-  padding: 10px 20px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  color: white;
-}
-
-.sidebar .menu-item:hover {
-  background-color: #0057a4;
-}

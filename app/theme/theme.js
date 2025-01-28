@@ -12,5 +12,9 @@ export const getTheme = (mode, primaryColor, fontSize) => {
     typography: {
       fontSize: Number(fontSize),
     },
+    custom: {
+      hoverBackground: mode === 'dark' ? '#555' : '#0057a4',
+      backgroundColor: mode === 'dark' ? '#333' : primaryColor,
+    },
   });
 };

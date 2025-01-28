@@ -10,7 +10,7 @@ export const ThemeContext = createContext(null);
 export default function ThemeRegistry({ children }) {
   const [mode, setMode] = useState('light'); 
   const [primaryColor, setPrimaryColor] = useState('#1976d2'); 
-  const [fontSize, setFontSize] = useState('14');
+  const [fontSize, setFontSize] = useState(14);
 
   const theme = getTheme(mode, primaryColor, fontSize);
 
@@ -29,6 +29,3 @@ export default function ThemeRegistry({ children }) {
     </NextAppDirEmotionCacheProvider>
   );
 }
-
-
-
