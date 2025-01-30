@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import {
   DataGridPremium,
   useGridApiRef,
-  useKeepGroupedColumnsHidden,
+  useKeepGroupedColumnsHidden
 } from '@mui/x-data-grid-premium';
 import { columnGroupingModel,generateWeeklyColumns, getAllColumnsWithWeek } from './TableHeader';
 import CustomToolbar from '../Toolbar/CustomToolbar';
@@ -46,6 +46,15 @@ export default function AllocationGrid(props) {
     },
   });
 
+
+const showField = columns.map((col)=>col.field)
+const getTogglableColumns = (columns) => {
+  return columns
+    .filter((column) => showField.includes(column.field))
+    .map((column) => column.field);
+};
+
+
   return (
     <Box sx={{ height: 520, width: '100%' }}>
       <DataGridPremium
@@ -58,6 +67,11 @@ export default function AllocationGrid(props) {
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
         slots={{ toolbar: CustomToolbar }}
+        slotProps={{
+          columnsManagement: {
+            getTogglableColumns,
+          },
+        }}
         hideFooter
         sx={{
             "& .MuiDataGrid-cell": {
@@ -86,7 +100,18 @@ export default function AllocationGrid(props) {
             "& .MuiDataGrid-columnHeader:focus": {
               outline: "none",
             },
-            
+            "& .MuiDataGrid-groupingCriteriaCellToggle button": {
+              display: "none",
+            },
+            "& .MuiDataGrid-groupingCriteriaCell": {
+              padding: "0",
+            },
+            "& .MuiDataGrid-cellContent": {
+              paddingLeft: "8px",
+            },
+            "& .MuiDataGrid-groupingCriteriaCellToggle": {
+              display: "none",
+            },
           }}
       />
     </Box>

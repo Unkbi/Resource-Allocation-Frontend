@@ -22,8 +22,6 @@ const generateWeeklyColumns = (startDate) => {
       headerName: `W${i}`,
       width: 80,
       editable: true,
-      disableColumnMenu: true,
-      hideable: false,
     }
   })
 }
