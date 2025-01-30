@@ -36,8 +36,8 @@ const Sidebar = () => {
       <List>
         {menuItems.map((item, index) => (
           <MenuItem key={index}>
-            <ListItemIcon style={{ color: 'white' }}>{item.icon}</ListItemIcon>
-            <Typography className=''>
+            <ListItemIcon sx={{ color: 'white' }}>{item.icon}</ListItemIcon>
+            <Typography>
               {item.text}
             </Typography>
             {/* <ListItemText primary={item.text} /> */}
