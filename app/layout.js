@@ -18,9 +18,9 @@ export default function CommonLayout({ children }) {
         <StoreProvider>
           <AppRouterCacheProvider>
             <ThemeRegistry>
+            <Header />
             <SideBar/>
             <Wrapper>
-              <Header />
               {children} 
             </Wrapper>
             </ThemeRegistry>
