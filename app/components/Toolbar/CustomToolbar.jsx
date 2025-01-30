@@ -51,7 +51,7 @@ export default function CustomToolbar() {
           sx={{ minWidth: 100, border: "none", boxShadow: "none" }}
         >
           <Select
-            value={"Project"}
+            value={view || "Project"}
             onChange={handleViewChange}
             sx={{
               padding: 0,
