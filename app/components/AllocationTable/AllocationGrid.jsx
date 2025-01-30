@@ -119,7 +119,9 @@ export default function AllocationGrid(props) {
         disableRowSelectionOnClick
         initialState={initialState}
         columnGroupingModel={columnGroupingModel}
+        defaultGroupingExpansionDepth={1}
         slots={{ toolbar: CustomToolbar }}
+        hideFooter
         sx={{
             "& .MuiDataGrid-cell": {
               borderRight: "1px solid #e0e0e0",
