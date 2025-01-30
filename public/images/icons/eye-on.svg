@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>eye-on</title>
+    <g id="V9" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="01_Welcome" transform="translate(-1187, -279)">
+            <g id="eye-on" transform="translate(1187, 279)">
+                <rect id="Rectangle" x="0" y="0" width="24" height="24"></rect>
+                <g id="Group-12" transform="translate(3, 5)" stroke="#757575" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M0,6.54545455 C0,6.54545455 3.27272727,0 9,0 C14.7272727,0 18,6.54545455 18,6.54545455 C18,6.54545455 14.7272727,13.0909091 9,13.0909091 C3.27272727,13.0909091 0,6.54545455 0,6.54545455 Z" id="Path-Copy-2"></path>
+                    <circle id="Oval-Copy" cx="9.31818182" cy="6.36363636" r="2.5"></circle>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

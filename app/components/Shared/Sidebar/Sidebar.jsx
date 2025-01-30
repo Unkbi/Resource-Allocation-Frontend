@@ -1,50 +1,81 @@
 "use client";
-import { List, ListItem, ListItemIcon, ListItemText, styled, Typography } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import styles from './Sidebar.module.css';
-import { ThemeContext } from '../../../theme/ThemeRegistry';
-import { useContext } from 'react';
-import { useTheme } from '@mui/material/styles';
+import { Box, List, MenuItem, styled, Typography } from '@mui/material';
 
-const MenuItem = styled(ListItem)(({ theme }) => ({
-  padding: '10px 20px',
-  display: 'flex',
-  alignItems: 'center',
-  cursor: 'pointer',
-  color: 'white',
-  '&:hover': {
-    backgroundColor: theme.custom.hoverBackground,
+const MainBox = styled(Box)(({ theme }) => ({
+  width: "74px",
+  position:"fixed",
+  left:"0",
+  top:"0",
+  backgroundColor: theme.custom.bgColor,
+  height: "100vh",
+  position: "fixed",
+  color: theme.custom.secondryColor,
+  paddingTop: "10px",
+  textAlign:"center",
+  "& .menuList":{
+    flexDirection:"column",
+    padding: "0",
+    alignItems: "center",
+    opacity:"0.6",
+    padding:"10px 8px",
+    marginBottom:"5px",
+    "&.active":{
+      opacity:"1",
+      backgroundColor:theme.custom.ternaryColor
+    }
   },
+  "& .menuText":{
+    fontSize:"11px",
+    display:"block",
+    width:"100%",
+    fontFamily: "'Manrope', serif",
+    fontWeight: "500",
+    textAlign:"center",
+    marginTop:"10px",
+    lineHeight:"12px",
+  },
+  "& .logo":{
+    marginBottom:"20px"
+  }
 }));
 
 const Sidebar = () => {
   // const theme = useTheme();
   // const { mode } = useContext(ThemeContext);
-
+  const DashboardIcon=()=><img src="/images/icons/dashboard.svg" alt="Dashboard"  />
+  const AllocationIcon=()=><img src="/images/icons/allocation.svg" alt="allocation"/>
+  const ProjectsIcon=()=><img src="/images/icons/projects.svg" alt="projects" />
+  const PeopleIcon=()=><img src="/images/icons/people.svg" alt="people" />
+  const ReportsIcon=()=><img src="/images/icons/reports.svg" alt="reports" />
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon /> },
-    { text: 'Allocation', icon: <DashboardIcon /> },
-    { text: 'Projects', icon: <DashboardIcon /> },
+    { text: 'Dashboard', icon: <DashboardIcon />},
+    { text: 'Allocation', icon: <AllocationIcon /> },
+    { text: 'Projects', icon: <ProjectsIcon /> },
     { text: 'People', icon: <PeopleIcon /> },
-    { text: 'Reports', icon: <BarChartIcon /> },
+    { text: 'Reports', icon: <ReportsIcon /> },
   ];
 
   return (
-    <div className={styles.sidebar}>
+    <MainBox>
+      <Box className='logo'>
+        <a href='#'>
+        <img
+          alt=""
+          src={"/images/icons/cio-logo.svg"}
+        />
+        </a>
+      </Box>
       <List>
         {menuItems.map((item, index) => (
-          <MenuItem key={index}>
-            <ListItemIcon style={{ color: 'white' }}>{item.icon}</ListItemIcon>
-            <Typography className=''>
+          <MenuItem className='menuList' key={index}>
+            {item.icon}
+            <Typography className='menuText'>
               {item.text}
             </Typography>
-            {/* <ListItemText primary={item.text} /> */}
           </MenuItem>
         ))}
       </List>
-    </div>
+    </MainBox>
   );
 };
 
