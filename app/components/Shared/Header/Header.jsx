@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Avatar, TextField, InputAdornment } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Avatar, TextField, InputAdornment, Box } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SearchIcon from '@mui/icons-material/Search';
 import './header.css';
@@ -9,13 +9,13 @@ import { useAuth } from '../../../hooks/useAuth';
 const Header = () => {
   useAuth();
   return (
-    <AppBar position="static" color="default" className="header">
+    <AppBar position="fixed" color="default" className="header" sx={{ maxWidth: "calc(100vw - 250px)" }}>
       <Toolbar>
         <Typography variant="h6" noWrap>
           Settings
         </Typography>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div className="search-bar">
+        <Box sx={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Box className="search-bar">
             <TextField
               placeholder="Search"
               size="small"
@@ -29,12 +29,12 @@ const Header = () => {
               }}
               variant="standard"
             />
-          </div>
-          <IconButton>
-            <SettingsIcon />
-          </IconButton>
-          <Avatar alt="User" src="/static/images/avatar/1.jpg" />
-        </div>
+            <IconButton>
+              <SettingsIcon />
+            </IconButton>
+            <Avatar alt="User" src="/static/images/avatar/1.jpg" />
+          </Box>
+        </Box>
       </Toolbar>
     </AppBar>
   );

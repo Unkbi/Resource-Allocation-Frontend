@@ -31,8 +31,8 @@ export default function CommonLayout({ children }) {
         <StoreProvider>
           <AppRouterCacheProvider>
             <ThemeRegistry>
-            <Header />
             <SideBar/>
+              <Header />
               {children} 
             </ThemeRegistry>
           </AppRouterCacheProvider>
