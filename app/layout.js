@@ -6,6 +6,12 @@ import ThemeRegistry from "./theme/ThemeRegistry";
 import SideBar from "./components/Shared/Sidebar/Sidebar";
 import Header from "./components/Shared/Header/Header";
 import { useAuth } from "./hooks/useAuth";
+import { Box, styled } from "@mui/material";
+const MainContent = styled(Box)(({ theme,user }) => ({
+  background: "#fff",
+  marginLeft: user ? "74px" : 0,
+  paddingTop: user ? "52px" : 0
+}));
 
 // export const metadata = {
 //   title: "Resource Allocations", 
@@ -19,7 +25,9 @@ export default function CommonLayout({ children }) {
     return (
    <html lang="en">
      <body>
+     <StoreProvider>
        {children}
+       </StoreProvider>
      </body>
    </html>
  )
@@ -30,10 +38,11 @@ export default function CommonLayout({ children }) {
       <body>
         <StoreProvider>
           <AppRouterCacheProvider>
-            <ThemeRegistry>
-            <Header />
+            <ThemeRegistry><Header />
             <SideBar/>
+            <MainContent>
               {children} 
+            </MainContent>
             </ThemeRegistry>
           </AppRouterCacheProvider>
         </StoreProvider>

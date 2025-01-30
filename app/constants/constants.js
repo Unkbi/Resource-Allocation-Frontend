@@ -31,8 +31,10 @@ export const themeColors = {
     },
     "#1C2D5F": {
       'light': {
-        bgColor: "#ffffff",
-        primaryColor: "#1976d2",
+        bgColor: "#1C2D5F",
+        primaryColor: "#212121",
+        secondryColor: "#ffffff",
+        ternaryColor: "#122047",
       },
       'dark': {
         bgColor: "#121212",

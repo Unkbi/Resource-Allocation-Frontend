@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>eye-off</title>
+    <g id="V9" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="01_Welcome" transform="translate(-1217, -279)">
+            <g id="eye-off" transform="translate(1217, 279)">
+                <rect id="Rectangle-Copy-4" x="0" y="0" width="24" height="24"></rect>
+                <g id="Group-13" transform="translate(3, 3)" stroke="#757575" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13.86,13.4054951 C12.4613918,14.4715879 10.7583607,15.0622014 9,15.0909497 C3.27272727,15.0909497 0,8.54549514 0,8.54549514 C1.0177281,6.64886432 2.42929264,4.99181029 4.14,3.68549514 M7.28181818,2.19640423 C7.84499916,2.06457838 8.42159788,1.99868138 9,2.00001999 C14.7272727,2.00001999 18,8.54549514 18,8.54549514 C17.5033469,9.47462843 16.9110453,10.3493701 16.2327273,11.1554951 M10.7345455,10.2800406 C10.1226417,10.9367237 9.20109095,11.2070379 8.33141812,10.9849387 C7.46174528,10.7628395 6.78265559,10.0837499 6.56055641,9.21407702 C6.33845722,8.34440418 6.60877142,7.4228534 7.26545455,6.81094968" id="Shape-Copy"></path>
+                    <line x1="1" y1="0" x2="19" y2="18" id="Path-Copy"></line>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
