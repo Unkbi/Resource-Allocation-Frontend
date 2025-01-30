@@ -7,11 +7,11 @@ import SideBar from "./components/Shared/Sidebar/Sidebar";
 import Header from "./components/Shared/Header/Header";
 import { useAuth } from "./hooks/useAuth";
 import { Box, styled } from "@mui/material";
-const MainContent = styled(Box)(({ theme,user }) => ({
+const MainContent = styled(Box)({
   background: "#fff",
-  marginLeft: user ? "74px" : 0,
-  paddingTop: user ? "52px" : 0
-}));
+  marginLeft:  "74px",
+  paddingTop: "52px"
+});
 
 // export const metadata = {
 //   title: "Resource Allocations", 
