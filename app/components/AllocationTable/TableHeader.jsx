@@ -1,3 +1,5 @@
+import clsx from "clsx"
+
 const getStartDate = () => {
   const now = new Date()
   now.setDate(now.getDate() - now.getDay() - 7) // Set to the start of the previous week (Sunday)
@@ -22,8 +24,17 @@ const generateWeeklyColumns = (startDate) => {
       headerName: `W${i}`,
       width: 80,
       editable: true,
-      disableColumnMenu: true,
-      hideable: false,
+      type: "number",
+      cellClassName: (params) => {
+        if (params.value == null) {
+          return ""
+        }
+
+        return clsx("super-app", {
+          negative: params.value < 0,
+          positive: params.value > 0,
+        })
+      },
     }
   })
 }
@@ -64,15 +75,16 @@ const generateColumnGroupingModel = (startDate) => {
 const startDate = getStartDate()
 
 export const columns = [
-  // { field: "project", headerName: "Project Name", width: 250 },
-  // { field: "resource", headerName: "Resource", width: 200, disableColumnMenu: true },
-  // { field: "role", headerName: "Role", width: 200, disableColumnMenu: true },
-  // { field: "totalEffort", headerName: "Total Effort", width: 150, disableColumnMenu: true },
+  { field: "project", headerName: "Project Name", width: 250 },
+//   { field: "resource", headerName: "Resource", width: 200, disableColumnMenu: true },
+//   { field: "role", headerName: "Role", width: 200, disableColumnMenu: true },
+  // {     field: "totalEffort",     headerName: "Total Effort",     width: 150,     disableColumnMenu: true },
   ...generateWeeklyColumns(startDate),
 ]
 
 export const columnGroupingModel = generateColumnGroupingModel(startDate)
 
-export const getAllColumnsWithWeek = (columns)=>{
+export const getAllColumnsWithWeek = (columns) => {
   return [...columns, ...generateWeeklyColumns(startDate)]
 }
+
