@@ -3,7 +3,7 @@ import { Box, Button, TextField, Popper, List, ListItem, ListItemText } from "@m
 import { DataGridPremium, gridClasses, useGridApiRef, useKeepGroupedColumnsHidden } from "@mui/x-data-grid-premium"
 import { columnGroupingModel, getAllColumnsWithWeek } from "./TableHeader"
 import CustomToolbar from "../Toolbar/CustomToolbar"
-import { transformJson } from "@/app/utils/common"
+import { calculateTotalEffort, transformJson } from "@/app/utils/common"
 import { demoRows, jsonData } from "./data"
 import { styled } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -27,11 +27,15 @@ export default function AllocationGrid(props) {
 
   const [tableData, setTableData] = React.useState([])
 
+  const updatedRows = demoRows.map(row => ({
+    ...row,
+    totalEffort: calculateTotalEffort(row)
+  }));
   React.useEffect(() => {
     if (groupBy === "role") {
       setTableData(transformJson(groupBy, jsonData))
     } else {
-      setTableData(demoRows)
+      setTableData(updatedRows)
     }
   }, [groupBy])
 
@@ -42,16 +46,16 @@ export default function AllocationGrid(props) {
 
   // State to manage rows dynamically
   const [rowsState, setRowsState] = React.useState([
-    ...demoRows,
+    ...updatedRows,
     // Add placeholder rows for each project
-    ...Array.from(new Set(demoRows.map((row) => row.project))).map((project) => ({
+    ...Array.from(new Set(updatedRows.map((row) => row.project))).map((project) => ({
       id: `${project}-add-resource`,
       project: project,
       resource: "",
       role: "",
       totalEffort: "",
       hasButton: true, // Marker for the "Add Resource" row
-      ...Object.keys(demoRows[0])
+      ...Object.keys(updatedRows[0])
         .filter((key) => key.startsWith("W"))
         .reduce((acc, week) => {
           acc[week] = ""
@@ -70,7 +74,7 @@ export default function AllocationGrid(props) {
       resource: resource.name,
       role: "New Role", // Default role
       totalEffort: resource.totalHours,
-      ...Object.keys(demoRows[0])
+      ...Object.keys(updatedRows[0])
         .filter((key) => key.startsWith("W"))
         .reduce((acc, week) => {
           acc[week] = 0
@@ -103,7 +107,7 @@ export default function AllocationGrid(props) {
       aggregation: {
         model: {
           totalEffort: "sum",
-          ...Object.keys(demoRows[0])
+          ...Object.keys(updatedRows[0])
             .filter((key) => key.startsWith("W"))
             .reduce((acc, week) => {
               acc[week] = "sum"
@@ -114,7 +118,7 @@ export default function AllocationGrid(props) {
       pinnedColumns: { left: [groupBy] },
       // columns: {
       //   columnVisibilityModel: {
-      //     ...Object.keys(demoRows[0])
+      //     ...Object.keys(updatedRows[0])
       //       .filter((key) => key.startsWith("W"))
       //       .reduce((acc, week) => {
       //         acc[week] = true
@@ -205,6 +209,9 @@ export default function AllocationGrid(props) {
             getTogglableColumns,
           },
         }}
+        getAggregationPosition={(groupNode) =>
+          groupNode.depth === -1 ? null : 'inline'
+        }
         hideFooter
         editMode="row"
         // processRowUpdate={processRowUpdate}

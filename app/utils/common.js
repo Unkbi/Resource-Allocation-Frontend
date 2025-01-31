@@ -33,3 +33,12 @@ export function transformJson(pageType, apiData) {
   
     return demoRows;
   }
+
+// Calculate total effort from weekly columns
+export const calculateTotalEffort = (row) => {
+  console.log('rowCount:: ', row)
+  const weeklyEfforts = Object.keys(row)
+    .filter(key => key.startsWith('W'))
+    .map(key => row[key]);
+  return weeklyEfforts.reduce((total, effort) => total + (effort || 0), 0);
+};

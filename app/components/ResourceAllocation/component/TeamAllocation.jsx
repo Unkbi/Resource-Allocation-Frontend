@@ -5,14 +5,14 @@ const teamsColumnConfig = [
     { field: "teams", headerName: "Teams Name", width: 250 },
     { field: "resource", headerName: "Resource", width: 200, disableColumnMenu: true },
     { field: "project", headerName: "Projects", width: 200, disableColumnMenu: true },
-    { field: "totalEffort", headerName: "Resource Type", width: 200, disableColumnMenu: true },
+    { field: "resourceType", headerName: "Resource Type", width: 200, disableColumnMenu: true },
     ];
 
 export default function TeamAllocation() {
     return (
         <>
          <AllocationGrid 
-            groupBy="resource"
+            groupBy="teams"
             columns={teamsColumnConfig}
          />
         </>

@@ -25,6 +25,8 @@ const generateWeeklyColumns = (startDate) => {
       width: 80,
       editable: true,
       type: "number",
+      disableColumnMenu: true,
+      sortable: false,
       cellClassName: (params) => {
         if (params.value == null) {
           return ""

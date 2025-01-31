@@ -4,7 +4,7 @@ import AllocationGrid from "@/app/components/AllocationTable/AllocationGrid";
 const projectColumnConfig = [
     { field: "project", headerName: "Project Name", width: 250 },
     { field: "resource", headerName: "Resource", width: 200, disableColumnMenu: true },
-    { field: "role", headerName: "Role", width: 200, disableColumnMenu: true },
+    { field: "teams", headerName: "Teams", width: 200, disableColumnMenu: true },
     {
         field: "totalEffort",
         headerName: "Total Effort",

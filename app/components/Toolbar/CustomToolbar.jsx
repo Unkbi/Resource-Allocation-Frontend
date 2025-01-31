@@ -28,7 +28,7 @@ import {
 export default function CustomToolbar() {
   const dispatch = useDispatch();
   const view = useSelector((state) => state.allocationView.view);
-  const viewOptions = ["Organization","Project", "Teams"];
+  const viewOptions = ["Teams","Project","Organization"];
 
   const handleViewChange = (event) => {
     const newView = event.target.value;
