@@ -209,14 +209,27 @@ export default function AllocationGrid(props) {
         editMode="row"
         // processRowUpdate={processRowUpdate}
         sx={{
-          [`.${gridClasses.cell}.negative`]: {
-            backgroundColor: "#F6C8C8",
-            color: "#1a3e72",
-          },
-          [`.${gridClasses.cell}.positive`]: {
-            backgroundColor: "#C4E5C4",
-            borderColor: "#7AB17A",
-          },
+            [`.${gridClasses.cell}`]: {
+              "& input[type='number']": {
+                appearance: "textfield",
+                margin: 0,
+              },
+              "& input[type='number']::-webkit-outer-spin-button, & input[type='number']::-webkit-inner-spin-button": {
+                display: "none",
+              },
+            },
+          // [`.${gridClasses.cell}.less-occupancy`]: {
+          //   backgroundColor: "#F6C8C8",
+          //   color: "#1a3e72",
+          // },
+          // [`.${gridClasses.cell}.average-occupancy`]: {
+          //   backgroundColor: "#C4E5C4",
+          //   borderColor: "#7AB17A",
+          // },
+          // [`.${gridClasses.cell}.fully-occupied`]: {
+          //   backgroundColor: "#C4E5C4",
+          //   borderColor: "#7AB17A",
+          // },
           "& .MuiDataGrid-cell": {
             borderRight: "1px solid #e0e0e0",
             fontSize: "14px",
@@ -255,19 +268,9 @@ export default function AllocationGrid(props) {
           "& .MuiDataGrid-groupingCriteriaCellToggle": {
             display: "none",
           },
-          // Apply specific styling to aggregation columns (like `totalEffort`)
-          // '& .MuiDataGrid-cell.aggregated': {
-          //   backgroundColor: '#d1e7dd', // Light green background for aggregate columns
-          //   fontWeight: 'bold', // Bold font for aggregate values
-          //   color: '#2a6d2f', // Dark green text color
-          // },
-
-          // // Example of color variation for total effort (just for illustration)
-          // '& .MuiDataGrid-cell[data-field="totalEffort"]': {
-          //   backgroundColor: '#e0f7fa', // Light cyan background for totalEffort column
-          //   fontWeight: '600', // Bold text for total effort
-          //   color: '#00796b', // Dark cyan color for the total effort
-          // },
+          "& .MuiDataGrid-aggregationColumnHeaderLabel": {
+            display: "none", // Hides the aggregation label
+          },
         }}
 
       />
