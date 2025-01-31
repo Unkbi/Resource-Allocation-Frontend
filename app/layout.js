@@ -5,7 +5,9 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import ThemeRegistry from "./theme/ThemeRegistry";
 import SideBar from "./components/Shared/Sidebar/Sidebar";
 import Header from "./components/Shared/Header/Header";
-import { useAuth } from "./hooks/useAuth";
+import { usePathname } from "next/navigation";
+// import { useAuth } from "./hooks/useAuth"; uncomment this after implementing login
+
 import { Box, styled } from "@mui/material";
 const MainContent = styled(Box)(({ theme }) => ({
   background: "#fff",
@@ -19,18 +21,33 @@ const MainContent = styled(Box)(({ theme }) => ({
 // };
 
 export default function CommonLayout({ children }) {
-  const isLoggedIn = useAuth();
+//   const isLoggedIn = useAuth(); uncomment this after implementing login
   
-  if (!isLoggedIn) {
+//   if (!isLoggedIn) {
+//     return (
+//    <html lang="en">
+//      <body>
+//      <StoreProvider>
+//        {children}
+//        </StoreProvider>
+//      </body>
+//    </html>
+//  )
+//   }
+
+// add the above return statement and remove the below return statement after login implementation
+  const pathname = usePathname();
+  const isPublicRoute = pathname.includes('login');
+  if (isPublicRoute) {
     return (
-   <html lang="en">
-     <body>
-     <StoreProvider>
-       {children}
-       </StoreProvider>
-     </body>
-   </html>
- )
+      <html lang="en">
+        <body>
+          <StoreProvider>
+            {children}
+          </StoreProvider>
+        </body>
+      </html>
+    )
   }
 
   return (
