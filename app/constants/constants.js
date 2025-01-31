@@ -35,6 +35,7 @@ export const themeColors = {
         primaryColor: "#212121",
         secondryColor: "#ffffff",
         ternaryColor: "#122047",
+        textColor:"#298AFF"
       },
       'dark': {
         bgColor: "#121212",

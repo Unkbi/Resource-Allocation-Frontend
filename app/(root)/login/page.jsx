@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, logoutUser } from '../../services/authServices';
 import { useRouter } from 'next/navigation';
@@ -180,11 +180,18 @@ export default function LoginPage() {
     const router = useRouter();
 
     const [showPassword, setShowPassword] = React.useState(false);
+
     const handleLogin = (e) => {
         e.preventDefault();
-        // dispatch(loginUser({ email, password }));
-        router.push('/dashboard');
+        dispatch(loginUser({ email, password }));
     };
+
+    useEffect(() => {
+        if (user) {
+            router.push('/dashboard');
+        }
+    }, [user, router]);
+
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -240,6 +247,8 @@ export default function LoginPage() {
                                         shrink: false
                                     }}
                                     variant="outlined"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
                                 <TextField
                                     className='textField'
@@ -250,6 +259,8 @@ export default function LoginPage() {
                                         shrink: false
                                     }}
                                     fullWidth
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     InputProps={{
                                         endAdornment: (
                                             <InputAdornment position="end">
@@ -260,11 +271,11 @@ export default function LoginPage() {
                                         ),
                                     }}
                                 />
-                                <Box className='forgot'>
+                                {/* <Box className='forgot'>
                                     <Link href="/forgot-password" underline="hover">
                                         Forgot Password?
                                     </Link>
-                                </Box>
+                                </Box> */}
                                 <Button
                                     type="submit"
                                     variant="contained"
@@ -294,12 +305,12 @@ export default function LoginPage() {
                                     Sign in with SSO
                                 </Button>
                             </Box>
-                            <Typography className='noAccount'>
+                            {/* <Typography className='noAccount'>
                                 Don’t have an account?{' '}
                                 <Link href="/signup" underline="hover" color="primary">
                                     Sign up
                                 </Link>
-                            </Typography>
+                            </Typography> */}
                         </Box>
                     </Box>
                 </Box>

@@ -1,19 +1,19 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../utils/apiClient';
+import { clearToken, saveToken } from '../utils/authUtils';
 
 // Login User
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/auth/login', credentials);
+      console.log('credentials', credentials);
+      const response = await axiosInstance.post('/login', credentials);
       const { user, token } = response.data;
-
-      // Store the token in localStorage
-      localStorage.setItem('token', token);
-
-      return { user, token }; // Fulfilled payload
+      saveToken(token);
+      return { user, token }; 
     } catch (error) {
+      console.error('Login failed:', error.response);
       return rejectWithValue(error.response?.data?.message || 'Login failed');
     }
   }
@@ -21,6 +21,6 @@ export const loginUser = createAsyncThunk(
 
 // Logout User
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
-  localStorage.removeItem('token'); // Clear token from storage
-  return; // Fulfilled payload will be `undefined`
+  clearToken();
+  return;
 });

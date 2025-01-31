@@ -1,8 +1,11 @@
 import axios from 'axios';
-import { makeStore } from '../redux/store';
+import { getToken } from './authUtils';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
+
 
 const axiosInstance = axios.create({
-  baseURL: 'process.env.NEXT_PUBLIC_API_BASE_URL', 
+  baseURL: API_BASE_URL, 
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,9 +13,7 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    const state = makeStore.getState();
-    const token = state.auth?.token; 
-
+    const token =getToken(); 
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }

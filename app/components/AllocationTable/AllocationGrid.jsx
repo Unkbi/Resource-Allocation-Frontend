@@ -6,6 +6,7 @@ import Popper from '@mui/material/Popper';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import AddIcon from '@mui/icons-material/Add';
 import {
   DataGridPremium,
   useGridApiRef,
@@ -13,6 +14,20 @@ import {
 } from '@mui/x-data-grid-premium';
 import { columnGroupingModel, generateWeeklyColumns, getAllColumnsWithWeek } from './TableHeader';
 import CustomToolbar from '../Toolbar/CustomToolbar';
+import { styled } from '@mui/material';
+
+
+
+
+
+const AddResourceButton = styled(Button)(({ theme }) => ({
+  color: theme.custom.textColor,
+  textTransform: "none",
+  "&:hover": {
+    backgroundColor: "transparent",
+  },
+}));
+
 
 // Your data (rows)
 export const rows = [
@@ -185,24 +200,25 @@ export default function AllocationGrid(props) {
         if (params.row.hasButton) {
           return (
             <div>
-              <Button
-                variant="contained"
+              <AddResourceButton
+                variant="text"
                 size="small"
+                startIcon={<AddIcon />}
                 onClick={(event) => {
                   setSelectedProject(params.row.project);
                   setAnchorEl(event.currentTarget);
                 }}
               >
                 Add Resource
-              </Button>
+              </AddResourceButton>
               <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} placement="bottom-start">
-                <Box sx={{ border: 1, p: 1, bgcolor: "background.paper", minWidth: 200 }}>
+                <Box sx={{ p: 1, bgcolor: "background.paper", minWidth: 200 }}>
                   <TextField
-                    autoFocus
                     fullWidth
                     placeholder="Search Resource"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{ border: 0 }}
                   />
                   <List>
                     {filteredResources.map((resource, index) => (
