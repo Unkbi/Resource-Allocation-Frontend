@@ -62,7 +62,8 @@ export default function CustomToolbar() {
           margin: "-1px",
           position: "relative",
           zIndex: "1",
-          height: "32px"
+          height: "32px",
+          color:"#fff"
         },
         "&:first-child":{
           border:"none"
