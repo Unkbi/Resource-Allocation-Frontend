@@ -2,6 +2,7 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import {
   DataGridPremium,
+  gridClasses,
   useGridApiRef,
   useKeepGroupedColumnsHidden
 } from '@mui/x-data-grid-premium';
@@ -66,6 +67,7 @@ const getTogglableColumns = (columns) => {
         initialState={initialState}
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
+        getRowClassName={(params) => `super-app-theme--${params.row.status}`}
         slots={{ toolbar: CustomToolbar }}
         slotProps={{
           columnsManagement: {
@@ -73,7 +75,16 @@ const getTogglableColumns = (columns) => {
           },
         }}
         hideFooter
+        editMode='row'
         sx={{
+          [`.${gridClasses.cell}.negative`]: {
+            backgroundColor: '#F6C8C8',
+            color: '#1a3e72',
+          },
+          [`.${gridClasses.cell}.positive`]: {
+            backgroundColor: '#C4E5C4',
+            borderColor:"#7AB17A"
+          },
             "& .MuiDataGrid-cell": {
               borderRight: "1px solid #e0e0e0",
               fontSize: "14px",
@@ -112,6 +123,19 @@ const getTogglableColumns = (columns) => {
             "& .MuiDataGrid-groupingCriteriaCellToggle": {
               display: "none",
             },
+            // Apply specific styling to aggregation columns (like `totalEffort`)
+          // '& .MuiDataGrid-cell.aggregated': {
+          //   backgroundColor: '#d1e7dd', // Light green background for aggregate columns
+          //   fontWeight: 'bold', // Bold font for aggregate values
+          //   color: '#2a6d2f', // Dark green text color
+          // },
+
+          // // Example of color variation for total effort (just for illustration)
+          // '& .MuiDataGrid-cell[data-field="totalEffort"]': {
+          //   backgroundColor: '#e0f7fa', // Light cyan background for totalEffort column
+          //   fontWeight: '600', // Bold text for total effort
+          //   color: '#00796b', // Dark cyan color for the total effort
+          // },
           }}
       />
     </Box>

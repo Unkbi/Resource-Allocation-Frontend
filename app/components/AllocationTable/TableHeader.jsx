@@ -1,3 +1,5 @@
+import clsx from "clsx"
+
 const getStartDate = () => {
   const now = new Date()
   now.setDate(now.getDate() - now.getDay() - 7) // Set to the start of the previous week (Sunday)
@@ -22,6 +24,16 @@ const generateWeeklyColumns = (startDate) => {
       headerName: `W${i}`,
       width: 80,
       editable: true,
+      cellClassName: (params) => {
+        if (params.value == null) {
+          return '';
+        }
+  
+        return clsx('super-app', {
+          negative: params.value < 0,
+          positive: params.value > 0,
+        });
+      },
     }
   })
 }
