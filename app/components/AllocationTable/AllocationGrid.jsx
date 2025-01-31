@@ -1,16 +1,28 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Popper from '@mui/material/Popper';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
 import {
   DataGridPremium,
   gridClasses,
   useGridApiRef,
   useKeepGroupedColumnsHidden
 } from '@mui/x-data-grid-premium';
-import { columnGroupingModel,generateWeeklyColumns, getAllColumnsWithWeek } from './TableHeader';
+import { columnGroupingModel, generateWeeklyColumns, getAllColumnsWithWeek } from './TableHeader';
 import CustomToolbar from '../Toolbar/CustomToolbar';
 import { transformJson } from '@/app/utils/common';
 import { demoRows, jsonData } from './data';
 
+
+const allResources = [
+  { name: "John Doe", projects: ["Project A"], totalHours: 30 },
+  { name: "Jane Smith", projects: ["Project B"], totalHours: 25 },
+  { name: "Alice Johnson", projects: ["Project C"], totalHours: 35 },
+];
 export default function AllocationGrid(props) {
   const {groupBy, columns} = props;
   
@@ -25,25 +37,80 @@ export default function AllocationGrid(props) {
   },[groupBy])
 
   const apiRef = useGridApiRef();
-  const allColumns = getAllColumnsWithWeek(columns)
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [selectedProject, setSelectedProject] = React.useState("");
+
+  // State to manage rows dynamically
+  const [rowsState, setRowsState] = React.useState([
+    ...demoRows,
+    // Add placeholder rows for each project
+    ...Array.from(new Set(demoRows.map((row) => row.project))).map((project) => ({
+      id: `${project}-add-resource`,
+      project: project,
+      resource: "",
+      role: "",
+      totalEffort: "",
+      hasButton: true, // Marker for the "Add Resource" row
+      ...Object.keys(demoRows[0])
+        .filter((key) => key.startsWith("W"))
+        .reduce((acc, week) => {
+          acc[week] = "";
+          return acc;
+        }, {}),
+    })),
+  ]);
+
+  const allColumns = getAllColumnsWithWeek(columns);
+
+  // Function to handle adding a new row
+  const handleAddRow = (resource) => {
+    const newRow = {
+      id: `${selectedProject}-${resource.name}-${rowsState.length + 1}`,
+      project: selectedProject,
+      resource: resource.name,
+      role: "New Role", // Default role
+      totalEffort: resource.totalHours,
+      ...Object.keys(demoRows[0])
+        .filter((key) => key.startsWith("W"))
+        .reduce((acc, week) => {
+          acc[week] = 0; // Initialize weekly hours to 0
+          return acc;
+        }, {}),
+      hasButton: false,
+    };
+    // Insert the new row before the "Add Resource" row for the project
+    setRowsState((prevRows) =>
+      prevRows.flatMap((row) =>
+        row.id === `${selectedProject}-add-resource`
+          ? [newRow, row]
+          : [row]
+      )
+    );
+    setAnchorEl(null); // Close the Popper
+    setSearchTerm(""); // Reset the search term
+  };
+
+  // Filter resources based on the search term
+  const filteredResources = allResources.filter((resource) =>
+    resource.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
-    // Grouping rows by dynamic row"
     initialState: {
       rowGrouping: {
         model: [groupBy],
       },
-      // Sort by dynamic  initially
       sorting: {
-        sortModel: [{ field: groupBy, sort: 'asc' }], 
+        sortModel: [{ field: groupBy, sort: "asc" }],
       },
-      // Aggregating the total effort
       aggregation: {
         model: {
-          totalEffort: 'sum', 
+          totalEffort: "sum",
         },
       },
-      pinnedColumns: { left: [groupBy]} 
+      pinnedColumns: { left: [groupBy] },
     },
   });
 
@@ -56,11 +123,65 @@ const getTogglableColumns = (columns) => {
 };
 
 
+  // Final columns array with fallback
+  const finalColumns = [
+    ...(allColumns || []), // Fallback to an empty array if allColumns is undefined
+    {
+      field: "resource",
+      headerName: "Resource",
+      width: 200,
+      renderCell: (params) => {
+        if (params.row.hasButton) {
+          return (
+            <div>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={(event) => {
+                  setSelectedProject(params.row.project);
+                  setAnchorEl(event.currentTarget);
+                }}
+              >
+                Add Resource
+              </Button>
+              <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} placement="bottom-start">
+                <Box sx={{ border: 1, p: 1, bgcolor: "background.paper", minWidth: 200 }}>
+                  <TextField
+                    autoFocus
+                    fullWidth
+                    placeholder="Search Resource"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <List>
+                    {filteredResources.map((resource, index) => (
+                      <ListItem
+                        key={index}
+                        button
+                        onClick={() => handleAddRow(resource)}
+                      >
+                        <ListItemText
+                          primary={resource.name}
+                          secondary={resource.projects.join(", ")}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              </Popper>
+            </div>
+          );
+        }
+        return <span>{params.value}</span>;
+      },
+    },
+  ];
+
   return (
-    <Box sx={{ height: 520, width: '100%' }}>
+    <Box sx={{ height: 520, width: "100%" }}>
       <DataGridPremium
-        rows={tableData}
-        columns={allColumns}
+        rows={rowsState}
+        columns={finalColumns}
         apiRef={apiRef}
         loading={false}
         disableRowSelectionOnClick
