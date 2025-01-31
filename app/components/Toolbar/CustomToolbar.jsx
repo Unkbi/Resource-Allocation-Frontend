@@ -8,6 +8,7 @@ import {
   FormControl,
   InputLabel,
   Divider,
+  styled,
 } from "@mui/material";
 import {
   GridView,
@@ -34,18 +35,117 @@ export default function CustomToolbar() {
     dispatch(performChangeView(newView));
   };
 
+  const ToolBox1 = styled(Box)(({ theme }) => ({
+    display:"flex",
+    width:"364px",
+    padding:"14px",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRight: "#DDE1E4 solid 1px",
+    "& .viewFilterBlock":{
+      backgroundColor: "#FFFFFF",
+      border: "1px solid #D6DCE1",
+      borderRadius: "4px",
+      boxShadow: "0 0 2px 0 rgba(0, 0, 0, 0.02)",
+      height: "32px",
+      display:"flex",
+      alignItems:"center",
+      "& button":{
+        padding:"3px 5px",
+        borderLeft: "1px solid #D6DCE1",
+        height:"100%",
+        borderRadius:"0",
+        minWidth:"34px",
+        "&.selected":{
+          backgroundColor: "#344665",
+          borderRadius: "4px",
+          margin: "-1px",
+          position: "relative",
+          zIndex: "1",
+          height: "32px"
+        },
+        "&:first-child":{
+          border:"none"
+        },
+        "& span":{
+          margin:"0"
+        }
+      }
+    }
+  }));
+
+  const ToolBox2 = styled(Box)(({ theme }) => ({
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding:"14px",
+    "& .filterColBlock":{
+      display:"flex",
+      alignItems:"center",
+      gap:"12px",
+      "& button":{
+        backgroundColor: "rgba(242, 245, 250, 0.3)",
+        border: "1px solid #D6DCE1",
+        borderRadius: "4px",
+        height: "32px",
+        padding: "5px 12px",
+        fontSize:"13px",
+        color:"#212121",
+        fontFamily: "'Manrope', serif",
+        fontWeight: "600",
+        textTransform:"none"
+      }
+    },
+    "& .dayWeekBlock":{
+      backgroundColor: "rgba(242, 245, 250, 0.3)",
+      border: "1px solid #D6DCE1",
+      borderRadius: "4px",
+      height: "32px",
+      display: "flex",
+      alignItems: "center",
+      "& button":{
+        color: "#757575",
+        fontFamily: "'Manrope', serif",
+        fontWeight: "500",
+        fontSize: "13px",
+        lineHeight: "16px",
+        textAlign: "center",
+        textTransform: "none",
+        height: "100%",
+        "&.selected":{
+          color:"#212121",
+          fontWeight:"600",
+          backgroundColor:"#fff",
+          borderLeft: "1px solid #D6DCE1",
+          borderRight: "1px solid #D6DCE1",
+          borderRadius: "4px"
+        }
+      }
+    },
+    "& .selectedDate":{
+      backgroundColor: "#FFFFFF",
+      border: "1px solid #D6DCE1",
+      borderRadius: "4px",
+      height: "32px",
+      color: "#212121",
+      fontFamily: "'Manrope', serif",
+      fontWeight: "600",
+      fontSize: "12px",
+      lineHeight: "14px",
+      textAlign: "center",
+      textTransform: "none"
+    },
+    "& .nextPrevIcon":{
+      backgroundColor: "rgba(242, 245, 250, 0.3)",
+      border: "1px solid #D6DCE1",
+      borderRadius: "4px",
+      height: "32px"
+    }
+  }));
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "8px 16px",
-        borderBottom: "1px solid #e0e0e0",
-        backgroundColor: "#f8f9fa",
-      }}
-    >
-      <Box sx={{ display: "flex", gap: 1 }}>
+    <Box display={"flex"}>
+      <ToolBox1>
         <FormControl
           size="small"
           sx={{ minWidth: 100, border: "none", boxShadow: "none" }}
@@ -70,146 +170,87 @@ export default function CustomToolbar() {
             ))}
           </Select>
         </FormControl>
-
-        <Box
-          sx={{
-            display: "flex",
-          }}
-        >
+        <Box className='viewFilterBlock'>
           <Button
             size="small"
-            sx={{
-              padding: 0,
-              minWidth: 0,
-              "& .MuiButton-startIcon": { padding: 0 },
-            }}
             startIcon={<GridView />}
+            className="selected"
           />
           <Button
             size="small"
-            sx={{
-              padding: 0,
-              minWidth: 0,
-              "& .MuiButton-startIcon": { padding: 0 },
-            }}
             startIcon={<ViewWeek />}
           />
           <Button
             size="small"
-            sx={{
-              padding: 0,
-              minWidth: 0,
-              "& .MuiButton-startIcon": { padding: 0 },
-            }}
           >
             $
           </Button>
         </Box>
-      </Box>
-      <Divider orientation="vertical" flexItem sx={{ marginX: 2 }} />
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <Box>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <GridToolbarColumnsButton
-              slotProps={{
-                tooltip: { title: "Columns" },
-                button: {
-                  variant: "outlined",
-                  sx: { color: "#555", borderColor: "#ddd" },
-                },
-              }}
-            />
-            <GridToolbarExport
-              slotProps={{
-                tooltip: { title: "Export data" },
-                button: {
-                  variant: "outlined",
-                  sx: { color: "#555", borderColor: "#ddd" },
-                },
-              }}
-            />
-            <GridToolbarFilterButton
-              slotProps={{
-                tooltip: { title: "Filter" },
-                button: {
-                  variant: "outlined",
-                  sx: { color: "#555", borderColor: "#ddd" },
-                },
-              }}
-            />
+      </ToolBox1>
+
+      <ToolBox2 flex={1} className="filterTopRow">        
+        <Box className="filterColBlock">
+          <GridToolbarColumnsButton
+            slotProps={{
+              tooltip: { title: "Columns" },
+              button: {
+                variant: "outlined",
+                sx: { color: "#555", borderColor: "#ddd" },
+              },
+            }}
+          />
+          <GridToolbarExport
+            slotProps={{
+              tooltip: { title: "Export data" },
+              button: {
+                variant: "outlined",
+                sx: { color: "#555", borderColor: "#ddd" },
+              },
+            }}
+          />
+          <GridToolbarFilterButton
+            slotProps={{
+              tooltip: { title: "Filter" },
+              button: {
+                variant: "outlined",
+                sx: { color: "#555", borderColor: "#ddd" },
+              },
+            }}
+          />
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box className="dayWeekBlock">
+            <Button>
+              Day
+            </Button>
+            <Button className="selected">
+              Week
+            </Button>
+            <Button>
+              Month
+            </Button>
+          </Box>
+          <Divider orientation="vertical" flexItem />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton
+              size="medium"
+              className="nextPrevIcon"
+            >
+              <KeyboardArrowLeft sx={{ fontSize: 18 }} />
+            </IconButton>
+            <Button className="selectedDate">
+              Today
+            </Button>
+
+            <IconButton
+              size="medium"
+              className="nextPrevIcon"
+            >
+              <KeyboardArrowRight sx={{ fontSize: 18 }} />
+            </IconButton>
           </Box>
         </Box>
-      </Box>
-      <Divider orientation="vertical" flexItem sx={{ marginX: 2 }} />
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Box
-          sx={{
-            display: "flex",
-            border: "1px solid #e0e0e0",
-            borderRadius: 1,
-            overflow: "hidden",
-          }}
-        >
-          <Button size="small" sx={{ borderRadius: 0 }}>
-            Day
-          </Button>
-          <Button size="small" sx={{ borderRadius: 0 }}>
-            Week
-          </Button>
-          <Button
-            size="small"
-            sx={{
-              borderRadius: 0,
-              backgroundColor: "#f0f0f0",
-            }}
-          >
-            Month
-          </Button>
-        </Box>
-        <Divider orientation="vertical" flexItem />
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton
-            size="small"
-            sx={{
-              border: "1px solid #ddd", 
-              borderRadius: "50%",
-              padding: "4px",
-              "&:hover": {
-                backgroundColor: "#f0f0f0",
-              },
-            }}
-          >
-            <KeyboardArrowLeft sx={{ fontSize: 18 }} />
-          </IconButton>
-          <Button
-            size="small"
-            sx={{
-              border: "1px solid #ddd", 
-              borderRadius: "4px", 
-              padding: "4px 12px", 
-              "&:hover": {
-                backgroundColor: "#f0f0f0", 
-              },
-            }}
-          >
-            Today
-          </Button>
-
-          <IconButton
-            size="small"
-            sx={{
-              border: "1px solid #ddd",
-              borderRadius: "50%", 
-              padding: "4px", 
-              "&:hover": {
-                backgroundColor: "#f0f0f0",
-              },
-            }}
-          >
-            <KeyboardArrowRight sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Box>
-      </Box>
+      </ToolBox2>
     </Box>
   );
 }

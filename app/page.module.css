@@ -14,9 +14,7 @@
   gap: 64px;
   font-family: var(--font-geist-sans); */
 }
-.wrapperBox {
-  padding-top: 100px;
-}
+
 @media (prefers-color-scheme: dark) {
   .page {
     --gray-rgb: 255, 255, 255;

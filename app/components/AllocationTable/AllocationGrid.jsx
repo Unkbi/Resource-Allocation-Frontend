@@ -123,34 +123,46 @@ export default function AllocationGrid(props) {
         slots={{ toolbar: CustomToolbar }}
         hideFooter
         sx={{
-            "& .MuiDataGrid-cell": {
-              borderRight: "1px solid #e0e0e0",
-              fontSize: "14px",
-              padding: "0 16px",
-            },
-            "& .MuiDataGrid-columnHeader": {
-              borderRight: "1px solid #e0e0e0",
+          "& .MuiDataGrid-cell": {
+            borderRight: "1px solid #e0e0e0",
+            fontSize: "14px",
+            padding: "0 16px",
+          },
+          "& .MuiDataGrid-columnHeader": {
+            borderRight: "1px solid #e0e0e0",
+            backgroundColor: "#f5f5f5",
+            padding: "0 16px",
+          },
+          "& .MuiDataGrid-columnHeaderTitle": {
+            fontWeight: "600",
+            fontSize: "14px",
+          },
+          "& .MuiDataGrid-row": {
+            "&:hover": {
               backgroundColor: "#f5f5f5",
-              padding: "0 16px",
             },
-            "& .MuiDataGrid-columnHeaderTitle": {
-              fontWeight: "600",
-              fontSize: "14px",
-            },
-            "& .MuiDataGrid-row": {
-              "&:hover": {
-                backgroundColor: "#f5f5f5",
-              },
-            },
-            border: "none",
-            "& .MuiDataGrid-cell:focus": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-columnHeader:focus": {
-              outline: "none",
-            },
-            
-          }}
+          },
+          border: "none",
+          "& .MuiDataGrid-cell:focus": {
+            outline: "none",
+          },
+          "& .MuiDataGrid-columnHeader:focus": {
+            outline: "none",
+          },
+          "& .MuiDataGrid-groupingCriteriaCellToggle button": {
+            display: "none",
+          },
+          "& .MuiDataGrid-groupingCriteriaCell": {
+            padding: "0",
+          },
+          "& .MuiDataGrid-cellContent": {
+            paddingLeft: "8px",
+          },
+          "& .MuiDataGrid-groupingCriteriaCellToggle": {
+            display: "none",
+          },
+        }}
+
       />
     </Box>
   );
