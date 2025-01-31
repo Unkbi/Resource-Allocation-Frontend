@@ -24,15 +24,16 @@ const generateWeeklyColumns = (startDate) => {
       headerName: `W${i}`,
       width: 80,
       editable: true,
+      type: "number",
       cellClassName: (params) => {
         if (params.value == null) {
-          return '';
+          return ""
         }
-  
-        return clsx('super-app', {
+
+        return clsx("super-app", {
           negative: params.value < 0,
           positive: params.value > 0,
-        });
+        })
       },
     }
   })
@@ -74,15 +75,16 @@ const generateColumnGroupingModel = (startDate) => {
 const startDate = getStartDate()
 
 export const columns = [
-  // { field: "project", headerName: "Project Name", width: 250 },
-  // { field: "resource", headerName: "Resource", width: 200, disableColumnMenu: true },
-  // { field: "role", headerName: "Role", width: 200, disableColumnMenu: true },
-  // { field: "totalEffort", headerName: "Total Effort", width: 150, disableColumnMenu: true },
+  { field: "project", headerName: "Project Name", width: 250 },
+//   { field: "resource", headerName: "Resource", width: 200, disableColumnMenu: true },
+//   { field: "role", headerName: "Role", width: 200, disableColumnMenu: true },
+  // {     field: "totalEffort",     headerName: "Total Effort",     width: 150,     disableColumnMenu: true },
   ...generateWeeklyColumns(startDate),
 ]
 
 export const columnGroupingModel = generateColumnGroupingModel(startDate)
 
-export const getAllColumnsWithWeek = (columns)=>{
+export const getAllColumnsWithWeek = (columns) => {
   return [...columns, ...generateWeeklyColumns(startDate)]
 }
+
