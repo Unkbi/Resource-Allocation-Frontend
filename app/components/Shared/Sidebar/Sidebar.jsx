@@ -1,5 +1,7 @@
 "use client";
+import { useState } from "react";
 import { Box, List, MenuItem, styled, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 const MainBox = styled(Box)(({ theme }) => ({
   width: "74px",
@@ -8,7 +10,6 @@ const MainBox = styled(Box)(({ theme }) => ({
   top: "0",
   backgroundColor: theme.custom.bgColor,
   height: "100vh",
-  position: "fixed",
   color: theme.custom.secondryColor,
   paddingTop: "10px",
   textAlign: "center",
@@ -19,6 +20,7 @@ const MainBox = styled(Box)(({ theme }) => ({
     opacity: "0.6",
     padding: "10px 8px",
     marginBottom: "5px",
+    cursor: "pointer",
     "&.active": {
       opacity: "1",
       backgroundColor: theme.custom.ternaryColor
@@ -40,38 +42,39 @@ const MainBox = styled(Box)(({ theme }) => ({
 }));
 
 const Sidebar = () => {
-  // const theme = useTheme();
-  // const { mode } = useContext(ThemeContext);
-  const DashboardIcon = () => <img src="/images/icons/dashboard.svg" alt="Dashboard" />
-  const AllocationIcon = () => <img src="/images/icons/allocation.svg" alt="allocation" />
-  const ProjectsIcon = () => <img src="/images/icons/projects.svg" alt="projects" />
-  const PeopleIcon = () => <img src="/images/icons/people.svg" alt="people" />
-  const ReportsIcon = () => <img src="/images/icons/reports.svg" alt="reports" />
+  const [selectedMenu, setSelectedMenu] = useState('Dashboard');
+  const router = useRouter();
+
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon /> },
-    { text: 'Allocation', icon: <AllocationIcon /> },
-    { text: 'Projects', icon: <ProjectsIcon /> },
-    { text: 'People', icon: <PeopleIcon /> },
-    { text: 'Reports', icon: <ReportsIcon /> },
+    { text: 'Dashboard', icon: "/images/icons/dashboard.svg", url: "/dashboard" },
+    { text: 'Allocation', icon: "/images/icons/allocation.svg", url: "/allocation" },
+    { text: 'Projects', icon: "/images/icons/projects.svg", url: "/projects" },
+    { text: 'People', icon: "/images/icons/people.svg", url: "/people" },
+    { text: 'Reports', icon: "/images/icons/reports.svg", url: "/reports" },
   ];
+
+  const handleMenuClick = (text, url) => {
+    setSelectedMenu(text);
+    console.log('Navigating to:', url);
+    router.push(url);
+  };
 
   return (
     <MainBox>
       <Box className='logo'>
-        <a href='#'>
-          <img
-            alt=""
-            src={"/images/icons/cio-logo.svg"}
-          />
+        <a href='/'>
+          <img alt="logo" src="/images/icons/cio-logo.svg" />
         </a>
       </Box>
       <List>
         {menuItems.map((item, index) => (
-          <MenuItem className='menuList' key={index}>
-            {item.icon}
-            <Typography className='menuText'>
-              {item.text}
-            </Typography>
+          <MenuItem
+            className={`menuList ${selectedMenu === item.text ? 'active' : ''}`}
+            key={index}
+            onClick={() => handleMenuClick(item.text, item.url)} // ✅ Pass both text and url
+          >
+            <img src={item.icon} alt={item.text} />
+            <Typography className='menuText'>{item.text}</Typography>
           </MenuItem>
         ))}
       </List>
