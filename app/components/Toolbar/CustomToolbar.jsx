@@ -72,6 +72,15 @@ export default function CustomToolbar() {
           margin:"0"
         }
       }
+    },
+    "& .projectDropdown":{
+      color: "#313F68",
+      fontFamily: "'Manrope', serif",
+      fontWeight: "800",
+      fontSize: "15px",
+      "& .MuiSelect-select":{
+        paddingLeft:"0"
+      }
     }
   }));
 
@@ -123,6 +132,34 @@ export default function CustomToolbar() {
         }
       }
     },
+    "& .projectIcon":{
+      backgroundColor: "rgba(242, 245, 250, 0.3)",
+      border: "1px solid #D6DCE1",
+      borderRadius: "4px",
+      height: "32px",
+      display: "flex",
+      alignItems: "center",
+      overflow: "hidden",
+      "& button":{
+        color: "#757575",
+        fontFamily: "'Manrope', serif",
+        fontWeight: "500",
+        fontSize: "13px",
+        lineHeight: "16px",
+        textAlign: "center",
+        textTransform: "none",
+        borderLeft: "1px solid #D6DCE1",
+        width:"36px",
+        minWidth:"36px",
+        height: "100%",
+        "&.selected":{
+          color:"#212121",
+          fontWeight:"600",
+          backgroundColor:"#fff",
+          borderRadius:"0"
+        }
+      }
+    },
     "& .selectedDate":{
       backgroundColor: "#FFFFFF",
       border: "1px solid #D6DCE1",
@@ -144,6 +181,22 @@ export default function CustomToolbar() {
     }
   }));
 
+  const StyledMenuItem = styled(MenuItem)(({ theme }) => ({  
+      padding: "10px 12px",   
+      color: "#212121",
+      fontFamily: "'Manrope', serif",
+      fontWeight: "400",
+      fontSize: "13px",
+     "&:hover": {     
+      backgroundColor: "rgb(52 70 101 / 2%) !important", 
+      }, 
+      "&.Mui-selected":{
+        backgroundColor: "rgb(52 70 101 / 2%) !important", 
+        fontWeight: "600",
+      }
+  }));
+
+
   return (
     <Box display={"flex"} height={"60px"} boxShadow={"0 1px 0 0 #DDE1E4"} position={"relative"} zIndex={1}>
       <ToolBox1>
@@ -154,6 +207,7 @@ export default function CustomToolbar() {
           <Select
             value={view || "Project"}
             onChange={handleViewChange}
+            className="projectDropdown"
             sx={{
               padding: 0,
               border: "none",
@@ -163,28 +217,40 @@ export default function CustomToolbar() {
               },
             }}
             defaultValue="Project"
+            MenuProps={{
+              PaperProps: {           
+                sx: {             
+                  backgroundColor: "#FFFFFF",
+                  boxShadow: "0 4px 20px 0 rgba(0, 0, 0, 0.06)",
+                  padding:"0"
+                },
+               }, 
+            }}
           >
             {viewOptions.map((option, index) => (
-              <MenuItem key={index} value={option}>
-                {option}
-              </MenuItem>
+              <StyledMenuItem key={index} value={option}>          
+                {option}        
+              </StyledMenuItem>
             ))}
           </Select>
         </FormControl>
         <Box className='viewFilterBlock'>
           <Button
             size="small"
-            startIcon={<GridView />}
             className="selected"
-          />
-          <Button
-            size="small"
-            startIcon={<ViewWeek />}
-          />
+          >
+            <img src={"/images/icons/capacity.svg"} alt='capacity' />
+          </Button>
+
           <Button
             size="small"
           >
-            $
+            <img src={"/images/icons/time.svg"} alt='time' />
+          </Button>
+          <Button
+            size="small"
+          >
+            <img src={"/images/icons/currency.svg"} alt='currency' />
           </Button>
         </Box>
       </ToolBox1>
@@ -197,6 +263,7 @@ export default function CustomToolbar() {
               button: {
                 variant: "outlined",
                 sx: { color: "#555", borderColor: "#ddd" },
+                startIcon: <img src="/images/icons/columns.svg" alt="columns" />,
               },
             }}
           />
@@ -206,6 +273,7 @@ export default function CustomToolbar() {
               button: {
                 variant: "outlined",
                 sx: { color: "#555", borderColor: "#ddd" },
+                startIcon: <img src="/images/icons/export.svg" alt="export" />,
               },
             }}
           />
@@ -215,11 +283,21 @@ export default function CustomToolbar() {
               button: {
                 variant: "outlined",
                 sx: { color: "#555", borderColor: "#ddd" },
+                startIcon: <img src="/images/icons/filter.svg" alt="filter" />,
               },
             }}
           />
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box className="projectIcon">
+            <Button>
+              <img src={"/images/icons/my-project.svg"} alt='my-project' />
+            </Button>
+            <Button className="selected">
+              <img src={"/images/icons/all-project.svg"} alt='all-project' />
+            </Button>
+          </Box>
+          <Divider orientation="vertical" flexItem />
           <Box className="dayWeekBlock">
             <Button>
               Day
@@ -237,7 +315,7 @@ export default function CustomToolbar() {
               size="medium"
               className="nextPrevIcon"
             >
-              <KeyboardArrowLeft sx={{ fontSize: 18 }} />
+              <img src={"/images/icons/left-arrow.svg"} alt='left-arrow' />
             </IconButton>
             <Button className="selectedDate">
               Today
@@ -247,7 +325,7 @@ export default function CustomToolbar() {
               size="medium"
               className="nextPrevIcon"
             >
-              <KeyboardArrowRight sx={{ fontSize: 18 }} />
+              <img src={"/images/icons/right-arrow.svg"} alt='right-arrow' />
             </IconButton>
           </Box>
         </Box>

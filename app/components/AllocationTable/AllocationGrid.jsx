@@ -14,6 +14,9 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]: {
     width:"290px !important"
   },
+  [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]: {
+    width: "290px !important",
+  },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     width:"290px"
   },

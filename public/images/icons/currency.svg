@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18px" height="18px" viewBox="0 0 18 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>currency</title>
+    <g id="V9" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="currency">
+            <rect id="Rectangle-Copy-63" x="0" y="0" width="18" height="18"></rect>
+            <g id="dollar-sign-(3)-copy" transform="translate(5, 2)" stroke="#AEB5C1" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4">
+                <line x1="4.00000002" y1="0" x2="4.00000002" y2="14.6666668" id="Path"></line>
+                <path d="M7.33333338,2.66666668 L2.33333335,2.66666668 C1.04466892,2.66666668 0,3.71133561 0,5.00000003 C0,6.28866445 1.04466892,7.33333338 2.33333335,7.33333338 L5.6666667,7.33333338 C6.95533111,7.33333341 8,8.37800232 8,9.66666668 C8,10.9553311 6.95533111,12.0000001 5.6666667,12.0000001 L0,12.0000001" id="Path"></path>
+            </g>
+        </g>
+    </g>
+</svg>

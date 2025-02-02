@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18px" height="18px" viewBox="0 0 18 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>export</title>
+    <g id="V9" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="export">
+            <g id="currency-copy-2">
+                <rect id="Rectangle-Copy-63" x="0" y="0" width="18" height="18"></rect>
+            </g>
+            <g id="Group-20-Copy" transform="translate(2, 2)" stroke="#344665" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4">
+                <path d="M14,9.33333333 L14,12.4444444 C14,13.3035541 13.3035541,14 12.4444444,14 L1.55555556,14 C0.696445945,14 0,13.3035541 0,12.4444444 L0,9.33333333" id="Path"></path>
+                <polyline id="Path" points="3.11111111 5.44444444 7 9.33333333 10.8888889 5.44444444"></polyline>
+                <line x1="7" y1="9.33333333" x2="7" y2="0" id="Path"></line>
+            </g>
+        </g>
+    </g>
+</svg>

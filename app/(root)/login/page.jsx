@@ -220,9 +220,9 @@ export default function LoginPage() {
                 <Box display={"flex"} width={'100%'}>
                     {/* Left Section */}
                     <Box className='loginLeft'>
-                        <img src={"/images/coi-logo.png"} alt='COI' width={241} />
+                        <img src={"/images/coi-logo.png"} alt='COI' width={280} />
                         <Box mt={12}>
-                            <img src={"/images/login-left-img.png"} alt='login-left-img' width={'522px'} />
+                            <img src={"/images/login-left-img.png"} alt='login-left-img' width={'480px'} />
                         </Box>
                     </Box>
 
