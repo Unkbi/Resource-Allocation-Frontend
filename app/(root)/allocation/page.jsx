@@ -18,7 +18,7 @@ export default function Allocation() {
       case "Teams":
         return <TeamAllocation />;
       default:
-        return null; // or return a default component/message
+        return null;
     }
   };
 

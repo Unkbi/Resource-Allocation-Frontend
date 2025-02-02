@@ -1,60 +1,117 @@
-import * as React from "react"
-import { Box, Button, TextField, Popper, List, ListItem, ListItemText } from "@mui/material"
-import { DataGridPremium, gridClasses, useGridApiRef, useKeepGroupedColumnsHidden } from "@mui/x-data-grid-premium"
-import { columnGroupingModel, getAllColumnsWithWeek } from "./TableHeader"
-import CustomToolbar from "../Toolbar/CustomToolbar"
-import { calculateTotalEffort, transformJson } from "@/app/utils/common"
-import { demoRows, jsonData } from "./data"
-import { styled } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { useState, lazy, Suspense } from "react"
+import { Box } from "@mui/material"
+import { useGridApiRef, useKeepGroupedColumnsHidden } from "@mui/x-data-grid-premium"
+import { calculateTotalEffort } from "@/app/utils/common"
+import { demoRows } from "./data"
+// import { StyledDataGrid } from "./styles/StyledDataGrid"
+import { styled } from "@mui/material"
+import { DataGridPremium, gridClasses } from "@mui/x-data-grid-premium"
+import { getInitialState, getFinalColumns, getTogglableColumns, getGroupingColDef, processRowUpdate, groupPage } from "./AllocationGridUtils"
 
-
-const allResources = [
-  { name: "John Doe", projects: ["Project A"], totalHours: 30 },
-  { name: "Jane Smith", projects: ["Project B"], totalHours: 25 },
-  { name: "Alice Johnson", projects: ["Project C"], totalHours: 35 },
-]
-
-const AddResourceButton = styled(Button)(({ theme }) => ({
-  color: theme.custom.textColor,
-  textTransform: "none",
-  "&:hover": {
-    backgroundColor: "transparent",
+const CustomToolbar = lazy(() => import("../Toolbar/CustomToolbar"))
+const ResourcePopper = lazy(() => import("./components/ResourcePopper"))
+const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
+  [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]: {
+    backgroundColor: "#d3d3d3",
   },
-}));
-export default function AllocationGrid(props) {
-  const { groupBy, columns } = props
-
-  const [tableData, setTableData] = React.useState([])
-
-  const updatedRows = demoRows.map(row => ({
-    ...row,
-    totalEffort: calculateTotalEffort(row)
-  }));
-  React.useEffect(() => {
-    if (groupBy === "role") {
-      setTableData(transformJson(groupBy, jsonData))
-    } else {
-      setTableData(updatedRows)
-    }
-  }, [groupBy])
-
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
+    backgroundColor: "#f0f0f0",
+  },
+  [`& .${gridClasses.columnHeader}`]: {
+    "&.prime-header": {
+      backgroundColor: "#fff8dc",
+      fontWeight: "bold",
+    },
+    "&.secondary-header": {
+      backgroundColor: "#fff8dc",
+      fontWeight: "bold",
+    },
+    "&.weekly-header": {
+      backgroundColor: "#f5f5f5",
+      fontWeight: "normal",
+    },
+  },
+  [`& .${gridClasses.cell}`]: {
+    "&.prime-cell": {
+      backgroundColor: "#e6f7ff",
+    },
+    "&.secondary-cell": {
+      backgroundColor: "#fff3cd",
+    },
+    "&.weekly-cell": {
+      backgroundColor: "#fafafa",
+    },
+  },
+  [`.${gridClasses.cell}`]: {
+    "& input[type='number']": {
+      appearance: "textfield",
+      margin: 0,
+    },
+    "& input[type='number']::-webkit-outer-spin-button, & input[type='number']::-webkit-inner-spin-button": {
+      display: "none",
+    },
+  },
+  "& .MuiDataGrid-cell": {
+    borderRight: "1px solid #e0e0e0",
+    fontSize: "14px",
+    padding: "0 16px",
+  },
+  "& .MuiDataGrid-columnHeader": {
+    borderRight: "1px solid #e0e0e0",
+    backgroundColor: "#f5f5f5",
+    padding: "0 16px",
+  },
+  "& .MuiDataGrid-columnHeaderTitle": {
+    fontWeight: "600",
+    fontSize: "14px",
+  },
+  "& .MuiDataGrid-row": {
+    "&:hover": {
+      backgroundColor: "#f5f5f5",
+    },
+  },
+  border: "none",
+  "& .MuiDataGrid-cell:focus": {
+    outline: "none",
+  },
+  "& .MuiDataGrid-columnHeader:focus": {
+    outline: "none",
+  },
+  "& .MuiDataGrid-groupingCriteriaCellToggle button": {
+    display: "none",
+  },
+  "& .MuiDataGrid-groupingCriteriaCell": {
+    padding: "0",
+  },
+  "& .MuiDataGrid-cellContent": {
+    paddingLeft: "8px",
+  },
+  "& .MuiDataGrid-groupingCriteriaCellToggle": {
+    display: "none",
+  },
+  "& .MuiDataGrid-aggregationColumnHeaderLabel": {
+    display: "none",
+  },
+}))
+export default function AllocationGrid({ groupBy, columns, columnGroupingModel }) {
   const apiRef = useGridApiRef()
-  const [anchorEl, setAnchorEl] = React.useState(null)
-  const [searchTerm, setSearchTerm] = React.useState("")
-  const [selectedProject, setSelectedProject] = React.useState("")
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [selectedProject, setSelectedProject] = useState("")
 
-  // State to manage rows dynamically
-  const [rowsState, setRowsState] = React.useState([
+  const updatedRows = demoRows.map((row) => ({
+    ...row,
+    totalEffort: calculateTotalEffort(row),
+  }))
+
+  const [rowsState, setRowsState] = useState([
     ...updatedRows,
-    // Add placeholder rows for each project
     ...Array.from(new Set(updatedRows.map((row) => row.project))).map((project) => ({
       id: `${project}-add-resource`,
       project: project,
       resource: "",
       role: "",
       totalEffort: "",
-      hasButton: true, // Marker for the "Add Resource" row
+      hasButton: true,
       ...Object.keys(updatedRows[0])
         .filter((key) => key.startsWith("W"))
         .reduce((acc, week) => {
@@ -64,136 +121,37 @@ export default function AllocationGrid(props) {
     })),
   ])
 
-  const allColumns = getAllColumnsWithWeek(columns)
+  const initialState = useKeepGroupedColumnsHidden({
+    apiRef,
+    initialState: getInitialState(groupBy, updatedRows),
+  })
 
-  // Function to handle adding a new row
   const handleAddRow = (resource) => {
     const newRow = {
       id: `${selectedProject}-${resource.name}-${rowsState.length + 1}`,
       project: selectedProject,
       resource: resource.name,
-      role: "New Role", // Default role
+      role: "New Role",
       totalEffort: resource.totalHours,
       ...Object.keys(updatedRows[0])
         .filter((key) => key.startsWith("W"))
         .reduce((acc, week) => {
-          acc[week] = 0
+          acc[week] = ""
           return acc
         }, {}),
       hasButton: false,
     }
-    // Insert the new row before the "Add Resource" row for the project
     setRowsState((prevRows) =>
       prevRows.flatMap((row) => (row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row])),
     )
-    setAnchorEl(null) // Close the Popper
-    setSearchTerm("") // Reset the search term
+    setAnchorEl(null)
   }
 
-  // Filter resources based on the search term
-  const filteredResources = allResources.filter((resource) =>
-    resource.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  const initialState = useKeepGroupedColumnsHidden({
-    apiRef,
-    initialState: {
-      rowGrouping: {
-        model: [groupBy],
-      },
-      sorting: {
-        sortModel: [{ field: groupBy, sort: "asc" }],
-      },
-      aggregation: {
-        model: {
-          totalEffort: "sum",
-          ...Object.keys(updatedRows[0])
-            .filter((key) => key.startsWith("W"))
-            .reduce((acc, week) => {
-              acc[week] = "sum"
-              return acc
-            }, {}),
-        },
-      },
-      pinnedColumns: { left: [groupBy] },
-      // columns: {
-      //   columnVisibilityModel: {
-      //     ...Object.keys(updatedRows[0])
-      //       .filter((key) => key.startsWith("W"))
-      //       .reduce((acc, week) => {
-      //         acc[week] = true
-      //         return acc
-      //       }, {}),
-      //     totalEffort: true,
-      //   },
-      // },
-    },
-  })
-
-  const showField = columns.map((col) => col.field)
-  const getTogglableColumns = (columns) => {
-    return columns.filter((column) => showField.includes(column.field)).map((column) => column.field)
-  }
-
-  // Final columns array with fallback
-  const finalColumns = [
-    ...(allColumns || []),
-    {
-      field: "resource",
-      headerName: "Resource",
-      width: 200,
-      renderCell: (params) => {
-        if (params.row.hasButton) {
-          return (
-            <div>
-              <AddResourceButton
-                variant="text"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={(event) => {
-                  setSelectedProject(params.row.project)
-                  setAnchorEl(event.currentTarget)
-                }}
-              >
-                Add Resource
-              </AddResourceButton>
-              <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} placement="bottom-start">
-                <Box sx={{ p: 1, bgcolor: "background.paper", minWidth: 200 }}>
-                  <TextField
-                    fullWidth
-                    placeholder="Search Resource"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ border: 0 }}
-                  />
-                  <List>
-                    {filteredResources.map((resource, index) => (
-                      <ListItem key={index} button onClick={() => handleAddRow(resource)}>
-                        <ListItemText primary={resource.name} secondary={resource.projects.join(", ")} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </Box>
-              </Popper>
-            </div>
-          )
-        }
-        return <span>{params.value}</span>
-      },
-    },
-  ]
-
-  const processRowUpdate = (newRow) => {
-    const weeklyTotal = Object.keys(newRow)
-      .filter((key) => key.startsWith("W"))
-      .reduce((sum, week) => sum + (Number(newRow[week]) || 0), 0)
-
-    return { ...newRow, totalEffort: weeklyTotal }
-  }
+  const finalColumns = getFinalColumns(columns, groupBy, setSelectedProject, setAnchorEl)
 
   return (
     <Box sx={{ height: 520, width: "100%" }}>
-      <DataGridPremium
+      <StyledDataGrid
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
@@ -203,84 +161,28 @@ export default function AllocationGrid(props) {
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
         getRowClassName={(params) => `super-app-theme--${params.row.status}`}
-        slots={{ toolbar: CustomToolbar }}
+        slots={{
+          toolbar: (props) => (
+            <Suspense fallback={<div>Loading...</div>}>
+              <CustomToolbar {...props} />
+            </Suspense>
+          ),
+        }}
         slotProps={{
-          columnsManagement: {
-            getTogglableColumns,
+          columnsPanel: {
+            getTogglableColumns: getTogglableColumns(columns, groupBy),
           },
         }}
-        getAggregationPosition={(groupNode) =>
-          groupNode.depth === -1 ? null : 'inline'
-        }
+        getAggregationPosition={(groupNode) => (groupNode.depth === -1 ? null : "inline")}
+        groupingColDef={getGroupingColDef(groupBy)}
+        treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="row"
-        // processRowUpdate={processRowUpdate}
-        sx={{
-            [`.${gridClasses.cell}`]: {
-              "& input[type='number']": {
-                appearance: "textfield",
-                margin: 0,
-              },
-              "& input[type='number']::-webkit-outer-spin-button, & input[type='number']::-webkit-inner-spin-button": {
-                display: "none",
-              },
-            },
-          // [`.${gridClasses.cell}.less-occupancy`]: {
-          //   backgroundColor: "#F6C8C8",
-          //   color: "#1a3e72",
-          // },
-          // [`.${gridClasses.cell}.average-occupancy`]: {
-          //   backgroundColor: "#C4E5C4",
-          //   borderColor: "#7AB17A",
-          // },
-          // [`.${gridClasses.cell}.fully-occupied`]: {
-          //   backgroundColor: "#C4E5C4",
-          //   borderColor: "#7AB17A",
-          // },
-          "& .MuiDataGrid-cell": {
-            borderRight: "1px solid #e0e0e0",
-            fontSize: "14px",
-            padding: "0 16px",
-          },
-          "& .MuiDataGrid-columnHeader": {
-            borderRight: "1px solid #e0e0e0",
-            backgroundColor: "#f5f5f5",
-            padding: "0 16px",
-          },
-          "& .MuiDataGrid-columnHeaderTitle": {
-            fontWeight: "600",
-            fontSize: "14px",
-          },
-          "& .MuiDataGrid-row": {
-            "&:hover": {
-              backgroundColor: "#f5f5f5",
-            },
-          },
-          border: "none",
-          "& .MuiDataGrid-cell:focus": {
-            outline: "none",
-          },
-          "& .MuiDataGrid-columnHeader:focus": {
-            outline: "none",
-          },
-          "& .MuiDataGrid-groupingCriteriaCellToggle button": {
-            display: "none",
-          },
-          "& .MuiDataGrid-groupingCriteriaCell": {
-            padding: "0",
-          },
-          "& .MuiDataGrid-cellContent": {
-            paddingLeft: "8px",
-          },
-          "& .MuiDataGrid-groupingCriteriaCellToggle": {
-            display: "none",
-          },
-          "& .MuiDataGrid-aggregationColumnHeaderLabel": {
-            display: "none", // Hides the aggregation label
-          },
-        }}
-
+        processRowUpdate={processRowUpdate}
       />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ResourcePopper anchorEl={anchorEl} onClose={() => setAnchorEl(null)} onAddResource={handleAddRow} />
+      </Suspense>
     </Box>
   )
 }
