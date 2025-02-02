@@ -25,7 +25,7 @@ const generateWeeklyColumns = (startDate) => {
     return {
       field: `W${i}`,
       headerName: `W${i}`,
-      width: 80,
+      width: 50,
       editable: true,
       type: "number",
       headerClassName: 'weekly-header',

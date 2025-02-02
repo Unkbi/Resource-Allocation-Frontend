@@ -12,34 +12,30 @@ const CustomToolbar = lazy(() => import("../Toolbar/CustomToolbar"))
 const ResourcePopper = lazy(() => import("./components/ResourcePopper"))
 const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]: {
-    backgroundColor: "#d3d3d3",
+    
   },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
-    backgroundColor: "#f0f0f0",
+    
   },
   [`& .${gridClasses.columnHeader}`]: {
     "&.prime-header": {
-      backgroundColor: "#fff8dc",
-      fontWeight: "bold",
+      
     },
     "&.secondary-header": {
-      backgroundColor: "#fff8dc",
-      fontWeight: "bold",
+     
     },
     "&.weekly-header": {
-      backgroundColor: "#f5f5f5",
-      fontWeight: "normal",
     },
   },
   [`& .${gridClasses.cell}`]: {
     "&.prime-cell": {
-      backgroundColor: "#e6f7ff",
+      
     },
     "&.secondary-cell": {
-      backgroundColor: "#fff3cd",
+
     },
     "&.weekly-cell": {
-      backgroundColor: "#fafafa",
+      
     },
   },
   [`.${gridClasses.cell}`]: {
@@ -52,22 +48,24 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     },
   },
   "& .MuiDataGrid-cell": {
-    borderRight: "1px solid #e0e0e0",
+    borderRight: "1px solid #DDE1E4",
     fontSize: "14px",
     padding: "0 16px",
+    color:"#313F68",
+    fontFamily: "'Manrope', serif",
+    fontWeight: "500",
   },
   "& .MuiDataGrid-columnHeader": {
-    borderRight: "1px solid #e0e0e0",
-    backgroundColor: "#f5f5f5",
+    borderRight: "1px solid #DDE1E4",
+    backgroundColor: "#FBFCFE",
     padding: "0 16px",
-  },
-  "& .MuiDataGrid-columnHeaderTitle": {
-    fontWeight: "600",
-    fontSize: "14px",
+    color:"#313F68",
+    fontFamily: "'Manrope', serif",
+    fontWeight: "500",
   },
   "& .MuiDataGrid-row": {
     "&:hover": {
-      backgroundColor: "#f5f5f5",
+      backgroundColor: "#FBFCFE",
     },
   },
   border: "none",
@@ -92,6 +90,33 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   "& .MuiDataGrid-aggregationColumnHeaderLabel": {
     display: "none",
   },
+  "& .weekly-cell":{
+    textAlign:"center",
+    fontFamily: "'Manrope', serif",
+    fontWeight: "500",
+    fontSize:"14px",
+    color:"#212121",
+    padding:"3px",
+  },
+  "& .weekly-header":{
+    padding:"3px",
+    backgroundColor: "rgba(20, 43, 81, 0.72)",
+    "& .MuiDataGrid-columnHeaderTitleContainer":{
+      justifyContent: "center",
+      "& .MuiDataGrid-columnHeaderTitle":{
+      fontFamily: "'Manrope', serif",
+      fontWeight: "500",
+      fontSize:"12px",
+      color:"#fff",
+      }
+    }
+  },
+  "& .MuiDataGrid-columnSeparator--resizable":{
+    opacity:"0"
+  },
+  "& .MuiDataGrid-cellEmpty":{
+    display:"none"
+  }
 }))
 export default function AllocationGrid({ groupBy, columns, columnGroupingModel }) {
   const apiRef = useGridApiRef()
@@ -150,7 +175,7 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
   const finalColumns = getFinalColumns(columns, groupBy, setSelectedProject, setAnchorEl)
 
   return (
-    <Box sx={{ height: 520, width: "100%" }}>
+    <Box sx={{ height: "calc(100vh - 54px)", width: "100%" }}>
       <StyledDataGrid
         rows={rowsState}
         columns={finalColumns}

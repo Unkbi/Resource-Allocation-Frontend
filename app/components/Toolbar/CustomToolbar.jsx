@@ -37,8 +37,8 @@ export default function CustomToolbar() {
 
   const ToolBox1 = styled(Box)(({ theme }) => ({
     display:"flex",
-    width:"364px",
-    padding:"14px",
+    width:"290px",
+    padding:"7px 14px 5px 14px",
     justifyContent: "space-between",
     alignItems: "center",
     borderRight: "#DDE1E4 solid 1px",
@@ -79,7 +79,7 @@ export default function CustomToolbar() {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding:"14px",
+    padding:"7px 14px 5px 14px",
     "& .filterColBlock":{
       display:"flex",
       alignItems:"center",
@@ -145,7 +145,7 @@ export default function CustomToolbar() {
   }));
 
   return (
-    <Box display={"flex"}>
+    <Box display={"flex"} height={"60px"} boxShadow={"0 1px 0 0 #DDE1E4"} position={"relative"} zIndex={1}>
       <ToolBox1>
         <FormControl
           size="small"
