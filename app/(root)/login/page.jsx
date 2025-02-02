@@ -22,7 +22,7 @@ const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
         width: "45%",
         backgroundImage: "linear-gradient(180deg, #FFFDF9 0%, #FFFAEF 100%);",
-        textAlign: "center",
+        textAlign: "left",
         padding: "30px 90px",
         "& img": {
             maxWidth: "100%"
