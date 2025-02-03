@@ -32,6 +32,7 @@ const MainBox = styled(Box)(({ theme }) => ({
         width: "55%",
         display: "flex",
         alignItems: "center",
+        backgroundColor:"#fff",
         "& .formBox": {
             width: "360px",
             margin: "0 auto",

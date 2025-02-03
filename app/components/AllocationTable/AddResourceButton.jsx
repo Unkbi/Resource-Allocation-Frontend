@@ -4,6 +4,12 @@ import AddIcon from "@mui/icons-material/Add"
 const StyledButton = styled(Button)(({ theme }) => ({
   color: theme.custom.textColor,
   textTransform: "none",
+  fontSize:"12px",
+  fontFamily: "'Manrope', serif",
+  fontWeight: "600",
+  "& .MuiSvgIcon-root":{
+    fontSize:"16px",
+  },
   "&:hover": {
     backgroundColor: "transparent",
   },
