@@ -3,9 +3,5 @@
 import { Box } from "@mui/material";
 
 export default function Home() {
-  return (
-    <Box>
-      test
-    </Box>
-  );
+  return <Box>Dashboard</Box>;
 }
