@@ -318,7 +318,7 @@ export default function CustomToolbar() {
               <img src={"/images/icons/left-arrow.svg"} alt='left-arrow' />
             </IconButton>
             <Button className="selectedDate">
-              Today
+              Jan 25 - Dec 25
             </Button>
 
             <IconButton
