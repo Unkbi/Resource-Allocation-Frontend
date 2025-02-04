@@ -62,7 +62,6 @@ export const getFinalColumns = (columns, groupBy, setSelectedProject, handleAddR
 }
 
 export const groupPage = (groupBy) => {
-  console.log('groupBy:; ', groupBy)
   const groupPages = {
     project: "Project",
     teams: "Teams",
@@ -77,11 +76,11 @@ export const getGroupingColDef = (groupBy) => ({
   renderCell: (params) => params.value,
 });
 
-export const processRowUpdate = (newRow) => {
-  const weeklyTotal = Object.keys(newRow)
-    .filter((key) => key.startsWith("W"))
-    .reduce((sum, week) => sum + (Number(newRow[week]) || 0), 0)
+// export const processRowUpdate = (newRow) => {
+//   const weeklyTotal = Object.keys(newRow)
+//     .filter((key) => key.startsWith("W"))
+//     .reduce((sum, week) => sum + (Number(newRow[week]) || 0), 0)
 
-  return { ...newRow, totalEffort: weeklyTotal }
-}
+//   return { ...newRow, totalEffort: weeklyTotal }
+// }
 

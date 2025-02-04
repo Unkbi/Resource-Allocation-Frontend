@@ -29,7 +29,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       "&.secondary-cell": {
         backgroundColor: "#fff3cd",
       },
-      "&.weekly-cell": {
+      "&.weeklyCell": {
         backgroundColor: "#fafafa",
       },
     },

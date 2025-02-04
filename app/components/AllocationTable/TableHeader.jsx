@@ -1,11 +1,13 @@
 import clsx from "clsx";
 
+const WEEK_COUNT = 20;
 const getStartDate = () => {
   const now = new Date();
   const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust day
+  // Adjust starting day of the week
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
   now.setDate(diff);
-  now.setDate(now.getDate() - 7); // back to previous week
+  now.setDate(now.getDate() - 7);
   return now;
 };
 
@@ -18,49 +20,67 @@ const addDays = (date, days) => {
   result.setDate(result.getDate() + days);
   return result;
 };
-
+const getCurrentWeekIndex = (startDate) => {
+  const today = new Date();
+  const diffTime = today - startDate;
+  return Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
+};
 const generateWeeklyColumns = (startDate) => {
-  return Array.from({ length: 20 }, (_, i) => {
+  const currentWeekIndex = getCurrentWeekIndex(startDate);
+  return Array.from({ length: WEEK_COUNT }, (_, i) => {
     const date = addDays(startDate, i * 7);
+    const isCurrentWeek = i === currentWeekIndex;
     return {
-      field: `W${i}`,
-      headerName: `W${i}`,
+      field: `W${i + 1}`,
+      headerName: `W${i + 1}`, 
       width: 50,
       editable: true,
       type: "number",
-      headerClassName: 'weekly-header',
-      cellClassName: 'weekly-cell',
+      headerClassName: clsx('weekly-header', { 'current-week-header': isCurrentWeek }),
+      cellClassName: (params) => {
+        if (params.value == null) {
+          return ""
+        }
+ 
+        return clsx("super-app", {
+          weeklyCell: "weeklyCell",
+          negative: params.value < 0,
+          positive: params.value > 0,
+        })
+      },
       disableColumnMenu: true,
       sortable: false,
     };
   });
 };
 
+
 const generateColumnGroupingModel = (startDate) => {
   const groups = [];
   const currentDate = new Date(startDate);
   let currentMonthYear = getMonthYear(currentDate);
-  let weekCounter = 0;
+  let weekFields = [];
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < WEEK_COUNT; i++) {
     const weekDate = addDays(startDate, i * 7);
     const weekMonthYear = getMonthYear(weekDate);
 
     if (weekMonthYear !== currentMonthYear) {
-      groups.push({
-        groupId: currentMonthYear,
-        children: Array.from({ length: weekCounter }, (_, j) => ({ field: `W${i - weekCounter + j}` })),
-      });
+      if (weekFields.length > 0) {
+        groups.push({
+          groupId: currentMonthYear,
+          children: weekFields.map((field) => ({ field })),
+        });
+      }
       currentMonthYear = weekMonthYear;
-      weekCounter = 0;
+      weekFields = [];
     }
 
-    weekCounter++;
-
-    if (i === 19) {
+    weekFields.push(`W${i + 1}`);
+    if ((i + 1) === WEEK_COUNT) {
       groups.push({
         groupId: currentMonthYear,
-        children: Array.from({ length: weekCounter }, (_, j) => ({ field: `W${i - weekCounter + j + 1}` })),
+        children: weekFields.map((field) => ({ field })),
       });
     }
   }
