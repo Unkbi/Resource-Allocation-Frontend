@@ -202,12 +202,17 @@ export default function AllocationGrid({
     setIsSearchMode,
   );
 
-  const showField = columns.map((col) => col.field);
-  const getTogglableColumns = (columns) => {
-    return columns
+  const showField = [
+    ...columns.map((col) => col.field),
+    ...finalColumns
+      .filter((i) => i.field === "resource")
+      .map((col) => col.field),
+  ];
+
+  const getTogglableColumns = (columns) =>
+    columns
       .filter((column) => showField.includes(column.field))
       .map((column) => column.field);
-  };
 
   return (
     <Box sx={{ height: "calc(100vh - 54px)", width: "100%" }}>
