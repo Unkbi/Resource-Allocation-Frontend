@@ -6,7 +6,7 @@ import { demoRows } from "./data"
 // import { StyledDataGrid } from "./styles/StyledDataGrid"
 import { styled } from "@mui/material"
 import { DataGridPremium, gridClasses } from "@mui/x-data-grid-premium"
-import { getInitialState, getFinalColumns, getTogglableColumns, getGroupingColDef, processRowUpdate, groupPage } from "./AllocationGridUtils"
+import { getInitialState, getFinalColumns, getTogglableColumns, getGroupingColDef, groupPage } from "./AllocationGridUtils"
 
 const CustomToolbar = lazy(() => import("../Toolbar/CustomToolbar"))
 const ResourcePopper = lazy(() => import("./components/ResourcePopper"))
@@ -38,7 +38,7 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     "&.secondary-cell": {
 
     },
-    "&.weekly-cell": {
+    "&.weeklyCell": {
       
     },
   },
@@ -94,7 +94,7 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   "& .MuiDataGrid-aggregationColumnHeaderLabel": {
     display: "none",
   },
-  "& .weekly-cell":{
+  "& .weeklyCell":{
     textAlign:"center",
     fontFamily: "'Manrope', serif",
     fontWeight: "500",
@@ -115,6 +115,9 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       }
     }
   },
+  "& .current-week-header":{
+    backgroundColor: "rgb(43 102 199 / 72%)",
+  },
   "& .MuiDataGrid-columnSeparator--resizable":{
     opacity:"0"
   },
@@ -124,7 +127,8 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   "& .MuiDataGrid-cell:focus-within":{
     outline:"none"
   }
-}))
+}));
+
 export default function AllocationGrid({ groupBy, columns, columnGroupingModel }) {
   const apiRef = useGridApiRef()
   const [anchorEl, setAnchorEl] = useState(null)
@@ -193,6 +197,7 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
         getRowClassName={(params) => `super-app-theme--${params.row.status}`}
+        disableAutosize
         slots={{
           toolbar: (props) => (
             <Suspense fallback={<div>Loading...</div>}>
@@ -210,7 +215,6 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="row"
-        processRowUpdate={processRowUpdate}
       />
       <Suspense fallback={<div>Loading...</div>}>
         <ResourcePopper anchorEl={anchorEl} onClose={() => setAnchorEl(null)} onAddResource={handleAddRow} />
