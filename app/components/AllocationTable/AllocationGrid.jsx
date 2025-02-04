@@ -120,6 +120,9 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   },
   "& .MuiDataGrid-cellEmpty":{
     display:"none"
+  },
+  "& .MuiDataGrid-cell:focus-within":{
+    outline:"none"
   }
 }))
 export default function AllocationGrid({ groupBy, columns, columnGroupingModel }) {

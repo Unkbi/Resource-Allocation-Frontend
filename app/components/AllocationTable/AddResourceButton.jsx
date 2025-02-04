@@ -8,13 +8,57 @@ const StyledButton = styled(Button)(({ theme }) => ({
   fontSize:"12px",
   fontFamily: "'Manrope', serif",
   fontWeight: "600",
+  padding:"0 16px",
   "& .MuiSvgIcon-root":{
     fontSize:"16px",
   },
   "&:hover": {
     backgroundColor: "transparent",
   },
+  "& .MuiTouchRipple-root":{
+    display:"none"
+  }
 }))
+
+const MainBox = styled(Box)(({ theme }) => ({
+  position: "relative", 
+  width: "auto", 
+  margin: "0 -16px",
+  "& .MuiInputBase-formControl":{
+    padding:"0 !important"
+  },
+  "& .MuiOutlinedInput-input": {
+      height: "51px",
+      lineHeight: "32px",
+      background: "rgba(157, 201, 255, 0.3)",
+      padding: "10px 16px !important",
+      borderRadius: "0",
+      fontFamily: "'Manrope', serif",
+      fontSize: "12px",
+      fontWeight: "600",
+      color: "#313F68",
+      boxSizing: "border-box",
+      border: "1px solid #298AFF",
+      "&::placeholder": {
+          color: "#424242",
+          opacity: 1,
+          fontFamily: "'Manrope', serif",
+          fontSize: "12px",
+          fontWeight: "600"
+      },
+  },
+  "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
+      border: "none",
+      borderRadius: "0",
+      padding:"0"
+  },
+  "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      border: "none",
+      borderRadius: "0px"
+  }
+}))
+
+
 
 const allResources = [
   { name: "John Doe", projects: ["Project A"], totalHours: 30 },
@@ -41,7 +85,7 @@ export const AddResourceButton = ({ project, resources, handleAddRow,onClick }) 
   };
 
   return (
-    <Box sx={{ position: "relative", width: "200px" }}>
+    <MainBox>
       {isSearchMode ? (
           <Autocomplete
           {...defaultProps}
@@ -52,8 +96,8 @@ export const AddResourceButton = ({ project, resources, handleAddRow,onClick }) 
             }
             setIsSearchMode(false);
           }}
-          sx={{ width: 150 }}
-          onBlur={() => setIsSearchMode(false)}
+          //onBlur={() => setIsSearchMode(false)}
+          open={true}
           popupIcon={null}
           renderInput={(params) => <TextField {...params} inputRef={inputRef}/>}
         />
@@ -67,6 +111,6 @@ export const AddResourceButton = ({ project, resources, handleAddRow,onClick }) 
           Add Resource
         </StyledButton>
       )}
-    </Box>
+    </MainBox>
   );
 };
