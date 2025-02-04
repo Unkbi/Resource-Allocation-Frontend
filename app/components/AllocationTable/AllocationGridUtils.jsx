@@ -23,20 +23,11 @@ export const getInitialState = (groupBy, updatedRows) => ({
   pinnedColumns: { left: [groupBy] },
 });
 
-export const getTogglableColumns = (columns, groupBy) => {
-  const showField = columns.map((col) => col.field);
-  return columns
-    .filter(
-      (column) => showField.includes(column.field) && column.field !== groupBy
-    )
-    .map((column) => column.field);
-};
-
 export const getFinalColumns = (
   columns,
   groupBy,
   setSelectedProject,
-  handleAddRow
+  handleAddRow,
 ) => {
   const allColumns = getAllColumnsWithWeek(columns);
   if (groupBy === "teams") {
@@ -76,9 +67,9 @@ export const getFinalColumns = (
 
 export const groupPage = (groupBy) => {
   const groupPages = {
-    project: "Project",
-    teams: "Teams",
-    organization: "Organization",
+    project: "Project Name",
+    teams: "Team Name",
+    organization: "Organization Name",
   };
   return groupPages[groupBy];
 };
