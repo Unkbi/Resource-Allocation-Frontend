@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Button, styled, Box, Autocomplete, TextField, Popper, Avatar } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { getInitials, getInitialsColor } from "./AllocationGridUtils";
  
 const StyledButton = styled(Button)(({ theme }) => ({
   color: theme.custom.textColor,
@@ -168,15 +169,15 @@ export const AddResourceButton = ({ project, resources, handleAddRow,onClick }) 
               >
                 {/* Avatar */}
                 <Avatar
-                  src={typeof option.avatar === "string" && option.avatar.startsWith("/") ? option.avatar : undefined}
                   sx={{
                     width: 32,
                     height: 32,
                     marginRight: 2,
-                    backgroundColor: "#0366d6",
+                    fontSize: 8,
+                    backgroundColor: getInitialsColor(option.name),
                   }}
                 >
-                  {typeof option.avatar === "string" && !option.avatar.startsWith("/") ? option.avatar : ""}
+                  {getInitials(option.name)}
                 </Avatar>
                 {/* Resource Details */}
                 <Box sx={{ flexGrow: 1 }}>
