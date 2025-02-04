@@ -27,7 +27,8 @@ export const getTogglableColumns = (columns, groupBy) => {
   return columns.filter((column) => showField.includes(column.field) && column.field !== groupBy).map((column) => column.field)
 }
 
-export const getFinalColumns = (columns, groupBy, setSelectedProject, setAnchorEl) => {
+export const getFinalColumns = (columns, groupBy, setSelectedProject, handleAddRow) => {
+
   const allColumns = getAllColumnsWithWeek(columns)
   if(groupBy === 'teams') {
     return allColumns || []
@@ -47,10 +48,8 @@ export const getFinalColumns = (columns, groupBy, setSelectedProject, setAnchorE
             return (
               <AddResourceButton
                 project={params.row.project}
-                onClick={(event) => {
-                  setSelectedProject(params.row.project)
-                  setAnchorEl(event.currentTarget)
-                }}
+                handleAddRow = {handleAddRow}
+                onClick={(event)=>{setSelectedProject(params.row.project)}}
               />
             )
           }

@@ -126,6 +126,7 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
   const apiRef = useGridApiRef()
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedProject, setSelectedProject] = useState("")
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
   const updatedRows = demoRows.map((row) => ({
     ...row,
@@ -155,7 +156,7 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
     initialState: getInitialState(groupBy, updatedRows),
   })
 
-  const handleAddRow = (resource) => {
+  const handleAddRow = (e, resource) => {
     const newRow = {
       id: `${selectedProject}-${resource.name}-${rowsState.length + 1}`,
       project: selectedProject,
@@ -173,10 +174,9 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
     setRowsState((prevRows) =>
       prevRows.flatMap((row) => (row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row])),
     )
-    setAnchorEl(null)
+    setIsSearchMode(false)
   }
-
-  const finalColumns = getFinalColumns(columns, groupBy, setSelectedProject, setAnchorEl)
+  const finalColumns = getFinalColumns(columns, groupBy, setSelectedProject, handleAddRow, isSearchMode, setIsSearchMode)
 
   return (
     <Box sx={{ height: "calc(100vh - 54px)", width: "100%" }}>

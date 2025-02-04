@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -6,23 +6,18 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   Divider,
-  styled,
+  styled
 } from "@mui/material";
 import {
-  GridView,
-  ViewWeek,
-  KeyboardArrowLeft,
-  KeyboardArrowRight,
+  KeyboardArrowDown,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { performChangeView } from "@/app/redux/actions/allocationViewAction";
 import {
   GridToolbarColumnsButton,
   GridToolbarExport,
-  GridToolbarFilterButton,
-  GridToolbarContainer,
+  GridToolbarFilterButton
 } from "@mui/x-data-grid";
 
 export default function CustomToolbar() {
@@ -217,6 +212,7 @@ export default function CustomToolbar() {
               },
             }}
             defaultValue="Project"
+            IconComponent={KeyboardArrowDown}
             MenuProps={{
               PaperProps: {           
                 sx: {             
