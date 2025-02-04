@@ -1,6 +1,6 @@
-import { useState, lazy, Suspense } from "react"
+import { useState, lazy } from "react"
 import { Box } from "@mui/material"
-import { useGridApiRef, useKeepGroupedColumnsHidden } from "@mui/x-data-grid-premium"
+import {GridColumnMenuPinningItem, useGridApiRef, useKeepGroupedColumnsHidden } from "@mui/x-data-grid-premium"
 import { calculateTotalEffort } from "@/app/utils/common"
 import { demoRows } from "./data"
 // import { StyledDataGrid } from "./styles/StyledDataGrid"
@@ -20,7 +20,7 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     width:"290px"
   },
- 
+
   [`& .${gridClasses.columnHeader}`]: {
     "&.prime-header": {
       
@@ -108,8 +108,8 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     "& .MuiDataGrid-columnHeaderTitleContainer":{
       justifyContent: "center",
       "& .MuiDataGrid-columnHeaderTitle":{
-      fontFamily: "'Manrope', serif",
-      fontWeight: "500",
+        fontFamily: "'Manrope', serif",
+        fontWeight: "500",
       fontSize:"12px",
       color:"#fff",
       }
@@ -133,14 +133,15 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
   const apiRef = useGridApiRef()
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedProject, setSelectedProject] = useState("")
-  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [isSearchMode, setIsSearchMode] = useState(false)
+  const [filterButtonEl, setFilterButtonEl] = useState(null)
 
   const updatedRows = demoRows.map((row) => ({
-    ...row,
-    totalEffort: calculateTotalEffort(row),
+        ...row,
+        totalEffort: calculateTotalEffort(row),
   }))
 
-  const [rowsState, setRowsState] = useState([
+  const [rowsState, setRowsState] = useState(() => [
     ...updatedRows,
     ...Array.from(new Set(updatedRows.map((row) => row.project))).map((project) => ({
       id: `${project}-add-resource`,
@@ -164,24 +165,24 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
   })
 
   const handleAddRow = (e, resource) => {
-    const newRow = {
-      id: `${selectedProject}-${resource.name}-${rowsState.length + 1}`,
-      project: selectedProject,
-      resource: resource.name,
-      role: "New Role",
-      totalEffort: resource.totalHours,
-      ...Object.keys(updatedRows[0])
-        .filter((key) => key.startsWith("W"))
-        .reduce((acc, week) => {
-          acc[week] = ""
-          return acc
-        }, {}),
-      hasButton: false,
-    }
-    setRowsState((prevRows) =>
-      prevRows.flatMap((row) => (row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row])),
-    )
-    setIsSearchMode(false)
+      const newRow = {
+        id: `${selectedProject}-${resource.name}-${rowsState.length + 1}`,
+        project: selectedProject,
+        resource: resource.name,
+        role: "New Role",
+        totalEffort: resource.totalHours,
+        ...Object.keys(updatedRows[0])
+          .filter((key) => key.startsWith("W"))
+          .reduce((acc, week) => {
+            acc[week] = ""
+            return acc
+          }, {}),
+        hasButton: false,
+      }
+      setRowsState((prevRows) =>
+        prevRows.flatMap((row) => (row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row])),
+      )
+      setIsSearchMode(false)
   }
   const finalColumns = getFinalColumns(columns, groupBy, setSelectedProject, handleAddRow, isSearchMode, setIsSearchMode)
 
@@ -199,15 +200,24 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
         getRowClassName={(params) => `super-app-theme--${params.row.status}`}
         disableAutosize
         slots={{
-          toolbar: (props) => (
-            <Suspense fallback={<div>Loading...</div>}>
-              <CustomToolbar {...props} />
-            </Suspense>
-          ),
+          toolbar: CustomToolbar,
+          columnMenu: (props) => {
+            return (
+              <GridColumnMenuPinningItem
+                {...props}    
+              />
+            );
+          },
         }}
         slotProps={{
+          panel: {
+            anchorEl: filterButtonEl
+          },
           columnsPanel: {
             getTogglableColumns: getTogglableColumns(columns, groupBy),
+          },
+          toolbar: {
+            setFilterButtonEl
           },
         }}
         getAggregationPosition={(groupNode) => (groupNode.depth === -1 ? null : "inline")}
@@ -216,9 +226,9 @@ export default function AllocationGrid({ groupBy, columns, columnGroupingModel }
         hideFooter
         editMode="row"
       />
-      <Suspense fallback={<div>Loading...</div>}>
+      {/* <Suspense fallback={<div>Loading...</div>}>
         <ResourcePopper anchorEl={anchorEl} onClose={() => setAnchorEl(null)} onAddResource={handleAddRow} />
-      </Suspense>
+      </Suspense> */}
     </Box>
   )
 }

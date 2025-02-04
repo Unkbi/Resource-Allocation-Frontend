@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   Box,
   Button,
@@ -16,19 +16,22 @@ import { useDispatch, useSelector } from "react-redux";
 import { performChangeView } from "@/app/redux/actions/allocationViewAction";
 import {
   GridToolbarColumnsButton,
+  GridToolbarContainer,
   GridToolbarExport,
   GridToolbarFilterButton
 } from "@mui/x-data-grid";
 
-export default function CustomToolbar() {
-  const dispatch = useDispatch();
-  const view = useSelector((state) => state.allocationView.view);
+const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
+  const dispatch = useDispatch()
+  const view = useSelector((state) => state.allocationView.view)
   const viewOptions = ["Teams","Project","Organization"];
 
-  const handleViewChange = (event) => {
-    const newView = event.target.value;
-    dispatch(performChangeView(newView));
-  };
+  const handleViewChange = useCallback(
+    (event) => {
+      dispatch(performChangeView(event.target.value))
+    },
+    [dispatch],
+  )
 
   const ToolBox1 = styled(Box)(({ theme }) => ({
     display:"flex",
@@ -220,7 +223,7 @@ export default function CustomToolbar() {
                   boxShadow: "0 4px 20px 0 rgba(0, 0, 0, 0.06)",
                   padding:"0"
                 },
-               }, 
+              },
             }}
           >
             {viewOptions.map((option, index) => (
@@ -251,8 +254,10 @@ export default function CustomToolbar() {
         </Box>
       </ToolBox1>
 
-      <ToolBox2 flex={1} className="filterTopRow">        
+      <ToolBox2 flex={1} className="filterTopRow">
         <Box className="filterColBlock">
+          <GridToolbarContainer ref={setFilterButtonEl}>
+
           <GridToolbarColumnsButton
             slotProps={{
               tooltip: { title: "Columns" },
@@ -283,6 +288,7 @@ export default function CustomToolbar() {
               },
             }}
           />
+          </GridToolbarContainer>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Box className="projectIcon">
@@ -327,5 +333,9 @@ export default function CustomToolbar() {
         </Box>
       </ToolBox2>
     </Box>
-  );
-}
+  )
+})
+
+CustomToolbar.displayName = "CustomToolbar"
+
+export default CustomToolbar
