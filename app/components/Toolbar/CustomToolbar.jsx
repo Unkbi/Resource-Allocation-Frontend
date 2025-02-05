@@ -258,7 +258,6 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                 tooltip: { title: "Columns" },
                 button: {
                   variant: "outlined",
-                  sx: { color: "#555", borderColor: "#ddd" },
                   startIcon: (
                     <img src="/images/icons/columns.svg" alt="columns" />
                   ),
