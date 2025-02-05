@@ -139,8 +139,9 @@ export const AddResourceButton = ({
     getOptionLabel: (option) => option.name,
   };
   const inputRef = useRef(null);
+
   const handleButtonClick = () => {
-    setIsSearchMode(!isSearchMode);
+    setIsSearchMode(true);
     onClick();
     setTimeout(() => {
       if (inputRef.current) {
@@ -161,8 +162,7 @@ export const AddResourceButton = ({
             }
             setIsSearchMode(false);
           }}
-          open={true}
-          // onBlur={() => setIsSearchMode(false)}
+          onBlur={() => setIsSearchMode(false)}
           popupIcon={null}
           slots={{ popper: StyledPopper }}
           renderOption={(props, option, { selected }) => {
