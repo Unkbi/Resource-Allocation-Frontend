@@ -11,9 +11,9 @@ export default function Allocation() {
 
   const getContentByRole = (view) => {
     switch (view) {
-      case "Project":
+      case "Projects":
         return <ProjectAllocation />;
-      case "Organization":
+      case "Organizations":
         return <OrganizationAllocation />;
       case "Teams":
         return <TeamAllocation />;
@@ -21,12 +21,14 @@ export default function Allocation() {
         return null;
     }
   };
-
   return (
-    <Box className={styles.page}>
-      <main className={styles.wrapperBox}>
-        {getContentByRole(view)}
-        </main>
-    </Box>
+    <>
+      <metadata>
+        <title>{view}</title>
+      </metadata>
+      <Box className={styles.page}>
+        <main className={styles.wrapperBox}>{getContentByRole(view)}</main>
+      </Box>
+    </>
   );
 }
