@@ -36,12 +36,11 @@ const projectColumnConfig = [
 ];
 
 export default function ProjectAllocation() {
-  const dispatch = useDispatch();
+  const [allocationsFetched, setAllocationsFetched] = useState(false);
   const { projects, allocations, loading, error } = useSelector(
     state => state.projects
   );
-
-  const [allocationsFetched, setAllocationsFetched] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchAllProjects());

@@ -3,6 +3,7 @@ import {
   getProjectAllocations,
 } from '@/app/services/projectServices';
 import { updateAllocations } from '../reducers/projectsReducer';
+import { getWeekNumber } from '@/app/utils/common';
 
 export const fetchAllProjects = () => async dispatch => {
   try {
@@ -12,65 +13,55 @@ export const fetchAllProjects = () => async dispatch => {
   }
 };
 
-const getWeekNumber = date => {
-  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-  const pastDaysOfYear = (date - firstDayOfYear + 86400000) / 86400000;
-  return `W${Math.ceil((pastDaysOfYear + firstDayOfYear.getDay()) / 7)}`;
-};
-
 const formatAllocations = allocationsData => {
-  const formattedAllocations = allocationsData.result.reduce(
-    (acc, allocation) => {
-      if (!allocation.Period || allocation.AllocationEntered === 0) return acc;
+  const allocationMap = new Map();
 
-      const periodDate = new Date(allocation.Period);
-      const weekNumber = `${getWeekNumber(periodDate)}`;
+  allocationsData.result.forEach(allocation => {
+    if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
-      const existingAllocation = acc.find(
-        item => item.id === allocation.Allocation
-      );
+    const periodDate = new Date(allocation.Period);
+    const weekNumber = getWeekNumber(periodDate);
 
-      if (existingAllocation) {
-        existingAllocation[weekNumber] =
-          (existingAllocation[weekNumber] || 0) + allocation.AllocationEntered;
-      } else {
-        const newAllocation = {
-          id: allocation.Allocation, //Unique ID
-          project: allocation.ProjectName,
-          resource: allocation.ResourceName,
-          totalEffort: allocation.AllocationEntered,
-          role: 'Trader',
-          teams: 'Developer',
-          resourceType: 'FTE',
-          W1: '',
-          W2: '',
-          W3: '',
-          W4: '',
-          W5: '',
-          W6: '',
-          W7: '',
-          W8: '',
-          W9: '',
-          W10: '',
-          W11: '',
-          W12: '',
-          W13: '',
-          W14: '',
-          W15: '',
-        };
+    // Using Resource as the unique identifier
+    const existingAllocation = allocationMap.get(allocation.Resource);
 
-        // Add effort to the corresponding week number
-        newAllocation[weekNumber] = allocation.AllocationEntered;
+    if (existingAllocation) {
+      existingAllocation[weekNumber] =
+        (existingAllocation[weekNumber] || 0) + allocation.AllocationEntered;
+      existingAllocation.totalEffort += allocation.AllocationEntered;
+    } else {
+      const newAllocation = {
+        id: allocation.Resource,
+        project: allocation.ProjectName,
+        resource: allocation.ResourceName,
+        totalEffort: allocation.AllocationEntered,
+        role: 'Trader', //Mock data, needs to be replaced later with API data.
+        teams: 'Developer', //Mock data, needs to be replaced later with API data.
+        resourceType: 'FTE', //Mock data, needs to be replaced later with API data.
+        W1: '',
+        W2: '',
+        W3: '',
+        W4: '',
+        W5: '',
+        W6: '',
+        W7: '',
+        W8: '',
+        W9: '',
+        W10: '',
+        W11: '',
+        W12: '',
+        W13: '',
+        W14: '',
+        W15: '',
+      };
 
-        acc.push(newAllocation);
-      }
+      newAllocation[weekNumber] = allocation.AllocationEntered;
 
-      return acc;
-    },
-    []
-  );
-
-  return formattedAllocations;
+      allocationMap.set(allocation.Resource, newAllocation);
+    }
+  });
+  // Converting Map back to an array
+  return Array.from(allocationMap.values());
 };
 
 export const fetchAllProjectAllocations = projects => async dispatch => {
