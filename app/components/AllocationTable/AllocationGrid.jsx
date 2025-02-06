@@ -146,18 +146,15 @@ export default function AllocationGrid({
             className: 'filterPopup',
             filterFormProps: {
               columnInputProps: {
-                variant: 'outlined',
                 size: 'small',
                 sx: { mt: 'auto' },
               },
               operatorInputProps: {
-                variant: 'outlined',
                 size: 'small',
                 sx: { mt: 'auto' },
               },
               valueInputProps: {
                 InputComponentProps: {
-                  variant: 'outlined',
                   size: 'small',
                 },
               },
