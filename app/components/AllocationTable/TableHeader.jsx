@@ -1,4 +1,5 @@
-import clsx from "clsx";
+import clsx from 'clsx';
+import { getWeekNumber } from '@/app/utils/common';
 
 const WEEK_COUNT = 20;
 const getStartDate = () => {
@@ -11,8 +12,8 @@ const getStartDate = () => {
   return now;
 };
 
-const getMonthYear = (date) => {
-  return date.toLocaleString("default", { month: "short", year: "numeric" });
+const getMonthYear = date => {
+  return date.toLocaleString('default', { month: 'short', year: 'numeric' });
 };
 
 const addDays = (date, days) => {
@@ -20,33 +21,35 @@ const addDays = (date, days) => {
   result.setDate(result.getDate() + days);
   return result;
 };
-const getCurrentWeekIndex = (startDate) => {
+const getCurrentWeekIndex = startDate => {
   const today = new Date();
   const diffTime = today - startDate;
   return Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
 };
-const generateWeeklyColumns = (startDate) => {
+const generateWeeklyColumns = startDate => {
   const currentWeekIndex = getCurrentWeekIndex(startDate);
   return Array.from({ length: WEEK_COUNT }, (_, i) => {
     const date = addDays(startDate, i * 7);
     const isCurrentWeek = i === currentWeekIndex;
     return {
-      field: `W${i + 1}`,
-      headerName: `W${i + 1}`, 
+      field: getWeekNumber(addDays(startDate, i * 7)),
+      headerName: getWeekNumber(addDays(startDate, i * 7)),
       width: 50,
       editable: true,
-      type: "number",
-      headerClassName: clsx('weekly-header', { 'current-week-header': isCurrentWeek }),
-      cellClassName: (params) => {
+      type: 'number',
+      headerClassName: clsx('weekly-header', {
+        'current-week-header': isCurrentWeek,
+      }),
+      cellClassName: params => {
         if (params.value == null) {
-          return ""
+          return '';
         }
- 
-        return clsx("super-app", {
-          weeklyCell: "weeklyCell",
+
+        return clsx('super-app', {
+          weeklyCell: 'weeklyCell',
           negative: params.value < 0,
           positive: params.value > 0,
-        })
+        });
       },
       disableColumnMenu: true,
       sortable: false,
@@ -54,8 +57,7 @@ const generateWeeklyColumns = (startDate) => {
   });
 };
 
-
-const generateColumnGroupingModel = (startDate) => {
+const generateColumnGroupingModel = startDate => {
   const groups = [];
   const currentDate = new Date(startDate);
   let currentMonthYear = getMonthYear(currentDate);
@@ -69,18 +71,18 @@ const generateColumnGroupingModel = (startDate) => {
       if (weekFields.length > 0) {
         groups.push({
           groupId: currentMonthYear,
-          children: weekFields.map((field) => ({ field })),
+          children: weekFields.map(field => ({ field })),
         });
       }
       currentMonthYear = weekMonthYear;
       weekFields = [];
     }
 
-    weekFields.push(`W${i + 1}`);
-    if ((i + 1) === WEEK_COUNT) {
+    weekFields.push(getWeekNumber(addDays(startDate, i * 7)));
+    if (i + 1 === WEEK_COUNT) {
       groups.push({
         groupId: currentMonthYear,
-        children: weekFields.map((field) => ({ field })),
+        children: weekFields.map(field => ({ field })),
       });
     }
   }
@@ -91,6 +93,6 @@ const generateColumnGroupingModel = (startDate) => {
 const startDate = getStartDate();
 export const columns = [...generateWeeklyColumns(startDate)];
 export const columnGroupingModel = generateColumnGroupingModel(startDate);
-export const getAllColumnsWithWeek = (columns) => {
+export const getAllColumnsWithWeek = columns => {
   return [...columns, ...generateWeeklyColumns(startDate)];
 };

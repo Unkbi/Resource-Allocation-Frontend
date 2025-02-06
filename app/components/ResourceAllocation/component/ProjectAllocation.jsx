@@ -7,6 +7,7 @@ import {
   fetchAllProjectAllocations,
   fetchAllProjects,
 } from '@/app/redux/actions/fetchProjectsAction';
+import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 
 const projectColumnConfig = [
   {
@@ -43,11 +44,13 @@ export default function ProjectAllocation() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    setAllocationsFetched(false);
     dispatch(fetchAllProjects());
   }, []);
 
   useEffect(() => {
     if (projects && projects.length > 0 && !allocationsFetched) {
+      dispatch(resetAllocations());
       // Fetch allocations for each project
       dispatch(fetchAllProjectAllocations(projects[0].result));
       setAllocationsFetched(true);
@@ -55,12 +58,13 @@ export default function ProjectAllocation() {
   }, [projects, allocationsFetched]);
   return (
     <>
+      {loading && <div>Loading...</div>}
       {allocations && allocations.length > 0 && (
         <AllocationGrid
           groupBy="project"
-          columns={projectColumnConfig} // Assuming this is defined elsewhere
-          columnGroupingModel={columnGroupingModel} // Assuming this is defined elsewhere
-          data={allocations} // Pass allocations data to AllocationGrid
+          columns={projectColumnConfig}
+          columnGroupingModel={columnGroupingModel}
+          data={allocations}
         />
       )}
     </>

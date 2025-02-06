@@ -99,33 +99,31 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .weeklyCell': {
     textAlign: 'center',
     fontFamily: "'Manrope', serif",
-    fontWeight: "500",
-    fontSize: "14px",
-    color: "#212121",
-    padding: "0",
-    "&.MuiDataGrid-cell--editing:focus-within":{
-      outline:"none"
+    fontWeight: '500',
+    fontSize: '14px',
+    color: '#212121',
+    padding: '0',
+    '&.MuiDataGrid-cell--editing:focus-within': {
+      outline: 'none',
     },
-    "&.MuiDataGrid-cell.MuiDataGrid-cell--editing":{
-      padding:"0"
+    '&.MuiDataGrid-cell.MuiDataGrid-cell--editing': {
+      padding: '0',
     },
-    "& .MuiDataGrid-editInputCell":{
-      
-    },
-    "& input":{
+    '& .MuiDataGrid-editInputCell': {},
+    '& input': {
       fontFamily: "'Manrope', serif",
-      fontWeight: "500",
-      color: "#313F68",
-      fontSize: "14px",
-      padding:"3px",
-      textAlign:"center",
-      border:"1px solid transparent",
-      boxSizing: "border-box",
-      "&:focus":{
-        backgroundColor: "rgba(157, 201, 255, 0.3)",
-        border:"1px solid #298AFF"
-      }
-    }
+      fontWeight: '500',
+      color: '#313F68',
+      fontSize: '14px',
+      padding: '3px',
+      textAlign: 'center',
+      border: '1px solid transparent',
+      boxSizing: 'border-box',
+      '&:focus': {
+        backgroundColor: 'rgba(157, 201, 255, 0.3)',
+        border: '1px solid #298AFF',
+      },
+    },
   },
   '& .weekly-header': {
     padding: '3px',
@@ -152,9 +150,9 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-cell:focus-within': {
     outline: 'none',
   },
-  "& .MuiDataGrid-row--editing":{
-    boxShadow:"none"
-  }
+  '& .MuiDataGrid-row--editing': {
+    boxShadow: 'none',
+  },
 }));
 
 export default function AllocationGrid({
@@ -169,7 +167,7 @@ export default function AllocationGrid({
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
-  const mapData = groupBy === 'teams' ? demoRows : data;
+  const mapData = groupBy === 'project' ? data : demoRows;
   const updatedRows = mapData.map(row => ({
     ...row,
     totalEffort: calculateTotalEffort(row),

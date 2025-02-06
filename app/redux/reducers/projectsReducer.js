@@ -16,7 +16,16 @@ const projectsSlice = createSlice({
   initialState,
   reducers: {
     updateAllocations: (state, action) => {
-      state.allocations = [...state.allocations, ...action.payload];
+      const uniqueAllocations = action.payload.filter(
+        newAlloc =>
+          !state.allocations.some(
+            existingAlloc => existingAlloc.id === newAlloc.id
+          )
+      );
+      state.allocations = [...state.allocations, ...uniqueAllocations];
+    },
+    resetAllocations: state => {
+      state.allocations = [];
     },
   },
   extraReducers: builder => {
@@ -49,5 +58,5 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { updateAllocations } = projectsSlice.actions;
+export const { updateAllocations, resetAllocations } = projectsSlice.actions;
 export default projectsSlice.reducer;
