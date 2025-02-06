@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Button,
   styled,
@@ -11,6 +11,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { getInitials, getInitialsColor } from './AllocationGridUtils';
 import CustomAvatar from '../Avatar/CustomAvatar';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
 const StyledButton = styled(Button)(({ theme }) => ({
   color: theme.custom.textColor,
@@ -120,23 +122,21 @@ const StyledInput = styled(TextField)(({ theme }) => ({
   },
 }));
 
-const allResources = [
-  { name: 'John Doe', projects: ['Project A'] },
-  { name: 'Jane Smith', projects: ['Project B'] },
-  { name: 'Alice Johnson', projects: ['Project C'] },
-];
+// const allResources = [
+//   { name: 'John Doe', projects: ['Project A'] },
+//   { name: 'Jane Smith', projects: ['Project B'] },
+//   { name: 'Alice Johnson', projects: ['Project C'] },
+// ];
 
-export const AddResourceButton = ({
-  project,
-  resources,
-  handleAddRow,
-  onClick,
-}) => {
+export const AddResourceButton = ({ project, handleAddRow, onClick }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const { resources, loading, error } = useSelector(state => state.resources);
+
+  const dispatch = useDispatch();
 
   const defaultProps = {
-    options: allResources,
-    getOptionLabel: option => option.name,
+    options: resources?.[0]?.result || [],
+    getOptionLabel: option => option.FullName,
   };
   const inputRef = useRef(null);
 
@@ -150,9 +150,13 @@ export const AddResourceButton = ({
     }, 0);
   };
 
+  useEffect(() => {
+    dispatch(fetchAllResources());
+  }, []);
+
   return (
     <MainBox>
-      {isSearchMode ? (
+      {isSearchMode && resources.length > 0 ? (
         <Autocomplete
           {...defaultProps}
           id="open-on-focus"
@@ -179,11 +183,11 @@ export const AddResourceButton = ({
                   borderBottom: `1px solid ${'#eaecef'}`,
                 }}
               >
-                <CustomAvatar value={option.name} />
+                <CustomAvatar value={option.FullName} />
                 {/* Resource Details */}
                 <Box sx={{ flexGrow: 1 }}>
-                  <span>{option.name}</span>
-                  <span className="userEamil">alex.lewis@stealth.com</span>
+                  <span>{option.FullName}</span>
+                  <span className="userEamil">{option.Email}</span>
                 </Box>
               </Box>
             );
