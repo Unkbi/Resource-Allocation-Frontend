@@ -32,7 +32,7 @@ export default function AllocationGrid({
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
-  const mapData = groupBy === 'teams' ? demoRows : data;
+  const mapData = groupBy === 'project' ? data : demoRows;
   const updatedRows = mapData.map(row => ({
     ...row,
     totalEffort: calculateTotalEffort(row),

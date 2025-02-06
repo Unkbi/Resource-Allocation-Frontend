@@ -3,7 +3,7 @@ import {
   getProjectAllocations,
 } from '@/app/services/projectServices';
 import { updateAllocations } from '../reducers/projectsReducer';
-import { getWeekNumber } from '@/app/utils/common';
+import { getWeekNumber, isCurrentOrPreviousWeek } from '@/app/utils/common';
 
 export const fetchAllProjects = () => async dispatch => {
   try {
@@ -26,36 +26,31 @@ const formatAllocations = allocationsData => {
     const existingAllocation = allocationMap.get(allocation.Resource);
 
     if (existingAllocation) {
-      existingAllocation[weekNumber] =
-        (existingAllocation[weekNumber] || 0) + allocation.AllocationEntered;
-      existingAllocation.totalEffort += allocation.AllocationEntered;
+      if (isCurrentOrPreviousWeek(allocation.Period)) {
+        existingAllocation[weekNumber] = {
+          allocationId: allocation.Allocation,
+          value: allocation.AllocationEntered,
+        };
+        existingAllocation.totalEffort += allocation.AllocationEntered;
+      }
     } else {
       const newAllocation = {
         id: allocation.Resource,
         project: allocation.ProjectName,
+        projectId: allocation.Project,
         resource: allocation.ResourceName,
         totalEffort: allocation.AllocationEntered,
         role: 'Trader', //Mock data, needs to be replaced later with API data.
         teams: 'Developer', //Mock data, needs to be replaced later with API data.
         resourceType: 'FTE', //Mock data, needs to be replaced later with API data.
-        W1: '',
-        W2: '',
-        W3: '',
-        W4: '',
-        W5: '',
-        W6: '',
-        W7: '',
-        W8: '',
-        W9: '',
-        W10: '',
-        W11: '',
-        W12: '',
-        W13: '',
-        W14: '',
-        W15: '',
       };
 
-      newAllocation[weekNumber] = allocation.AllocationEntered;
+      if (isCurrentOrPreviousWeek(allocation.Period)) {
+        newAllocation[weekNumber] = {
+          allocationId: allocation.Allocation,
+          value: allocation.AllocationEntered,
+        };
+      }
 
       allocationMap.set(allocation.Resource, newAllocation);
     }
