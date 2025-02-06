@@ -110,4 +110,16 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-cell:focus-within': {
     outline: 'none',
   },
+  '& .poor-allocation': {
+    backgroundColor: '#F6C8C8',
+    border: '#CE8585',
+  },
+  '& .average-allocation': {
+    backgroundColor: '#FFF1D3',
+    border: '#BDAE88',
+  },
+  '& .fully-occupied': {
+    backgroundColor: '#C4E5C4',
+    border: '#7AB17A',
+  },
 }));

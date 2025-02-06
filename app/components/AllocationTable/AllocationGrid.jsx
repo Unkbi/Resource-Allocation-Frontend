@@ -14,6 +14,7 @@ import {
   getFinalColumns,
   getGroupingColDef,
   groupPage,
+  getCellClassName,
 } from './AllocationGridUtils';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
@@ -116,6 +117,7 @@ export default function AllocationGrid({
         defaultGroupingExpansionDepth={1}
         getRowClassName={params => `super-app-theme--${params.row.status}`}
         disableAutosize
+        getCellClassName={getCellClassName}
         slots={{
           toolbar: CustomToolbar,
           columnMenu: props => {
