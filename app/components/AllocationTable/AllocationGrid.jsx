@@ -117,7 +117,7 @@ export default function AllocationGrid({
         defaultGroupingExpansionDepth={1}
         getRowClassName={params => `super-app-theme--${params.row.status}`}
         disableAutosize
-        getCellClassName={getCellClassName}
+        getCellClassName={params => getCellClassName(params, updatedRows)}
         slots={{
           toolbar: CustomToolbar,
           columnMenu: props => {

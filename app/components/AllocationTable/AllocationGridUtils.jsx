@@ -80,33 +80,38 @@ export const getGroupingColDef = groupBy => ({
   renderCell: params => params.value,
 });
 
-// export const processRowUpdate = (newRow) => {
-//   const weeklyTotal = Object.keys(newRow)
-//     .filter((key) => key.startsWith("W"))
-//     .reduce((sum, week) => sum + (Number(newRow[week]) || 0), 0)
-
-//   return { ...newRow, totalEffort: weeklyTotal }
-// }
-
-export const getCellClassName = params => {
-  console.log('params.formattedValue', params);
-
+export const getCellClassName = (params, updatedRows) => {
   if (params && params.field && typeof params.field === 'string') {
     if (
+      params &&
+      params.field &&
+      typeof params.field === 'string' &&
       params.field.startsWith('W') &&
-      params.rowNode.type === 'group' &&
-      params.rowNode.groupingField === 'project'
+      params.rowNode?.type === 'group' &&
+      params.rowNode?.groupingField === 'project'
     ) {
-      if (params.formattedValue === 0.2) {
+      const projectName = params.rowNode.groupingKey;
+
+      const projectRows = updatedRows.filter(
+        row => row.project === projectName
+      );
+
+      const totalRows = projectRows.length;
+
+      const aggregatedValue = projectRows.reduce((sum, row) => {
+        return sum + (row[params.field] || 0);
+      }, 0);
+
+      const percentage = (aggregatedValue / totalRows) * 100;
+
+      if (percentage === 0) {
+        return '';
+      } else if (percentage <= 20) {
         return 'poor-allocation';
-      } else if (params.formattedValue >= 0.5) {
+      } else if (percentage > 20 && percentage <= 50) {
         return 'average-allocation';
-      } else if (params.formattedValue < 0.9) {
+      } else if (percentage > 50) {
         return 'fully-occupied';
-      } else if (params.formattedValue === 0 && params.formattedValue === '') {
-        return '';
-      } else {
-        return '';
       }
     }
   }
