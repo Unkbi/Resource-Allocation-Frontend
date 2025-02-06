@@ -58,6 +58,9 @@ export const getFinalColumns = (
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
           }
+          // if (params.value?.value !== undefined) {
+          //   return params.value.value;
+          // }
         },
       },
       ...(allColumns?.slice(1) || []),

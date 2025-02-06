@@ -65,10 +65,11 @@ export default function AllocationGrid({
 
   const handleAddRow = (e, resource) => {
     const newRow = {
-      id: `${selectedProject}-${resource.name}-${rowsState.length + 1}`,
+      id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
+      resourceId: resource.Id,
       project: selectedProject,
-      resource: resource.name,
-      role: 'New Role',
+      resource: resource.FullName,
+      role: resource.Role,
       totalEffort: resource.totalHours,
       ...Object.keys(updatedRows[0])
         .filter(key => key.startsWith('W'))
@@ -104,10 +105,29 @@ export default function AllocationGrid({
       .filter(column => showField.includes(column.field))
       .map(column => column.field);
 
+  const transformRowData = data => {
+    return data.map(row => {
+      const modifiedRow = { ...row };
+
+      Object.keys(row).forEach(key => {
+        if (
+          key.startsWith('W') &&
+          row[key] &&
+          typeof row[key] === 'object' &&
+          row[key].value !== undefined
+        ) {
+          modifiedRow[key] = row[key].value;
+        }
+      });
+
+      return modifiedRow;
+    });
+  };
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
-        rows={rowsState}
+        rows={transformRowData(rowsState)}
         columns={finalColumns}
         apiRef={apiRef}
         loading={false}
