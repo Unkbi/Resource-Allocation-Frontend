@@ -284,6 +284,18 @@ export default function AllocationGrid({
                 paddingBottom:"0",
                 marginBottom:"-5px"
               },
+              "& .MuiInputBase-input":{
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                border: "1px solid #D6DCE1",
+                borderRadius: "4px",
+                color: "#212121",
+                fontFamily: "'Manrope', serif",
+                fontSize: "13px",
+                lineHeight: "16px",
+                textTransform: "none",
+                fontWeight: "600",
+                padding:"8px 10px"
+              },
               "& .MuiSelect-select":{
                 backgroundColor: "rgba(255, 255, 255, 0.3)",
                 border: "1px solid #D6DCE1",
