@@ -36,3 +36,13 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+.parent-grid-panel{
+  background-color: #FFFFFF;
+  border-radius: 0;
+}
+.parent-grid-panel .MuiPaper-root{
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.05);
+  border-radius: 0;
+  padding: 15px;
+}

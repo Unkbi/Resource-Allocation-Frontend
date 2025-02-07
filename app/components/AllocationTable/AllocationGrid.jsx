@@ -158,8 +158,88 @@ export default function AllocationGrid({
           columnsPanel: {
             className: 'styleColumnMenu',
             sx: {
-              '& .MuiDataGrid-columnsManagement': {
-                color: 'red',
+              '& .MuiDataGrid-columnsManagementHeader': {
+                padding:"0"
+              },
+              "& .MuiInputBase-input": {
+                height: "32px",
+                lineHeight: "32px",
+                background: "#FFFFFF 0% 0% no-repeat padding-box",
+                padding: "0",
+                borderRadius: "5px",
+                fontFamily: "'Manrope', serif",
+                fontSize: "12px",
+                fontWeight: "500",
+                color: "#212121",
+                boxSizing: "border-box",
+                "&::placeholder": {
+                    color: "#757575",
+                    opacity: 1,
+                    fontFamily: "'Manrope', serif",
+                    fontSize: "14px"
+                },
+              },
+              "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
+                  border: "1px solid #D6DCE1",
+                  backgroundColor:"rgba(242, 245, 250, 0.3)"
+              },
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  border: "1px solid #D6DCE1",
+                  borderRadius: "4px"
+              },
+              "& .MuiSvgIcon-root":{
+                fontSize:"18px"
+              },
+              "& .MuiDataGrid-columnsManagement":{
+                padding: "5px 0",
+                color: "#424242",
+                fontFamily: "'Manrope', serif",
+                fontSize:"14px",
+                "& .MuiFormControlLabel-root":{
+                  margin:"0",
+                  padding:"6px 0",
+                  "& span":{
+                    padding:"0"
+                  },
+                  "& .MuiTypography-root":{
+                    color: "#424242",
+                    fontFamily: "'Manrope', serif",
+                    fontSize: "12px",
+                    fontWeight:"500",
+                    paddingLeft:"10px"
+                  }
+                }
+              },
+              "& .MuiDataGrid-columnsManagementFooter":{
+                padding:"0",
+                borderColor:"#F2F5FA",
+                paddingTop: "6px",
+                "& .MuiFormControlLabel-root":{
+                  margin:"0",
+                  "& span":{
+                    padding:"0"
+                  },
+                  "& .MuiTypography-root":{
+                    color: "#424242",
+                    fontFamily: "'Manrope', serif",
+                    fontSize: "12px",
+                    fontWeight:"500",
+                    paddingLeft:"10px"
+                  }
+                },
+                "& .MuiButtonBase-root":{
+                  color: "#298AFF",
+                  fontFamily: "'Manrope', serif",
+                  fontSize: "11px",
+                  lineHeight: "30px",
+                  textTransform: "none",
+                  fontWeight: "600",
+                  cursor:"pointer",
+                  padding:"0",
+                  "&:hover":{
+                    background:"none"
+                  }
+                }
               },
             },
           },
@@ -197,6 +277,61 @@ export default function AllocationGrid({
               '& .MuiDataGrid-filterFormColumnInput': { mr: 2, width: 150 },
               '& .MuiDataGrid-filterFormOperatorInput': { mr: 2 },
               '& .MuiDataGrid-filterFormValueInput': { width: 200 },
+              "& .MuiDataGrid-filterForm":{
+                padding:"0"
+              },
+              "& .MuiDataGrid-panelFooter":{
+                paddingBottom:"0",
+                marginBottom:"-5px"
+              },
+              "& .MuiSelect-select":{
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                border: "1px solid #D6DCE1",
+                borderRadius: "4px",
+                color: "#212121",
+                fontFamily: "'Manrope', serif",
+                fontSize: "13px",
+                lineHeight: "16px",
+                textTransform: "none",
+                fontWeight: "600",
+                padding:"8px 10px"
+              },
+              "& .MuiInputBase-formControl":{
+                "&::before":{
+                  border:"none !important"
+                },
+                "&::after":{
+                  border:"none !important"
+                }
+              },
+              "& .MuiFormLabel-root":{
+                color: "#757575",
+                fontFamily: "'Manrope', serif",
+                fontSize: "13px",
+                lineHeight: "16px",
+                textTransform: "none",
+                fontWeight: "600",
+              },
+              "& .MuiButtonBase-root":{
+                color: "#298AFF",
+                fontFamily: "'Manrope', serif",
+                fontSize: "12px",
+                lineHeight: "14px",
+                textTransform: "none",
+                fontWeight: "600",
+                "& svg":{
+                  fontSize: "16px"
+                },
+                "& .MuiButton-icon":{
+                  marginRight:"3px"
+                }
+              },
+              "& .MuiDataGrid-filterFormDeleteIcon":{
+                display:"none"
+              },
+              "& .MuiDataGrid-filterFormLogicOperatorInput":{
+                display:"none"
+              }
             },
           },
         }}
