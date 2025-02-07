@@ -84,6 +84,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     fontSize: '14px',
     color: '#212121',
     padding: '3px',
+    lineHeight: "45px",
     "&.MuiDataGrid-cell--editing:focus-within":{
       outline:"none"
     },
