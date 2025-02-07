@@ -84,6 +84,29 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     fontSize: '14px',
     color: '#212121',
     padding: '3px',
+    "&.MuiDataGrid-cell--editing:focus-within":{
+      outline:"none"
+    },
+    "&.MuiDataGrid-cell.MuiDataGrid-cell--editing":{
+      padding:"0"
+    },
+    "& .MuiDataGrid-editInputCell":{
+      
+    },
+    "& input":{
+      fontFamily: "'Manrope', serif",
+      fontWeight: "500",
+      color: "#313F68",
+      fontSize: "14px",
+      padding:"3px",
+      textAlign:"center",
+      border:"1px solid transparent",
+      boxSizing: "border-box",
+      "&:focus":{
+        backgroundColor: "rgba(157, 201, 255, 0.3)",
+        border:"1px solid #298AFF"
+      }
+    }
   },
   '& .weekly-header': {
     padding: '3px',
@@ -122,4 +145,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     backgroundColor: '#C4E5C4',
     border: '#7AB17A',
   },
+  '& .MuiDataGrid-cell:focus-within': {
+    outline: 'none',
+  },
+  "& .MuiDataGrid-row--editing":{
+    boxShadow:"none"
+  }
 }));

@@ -141,6 +141,10 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       width: '36px',
       minWidth: '36px',
       height: '100%',
+      borderRadius:"0",
+      "& svg":{
+        fontSize:"24px"
+      },
       '&.selected': {
         color: '#212121',
         fontWeight: '600',
