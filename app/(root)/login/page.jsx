@@ -272,11 +272,11 @@ export default function LoginPage() {
                                         ),
                                     }}
                                 />
-                                {/* <Box className='forgot'>
+                                <Box className='forgot'>
                                     <Link href="/forgot-password" underline="hover">
                                         Forgot Password?
                                     </Link>
-                                </Box> */}
+                                </Box>
                                 <Button
                                     type="submit"
                                     variant="contained"
@@ -307,7 +307,7 @@ export default function LoginPage() {
                                 </Button>
                             </Box>
                             <Typography className='noAccount'>
-                                Don’t have an account?{' '}
+                                Don't have an account?{' '}
                                 <Link href="/signup" underline="hover" color="primary">
                                     Sign up
                                 </Link>

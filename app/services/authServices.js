@@ -19,6 +19,19 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const signupUser = createAsyncThunk(
+  'auth/signupUser',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('/signup', data);
+      return response.data;
+    } catch (error) {
+      console.error('Signup failed:', error.response);
+      return rejectWithValue(error.response?.data?.message || 'Signup failed');
+    }
+  }
+);
+
 // Logout User
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
   clearToken();

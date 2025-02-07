@@ -37,7 +37,7 @@ export default function CommonLayout({ children }) {
 
 // add the above return statement and remove the below return statement after login implementation
   const pathname = usePathname();
-  const isPublicRoute = pathname.includes('login');
+  const isPublicRoute = pathname.includes('login') || pathname.includes('signup');
   if (isPublicRoute) {
     return (
       <html lang="en">

@@ -1,10 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loginUser, logoutUser } from '../../services/authServices';
+import { loginUser, logoutUser, signupUser } from '../../services/authServices';
 
 const initialState = {
   user: null,
   token: null,
   loading: false,
+  signupData: '',
   error: null,
 };
 
@@ -12,6 +13,9 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    updateSignup: (state, action) => {
+      state.signupData = action.payload;
+    },
     logout: () => initialState,
   },
   extraReducers: (builder) => {
@@ -44,8 +48,25 @@ const authSlice = createSlice({
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      // Signup Actions
+      .addCase(signupUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(signupUser.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.token = null;
+      })
+      .addCase(signupUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
+
   },
 });
 
+export const { updateSignup } = authSlice.actions;
 export default authSlice.reducer;
