@@ -58,7 +58,10 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post(`${API_BASE_URL}/refresh-token`, { refreshToken });
+        const response = await axios.post(`${API_BASE_URL}/refresh-token`, 
+          { "Agentlang.Kernel.Identity/RefreshToken": {
+            RefreshToken:refreshToken
+        }});
         const newToken = response.data.accessToken;
 
         saveToken(newToken);

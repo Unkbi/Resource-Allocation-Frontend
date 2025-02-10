@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, logoutUser } from '../../services/authServices';
 import { useRouter } from 'next/navigation';
+import { performLogin } from '@/app/redux/actions/authActions';
 import {
     Box,
     Typography,
@@ -180,7 +180,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = React.useState(false);
     const handleLogin = (e) => {
         e.preventDefault();
-        dispatch(loginUser(
+        dispatch(performLogin(
             {
                 "Agentlang.Kernel.Identity/UserLogin": {
                     "Username": email,

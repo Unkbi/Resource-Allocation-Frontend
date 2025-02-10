@@ -19,6 +19,20 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// Get User
+export const getUser = createAsyncThunk(
+  'auth/getUser',
+  async () => {
+    try {
+      const response = await axiosInstance.post('/get-user');
+      return response.data.result; 
+    } catch (error) {
+      return 'User not found'; 
+    }
+  }
+);
+
+
 export const signupUser = createAsyncThunk(
   'auth/signupUser',
   async (data, { rejectWithValue }) => {

@@ -1,5 +1,5 @@
 import { updateSignup } from '../reducers/authReducer';
-import { confirmForgotPassword, confirmSignUp, forgotPassword, loginUser, logoutUser, signupUser } from './../../services/authServices';
+import { confirmForgotPassword, confirmSignUp, forgotPassword, getUser, loginUser, logoutUser, signupUser } from './../../services/authServices';
 
 // Example of wrapping an async action for added logic
 export const performLogin = (credentials) => async (dispatch) => {
@@ -12,7 +12,6 @@ export const performLogin = (credentials) => async (dispatch) => {
 
 export const performLogout = () => (dispatch) => {
   dispatch(logoutUser());
-  console.log('User logged out successfully');
 };
 
 
@@ -33,6 +32,14 @@ export const confirmSignUpUser = (data) => async (dispatch) => {
     console.log('confirm signup:', response);
   } catch (error) {
     console.error('confirm signup failed:', error);
+  }
+};
+
+export const getUserData = () => async (dispatch) => {
+  try {
+    await dispatch(getUser());
+  } catch (error) {
+    console.error('get user failed:', error);
   }
 };
 
