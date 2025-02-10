@@ -214,3 +214,6 @@ export const themeColors = {
   export const DEFAULT_COLOR = "#1C2D5F"; 
 
   export const BASE_FONT_SIZE = 16;
+
+
+  export const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/signup-otp'];

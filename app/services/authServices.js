@@ -1,20 +1,20 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../utils/apiClient';
-import { clearToken, saveToken } from '../utils/authUtils';
+import { clearToken, saveRefreshToken, saveToken } from '../utils/authUtils';
 
 // Login User
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      console.log('credentials', credentials);
+      
       const response = await axiosInstance.post('/login', credentials);
-      const { user, token } = response.data;
-      saveToken(token);
-      return { user, token }; 
+      const data = response.data.result['authentication-result'];
+      saveToken(data['id-token']);
+      saveRefreshToken(data['refresh-token']);
+      return data; 
     } catch (error) {
-      console.error('Login failed:', error.response);
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
+      return rejectWithValue(error.response?.data?.reason || 'Login failed');
     }
   }
 );
@@ -27,13 +27,53 @@ export const signupUser = createAsyncThunk(
       return response.data;
     } catch (error) {
       console.error('Signup failed:', error.response);
-      return rejectWithValue(error.response?.data?.message || 'Signup failed');
+      return rejectWithValue(error.response?.data?.reason || 'Signup failed');
     }
   }
 );
+
+export const confirmSignUp = createAsyncThunk(
+  'auth/confirmSignUp',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('/confirm-sign-up', data);
+      return response.data;
+    } catch (error) {
+      console.error('Signup failed:', error.response);
+      return rejectWithValue(error.response?.data?.reason || 'Signup failed');
+    }
+  }
+);
+
 
 // Logout User
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
   clearToken();
   return;
 });
+
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('/forgot-password', data);
+      return response.data.message; 
+    } catch (error) {
+      console.error('Forgot Password failed:', error.response);
+      return rejectWithValue(error.response?.data?.reason || 'Failed to send reset link');
+    }
+  }
+);
+
+export const confirmForgotPassword = createAsyncThunk(
+  'auth/confirmForgotPassword',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('/confirm-forgot-password', data);
+      return response.data.message;
+    } catch (error) {
+      console.error('Reset Password failed:', error.response);
+      return rejectWithValue(error.response?.data?.reason || 'Failed to reset password');
+    }
+  }
+);

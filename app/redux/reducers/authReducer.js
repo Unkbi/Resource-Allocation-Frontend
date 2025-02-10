@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loginUser, logoutUser, signupUser } from '../../services/authServices';
+import { confirmForgotPassword, forgotPassword, loginUser, logoutUser,confirmSignUp, signupUser } from '../../services/authServices';
 
 const initialState = {
   user: null,
@@ -7,6 +7,8 @@ const initialState = {
   loading: false,
   signupData: '',
   error: null,
+  forgotPasswordMessage: null,
+  resetPasswordMessage: null,
 };
 
 const authSlice = createSlice({
@@ -27,8 +29,8 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.user = action.payload;
+        state.token = action.payload['id-token'];
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -63,8 +65,47 @@ const authSlice = createSlice({
       .addCase(signupUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
-
+      })
+      // forgot
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.forgotPasswordMessage = action.payload.message;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // confirm forgot password
+      .addCase(confirmForgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(confirmForgotPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.resetPasswordMessage = action.payload.message;
+      })
+      .addCase(confirmForgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // confirm signup
+      .addCase(confirmSignUp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(confirmSignUp.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+      })
+      .addCase(confirmSignUp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
   },
 });
 

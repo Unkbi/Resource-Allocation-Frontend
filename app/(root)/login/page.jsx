@@ -15,8 +15,6 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import Image from 'next/image';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -32,7 +30,7 @@ const MainBox = styled(Box)(({ theme }) => ({
         width: "55%",
         display: "flex",
         alignItems: "center",
-        backgroundColor:"#fff",
+        backgroundColor: "#fff",
         "& .formBox": {
             width: "360px",
             margin: "0 auto",
@@ -179,13 +177,17 @@ export default function LoginPage() {
     const dispatch = useDispatch();
     const { loading, error, user } = useSelector((state) => state.user);
     const router = useRouter();
-
     const [showPassword, setShowPassword] = React.useState(false);
-
     const handleLogin = (e) => {
         e.preventDefault();
-        dispatch(loginUser({ email, password }));
-    };
+        dispatch(loginUser(
+            {
+                "Agentlang.Kernel.Identity/UserLogin": {
+                    "Username": email,
+                    "Password": password
+                }
+            }));
+    }
 
     useEffect(() => {
         if (user) {
@@ -193,129 +195,109 @@ export default function LoginPage() {
         }
     }, [user, router]);
 
-
-    const handleLogout = () => {
-        dispatch(logoutUser());
-    };
-
     const handleTogglePassword = () => {
         setShowPassword((prev) => !prev);
     };
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
-            {user ? (
-                <Box sx={{ mx: 'auto', textAlign: 'center', mt: 8 }}>
-                    <Typography variant="h4" gutterBottom>
-                        Welcome, {user.name}
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleLogout}
-                    >
-                        Logout
-                    </Button>
-                </Box>
-            ) : (
-                <Box display={"flex"} width={'100%'}>
-                    {/* Left Section */}
-                    <Box className='loginLeft'>
-                        <img src={"/images/coi-logo.png"} alt='COI' width={280} />
-                        <Box mt={12}>
-                            <img src={"/images/login-left-img.png"} alt='login-left-img' width={'480px'} />
-                        </Box>
+            <Box display={"flex"} width={'100%'}>
+                {/* Left Section */}
+                <Box className='loginLeft'>
+                    <img src={"/images/coi-logo.png"} alt='COI' width={280} />
+                    <Box mt={12}>
+                        <img src={"/images/login-left-img.png"} alt='login-left-img' width={'480px'} />
                     </Box>
+                </Box>
 
-                    {/* Right Section */}
-                    <Box className='loginRight'>
-                        <Box className='formBox'>
-                            <Typography variant="h4">
-                                Welcome
-                            </Typography>
-                            <Typography className='subHeadingText'>
-                                Please enter your details
-                            </Typography>
-                            <Box
-                                component="form"
-                                onSubmit={handleLogin}
-                            >
-                                <TextField
-                                    className='textField'
-                                    id="outlined-basic"
-                                    placeholder="Email Id"
-                                    InputLabelProps={{
-                                        shrink: false
-                                    }}
-                                    variant="outlined"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                                <TextField
-                                    className='textField'
-                                    variant="outlined"
-                                    placeholder="Password"
-                                    type={showPassword ? "text" : "password"}
-                                    InputLabelProps={{
-                                        shrink: false
-                                    }}
-                                    fullWidth
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position="end">
-                                                <IconButton onClick={handleTogglePassword} edge="end">
-                                                    {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                                <Box className='forgot'>
-                                    <Link href="/forgot-password" underline="hover">
-                                        Forgot Password?
-                                    </Link>
-                                </Box>
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    color="primary"
-                                    fullWidth
-                                    disabled={loading}
-                                    sx={{ mt: 2 }}
-                                    className='signInButton'
-                                >
-                                    {loading ? <CircularProgress size={24} /> : 'Sign in'}
-                                </Button>
-                                <Typography className='orText'>
-                                    <span>OR</span>
-                                </Typography>
-                                <Button
-                                    variant="outlined"
-                                    fullWidth
-                                    className='googleButton'
-                                >
-                                    <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    fullWidth
-                                    className='signWithSSO'
-                                >
-                                    Sign in with SSO
-                                </Button>
-                            </Box>
-                            <Typography className='noAccount'>
-                                Don't have an account?{' '}
-                                <Link href="/signup" underline="hover" color="primary">
-                                    Sign up
+                {/* Right Section */}
+                <Box className='loginRight'>
+                    <Box className='formBox'>
+                        <Typography variant="h4">
+                            Welcome
+                        </Typography>
+                        <Typography className='subHeadingText'>
+                            Please enter your details
+                        </Typography>
+                        <Box
+                            component="form"
+                            onSubmit={handleLogin}
+                        >
+                            <TextField
+                                className='textField'
+                                id="outlined-basic"
+                                placeholder="Email Id"
+                                InputLabelProps={{
+                                    shrink: false
+                                }}
+                                variant="outlined"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            <TextField
+                                className='textField'
+                                variant="outlined"
+                                placeholder="Password"
+                                type={showPassword ? "text" : "password"}
+                                InputLabelProps={{
+                                    shrink: false
+                                }}
+                                fullWidth
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={handleTogglePassword} edge="end">
+                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            <Box className='forgot'>
+                                <Link href="/forgot-password" underline="hover">
+                                    Forgot Password?
                                 </Link>
+                            </Box>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                fullWidth
+                                disabled={loading}
+                                sx={{ mt: 2 }}
+                                className='signInButton'
+                            >
+                                {loading ? <CircularProgress size={24} /> : 'Sign in'}
+                            </Button>
+                            <Typography className='orText'>
+                                <span>OR</span>
                             </Typography>
+                            <Button
+                                variant="outlined"
+                                fullWidth
+                                className='googleButton'
+                            >
+                                <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                fullWidth
+                                className='signWithSSO'
+                            >
+                                Sign in with SSO
+                            </Button>
                         </Box>
+                        <Typography className='noAccount'>
+                            Don't have an account?{' '}
+                            <Link href="/signup" underline="hover" color="primary">
+                                Sign up
+                            </Link>
+                        </Typography>
                     </Box>
                 </Box>
-            )}
+            </Box>
             {error && (
                 <Typography
                     variant="body2"

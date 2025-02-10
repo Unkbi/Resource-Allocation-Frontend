@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import {
@@ -14,7 +14,9 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
-import { signUp } from '@/app/redux/actions/authActions';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import Image from 'next/image';
+import { confirmSignUpUser, performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -171,57 +173,49 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function SingupPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [mobile, setMobile] = useState('');
-
+export default function SignUpOtpPage() {
+    const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const dispatch = useDispatch();
-    const { loading, user, signupData, error } = useSelector((state) => state.user);
+    const { loading, error, user, signupData } = useSelector((state) => state.user);
+    const inputRefs = useRef([]);
     const router = useRouter();
 
-    const [showPassword, setShowPassword] = React.useState(false);
-
-    const handleSignup = async (e) => {
+    const handleVerifyOtp = (e) => {
         e.preventDefault();
-        if (!firstName || !lastName || !email || !password || !mobile) {
-            return;
-        }
-        dispatch(signUp({
-            'Agentlang.Kernel.Identity/SignUp': {
-                'User': {
-                    'Agentlang.Kernel.Identity/User': {
-                        Name: `${firstName} ${lastName}`,
-                        FirstName: firstName,
-                        LastName: lastName,
-                        Email: email,
-                        UserData: {
-                            PhoneNumber: mobile
-                        },
-                        Password: password
-                    }
-                }
+        dispatch(confirmSignUpUser({
+            'Agentlang.Kernel.Identity/ConfirmSignUp': {
+                Username: signupData,
+                ConfirmationCode: otp.join(""),
             }
-        }, email));
+        }));
     };
 
-    useEffect(() => {
-        if (user) {
-            router.push('/dashboard');
+    const handleChange = (index, event) => {
+        const value = event.target.value.replace(/\D/g, "").slice(0, 1);
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
         }
-    }, [user, router]);
-
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
     };
 
-    console.log('signupData', signupData, error);
+    const handleKeyDown = (index, event) => {
+        if (event.key === "Backspace" && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
 
-    if (signupData && !error) {
-        router.push('/signup-otp');
-    }
+    const handleResendOtp = (e) => {
+        e.preventDefault();
+        dispatch(performForgotPassword({
+            'Agentlang.Kernel.Identity/ForgotPassword': {
+                Username: signupData
+            }
+        }));
+    };
+
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -238,80 +232,32 @@ export default function SingupPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Create an Account
+                            Verify with OTP
                         </Typography>
                         <Typography className='subHeadingText'>
-                            Please enter your details
+                            We've sent a verification code to {signupData}
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleSignup}
+                            onSubmit={handleVerifyOtp}
                         >
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="First Name"
-                                variant="outlined"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Last Name"
-                                variant="outlined"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Mobile Number"
-                                variant="outlined"
-                                type='tel'
-                                value={mobile}
-                                onChange={(e) => setMobile(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Email Id"
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                variant="outlined"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Password"
-                                type={showPassword ? "text" : "password"}
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleTogglePassword} edge="end">
-                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            {error && (
-                                <Typography
-                                    variant="body2"
-                                    color="error"
-                                >
-                                    {error}
-                                </Typography>
-                            )}
+                            {otp.map((digit, index) => (
+                                <TextField
+                                    key={index}
+                                    variant="outlined"
+                                    value={digit}
+                                    onChange={(e) => handleChange(index, e)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    inputProps={{
+                                        maxLength: 1,
+                                        pattern: "[0-9]*",
+                                        inputMode: "numeric",
+                                        style: { textAlign: "center", width: "40px" },
+                                    }}
+                                    inputRef={(el) => (inputRefs.current[index] = el)}
+                                />
+                            ))}
+
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -321,18 +267,24 @@ export default function SingupPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign up'}
+                                {loading ? <CircularProgress size={24} /> : 'Verify'}
                             </Button>
                         </Box>
-                        <Typography className='noAccount'>
-                            Already have an account?{' '}
-                            <Link href="/login" underline="hover" color="primary">
-                                Sign in
-                            </Link>
+                        <Typography className='noAccount' onClick={handleResendOtp}>
+                            Resend OTP
                         </Typography>
                     </Box>
                 </Box>
             </Box>
+            {error && (
+                <Typography
+                    variant="body2"
+                    color="error"
+                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
+                >
+                    {error}
+                </Typography>
+            )}
         </MainBox>
     );
 }

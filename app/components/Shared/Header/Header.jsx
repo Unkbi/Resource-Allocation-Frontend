@@ -2,7 +2,6 @@
 import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, TextField, InputAdornment, styled, Box, colors } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-// import { useAuth } from '@/app/hooks/useAuth';  uncomment this after implementing useAuth
 
 const MainAppBar = styled(AppBar)(({ theme }) => ({
   marginLeft: "74px",
@@ -51,7 +50,6 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
 }));
 
 const Header = () => {
-  // useAuth();  uncomment this after implementing useAuth
   return (
     <MainAppBar>
       <Toolbar className='toobarRow'>

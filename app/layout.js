@@ -5,49 +5,30 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import ThemeRegistry from "./theme/ThemeRegistry";
 import SideBar from "./components/Shared/Sidebar/Sidebar";
 import Header from "./components/Shared/Header/Header";
-import { usePathname } from "next/navigation";
-// import { useAuth } from "./hooks/useAuth"; uncomment this after implementing login
+import { usePathname, useRouter } from "next/navigation";
 
 import { Box, styled } from "@mui/material";
-const MainContent = styled(Box)(({ theme }) => ({
+import { getToken } from "./utils/authUtils";
+import { PUBLIC_ROUTES } from "./constants/constants";
+const MainContent = styled(Box)(() => ({
   background: "#fff",
   marginLeft:"74px",
   paddingTop:"52px"
 }));
 
-// export const metadata = {
-//   title: "Resource Allocations", 
-//   description: "Resource Allocations",
-// };
-
 export default function CommonLayout({ children }) {
-//   const isLoggedIn = useAuth(); uncomment this after implementing login
+  const isLoggedIn = getToken();
+  const pathname = usePathname(); 
+  const router = useRouter(); 
+  const isPublicRoute =PUBLIC_ROUTES.includes(pathname);
+  if (isLoggedIn && isPublicRoute) {
+    router.push("/dashboard"); 
+    return null;
+  }
   
-//   if (!isLoggedIn) {
-//     return (
-//    <html lang="en">
-//      <body>
-//      <StoreProvider>
-//        {children}
-//        </StoreProvider>
-//      </body>
-//    </html>
-//  )
-//   }
-
-// add the above return statement and remove the below return statement after login implementation
-  const pathname = usePathname();
-  const isPublicRoute = pathname.includes('login') || pathname.includes('signup');
-  if (isPublicRoute) {
-    return (
-      <html lang="en">
-        <body>
-          <StoreProvider>
-            {children}
-          </StoreProvider>
-        </body>
-      </html>
-    )
+  if (!isLoggedIn && !isPublicRoute) {
+    router.push("/login");
+    return null;
   }
 
   return (
@@ -55,8 +36,9 @@ export default function CommonLayout({ children }) {
       <body>
         <StoreProvider>
           <AppRouterCacheProvider>
-            <ThemeRegistry><Header />
-            <SideBar/>
+            <ThemeRegistry>
+            {!isPublicRoute && <Header />}
+            {!isPublicRoute && <SideBar/>}
             <MainContent>
               {children} 
             </MainContent>
@@ -67,3 +49,5 @@ export default function CommonLayout({ children }) {
     </html>
   );
 }
+
+

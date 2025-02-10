@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { loginUser } from '../../services/authServices';
 import { useRouter } from 'next/navigation';
 import {
     Box,
@@ -14,7 +15,9 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
-import { signUp } from '@/app/redux/actions/authActions';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import Image from 'next/image';
+import { performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -171,57 +174,21 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function SingupPage() {
+export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [mobile, setMobile] = useState('');
-
     const dispatch = useDispatch();
-    const { loading, user, signupData, error } = useSelector((state) => state.user);
-    const router = useRouter();
+    const { loading, error, user } = useSelector((state) => state.user);
+    // const router = useRouter();
 
-    const [showPassword, setShowPassword] = React.useState(false);
 
-    const handleSignup = async (e) => {
+    const handleForgotPassword = (e) => {
         e.preventDefault();
-        if (!firstName || !lastName || !email || !password || !mobile) {
-            return;
-        }
-        dispatch(signUp({
-            'Agentlang.Kernel.Identity/SignUp': {
-                'User': {
-                    'Agentlang.Kernel.Identity/User': {
-                        Name: `${firstName} ${lastName}`,
-                        FirstName: firstName,
-                        LastName: lastName,
-                        Email: email,
-                        UserData: {
-                            PhoneNumber: mobile
-                        },
-                        Password: password
-                    }
-                }
+        dispatch(performForgotPassword({
+            'Agentlang.Kernel.Identity/ForgotPassword': {
+                Username: email
             }
-        }, email));
+        }));
     };
-
-    useEffect(() => {
-        if (user) {
-            router.push('/dashboard');
-        }
-    }, [user, router]);
-
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
-    };
-
-    console.log('signupData', signupData, error);
-
-    if (signupData && !error) {
-        router.push('/signup-otp');
-    }
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -238,40 +205,15 @@ export default function SingupPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Create an Account
+                            Forgot Password
                         </Typography>
                         <Typography className='subHeadingText'>
-                            Please enter your details
+                            We will send you an otp to reset your password
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleSignup}
+                            onSubmit={handleForgotPassword}
                         >
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="First Name"
-                                variant="outlined"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Last Name"
-                                variant="outlined"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Mobile Number"
-                                variant="outlined"
-                                type='tel'
-                                value={mobile}
-                                onChange={(e) => setMobile(e.target.value)}
-                            />
                             <TextField
                                 className='textField'
                                 id="outlined-basic"
@@ -283,35 +225,7 @@ export default function SingupPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Password"
-                                type={showPassword ? "text" : "password"}
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleTogglePassword} edge="end">
-                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            {error && (
-                                <Typography
-                                    variant="body2"
-                                    color="error"
-                                >
-                                    {error}
-                                </Typography>
-                            )}
+
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -321,18 +235,27 @@ export default function SingupPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign up'}
+                                {loading ? <CircularProgress size={24} /> : 'Send OTP'}
                             </Button>
                         </Box>
                         <Typography className='noAccount'>
-                            Already have an account?{' '}
-                            <Link href="/login" underline="hover" color="primary">
-                                Sign in
+                            Back to {""}
+                            <Link href="/signup" underline="hover" color="primary">
+                                Sign up
                             </Link>
                         </Typography>
                     </Box>
                 </Box>
             </Box>
+            {error && (
+                <Typography
+                    variant="body2"
+                    color="error"
+                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
+                >
+                    {error}
+                </Typography>
+            )}
         </MainBox>
     );
 }
