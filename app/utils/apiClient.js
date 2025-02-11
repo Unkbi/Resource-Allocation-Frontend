@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { getToken, getRefreshToken, saveToken, clearAuth } from './authUtils';
+import { getToken, getRefreshToken, saveToken, clearAuth, saveRefreshToken } from './authUtils';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
-
+const authBaseURL = process.env.NEXT_PUBLIC_AUTH_BASE_URL;
+const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const MAX_RETRIES = 3;
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: authBaseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,6 +25,9 @@ const addRefreshSubscriber = (callback) => {
 
 axiosInstance.interceptors.request.use(
   (config) => {
+    if (config.url.includes('/api')) {
+      config.baseURL = apiBaseURL;
+    }
     const token = getToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -47,8 +51,14 @@ axiosInstance.interceptors.response.use(
           });
         });
       }
-
       originalRequest._retry = true;
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+
+      if (originalRequest._retryCount > MAX_RETRIES) {
+        clearAuth();
+        return Promise.reject(new Error('Max retry attempts reached'));
+      }
+
       isRefreshing = true;
 
       try {
@@ -58,11 +68,19 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post(`${API_BASE_URL}/refresh-token`, 
-          { "Agentlang.Kernel.Identity/RefreshToken": {
-            RefreshToken:refreshToken
-        }});
-        const newToken = response.data.accessToken;
+        const response = await axios.post(`${authBaseURL}/refresh-token`, {
+          "Agentlang.Kernel.Identity/RefreshToken": {
+            RefreshToken: refreshToken,
+          },
+        });
+
+        const data = response?.data?.result['authentication-result'];
+        const newToken = data['id-token'];
+        const newRefreshToken = data['refresh-token'];
+
+        if (newRefreshToken) {
+          saveRefreshToken(newRefreshToken);
+        }
 
         saveToken(newToken);
         isRefreshing = false;
@@ -72,7 +90,7 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         clearAuth();
-        return Promise.reject(refreshError);
+        return Promise.reject(refreshError); 
       } finally {
         isRefreshing = false;
       }
