@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Button,
   styled,
@@ -9,10 +9,8 @@ import {
   Avatar,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { getInitials, getInitialsColor } from './AllocationGridUtils';
 import CustomAvatar from '../Avatar/CustomAvatar';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
 const StyledButton = styled(Button)(({ theme }) => ({
   color: theme.custom.textColor,
@@ -149,10 +147,6 @@ export const AddResourceButton = ({ project, handleAddRow, onClick }) => {
       }
     }, 0);
   };
-
-  useEffect(() => {
-    dispatch(fetchAllResources());
-  }, []);
 
   return (
     <MainBox>
