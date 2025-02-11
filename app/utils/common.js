@@ -1,3 +1,5 @@
+import { TOTAL_FUTURE_WEEKS } from '../constants/constants';
+
 export function transformJson(pageType, apiData) {
   const demoRows = [];
 
@@ -56,27 +58,75 @@ export const getWeekNumber = date => {
 };
 
 /**
- * Checks whether the given date falls within the current week or the previous week.
+ * Checks whether the given date falls within the previous week, current week,
+ * or one of the next 20 weeks (making a total of 22 weeks including the previous week).
  * @param {Date | string} date - The date to check. Can be a Date object or a string in a date format.
- * @returns {boolean} - Returns true if the date is in the current or previous week, false otherwise.
+ * @returns {boolean} - Returns true if the date is in the previous week, current week, or next 20 weeks, false otherwise.
  */
-export const isCurrentOrPreviousWeek = date => {
-  const givenDate = new Date(date);
+export const isWithin20WeeksRange = date => {
+  const givenDate = new Date(date).setHours(0, 0, 0, 0);
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const startOfCurrentWeek = new Date(
-    today.setDate(today.getDate() - today.getDay() + 1)
+  const dayOfWeek = today.getDay();
+  const startOfCurrentWeek = new Date(today);
+  startOfCurrentWeek.setDate(
+    today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
   );
 
-  const startOfPreviousWeek = new Date(
-    new Date(startOfCurrentWeek).setDate(startOfCurrentWeek.getDate() - 7)
+  const startOfPreviousWeek = new Date(startOfCurrentWeek);
+  startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
+
+  const endOfNext20Weeks = new Date(startOfCurrentWeek);
+  endOfNext20Weeks.setDate(
+    startOfCurrentWeek.getDate() + TOTAL_FUTURE_WEEKS * 7
   );
 
-  const endOfCurrentWeek = new Date(startOfCurrentWeek);
-  endOfCurrentWeek.setDate(endOfCurrentWeek.getDate() + 6);
+  return givenDate >= startOfPreviousWeek && givenDate <= endOfNext20Weeks;
+};
 
-  return (
-    (givenDate >= startOfPreviousWeek && givenDate < startOfCurrentWeek) ||
-    (givenDate >= startOfCurrentWeek && givenDate <= endOfCurrentWeek)
-  );
+/**
+ * Get the Monday date of a given week number in the current year,
+ * where week 1 starts from January 1st.
+ * @param {string} weekStr - A string representing the week number, e.g. "W1".
+ * @returns {string} - The Monday date of the given week in YYYY-MM-DD format.
+ */
+export const getMondayOfWeek = weekStr => {
+  const weekNumber = parseInt(weekStr.replace('W', ''), 10);
+
+  const currentYear = new Date().getFullYear();
+
+  const januaryFirst = new Date(currentYear, 0, 1);
+
+  const weekMonday = new Date(januaryFirst);
+  weekMonday.setDate(januaryFirst.getDate() + (weekNumber - 1) * 7);
+
+  const dayOfWeek = weekMonday.getDay();
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  weekMonday.setDate(weekMonday.getDate() + diffToMonday);
+
+  return weekMonday.toLocaleDateString('en-CA');
+};
+
+/**
+ * Checks whether the given string is a valid UUID.
+ * @param {string} uuid - UUID string to test.
+ * @returns {boolean} - Boolean true or false against the UUID string.
+ */
+export const isValidUUID = uuid => {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+/**
+ * Get the project Id based on the project name.
+ * @param {Array} projects - The array of project objects.
+ * @param {string} projectName - The name of the project to find.
+ * @returns {string|null} - The Id of the project if found, otherwise null.
+ */
+export const getProjectIdByName = (projects, projectName) => {
+  const project = projects.find(proj => proj.Name === projectName);
+
+  return project ? project.Id : null;
 };

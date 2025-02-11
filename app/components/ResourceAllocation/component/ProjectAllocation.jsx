@@ -17,14 +17,14 @@ const projectColumnConfig = [
     headerClassName: 'prime-header',
     cellClassName: 'prime-cell',
   },
-  {
-    field: 'teams',
-    headerName: 'Teams',
-    width: 200,
-    disableColumnMenu: true,
-    headerClassName: 'secondary-header',
-    cellClassName: 'secondary-cell',
-  },
+  // {
+  //   field: 'teams',
+  //   headerName: 'Teams',
+  //   width: 200,
+  //   disableColumnMenu: true,
+  //   headerClassName: 'secondary-header',
+  //   cellClassName: 'secondary-cell',
+  // },
   {
     field: 'totalEffort',
     headerName: 'Total Effort',

@@ -5,7 +5,11 @@ import {
   useGridApiRef,
   useKeepGroupedColumnsHidden,
 } from '@mui/x-data-grid-premium';
-import { calculateTotalEffort } from '@/app/utils/common';
+import {
+  calculateTotalEffort,
+  getMondayOfWeek,
+  getProjectIdByName,
+} from '@/app/utils/common';
 import { demoRows } from './data';
 import { StyledDataGrid } from './styles/StyledDataGrid';
 import './styles/AllocationGrid.css';
@@ -16,6 +20,11 @@ import {
   groupPage,
   getCellClassName,
 } from './AllocationGridUtils';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  setResourceAllocation,
+  updateResourceAllocation,
+} from '@/app/redux/actions/resourceAllocationAction';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 const ResourcePopper = lazy(() => import('./components/ResourcePopper'));
@@ -31,6 +40,8 @@ export default function AllocationGrid({
   const [selectedProject, setSelectedProject] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+  const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedAllocationId, setSelectedAllocationId] = useState(null);
 
   const mapData = groupBy === 'project' ? data : demoRows;
   const updatedRows = mapData.map(row => ({
@@ -58,6 +69,9 @@ export default function AllocationGrid({
     ),
   ]);
 
+  const dispatch = useDispatch();
+  const { projects } = useSelector(state => state.projects);
+
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
     initialState: getInitialState(groupBy, updatedRows),
@@ -68,6 +82,7 @@ export default function AllocationGrid({
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: selectedProject,
+      projectId: getProjectIdByName(projects[0]?.result, selectedProject),
       resource: resource.FullName,
       role: resource.Role,
       totalEffort: resource.totalHours,
@@ -105,29 +120,68 @@ export default function AllocationGrid({
       .filter(column => showField.includes(column.field))
       .map(column => column.field);
 
-  const transformRowData = data => {
-    return data.map(row => {
-      const modifiedRow = { ...row };
+  const handleDoubleClick = params => {
+    setSelectedCell(params.field);
+    const { field, formattedValue, row } = params || {};
+    if (formattedValue) {
+      const allocationData = row[field];
+      setSelectedAllocationId(allocationData.allocationId);
+    }
+  };
 
-      Object.keys(row).forEach(key => {
-        if (
-          key.startsWith('W') &&
-          row[key] &&
-          typeof row[key] === 'object' &&
-          row[key].value !== undefined
-        ) {
-          modifiedRow[key] = row[key].value;
-        }
-      });
+  const handleCellUpdate = updated => {
+    try {
+      const { project, projectId, id } = updated || {};
 
-      return modifiedRow;
-    });
+      let resourceId = updated?.resourceId;
+
+      if (selectedAllocationId) {
+        const putPayload = {
+          resourceId: resourceId,
+          allocationId: selectedAllocationId,
+          putData: {
+            'ProjectPortfolio.Core/Allocation': {
+              AllocationEntered: updated[selectedCell],
+            },
+          },
+        };
+        dispatch(updateResourceAllocation(putPayload));
+      } else {
+        const postPayload = {
+          resourceId: resourceId,
+          postData: {
+            'ProjectPortfolio.Core/Allocation': {
+              Resource: resourceId,
+              Project: projectId,
+              ProjectName: project,
+              Period: getMondayOfWeek(selectedCell),
+              AllocationEntered: updated[selectedCell],
+            },
+          },
+        };
+        dispatch(setResourceAllocation(postPayload));
+      }
+    } catch (err) {
+      console.error('Cell update failed:', err);
+    } finally {
+      setSelectedAllocationId(null);
+      setSelectedCell(null);
+    }
   };
 
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
-        rows={transformRowData(rowsState)}
+        onCellDoubleClick={params => {
+          handleDoubleClick(params);
+        }}
+        processRowUpdate={newRow => {
+          handleCellUpdate(newRow);
+        }}
+        onProcessRowUpdateError={err => {
+          console.error('Row update failed:', err);
+        }}
+        rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
         loading={false}
@@ -159,87 +213,88 @@ export default function AllocationGrid({
             className: 'styleColumnMenu',
             sx: {
               '& .MuiDataGrid-columnsManagementHeader': {
-                padding:"0"
+                padding: '0',
               },
-              "& .MuiInputBase-input": {
-                height: "32px",
-                lineHeight: "32px",
-                background: "#FFFFFF 0% 0% no-repeat padding-box",
-                padding: "0",
-                borderRadius: "5px",
+              '& .MuiInputBase-input': {
+                height: '32px',
+                lineHeight: '32px',
+                background: '#FFFFFF 0% 0% no-repeat padding-box',
+                padding: '0',
+                borderRadius: '5px',
                 fontFamily: "'Manrope', serif",
-                fontSize: "12px",
-                fontWeight: "500",
-                color: "#212121",
-                boxSizing: "border-box",
-                "&::placeholder": {
-                    color: "#757575",
-                    opacity: 1,
-                    fontFamily: "'Manrope', serif",
-                    fontSize: "14px"
-                },
-              },
-              "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
-                  border: "1px solid #D6DCE1",
-                  backgroundColor:"rgba(242, 245, 250, 0.3)"
-              },
-              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                  border: "1px solid #D6DCE1",
-                  borderRadius: "4px"
-              },
-              "& .MuiSvgIcon-root":{
-                fontSize:"18px"
-              },
-              "& .MuiDataGrid-columnsManagement":{
-                padding: "5px 0",
-                color: "#424242",
-                fontFamily: "'Manrope', serif",
-                fontSize:"14px",
-                "& .MuiFormControlLabel-root":{
-                  margin:"0",
-                  padding:"6px 0",
-                  "& span":{
-                    padding:"0"
-                  },
-                  "& .MuiTypography-root":{
-                    color: "#424242",
-                    fontFamily: "'Manrope', serif",
-                    fontSize: "12px",
-                    fontWeight:"500",
-                    paddingLeft:"10px"
-                  }
-                }
-              },
-              "& .MuiDataGrid-columnsManagementFooter":{
-                padding:"0",
-                borderColor:"#F2F5FA",
-                paddingTop: "6px",
-                "& .MuiFormControlLabel-root":{
-                  margin:"0",
-                  "& span":{
-                    padding:"0"
-                  },
-                  "& .MuiTypography-root":{
-                    color: "#424242",
-                    fontFamily: "'Manrope', serif",
-                    fontSize: "12px",
-                    fontWeight:"500",
-                    paddingLeft:"10px"
-                  }
-                },
-                "& .MuiButtonBase-root":{
-                  color: "#298AFF",
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#212121',
+                boxSizing: 'border-box',
+                '&::placeholder': {
+                  color: '#757575',
+                  opacity: 1,
                   fontFamily: "'Manrope', serif",
-                  fontSize: "11px",
-                  lineHeight: "30px",
-                  textTransform: "none",
-                  fontWeight: "600",
-                  cursor:"pointer",
-                  padding:"0",
-                  "&:hover":{
-                    background:"none"
-                  }
-                }
+                  fontSize: '14px',
+                },
+              },
+              '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                border: '1px solid #D6DCE1',
+                backgroundColor: 'rgba(242, 245, 250, 0.3)',
+              },
+              '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+                {
+                  border: '1px solid #D6DCE1',
+                  borderRadius: '4px',
+                },
+              '& .MuiSvgIcon-root': {
+                fontSize: '18px',
+              },
+              '& .MuiDataGrid-columnsManagement': {
+                padding: '5px 0',
+                color: '#424242',
+                fontFamily: "'Manrope', serif",
+                fontSize: '14px',
+                '& .MuiFormControlLabel-root': {
+                  margin: '0',
+                  padding: '6px 0',
+                  '& span': {
+                    padding: '0',
+                  },
+                  '& .MuiTypography-root': {
+                    color: '#424242',
+                    fontFamily: "'Manrope', serif",
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    paddingLeft: '10px',
+                  },
+                },
+              },
+              '& .MuiDataGrid-columnsManagementFooter': {
+                padding: '0',
+                borderColor: '#F2F5FA',
+                paddingTop: '6px',
+                '& .MuiFormControlLabel-root': {
+                  margin: '0',
+                  '& span': {
+                    padding: '0',
+                  },
+                  '& .MuiTypography-root': {
+                    color: '#424242',
+                    fontFamily: "'Manrope', serif",
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    paddingLeft: '10px',
+                  },
+                },
+                '& .MuiButtonBase-root': {
+                  color: '#298AFF',
+                  fontFamily: "'Manrope', serif",
+                  fontSize: '11px',
+                  lineHeight: '30px',
+                  textTransform: 'none',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  padding: '0',
+                  '&:hover': {
+                    background: 'none',
+                  },
+                },
               },
             },
           },
@@ -277,73 +332,73 @@ export default function AllocationGrid({
               '& .MuiDataGrid-filterFormColumnInput': { mr: 2, width: 150 },
               '& .MuiDataGrid-filterFormOperatorInput': { mr: 2 },
               '& .MuiDataGrid-filterFormValueInput': { width: 200 },
-              "& .MuiDataGrid-filterForm":{
-                padding:"0"
+              '& .MuiDataGrid-filterForm': {
+                padding: '0',
               },
-              "& .MuiDataGrid-panelFooter":{
-                paddingBottom:"0",
-                marginBottom:"-5px"
+              '& .MuiDataGrid-panelFooter': {
+                paddingBottom: '0',
+                marginBottom: '-5px',
               },
-              "& .MuiInputBase-input":{
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
-                border: "1px solid #D6DCE1",
-                borderRadius: "4px",
-                color: "#212121",
+              '& .MuiInputBase-input': {
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                border: '1px solid #D6DCE1',
+                borderRadius: '4px',
+                color: '#212121',
                 fontFamily: "'Manrope', serif",
-                fontSize: "13px",
-                lineHeight: "16px",
-                textTransform: "none",
-                fontWeight: "600",
-                padding:"8px 10px"
+                fontSize: '13px',
+                lineHeight: '16px',
+                textTransform: 'none',
+                fontWeight: '600',
+                padding: '8px 10px',
               },
-              "& .MuiSelect-select":{
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
-                border: "1px solid #D6DCE1",
-                borderRadius: "4px",
-                color: "#212121",
+              '& .MuiSelect-select': {
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                border: '1px solid #D6DCE1',
+                borderRadius: '4px',
+                color: '#212121',
                 fontFamily: "'Manrope', serif",
-                fontSize: "13px",
-                lineHeight: "16px",
-                textTransform: "none",
-                fontWeight: "600",
-                padding:"8px 10px"
+                fontSize: '13px',
+                lineHeight: '16px',
+                textTransform: 'none',
+                fontWeight: '600',
+                padding: '8px 10px',
               },
-              "& .MuiInputBase-formControl":{
-                "&::before":{
-                  border:"none !important"
+              '& .MuiInputBase-formControl': {
+                '&::before': {
+                  border: 'none !important',
                 },
-                "&::after":{
-                  border:"none !important"
-                }
-              },
-              "& .MuiFormLabel-root":{
-                color: "#757575",
-                fontFamily: "'Manrope', serif",
-                fontSize: "13px",
-                lineHeight: "16px",
-                textTransform: "none",
-                fontWeight: "600",
-              },
-              "& .MuiButtonBase-root":{
-                color: "#298AFF",
-                fontFamily: "'Manrope', serif",
-                fontSize: "12px",
-                lineHeight: "14px",
-                textTransform: "none",
-                fontWeight: "600",
-                "& svg":{
-                  fontSize: "16px"
+                '&::after': {
+                  border: 'none !important',
                 },
-                "& .MuiButton-icon":{
-                  marginRight:"3px"
-                }
               },
-              "& .MuiDataGrid-filterFormDeleteIcon":{
-                display:"none"
+              '& .MuiFormLabel-root': {
+                color: '#757575',
+                fontFamily: "'Manrope', serif",
+                fontSize: '13px',
+                lineHeight: '16px',
+                textTransform: 'none',
+                fontWeight: '600',
               },
-              "& .MuiDataGrid-filterFormLogicOperatorInput":{
-                display:"none"
-              }
+              '& .MuiButtonBase-root': {
+                color: '#298AFF',
+                fontFamily: "'Manrope', serif",
+                fontSize: '12px',
+                lineHeight: '14px',
+                textTransform: 'none',
+                fontWeight: '600',
+                '& svg': {
+                  fontSize: '16px',
+                },
+                '& .MuiButton-icon': {
+                  marginRight: '3px',
+                },
+              },
+              '& .MuiDataGrid-filterFormDeleteIcon': {
+                display: 'none',
+              },
+              '& .MuiDataGrid-filterFormLogicOperatorInput': {
+                display: 'none',
+              },
             },
           },
         }}
@@ -353,7 +408,7 @@ export default function AllocationGrid({
         groupingColDef={getGroupingColDef(groupBy)}
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
-        editMode="row"
+        editMode="cell"
       />
     </Box>
   );

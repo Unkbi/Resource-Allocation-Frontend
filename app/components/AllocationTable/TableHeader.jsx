@@ -1,7 +1,8 @@
 import clsx from 'clsx';
 import { getWeekNumber } from '@/app/utils/common';
+import { TOTAL_FUTURE_WEEKS } from '@/app/constants/constants';
 
-const WEEK_COUNT = 20;
+const WEEK_COUNT = TOTAL_FUTURE_WEEKS + 2;
 const getStartDate = () => {
   const now = new Date();
   const day = now.getDay();
@@ -35,6 +36,17 @@ const generateWeeklyColumns = startDate => {
       field: getWeekNumber(addDays(startDate, i * 7)),
       headerName: getWeekNumber(addDays(startDate, i * 7)),
       width: 50,
+      valueGetter: params => {
+        if (
+          params?.value &&
+          typeof params === 'object' &&
+          params?.value !== undefined
+        ) {
+          return params.value;
+        } else {
+          return params;
+        }
+      },
       editable: true,
       type: 'number',
       headerClassName: clsx('weekly-header', {
