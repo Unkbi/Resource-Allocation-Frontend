@@ -141,9 +141,9 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       width: '36px',
       minWidth: '36px',
       height: '100%',
-      borderRadius:"0",
-      "& svg":{
-        fontSize:"24px"
+      borderRadius: '0',
+      '& svg': {
+        fontSize: '24px',
       },
       '&.selected': {
         color: '#212121',
@@ -248,7 +248,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             ))}
           </Select>
         </FormControl>
-        <Box className="viewFilterBlock">
+        {/* <Box className="viewFilterBlock">
           <Button size="small" className="selected">
             <img src={'/images/icons/capacity.svg'} alt="capacity" />
           </Button>
@@ -259,7 +259,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           <Button size="small">
             <img src={'/images/icons/currency.svg'} alt="currency" />
           </Button>
-        </Box>
+        </Box> */}
       </ToolBox1>
 
       <ToolBox2 flex={1} className="filterTopRow">
@@ -368,7 +368,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            <Button className="selectedDate">Jan 25 - Dec 25</Button>
+            <Button className="selectedDate">Default</Button>
 
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />

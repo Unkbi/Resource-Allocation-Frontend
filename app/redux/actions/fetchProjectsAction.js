@@ -3,7 +3,7 @@ import {
   getProjectAllocations,
 } from '@/app/services/projectServices';
 import { updateAllocations } from '../reducers/projectsReducer';
-import { getWeekNumber, isCurrentOrPreviousWeek } from '@/app/utils/common';
+import { getWeekNumber, isWithin20WeeksRange } from '@/app/utils/common';
 
 export const fetchAllProjects = () => async dispatch => {
   try {
@@ -13,7 +13,7 @@ export const fetchAllProjects = () => async dispatch => {
   }
 };
 
-const formatAllocations = allocationsData => {
+const formatAllocations = (allocationsData, projectId) => {
   const allocationMap = new Map();
 
   allocationsData.result.forEach(allocation => {
@@ -22,11 +22,13 @@ const formatAllocations = allocationsData => {
     const periodDate = new Date(allocation.Period);
     const weekNumber = getWeekNumber(periodDate);
 
-    // Using Resource as the unique identifier
-    const existingAllocation = allocationMap.get(allocation.Resource);
+    // Using Resource + Project ID as the unique identifier
+    const existingAllocation = allocationMap.get(
+      allocation.Resource + projectId
+    );
 
     if (existingAllocation) {
-      if (isCurrentOrPreviousWeek(allocation.Period)) {
+      if (isWithin20WeeksRange(allocation.Period)) {
         existingAllocation[weekNumber] = {
           allocationId: allocation.Allocation,
           value: allocation.AllocationEntered,
@@ -35,9 +37,10 @@ const formatAllocations = allocationsData => {
       }
     } else {
       const newAllocation = {
-        id: allocation.Resource,
+        id: allocation.Resource + projectId,
+        resourceId: allocation.Resource,
         project: allocation.ProjectName,
-        projectId: allocation.Project,
+        projectId: projectId,
         resource: allocation.ResourceName,
         totalEffort: allocation.AllocationEntered,
         role: 'Trader', //Mock data, needs to be replaced later with API data.
@@ -45,14 +48,14 @@ const formatAllocations = allocationsData => {
         resourceType: 'FTE', //Mock data, needs to be replaced later with API data.
       };
 
-      if (isCurrentOrPreviousWeek(allocation.Period)) {
+      if (isWithin20WeeksRange(allocation.Period)) {
         newAllocation[weekNumber] = {
           allocationId: allocation.Allocation,
           value: allocation.AllocationEntered,
         };
       }
 
-      allocationMap.set(allocation.Resource, newAllocation);
+      allocationMap.set(allocation.Resource + projectId, newAllocation);
     }
   });
   // Converting Map back to an array
@@ -67,7 +70,7 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
         'ProjectPortfolio.Core/GetProjectAllocationsForPeriod': {
           Project: project.Id,
           StartDate: '2025-01-01',
-          EndDate: '2025-02-19',
+          EndDate: '2025-12-31',
         },
       };
 
@@ -75,7 +78,10 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
 
       if (result.meta.requestStatus === 'fulfilled') {
         const allocationsData = result.payload[0];
-        const formattedAllocations = formatAllocations(allocationsData);
+        const formattedAllocations = formatAllocations(
+          allocationsData,
+          project.Id
+        );
 
         allAllocations = [...allAllocations, ...formattedAllocations];
       }

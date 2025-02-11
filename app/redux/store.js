@@ -4,6 +4,7 @@ import allocationViewReducer from '../redux/reducers/allocationViewReducer';
 import teamsReducer from './reducers/teamsReducer';
 import projectsReducer from './reducers/projectsReducer';
 import resourcesReducer from './reducers/resourcesReducer';
+import resourceAllocationReducer from './reducers/resourceAllocationReducer';
 
 export const makeStore = () => {
   return configureStore({
@@ -13,6 +14,7 @@ export const makeStore = () => {
       teams: teamsReducer,
       projects: projectsReducer,
       resources: resourcesReducer,
+      resourceAllocations: resourceAllocationReducer,
     },
   });
 };
