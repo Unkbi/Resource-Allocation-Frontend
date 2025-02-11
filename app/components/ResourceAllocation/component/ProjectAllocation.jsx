@@ -1,14 +1,15 @@
 'use client';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { columnGroupingModel } from '../../AllocationTable/TableHeader';
-import { useDispatch, useSelector } from 'react-redux';
-import { useEffect, useState } from 'react';
 import {
   fetchAllProjectAllocations,
   fetchAllProjects,
 } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import CenteredLoader from '../../Shared/Loader/CenteredLoader';
 
 const projectColumnConfig = [
   {
@@ -60,7 +61,7 @@ export default function ProjectAllocation() {
   }, [projects, allocationsFetched]);
   return (
     <>
-      {loading && <div>Loading...</div>}
+      {loading && <CenteredLoader />}
       {allocations && allocations.length > 0 && (
         <AllocationGrid
           groupBy="project"
