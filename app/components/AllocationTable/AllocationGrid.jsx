@@ -9,6 +9,7 @@ import {
   calculateTotalEffort,
   getMondayOfWeek,
   getProjectIdByName,
+  isResourceInProject,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import { StyledDataGrid } from './styles/StyledDataGrid';
@@ -94,11 +95,13 @@ export default function AllocationGrid({
         }, {}),
       hasButton: false,
     };
-    setRowsState(prevRows =>
-      prevRows.flatMap(row =>
-        row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row]
-      )
-    );
+    if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
+      setRowsState(prevRows =>
+        prevRows.flatMap(row =>
+          row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row]
+        )
+      );
+    }
     setIsSearchMode(false);
   };
   const finalColumns = getFinalColumns(

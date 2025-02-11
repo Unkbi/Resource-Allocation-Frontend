@@ -130,3 +130,17 @@ export const getProjectIdByName = (projects, projectName) => {
 
   return project ? project.Id : null;
 };
+
+/**
+ * Checks if a resource is present for a specific project.
+ *
+ * @param {Array<Object>} data - The array of project-resource objects.
+ * @param {string} projectName - The name of the project to check.
+ * @param {string} resourceName - The name of the resource to check.
+ * @return {boolean} - Returns true if the resource is found in the project, otherwise false.
+ */
+export const isResourceInProject = (data, projectName, resourceName) => {
+  return data.some(
+    item => item.project === projectName && item.resource === resourceName
+  );
+};
