@@ -137,7 +137,7 @@ const Header = () => {
             sx={{ cursor: 'pointer' }}
           >
             <Typography variant="h6">
-              {`${FirstName?.[0]}${LastName?.[0]}`.toUpperCase()}
+              {`${FirstName?.[0] || ""}${LastName?.[0] || ""}`.toUpperCase()}
             </Typography>
             {/* <img src={"/images/icons/profile.svg"} alt='' /> */}
           </Box>
