@@ -26,7 +26,7 @@ import TooltipButton from '../Button/TooltipButton';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
-  width: '290px',
+  width: '240px',
   padding: '7px 14px 5px 14px',
   justifyContent: 'space-between',
   alignItems: 'center',

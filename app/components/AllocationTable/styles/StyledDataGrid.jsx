@@ -4,14 +4,14 @@ import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
-      width: '290px !important',
+      width: '240px !important',
     },
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
     {
-      width: '290px !important',
+      width: '240px !important',
     },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
-    width: '290px',
+    width: '240px',
   },
 
   [`& .${gridClasses.columnHeader}`]: {

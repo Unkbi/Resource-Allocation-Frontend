@@ -13,10 +13,10 @@ import { PUBLIC_ROUTES } from "./constants/constants";
 import { getUserData } from "./redux/actions/authActions";
 import { useDispatch } from "react-redux";
 
-const MainContent = styled(Box)(() => ({
+const MainContent = styled(Box)(({isLoggedIn}) => ({
   background: "#fff",
-  marginLeft: "74px",
-  paddingTop: "52px",
+  marginLeft: `${isLoggedIn ? "74px":'0'}`,
+  paddingTop: `${isLoggedIn ? "52px":'0'}`,
 }));
 
 function LayoutContent({ children }) {
@@ -44,7 +44,7 @@ function LayoutContent({ children }) {
     <>
       {!isPublicRoute && <Header />}
       {!isPublicRoute && <SideBar />}
-      <MainContent>{children}</MainContent>
+      <MainContent isLoggedIn={isLoggedIn}>{children}</MainContent>
     </>
   );
 }

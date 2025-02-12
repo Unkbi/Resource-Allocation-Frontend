@@ -56,6 +56,39 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
   },
   "& .settingIcon": {
     padding: "0"
+  },
+  "& .profileLogo":{
+    backgroundColor: "#1c2d5f",
+    width: "22px",
+    height: "22px",
+    borderRadius: "50%",
+    fontSize: "10px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "700",
+    lineHeight: "21px",
+    color: "#fff",
+    paddingTop:"0px"
+  },
+  "& .profileMenu":{
+    backgroundColor: '#FFFFFF',
+    boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
+    marginTop: "16px",
+    minWidth: "160px",
+    "& li":{
+      fontFamily: "'Manrope', serif",
+      fontWeight: "500",
+      fontSize: "14px",
+      lineHeight: "22px",
+      color:"#212121",
+      "& .MuiTouchRipple-root":{
+        display:"none"
+      },
+      "&.Mui-focusVisible":{
+        backgroundColor: '#FFFFFF',
+      }
+    }
   }
 }));
 
@@ -136,7 +169,7 @@ const Header = () => {
             aria-controls={open ? 'composition-menu' : undefined}
             sx={{ cursor: 'pointer' }}
           >
-            <Typography variant="h6">
+            <Typography variant="h4" className="profileLogo">
               {`${FirstName?.[0] || ""}${LastName?.[0] || ""}`.toUpperCase()}
             </Typography>
             {/* <img src={"/images/icons/profile.svg"} alt='' /> */}
@@ -159,7 +192,7 @@ const Header = () => {
                 placement === 'bottom-start' ? 'left top' : 'left bottom',
             }}
           >
-            <Paper>
+            <Paper className="profileMenu">
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList
                   autoFocusItem={open}
