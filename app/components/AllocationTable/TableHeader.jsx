@@ -49,6 +49,7 @@ const generateWeeklyColumns = startDate => {
       },
       editable: true,
       type: 'number',
+      filterable: false,
       headerClassName: clsx('weekly-header', {
         'current-week-header': isCurrentWeek,
       }),

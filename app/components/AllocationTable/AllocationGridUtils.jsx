@@ -78,6 +78,7 @@ export const getGroupingColDef = groupBy => ({
   headerName: groupPage(groupBy),
   renderHeader: () => groupPage(groupBy),
   renderCell: params => params.value,
+  filterable: false,
 });
 
 export const getCellClassName = (params, updatedRows) => {
