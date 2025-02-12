@@ -4,6 +4,7 @@ import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
+import CenteredLoader from '../../Shared/Loader/CenteredLoader';
 
 const teamsColumnConfig = [
   {
@@ -46,6 +47,7 @@ export default function TeamAllocation() {
   }, []);
   return (
     <>
+      {loading && <CenteredLoader />}
       <AllocationGrid
         groupBy="teams"
         columns={teamsColumnConfig}

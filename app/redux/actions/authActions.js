@@ -53,7 +53,7 @@ export const performForgotPassword = (email) => async (dispatch) => {
 };
 
 // Confirm Forgot Password Action
-export const performConfirmForgotPassword = (data) => async (dispatch) => {
+export const performResetPassword = (data) => async (dispatch) => {
   try {
     const response = await dispatch(confirmForgotPassword(data)).unwrap();
     console.log('Password reset successful:', response);
