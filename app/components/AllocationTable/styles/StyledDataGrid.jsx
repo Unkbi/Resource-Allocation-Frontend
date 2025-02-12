@@ -1,3 +1,4 @@
+import { getInitialsColor } from '@/app/utils/common';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
@@ -22,7 +23,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
         left: '0px',
         width: '5px',
         height: '40px',
-        backgroundColor: '#FFBFB0',
+        backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
       },
     },
 

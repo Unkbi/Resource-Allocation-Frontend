@@ -144,3 +144,21 @@ export const isResourceInProject = (data, projectName, resourceName) => {
     item => item.project === projectName && item.resource === resourceName
   );
 };
+
+export const getInitialsColor = name => {
+  const colors = [
+    '#816CB3',
+    '#B56A9B',
+    '#4779CD',
+    '#6BB6B2',
+    '#DD5091',
+    '#828F95',
+    '#7B90DE',
+    '#E59D6D',
+  ];
+
+  // Generate a hash from the name to pick a color
+  const hash =
+    name && name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+};
