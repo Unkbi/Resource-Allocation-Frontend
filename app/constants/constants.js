@@ -216,4 +216,4 @@ export const themeColors = {
   export const BASE_FONT_SIZE = 16;
 
 
-  export const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/signup-otp'];
+  export const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/signup-otp','/reset-password'];

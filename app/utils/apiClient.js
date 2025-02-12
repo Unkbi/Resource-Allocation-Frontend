@@ -1,11 +1,10 @@
 import axios from 'axios';
 import { getToken, getRefreshToken, saveToken, clearAuth, saveRefreshToken } from './authUtils';
 
-const authBaseURL = process.env.NEXT_PUBLIC_AUTH_BASE_URL;
 const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const MAX_RETRIES = 3;
 const axiosInstance = axios.create({
-  baseURL: authBaseURL,
+  baseURL: apiBaseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -25,9 +24,6 @@ const addRefreshSubscriber = (callback) => {
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    if (config.url.includes('/api')) {
-      config.baseURL = apiBaseURL;
-    }
     const token = getToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -68,7 +64,7 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post(`${authBaseURL}/refresh-token`, {
+        const response = await axios.post(`${apiBaseURL}/refresh-token`, {
           "Agentlang.Kernel.Identity/RefreshToken": {
             RefreshToken: refreshToken,
           },
