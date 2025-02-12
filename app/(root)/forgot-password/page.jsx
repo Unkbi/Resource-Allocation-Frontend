@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { performLogin } from '@/app/redux/actions/authActions';
 import {
     Box,
     Typography,
@@ -15,6 +14,7 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
+import { performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -171,32 +171,19 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const dispatch = useDispatch();
-    const { loading, error, user } = useSelector((state) => state.user);
-    const router = useRouter();
-    const [showPassword, setShowPassword] = React.useState(false);
-    const handleLogin = (e) => {
+    const { loading, error, forgotPasswordMessage } = useSelector((state) => state.user);
+
+    const handleForgotPassword = (e) => {
         e.preventDefault();
-        dispatch(performLogin(
-            {
-                "Agentlang.Kernel.Identity/UserLogin": {
-                    "Username": email,
-                    "Password": password
-                }
-            }));
-    }
-
-    useEffect(() => {
-        if (user) {
-            router.push('/dashboard');
-        }
-    }, [user, router]);
-
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
+        dispatch(performForgotPassword({
+            'Agentlang.Kernel.Identity/ForgotPassword': {
+                Username: email
+            }
+        }));
+        setEmail('');
     };
 
     return (
@@ -214,14 +201,14 @@ export default function LoginPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Welcome
+                            Forgot Password
                         </Typography>
                         <Typography className='subHeadingText'>
-                            Please enter your details
+                            We will send you an link to reset your password
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleLogin}
+                            onSubmit={handleForgotPassword}
                         >
                             <TextField
                                 className='textField'
@@ -234,32 +221,7 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Password"
-                                type={showPassword ? "text" : "password"}
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleTogglePassword} edge="end">
-                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <Box className='forgot'>
-                                <Link href="/forgot-password" underline="hover">
-                                    Forgot Password?
-                                </Link>
-                            </Box>
+
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -269,40 +231,32 @@ export default function LoginPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign in'}
-                            </Button>
-                            <Typography className='orText'>
-                                <span>OR</span>
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='googleButton'
-                            >
-                                <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='signWithSSO'
-                            >
-                                Sign in with SSO
+                                {loading ? <CircularProgress size={24} /> : 'Submit'}
                             </Button>
                         </Box>
-                        {/* <Typography className='noAccount'>
-                            Don't have an account?{' '}
-                            <Link href="/signup" underline="hover" color="primary">
-                                Sign up
+                        <Typography className='noAccount'>
+                            Back to {""}
+                            <Link href="/login" underline="hover" color="primary">
+                                Sign in
                             </Link>
-                        </Typography> */}
+                        </Typography>
                     </Box>
                 </Box>
             </Box>
+            {(forgotPasswordMessage && !error) && (
+                <Typography
+                    variant="body2"
+                    color="success"
+                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
+                >
+                    A password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.
+                </Typography>
+            )}
             {error && (
                 <Typography
                     variant="body2"
                     color="error"
-                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
+                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
                 >
                     {error}
                 </Typography>

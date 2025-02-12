@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { performLogin } from '@/app/redux/actions/authActions';
 import {
     Box,
     Typography,
@@ -15,6 +14,7 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
+import { signUp } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -171,23 +171,41 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function LoginPage() {
+export default function SingupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [mobile, setMobile] = useState('');
+
     const dispatch = useDispatch();
-    const { loading, error, user } = useSelector((state) => state.user);
+    const { loading, user, signupData, error } = useSelector((state) => state.user);
     const router = useRouter();
+
     const [showPassword, setShowPassword] = React.useState(false);
-    const handleLogin = (e) => {
+
+    const handleSignup = async (e) => {
         e.preventDefault();
-        dispatch(performLogin(
-            {
-                "Agentlang.Kernel.Identity/UserLogin": {
-                    "Username": email,
-                    "Password": password
+        if (!firstName || !lastName || !email || !password || !mobile) {
+            return;
+        }
+        dispatch(signUp({
+            'Agentlang.Kernel.Identity/SignUp': {
+                'User': {
+                    'Agentlang.Kernel.Identity/User': {
+                        Name: `${firstName} ${lastName}`,
+                        FirstName: firstName,
+                        LastName: lastName,
+                        Email: email,
+                        UserData: {
+                            PhoneNumber: mobile
+                        },
+                        Password: password
+                    }
                 }
-            }));
-    }
+            }
+        }, email));
+    };
 
     useEffect(() => {
         if (user) {
@@ -198,6 +216,10 @@ export default function LoginPage() {
     const handleTogglePassword = () => {
         setShowPassword((prev) => !prev);
     };
+
+    if (signupData && !error) {
+        router.push('/signup-otp');
+    }
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -214,15 +236,40 @@ export default function LoginPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Welcome
+                            Create an Account
                         </Typography>
                         <Typography className='subHeadingText'>
                             Please enter your details
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleLogin}
+                            onSubmit={handleSignup}
                         >
+                            <TextField
+                                className='textField'
+                                id="outlined-basic"
+                                placeholder="First Name"
+                                variant="outlined"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                            />
+                            <TextField
+                                className='textField'
+                                id="outlined-basic"
+                                placeholder="Last Name"
+                                variant="outlined"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                            />
+                            <TextField
+                                className='textField'
+                                id="outlined-basic"
+                                placeholder="Mobile Number"
+                                variant="outlined"
+                                type='tel'
+                                value={mobile}
+                                onChange={(e) => setMobile(e.target.value)}
+                            />
                             <TextField
                                 className='textField'
                                 id="outlined-basic"
@@ -255,11 +302,14 @@ export default function LoginPage() {
                                     ),
                                 }}
                             />
-                            <Box className='forgot'>
-                                <Link href="/forgot-password" underline="hover">
-                                    Forgot Password?
-                                </Link>
-                            </Box>
+                            {error && (
+                                <Typography
+                                    variant="body2"
+                                    color="error"
+                                >
+                                    {error}
+                                </Typography>
+                            )}
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -269,44 +319,18 @@ export default function LoginPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign in'}
-                            </Button>
-                            <Typography className='orText'>
-                                <span>OR</span>
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='googleButton'
-                            >
-                                <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='signWithSSO'
-                            >
-                                Sign in with SSO
+                                {loading ? <CircularProgress size={24} /> : 'Sign up'}
                             </Button>
                         </Box>
-                        {/* <Typography className='noAccount'>
-                            Don't have an account?{' '}
-                            <Link href="/signup" underline="hover" color="primary">
-                                Sign up
+                        <Typography className='noAccount'>
+                            Already have an account?{' '}
+                            <Link href="/login" underline="hover" color="primary">
+                                Sign in
                             </Link>
-                        </Typography> */}
+                        </Typography>
                     </Box>
                 </Box>
             </Box>
-            {error && (
-                <Typography
-                    variant="body2"
-                    color="error"
-                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
-                >
-                    {error}
-                </Typography>
-            )}
         </MainBox>
     );
 }

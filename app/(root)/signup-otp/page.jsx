@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { performLogin } from '@/app/redux/actions/authActions';
 import {
     Box,
     Typography,
@@ -15,6 +14,9 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import Image from 'next/image';
+import { confirmSignUpUser, performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -171,33 +173,49 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+export default function SignUpOtpPage() {
+    const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const dispatch = useDispatch();
-    const { loading, error, user } = useSelector((state) => state.user);
+    const { loading, error, user, signupData } = useSelector((state) => state.user);
+    const inputRefs = useRef([]);
     const router = useRouter();
-    const [showPassword, setShowPassword] = React.useState(false);
-    const handleLogin = (e) => {
+
+    const handleVerifyOtp = (e) => {
         e.preventDefault();
-        dispatch(performLogin(
-            {
-                "Agentlang.Kernel.Identity/UserLogin": {
-                    "Username": email,
-                    "Password": password
-                }
-            }));
-    }
-
-    useEffect(() => {
-        if (user) {
-            router.push('/dashboard');
-        }
-    }, [user, router]);
-
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
+        dispatch(confirmSignUpUser({
+            'Agentlang.Kernel.Identity/ConfirmSignUp': {
+                Username: signupData,
+                ConfirmationCode: otp.join(""),
+            }
+        }));
     };
+
+    const handleChange = (index, event) => {
+        const value = event.target.value.replace(/\D/g, "").slice(0, 1);
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (index, event) => {
+        if (event.key === "Backspace" && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handleResendOtp = (e) => {
+        e.preventDefault();
+        dispatch(performForgotPassword({
+            'Agentlang.Kernel.Identity/ForgotPassword': {
+                Username: signupData
+            }
+        }));
+    };
+
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -214,52 +232,32 @@ export default function LoginPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Welcome
+                            Verify with OTP
                         </Typography>
                         <Typography className='subHeadingText'>
-                            Please enter your details
+                            We've sent a verification code to {signupData}
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleLogin}
+                            onSubmit={handleVerifyOtp}
                         >
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Email Id"
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                variant="outlined"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Password"
-                                type={showPassword ? "text" : "password"}
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleTogglePassword} edge="end">
-                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <Box className='forgot'>
-                                <Link href="/forgot-password" underline="hover">
-                                    Forgot Password?
-                                </Link>
-                            </Box>
+                            {otp.map((digit, index) => (
+                                <TextField
+                                    key={index}
+                                    variant="outlined"
+                                    value={digit}
+                                    onChange={(e) => handleChange(index, e)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    inputProps={{
+                                        maxLength: 1,
+                                        pattern: "[0-9]*",
+                                        inputMode: "numeric",
+                                        style: { textAlign: "center", width: "40px" },
+                                    }}
+                                    inputRef={(el) => (inputRefs.current[index] = el)}
+                                />
+                            ))}
+
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -269,32 +267,12 @@ export default function LoginPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign in'}
-                            </Button>
-                            <Typography className='orText'>
-                                <span>OR</span>
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='googleButton'
-                            >
-                                <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='signWithSSO'
-                            >
-                                Sign in with SSO
+                                {loading ? <CircularProgress size={24} /> : 'Verify'}
                             </Button>
                         </Box>
-                        {/* <Typography className='noAccount'>
-                            Don't have an account?{' '}
-                            <Link href="/signup" underline="hover" color="primary">
-                                Sign up
-                            </Link>
-                        </Typography> */}
+                        <Typography className='noAccount' onClick={handleResendOtp}>
+                            Resend OTP
+                        </Typography>
                     </Box>
                 </Box>
             </Box>
