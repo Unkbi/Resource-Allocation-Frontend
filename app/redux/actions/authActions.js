@@ -46,9 +46,7 @@ export const getUserData = () => async (dispatch) => {
 // Forgot Password Action
 export const performForgotPassword = (email) => async (dispatch) => {
   try {
-    console.log('Forgot Password:', email);
-    const response = await dispatch(forgotPassword(email)).unwrap();
-    console.log('Reset link sent:', response);
+   await dispatch(forgotPassword(email)).unwrap();
   } catch (error) {
     console.error('Forgot password request failed:', error);
   }

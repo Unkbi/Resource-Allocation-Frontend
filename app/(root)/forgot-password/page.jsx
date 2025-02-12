@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser } from '../../services/authServices';
 import { useRouter } from 'next/navigation';
 import {
     Box,
@@ -15,8 +14,6 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import Image from 'next/image';
 import { performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
@@ -177,9 +174,7 @@ const MainBox = styled(Box)(({ theme }) => ({
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
     const dispatch = useDispatch();
-    const { loading, error, user } = useSelector((state) => state.user);
-    // const router = useRouter();
-
+    const { loading, error, forgotPasswordMessage } = useSelector((state) => state.user);
 
     const handleForgotPassword = (e) => {
         e.preventDefault();
@@ -188,6 +183,7 @@ export default function ForgotPasswordPage() {
                 Username: email
             }
         }));
+        setEmail('');
     };
 
     return (
@@ -208,7 +204,7 @@ export default function ForgotPasswordPage() {
                             Forgot Password
                         </Typography>
                         <Typography className='subHeadingText'>
-                            We will send you an otp to reset your password
+                            We will send you an link to reset your password
                         </Typography>
                         <Box
                             component="form"
@@ -235,23 +231,32 @@ export default function ForgotPasswordPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Send OTP'}
+                                {loading ? <CircularProgress size={24} /> : 'Submit'}
                             </Button>
                         </Box>
                         <Typography className='noAccount'>
                             Back to {""}
-                            <Link href="/signup" underline="hover" color="primary">
-                                Sign up
+                            <Link href="/login" underline="hover" color="primary">
+                                Sign in
                             </Link>
                         </Typography>
                     </Box>
                 </Box>
             </Box>
+            {(forgotPasswordMessage && !error) && (
+                <Typography
+                    variant="body2"
+                    color="success"
+                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
+                >
+                    A password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.
+                </Typography>
+            )}
             {error && (
                 <Typography
                     variant="body2"
                     color="error"
-                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
+                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
                 >
                     {error}
                 </Typography>

@@ -73,7 +73,7 @@ const authSlice = createSlice({
       })
       .addCase(forgotPassword.fulfilled, (state, action) => {
         state.loading = false;
-        state.forgotPasswordMessage = action.payload.message;
+        state.forgotPasswordMessage = action.payload.statusText;
       })
       .addCase(forgotPassword.rejected, (state, action) => {
         state.loading = false;

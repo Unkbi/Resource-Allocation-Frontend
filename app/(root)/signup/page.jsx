@@ -217,8 +217,6 @@ export default function SingupPage() {
         setShowPassword((prev) => !prev);
     };
 
-    console.log('signupData', signupData, error);
-
     if (signupData && !error) {
         router.push('/signup-otp');
     }

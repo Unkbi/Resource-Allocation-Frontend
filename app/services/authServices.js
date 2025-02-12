@@ -40,7 +40,6 @@ export const signupUser = createAsyncThunk(
       const response = await axiosInstance.post('/signup', data);
       return response.data;
     } catch (error) {
-      console.error('Signup failed:', error.response);
       return rejectWithValue(error.response?.data?.reason || 'Signup failed');
     }
   }
@@ -53,7 +52,6 @@ export const confirmSignUp = createAsyncThunk(
       const response = await axiosInstance.post('/confirm-sign-up', data);
       return response.data;
     } catch (error) {
-      console.error('Signup failed:', error.response);
       return rejectWithValue(error.response?.data?.reason || 'Signup failed');
     }
   }
@@ -71,9 +69,8 @@ export const forgotPassword = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/forgot-password', data);
-      return response.data.message; 
+      return response; 
     } catch (error) {
-      console.error('Forgot Password failed:', error.response);
       return rejectWithValue(error.response?.data?.reason || 'Failed to send reset link');
     }
   }
@@ -86,7 +83,6 @@ export const confirmForgotPassword = createAsyncThunk(
       const response = await axiosInstance.post('/confirm-forgot-password', data);
       return response.data.message;
     } catch (error) {
-      console.error('Reset Password failed:', error.response);
       return rejectWithValue(error.response?.data?.reason || 'Failed to reset password');
     }
   }
