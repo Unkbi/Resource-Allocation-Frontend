@@ -6,7 +6,7 @@ export const postResourceAllocations = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        `ProjectPortfolio.Core/Resource/${params.resourceId}/ResourceAllocation/Allocation`,
+        `/api/ProjectPortfolio.Core/Resource/${params.resourceId}/ResourceAllocation/Allocation`,
         params.postData
       );
       return response.data;
