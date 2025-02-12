@@ -13,6 +13,18 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     width: '240px',
   },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
+    {
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        top: '5px',
+        left: '0px',
+        width: '5px',
+        height: '40px',
+        backgroundColor: '#FFBFB0',
+      },
+    },
 
   [`& .${gridClasses.columnHeader}`]: {
     '&.prime-header': {},
@@ -143,6 +155,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .fully-occupied': {
     backgroundColor: '#C4E5C4',
     border: '#7AB17A',
+  },
+  '& .firstGroupsRow': {
+    backgroundColor: '#E9EFF8',
   },
   '& .MuiDataGrid-cell:focus-within': {
     outline: 'none',

@@ -106,7 +106,7 @@ export const getCellClassName = (params, updatedRows) => {
       const percentage = (aggregatedValue / totalRows) * 100;
 
       if (percentage === 0) {
-        return '';
+        return 'firstGroupsRow';
       } else if (percentage <= 20) {
         return 'poor-allocation';
       } else if (percentage > 20 && percentage <= 50) {
@@ -115,6 +115,9 @@ export const getCellClassName = (params, updatedRows) => {
         return 'fully-occupied';
       }
     }
+  }
+  if (params.rowNode?.type === 'group') {
+    return 'firstGroupsRow';
   }
   return '';
 };

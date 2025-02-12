@@ -55,13 +55,11 @@ const generateWeeklyColumns = startDate => {
       }),
       cellClassName: params => {
         if (params.value == null) {
-          return '';
+          return 'weeklyCell';
         }
 
         return clsx('super-app', {
           weeklyCell: 'weeklyCell',
-          negative: params.value < 0,
-          positive: params.value > 0,
         });
       },
       disableColumnMenu: true,
