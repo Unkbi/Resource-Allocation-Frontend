@@ -1,12 +1,13 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../utils/apiClient';
+import { API_PROJECT_PORTFOLIO } from '../constants/constants';
 
 export const postResourceAllocations = createAsyncThunk(
   '/allocations/post',
   async (params, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        `/api/ProjectPortfolio.Core/Resource/${params.resourceId}/ResourceAllocation/Allocation`,
+        `${API_PROJECT_PORTFOLIO}/Resource/${params.resourceId}/ResourceAllocation/Allocation`,
         params.postData
       );
       return response.data;
@@ -23,7 +24,7 @@ export const putResourceAllocations = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(
-        `ProjectPortfolio.Core/Resource/${params.resourceId}/ResourceAllocation/Allocation/${params.allocationId}`,
+        `${API_PROJECT_PORTFOLIO}/Resource/${params.resourceId}/ResourceAllocation/Allocation/${params.allocationId}`,
         params.putData
       );
       return response.data;

@@ -62,13 +62,24 @@ export default function ProjectAllocation() {
   return (
     <>
       {loading && <CenteredLoader />}
-      {allocations && allocations.length > 0 && (
+      {allocations && allocations.length > 0 && !loading ? (
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
           columnGroupingModel={columnGroupingModel}
           data={allocations}
         />
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '90vh',
+          }}
+        >
+          <div>No Data</div>
+        </div>
       )}
     </>
   );

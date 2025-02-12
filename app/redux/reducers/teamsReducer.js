@@ -3,6 +3,7 @@ import { getAllTeams } from '@/app/services/teamServices';
 
 const initialState = {
   teams: null,
+  resources: [],
   loading: false,
   error: null,
 };
