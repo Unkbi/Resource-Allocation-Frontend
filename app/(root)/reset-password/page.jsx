@@ -231,7 +231,7 @@ export default function RestPasswordPage() {
                         <Typography variant="h4">
                             Reset Password
                         </Typography>
-                        <Typography className='subHeadingText'>
+                        <Typography className='subHeadingText' whiteSpace={'nowrap'}>
                             Your new password must be different from previous one
                         </Typography>
                         <Box
