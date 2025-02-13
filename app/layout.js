@@ -30,7 +30,7 @@ function LayoutContent({ children }) {
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   useEffect(() => {
     if (isLoggedIn && isPublicRoute) {
-      router.push('/dashboard');
+      router.push('/allocation');
     } else if (!isLoggedIn && !isPublicRoute) {
       router.push('/login');
     }
