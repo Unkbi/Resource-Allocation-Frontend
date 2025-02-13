@@ -1,5 +1,5 @@
 import { getAllColumnsWithWeek } from '@/app/components/AllocationTable/TableHeader';
-import { AddResourceButton } from '@/app/components/AllocationTable/AddResourceButton';
+import { AddRowButton } from '@/app/components/AllocationTable/AddRowButton';
 import CustomAvatar from '../Avatar/CustomAvatar';
 
 export const getInitialState = (groupBy, updatedRows) => ({
@@ -13,7 +13,13 @@ export const getInitialState = (groupBy, updatedRows) => ({
     model: {
       totalEffort: 'sum',
       ...Object.keys(updatedRows[0])
-        .filter(week => week.startsWith('W') && updatedRows.some(row => row[week] !== null && row[week] !== undefined))
+        .filter(
+          week =>
+            week.startsWith('W') &&
+            updatedRows.some(
+              row => row[week] !== null && row[week] !== undefined
+            )
+        )
         .reduce((acc, week) => {
           acc[week] = 'sum';
           return acc;
@@ -27,12 +33,13 @@ export const getFinalColumns = (
   columns,
   groupBy,
   setSelectedProject,
-  handleAddRow
+  handleAddRow,
+  setSelectedTeam,
+  handleAddProject,
+  setSelectedResourceId
 ) => {
   const allColumns = getAllColumnsWithWeek(columns);
-  if (groupBy === 'teams') {
-    return allColumns || [];
-  } else if (groupBy === 'organization') {
+  if (groupBy === 'organization') {
     return allColumns || [];
   } else {
     return [
@@ -46,11 +53,15 @@ export const getFinalColumns = (
         renderCell: params => {
           if (params.row.hasButton) {
             return (
-              <AddResourceButton
+              <AddRowButton
                 project={params.row.project}
                 handleAddRow={handleAddRow}
+                buttonName={
+                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
+                }
                 onClick={event => {
-                  setSelectedProject(params.row.project);
+                  setSelectedProject(params.row.project),
+                    setSelectedTeam(params.row.teams);
                 }}
               />
             );
@@ -58,6 +69,32 @@ export const getFinalColumns = (
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
           }
+        },
+      },
+      {
+        field: 'project',
+        headerName: 'Project',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        renderCell: params => {
+          if (params.row.hasProject && !params.row.project) {
+            return (
+              <AddRowButton
+                project={params.row.project}
+                handleAddRow={handleAddProject}
+                buttonName="Add Project"
+                onClick={event => {
+                  setSelectedProject(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId);
+                }}
+              />
+            );
+          }
+          if (params.value) {
+            return params.value;
+          }
+          return null;
         },
       },
       ...(allColumns?.slice(1) || []),
@@ -127,4 +164,50 @@ export const getCellClassName = (params, updatedRows) => {
     return 'firstGroupsRow';
   }
   return '';
+};
+
+export const getInitialRowsState = (updatedRows, groupBy) => {
+  if (groupBy === 'project') {
+    return [
+      ...updatedRows,
+      ...Array.from(new Set(updatedRows?.map(row => row.project))).map(
+        project => ({
+          id: `${project}-add-resource`,
+          project: project,
+          resource: '',
+          role: '',
+          totalEffort: '',
+          hasButton: true,
+          ...Object.keys(updatedRows[0])
+            .filter(key => key.startsWith('W'))
+            .reduce((acc, week) => {
+              acc[week] = '';
+              return acc;
+            }, {}),
+        })
+      ),
+    ];
+  } else if (groupBy === 'teams') {
+    return [
+      ...updatedRows,
+      ...Array.from(new Set(updatedRows?.map(row => row.teams))).map(teams => ({
+        id: `${teams}-add-resource`,
+        project: '',
+        teams: teams,
+        resource: '',
+        role: '',
+        totalEffort: '',
+        resourceId: '',
+        hasButton: true,
+        ...Object.keys(updatedRows[0])
+          .filter(key => key.startsWith('W'))
+          .reduce((acc, week) => {
+            acc[week] = '';
+            return acc;
+          }, {}),
+      })),
+    ];
+  } else {
+    return updatedRows;
+  }
 };

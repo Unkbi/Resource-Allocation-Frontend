@@ -1,5 +1,5 @@
-import { useState, lazy } from 'react';
-import { Box } from '@mui/material';
+import { useState, lazy, useEffect } from 'react';
+import { Box, Select } from '@mui/material';
 import {
   GridColumnMenuPinningItem,
   useGridApiRef,
@@ -10,6 +10,7 @@ import {
   getMondayOfWeek,
   getProjectIdByName,
   isResourceInProject,
+  isResourceInTeam,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -24,6 +25,7 @@ import {
   getGroupingColDef,
   groupPage,
   getCellClassName,
+  getInitialRowsState,
 } from './AllocationGridUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -42,10 +44,12 @@ export default function AllocationGrid({
   const apiRef = useGridApiRef();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProject, setSelectedProject] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedAllocationId, setSelectedAllocationId] = useState(null);
+  const [selectedResourceId, setSelectedResourceId] = useState('');
 
   const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
   const updatedRows = mapData.map(row => ({
@@ -53,25 +57,9 @@ export default function AllocationGrid({
     totalEffort: calculateTotalEffort(row),
   }));
 
-  const [rowsState, setRowsState] = useState(() => [
-    ...updatedRows,
-    ...Array.from(new Set(updatedRows.map(row => row.project))).map(
-      project => ({
-        id: `${project}-add-resource`,
-        project: project,
-        resource: '',
-        role: '',
-        totalEffort: '',
-        hasButton: true,
-        ...Object.keys(updatedRows[0])
-          .filter(key => key.startsWith('W'))
-          .reduce((acc, week) => {
-            acc[week] = '';
-            return acc;
-          }, {}),
-      })
-    ),
-  ]);
+  const [rowsState, setRowsState] = useState(() =>
+    getInitialRowsState(updatedRows, groupBy)
+  );
 
   const dispatch = useDispatch();
   const { projects } = useSelector(state => state.projects);
@@ -82,7 +70,7 @@ export default function AllocationGrid({
   });
 
   const handleAddRow = (e, resource) => {
-    const newRow = {
+    const newRowForProject = {
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: selectedProject,
@@ -98,22 +86,78 @@ export default function AllocationGrid({
         }, {}),
       hasButton: false,
     };
-    if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
-      setRowsState(prevRows =>
-        prevRows.flatMap(row =>
-          row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row]
-        )
-      );
+    const newRowForTeams = {
+      id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
+      resourceId: resource.Id,
+      project: '',
+      teamsId: getProjectIdByName(projects[0]?.result, selectedProject),
+      resource: resource.FullName,
+      teams: selectedTeam,
+      role: resource.Role,
+      totalEffort: resource.totalHours,
+      ...Object.keys(updatedRows[0])
+        .filter(key => key.startsWith('W'))
+        .reduce((acc, week) => {
+          acc[week] = '';
+          return acc;
+        }, {}),
+      hasButton: false,
+      hasProject: true,
+    };
+    if (groupBy === 'project') {
+      if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
+        setRowsState(prevRows =>
+          prevRows.flatMap(row =>
+            row.id === `${selectedProject}-add-resource`
+              ? [newRowForProject, row]
+              : [row]
+          )
+        );
+      }
+    } else if (groupBy === 'teams') {
+      if (!isResourceInTeam(rowsState, selectedTeam, resource.FullName)) {
+        setRowsState(prevRows =>
+          prevRows.flatMap(row =>
+            row.id === `${selectedTeam}-add-resource`
+              ? [newRowForTeams, row]
+              : [row]
+          )
+        );
+      }
     }
+
     setIsSearchMode(false);
+  };
+
+  const handleAddProject = (e, project) => {
+    setRowsState(prevRows => {
+      const updatedRows = prevRows.map(row => {
+        if (
+          row.resourceId === selectedResourceId &&
+          row.teams === selectedTeam
+        ) {
+          return {
+            ...row,
+            project: project.FullName,
+            projectId: getProjectIdByName(
+              projects[0]?.result,
+              project.FullName
+            ),
+          };
+        }
+        return row;
+      });
+      return updatedRows;
+    });
   };
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
     setSelectedProject,
     handleAddRow,
-    isSearchMode,
-    setIsSearchMode
+    setSelectedTeam,
+    handleAddProject,
+    setSelectedResourceId
   );
 
   const showField = [
@@ -174,7 +218,6 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
-
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -252,12 +295,11 @@ export default function AllocationGrid({
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
-      // aggregationRowsCount={
-      //   (params) => {
-      //     return params.rowNode.children?.length || 1;
-      //   }
-      // }
-
+        // aggregationRowsCount={
+        //   (params) => {
+        //     return params.rowNode.children?.length || 1;
+        //   }
+        // }
       />
     </Box>
   );

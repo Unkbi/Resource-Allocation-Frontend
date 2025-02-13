@@ -144,6 +144,10 @@ export const isResourceInProject = (data, projectName, resourceName) => {
   );
 };
 
+export const isResourceInTeam = (rows, team, resourceName) => {
+  return rows.some(row => row.teams === team && row.resource === resourceName);
+};
+
 export const getInitialsColor = name => {
   const colors = [
     '#816CB3',
