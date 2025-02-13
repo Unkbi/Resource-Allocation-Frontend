@@ -41,7 +41,7 @@ export const calculateTotalEffort = row => {
     .filter(key => key.startsWith('W'))
     .map(key => row[key]);
   return weeklyEfforts.reduce(
-    (total, effort) => total + (effort.value || 0),
+    (total, effort) => total + (effort?.value || 0),
     0
   );
 };

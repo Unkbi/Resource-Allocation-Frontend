@@ -13,7 +13,7 @@ export const getInitialState = (groupBy, updatedRows) => ({
     model: {
       totalEffort: 'sum',
       ...Object.keys(updatedRows[0])
-        .filter(key => key.startsWith('W'))
+        .filter(week => week.startsWith('W') && updatedRows.some(row => row[week] !== null && row[week] !== undefined))
         .reduce((acc, week) => {
           acc[week] = 'sum';
           return acc;
@@ -96,6 +96,13 @@ export const getCellClassName = (params, updatedRows) => {
       const projectRows = updatedRows.filter(
         row => row.project === projectName
       );
+      // const sum = projectRows.reduce((total, row) => {
+      //   return total + (Number(row[params.field])) || 0;
+      // }, 0);
+
+      // // Now use this sum for your conditional styling
+      // if (sum === 0) return 'no-allocation';
+      // if (sum > 0 && sum <= 20) return 'low-allocation';
 
       const totalRows = projectRows.length;
 
