@@ -12,7 +12,11 @@ import {
   isResourceInProject,
 } from '@/app/utils/common';
 import { demoRows } from './data';
-import { StyledDataGrid } from './styles/StyledDataGrid';
+import {
+  ColumnManagementStyles,
+  FilterPanelStyles,
+  StyledDataGrid,
+} from './styles/StyledDataGrid';
 import './styles/AllocationGrid.css';
 import {
   getInitialState,
@@ -28,7 +32,6 @@ import {
 } from '@/app/redux/actions/resourceAllocationAction';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
-const ResourcePopper = lazy(() => import('./components/ResourcePopper'));
 
 export default function AllocationGrid({
   groupBy,
@@ -171,7 +174,16 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
-
+  const validateAggregationParams = (params) => {
+    if (!params || typeof params !== 'object') return false;
+    if (!Array.isArray(params.values)) return false;
+    return true;
+  };
+  const aggregationFunctionss = () => {
+    console.log('params:: ', params)
+    const sum = params.values.reduce((a, b) => a + (Number(b) || 0), 0);
+    return sum === 0 ? null : sum;
+  };
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -184,6 +196,12 @@ export default function AllocationGrid({
         onProcessRowUpdateError={err => {
           console.error('Row update failed:', err);
         }}
+        // aggregationFunctions={
+        //   // aggregationFunctions()
+        //   (function (params) {
+        //     console.log('params:: ', params)
+        //   })()
+        // }
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
@@ -214,92 +232,7 @@ export default function AllocationGrid({
           },
           columnsPanel: {
             className: 'styleColumnMenu',
-            sx: {
-              '& .MuiDataGrid-columnsManagementHeader': {
-                padding: '0',
-              },
-              '& .MuiInputBase-input': {
-                height: '32px',
-                lineHeight: '32px',
-                background: '#FFFFFF 0% 0% no-repeat padding-box',
-                padding: '0',
-                borderRadius: '5px',
-                fontFamily: "'Manrope', serif",
-                fontSize: '12px',
-                fontWeight: '500',
-                color: '#212121',
-                boxSizing: 'border-box',
-                '&::placeholder': {
-                  color: '#757575',
-                  opacity: 1,
-                  fontFamily: "'Manrope', serif",
-                  fontSize: '14px',
-                },
-              },
-              '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-                border: '1px solid #D6DCE1',
-                backgroundColor: 'rgba(242, 245, 250, 0.3)',
-              },
-              '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                {
-                  border: '1px solid #D6DCE1',
-                  borderRadius: '4px',
-                },
-              '& .MuiSvgIcon-root': {
-                fontSize: '18px',
-              },
-              '& .MuiDataGrid-columnsManagement': {
-                padding: '5px 0',
-                color: '#424242',
-                fontFamily: "'Manrope', serif",
-                fontSize: '14px',
-                '& .MuiFormControlLabel-root': {
-                  margin: '0',
-                  padding: '6px 0',
-                  '& span': {
-                    padding: '0',
-                  },
-                  '& .MuiTypography-root': {
-                    color: '#424242',
-                    fontFamily: "'Manrope', serif",
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    paddingLeft: '10px',
-                  },
-                },
-              },
-              '& .MuiDataGrid-columnsManagementFooter': {
-                padding: '0',
-                borderColor: '#F2F5FA',
-                paddingTop: '6px',
-                '& .MuiFormControlLabel-root': {
-                  margin: '0',
-                  '& span': {
-                    padding: '0',
-                  },
-                  '& .MuiTypography-root': {
-                    color: '#424242',
-                    fontFamily: "'Manrope', serif",
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    paddingLeft: '10px',
-                  },
-                },
-                '& .MuiButtonBase-root': {
-                  color: '#298AFF',
-                  fontFamily: "'Manrope', serif",
-                  fontSize: '11px',
-                  lineHeight: '30px',
-                  textTransform: 'none',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  padding: '0',
-                  '&:hover': {
-                    background: 'none',
-                  },
-                },
-              },
-            },
+            sx: ColumnManagementStyles,
           },
           filterPanel: {
             columnsSort: 'asc',
@@ -324,85 +257,7 @@ export default function AllocationGrid({
                 },
               },
             },
-            sx: {
-              // Customize inputs using css selectors
-              '& .MuiDataGrid-filterForm': { p: 2 },
-              '& .MuiDataGrid-filterForm:nth-child(even)': {
-                backgroundColor: theme =>
-                  theme.palette.mode === 'dark' ? '#444' : '#f5f5f5',
-              },
-              '& .MuiDataGrid-filterFormLogicOperatorInput': { mr: 2 },
-              '& .MuiDataGrid-filterFormColumnInput': { mr: 2, width: 150 },
-              '& .MuiDataGrid-filterFormOperatorInput': { mr: 2 },
-              '& .MuiDataGrid-filterFormValueInput': { width: 200 },
-              '& .MuiDataGrid-filterForm': {
-                padding: '0',
-              },
-              '& .MuiDataGrid-panelFooter': {
-                paddingBottom: '0',
-                marginBottom: '-5px',
-              },
-              '& .MuiInputBase-input': {
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                border: '1px solid #D6DCE1',
-                borderRadius: '4px',
-                color: '#212121',
-                fontFamily: "'Manrope', serif",
-                fontSize: '13px',
-                lineHeight: '16px',
-                textTransform: 'none',
-                fontWeight: '600',
-                padding: '8px 10px',
-              },
-              '& .MuiSelect-select': {
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                border: '1px solid #D6DCE1',
-                borderRadius: '4px',
-                color: '#212121',
-                fontFamily: "'Manrope', serif",
-                fontSize: '13px',
-                lineHeight: '16px',
-                textTransform: 'none',
-                fontWeight: '600',
-                padding: '8px 10px',
-              },
-              '& .MuiInputBase-formControl': {
-                '&::before': {
-                  border: 'none !important',
-                },
-                '&::after': {
-                  border: 'none !important',
-                },
-              },
-              '& .MuiFormLabel-root': {
-                color: '#757575',
-                fontFamily: "'Manrope', serif",
-                fontSize: '13px',
-                lineHeight: '16px',
-                textTransform: 'none',
-                fontWeight: '600',
-              },
-              '& .MuiButtonBase-root': {
-                color: '#298AFF',
-                fontFamily: "'Manrope', serif",
-                fontSize: '12px',
-                lineHeight: '14px',
-                textTransform: 'none',
-                fontWeight: '600',
-                '& svg': {
-                  fontSize: '16px',
-                },
-                '& .MuiButton-icon': {
-                  marginRight: '3px',
-                },
-              },
-              '& .MuiDataGrid-filterFormDeleteIcon': {
-                display: 'none',
-              },
-              '& .MuiDataGrid-filterFormLogicOperatorInput': {
-                display: 'none',
-              },
-            },
+            sx: FilterPanelStyles,
           },
         }}
         getAggregationPosition={groupNode =>
@@ -412,6 +267,14 @@ export default function AllocationGrid({
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
+        getRowId={(row) => row.id}
+        aggregationRowsCount={
+          (params) => {
+            // Force aggregation calculation even when first row has 0 values
+            return params.rowNode.children?.length || 1;
+          }
+        }
+
       />
     </Box>
   );

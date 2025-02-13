@@ -27,6 +27,20 @@ const getCurrentWeekIndex = startDate => {
   const diffTime = today - startDate;
   return Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
 };
+
+// const customAggregationFunction = (params) => {
+//   const sum = params.values.reduce((a, b) => a + (Number(b) || 0), 0);
+//   return sum === 0 ? null : sum;
+// };
+// const asdf = (params) => {
+//   const sum = params?.formattedValue.reduce((a, b) => a + (Number(b) || 0), 0);
+//   console.log('prams:: ', params?.formattedValue, sum)
+//   return sum === 0 ? null : sum;
+
+// }
+const funcsa = (params) => {
+  console.log('val:: ', params)
+}
 const generateWeeklyColumns = startDate => {
   const currentWeekIndex = getCurrentWeekIndex(startDate);
   return Array.from({ length: WEEK_COUNT }, (_, i) => {
@@ -36,6 +50,13 @@ const generateWeeklyColumns = startDate => {
       field: getWeekNumber(addDays(startDate, i * 7)),
       headerName: getWeekNumber(addDays(startDate, i * 7)),
       width: 50,
+      type: 'number',
+      // valueFormatter: (params) => params?.value ?? null,
+      // valueParser: (value) => Number(value) || null, // Ensure numeric values
+      // aggregationFunction: customAggregationFunction,
+      // apply: ({ values }) => values.reduce((acc, val) => acc + val, 0),
+      // renderCell: (params) => console.log('params:: ', params), // Always show numeric value
+
       valueGetter: params => {
         if (
           params?.value &&
@@ -44,23 +65,21 @@ const generateWeeklyColumns = startDate => {
         ) {
           return params.value;
         } else {
-          return params;
+          return null;
         }
       },
       editable: true,
-      type: 'number',
+      filterable: false,
       headerClassName: clsx('weekly-header', {
         'current-week-header': isCurrentWeek,
       }),
       cellClassName: params => {
         if (params.value == null) {
-          return '';
+          return 'weeklyCell';
         }
 
         return clsx('super-app', {
           weeklyCell: 'weeklyCell',
-          negative: params.value < 0,
-          positive: params.value > 0,
         });
       },
       disableColumnMenu: true,

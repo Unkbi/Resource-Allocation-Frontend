@@ -1,18 +1,31 @@
+import { getInitialsColor } from '@/app/utils/common';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
 export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
-      width: '290px !important',
+      width: '240px !important',
     },
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
     {
-      width: '290px !important',
+      width: '240px !important',
     },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
-    width: '290px',
+    width: '240px',
   },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
+    {
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        top: '5px',
+        left: '0px',
+        width: '5px',
+        height: '40px',
+        backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
+      },
+    },
 
   [`& .${gridClasses.columnHeader}`]: {
     '&.prime-header': {},
@@ -84,30 +97,28 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     fontSize: '14px',
     color: '#212121',
     padding: '3px',
-    lineHeight: "45px",
-    "&.MuiDataGrid-cell--editing:focus-within":{
-      outline:"none"
+    lineHeight: '45px',
+    '&.MuiDataGrid-cell--editing:focus-within': {
+      outline: 'none',
     },
-    "&.MuiDataGrid-cell.MuiDataGrid-cell--editing":{
-      padding:"0"
+    '&.MuiDataGrid-cell.MuiDataGrid-cell--editing': {
+      padding: '0',
     },
-    "& .MuiDataGrid-editInputCell":{
-      
-    },
-    "& input":{
+    '& .MuiDataGrid-editInputCell': {},
+    '& input': {
       fontFamily: "'Manrope', serif",
-      fontWeight: "500",
-      color: "#313F68",
-      fontSize: "14px",
-      padding:"3px",
-      textAlign:"center",
-      border:"1px solid transparent",
-      boxSizing: "border-box",
-      "&:focus":{
-        backgroundColor: "rgba(157, 201, 255, 0.3)",
-        border:"1px solid #298AFF"
-      }
-    }
+      fontWeight: '500',
+      color: '#313F68',
+      fontSize: '14px',
+      padding: '3px',
+      textAlign: 'center',
+      border: '1px solid transparent',
+      boxSizing: 'border-box',
+      '&:focus': {
+        backgroundColor: 'rgba(157, 201, 255, 0.3)',
+        border: '1px solid #298AFF',
+      },
+    },
   },
   '& .weekly-header': {
     padding: '3px',
@@ -146,10 +157,179 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     backgroundColor: '#C4E5C4',
     border: '#7AB17A',
   },
+  '& .firstGroupsRow': {
+    backgroundColor: '#E9EFF8',
+  },
   '& .MuiDataGrid-cell:focus-within': {
     outline: 'none',
   },
-  "& .MuiDataGrid-row--editing":{
-    boxShadow:"none"
-  }
+  '& .MuiDataGrid-row--editing': {
+    boxShadow: 'none',
+  },
 }));
+
+export const ColumnManagementStyles = {
+  '& .MuiDataGrid-columnsManagementHeader': {
+    padding: '0',
+  },
+  '& .MuiInputBase-input': {
+    height: '32px',
+    lineHeight: '32px',
+    background: '#FFFFFF 0% 0% no-repeat padding-box',
+    padding: '0',
+    borderRadius: '5px',
+    fontFamily: "'Manrope', serif",
+    fontSize: '12px',
+    fontWeight: '500',
+    color: '#212121',
+    boxSizing: 'border-box',
+    '&::placeholder': {
+      color: '#757575',
+      opacity: 1,
+      fontFamily: "'Manrope', serif",
+      fontSize: '14px',
+    },
+  },
+  '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+    border: '1px solid #D6DCE1',
+    backgroundColor: 'rgba(242, 245, 250, 0.3)',
+  },
+  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+  },
+  '& .MuiSvgIcon-root': {
+    fontSize: '18px',
+  },
+  '& .MuiDataGrid-columnsManagement': {
+    padding: '5px 0',
+    color: '#424242',
+    fontFamily: "'Manrope', serif",
+    fontSize: '14px',
+    '& .MuiFormControlLabel-root': {
+      margin: '0',
+      padding: '6px 0',
+      '& span': {
+        padding: '0',
+      },
+      '& .MuiTypography-root': {
+        color: '#424242',
+        fontFamily: "'Manrope', serif",
+        fontSize: '12px',
+        fontWeight: '500',
+        paddingLeft: '10px',
+      },
+    },
+  },
+  '& .MuiDataGrid-columnsManagementFooter': {
+    padding: '0',
+    borderColor: '#F2F5FA',
+    paddingTop: '6px',
+    '& .MuiFormControlLabel-root': {
+      margin: '0',
+      '& span': {
+        padding: '0',
+      },
+      '& .MuiTypography-root': {
+        color: '#424242',
+        fontFamily: "'Manrope', serif",
+        fontSize: '12px',
+        fontWeight: '500',
+        paddingLeft: '10px',
+      },
+    },
+    '& .MuiButtonBase-root': {
+      color: '#298AFF',
+      fontFamily: "'Manrope', serif",
+      fontSize: '11px',
+      lineHeight: '30px',
+      textTransform: 'none',
+      fontWeight: '600',
+      cursor: 'pointer',
+      padding: '0',
+      '&:hover': {
+        background: 'none',
+      },
+    },
+  },
+};
+
+export const FilterPanelStyles = {
+  // Customize inputs using css selectors
+  '& .MuiDataGrid-filterForm': { p: 2 },
+  '& .MuiDataGrid-filterForm:nth-child(even)': {
+    backgroundColor: theme =>
+      theme.palette.mode === 'dark' ? '#444' : '#f5f5f5',
+  },
+  '& .MuiDataGrid-filterFormLogicOperatorInput': { mr: 2 },
+  '& .MuiDataGrid-filterFormColumnInput': { mr: 2, width: 150 },
+  '& .MuiDataGrid-filterFormOperatorInput': { mr: 2 },
+  '& .MuiDataGrid-filterFormValueInput': { width: 200 },
+  '& .MuiDataGrid-filterForm': {
+    padding: '0',
+  },
+  '& .MuiDataGrid-panelFooter': {
+    paddingBottom: '0',
+    marginBottom: '-5px',
+  },
+  '& .MuiInputBase-input': {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    color: '#212121',
+    fontFamily: "'Manrope', serif",
+    fontSize: '13px',
+    lineHeight: '16px',
+    textTransform: 'none',
+    fontWeight: '600',
+    padding: '8px 10px',
+  },
+  '& .MuiSelect-select': {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    color: '#212121',
+    fontFamily: "'Manrope', serif",
+    fontSize: '13px',
+    lineHeight: '16px',
+    textTransform: 'none',
+    fontWeight: '600',
+    padding: '8px 10px',
+  },
+  '& .MuiInputBase-formControl': {
+    '&::before': {
+      border: 'none !important',
+    },
+    '&::after': {
+      border: 'none !important',
+    },
+  },
+  '& .MuiFormLabel-root': {
+    color: '#757575',
+    fontFamily: "'Manrope', serif",
+    fontSize: '13px',
+    lineHeight: '16px',
+    textTransform: 'none',
+    fontWeight: '600',
+  },
+  '& .MuiButtonBase-root': {
+    color: '#298AFF',
+    fontFamily: "'Manrope', serif",
+    fontSize: '12px',
+    lineHeight: '14px',
+    textTransform: 'none',
+    fontWeight: '600',
+    '& svg': {
+      fontSize: '16px',
+    },
+    '& .MuiButton-icon': {
+      marginRight: '3px',
+    },
+  },
+  '& .MuiDataGrid-filterFormDeleteIcon': {
+    display: 'none',
+  },
+  '& .MuiDataGrid-filterFormLogicOperatorInput': {
+    display: 'none',
+  },
+};

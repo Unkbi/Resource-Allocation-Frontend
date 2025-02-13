@@ -13,7 +13,7 @@ export const getInitialState = (groupBy, updatedRows) => ({
     model: {
       totalEffort: 'sum',
       ...Object.keys(updatedRows[0])
-        .filter(key => key.startsWith('W'))
+        .filter(week => week.startsWith('W') && updatedRows.some(row => row[week] !== null && row[week] !== undefined))
         .reduce((acc, week) => {
           acc[week] = 'sum';
           return acc;
@@ -78,6 +78,7 @@ export const getGroupingColDef = groupBy => ({
   headerName: groupPage(groupBy),
   renderHeader: () => groupPage(groupBy),
   renderCell: params => params.value,
+  filterable: false,
 });
 
 export const getCellClassName = (params, updatedRows) => {
@@ -95,6 +96,13 @@ export const getCellClassName = (params, updatedRows) => {
       const projectRows = updatedRows.filter(
         row => row.project === projectName
       );
+      // const sum = projectRows.reduce((total, row) => {
+      //   return total + (Number(row[params.field])) || 0;
+      // }, 0);
+
+      // // Now use this sum for your conditional styling
+      // if (sum === 0) return 'no-allocation';
+      // if (sum > 0 && sum <= 20) return 'low-allocation';
 
       const totalRows = projectRows.length;
 
@@ -105,7 +113,7 @@ export const getCellClassName = (params, updatedRows) => {
       const percentage = (aggregatedValue / totalRows) * 100;
 
       if (percentage === 0) {
-        return '';
+        return 'firstGroupsRow';
       } else if (percentage <= 20) {
         return 'poor-allocation';
       } else if (percentage > 20 && percentage <= 50) {
@@ -114,6 +122,9 @@ export const getCellClassName = (params, updatedRows) => {
         return 'fully-occupied';
       }
     }
+  }
+  if (params.rowNode?.type === 'group') {
+    return 'firstGroupsRow';
   }
   return '';
 };

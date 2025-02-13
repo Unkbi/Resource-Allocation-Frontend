@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -171,7 +171,15 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function RestPasswordPage() {
+export default function ResetPasswordPageWrapper() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <RestPasswordPage />
+        </Suspense>
+    );
+}
+
+function RestPasswordPage() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -231,7 +239,7 @@ export default function RestPasswordPage() {
                         <Typography variant="h4">
                             Reset Password
                         </Typography>
-                        <Typography className='subHeadingText'>
+                        <Typography className='subHeadingText' whiteSpace={'nowrap'}>
                             Your new password must be different from previous one
                         </Typography>
                         <Box
