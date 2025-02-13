@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './styles/globals.css';
 import StoreProvider from './StoreProvider';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
@@ -23,11 +23,11 @@ const MainContent = styled(Box, {
 
 function LayoutContent({ children }) {
   const isLoggedIn = getToken();
+  const [isUserLoginIn,setIsUserLoginIn]=useState(null);
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-
   useEffect(() => {
     if (isLoggedIn && isPublicRoute) {
       router.push('/dashboard');
@@ -38,6 +38,7 @@ function LayoutContent({ children }) {
 
   useEffect(() => {
     if (isLoggedIn) {
+      setIsUserLoginIn(isLoggedIn)
       dispatch(getUserData());
     }
   }, [dispatch, isLoggedIn]);
@@ -46,7 +47,7 @@ function LayoutContent({ children }) {
     <>
       {!isPublicRoute && <Header />}
       {!isPublicRoute && <SideBar />}
-      <MainContent isLoggedIn={isLoggedIn}>{children}</MainContent>
+      <MainContent isLoggedIn={isUserLoginIn}>{children}</MainContent>
     </>
   );
 }

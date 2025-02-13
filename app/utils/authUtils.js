@@ -5,10 +5,10 @@ export const saveToken = (token) => {
 
 // Get access token from localStorage
 export const getToken = () => {
-  // if (typeof window !== "undefined" && window.localStorage) {
+  if (typeof window !== "undefined" && window.localStorage) {
     return localStorage.getItem("token");
-  // }
-  // return null;
+  }
+    return null;
 };
 
 // Clear access token from localStorage
