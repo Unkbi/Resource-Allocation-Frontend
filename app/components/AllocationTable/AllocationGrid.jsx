@@ -44,7 +44,7 @@ export default function AllocationGrid({
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedAllocationId, setSelectedAllocationId] = useState(null);
 
-  const mapData = groupBy === 'project' ? data : demoRows;
+  const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
   const updatedRows = mapData.map(row => ({
     ...row,
     totalEffort: calculateTotalEffort(row),

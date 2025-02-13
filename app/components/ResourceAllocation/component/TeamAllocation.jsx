@@ -1,10 +1,14 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { columnGroupingModel } from '../../AllocationTable/TableHeader';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
+import {
+  fetchAllTeams,
+  fetchResourcesAgainstTeams,
+} from '@/app/redux/actions/fetchTeamsAction';
 import CenteredLoader from '../../Shared/Loader/CenteredLoader';
+import { resetResources } from '@/app/redux/reducers/teamsReducer';
 
 const teamsColumnConfig = [
   {
@@ -39,20 +43,48 @@ const teamsColumnConfig = [
 ];
 
 export default function TeamAllocation() {
+  const [resourcesFetched, setResourcesFetched] = useState(false);
   const dispatch = useDispatch();
-  const { teams, loading, error } = useSelector(state => state.teams);
+  const { teams, resources, loading, error } = useSelector(
+    state => state.teams
+  );
 
   useEffect(() => {
+    setResourcesFetched(false);
     dispatch(fetchAllTeams());
   }, []);
+
+  useEffect(() => {
+    if (teams && teams.length > 0 && !resourcesFetched) {
+      dispatch(resetResources());
+      dispatch(fetchResourcesAgainstTeams(teams[0].result));
+      setResourcesFetched(true);
+    }
+  }, [teams, resourcesFetched]);
+
   return (
     <>
       {loading && <CenteredLoader />}
-      <AllocationGrid
-        groupBy="teams"
-        columns={teamsColumnConfig}
-        columnGroupingModel={columnGroupingModel}
-      />
+      {resources[0] && resources[0].length > 0 && (
+        <AllocationGrid
+          groupBy="teams"
+          columns={teamsColumnConfig}
+          columnGroupingModel={columnGroupingModel}
+          data={resources[0]}
+        />
+      )}
+      {!resources && !loading && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '90vh',
+          }}
+        >
+          <div>No Data</div>
+        </div>
+      )}
     </>
   );
 }
