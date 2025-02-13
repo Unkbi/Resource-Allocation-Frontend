@@ -1,26 +1,34 @@
-"use client";
-import styles from "../../page.module.css";
-import { Box } from "@mui/material";
-import { useSelector } from "react-redux";
-import TeamAllocation from "@/app/components/ResourceAllocation/component/TeamAllocation";
-import OrganizationAllocation from "@/app/components/ResourceAllocation/component/OrganizationAllocation";
-import ProjectAllocation from "@/app/components/ResourceAllocation/component/ProjectAllocation";
+'use client';
+import styles from '../../page.module.css';
+import { Box } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import TeamAllocation from '@/app/components/ResourceAllocation/component/TeamAllocation';
+import OrganizationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
+import ProjectAllocation from '@/app/components/ResourceAllocation/component/ProjectAllocation';
+import { useEffect } from 'react';
+import { fetchAllAllocations } from '@/app/redux/actions/fetchTeamsAction';
 
 export default function Allocation() {
-  const view = useSelector((state) => state.allocationView.view);
+  const dispatch = useDispatch();
+  const view = useSelector(state => state.allocationView.view);
 
-  const getContentByRole = (view) => {
+  const getContentByRole = view => {
     switch (view) {
-      case "Projects":
+      case 'Projects':
         return <ProjectAllocation />;
-      case "Organizations":
+      case 'Organizations':
         return <OrganizationAllocation />;
-      case "Teams":
+      case 'Teams':
         return <TeamAllocation />;
       default:
         return null;
     }
   };
+
+  useEffect(() => {
+    dispatch(fetchAllAllocations());
+  }, []);
+
   return (
     <>
       <metadata>

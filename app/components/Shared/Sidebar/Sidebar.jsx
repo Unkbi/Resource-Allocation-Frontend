@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, List, MenuItem, styled, Typography } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from "next/link";
 
 const MainBox = styled(Box)(({ theme }) => ({
   width: "74px",
@@ -44,34 +45,41 @@ const MainBox = styled(Box)(({ theme }) => ({
 const Sidebar = () => {
   const [selectedMenu, setSelectedMenu] = useState('Dashboard');
   const router = useRouter();
+  const pathname = usePathname();
 
   const menuItems = [
-    { text: 'Dashboard', icon: "/images/icons/dashboard.svg", url: "/dashboard" },
+    { text: 'Dashboard', icon: "/images/icons/dashboard.svg", url: "" },
     { text: 'Allocation', icon: "/images/icons/allocation.svg", url: "/allocation" },
-    { text: 'Projects', icon: "/images/icons/projects.svg", url: "/projects" },
-    { text: 'People', icon: "/images/icons/people.svg", url: "/people" },
-    { text: 'Reports', icon: "/images/icons/reports.svg", url: "/reports" },
+    { text: 'Projects', icon: "/images/icons/projects.svg", url: "" },
+    { text: 'People', icon: "/images/icons/people.svg", url: "" },
+    { text: 'Reports', icon: "/images/icons/reports.svg", url: "" },
   ];
+
+  useEffect(() => {
+    const currentMenuItem = menuItems.find(item => item.url === pathname);
+    if (currentMenuItem) {
+      setSelectedMenu(currentMenuItem.text);
+    }
+  }, [pathname]);
 
   const handleMenuClick = (text, url) => {
     setSelectedMenu(text);
-    console.log('Navigating to:', url);
     router.push(url);
   };
 
   return (
     <MainBox>
       <Box className='logo'>
-        <a href='/'>
+        <Link href={''}>
           <img alt="logo" src="/images/icons/cio-logo.svg" />
-        </a>
+        </Link>
       </Box>
       <List>
         {menuItems.map((item, index) => (
           <MenuItem
             className={`menuList ${selectedMenu === item.text ? 'active' : ''}`}
             key={index}
-            onClick={() => handleMenuClick(item.text, item.url)} // ✅ Pass both text and url
+            onClick={() => handleMenuClick(item.text, item.url)}
           >
             <img src={item.icon} alt={item.text} />
             <Typography className='menuText'>{item.text}</Typography>

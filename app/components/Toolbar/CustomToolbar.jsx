@@ -202,7 +202,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     [dispatch]
   );
   const handleClick = () => {
-    setActive(true);
+    setActive((prev) => !prev);
   };
   return (
     <Box
@@ -318,7 +318,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                   placement="bottom"
                   onClick={handleClick}
                 >
-                  <AllProjectIcon color={active ? '#344665' : '#99A2B2'} />
+                  <AllProjectIcon color={!active ? '#344665' : '#99A2B2'} />
                 </TooltipButton>
               </>
             ) : view === 'Teams' ? (
@@ -335,7 +335,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                   placement="bottom"
                   onClick={handleClick}
                 >
-                  <AllTeamsIcon color={active ? '#344665' : '#99A2B2'} />
+                  <AllTeamsIcon color={!active ? '#344665' : '#99A2B2'} />
                 </TooltipButton>
               </>
             ) : (
