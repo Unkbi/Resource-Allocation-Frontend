@@ -3,6 +3,7 @@ import { getWeekNumber } from '@/app/utils/common';
 import { TOTAL_FUTURE_WEEKS } from '@/app/constants/constants';
 
 const WEEK_COUNT = TOTAL_FUTURE_WEEKS + 2;
+
 const getStartDate = () => {
   const now = new Date();
   const day = now.getDay();
@@ -22,41 +23,43 @@ const addDays = (date, days) => {
   result.setDate(result.getDate() + days);
   return result;
 };
+
 const getCurrentWeekIndex = startDate => {
   const today = new Date();
   const diffTime = today - startDate;
   return Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
 };
 
-// const customAggregationFunction = (params) => {
-//   const sum = params.values.reduce((a, b) => a + (Number(b) || 0), 0);
-//   return sum === 0 ? null : sum;
-// };
-// const asdf = (params) => {
-//   const sum = params?.formattedValue.reduce((a, b) => a + (Number(b) || 0), 0);
-//   console.log('prams:: ', params?.formattedValue, sum)
-//   return sum === 0 ? null : sum;
-
-// }
-const funcsa = (params) => {
-  console.log('val:: ', params)
-}
 const generateWeeklyColumns = startDate => {
   const currentWeekIndex = getCurrentWeekIndex(startDate);
   return Array.from({ length: WEEK_COUNT }, (_, i) => {
-    const date = addDays(startDate, i * 7);
     const isCurrentWeek = i === currentWeekIndex;
     return {
       field: getWeekNumber(addDays(startDate, i * 7)),
       headerName: getWeekNumber(addDays(startDate, i * 7)),
       width: 50,
       type: 'number',
-      // valueFormatter: (params) => params?.value ?? null,
-      // valueParser: (value) => Number(value) || null, // Ensure numeric values
-      // aggregationFunction: customAggregationFunction,
-      // apply: ({ values }) => values.reduce((acc, val) => acc + val, 0),
-      // renderCell: (params) => console.log('params:: ', params), // Always show numeric value
-
+      valueParser: (value) => {
+        let parsedValue = value.replace(/[^0-9.]/g, "").replace(/(?<=\..*)\./g, "");
+        parsedValue = parsedValue.replace(/^(\d*\.?\d?).*$/, "$1");
+        let numericValue = parseFloat(parsedValue) || 0;
+        numericValue = Math.min(Math.max(numericValue, 0), 1);
+        return numericValue;
+      },
+      preProcessEditCellProps: (params) => {
+        const { props } = params;
+        let numericValue = parseFloat(props.value) || 0;
+        const formattedValue = Math.min(Math.max(numericValue, 0), 1).toFixed(1);
+        return {
+          ...props,
+          value: formattedValue,
+          error: null
+        };
+      },
+      valueFormatter: (params) => {
+        const value = Number(params);
+        return value !== 0 ? value.toFixed(1) : '';
+      },
       valueGetter: params => {
         if (
           params?.value &&

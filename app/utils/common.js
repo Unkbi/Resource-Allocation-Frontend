@@ -42,8 +42,7 @@ export const calculateTotalEffort = row => {
     .map(key => row[key]);
   return weeklyEfforts.reduce(
     (total, effort) => total + (effort?.value || 0),
-    0
-  );
+    0);
 };
 
 /**
@@ -92,7 +91,7 @@ export const isWithin20WeeksRange = date => {
  * @returns {string} - The Monday date of the given week in YYYY-MM-DD format.
  */
 export const getMondayOfWeek = weekStr => {
-  const weekNumber = parseInt(weekStr.replace('W', ''), 10);
+  const weekNumber = parseInt(weekStr?.replace('W', ''), 10);
 
   const currentYear = new Date().getFullYear();
 
