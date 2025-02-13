@@ -32,7 +32,6 @@ import {
 } from '@/app/redux/actions/resourceAllocationAction';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
-const ResourcePopper = lazy(() => import('./components/ResourcePopper'));
 
 export default function AllocationGrid({
   groupBy,
@@ -175,7 +174,16 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
-
+  const validateAggregationParams = (params) => {
+    if (!params || typeof params !== 'object') return false;
+    if (!Array.isArray(params.values)) return false;
+    return true;
+  };
+  const aggregationFunctionss = () => {
+    console.log('params:: ', params)
+    const sum = params.values.reduce((a, b) => a + (Number(b) || 0), 0);
+    return sum === 0 ? null : sum;
+  };
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -188,6 +196,12 @@ export default function AllocationGrid({
         onProcessRowUpdateError={err => {
           console.error('Row update failed:', err);
         }}
+        // aggregationFunctions={
+        //   // aggregationFunctions()
+        //   (function (params) {
+        //     console.log('params:: ', params)
+        //   })()
+        // }
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
@@ -253,6 +267,14 @@ export default function AllocationGrid({
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
+        getRowId={(row) => row.id}
+        aggregationRowsCount={
+          (params) => {
+            // Force aggregation calculation even when first row has 0 values
+            return params.rowNode.children?.length || 1;
+          }
+        }
+
       />
     </Box>
   );
