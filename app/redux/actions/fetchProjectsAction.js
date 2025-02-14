@@ -70,12 +70,11 @@ const formatAllocations = (allocationsData, projectId) => {
         newAllocation[week] = null;
       });
 
-      // actual weekly cell values
       if (allWeeks.includes(weekNumber)) {
-        // newAllocation[weekNumber] = allocation.AllocationEntered || null;
-        const rawValue = allocation.AllocationEntered || 0;
-        const sanitizedValue = Math.min(1, Math.max(0, rawValue));
-        newAllocation[weekNumber] = sanitizedValue.toFixed(1);
+        newAllocation[weekNumber] = {
+          allocationId: allocation.Allocation,
+          value: allocation.AllocationEntered || null
+        };
       }
       newAllocation.totalEffort = allWeeks.reduce(
         (sum, week) => sum + newAllocation[week],
