@@ -3,7 +3,11 @@ import {
   getProjectAllocations,
 } from '@/app/services/projectServices';
 import { updateAllocations } from '../reducers/projectsReducer';
-import { getWeekNumber, isWithin20WeeksRange, getMondayOfWeek } from '@/app/utils/common';
+import {
+  getWeekNumber,
+  isWithin20WeeksRange,
+  getMondayOfWeek,
+} from '@/app/utils/common';
 
 export const fetchAllProjects = () => async dispatch => {
   try {
@@ -26,7 +30,7 @@ const generateAllWeeks = () => {
   // Generate 22 weeks total: previous week + current week + next 20 weeks
   for (let i = -1; i <= 20; i++) {
     const weekDate = new Date(startDate);
-    weekDate.setDate(startDate.getDate() + (i * 7));
+    weekDate.setDate(startDate.getDate() + i * 7);
     weeks.push(getWeekNumber(weekDate));
   }
 
@@ -47,11 +51,10 @@ const formatAllocations = (allocationsData, projectId) => {
 
     if (existingAllocation) {
       if (allWeeks.includes(weekNumber)) {
-        existingAllocation[weekNumber] =
-        {
+        existingAllocation[weekNumber] = {
           allocationId: allocation.Allocation,
-          value: allocation.AllocationEntered || null
-        }
+          value: allocation.AllocationEntered || null,
+        };
         existingAllocation.totalEffort += allocation.AllocationEntered || null;
       }
     } else {
@@ -73,7 +76,7 @@ const formatAllocations = (allocationsData, projectId) => {
       if (allWeeks.includes(weekNumber)) {
         newAllocation[weekNumber] = {
           allocationId: allocation.Allocation,
-          value: allocation.AllocationEntered || null
+          value: allocation.AllocationEntered || null,
         };
       }
       newAllocation.totalEffort = allWeeks.reduce(
@@ -93,7 +96,7 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
     let allAllocations = [];
     for (const project of projects) {
       const postData = {
-        'ProjectPortfolio.Core/GetProjectAllocationsForPeriod': {
+        'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
           Project: project.Id,
           StartDate: '2025-01-01',
           EndDate: '2025-12-31',

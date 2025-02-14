@@ -146,7 +146,7 @@ export default function AllocationGrid({
           resourceId: resourceId,
           allocationId: selectedAllocationId,
           putData: {
-            'ProjectPortfolio.Core/Allocation': {
+            'ResourceAllocation.Core/Allocation': {
               AllocationEntered: updated[selectedCell],
             },
           },
@@ -156,7 +156,7 @@ export default function AllocationGrid({
         const postPayload = {
           resourceId: resourceId,
           postData: {
-            'ProjectPortfolio.Core/Allocation': {
+            'ResourceAllocation.Core/Allocation': {
               Resource: resourceId,
               Project: projectId,
               ProjectName: project,
@@ -252,12 +252,11 @@ export default function AllocationGrid({
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
-      // aggregationRowsCount={
-      //   (params) => {
-      //     return params.rowNode.children?.length || 1;
-      //   }
-      // }
-
+        // aggregationRowsCount={
+        //   (params) => {
+        //     return params.rowNode.children?.length || 1;
+        //   }
+        // }
       />
     </Box>
   );
