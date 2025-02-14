@@ -12,6 +12,7 @@ import { getToken } from './utils/authUtils';
 import { PUBLIC_ROUTES } from './constants/constants';
 import { getUserData } from './redux/actions/authActions';
 import { useDispatch } from 'react-redux';
+// import { LicenseInfo } from '@mui/x-data-grid-premium';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => prop !== 'isLoggedIn', // Prevent `isLoggedIn` from being passed to the DOM
@@ -27,6 +28,7 @@ function LayoutContent({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
+  const licenseKey = process.env.MUI_X_LICENSE_KEY;
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   useEffect(() => {
     if (isLoggedIn && isPublicRoute) {
@@ -43,6 +45,12 @@ function LayoutContent({ children }) {
     }
   }, [dispatch, isLoggedIn]);
 
+  // if (licenseKey) {
+  //   LicenseInfo.setLicenseKey(licenseKey);
+  // } else {
+  //   console.error('MUI X License Key is missing. Please set it in .env.local.');
+  // }
+  
   return (
     <>
       {!isPublicRoute && <Header />}

@@ -190,7 +190,7 @@ export default function AllocationGrid({
           resourceId: resourceId,
           allocationId: selectedAllocationId,
           putData: {
-            'ProjectPortfolio.Core/Allocation': {
+            'ResourceAllocation.Core/Allocation': {
               AllocationEntered: updated[selectedCell],
             },
           },
@@ -200,7 +200,7 @@ export default function AllocationGrid({
         const postPayload = {
           resourceId: resourceId,
           postData: {
-            'ProjectPortfolio.Core/Allocation': {
+            'ResourceAllocation.Core/Allocation': {
               Resource: resourceId,
               Project: projectId,
               ProjectName: project,
