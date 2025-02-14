@@ -217,7 +217,7 @@ export const BASE_FONT_SIZE = 16;
 
 export const TOTAL_FUTURE_WEEKS = 20; //Configurable weeks count (Previous + Current + 20 weeks)
 
-export const API_PROJECT_PORTFOLIO = '/api/ProjectPortfolio.Core';
+export const API_PROJECT_PORTFOLIO = '/api/ResourceAllocation.Core';
 
 export const PUBLIC_ROUTES = [
   '/login',
