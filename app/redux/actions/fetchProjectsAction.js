@@ -120,8 +120,6 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
     });
 
     const results = await Promise.allSettled(allocationPromises);
-
-   console.log(results,'results');
     let allAllocations = [];
     results.forEach(result => {
       if (result.status === 'fulfilled' && result.value) {

@@ -26,7 +26,6 @@ axiosInstance.interceptors.request.use(
   (config) => {
     const token = getToken();
     if (token) {
-      console.log('originalRequest._retry34',config)
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
@@ -47,7 +46,6 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response.status === 401 && !originalRequest._retry) {
-      console.log("401 detected, handling token refresh...");
       originalRequest._retry = true;
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
 
@@ -73,7 +71,6 @@ axiosInstance.interceptors.response.use(
         console.log("Using refresh token:", refreshToken);
 
         if (!refreshToken) {
-          console.log("No refresh token found, logging out.");
           clearAuth();
           return Promise.reject(error);
         }
@@ -97,7 +94,6 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        console.error("Token refresh failed:", refreshError);
         clearAuth();
         return Promise.reject(refreshError);
       } finally {
