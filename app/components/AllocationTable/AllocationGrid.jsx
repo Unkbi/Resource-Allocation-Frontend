@@ -1,7 +1,7 @@
 import { useState, lazy, useEffect } from 'react';
-import { Box, Select } from '@mui/material';
+import { Box } from '@mui/material';
 import {
-  GridColumnMenuPinningItem,
+  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   useGridApiRef,
   useKeepGroupedColumnsHidden,
 } from '@mui/x-data-grid-premium';
@@ -32,6 +32,7 @@ import {
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
+import { CustomColumnMenu } from './components/CustomColumnMenu';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
@@ -40,6 +41,7 @@ export default function AllocationGrid({
   columns,
   columnGroupingModel,
   data,
+  loading,
 }) {
   const apiRef = useGridApiRef();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -50,6 +52,8 @@ export default function AllocationGrid({
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedAllocationId, setSelectedAllocationId] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
+  const [updatedRows, setUpdatedRows] = useState([]);
+  const [rowsState, setRowsState] = useState([]);
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -66,23 +70,26 @@ export default function AllocationGrid({
     }, {});
   };
 
-  const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
-
-  const updatedRows = mapData.map(row => ({
-    ...normalizeRow(row),
-    totalEffort: calculateTotalEffort(normalizeRow(row)),
-  }));
-
-  const [rowsState, setRowsState] = useState(() =>
-    getInitialRowsState(updatedRows, groupBy)
-  );
+  useEffect(() => {
+    const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
+    const updatedRows = mapData.map(row => ({
+      ...normalizeRow(row),
+      totalEffort: calculateTotalEffort(normalizeRow(row)),
+    }));
+    setUpdatedRows(updatedRows);
+    setRowsState(() => getInitialRowsState(updatedRows, groupBy));
+  }, [data, groupBy]);
 
   const dispatch = useDispatch();
   const { projects } = useSelector(state => state.projects);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
-    initialState: getInitialState(groupBy, updatedRows),
+    initialState: getInitialState(
+      groupBy,
+      updatedRows,
+      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+    ),
   });
 
   const handleAddRow = (e, resource) => {
@@ -177,12 +184,14 @@ export default function AllocationGrid({
   );
 
   const showField = [
+    GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
     ...columns.map(col => col.field),
     ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
   ];
 
   const getTogglableColumns = columns =>
     columns
+      .filter(column => column.field !== groupBy)
       .filter(column => showField.includes(column.field))
       .map(column => column.field);
 
@@ -194,7 +203,6 @@ export default function AllocationGrid({
       setSelectedAllocationId(allocationData.allocationId);
     }
   };
-
 
   const handleCellUpdate = updated => {
     try {
@@ -232,19 +240,19 @@ export default function AllocationGrid({
         prevRows.map(row =>
           row.id === id
             ? {
-              ...row,
-              [selectedCell]: {
-                allocationId: row[selectedCell]?.allocationId || null,
-                value: updated[selectedCell],
-              },
-              totalEffort: calculateTotalEffort({
                 ...row,
                 [selectedCell]: {
                   allocationId: row[selectedCell]?.allocationId || null,
                   value: updated[selectedCell],
                 },
-              }),
-            }
+                totalEffort: calculateTotalEffort({
+                  ...row,
+                  [selectedCell]: {
+                    allocationId: row[selectedCell]?.allocationId || null,
+                    value: updated[selectedCell],
+                  },
+                }),
+              }
             : row
         )
       );
@@ -272,9 +280,11 @@ export default function AllocationGrid({
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
-        loading={false}
+        loading={loading}
         disableRowSelectionOnClick
         initialState={initialState}
+        columnHeaderHeight={30}
+        columnGroupHeaderHeight={22}
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
         getRowClassName={params => `super-app-theme--${params.row.status}`}
@@ -283,10 +293,14 @@ export default function AllocationGrid({
         slots={{
           toolbar: CustomToolbar,
           columnMenu: props => {
-            return <GridColumnMenuPinningItem {...props} />;
+            return <CustomColumnMenu {...props} apiRef={apiRef} />;
           },
         }}
         slotProps={{
+          loadingOverlay: {
+            variant: 'skeleton',
+            noRowsVariant: 'skeleton',
+          },
           panel: {
             anchorEl: filterButtonEl,
             className: 'parent-grid-panel',
@@ -331,15 +345,12 @@ export default function AllocationGrid({
           groupNode.depth === -1 ? null : 'inline'
         }
         groupingColDef={getGroupingColDef(groupBy)}
-        treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
-        aggregationRowsCount={
-          (params) => {
-            console.log(params, 'params');
-            return params.rowNode.children?.length || 1;
-          }
-        }
+        aggregationRowsCount={params => {
+          console.log(params, 'params');
+          return params.rowNode.children?.length || 1;
+        }}
       />
     </Box>
   );
