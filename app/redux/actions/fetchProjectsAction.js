@@ -93,8 +93,7 @@ const formatAllocations = (allocationsData, projectId) => {
 
 export const fetchAllProjectAllocations = projects => async dispatch => {
   try {
-    let allAllocations = [];
-    for (const project of projects) {
+    const allocationPromises = projects.map(async project => {
       const postData = {
         'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
           Project: project.Id,
@@ -102,23 +101,40 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
           EndDate: '2025-12-31',
         },
       };
-
-      const result = await dispatch(getProjectAllocations(postData));
-
-      if (result.meta.requestStatus === 'fulfilled') {
-        const allocationsData = result.payload[0];
-        const formattedAllocations = formatAllocations(
-          allocationsData,
-          project.Id
-        );
-
-        allAllocations = [...allAllocations, ...formattedAllocations];
+      try {
+        const result = await dispatch(getProjectAllocations(postData));
+        if (result.meta.requestStatus === 'fulfilled') {
+          const allocationsData = result.payload[0];
+          const formattedAllocations = formatAllocations(
+            allocationsData,
+            project.Id
+          );
+          return formattedAllocations; 
+        } else {
+          throw new Error(`Request for project ${project.Id} was not fulfilled`);
+        }
+      } catch (error) {
+        console.error(`Error fetching allocations for project ${project.Id}:`, error);
+        return null; 
       }
-    }
+    });
+
+    const results = await Promise.allSettled(allocationPromises);
+
+   console.log(results,'results');
+    let allAllocations = [];
+    results.forEach(result => {
+      if (result.status === 'fulfilled' && result.value) {
+        allAllocations = [...allAllocations, ...result.value]; 
+      } else if (result.status === 'rejected') {
+        console.error('A project allocation request failed:', result.reason);
+      }
+    });
+
     if (allAllocations.length > 0) {
       dispatch(updateAllocations(allAllocations));
     }
   } catch (error) {
-    console.error('Error fetching project allocations:', error);
+    console.error('Error in fetchAllProjectAllocations:', error);
   }
 };
