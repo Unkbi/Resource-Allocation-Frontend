@@ -1,6 +1,7 @@
 import { getAllColumnsWithWeek } from '@/app/components/AllocationTable/TableHeader';
 import { AddRowButton } from '@/app/components/AllocationTable/AddRowButton';
 import CustomAvatar from '../Avatar/CustomAvatar';
+import { calculateTotalEffort } from '@/app/utils/common';
 
 export const getInitialState = (groupBy, updatedRows) => ({
   rowGrouping: {
@@ -144,7 +145,12 @@ export const getCellClassName = (params, updatedRows) => {
       const totalRows = projectRows.length;
 
       const aggregatedValue = projectRows.reduce((sum, row) => {
-        return sum + (row[params.field] || 0);
+        const weekValue = row[params.field];
+        const numericValue =
+          typeof weekValue === 'object' && weekValue !== null
+            ? parseFloat(weekValue.value || 0)
+            : parseFloat(weekValue || 0);
+        return sum + numericValue;
       }, 0);
 
       const percentage = (aggregatedValue / totalRows) * 100;
@@ -167,10 +173,15 @@ export const getCellClassName = (params, updatedRows) => {
 };
 
 export const getInitialRowsState = (updatedRows, groupBy) => {
+  const rowsWithTotalEffort = updatedRows.map(row => ({
+    ...row,
+    totalEffort: calculateTotalEffort(row),
+  }));
+
   if (groupBy === 'project') {
     return [
-      ...updatedRows,
-      ...Array.from(new Set(updatedRows?.map(row => row.project))).map(
+      ...rowsWithTotalEffort,
+      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.project))).map(
         project => ({
           id: `${project}-add-resource`,
           project: project,
@@ -189,8 +200,8 @@ export const getInitialRowsState = (updatedRows, groupBy) => {
     ];
   } else if (groupBy === 'teams') {
     return [
-      ...updatedRows,
-      ...Array.from(new Set(updatedRows?.map(row => row.teams))).map(teams => ({
+      ...rowsWithTotalEffort,
+      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.teams))).map(teams => ({
         id: `${teams}-add-resource`,
         project: '',
         teams: teams,
