@@ -2,12 +2,16 @@ import { TOTAL_FUTURE_WEEKS } from '../constants/constants';
 
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
-  const weeklyEfforts = Object.keys(row)
-    .filter(key => key.startsWith('W'))
-    .map(key => row[key]);
-  return weeklyEfforts.reduce(
-    (total, effort) => total + (effort?.value || 0),
-    0);
+  return Object.keys(row)
+    .filter(key => key.startsWith('W')) // Filter weekly columns
+    .reduce((sum, weekKey) => {
+      const weekValue = row[weekKey];
+      const numericValue =
+        typeof weekValue === 'object' && weekValue !== null
+          ? parseFloat(weekValue.value || 0)
+          : parseFloat(weekValue || 0);
+      return sum + numericValue;
+    }, 0);
 };
 
 /**

@@ -51,10 +51,26 @@ export default function AllocationGrid({
   const [selectedAllocationId, setSelectedAllocationId] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
 
+  const normalizeRow = row => {
+    return Object.keys(row).reduce((normalized, key) => {
+      if (key.startsWith('W')) {
+        const weekValue = row[key];
+        normalized[key] =
+          typeof weekValue === 'object' && weekValue !== null
+            ? weekValue
+            : { allocationId: null, value: weekValue };
+      } else {
+        normalized[key] = row[key];
+      }
+      return normalized;
+    }, {});
+  };
+
   const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
+
   const updatedRows = mapData.map(row => ({
-    ...row,
-    totalEffort: calculateTotalEffort(row),
+    ...normalizeRow(row),
+    totalEffort: calculateTotalEffort(normalizeRow(row)),
   }));
 
   const [rowsState, setRowsState] = useState(() =>
@@ -81,7 +97,7 @@ export default function AllocationGrid({
       ...Object.keys(updatedRows[0])
         .filter(key => key.startsWith('W'))
         .reduce((acc, week) => {
-          acc[week] = '';
+          acc[week] = { allocationId: null, value: '' };
           return acc;
         }, {}),
       hasButton: false,
@@ -179,6 +195,7 @@ export default function AllocationGrid({
     }
   };
 
+
   const handleCellUpdate = updated => {
     try {
       const { project, projectId, id } = updated || {};
@@ -211,6 +228,26 @@ export default function AllocationGrid({
         };
         dispatch(setResourceAllocation(postPayload));
       }
+      setRowsState(prevRows =>
+        prevRows.map(row =>
+          row.id === id
+            ? {
+              ...row,
+              [selectedCell]: {
+                allocationId: row[selectedCell]?.allocationId || null,
+                value: updated[selectedCell],
+              },
+              totalEffort: calculateTotalEffort({
+                ...row,
+                [selectedCell]: {
+                  allocationId: row[selectedCell]?.allocationId || null,
+                  value: updated[selectedCell],
+                },
+              }),
+            }
+            : row
+        )
+      );
     } catch (err) {
       console.error('Cell update failed:', err);
     } finally {
@@ -218,9 +255,11 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
+  console.log(rowsState, 'rowstate update');
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
+        key={rowsState.length}
         onCellDoubleClick={params => {
           handleDoubleClick(params);
         }}
@@ -295,11 +334,12 @@ export default function AllocationGrid({
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
-        // aggregationRowsCount={
-        //   (params) => {
-        //     return params.rowNode.children?.length || 1;
-        //   }
-        // }
+        aggregationRowsCount={
+          (params) => {
+            console.log(params, 'params');
+            return params.rowNode.children?.length || 1;
+          }
+        }
       />
     </Box>
   );
