@@ -53,7 +53,7 @@ axiosInstance.interceptors.response.use(
 
       if (originalRequest._retryCount > MAX_RETRIES) {
         console.error("Max retry attempts reached. Logging out.");
-        // clearAuth();
+        clearAuth();
         return Promise.reject(new Error('Max retry attempts reached'));
       }
 
@@ -74,7 +74,7 @@ axiosInstance.interceptors.response.use(
 
         if (!refreshToken) {
           console.log("No refresh token found, logging out.");
-          // clearAuth();
+          clearAuth();
           return Promise.reject(error);
         }
 
