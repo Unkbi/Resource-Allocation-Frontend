@@ -200,7 +200,7 @@ export default function AllocationGrid({
     const { field, formattedValue, row } = params || {};
     if (formattedValue) {
       const allocationData = row[field];
-      setSelectedAllocationId(allocationData.allocationId);
+      setSelectedAllocationId(allocationData?.allocationId);
     }
   };
 
@@ -240,19 +240,19 @@ export default function AllocationGrid({
         prevRows.map(row =>
           row.id === id
             ? {
+              ...row,
+              [selectedCell]: {
+                allocationId: row[selectedCell]?.allocationId || null,
+                value: updated[selectedCell],
+              },
+              totalEffort: calculateTotalEffort({
                 ...row,
                 [selectedCell]: {
                   allocationId: row[selectedCell]?.allocationId || null,
                   value: updated[selectedCell],
                 },
-                totalEffort: calculateTotalEffort({
-                  ...row,
-                  [selectedCell]: {
-                    allocationId: row[selectedCell]?.allocationId || null,
-                    value: updated[selectedCell],
-                  },
-                }),
-              }
+              }),
+            }
             : row
         )
       );
