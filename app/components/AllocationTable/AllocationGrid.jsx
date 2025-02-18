@@ -33,6 +33,8 @@ import {
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
+import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
@@ -54,6 +56,7 @@ export default function AllocationGrid({
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const [rowsState, setRowsState] = useState([]);
+  const { open, message, type, position } = useSelector(state => state.toast);
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -280,7 +283,7 @@ export default function AllocationGrid({
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
-        loading={loading}
+        loading={loading || internalLoading}
         disableRowSelectionOnClick
         initialState={initialState}
         columnHeaderHeight={30}
@@ -351,6 +354,12 @@ export default function AllocationGrid({
           console.log(params, 'params');
           return params.rowNode.children?.length || 1;
         }}
+      />
+      <CustomSnackbar
+        message={message}
+        type={type}
+        open={open}
+        position={position}
       />
     </Box>
   );
