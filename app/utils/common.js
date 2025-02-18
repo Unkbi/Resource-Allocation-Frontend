@@ -89,14 +89,14 @@ export const isValidUUID = uuid => {
 
 /**
  * Get the project Id based on the project name.
- * @param {Array} projects - The array of project objects.
- * @param {string} projectName - The name of the project to find.
- * @returns {string|null} - The Id of the project if found, otherwise null.
+ * @param {Array} arr - The array of project or teams objects.
+ * @param {string} name - The name of the project or team to find.
+ * @returns {string|null} - The Id of the project or team if found, otherwise null.
  */
-export const getProjectIdByName = (projects, projectName) => {
-  const project = projects.find(proj => proj.Name === projectName);
+export const getProjectOrTeamIdByName = (arr, name) => {
+  const projectOrTeam = arr.find(proj => proj.Name === name);
 
-  return project ? project.Id : null;
+  return projectOrTeam ? projectOrTeam.Id : null;
 };
 
 /**

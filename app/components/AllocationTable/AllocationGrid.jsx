@@ -8,7 +8,7 @@ import {
 import {
   calculateTotalEffort,
   getMondayOfWeek,
-  getProjectIdByName,
+  getProjectOrTeamIdByName,
   isResourceInProject,
   isResourceInTeam,
 } from '@/app/utils/common';
@@ -32,6 +32,7 @@ import {
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
+import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
@@ -79,6 +80,7 @@ export default function AllocationGrid({
 
   const dispatch = useDispatch();
   const { projects } = useSelector(state => state.projects);
+  const { teams } = useSelector(state => state.teams);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -90,7 +92,7 @@ export default function AllocationGrid({
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: selectedProject,
-      projectId: getProjectIdByName(projects[0]?.result, selectedProject),
+      projectId: getProjectOrTeamIdByName(projects[0]?.result, selectedProject),
       resource: resource.FullName,
       role: resource.Role,
       totalEffort: resource.totalHours,
@@ -106,7 +108,7 @@ export default function AllocationGrid({
       id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: '',
-      teamsId: getProjectIdByName(projects[0]?.result, selectedProject),
+      teamsId: getProjectOrTeamIdByName(teams[0]?.result, selectedTeam),
       resource: resource.FullName,
       teams: selectedTeam,
       role: resource.Role,
@@ -131,15 +133,16 @@ export default function AllocationGrid({
         );
       }
     } else if (groupBy === 'teams') {
-      if (!isResourceInTeam(rowsState, selectedTeam, resource.FullName)) {
-        setRowsState(prevRows =>
-          prevRows.flatMap(row =>
-            row.id === `${selectedTeam}-add-resource`
-              ? [newRowForTeams, row]
-              : [row]
-          )
-        );
-      }
+      setRowsState(prevRows =>
+        prevRows.flatMap(row =>
+          row.id === `${selectedTeam}-add-resource`
+            ? [newRowForTeams, row]
+            : [row]
+        )
+      );
+      dispatch(
+        addResourceToTeam(newRowForTeams.teamsId, newRowForTeams.resourceId)
+      );
     }
 
     setIsSearchMode(false);
@@ -154,11 +157,8 @@ export default function AllocationGrid({
         ) {
           return {
             ...row,
-            project: project.FullName,
-            projectId: getProjectIdByName(
-              projects[0]?.result,
-              project.FullName
-            ),
+            project: project.Name,
+            projectId: project.Id,
           };
         }
         return row;
@@ -194,7 +194,6 @@ export default function AllocationGrid({
       setSelectedAllocationId(allocationData.allocationId);
     }
   };
-
 
   const handleCellUpdate = updated => {
     try {
@@ -232,19 +231,19 @@ export default function AllocationGrid({
         prevRows.map(row =>
           row.id === id
             ? {
-              ...row,
-              [selectedCell]: {
-                allocationId: row[selectedCell]?.allocationId || null,
-                value: updated[selectedCell],
-              },
-              totalEffort: calculateTotalEffort({
                 ...row,
                 [selectedCell]: {
                   allocationId: row[selectedCell]?.allocationId || null,
                   value: updated[selectedCell],
                 },
-              }),
-            }
+                totalEffort: calculateTotalEffort({
+                  ...row,
+                  [selectedCell]: {
+                    allocationId: row[selectedCell]?.allocationId || null,
+                    value: updated[selectedCell],
+                  },
+                }),
+              }
             : row
         )
       );
@@ -255,7 +254,7 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
-  console.log(rowsState, 'rowstate update');
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -334,12 +333,9 @@ export default function AllocationGrid({
         treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
-        aggregationRowsCount={
-          (params) => {
-            console.log(params, 'params');
-            return params.rowNode.children?.length || 1;
-          }
-        }
+        aggregationRowsCount={params => {
+          return params.rowNode.children?.length || 1;
+        }}
       />
     </Box>
   );
