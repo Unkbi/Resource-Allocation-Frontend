@@ -9,11 +9,18 @@ export const getAllTeams = createAsyncThunk('/team', async () => {
 
 export const getResourcesAgainstTeams = createAsyncThunk(
   '/team/resources',
-  async team => {
-    const response = await axiosInstance.get(
-      `${API_PROJECT_PORTFOLIO}/Team/${team}/TeamResource/Resource`
-    );
-    return response.data;
+  async (postData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/GetTeamResources`,
+        postData
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to fetch teams resources.'
+      );
+    }
   }
 );
 
@@ -29,6 +36,40 @@ export const getAllAllocationsForPeriod = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data || 'Failed to fetch all allocations'
+      );
+    }
+  }
+);
+
+export const getTeamAllocations = createAsyncThunk(
+  'team/allocations',
+  async (postData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/GetTeamAllocations`,
+        postData
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to fetch team allocations'
+      );
+    }
+  }
+);
+
+export const postTeamResource = createAsyncThunk(
+  'team/addResource',
+  async (postData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/TeamResource`,
+        postData
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to add resource to team'
       );
     }
   }

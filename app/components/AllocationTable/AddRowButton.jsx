@@ -171,12 +171,16 @@ export const AddRowButton = ({
 }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const { resources, loading, error } = useSelector(state => state.resources);
+  const { projects } = useSelector(state => state.projects);
 
   const dispatch = useDispatch();
   const defaultProps = {
     options:
-      buttonName === 'Add Project' ? allProject : resources?.[0]?.result || [],
-    getOptionLabel: option => option.FullName,
+      buttonName === 'Add Project'
+        ? projects?.[0]?.result
+        : resources?.[0]?.result || [],
+    getOptionLabel: option =>
+      buttonName === 'Add Project' ? option.Name : option.FullName,
   };
   const inputRef = useRef(null);
 
@@ -219,11 +223,20 @@ export const AddRowButton = ({
                   borderBottom: `1px solid ${'#eaecef'}`,
                 }}
               >
-                <CustomAvatar value={option.FullName} />
+                {buttonName !== 'Add Project' && (
+                  <CustomAvatar value={option.FullName} />
+                )}
                 {/* Resource Details */}
+
                 <Box sx={{ flexGrow: 1 }}>
-                  <span>{option.FullName}</span>
-                  <span className="userEamil">{option.Email}</span>
+                  <span>
+                    {buttonName === 'Add Project'
+                      ? option.Name
+                      : option.FullName}
+                  </span>
+                  {buttonName !== 'Add Project' && (
+                    <span className="userEamil">{option.Email}</span>
+                  )}
                 </Box>
               </Box>
             );

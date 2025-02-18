@@ -86,7 +86,7 @@ export const getFinalColumns = (
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
                 onClick={event => {
-                  setSelectedProject(params.row.teams),
+                  setSelectedTeam(params.row.teams),
                     setSelectedResourceId(params.row.resourceId);
                 }}
               />
@@ -201,22 +201,24 @@ export const getInitialRowsState = (updatedRows, groupBy) => {
   } else if (groupBy === 'teams') {
     return [
       ...rowsWithTotalEffort,
-      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.teams))).map(teams => ({
-        id: `${teams}-add-resource`,
-        project: '',
-        teams: teams,
-        resource: '',
-        role: '',
-        totalEffort: '',
-        resourceId: '',
-        hasButton: true,
-        ...Object.keys(updatedRows[0])
-          .filter(key => key.startsWith('W'))
-          .reduce((acc, week) => {
-            acc[week] = '';
-            return acc;
-          }, {}),
-      })),
+      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.teams))).map(
+        teams => ({
+          id: `${teams}-add-resource`,
+          project: '',
+          teams: teams,
+          resource: '',
+          role: '',
+          totalEffort: '',
+          resourceId: '',
+          hasButton: true,
+          ...Object.keys(updatedRows[0])
+            .filter(key => key.startsWith('W'))
+            .reduce((acc, week) => {
+              acc[week] = '';
+              return acc;
+            }, {}),
+        })
+      ),
     ];
   } else {
     return updatedRows;

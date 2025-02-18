@@ -3,12 +3,15 @@ import {
   getAllAllocationsForPeriod,
   getAllTeams,
   getResourcesAgainstTeams,
+  getTeamAllocations,
+  postTeamResource,
 } from '@/app/services/teamServices';
 
 const initialState = {
   teams: null,
   resources: [],
   allAllocations: [],
+  teamAllocations: [],
   loading: false,
   error: null,
 };
@@ -67,6 +70,31 @@ const teamsSlice = createSlice({
         state.allAllocations = action.payload;
       })
       .addCase(getAllAllocationsForPeriod.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Handle getTeamAllocations API call
+      .addCase(getTeamAllocations.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getTeamAllocations.fulfilled, (state, action) => {
+        state.loading = false;
+        state.teamAllocations = action.payload;
+      })
+      .addCase(getTeamAllocations.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Handle postTeamResource API call
+      .addCase(postTeamResource.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(postTeamResource.fulfilled, state => {
+        state.loading = false;
+      })
+      .addCase(postTeamResource.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
