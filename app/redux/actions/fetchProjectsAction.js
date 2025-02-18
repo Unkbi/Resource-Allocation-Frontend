@@ -3,7 +3,11 @@ import {
   getProjectAllocations,
 } from '@/app/services/projectServices';
 import { updateAllocations } from '../reducers/projectsReducer';
-import { getWeekNumber, isWithin20WeeksRange, getMondayOfWeek } from '@/app/utils/common';
+import {
+  getWeekNumber,
+  isWithin20WeeksRange,
+  getMondayOfWeek,
+} from '@/app/utils/common';
 
 export const fetchAllProjects = () => async dispatch => {
   try {
@@ -26,7 +30,7 @@ const generateAllWeeks = () => {
   // Generate 22 weeks total: previous week + current week + next 20 weeks
   for (let i = -1; i <= 20; i++) {
     const weekDate = new Date(startDate);
-    weekDate.setDate(startDate.getDate() + (i * 7));
+    weekDate.setDate(startDate.getDate() + i * 7);
     weeks.push(getWeekNumber(weekDate));
   }
 
@@ -47,11 +51,10 @@ const formatAllocations = (allocationsData, projectId) => {
 
     if (existingAllocation) {
       if (allWeeks.includes(weekNumber)) {
-        existingAllocation[weekNumber] =
-        {
+        existingAllocation[weekNumber] = {
           allocationId: allocation.Allocation,
-          value: allocation.AllocationEntered || null
-        }
+          value: allocation.AllocationEntered || null,
+        };
         existingAllocation.totalEffort += allocation.AllocationEntered || null;
       }
     } else {
@@ -70,12 +73,11 @@ const formatAllocations = (allocationsData, projectId) => {
         newAllocation[week] = null;
       });
 
-      // actual weekly cell values
       if (allWeeks.includes(weekNumber)) {
-        // newAllocation[weekNumber] = allocation.AllocationEntered || null;
-        const rawValue = allocation.AllocationEntered || 0;
-        const sanitizedValue = Math.min(1, Math.max(0, rawValue));
-        newAllocation[weekNumber] = sanitizedValue.toFixed(1);
+        newAllocation[weekNumber] = {
+          allocationId: allocation.Allocation,
+          value: allocation.AllocationEntered || null,
+        };
       }
       newAllocation.totalEffort = allWeeks.reduce(
         (sum, week) => sum + newAllocation[week],
@@ -91,32 +93,46 @@ const formatAllocations = (allocationsData, projectId) => {
 
 export const fetchAllProjectAllocations = projects => async dispatch => {
   try {
-    let allAllocations = [];
-    for (const project of projects) {
+    const allocationPromises = projects.map(async project => {
       const postData = {
-        'ProjectPortfolio.Core/GetProjectAllocationsForPeriod': {
+        'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
           Project: project.Id,
           StartDate: '2025-01-01',
           EndDate: '2025-12-31',
         },
       };
-
-      const result = await dispatch(getProjectAllocations(postData));
-
-      if (result.meta.requestStatus === 'fulfilled') {
-        const allocationsData = result.payload[0];
-        const formattedAllocations = formatAllocations(
-          allocationsData,
-          project.Id
-        );
-
-        allAllocations = [...allAllocations, ...formattedAllocations];
+      try {
+        const result = await dispatch(getProjectAllocations(postData));
+        if (result.meta.requestStatus === 'fulfilled') {
+          const allocationsData = result.payload[0];
+          const formattedAllocations = formatAllocations(
+            allocationsData,
+            project.Id
+          );
+          return formattedAllocations; 
+        } else {
+          throw new Error(`Request for project ${project.Id} was not fulfilled`);
+        }
+      } catch (error) {
+        console.error(`Error fetching allocations for project ${project.Id}:`, error);
+        return null; 
       }
-    }
+    });
+
+    const results = await Promise.allSettled(allocationPromises);
+    let allAllocations = [];
+    results.forEach(result => {
+      if (result.status === 'fulfilled' && result.value) {
+        allAllocations = [...allAllocations, ...result.value]; 
+      } else if (result.status === 'rejected') {
+        console.error('A project allocation request failed:', result.reason);
+      }
+    });
+
     if (allAllocations.length > 0) {
       dispatch(updateAllocations(allAllocations));
     }
   } catch (error) {
-    console.error('Error fetching project allocations:', error);
+    console.error('Error in fetchAllProjectAllocations:', error);
   }
 };

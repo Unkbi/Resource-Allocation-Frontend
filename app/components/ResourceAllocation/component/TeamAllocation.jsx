@@ -19,20 +19,6 @@ const teamsColumnConfig = [
     cellClassName: 'prime-cell',
   },
   {
-    field: 'resource',
-    headerName: 'Resource',
-    width: 200,
-    disableColumnMenu: true,
-  },
-  {
-    field: 'project',
-    headerName: 'Projects',
-    width: 200,
-    disableColumnMenu: true,
-    headerClassName: 'secondary-header',
-    cellClassName: 'secondary-cell',
-  },
-  {
     field: 'resourceType',
     headerName: 'Resource Type',
     width: 200,

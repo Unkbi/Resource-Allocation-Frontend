@@ -31,10 +31,16 @@ const projectColumnConfig = [
     field: 'totalEffort',
     headerName: 'Total Effort',
     width: 150,
-    disableColumnMenu: true,
+    valueFormatter: params => {
+      const value = Number(params);
+      return value && typeof value === 'number' && value !== 0
+        ? value.toFixed(1)
+        : null;
+    },
     type: 'number',
     headerClassName: 'secondary-header',
     cellClassName: 'secondary-cell',
+    headerAlign: 'left',
   },
 ];
 
@@ -44,7 +50,6 @@ export default function ProjectAllocation() {
     state => state.projects
   );
   const dispatch = useDispatch();
-
   useEffect(() => {
     setAllocationsFetched(false);
     dispatch(fetchAllProjects());
@@ -59,29 +64,16 @@ export default function ProjectAllocation() {
       setAllocationsFetched(true);
     }
   }, [projects, allocationsFetched]);
+
   return (
     <>
-      {loading && <CenteredLoader />}
-      {allocations && allocations.length > 0 && (
-        <AllocationGrid
-          groupBy="project"
-          columns={projectColumnConfig}
-          columnGroupingModel={columnGroupingModel}
-          data={allocations}
-        />
-      )}
-      {!allocations && !loading && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '90vh',
-          }}
-        >
-          <div>No Data</div>
-        </div>
-      )}
+      <AllocationGrid
+        groupBy="project"
+        columns={projectColumnConfig}
+        columnGroupingModel={columnGroupingModel}
+        data={allocations}
+        loading={loading}
+      />
     </>
   );
 }

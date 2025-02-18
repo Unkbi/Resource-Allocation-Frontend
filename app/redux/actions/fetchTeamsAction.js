@@ -142,7 +142,7 @@ export const fetchResourcesAgainstTeams =
 export const fetchAllAllocations = () => async dispatch => {
   try {
     const postData = {
-      'ProjectPortfolio.Core/GetAllAllocationsForPeriod': {
+      'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
         StartDate: '2025-01-01',
         EndDate: '2025-12-31',
       },

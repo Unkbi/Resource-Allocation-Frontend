@@ -1,7 +1,7 @@
-import { useState, lazy } from 'react';
+import { useState, lazy, useEffect } from 'react';
 import { Box } from '@mui/material';
 import {
-  GridColumnMenuPinningItem,
+  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   useGridApiRef,
   useKeepGroupedColumnsHidden,
 } from '@mui/x-data-grid-premium';
@@ -10,6 +10,7 @@ import {
   getMondayOfWeek,
   getProjectIdByName,
   isResourceInProject,
+  isResourceInTeam,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -24,12 +25,14 @@ import {
   getGroupingColDef,
   groupPage,
   getCellClassName,
+  getInitialRowsState,
 } from './AllocationGridUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
+import { CustomColumnMenu } from './components/CustomColumnMenu';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
@@ -38,51 +41,59 @@ export default function AllocationGrid({
   columns,
   columnGroupingModel,
   data,
+  loading,
 }) {
   const apiRef = useGridApiRef();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProject, setSelectedProject] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedAllocationId, setSelectedAllocationId] = useState(null);
+  const [selectedResourceId, setSelectedResourceId] = useState('');
+  const [updatedRows, setUpdatedRows] = useState([]);
+  const [rowsState, setRowsState] = useState([]);
 
-  const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
-  const updatedRows = mapData.map(row => ({
-    ...row,
-    totalEffort: calculateTotalEffort(row),
-  }));
+  const normalizeRow = row => {
+    return Object.keys(row).reduce((normalized, key) => {
+      if (key.startsWith('W')) {
+        const weekValue = row[key];
+        normalized[key] =
+          typeof weekValue === 'object' && weekValue !== null
+            ? weekValue
+            : { allocationId: null, value: weekValue };
+      } else {
+        normalized[key] = row[key];
+      }
+      return normalized;
+    }, {});
+  };
 
-  const [rowsState, setRowsState] = useState(() => [
-    ...updatedRows,
-    ...Array.from(new Set(updatedRows.map(row => row.project))).map(
-      project => ({
-        id: `${project}-add-resource`,
-        project: project,
-        resource: '',
-        role: '',
-        totalEffort: '',
-        hasButton: true,
-        ...Object.keys(updatedRows[0])
-          .filter(key => key.startsWith('W'))
-          .reduce((acc, week) => {
-            acc[week] = '';
-            return acc;
-          }, {}),
-      })
-    ),
-  ]);
+  useEffect(() => {
+    const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
+    const updatedRows = mapData.map(row => ({
+      ...normalizeRow(row),
+      totalEffort: calculateTotalEffort(normalizeRow(row)),
+    }));
+    setUpdatedRows(updatedRows);
+    setRowsState(() => getInitialRowsState(updatedRows, groupBy));
+  }, [data, groupBy]);
 
   const dispatch = useDispatch();
   const { projects } = useSelector(state => state.projects);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
-    initialState: getInitialState(groupBy, updatedRows),
+    initialState: getInitialState(
+      groupBy,
+      updatedRows,
+      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+    ),
   });
 
   const handleAddRow = (e, resource) => {
-    const newRow = {
+    const newRowForProject = {
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: selectedProject,
@@ -93,36 +104,94 @@ export default function AllocationGrid({
       ...Object.keys(updatedRows[0])
         .filter(key => key.startsWith('W'))
         .reduce((acc, week) => {
-          acc[week] = '';
+          acc[week] = { allocationId: null, value: '' };
           return acc;
         }, {}),
       hasButton: false,
     };
-    if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
-      setRowsState(prevRows =>
-        prevRows.flatMap(row =>
-          row.id === `${selectedProject}-add-resource` ? [newRow, row] : [row]
-        )
-      );
+    const newRowForTeams = {
+      id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
+      resourceId: resource.Id,
+      project: '',
+      teamsId: getProjectIdByName(projects[0]?.result, selectedProject),
+      resource: resource.FullName,
+      teams: selectedTeam,
+      role: resource.Role,
+      totalEffort: resource.totalHours,
+      ...Object.keys(updatedRows[0])
+        .filter(key => key.startsWith('W'))
+        .reduce((acc, week) => {
+          acc[week] = '';
+          return acc;
+        }, {}),
+      hasButton: false,
+      hasProject: true,
+    };
+    if (groupBy === 'project') {
+      if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
+        setRowsState(prevRows =>
+          prevRows.flatMap(row =>
+            row.id === `${selectedProject}-add-resource`
+              ? [newRowForProject, row]
+              : [row]
+          )
+        );
+      }
+    } else if (groupBy === 'teams') {
+      if (!isResourceInTeam(rowsState, selectedTeam, resource.FullName)) {
+        setRowsState(prevRows =>
+          prevRows.flatMap(row =>
+            row.id === `${selectedTeam}-add-resource`
+              ? [newRowForTeams, row]
+              : [row]
+          )
+        );
+      }
     }
+
     setIsSearchMode(false);
+  };
+
+  const handleAddProject = (e, project) => {
+    setRowsState(prevRows => {
+      const updatedRows = prevRows.map(row => {
+        if (
+          row.resourceId === selectedResourceId &&
+          row.teams === selectedTeam
+        ) {
+          return {
+            ...row,
+            project: project.FullName,
+            projectId: getProjectIdByName(
+              projects[0]?.result,
+              project.FullName
+            ),
+          };
+        }
+        return row;
+      });
+      return updatedRows;
+    });
   };
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
     setSelectedProject,
     handleAddRow,
-    isSearchMode,
-    setIsSearchMode
+    setSelectedTeam,
+    handleAddProject,
+    setSelectedResourceId
   );
 
   const showField = [
+    GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
     ...columns.map(col => col.field),
     ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
   ];
 
   const getTogglableColumns = columns =>
     columns
+      .filter(column => column.field !== groupBy)
       .filter(column => showField.includes(column.field))
       .map(column => column.field);
 
@@ -146,7 +215,7 @@ export default function AllocationGrid({
           resourceId: resourceId,
           allocationId: selectedAllocationId,
           putData: {
-            'ProjectPortfolio.Core/Allocation': {
+            'ResourceAllocation.Core/Allocation': {
               AllocationEntered: updated[selectedCell],
             },
           },
@@ -156,7 +225,7 @@ export default function AllocationGrid({
         const postPayload = {
           resourceId: resourceId,
           postData: {
-            'ProjectPortfolio.Core/Allocation': {
+            'ResourceAllocation.Core/Allocation': {
               Resource: resourceId,
               Project: projectId,
               ProjectName: project,
@@ -167,6 +236,26 @@ export default function AllocationGrid({
         };
         dispatch(setResourceAllocation(postPayload));
       }
+      setRowsState(prevRows =>
+        prevRows.map(row =>
+          row.id === id
+            ? {
+                ...row,
+                [selectedCell]: {
+                  allocationId: row[selectedCell]?.allocationId || null,
+                  value: updated[selectedCell],
+                },
+                totalEffort: calculateTotalEffort({
+                  ...row,
+                  [selectedCell]: {
+                    allocationId: row[selectedCell]?.allocationId || null,
+                    value: updated[selectedCell],
+                  },
+                }),
+              }
+            : row
+        )
+      );
     } catch (err) {
       console.error('Cell update failed:', err);
     } finally {
@@ -174,10 +263,11 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
-
+  console.log(rowsState, 'rowstate update');
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
+        key={rowsState.length}
         onCellDoubleClick={params => {
           handleDoubleClick(params);
         }}
@@ -190,9 +280,11 @@ export default function AllocationGrid({
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
-        loading={false}
+        loading={loading}
         disableRowSelectionOnClick
         initialState={initialState}
+        columnHeaderHeight={30}
+        columnGroupHeaderHeight={22}
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
         getRowClassName={params => `super-app-theme--${params.row.status}`}
@@ -201,10 +293,14 @@ export default function AllocationGrid({
         slots={{
           toolbar: CustomToolbar,
           columnMenu: props => {
-            return <GridColumnMenuPinningItem {...props} />;
+            return <CustomColumnMenu {...props} apiRef={apiRef} />;
           },
         }}
         slotProps={{
+          loadingOverlay: {
+            variant: 'skeleton',
+            noRowsVariant: 'skeleton',
+          },
           panel: {
             anchorEl: filterButtonEl,
             className: 'parent-grid-panel',
@@ -249,15 +345,12 @@ export default function AllocationGrid({
           groupNode.depth === -1 ? null : 'inline'
         }
         groupingColDef={getGroupingColDef(groupBy)}
-        treeDataGroupingHeaderName={groupPage(groupBy)}
         hideFooter
         editMode="cell"
-      // aggregationRowsCount={
-      //   (params) => {
-      //     return params.rowNode.children?.length || 1;
-      //   }
-      // }
-
+        aggregationRowsCount={params => {
+          console.log(params, 'params');
+          return params.rowNode.children?.length || 1;
+        }}
       />
     </Box>
   );

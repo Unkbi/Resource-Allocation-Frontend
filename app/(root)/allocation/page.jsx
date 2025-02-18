@@ -11,6 +11,9 @@ import { fetchAllAllocations } from '@/app/redux/actions/fetchTeamsAction';
 export default function Allocation() {
   const dispatch = useDispatch();
   const view = useSelector(state => state.allocationView.view);
+  useEffect(() => {
+    document.title = view || 'Resource Allocation';
+  }, [view]);
 
   const getContentByRole = view => {
     switch (view) {
@@ -31,9 +34,6 @@ export default function Allocation() {
 
   return (
     <>
-      <metadata>
-        <title>{view}</title>
-      </metadata>
       <Box className={styles.page}>
         <main className={styles.wrapperBox}>{getContentByRole(view)}</main>
       </Box>

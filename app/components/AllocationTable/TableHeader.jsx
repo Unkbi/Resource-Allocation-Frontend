@@ -30,7 +30,7 @@ const getCurrentWeekIndex = startDate => {
   return Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
 };
 
-const generateWeeklyColumns = startDate => {
+export const generateWeeklyColumns = startDate => {
   const currentWeekIndex = getCurrentWeekIndex(startDate);
   return Array.from({ length: WEEK_COUNT }, (_, i) => {
     const isCurrentWeek = i === currentWeekIndex;
@@ -39,24 +39,28 @@ const generateWeeklyColumns = startDate => {
       headerName: getWeekNumber(addDays(startDate, i * 7)),
       width: 50,
       type: 'number',
-      valueParser: (value) => {
-        let parsedValue = value.replace(/[^0-9.]/g, "").replace(/(?<=\..*)\./g, "");
-        parsedValue = parsedValue.replace(/^(\d*\.?\d?).*$/, "$1");
+      valueParser: value => {
+        let parsedValue = value
+          .replace(/[^0-9.]/g, '')
+          .replace(/(?<=\..*)\./g, '');
+        parsedValue = parsedValue.replace(/^(\d*\.?\d?).*$/, '$1');
         let numericValue = parseFloat(parsedValue) || 0;
         numericValue = Math.min(Math.max(numericValue, 0), 1);
         return numericValue;
       },
-      preProcessEditCellProps: (params) => {
+      preProcessEditCellProps: params => {
         const { props } = params;
         let numericValue = parseFloat(props.value) || 0;
-        const formattedValue = Math.min(Math.max(numericValue, 0), 1).toFixed(1);
+        const formattedValue = Math.min(Math.max(numericValue, 0), 1).toFixed(
+          1
+        );
         return {
           ...props,
           value: formattedValue,
-          error: null
+          error: null,
         };
       },
-      valueFormatter: (params) => {
+      valueFormatter: params => {
         const value = Number(params);
         return value !== 0 ? value.toFixed(1) : '';
       },
@@ -105,6 +109,7 @@ const generateColumnGroupingModel = startDate => {
       if (weekFields.length > 0) {
         groups.push({
           groupId: currentMonthYear,
+          headerClassName: 'grouping-header',
           children: weekFields.map(field => ({ field })),
         });
       }
@@ -116,6 +121,7 @@ const generateColumnGroupingModel = startDate => {
     if (i + 1 === WEEK_COUNT) {
       groups.push({
         groupId: currentMonthYear,
+        headerClassName: 'grouping-header',
         children: weekFields.map(field => ({ field })),
       });
     }
@@ -130,3 +136,12 @@ export const columnGroupingModel = generateColumnGroupingModel(startDate);
 export const getAllColumnsWithWeek = columns => {
   return [...columns, ...generateWeeklyColumns(startDate)];
 };
+
+const allWeekColumns = generateWeeklyColumns(startDate);
+
+export const aggregationModel = allWeekColumns
+  .filter(column => column.field.startsWith('W'))
+  .reduce((acc, column) => {
+    acc[column.field] = 'sum';
+    return acc;
+  }, {});

@@ -1,38 +1,44 @@
-import { getAllColumnsWithWeek } from '@/app/components/AllocationTable/TableHeader';
-import { AddResourceButton } from '@/app/components/AllocationTable/AddResourceButton';
+import {
+  aggregationModel,
+  getAllColumnsWithWeek,
+} from '@/app/components/AllocationTable/TableHeader';
 import CustomAvatar from '../Avatar/CustomAvatar';
+import { calculateTotalEffort } from '@/app/utils/common';
+import { AddRowButton } from './AddRowButton';
 
-export const getInitialState = (groupBy, updatedRows) => ({
+export const getInitialState = (
+  groupBy,
+  updatedRows,
+  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+) => ({
   rowGrouping: {
     model: [groupBy],
   },
   sorting: {
-    sortModel: [{ field: groupBy, sort: 'asc' }],
+    sortModel: [
+      { field: GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, sort: 'asc' },
+    ],
   },
   aggregation: {
     model: {
       totalEffort: 'sum',
-      ...Object.keys(updatedRows[0])
-        .filter(week => week.startsWith('W') && updatedRows.some(row => row[week] !== null && row[week] !== undefined))
-        .reduce((acc, week) => {
-          acc[week] = 'sum';
-          return acc;
-        }, {}),
+      ...aggregationModel,
     },
   },
-  pinnedColumns: { left: [groupBy] },
+  pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD] },
 });
 
 export const getFinalColumns = (
   columns,
   groupBy,
   setSelectedProject,
-  handleAddRow
+  handleAddRow,
+  setSelectedTeam,
+  handleAddProject,
+  setSelectedResourceId
 ) => {
   const allColumns = getAllColumnsWithWeek(columns);
-  if (groupBy === 'teams') {
-    return allColumns || [];
-  } else if (groupBy === 'organization') {
+  if (groupBy === 'organization') {
     return allColumns || [];
   } else {
     return [
@@ -46,11 +52,15 @@ export const getFinalColumns = (
         renderCell: params => {
           if (params.row.hasButton) {
             return (
-              <AddResourceButton
+              <AddRowButton
                 project={params.row.project}
                 handleAddRow={handleAddRow}
+                buttonName={
+                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
+                }
                 onClick={event => {
-                  setSelectedProject(params.row.project);
+                  setSelectedProject(params.row.project),
+                    setSelectedTeam(params.row.teams);
                 }}
               />
             );
@@ -58,6 +68,32 @@ export const getFinalColumns = (
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
           }
+        },
+      },
+      {
+        field: 'project',
+        headerName: 'Project',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        renderCell: params => {
+          if (params.row.hasProject && !params.row.project) {
+            return (
+              <AddRowButton
+                project={params.row.project}
+                handleAddRow={handleAddProject}
+                buttonName="Add Project"
+                onClick={event => {
+                  setSelectedProject(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId);
+                }}
+              />
+            );
+          }
+          if (params.value) {
+            return params.value;
+          }
+          return null;
         },
       },
       ...(allColumns?.slice(1) || []),
@@ -79,6 +115,7 @@ export const getGroupingColDef = groupBy => ({
   renderHeader: () => groupPage(groupBy),
   renderCell: params => params.value,
   filterable: false,
+  headerClassName: 'prime-header',
 });
 
 export const getCellClassName = (params, updatedRows) => {
@@ -107,7 +144,12 @@ export const getCellClassName = (params, updatedRows) => {
       const totalRows = projectRows.length;
 
       const aggregatedValue = projectRows.reduce((sum, row) => {
-        return sum + (row[params.field] || 0);
+        const weekValue = row[params.field];
+        const numericValue =
+          typeof weekValue === 'object' && weekValue !== null
+            ? parseFloat(weekValue.value || 0)
+            : parseFloat(weekValue || 0);
+        return sum + numericValue;
       }, 0);
 
       const percentage = (aggregatedValue / totalRows) * 100;
@@ -127,4 +169,57 @@ export const getCellClassName = (params, updatedRows) => {
     return 'firstGroupsRow';
   }
   return '';
+};
+
+export const getInitialRowsState = (updatedRows, groupBy) => {
+  const rowsWithTotalEffort = updatedRows.map(row => ({
+    ...row,
+    totalEffort: calculateTotalEffort(row),
+  }));
+
+  if (groupBy === 'project') {
+    return [
+      ...rowsWithTotalEffort,
+      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.project))).map(
+        project => ({
+          id: `${project}-add-resource`,
+          project: project,
+          resource: '',
+          role: '',
+          totalEffort: '',
+          hasButton: true,
+          ...Object.keys(updatedRows[0])
+            .filter(key => key.startsWith('W'))
+            .reduce((acc, week) => {
+              acc[week] = '';
+              return acc;
+            }, {}),
+        })
+      ),
+    ];
+  } else if (groupBy === 'teams') {
+    return [
+      ...rowsWithTotalEffort,
+      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.teams))).map(
+        teams => ({
+          id: `${teams}-add-resource`,
+          project: '',
+          teams: teams,
+          resource: '',
+          role: '',
+          totalEffort: '',
+          resourceId: '',
+          hasButton: true,
+          ...Object.keys(updatedRows[0])
+            .filter(key => key.startsWith('W'))
+            .reduce((acc, week) => {
+              acc[week] = '';
+              return acc;
+            }, {}),
+        })
+      ),
+    ];
+  } else {
+    return updatedRows;
+  }
 };
