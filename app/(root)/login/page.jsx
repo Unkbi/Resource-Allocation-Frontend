@@ -199,6 +199,15 @@ export default function LoginPage() {
         setShowPassword((prev) => !prev);
     };
 
+    const handleGoogleSignin = () => {
+        const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
+        if (googleAuthUrl) {
+            window.location.href = googleAuthUrl;
+        } else {
+            console.error("Google Auth URL is not defined");
+        }
+    }
+
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
             <Box display={"flex"} width={'100%'}>
@@ -278,6 +287,7 @@ export default function LoginPage() {
                                 variant="outlined"
                                 fullWidth
                                 className='googleButton'
+                                onClick={handleGoogleSignin}
                             >
                                 <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
                             </Button>
