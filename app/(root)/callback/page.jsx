@@ -1,10 +1,10 @@
 "use client";
 
+import { Suspense, useEffect } from "react";
 import { saveRefreshToken, saveToken } from "@/app/utils/authUtils";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 
-export default function Callback() {
+function CallbackContent() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -16,7 +16,16 @@ export default function Callback() {
                 saveRefreshToken(refreshToken);
             }
         }
-    }, []);
+    }, [searchParams]);
 
-    return <></>;
+    return null;
+}
+
+
+export default function Callback() {
+    return (
+        <Suspense fallback={null}>
+            <CallbackContent />
+        </Suspense>
+    );
 }
