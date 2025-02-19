@@ -109,21 +109,27 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
             allocationsData,
             project.Id
           );
-          return formattedAllocations; 
+          return formattedAllocations;
         } else {
-          throw new Error(`Request for project ${project.Id} was not fulfilled`);
+          throw new Error(
+            `Request for project ${project.Id} was not fulfilled`
+          );
         }
       } catch (error) {
-        console.error(`Error fetching allocations for project ${project.Id}:`, error);
-        return null; 
+        console.error(
+          `Error fetching allocations for project ${project.Id}:`,
+          error
+        );
+        return null;
       }
     });
 
     const results = await Promise.allSettled(allocationPromises);
+
     let allAllocations = [];
     results.forEach(result => {
       if (result.status === 'fulfilled' && result.value) {
-        allAllocations = [...allAllocations, ...result.value]; 
+        allAllocations = [...allAllocations, ...result.value];
       } else if (result.status === 'rejected') {
         console.error('A project allocation request failed:', result.reason);
       }

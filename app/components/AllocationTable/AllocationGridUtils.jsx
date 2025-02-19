@@ -84,7 +84,7 @@ export const getFinalColumns = (
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
                 onClick={event => {
-                  setSelectedProject(params.row.teams),
+                  setSelectedTeam(params.row.teams),
                     setSelectedResourceId(params.row.resourceId);
                 }}
               />

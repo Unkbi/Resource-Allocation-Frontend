@@ -28,10 +28,6 @@ export default function Allocation() {
     }
   };
 
-  useEffect(() => {
-    dispatch(fetchAllAllocations());
-  }, []);
-
   return (
     <>
       <Box className={styles.page}>
