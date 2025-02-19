@@ -1,33 +1,31 @@
-import { getAllColumnsWithWeek } from '@/app/components/AllocationTable/TableHeader';
-import { AddRowButton } from '@/app/components/AllocationTable/AddRowButton';
+import {
+  aggregationModel,
+  getAllColumnsWithWeek,
+} from '@/app/components/AllocationTable/TableHeader';
 import CustomAvatar from '../Avatar/CustomAvatar';
 import { calculateTotalEffort } from '@/app/utils/common';
+import { AddRowButton } from './AddRowButton';
 
-export const getInitialState = (groupBy, updatedRows) => ({
+export const getInitialState = (
+  groupBy,
+  updatedRows,
+  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+) => ({
   rowGrouping: {
     model: [groupBy],
   },
   sorting: {
-    sortModel: [{ field: groupBy, sort: 'asc' }],
+    sortModel: [
+      { field: GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, sort: 'asc' },
+    ],
   },
   aggregation: {
     model: {
       totalEffort: 'sum',
-      ...Object.keys(updatedRows[0])
-        .filter(
-          week =>
-            week.startsWith('W') &&
-            updatedRows.some(
-              row => row[week] !== null && row[week] !== undefined
-            )
-        )
-        .reduce((acc, week) => {
-          acc[week] = 'sum';
-          return acc;
-        }, {}),
+      ...aggregationModel,
     },
   },
-  pinnedColumns: { left: [groupBy] },
+  pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD] },
 });
 
 export const getFinalColumns = (
@@ -117,6 +115,7 @@ export const getGroupingColDef = groupBy => ({
   renderHeader: () => groupPage(groupBy),
   renderCell: params => params.value,
   filterable: false,
+  headerClassName: 'prime-header',
 });
 
 export const getCellClassName = (params, updatedRows) => {

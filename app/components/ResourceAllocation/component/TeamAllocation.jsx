@@ -50,15 +50,14 @@ export default function TeamAllocation() {
 
   return (
     <>
-      {loading && <CenteredLoader />}
-      {resources && resources.length > 0 && (
-        <AllocationGrid
-          groupBy="teams"
-          columns={teamsColumnConfig}
-          columnGroupingModel={columnGroupingModel}
-          data={resources}
-        />
-      )}
+      {/* {loading && <CenteredLoader />} */}
+      <AllocationGrid
+        loading={loading}
+        groupBy="teams"
+        columns={teamsColumnConfig}
+        columnGroupingModel={columnGroupingModel}
+        data={resources}
+      />
       {!resources && !loading && (
         <div
           style={{

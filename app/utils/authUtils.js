@@ -1,6 +1,9 @@
 // Save access token to localStorage
 export const saveToken = (token) => {
-  localStorage.setItem('token', token);
+  if (typeof window !== "undefined" && window.localStorage) {
+    localStorage.setItem('token', token);
+  }
+    return null;
 };
 
 // Get access token from localStorage
@@ -14,11 +17,15 @@ export const getToken = () => {
 // Clear access token from localStorage
 export const clearToken = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
 };
 
 // Save refresh token to localStorage
 export const saveRefreshToken = (refreshToken) => {
-  localStorage.setItem('refreshToken', refreshToken);
+  if (typeof window !== "undefined" && window.localStorage) {
+    localStorage.setItem('refreshToken', refreshToken);
+  }
+    return null;
 };
 
 // Get refresh token from localStorage

@@ -32,7 +32,6 @@ axiosInstance.interceptors.request.use(
   config => {
     const token = getToken();
     if (token) {
-      // console.log('originalRequest._retry34',config)
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
@@ -47,30 +46,21 @@ axiosInstance.interceptors.response.use(
       console.error('No response received from API', error);
       return Promise.reject(error);
     }
-
-    console.log(
-      'Interceptor caught error:',
-      error.response.status,
-      error.response.data
-    );
-
     const originalRequest = error.config;
 
     if (error.response.status === 401 && !originalRequest._retry) {
-      console.log('401 detected, handling token refresh...');
       originalRequest._retry = true;
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
 
       if (originalRequest._retryCount > MAX_RETRIES) {
-        console.error('Max retry attempts reached. Logging out.');
-        // clearAuth();
+        clearAuth();
         return Promise.reject(new Error('Max retry attempts reached'));
       }
 
       if (isRefreshing) {
         return new Promise(resolve => {
           addRefreshSubscriber(newToken => {
-            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            originalRequest.headers['Authorization'] = newToken;
             resolve(axiosInstance(originalRequest));
           });
         });
@@ -80,11 +70,9 @@ axiosInstance.interceptors.response.use(
 
       try {
         const refreshToken = getRefreshToken();
-        console.log('Using refresh token:', refreshToken);
 
         if (!refreshToken) {
-          console.log('No refresh token found, logging out.');
-          // clearAuth();
+          clearAuth();
           return Promise.reject(error);
         }
 

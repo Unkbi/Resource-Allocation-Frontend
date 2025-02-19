@@ -6,6 +6,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
       width: '240px !important',
+      fontSize: '14px',
     },
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
     {
@@ -62,6 +63,12 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     color: '#313F68',
     fontFamily: "'Manrope', serif",
     fontWeight: '500',
+    '& .MuiDataGrid-columnHeaderTitleContainer': {
+      // alignItems: 'flex-start',
+      '& .MuiDataGrid-columnHeaderTitle': {
+        fontSize: '14px',
+      },
+    },
   },
   '& .MuiDataGrid-row': {
     '&:hover': {
@@ -125,6 +132,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     backgroundColor: 'rgba(20, 43, 81, 0.72)',
     '& .MuiDataGrid-columnHeaderTitleContainer': {
       justifyContent: 'center',
+      alignItems: 'center',
       '& .MuiDataGrid-columnHeaderTitle': {
         fontFamily: "'Manrope', serif",
         fontWeight: '500',
@@ -133,11 +141,23 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       },
     },
   },
+  '& .grouping-header': {
+    '& .MuiDataGrid-columnHeaderTitleContainer': {
+      alignItems: 'center',
+      '& .MuiDataGrid-columnHeaderTitle': {
+        fontWeight: 'bold',
+        fontSize: '12px',
+      },
+    },
+  },
   '& .current-week-header': {
     backgroundColor: 'rgb(43 102 199 / 72%)',
   },
   '& .MuiDataGrid-columnSeparator--resizable': {
     opacity: '0',
+  },
+  '& .MuiDataGrid-columnSeparator--sideRight': {
+    opacity: 0,
   },
   '& .MuiDataGrid-cellEmpty': {
     display: 'none',
