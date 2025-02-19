@@ -6,7 +6,11 @@ import {
   postTeamResource,
 } from '@/app/services/teamServices';
 import { updateResources } from '../reducers/teamsReducer';
-import { getWeekNumber, isWithin20WeeksRange } from '@/app/utils/common';
+import {
+  getWeekNumber,
+  isWithin20WeeksRange,
+  removeDuplicateResources,
+} from '@/app/utils/common';
 
 export const fetchAllTeams = () => async dispatch => {
   try {
@@ -30,22 +34,47 @@ const formatAllocations = (data, resources, teamId, teamName) => {
   const allocationMap = new Map();
 
   if (allocationsData.length === 0) {
-    const obj = [
-      {
-        id: teamId,
-        resourceId: '',
-        project: '',
-        projectId: '',
-        resource: '',
-        totalEffort: '',
-        role: '',
-        teams: teamName,
-        teamsId: teamId,
-        resourceType: '',
-        W1: null,
-      },
-    ];
-    return obj;
+    let obj = [];
+    if (resources.length === 0) {
+      obj = [
+        {
+          id: teamId,
+          resourceId: '',
+          project: '',
+          projectId: '',
+          resource: '',
+          totalEffort: '',
+          role: '',
+          teams: teamName,
+          teamsId: teamId,
+          resourceType: '',
+          W1: null,
+        },
+      ];
+    } else {
+      if (Array.isArray(resources)) {
+        const uniqueRecords = removeDuplicateResources(resources);
+
+        if (uniqueRecords.length > 0) {
+          obj = uniqueRecords.map(resource => ({
+            id: resource.Id + teamId,
+            resourceId: resource.Id,
+            project: '',
+            projectId: '',
+            resource: resource.FullName,
+            totalEffort: '',
+            role: resource.Role,
+            teams: teamName,
+            teamsId: teamId,
+            resourceType: resource.Type,
+            hasProject: true, // Enables Add Project CTA for respective resource in case of empty allocations data.
+            W1: null,
+          }));
+        }
+      }
+
+      return obj;
+    }
   }
 
   allocationsData.forEach(allocation => {

@@ -15,7 +15,21 @@ export const getResourcesAgainstTeams = createAsyncThunk(
         `${API_PROJECT_PORTFOLIO}/GetTeamResources`,
         postData
       );
-      return response.data;
+      /**
+         @todo: Converting nested array into flat to accomodate nested array issue in API response.
+         Needs to be reverted later.
+      **/
+      const formattedData = [
+        {
+          status: response?.data?.[0]?.status,
+          message: response.data?.[0]?.message,
+          result: response?.data?.[0].result.flat(),
+        },
+      ];
+
+      return formattedData;
+      //Commented out as of now. Needs to be reverted later.
+      // return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data || 'Failed to fetch teams resources.'

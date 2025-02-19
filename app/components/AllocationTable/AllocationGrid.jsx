@@ -10,7 +10,6 @@ import {
   getMondayOfWeek,
   getProjectOrTeamIdByName,
   isResourceInProject,
-  isResourceInTeam,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
