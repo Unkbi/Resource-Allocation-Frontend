@@ -201,6 +201,7 @@ export default function LoginPage() {
 
     const handleGoogleSignin = () => {
         const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
+        console.log(googleAuthUrl, 'googleAuthUrl', process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL);
         if (googleAuthUrl) {
             window.location.href = googleAuthUrl;
         } else {
