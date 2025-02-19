@@ -70,13 +70,15 @@ const MainBox = styled(Box)(({ theme }) => ({
 const StyledPopper = styled(Popper)(({ theme }) => ({
   backgroundColor: '#FFFFFF',
   boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
-  maxHeight: '156px',
-  overflow: 'auto',
-  '&::-webkit-scrollbar': {
-    width: '2px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    backgroundColor: '#C4CAD4',
+  '& ul': {
+    maxHeight: '156px',
+    overflow: 'auto',
+    '&::-webkit-scrollbar': {
+      width: '4px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: '#C4CAD4',
+    },
   },
   '& .MuiAutocomplete-noOptions': {
     fontFamily: "'Manrope', serif",
