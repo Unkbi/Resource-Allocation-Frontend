@@ -1,12 +1,11 @@
 import { updateSignup } from '../reducers/authReducer';
 import { confirmForgotPassword, confirmSignUp, forgotPassword, getUser, loginUser, logoutUser, signupUser } from './../../services/authServices';
 
-// Example of wrapping an async action for added logic
 export const performLogin = (credentials) => async (dispatch) => {
   try {
     await dispatch(loginUser(credentials)).unwrap(); 
   } catch (error) {
-    console.error('Login failed:', error);
+    console.log('Login failed:', error);
   }
 };
 
