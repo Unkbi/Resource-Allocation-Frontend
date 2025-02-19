@@ -178,6 +178,7 @@ export default function LoginPage() {
     const { loading, error, user } = useSelector((state) => state.user);
     const router = useRouter();
     const [showPassword, setShowPassword] = React.useState(false);
+    const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
     const handleLogin = (e) => {
         e.preventDefault();
         dispatch(performLogin(
@@ -200,9 +201,7 @@ export default function LoginPage() {
     };
 
     const handleGoogleSignin = () => {
-        console.log('googleAuthUrl', process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL);
-        const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
-
+        console.log('googleAuthUrl', googleAuthUrl);
         if (googleAuthUrl) {
             window.location.href = googleAuthUrl;
         } else {
