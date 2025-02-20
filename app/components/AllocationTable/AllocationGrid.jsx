@@ -346,6 +346,7 @@ export default function AllocationGrid({
         groupingColDef={getGroupingColDef(groupBy)}
         hideFooter
         editMode="cell"
+        // editMode="row"
         aggregationRowsCount={params => {
           return params.rowNode.children?.length || 1;
         }}

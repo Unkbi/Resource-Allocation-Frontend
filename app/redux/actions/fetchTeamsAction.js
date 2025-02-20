@@ -33,7 +33,10 @@ const formatAllocations = (data, resources, teamId, teamName) => {
   const allocationsData = data.result;
   const allocationMap = new Map();
 
-  if (allocationsData.length === 0) {
+  if (
+    allocationsData.length === 0 ||
+    Object.keys(allocationsData[0]).length === 0
+  ) {
     let obj = [];
     if (resources.length === 0) {
       obj = [
@@ -52,7 +55,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
         },
       ];
     } else {
-      if (Array.isArray(resources)) {
+      if (Array.isArray(resources) && resources.length !== 0) {
         const uniqueRecords = removeDuplicateResources(resources);
 
         if (uniqueRecords.length > 0) {
@@ -72,9 +75,8 @@ const formatAllocations = (data, resources, teamId, teamName) => {
           }));
         }
       }
-
-      return obj;
     }
+    return obj;
   }
 
   allocationsData.forEach(allocation => {
