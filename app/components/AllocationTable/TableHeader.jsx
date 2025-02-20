@@ -54,7 +54,7 @@ export const generateWeeklyColumns = startDate => {
         return {
           ...props,
           value: formattedValue,
-          error: null,
+          error: formattedValue > 2 ? true : null,
         };
       },
       valueFormatter: params => {
