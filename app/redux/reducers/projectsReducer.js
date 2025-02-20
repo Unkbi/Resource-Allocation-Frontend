@@ -8,6 +8,7 @@ const initialState = {
   projects: null,
   allocations: [],
   loading: false,
+  dataProcessing: false,
   error: null,
 };
 
@@ -26,6 +27,9 @@ const projectsSlice = createSlice({
     },
     resetAllocations: state => {
       state.allocations = [];
+    },
+    setDataProcessing: (state, action) => {
+      state.dataProcessing = action.payload;
     },
   },
   extraReducers: builder => {
@@ -58,5 +62,6 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { updateAllocations, resetAllocations } = projectsSlice.actions;
+export const { updateAllocations, resetAllocations, setDataProcessing } =
+  projectsSlice.actions;
 export default projectsSlice.reducer;

@@ -9,6 +9,7 @@ import {
   calculateTotalEffort,
   getMondayOfWeek,
   getProjectOrTeamIdByName,
+  getWeekNumber,
   isResourceInProject,
 } from '@/app/utils/common';
 import { demoRows } from './data';
@@ -33,6 +34,7 @@ import {
 } from '@/app/redux/actions/resourceAllocationAction';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
+import { getTeamAllocations } from '@/app/services/teamServices';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
@@ -82,7 +84,7 @@ export default function AllocationGrid({
 
   const dispatch = useDispatch();
   const { projects } = useSelector(state => state.projects);
-  const { teams } = useSelector(state => state.teams);
+  const { teams, teamAllocations } = useSelector(state => state.teams);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -149,28 +151,75 @@ export default function AllocationGrid({
       dispatch(
         addResourceToTeam(newRowForTeams.teamsId, newRowForTeams.resourceId)
       );
+      const teamAllocationPostData = {
+        'ResourceAllocation.Core/GetTeamAllocations': {
+          TeamId: newRowForTeams.teamsId,
+        },
+      };
+      dispatch(getTeamAllocations(teamAllocationPostData));
     }
 
     setIsSearchMode(false);
   };
 
   const handleAddProject = (e, project) => {
-    setRowsState(prevRows => {
-      const updatedRows = prevRows.map(row => {
-        if (
-          row.resourceId === selectedResourceId &&
-          row.teams === selectedTeam
-        ) {
-          return {
-            ...row,
-            project: project.Name,
-            projectId: project.Id,
-          };
-        }
-        return row;
+    const checkEntryExists = (data, resourceId, projectName, projectId) => {
+      return data.some(
+        item =>
+          item.Resource === resourceId &&
+          item.ProjectName === projectName &&
+          item.Project === projectId
+      );
+    };
+    // const allocationMap = new Map();
+    // const allWeeks = generateAllWeeks();
+
+    // teamAllocations?.[0].result.forEach(allocation => {
+    //   if (!allocation.Period || allocation.AllocationEntered === 0) return;
+
+    //   const periodDate = new Date(allocation.Period);
+    //   const weekNumber = getWeekNumber(periodDate);
+    //   const weekObj = {};
+    //   allWeeks.forEach(week => {
+    //     weekObj[week] = null;
+    //   });
+
+    //   if (allWeeks.includes(weekNumber)) {
+    //     weekObj[weekNumber] = {
+    //       allocationId: allocation.Allocation,
+    //       value: allocation.AllocationEntered || null,
+    //     };
+    //   }
+
+    //   allocationMap.set(key, weekObj);
+    // });
+
+    if (
+      !checkEntryExists(
+        teamAllocations?.[0].result,
+        selectedResourceId,
+        project.Name,
+        project.Id
+      )
+    ) {
+      setRowsState(prevRows => {
+        const updatedRows = prevRows.map(row => {
+          if (
+            row.resourceId === selectedResourceId &&
+            row.teams === selectedTeam &&
+            row.project === ''
+          ) {
+            return {
+              ...row,
+              project: project.Name,
+              projectId: project.Id,
+            };
+          }
+          return row;
+        });
+        return updatedRows;
       });
-      return updatedRows;
-    });
+    }
   };
   const finalColumns = getFinalColumns(
     columns,

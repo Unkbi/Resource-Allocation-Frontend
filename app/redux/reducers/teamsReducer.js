@@ -13,6 +13,7 @@ const initialState = {
   allAllocations: [],
   teamAllocations: [],
   loading: false,
+  dataProcessing: false,
   error: null,
 };
 
@@ -31,6 +32,9 @@ const teamsSlice = createSlice({
     },
     resetResources: state => {
       state.resources = [];
+    },
+    setTeamsDataProcessing: (state, action) => {
+      state.dataProcessing = action.payload;
     },
   },
   extraReducers: builder => {
@@ -75,7 +79,6 @@ const teamsSlice = createSlice({
       })
       // Handle getTeamAllocations API call
       .addCase(getTeamAllocations.pending, state => {
-        state.loading = true;
         state.error = null;
       })
       .addCase(getTeamAllocations.fulfilled, (state, action) => {
@@ -88,7 +91,6 @@ const teamsSlice = createSlice({
       })
       // Handle postTeamResource API call
       .addCase(postTeamResource.pending, state => {
-        state.loading = true;
         state.error = null;
       })
       .addCase(postTeamResource.fulfilled, state => {
@@ -101,5 +103,6 @@ const teamsSlice = createSlice({
   },
 });
 
-export const { updateResources, resetResources } = teamsSlice.actions;
+export const { updateResources, resetResources, setTeamsDataProcessing } =
+  teamsSlice.actions;
 export default teamsSlice.reducer;

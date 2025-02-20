@@ -46,7 +46,7 @@ const projectColumnConfig = [
 
 export default function ProjectAllocation() {
   const [allocationsFetched, setAllocationsFetched] = useState(false);
-  const { projects, allocations, loading, error } = useSelector(
+  const { projects, allocations, loading, dataProcessing, error } = useSelector(
     state => state.projects
   );
   const dispatch = useDispatch();
@@ -72,7 +72,7 @@ export default function ProjectAllocation() {
         columns={projectColumnConfig}
         columnGroupingModel={columnGroupingModel}
         data={allocations}
-        loading={loading}
+        loading={loading || dataProcessing}
       />
     </>
   );

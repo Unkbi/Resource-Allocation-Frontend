@@ -5,7 +5,10 @@ import {
   getTeamAllocations,
   postTeamResource,
 } from '@/app/services/teamServices';
-import { updateResources } from '../reducers/teamsReducer';
+import {
+  setTeamsDataProcessing,
+  updateResources,
+} from '../reducers/teamsReducer';
 import {
   getWeekNumber,
   isWithin20WeeksRange,
@@ -35,7 +38,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
 
   if (
     allocationsData.length === 0 ||
-    Object.keys(allocationsData[0]).length === 0
+    Object.keys(allocationsData?.[0]).length === 0
   ) {
     let obj = [];
     if (resources.length === 0) {
@@ -137,6 +140,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
 
 export const fetchResourcesAgainstTeams = teams => async dispatch => {
   try {
+    dispatch(setTeamsDataProcessing(true));
     let allResources = [];
 
     const teamPromises = teams.map(async team => {
@@ -212,6 +216,8 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
     }
   } catch (error) {
     console.error('Error fetching resources and allocations for teams:', error);
+  } finally {
+    dispatch(setTeamsDataProcessing(false));
   }
 };
 

@@ -31,7 +31,7 @@ const teamsColumnConfig = [
 export default function TeamAllocation() {
   const [resourcesFetched, setResourcesFetched] = useState(false);
   const dispatch = useDispatch();
-  const { teams, resources, loading, error } = useSelector(
+  const { teams, resources, loading, dataProcessing, error } = useSelector(
     state => state.teams
   );
 
@@ -52,7 +52,7 @@ export default function TeamAllocation() {
     <>
       {/* {loading && <CenteredLoader />} */}
       <AllocationGrid
-        loading={loading}
+        loading={loading || dataProcessing}
         groupBy="teams"
         columns={teamsColumnConfig}
         columnGroupingModel={columnGroupingModel}
