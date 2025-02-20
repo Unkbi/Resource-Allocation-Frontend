@@ -1,7 +1,7 @@
 import React from 'react';
 import { SvgIcon } from '@mui/material';
 
-const MyTeamsIcon = ({ color = '#344665', fontSize = 'small', ...props }) => {
+const MyTeamsIcon = ({ color = '#344665', fontSize = 'medium', ...props }) => {
   return (
     <SvgIcon
       {...props}
