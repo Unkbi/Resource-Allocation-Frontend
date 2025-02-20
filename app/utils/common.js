@@ -149,3 +149,23 @@ export const getInitialsColor = name => {
     name && name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colors[hash % colors.length];
 };
+
+export const generateAllWeeks = () => {
+  const weeks = [];
+  const today = new Date();
+  const currentDay = today.getDay();
+
+  // Find current week Monday
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - ((currentDay + 6) % 7));
+  startDate.setHours(0, 0, 0, 0);
+
+  // Generate 22 weeks total: previous week + current week + next 20 weeks
+  for (let i = -1; i <= 20; i++) {
+    const weekDate = new Date(startDate);
+    weekDate.setDate(startDate.getDate() + i * 7);
+    weeks.push(getWeekNumber(weekDate));
+  }
+
+  return weeks;
+};
