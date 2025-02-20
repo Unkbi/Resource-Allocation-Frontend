@@ -225,7 +225,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           sx={{ minWidth: 100, border: 'none', boxShadow: 'none' }}
         >
           <Select
-            value={view || 'Projects'}
+            value={view || 'Teams'}
             onChange={handleViewChange}
             className="projectDropdown"
             sx={{
@@ -236,7 +236,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                 border: 'none',
               },
             }}
-            defaultValue="Projects"
+            defaultValue="Teams"
             IconComponent={KeyboardArrowDown}
             MenuProps={{
               PaperProps: {
