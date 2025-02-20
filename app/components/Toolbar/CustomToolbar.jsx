@@ -192,7 +192,11 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
 const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const view = useSelector(state => state.allocationView.view);
-  const viewOptions = ['Teams', 'Projects', 'Organizations'];
+  const viewOptions = [
+    'Teams',
+    'Projects',
+    // 'Organizations'
+  ];
   const [active, setActive] = useState(false);
 
   const handleViewChange = useCallback(

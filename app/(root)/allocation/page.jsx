@@ -19,8 +19,8 @@ export default function Allocation() {
     switch (view) {
       case 'Projects':
         return <ProjectAllocation />;
-      case 'Organizations':
-        return <OrganizationAllocation />;
+      // case 'Organizations':
+      //   return <OrganizationAllocation />;
       case 'Teams':
         return <TeamAllocation />;
       default:
