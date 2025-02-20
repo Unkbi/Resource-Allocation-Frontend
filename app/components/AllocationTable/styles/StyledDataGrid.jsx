@@ -100,6 +100,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .errorCell': {
     border: '1px solid red !important',
   },
+  '& .MuiDataGrid-filler--pinnedLeft': {
+    width: '240px',
+  },
   '& .weeklyCell': {
     textAlign: 'center',
     fontFamily: "'Manrope', serif",
