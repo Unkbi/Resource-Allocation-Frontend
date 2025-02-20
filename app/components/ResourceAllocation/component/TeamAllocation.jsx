@@ -14,7 +14,7 @@ const teamsColumnConfig = [
   {
     field: 'teams',
     headerName: 'Teams Name',
-    width: 250,
+    width: 200,
     headerClassName: 'prime-header',
     cellClassName: 'prime-cell',
   },

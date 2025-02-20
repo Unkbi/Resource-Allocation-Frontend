@@ -142,6 +142,9 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       minWidth: '36px',
       height: '100%',
       borderRadius: '0',
+      '& .MuiSvgIcon-fontSize18': {
+        fontSize: '18px',
+      },
       '& svg': {
         fontSize: '24px',
       },
@@ -332,7 +335,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                   placement="bottom"
                   onClick={handleClick}
                 >
-                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} />
+                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} fontSize={'18'} />
                 </TooltipButton>
                 <TooltipButton
                   msg="All Teams"
