@@ -244,6 +244,7 @@ export default function AllocationGrid({
       .map(column => column.field);
 
   const handleDoubleClick = params => {
+    apiRef.current.startCellEditMode({ id: params.id, field: params.field });
     setSelectedCell(params.field);
     const { field, formattedValue, row } = params || {};
     if (formattedValue) {
@@ -255,55 +256,58 @@ export default function AllocationGrid({
   const handleCellUpdate = updated => {
     try {
       const { project, projectId, id } = updated || {};
-
+      let formattedCellValue = Math.round(updated[selectedCell] * 10) / 10;
       let resourceId = updated?.resourceId;
 
-      if (selectedAllocationId) {
-        const putPayload = {
-          resourceId: resourceId,
-          allocationId: selectedAllocationId,
-          putData: {
-            'ResourceAllocation.Core/Allocation': {
-              AllocationEntered: updated[selectedCell],
-            },
-          },
-        };
-        dispatch(updateResourceAllocation(putPayload));
-      } else {
-        const postPayload = {
-          resourceId: resourceId,
-          postData: {
-            'ResourceAllocation.Core/Allocation': {
-              Resource: resourceId,
-              Project: projectId,
-              ProjectName: project,
-              Period: getMondayOfWeek(selectedCell),
-              AllocationEntered: updated[selectedCell],
-            },
-          },
-        };
-        dispatch(setResourceAllocation(postPayload));
-      }
-      setRowsState(prevRows =>
-        prevRows.map(row =>
-          row.id === id
-            ? {
-              ...row,
-              [selectedCell]: {
-                allocationId: row[selectedCell]?.allocationId || null,
-                value: updated[selectedCell],
+
+      if (formattedCellValue && formattedCellValue <= 2) {
+        if (selectedAllocationId) {
+          const putPayload = {
+            resourceId: resourceId,
+            allocationId: selectedAllocationId,
+            putData: {
+              'ResourceAllocation.Core/Allocation': {
+                AllocationEntered: formattedCellValue,
               },
-              totalEffort: calculateTotalEffort({
+            },
+          };
+          dispatch(updateResourceAllocation(putPayload));
+        } else {
+          const postPayload = {
+            resourceId: resourceId,
+            postData: {
+              'ResourceAllocation.Core/Allocation': {
+                Resource: resourceId,
+                Project: projectId,
+                ProjectName: project,
+                Period: getMondayOfWeek(selectedCell),
+                AllocationEntered: formattedCellValue,
+              },
+            },
+          };
+          dispatch(setResourceAllocation(postPayload));
+        }
+        setRowsState(prevRows =>
+          prevRows.map(row =>
+            row.id === id
+              ? {
                 ...row,
                 [selectedCell]: {
                   allocationId: row[selectedCell]?.allocationId || null,
-                  value: updated[selectedCell],
+                  value: formattedCellValue,
                 },
-              }),
-            }
-            : row
-        )
-      );
+                totalEffort: calculateTotalEffort({
+                  ...row,
+                  [selectedCell]: {
+                    allocationId: row[selectedCell]?.allocationId || null,
+                    value: formattedCellValue,
+                  },
+                }),
+              }
+              : row
+          )
+        );
+      }
     } catch (err) {
       console.error('Cell update failed:', err);
     } finally {
@@ -316,7 +320,7 @@ export default function AllocationGrid({
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
         key={rowsState.length}
-        onCellDoubleClick={params => {
+        onCellClick={params => {
           handleDoubleClick(params);
         }}
         processRowUpdate={newRow => {
@@ -331,7 +335,7 @@ export default function AllocationGrid({
         loading={loading}
         disableRowSelectionOnClick
         initialState={initialState}
-        columnHeaderHeight={30}
+        columnHeaderHeight={40}
         columnGroupHeaderHeight={22}
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}

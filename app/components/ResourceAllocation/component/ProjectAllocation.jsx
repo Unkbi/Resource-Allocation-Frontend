@@ -34,7 +34,7 @@ const projectColumnConfig = [
     valueFormatter: params => {
       const value = Number(params);
       return value && typeof value === 'number' && value !== 0
-        ? value.toFixed(1)
+        ? Math.round(value * 10) / 10
         : null;
     },
     type: 'number',
