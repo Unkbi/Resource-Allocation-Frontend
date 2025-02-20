@@ -103,6 +103,16 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-filler--pinnedLeft': {
     width: '240px',
   },
+  '& .Mui-error': {
+    '& input': {
+      border: '1px solid red !important',
+      backgroundColor: 'rgb(126,10,15, 0.1)',
+      color: theme.palette.error.main,
+      ...theme.applyStyles('dark', {
+        backgroundColor: 'rgb(126,10,15, 0)',
+      }),
+    }
+  },
   '& .weeklyCell': {
     textAlign: 'center',
     fontFamily: "'Manrope', serif",
