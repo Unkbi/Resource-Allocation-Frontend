@@ -34,6 +34,8 @@ import {
 } from '@/app/redux/actions/resourceAllocationAction';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
+import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 import { getTeamAllocations } from '@/app/services/teamServices';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
@@ -56,6 +58,7 @@ export default function AllocationGrid({
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const [rowsState, setRowsState] = useState([]);
+  const { open, message, type, position } = useSelector(state => state.toast);
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -228,7 +231,8 @@ export default function AllocationGrid({
     handleAddRow,
     setSelectedTeam,
     handleAddProject,
-    setSelectedResourceId
+    setSelectedResourceId,
+    dispatch
   );
 
   const showField = [
@@ -258,7 +262,6 @@ export default function AllocationGrid({
       const { project, projectId, id } = updated || {};
       let formattedCellValue = Math.round(updated[selectedCell] * 10) / 10;
       let resourceId = updated?.resourceId;
-
 
       if (formattedCellValue && formattedCellValue <= 2) {
         if (selectedAllocationId) {
@@ -291,19 +294,19 @@ export default function AllocationGrid({
           prevRows.map(row =>
             row.id === id
               ? {
-                ...row,
-                [selectedCell]: {
-                  allocationId: row[selectedCell]?.allocationId || null,
-                  value: formattedCellValue,
-                },
-                totalEffort: calculateTotalEffort({
                   ...row,
                   [selectedCell]: {
                     allocationId: row[selectedCell]?.allocationId || null,
                     value: formattedCellValue,
                   },
-                }),
-              }
+                  totalEffort: calculateTotalEffort({
+                    ...row,
+                    [selectedCell]: {
+                      allocationId: row[selectedCell]?.allocationId || null,
+                      value: formattedCellValue,
+                    },
+                  }),
+                }
               : row
           )
         );
@@ -335,7 +338,7 @@ export default function AllocationGrid({
         loading={loading}
         disableRowSelectionOnClick
         initialState={initialState}
-        columnHeaderHeight={40}
+        columnHeaderHeight={30}
         columnGroupHeaderHeight={22}
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
@@ -403,6 +406,12 @@ export default function AllocationGrid({
         aggregationRowsCount={params => {
           return params.rowNode.children?.length || 1;
         }}
+      />
+      <CustomSnackbar
+        message={message}
+        type={type}
+        open={open}
+        position={position}
       />
     </Box>
   );
