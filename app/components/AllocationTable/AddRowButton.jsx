@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CustomAvatar from '../Avatar/CustomAvatar';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const StyledButton = styled(Button)(({ theme }) => ({
   color: theme.custom.textColor,
@@ -170,16 +170,15 @@ export const AddRowButton = ({
   handleAddRow,
   onClick,
   buttonName = 'Add Resource',
+  resourceProjects,
 }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const { resources, loading, error } = useSelector(state => state.resources);
-  const { projects } = useSelector(state => state.projects);
+  const { resources } = useSelector(state => state.resources);
 
-  const dispatch = useDispatch();
   const defaultProps = {
     options:
       buttonName === 'Add Project'
-        ? projects?.[0]?.result
+        ? resourceProjects
         : resources?.[0]?.result || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,

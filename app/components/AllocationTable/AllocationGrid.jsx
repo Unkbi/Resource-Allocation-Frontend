@@ -7,6 +7,7 @@ import {
 } from '@mui/x-data-grid-premium';
 import {
   calculateTotalEffort,
+  generateAllWeeks,
   getMondayOfWeek,
   getProjectOrTeamIdByName,
   getWeekNumber,
@@ -95,7 +96,7 @@ export default function AllocationGrid({
     ),
   });
 
-  const handleAddRow = (e, resource) => {
+  const handleAddRow = async (e, resource) => {
     const newRowForProject = {
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
@@ -121,12 +122,13 @@ export default function AllocationGrid({
       teams: selectedTeam,
       role: resource.Role,
       totalEffort: resource.totalHours,
-      ...Object.keys(updatedRows[0])
-        .filter(key => key.startsWith('W'))
-        .reduce((acc, week) => {
-          acc[week] = '';
-          return acc;
-        }, {}),
+      //Looks like this is not required. So commenting out for now.
+      // ...Object.keys(updatedRows[0])
+      //   .filter(key => key.startsWith('W'))
+      //   .reduce((acc, week) => {
+      //     acc[week] = '';
+      //     return acc;
+      //   }, {}),
       hasButton: false,
       hasProject: true,
     };
@@ -148,15 +150,26 @@ export default function AllocationGrid({
             : [row]
         )
       );
-      dispatch(
-        addResourceToTeam(newRowForTeams.teamsId, newRowForTeams.resourceId)
-      );
-      const teamAllocationPostData = {
-        'ResourceAllocation.Core/GetTeamAllocations': {
-          TeamId: newRowForTeams.teamsId,
-        },
-      };
-      dispatch(getTeamAllocations(teamAllocationPostData));
+
+      try {
+        await new Promise((resolve, reject) => {
+          dispatch(
+            addResourceToTeam(newRowForTeams.teamsId, newRowForTeams.resourceId)
+          )
+            .then(resolve)
+            .catch(reject);
+        });
+
+        const teamAllocationPostData = {
+          'ResourceAllocation.Core/GetTeamAllocations': {
+            TeamId: newRowForTeams.teamsId,
+          },
+        };
+
+        dispatch(getTeamAllocations(teamAllocationPostData));
+      } catch (error) {
+        console.error('Error in handleAddRow:', error);
+      }
     }
 
     setIsSearchMode(false);
@@ -171,28 +184,35 @@ export default function AllocationGrid({
           item.Project === projectId
       );
     };
-    // const allocationMap = new Map();
-    // const allWeeks = generateAllWeeks();
 
-    // teamAllocations?.[0].result.forEach(allocation => {
-    //   if (!allocation.Period || allocation.AllocationEntered === 0) return;
+    const allocationsOfAddedResource = teamAllocations?.[0].result.filter(
+      resource => resource.Resource === selectedResourceId
+    );
 
-    //   const periodDate = new Date(allocation.Period);
-    //   const weekNumber = getWeekNumber(periodDate);
-    //   const weekObj = {};
-    //   allWeeks.forEach(week => {
-    //     weekObj[week] = null;
-    //   });
+    const allocationMap = new Map();
+    const allWeeks = generateAllWeeks();
 
-    //   if (allWeeks.includes(weekNumber)) {
-    //     weekObj[weekNumber] = {
-    //       allocationId: allocation.Allocation,
-    //       value: allocation.AllocationEntered || null,
-    //     };
-    //   }
+    allocationsOfAddedResource?.forEach(allocation => {
+      if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
-    //   allocationMap.set(key, weekObj);
-    // });
+      const periodDate = new Date(allocation.Period);
+      const weekNumber = getWeekNumber(periodDate);
+
+      const weekObj = {};
+      allWeeks.forEach(week => {
+        weekObj[week] = null;
+      });
+
+      if (allWeeks.includes(weekNumber)) {
+        weekObj[weekNumber] = {
+          allocationId: allocation.Allocation,
+          value: allocation.AllocationEntered || null,
+        };
+      }
+
+      const key = allocation.Allocation;
+      allocationMap.set(key, weekObj);
+    });
 
     if (
       !checkEntryExists(
@@ -209,10 +229,14 @@ export default function AllocationGrid({
             row.teams === selectedTeam &&
             row.project === ''
           ) {
+            const key = selectedResourceId;
+            const allocations = allocationMap.get(key) || {};
+
             return {
               ...row,
               project: project.Name,
               projectId: project.Id,
+              ...allocations,
             };
           }
           return row;
@@ -259,7 +283,6 @@ export default function AllocationGrid({
       let formattedCellValue = Math.round(updated[selectedCell] * 10) / 10;
       let resourceId = updated?.resourceId;
 
-
       if (formattedCellValue && formattedCellValue <= 2) {
         if (selectedAllocationId) {
           const putPayload = {
@@ -291,19 +314,19 @@ export default function AllocationGrid({
           prevRows.map(row =>
             row.id === id
               ? {
-                ...row,
-                [selectedCell]: {
-                  allocationId: row[selectedCell]?.allocationId || null,
-                  value: formattedCellValue,
-                },
-                totalEffort: calculateTotalEffort({
                   ...row,
                   [selectedCell]: {
                     allocationId: row[selectedCell]?.allocationId || null,
                     value: formattedCellValue,
                   },
-                }),
-              }
+                  totalEffort: calculateTotalEffort({
+                    ...row,
+                    [selectedCell]: {
+                      allocationId: row[selectedCell]?.allocationId || null,
+                      value: formattedCellValue,
+                    },
+                  }),
+                }
               : row
           )
         );
