@@ -231,7 +231,8 @@ export default function AllocationGrid({
     handleAddRow,
     setSelectedTeam,
     handleAddProject,
-    setSelectedResourceId
+    setSelectedResourceId,
+    dispatch
   );
 
   const showField = [
@@ -337,7 +338,7 @@ export default function AllocationGrid({
         loading={loading}
         disableRowSelectionOnClick
         initialState={initialState}
-        columnHeaderHeight={40}
+        columnHeaderHeight={30}
         columnGroupHeaderHeight={22}
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}

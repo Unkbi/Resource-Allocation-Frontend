@@ -15,7 +15,7 @@ export const CustomSnackbar = ({ message, type, open, position }) => {
     <Snackbar
       anchorOrigin={{ vertical, horizontal }}
       open={open}
-      autoHideDuration={6000}
+      autoHideDuration={4000}
       onClose={handleClose}
     >
       <Alert

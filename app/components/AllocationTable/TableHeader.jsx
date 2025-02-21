@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { getWeekNumber } from '@/app/utils/common';
 import { TOTAL_FUTURE_WEEKS } from '@/app/constants/constants';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const WEEK_COUNT = TOTAL_FUTURE_WEEKS + 2;
 
@@ -30,7 +31,7 @@ const getCurrentWeekIndex = startDate => {
   return Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
 };
 
-export const generateWeeklyColumns = startDate => {
+export const generateWeeklyColumns = (startDate, dispatch) => {
   const currentWeekIndex = getCurrentWeekIndex(startDate);
   return Array.from({ length: WEEK_COUNT }, (_, i) => {
     const isCurrentWeek = i === currentWeekIndex;
@@ -50,7 +51,15 @@ export const generateWeeklyColumns = startDate => {
         const { props } = params;
         let numericValue = parseFloat(props.value) || 0;
         const formattedValue = Math.round(numericValue * 10) / 10;
-
+        if (formattedValue > 2) {
+          dispatch(
+            showToastAction(
+              true,
+              'Invalid input. Please enter a number between 0 and 2.',
+              'error'
+            )
+          );
+        }
         return {
           ...props,
           value: formattedValue,
@@ -130,8 +139,8 @@ const generateColumnGroupingModel = startDate => {
 const startDate = getStartDate();
 export const columns = [...generateWeeklyColumns(startDate)];
 export const columnGroupingModel = generateColumnGroupingModel(startDate);
-export const getAllColumnsWithWeek = columns => {
-  return [...columns, ...generateWeeklyColumns(startDate)];
+export const getAllColumnsWithWeek = (columns, dispatch) => {
+  return [...columns, ...generateWeeklyColumns(startDate, dispatch)];
 };
 
 const allWeekColumns = generateWeeklyColumns(startDate);
