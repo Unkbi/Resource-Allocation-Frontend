@@ -43,26 +43,23 @@ export const generateWeeklyColumns = startDate => {
         let parsedValue = value
           .replace(/[^0-9.]/g, '')
           .replace(/(?<=\..*)\./g, '');
-        parsedValue = parsedValue.replace(/^(\d*\.?\d?).*$/, '$1');
-        let numericValue = parseFloat(parsedValue) || 0;
-        numericValue = Math.min(Math.max(numericValue, 0), 1);
+        let numericValue = parseFloat(parsedValue) || null;
         return numericValue;
       },
       preProcessEditCellProps: params => {
         const { props } = params;
         let numericValue = parseFloat(props.value) || 0;
-        const formattedValue = Math.min(Math.max(numericValue, 0), 1).toFixed(
-          1
-        );
+        const formattedValue = Math.round(numericValue * 10) / 10;
+
         return {
           ...props,
           value: formattedValue,
-          error: null,
+          error: formattedValue > 2 ? true : null,
         };
       },
       valueFormatter: params => {
         const value = Number(params);
-        return value !== 0 ? value.toFixed(1) : '';
+        return value !== 0 ? Math.round(value * 10) / 10 : '';
       },
       valueGetter: params => {
         if (
@@ -70,7 +67,7 @@ export const generateWeeklyColumns = startDate => {
           typeof params === 'object' &&
           params?.value !== undefined
         ) {
-          return params.value;
+          return Math.round(params.value * 10) / 10;
         } else {
           return null;
         }

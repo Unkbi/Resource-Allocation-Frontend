@@ -3,13 +3,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { columnGroupingModel } from '../../AllocationTable/TableHeader';
-import {
-  fetchAllProjectAllocations,
-  fetchAllProjects,
-} from '@/app/redux/actions/fetchProjectsAction';
+import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import CenteredLoader from '../../Shared/Loader/CenteredLoader';
 
 const projectColumnConfig = [
   {
@@ -34,7 +29,7 @@ const projectColumnConfig = [
     valueFormatter: params => {
       const value = Number(params);
       return value && typeof value === 'number' && value !== 0
-        ? value.toFixed(1)
+        ? Math.round(value * 10) / 10
         : null;
     },
     type: 'number',
@@ -46,14 +41,12 @@ const projectColumnConfig = [
 
 export default function ProjectAllocation() {
   const [allocationsFetched, setAllocationsFetched] = useState(false);
-  const { projects, allocations, loading, error } = useSelector(
+  const { projects, allocations, loading, dataProcessing, error } = useSelector(
     state => state.projects
   );
   const dispatch = useDispatch();
   useEffect(() => {
     setAllocationsFetched(false);
-    dispatch(fetchAllProjects());
-    dispatch(fetchAllResources());
   }, []);
 
   useEffect(() => {
@@ -72,7 +65,7 @@ export default function ProjectAllocation() {
         columns={projectColumnConfig}
         columnGroupingModel={columnGroupingModel}
         data={allocations}
-        loading={loading}
+        loading={loading || dataProcessing}
       />
     </>
   );

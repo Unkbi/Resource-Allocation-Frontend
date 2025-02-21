@@ -70,13 +70,15 @@ const MainBox = styled(Box)(({ theme }) => ({
 const StyledPopper = styled(Popper)(({ theme }) => ({
   backgroundColor: '#FFFFFF',
   boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
-  maxHeight: '156px',
-  overflow: 'auto',
-  '&::-webkit-scrollbar': {
-    width: '2px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    backgroundColor: '#C4CAD4',
+  '& ul': {
+    maxHeight: '156px',
+    overflow: 'auto',
+    '&::-webkit-scrollbar': {
+      width: '4px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: '#C4CAD4',
+    },
   },
   '& .MuiAutocomplete-noOptions': {
     fontFamily: "'Manrope', serif",
@@ -171,12 +173,16 @@ export const AddRowButton = ({
 }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const { resources, loading, error } = useSelector(state => state.resources);
+  const { projects } = useSelector(state => state.projects);
 
   const dispatch = useDispatch();
   const defaultProps = {
     options:
-      buttonName === 'Add Project' ? allProject : resources?.[0]?.result || [],
-    getOptionLabel: option => option.FullName,
+      buttonName === 'Add Project'
+        ? projects?.[0]?.result
+        : resources?.[0]?.result || [],
+    getOptionLabel: option =>
+      buttonName === 'Add Project' ? option.Name : option.FullName,
   };
   const inputRef = useRef(null);
 
@@ -219,11 +225,20 @@ export const AddRowButton = ({
                   borderBottom: `1px solid ${'#eaecef'}`,
                 }}
               >
-                <CustomAvatar value={option.FullName} />
+                {buttonName !== 'Add Project' && (
+                  <CustomAvatar value={option.FullName} />
+                )}
                 {/* Resource Details */}
+
                 <Box sx={{ flexGrow: 1 }}>
-                  <span>{option.FullName}</span>
-                  <span className="userEamil">{option.Email}</span>
+                  <span>
+                    {buttonName === 'Add Project'
+                      ? option.Name
+                      : option.FullName}
+                  </span>
+                  {buttonName !== 'Add Project' && (
+                    <span className="userEamil">{option.Email}</span>
+                  )}
                 </Box>
               </Box>
             );

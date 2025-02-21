@@ -14,7 +14,7 @@ const teamsColumnConfig = [
   {
     field: 'teams',
     headerName: 'Teams Name',
-    width: 250,
+    width: 200,
     headerClassName: 'prime-header',
     cellClassName: 'prime-cell',
   },
@@ -31,7 +31,7 @@ const teamsColumnConfig = [
 export default function TeamAllocation() {
   const [resourcesFetched, setResourcesFetched] = useState(false);
   const dispatch = useDispatch();
-  const { teams, resources, loading, error } = useSelector(
+  const { teams, resources, loading, dataProcessing, error } = useSelector(
     state => state.teams
   );
 
@@ -50,15 +50,14 @@ export default function TeamAllocation() {
 
   return (
     <>
-      {loading && <CenteredLoader />}
-      {resources[0] && resources[0].length > 0 && (
-        <AllocationGrid
-          groupBy="teams"
-          columns={teamsColumnConfig}
-          columnGroupingModel={columnGroupingModel}
-          data={resources[0]}
-        />
-      )}
+      {/* {loading && <CenteredLoader />} */}
+      <AllocationGrid
+        loading={loading || dataProcessing}
+        groupBy="teams"
+        columns={teamsColumnConfig}
+        columnGroupingModel={columnGroupingModel}
+        data={resources}
+      />
       {!resources && !loading && (
         <div
           style={{

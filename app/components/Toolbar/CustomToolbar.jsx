@@ -142,6 +142,9 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       minWidth: '36px',
       height: '100%',
       borderRadius: '0',
+      '& .MuiSvgIcon-fontSize18': {
+        fontSize: '18px',
+      },
       '& svg': {
         fontSize: '24px',
       },
@@ -192,7 +195,11 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
 const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const view = useSelector(state => state.allocationView.view);
-  const viewOptions = ['Teams', 'Projects', 'Organizations'];
+  const viewOptions = [
+    'Teams',
+    'Projects',
+    // 'Organizations'
+  ];
   const [active, setActive] = useState(false);
 
   const handleViewChange = useCallback(
@@ -218,7 +225,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           sx={{ minWidth: 100, border: 'none', boxShadow: 'none' }}
         >
           <Select
-            value={view || 'Projects'}
+            value={view || 'Teams'}
             onChange={handleViewChange}
             className="projectDropdown"
             sx={{
@@ -229,7 +236,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                 border: 'none',
               },
             }}
-            defaultValue="Projects"
+            defaultValue="Teams"
             IconComponent={KeyboardArrowDown}
             MenuProps={{
               PaperProps: {
@@ -328,7 +335,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                   placement="bottom"
                   onClick={handleClick}
                 >
-                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} />
+                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} fontSize={'18'} />
                 </TooltipButton>
                 <TooltipButton
                   msg="All Teams"

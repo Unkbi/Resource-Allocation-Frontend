@@ -217,9 +217,7 @@ function RestPasswordPage() {
     const handleToggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
 
     if (resetPasswordMessage && !error) {
-        setTimeout(() => {
-            router.push('/login');
-        }, 3000);
+        router.push('/login');
     }
 
     return (

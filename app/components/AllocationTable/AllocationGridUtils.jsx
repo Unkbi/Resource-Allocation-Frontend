@@ -84,7 +84,7 @@ export const getFinalColumns = (
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
                 onClick={event => {
-                  setSelectedProject(params.row.teams),
+                  setSelectedTeam(params.row.teams),
                     setSelectedResourceId(params.row.resourceId);
                 }}
               />
@@ -126,13 +126,11 @@ export const getCellClassName = (params, updatedRows) => {
       typeof params.field === 'string' &&
       params.field.startsWith('W') &&
       params.rowNode?.type === 'group' &&
-      params.rowNode?.groupingField === 'project'
+      params.rowNode?.groupingField === 'teams'
     ) {
       const projectName = params.rowNode.groupingKey;
 
-      const projectRows = updatedRows.filter(
-        row => row.project === projectName
-      );
+      const projectRows = updatedRows.filter(row => row.teams === projectName);
       // const sum = projectRows.reduce((total, row) => {
       //   return total + (Number(row[params.field])) || 0;
       // }, 0);

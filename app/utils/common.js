@@ -88,15 +88,15 @@ export const isValidUUID = uuid => {
 };
 
 /**
- * Get the project Id based on the project name.
- * @param {Array} projects - The array of project objects.
- * @param {string} projectName - The name of the project to find.
- * @returns {string|null} - The Id of the project if found, otherwise null.
+ * Get the project or team Id based on the project or team name.
+ * @param {Array} arr - The array of project or teams objects.
+ * @param {string} name - The name of the project or team to find.
+ * @returns {string|null} - The Id of the project or team if found, otherwise null.
  */
-export const getProjectIdByName = (projects, projectName) => {
-  const project = projects.find(proj => proj.Name === projectName);
+export const getProjectOrTeamIdByName = (arr, name) => {
+  const projectOrTeam = arr.find(proj => proj.Name === name);
 
-  return project ? project.Id : null;
+  return projectOrTeam ? projectOrTeam.Id : null;
 };
 
 /**
@@ -113,8 +113,23 @@ export const isResourceInProject = (data, projectName, resourceName) => {
   );
 };
 
-export const isResourceInTeam = (rows, team, resourceName) => {
-  return rows.some(row => row.teams === team && row.resource === resourceName);
+/**
+ * Removes duplicate resources from an array based on a unique combination of FullName and Id.
+ *
+ * @param {Array} arr - The array of objects where each object contains `FullName` and `Id`.
+ * @returns {Array} A new array with duplicate objects removed.
+ */
+export const removeDuplicateResources = arr => {
+  const seen = new Set();
+
+  return arr.filter(item => {
+    const identifier = `${item.FullName}${item.Id}`;
+    if (seen.has(identifier)) {
+      return false;
+    }
+    seen.add(identifier);
+    return true;
+  });
 };
 
 export const getInitialsColor = name => {
@@ -133,4 +148,24 @@ export const getInitialsColor = name => {
   const hash =
     name && name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colors[hash % colors.length];
+};
+
+export const generateAllWeeks = () => {
+  const weeks = [];
+  const today = new Date();
+  const currentDay = today.getDay();
+
+  // Find current week Monday
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - ((currentDay + 6) % 7));
+  startDate.setHours(0, 0, 0, 0);
+
+  // Generate 22 weeks total: previous week + current week + next 20 weeks
+  for (let i = -1; i <= 20; i++) {
+    const weekDate = new Date(startDate);
+    weekDate.setDate(startDate.getDate() + i * 7);
+    weeks.push(getWeekNumber(weekDate));
+  }
+
+  return weeks;
 };

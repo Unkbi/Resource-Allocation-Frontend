@@ -6,7 +6,8 @@ import TeamAllocation from '@/app/components/ResourceAllocation/component/TeamAl
 import OrganizationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
 import ProjectAllocation from '@/app/components/ResourceAllocation/component/ProjectAllocation';
 import { useEffect } from 'react';
-import { fetchAllAllocations } from '@/app/redux/actions/fetchTeamsAction';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 
 export default function Allocation() {
   const dispatch = useDispatch();
@@ -15,22 +16,23 @@ export default function Allocation() {
     document.title = view || 'Resource Allocation';
   }, [view]);
 
+  useEffect(() => {
+    dispatch(fetchAllResources());
+    dispatch(fetchAllProjects());
+  }, []);
+
   const getContentByRole = view => {
     switch (view) {
       case 'Projects':
         return <ProjectAllocation />;
-      case 'Organizations':
-        return <OrganizationAllocation />;
+      // case 'Organizations':
+      //   return <OrganizationAllocation />;
       case 'Teams':
         return <TeamAllocation />;
       default:
         return null;
     }
   };
-
-  useEffect(() => {
-    dispatch(fetchAllAllocations());
-  }, []);
 
   return (
     <>

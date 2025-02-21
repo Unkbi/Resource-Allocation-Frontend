@@ -3,13 +3,17 @@ import {
   getAllAllocationsForPeriod,
   getAllTeams,
   getResourcesAgainstTeams,
+  getTeamAllocations,
+  postTeamResource,
 } from '@/app/services/teamServices';
 
 const initialState = {
   teams: null,
   resources: [],
   allAllocations: [],
+  teamAllocations: [],
   loading: false,
+  dataProcessing: false,
   error: null,
 };
 
@@ -28,6 +32,9 @@ const teamsSlice = createSlice({
     },
     resetResources: state => {
       state.resources = [];
+    },
+    setTeamsDataProcessing: (state, action) => {
+      state.dataProcessing = action.payload;
     },
   },
   extraReducers: builder => {
@@ -69,9 +76,33 @@ const teamsSlice = createSlice({
       .addCase(getAllAllocationsForPeriod.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Handle getTeamAllocations API call
+      .addCase(getTeamAllocations.pending, state => {
+        state.error = null;
+      })
+      .addCase(getTeamAllocations.fulfilled, (state, action) => {
+        state.loading = false;
+        state.teamAllocations = action.payload;
+      })
+      .addCase(getTeamAllocations.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Handle postTeamResource API call
+      .addCase(postTeamResource.pending, state => {
+        state.error = null;
+      })
+      .addCase(postTeamResource.fulfilled, state => {
+        state.loading = false;
+      })
+      .addCase(postTeamResource.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
-export const { updateResources, resetResources } = teamsSlice.actions;
+export const { updateResources, resetResources, setTeamsDataProcessing } =
+  teamsSlice.actions;
 export default teamsSlice.reducer;

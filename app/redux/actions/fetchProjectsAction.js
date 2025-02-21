@@ -2,11 +2,15 @@ import {
   getAllProjects,
   getProjectAllocations,
 } from '@/app/services/projectServices';
-import { updateAllocations } from '../reducers/projectsReducer';
+import {
+  setDataProcessing,
+  updateAllocations,
+} from '../reducers/projectsReducer';
 import {
   getWeekNumber,
   isWithin20WeeksRange,
   getMondayOfWeek,
+  generateAllWeeks,
 } from '@/app/utils/common';
 
 export const fetchAllProjects = () => async dispatch => {
@@ -15,26 +19,6 @@ export const fetchAllProjects = () => async dispatch => {
   } catch (error) {
     console.error('Error fetching projects data:', error);
   }
-};
-
-const generateAllWeeks = () => {
-  const weeks = [];
-  const today = new Date();
-  const currentDay = today.getDay();
-
-  // Find current week Monday
-  const startDate = new Date(today);
-  startDate.setDate(today.getDate() - ((currentDay + 6) % 7));
-  startDate.setHours(0, 0, 0, 0);
-
-  // Generate 22 weeks total: previous week + current week + next 20 weeks
-  for (let i = -1; i <= 20; i++) {
-    const weekDate = new Date(startDate);
-    weekDate.setDate(startDate.getDate() + i * 7);
-    weeks.push(getWeekNumber(weekDate));
-  }
-
-  return weeks;
 };
 
 const formatAllocations = (allocationsData, projectId) => {
@@ -93,6 +77,7 @@ const formatAllocations = (allocationsData, projectId) => {
 
 export const fetchAllProjectAllocations = projects => async dispatch => {
   try {
+    dispatch(setDataProcessing(true));
     const allocationPromises = projects.map(async project => {
       const postData = {
         'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
@@ -109,21 +94,27 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
             allocationsData,
             project.Id
           );
-          return formattedAllocations; 
+          return formattedAllocations;
         } else {
-          throw new Error(`Request for project ${project.Id} was not fulfilled`);
+          throw new Error(
+            `Request for project ${project.Id} was not fulfilled`
+          );
         }
       } catch (error) {
-        console.error(`Error fetching allocations for project ${project.Id}:`, error);
-        return null; 
+        console.error(
+          `Error fetching allocations for project ${project.Id}:`,
+          error
+        );
+        return null;
       }
     });
 
     const results = await Promise.allSettled(allocationPromises);
+
     let allAllocations = [];
     results.forEach(result => {
       if (result.status === 'fulfilled' && result.value) {
-        allAllocations = [...allAllocations, ...result.value]; 
+        allAllocations = [...allAllocations, ...result.value];
       } else if (result.status === 'rejected') {
         console.error('A project allocation request failed:', result.reason);
       }
@@ -134,5 +125,7 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
     }
   } catch (error) {
     console.error('Error in fetchAllProjectAllocations:', error);
+  } finally {
+    dispatch(setDataProcessing(false));
   }
 };

@@ -12,50 +12,54 @@ import { getToken } from './utils/authUtils';
 import { PUBLIC_ROUTES } from './constants/constants';
 import { getUserData } from './redux/actions/authActions';
 import { useDispatch } from 'react-redux';
-// import { LicenseInfo } from '@mui/x-data-grid-premium';
+import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
 
 const MainContent = styled(Box, {
-  shouldForwardProp: prop => prop !== 'isLoggedIn', // Prevent `isLoggedIn` from being passed to the DOM
-})(({ theme, isLoggedIn }) => ({
-  background: '#fff',
-  marginLeft: `${isLoggedIn ? '74px' : '0'}`,
-  paddingTop: `${isLoggedIn ? '52px' : '0'}`,
-}));
+  shouldForwardProp: prop => prop !== 'isLoggedIn', 
+})(({ theme, isLoggedIn }) => {
+  return {
+    background: '#fff',
+    marginLeft: `${isLoggedIn ? '74px' : '0'}`,
+    paddingTop: `${isLoggedIn ? '52px' : '0'}`,
+  };
+});
 
 function LayoutContent({ children }) {
   const isLoggedIn = getToken();
-  const [isUserLoginIn,setIsUserLoginIn]=useState(null);
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
+  const [isUserLoginIn,setIsUserLoginIn]=useState(null);
   const router = useRouter();
   const dispatch = useDispatch();
-  const licenseKey = process.env.MUI_X_LICENSE_KEY;
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-  useEffect(() => {
-    if (isLoggedIn && isPublicRoute) {
-      router.push('/allocation');
-    } else if (!isLoggedIn && !isPublicRoute) {
-      router.push('/login');
-    }
-  }, [isLoggedIn, isPublicRoute, router]);
 
   useEffect(() => {
+    setIsClient(true); 
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return; 
+    if (isLoggedIn && isPublicRoute) {
+      router.replace('/allocation');
+    } else if (!isLoggedIn && !isPublicRoute) {
+      router.replace('/login');
+    }
+  }, [isLoggedIn, isPublicRoute, router,isClient]);
+
+  useEffect(() => {
+    if (!isClient) return;
     if (isLoggedIn) {
       setIsUserLoginIn(isLoggedIn)
       dispatch(getUserData());
     }
-  }, [dispatch, isLoggedIn]);
+  }, [dispatch,isLoggedIn,isClient]);
 
-  // if (licenseKey) {
-  //   LicenseInfo.setLicenseKey(licenseKey);
-  // } else {
-  //   console.error('MUI X License Key is missing. Please set it in .env.local.');
-  // }
-  
   return (
     <>
       {!isPublicRoute && <Header />}
       {!isPublicRoute && <SideBar />}
       <MainContent isLoggedIn={isUserLoginIn}>{children}</MainContent>
+      <MuiXLicense />
     </>
   );
 }
@@ -65,7 +69,6 @@ export default function CommonLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <StoreProvider>
-          {/* ✅ Ensures Redux Provider is applied before using hooks */}
           <AppRouterCacheProvider>
             <ThemeRegistry>
               <LayoutContent>{children}</LayoutContent>

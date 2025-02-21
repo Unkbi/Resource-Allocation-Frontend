@@ -178,6 +178,7 @@ export default function LoginPage() {
     const { loading, error, user } = useSelector((state) => state.user);
     const router = useRouter();
     const [showPassword, setShowPassword] = React.useState(false);
+    const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
     const handleLogin = (e) => {
         e.preventDefault();
         dispatch(performLogin(
@@ -198,6 +199,15 @@ export default function LoginPage() {
     const handleTogglePassword = () => {
         setShowPassword((prev) => !prev);
     };
+
+    const handleGoogleSignin = () => {
+        console.log('googleAuthUrl', googleAuthUrl);
+        if (googleAuthUrl) {
+            window.location.href = googleAuthUrl;
+        } else {
+            console.error("Google Auth URL is not defined");
+        }
+    }
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -278,6 +288,7 @@ export default function LoginPage() {
                                 variant="outlined"
                                 fullWidth
                                 className='googleButton'
+                                onClick={handleGoogleSignin}
                             >
                                 <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
                             </Button>

@@ -224,5 +224,6 @@ export const PUBLIC_ROUTES = [
   '/signup',
   '/forgot-password',
   '/signup-otp',
-  '/reset-password'
+  '/reset-password',
+  "/callback"
 ];

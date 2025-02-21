@@ -8,9 +8,9 @@ import {
 import {
   calculateTotalEffort,
   getMondayOfWeek,
-  getProjectIdByName,
+  getProjectOrTeamIdByName,
+  getWeekNumber,
   isResourceInProject,
-  isResourceInTeam,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -32,9 +32,11 @@ import {
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
+import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import { getTeamAllocations } from '@/app/services/teamServices';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
@@ -85,6 +87,7 @@ export default function AllocationGrid({
 
   const dispatch = useDispatch();
   const { projects } = useSelector(state => state.projects);
+  const { teams, teamAllocations } = useSelector(state => state.teams);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -100,7 +103,7 @@ export default function AllocationGrid({
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: selectedProject,
-      projectId: getProjectIdByName(projects[0]?.result, selectedProject),
+      projectId: getProjectOrTeamIdByName(projects[0]?.result, selectedProject),
       resource: resource.FullName,
       role: resource.Role,
       totalEffort: resource.totalHours,
@@ -116,7 +119,7 @@ export default function AllocationGrid({
       id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: '',
-      teamsId: getProjectIdByName(projects[0]?.result, selectedProject),
+      teamsId: getProjectOrTeamIdByName(teams[0]?.result, selectedTeam),
       resource: resource.FullName,
       teams: selectedTeam,
       role: resource.Role,
@@ -141,40 +144,85 @@ export default function AllocationGrid({
         );
       }
     } else if (groupBy === 'teams') {
-      if (!isResourceInTeam(rowsState, selectedTeam, resource.FullName)) {
-        setRowsState(prevRows =>
-          prevRows.flatMap(row =>
-            row.id === `${selectedTeam}-add-resource`
-              ? [newRowForTeams, row]
-              : [row]
-          )
-        );
-      }
+      setRowsState(prevRows =>
+        prevRows.flatMap(row =>
+          row.id === `${selectedTeam}-add-resource`
+            ? [newRowForTeams, row]
+            : [row]
+        )
+      );
+      dispatch(
+        addResourceToTeam(newRowForTeams.teamsId, newRowForTeams.resourceId)
+      );
+      const teamAllocationPostData = {
+        'ResourceAllocation.Core/GetTeamAllocations': {
+          TeamId: newRowForTeams.teamsId,
+        },
+      };
+      dispatch(getTeamAllocations(teamAllocationPostData));
     }
 
     setIsSearchMode(false);
   };
 
   const handleAddProject = (e, project) => {
-    setRowsState(prevRows => {
-      const updatedRows = prevRows.map(row => {
-        if (
-          row.resourceId === selectedResourceId &&
-          row.teams === selectedTeam
-        ) {
-          return {
-            ...row,
-            project: project.FullName,
-            projectId: getProjectIdByName(
-              projects[0]?.result,
-              project.FullName
-            ),
-          };
-        }
-        return row;
+    const checkEntryExists = (data, resourceId, projectName, projectId) => {
+      return data.some(
+        item =>
+          item.Resource === resourceId &&
+          item.ProjectName === projectName &&
+          item.Project === projectId
+      );
+    };
+    // const allocationMap = new Map();
+    // const allWeeks = generateAllWeeks();
+
+    // teamAllocations?.[0].result.forEach(allocation => {
+    //   if (!allocation.Period || allocation.AllocationEntered === 0) return;
+
+    //   const periodDate = new Date(allocation.Period);
+    //   const weekNumber = getWeekNumber(periodDate);
+    //   const weekObj = {};
+    //   allWeeks.forEach(week => {
+    //     weekObj[week] = null;
+    //   });
+
+    //   if (allWeeks.includes(weekNumber)) {
+    //     weekObj[weekNumber] = {
+    //       allocationId: allocation.Allocation,
+    //       value: allocation.AllocationEntered || null,
+    //     };
+    //   }
+
+    //   allocationMap.set(key, weekObj);
+    // });
+
+    if (
+      !checkEntryExists(
+        teamAllocations?.[0].result,
+        selectedResourceId,
+        project.Name,
+        project.Id
+      )
+    ) {
+      setRowsState(prevRows => {
+        const updatedRows = prevRows.map(row => {
+          if (
+            row.resourceId === selectedResourceId &&
+            row.teams === selectedTeam &&
+            row.project === ''
+          ) {
+            return {
+              ...row,
+              project: project.Name,
+              projectId: project.Id,
+            };
+          }
+          return row;
+        });
+        return updatedRows;
       });
-      return updatedRows;
-    });
+    }
   };
   const finalColumns = getFinalColumns(
     columns,
@@ -199,66 +247,69 @@ export default function AllocationGrid({
       .map(column => column.field);
 
   const handleDoubleClick = params => {
+    apiRef.current.startCellEditMode({ id: params.id, field: params.field });
     setSelectedCell(params.field);
     const { field, formattedValue, row } = params || {};
     if (formattedValue) {
       const allocationData = row[field];
-      setSelectedAllocationId(allocationData.allocationId);
+      setSelectedAllocationId(allocationData?.allocationId);
     }
   };
 
   const handleCellUpdate = updated => {
     try {
       const { project, projectId, id } = updated || {};
-
+      let formattedCellValue = Math.round(updated[selectedCell] * 10) / 10;
       let resourceId = updated?.resourceId;
 
-      if (selectedAllocationId) {
-        const putPayload = {
-          resourceId: resourceId,
-          allocationId: selectedAllocationId,
-          putData: {
-            'ResourceAllocation.Core/Allocation': {
-              AllocationEntered: updated[selectedCell],
+      if (formattedCellValue && formattedCellValue <= 2) {
+        if (selectedAllocationId) {
+          const putPayload = {
+            resourceId: resourceId,
+            allocationId: selectedAllocationId,
+            putData: {
+              'ResourceAllocation.Core/Allocation': {
+                AllocationEntered: formattedCellValue,
+              },
             },
-          },
-        };
-        dispatch(updateResourceAllocation(putPayload));
-      } else {
-        const postPayload = {
-          resourceId: resourceId,
-          postData: {
-            'ResourceAllocation.Core/Allocation': {
-              Resource: resourceId,
-              Project: projectId,
-              ProjectName: project,
-              Period: getMondayOfWeek(selectedCell),
-              AllocationEntered: updated[selectedCell],
+          };
+          dispatch(updateResourceAllocation(putPayload));
+        } else {
+          const postPayload = {
+            resourceId: resourceId,
+            postData: {
+              'ResourceAllocation.Core/Allocation': {
+                Resource: resourceId,
+                Project: projectId,
+                ProjectName: project,
+                Period: getMondayOfWeek(selectedCell),
+                AllocationEntered: formattedCellValue,
+              },
             },
-          },
-        };
-        dispatch(setResourceAllocation(postPayload));
-      }
-      setRowsState(prevRows =>
-        prevRows.map(row =>
-          row.id === id
-            ? {
-                ...row,
-                [selectedCell]: {
-                  allocationId: row[selectedCell]?.allocationId || null,
-                  value: updated[selectedCell],
-                },
-                totalEffort: calculateTotalEffort({
+          };
+          dispatch(setResourceAllocation(postPayload));
+        }
+        setRowsState(prevRows =>
+          prevRows.map(row =>
+            row.id === id
+              ? {
                   ...row,
                   [selectedCell]: {
                     allocationId: row[selectedCell]?.allocationId || null,
-                    value: updated[selectedCell],
+                    value: formattedCellValue,
                   },
-                }),
-              }
-            : row
-        )
-      );
+                  totalEffort: calculateTotalEffort({
+                    ...row,
+                    [selectedCell]: {
+                      allocationId: row[selectedCell]?.allocationId || null,
+                      value: formattedCellValue,
+                    },
+                  }),
+                }
+              : row
+          )
+        );
+      }
     } catch (err) {
       console.error('Cell update failed:', err);
     } finally {
@@ -266,12 +317,12 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
-  console.log(rowsState, 'rowstate update');
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
         key={rowsState.length}
-        onCellDoubleClick={params => {
+        onCellClick={params => {
           handleDoubleClick(params);
         }}
         processRowUpdate={newRow => {
@@ -286,7 +337,7 @@ export default function AllocationGrid({
         loading={loading || internalLoading}
         disableRowSelectionOnClick
         initialState={initialState}
-        columnHeaderHeight={30}
+        columnHeaderHeight={40}
         columnGroupHeaderHeight={22}
         columnGroupingModel={columnGroupingModel}
         defaultGroupingExpansionDepth={1}
@@ -350,8 +401,8 @@ export default function AllocationGrid({
         groupingColDef={getGroupingColDef(groupBy)}
         hideFooter
         editMode="cell"
+        // editMode="row"
         aggregationRowsCount={params => {
-          console.log(params, 'params');
           return params.rowNode.children?.length || 1;
         }}
       />

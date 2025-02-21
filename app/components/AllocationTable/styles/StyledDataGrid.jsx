@@ -4,29 +4,29 @@ import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
 export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
-    {
-      width: '240px !important',
-      fontSize: '14px',
-    },
+  {
+    width: '240px !important',
+    fontSize: '14px',
+  },
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
-    {
-      width: '240px !important',
-    },
+  {
+    width: '240px !important',
+  },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     width: '240px',
   },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
-    {
-      '&:before': {
-        content: '""',
-        position: 'absolute',
-        top: '5px',
-        left: '0px',
-        width: '5px',
-        height: '40px',
-        backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
-      },
+  {
+    '&:before': {
+      content: '""',
+      position: 'absolute',
+      top: '5px',
+      left: '0px',
+      width: '5px',
+      height: '40px',
+      backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
     },
+  },
 
   [`& .${gridClasses.columnHeader}`]: {
     '&.prime-header': {},
@@ -44,9 +44,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       margin: 0,
     },
     "& input[type='number']::-webkit-outer-spin-button, & input[type='number']::-webkit-inner-spin-button":
-      {
-        display: 'none',
-      },
+    {
+      display: 'none',
+    },
   },
   '& .MuiDataGrid-cell': {
     borderRight: '1px solid #DDE1E4',
@@ -96,6 +96,22 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   },
   '& .MuiDataGrid-aggregationColumnHeaderLabel': {
     display: 'none',
+  },
+  '& .errorCell': {
+    border: '1px solid red !important',
+  },
+  '& .MuiDataGrid-filler--pinnedLeft': {
+    width: '240px',
+  },
+  '& .Mui-error': {
+    '& input': {
+      border: '1px solid red !important',
+      backgroundColor: 'rgb(126,10,15, 0.1)',
+      color: theme.palette.error.main,
+      ...theme.applyStyles('dark', {
+        backgroundColor: 'rgb(126,10,15, 0)',
+      }),
+    }
   },
   '& .weeklyCell': {
     textAlign: 'center',
@@ -167,15 +183,15 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   },
   '& .poor-allocation': {
     backgroundColor: '#F6C8C8',
-    border: '#CE8585',
+    // border: '#CE8585',
   },
   '& .average-allocation': {
     backgroundColor: '#FFF1D3',
-    border: '#BDAE88',
+    // border: '#BDAE88',
   },
   '& .fully-occupied': {
     backgroundColor: '#C4E5C4',
-    border: '#7AB17A',
+    // border: '#7AB17A',
   },
   '& .firstGroupsRow': {
     backgroundColor: '#E9EFF8',
