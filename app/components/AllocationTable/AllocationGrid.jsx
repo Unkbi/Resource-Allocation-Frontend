@@ -334,7 +334,7 @@ export default function AllocationGrid({
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
-        loading={loading || internalLoading}
+        loading={loading}
         disableRowSelectionOnClick
         initialState={initialState}
         columnHeaderHeight={40}
