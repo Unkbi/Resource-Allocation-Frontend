@@ -8,8 +8,6 @@ import {
   fetchAllProjects,
 } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import CenteredLoader from '../../Shared/Loader/CenteredLoader';
 
 const projectColumnConfig = [
   {
@@ -53,7 +51,6 @@ export default function ProjectAllocation() {
   useEffect(() => {
     setAllocationsFetched(false);
     dispatch(fetchAllProjects());
-    dispatch(fetchAllResources());
   }, []);
 
   useEffect(() => {
