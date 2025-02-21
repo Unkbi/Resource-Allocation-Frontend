@@ -7,6 +7,7 @@ import OrganizationAllocation from '@/app/components/ResourceAllocation/componen
 import ProjectAllocation from '@/app/components/ResourceAllocation/component/ProjectAllocation';
 import { useEffect } from 'react';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 
 export default function Allocation() {
   const dispatch = useDispatch();
@@ -17,6 +18,7 @@ export default function Allocation() {
 
   useEffect(() => {
     dispatch(fetchAllResources());
+    dispatch(fetchAllProjects());
   }, []);
 
   const getContentByRole = view => {

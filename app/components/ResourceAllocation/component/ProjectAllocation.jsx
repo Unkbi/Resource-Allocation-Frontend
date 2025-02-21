@@ -3,10 +3,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { columnGroupingModel } from '../../AllocationTable/TableHeader';
-import {
-  fetchAllProjectAllocations,
-  fetchAllProjects,
-} from '@/app/redux/actions/fetchProjectsAction';
+import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 
 const projectColumnConfig = [
@@ -50,7 +47,6 @@ export default function ProjectAllocation() {
   const dispatch = useDispatch();
   useEffect(() => {
     setAllocationsFetched(false);
-    dispatch(fetchAllProjects());
   }, []);
 
   useEffect(() => {
