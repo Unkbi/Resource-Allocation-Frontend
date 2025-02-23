@@ -50,6 +50,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
+        sortable: false,
         renderCell: params => {
           if (params.row.hasButton) {
             return (
@@ -77,6 +78,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
+        sortable: groupBy == "project" ? true : false,
         renderCell: params => {
           if (params.row.hasProject && !params.row.project) {
             return (

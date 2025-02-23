@@ -294,19 +294,19 @@ export default function AllocationGrid({
           prevRows.map(row =>
             row.id === id
               ? {
+                ...row,
+                [selectedCell]: {
+                  allocationId: row[selectedCell]?.allocationId || null,
+                  value: formattedCellValue,
+                },
+                totalEffort: calculateTotalEffort({
                   ...row,
                   [selectedCell]: {
                     allocationId: row[selectedCell]?.allocationId || null,
                     value: formattedCellValue,
                   },
-                  totalEffort: calculateTotalEffort({
-                    ...row,
-                    [selectedCell]: {
-                      allocationId: row[selectedCell]?.allocationId || null,
-                      value: formattedCellValue,
-                    },
-                  }),
-                }
+                }),
+              }
               : row
           )
         );
