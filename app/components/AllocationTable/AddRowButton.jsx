@@ -121,50 +121,6 @@ const StyledInput = styled(TextField)(({ theme }) => ({
   },
 }));
 
-const allProject = [
-  {
-    FirstName: 'Piyush',
-    StartDate: '28-Jan-2024',
-    Id: '7ee6849f-0700-43a1-aac5-e403af595217',
-    LocationCategory: 'Onsite',
-    Email: 'piyush.modi@qtsolv.com',
-    HRLevel: '1',
-    HourlyRate: null,
-    Manager: 'Shalini',
-    LastName: 'Modi',
-    PhoneNumber: '9782306393',
-    AverageWeeklyHours: 40,
-    Department: 'Engineering',
-    HourlyRateCurrency: 'USD',
-    Type: 'FTE',
-    WorkLocation: null,
-    EndDate: null,
-    Role: 'Developer',
-    FullName: 'Piyush Modi',
-    Status: 'Active',
-  },
-  {
-    FirstName: 'Emma ',
-    StartDate: '2020-08-30',
-    Id: '07da8f8d-3381-4ac8-92a5-41dc30576f5c',
-    LocationCategory: 'Onsite',
-    Email: 'emma.johnson@ciotest.com',
-    HRLevel: '1',
-    HourlyRate: null,
-    Manager: 'Liam Smith',
-    LastName: 'Johnson',
-    PhoneNumber: '',
-    AverageWeeklyHours: 40,
-    Department: 'Smith Inc',
-    HourlyRateCurrency: 'USD',
-    Type: 'FTE',
-    WorkLocation: 'USA-Remote',
-    EndDate: null,
-    Role: 'CEO',
-    FullName: 'Emma Johnson',
-    Status: 'Active',
-  },
-];
 export const AddRowButton = ({
   project,
   handleAddRow,
@@ -194,9 +150,13 @@ export const AddRowButton = ({
       }
     }, 0);
   };
-
+  const handleKeyDown = event => {
+    if (isSearchMode && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+      event.stopPropagation();
+    }
+  };
   return (
-    <MainBox>
+    <MainBox onKeyDown={handleKeyDown}>
       {isSearchMode && resources.length > 0 ? (
         <Autocomplete
           {...defaultProps}
@@ -208,6 +168,7 @@ export const AddRowButton = ({
             setIsSearchMode(false);
           }}
           onBlur={() => setIsSearchMode(false)}
+          open={true}
           popupIcon={null}
           slots={{ popper: StyledPopper }}
           renderOption={(props, option, { selected }) => {

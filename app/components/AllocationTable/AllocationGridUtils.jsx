@@ -36,11 +36,12 @@ export const getFinalColumns = (
   handleAddRow,
   setSelectedTeam,
   handleAddProject,
-  setSelectedResourceId
+  setSelectedResourceId,
+  dispatch
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
-  const allColumns = getAllColumnsWithWeek(columns);
+  const allColumns = getAllColumnsWithWeek(columns, dispatch);
   if (groupBy === 'organization') {
     return allColumns || [];
   } else {

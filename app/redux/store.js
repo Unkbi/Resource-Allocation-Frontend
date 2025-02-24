@@ -5,6 +5,7 @@ import teamsReducer from './reducers/teamsReducer';
 import projectsReducer from './reducers/projectsReducer';
 import resourcesReducer from './reducers/resourcesReducer';
 import resourceAllocationReducer from './reducers/resourceAllocationReducer';
+import toastSlice from './reducers/toastReducer';
 
 export const makeStore = () => {
   return configureStore({
@@ -15,6 +16,7 @@ export const makeStore = () => {
       projects: projectsReducer,
       resources: resourcesReducer,
       resourceAllocations: resourceAllocationReducer,
+      toast: toastSlice,
     },
   });
 };
