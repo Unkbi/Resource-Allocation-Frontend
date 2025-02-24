@@ -5,6 +5,7 @@ import {
 import CustomAvatar from '../Avatar/CustomAvatar';
 import { calculateTotalEffort } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
+import { useSelector } from 'react-redux';
 
 export const getInitialState = (
   groupBy,
@@ -38,6 +39,8 @@ export const getFinalColumns = (
   setSelectedResourceId,
   dispatch
 ) => {
+  const { teamAllocations } = useSelector(state => state.teams);
+  const { projects } = useSelector(state => state.projects);
   const allColumns = getAllColumnsWithWeek(columns, dispatch);
   if (groupBy === 'organization') {
     return allColumns || [];
@@ -78,12 +81,24 @@ export const getFinalColumns = (
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         renderCell: params => {
+          const allocationsOfAddedResource = teamAllocations?.[0].result.filter(
+            resource => resource.Resource === params.row.resourceId
+          );
+          const uniqueProjectNames = [
+            ...new Set(
+              allocationsOfAddedResource.map(item => item.ProjectName)
+            ),
+          ];
+
           if (params.row.hasProject && !params.row.project) {
             return (
               <AddRowButton
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
+                resourceProjects={projects?.[0]?.result.filter(
+                  item => !uniqueProjectNames?.includes(item.Name)
+                )}
                 onClick={event => {
                   setSelectedTeam(params.row.teams),
                     setSelectedResourceId(params.row.resourceId);
