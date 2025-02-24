@@ -33,6 +33,7 @@ const projectColumnConfig = [
         : null;
     },
     type: 'number',
+    sortable: false,
     headerClassName: 'secondary-header',
     cellClassName: 'secondary-cell',
     headerAlign: 'left',

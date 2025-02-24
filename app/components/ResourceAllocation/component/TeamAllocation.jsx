@@ -23,6 +23,7 @@ const teamsColumnConfig = [
     headerName: 'Resource Type',
     width: 200,
     disableColumnMenu: true,
+    sortable: false,
     headerClassName: 'secondary-header',
     cellClassName: 'secondary-cell',
   },
