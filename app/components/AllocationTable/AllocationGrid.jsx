@@ -281,6 +281,9 @@ export default function AllocationGrid({
     }
   };
 
+  useEffect(() => {
+    console.log(rowsState, 'row');
+  }, [rowsState]);
   const handleCellUpdate = updated => {
     console.log(updated, 'upadted');
     try {
@@ -350,9 +353,7 @@ export default function AllocationGrid({
       const { field, formattedValue, row } = params || {};
       if (formattedValue) {
         const allocationData = row[field];
-        if (!selectedAllocationId) {
-          setSelectedAllocationId(allocationData?.allocationId);
-        }
+        setSelectedAllocationId(allocationData?.allocationId);
       }
       const visibleColumns = apiRef.current.getVisibleColumns();
       const currentIndex = visibleColumns.findIndex(
@@ -371,9 +372,7 @@ export default function AllocationGrid({
       if (formattedValue) {
         const allocationData = row[field];
         console.log(selectedAllocationId, 'selectedAllocationId');
-        if (!selectedAllocationId) {
-          setSelectedAllocationId(allocationData?.allocationId);
-        }
+        setSelectedAllocationId(allocationData?.allocationId);
       }
       const visibleColumns = apiRef.current.getVisibleColumns();
       const currentIndex = visibleColumns.findIndex(
