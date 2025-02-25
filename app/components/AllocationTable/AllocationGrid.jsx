@@ -391,6 +391,7 @@ export default function AllocationGrid({
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
+        isCellEditable={params => !params.row.hasButton}
         key={rowsState.length}
         onCellKeyDown={handleCellKeyDown}
         onCellClick={params => {
