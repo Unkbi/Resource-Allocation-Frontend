@@ -272,7 +272,7 @@ export default function AllocationGrid({
       .map(column => column.field);
 
   const handleDoubleClick = params => {
-    apiRef.current.startCellEditMode({ id: params.id, field: params.field });
+    // apiRef.current.startRowEditMode({ id: params.id });
     setSelectedCell(params.field);
     const { field, formattedValue, row } = params || {};
     if (formattedValue) {
@@ -282,6 +282,7 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = updated => {
+    console.log(updated, 'upadted');
     try {
       const { project, projectId, id } = updated || {};
       let formattedCellValue = Math.round(updated[selectedCell] * 10) / 10;
@@ -342,17 +343,66 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
+  const handleCellKeyDown = (params, event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      setSelectedCell(params.field);
+      const { field, formattedValue, row } = params || {};
+      if (formattedValue) {
+        const allocationData = row[field];
+        if (!selectedAllocationId) {
+          setSelectedAllocationId(allocationData?.allocationId);
+        }
+      }
+      const visibleColumns = apiRef.current.getVisibleColumns();
+      const currentIndex = visibleColumns.findIndex(
+        c => c.field === params.field
+      );
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < visibleColumns.length) {
+        const nextField = visibleColumns[nextIndex].field;
+        apiRef.current.setCellFocus(params.id, nextField);
+      }
+    }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      setSelectedCell(params.field);
+      const { field, formattedValue, row } = params || {};
+      if (formattedValue) {
+        const allocationData = row[field];
+        console.log(selectedAllocationId, 'selectedAllocationId');
+        if (!selectedAllocationId) {
+          setSelectedAllocationId(allocationData?.allocationId);
+        }
+      }
+      const visibleColumns = apiRef.current.getVisibleColumns();
+      const currentIndex = visibleColumns.findIndex(
+        c => c.field === params.field
+      );
+      const nextIndex = currentIndex + 1;
+      apiRef.current.stopRowEditMode({ id: params.id });
+      const nextField = visibleColumns[nextIndex].field;
+      apiRef.current.setCellFocus(params.id, nextField);
+    }
+  };
 
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
         key={rowsState.length}
-        onCellClick={params => {
-          handleDoubleClick(params);
-        }}
+        onCellKeyDown={handleCellKeyDown}
+        // onCellClick={params => {
+        //   handleDoubleClick(params);
+        // }}
         processRowUpdate={newRow => {
           handleCellUpdate(newRow);
         }}
+        // onCellEditStop={(params, event) => {
+        //   if (params.reason === GridCellEditStopReasons.cellFocusOut) {
+        //     event.defaultMuiPrevented = true;
+        //     apiRef.current.stopRowEditMode({ id: params.id });
+        //   }
+        // }}
         onProcessRowUpdateError={err => {
           console.error('Row update failed:', err);
         }}
@@ -425,8 +475,8 @@ export default function AllocationGrid({
         }
         groupingColDef={getGroupingColDef(groupBy)}
         hideFooter
-        editMode="cell"
-        // editMode="row"
+        // editMode="cell"
+        editMode="row"
         aggregationRowsCount={params => {
           return params.rowNode.children?.length || 1;
         }}

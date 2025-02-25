@@ -45,27 +45,28 @@ export const generateWeeklyColumns = (startDate, dispatch) => {
           .replace(/[^0-9.]/g, '')
           .replace(/(?<=\..*)\./g, '');
         let numericValue = parseFloat(parsedValue) || null;
+        // if (numericValue > 2) {
+        //   return null;
+        // }
         return numericValue;
       },
-      preProcessEditCellProps: params => {
-        const { props } = params;
-        let numericValue = parseFloat(props.value) || 0;
-        const formattedValue = Math.round(numericValue * 10) / 10;
-        if (formattedValue > 2) {
-          dispatch(
-            showToastAction(
-              true,
-              'Invalid input. Please enter a number between 0 and 2.',
-              'error'
-            )
-          );
-        }
-        return {
-          ...props,
-          value: formattedValue,
-          error: formattedValue > 2 ? true : null,
-        };
-      },
+      // preProcessEditCellProps: params => {
+      //   const { props } = params;
+      //   let numericValue = parseFloat(props.value) || 0;
+      //   const formattedValue = Math.round(numericValue * 10) / 10;
+      //   if (formattedValue > 2) {
+      //     dispatch(
+      //       showToastAction(
+      //         true,
+      //         'Invalid input. Please enter a number between 0 and 2.',
+      //         'error'
+      //       )
+      //     );
+      //   }
+      // },
+      // valueSetter: (value, row) => {
+      //   return { ...row, value: value };
+      // },
       valueFormatter: params => {
         const value = Number(params);
         return value !== 0 ? Math.round(value * 10) / 10 : '';
