@@ -272,7 +272,6 @@ export default function AllocationGrid({
       .map(column => column.field);
 
   const handleDoubleClick = params => {
-    // apiRef.current.startRowEditMode({ id: params.id });
     setSelectedCell(params.field);
     const { field, formattedValue, row } = params || {};
     if (formattedValue) {
@@ -346,7 +345,11 @@ export default function AllocationGrid({
       setSelectedCell(null);
     }
   };
+
   const handleCellKeyDown = (params, event) => {
+    if (['e', 'E', '+', '-'].includes(event.key)) {
+      event.preventDefault();
+    }
     if (event.key === 'Enter') {
       event.preventDefault();
       setSelectedCell(params.field);
@@ -390,9 +393,9 @@ export default function AllocationGrid({
       <StyledDataGrid
         key={rowsState.length}
         onCellKeyDown={handleCellKeyDown}
-        // onCellClick={params => {
-        //   handleDoubleClick(params);
-        // }}
+        onCellClick={params => {
+          handleDoubleClick(params);
+        }}
         processRowUpdate={newRow => {
           handleCellUpdate(newRow);
         }}
