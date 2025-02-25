@@ -48,11 +48,11 @@ export const generateWeeklyColumns = (startDate, dispatch) => {
         return numericValue;
       },
       preProcessEditCellProps: params => {
-        const { props, hasChanged } = params;
-        let numericValue = parseFloat(props.value) || null;
+        const { props } = params;
+        let numericValue = parseFloat(props.value) || 0;
         const formattedValue = Math.round(numericValue * 10) / 10;
-
-        if (formattedValue > 2 && hasChanged) {
+        const hasError = formattedValue > 2;
+        if (hasError) {
           dispatch(
             showToastAction(
               true,
@@ -60,16 +60,20 @@ export const generateWeeklyColumns = (startDate, dispatch) => {
               'error'
             )
           );
-          return {
-            ...props,
-            value: formattedValue,
-            error: true,
-          };
         }
+        let className = props.className || '';
+        if (hasError) {
+          className = clsx(className, 'errorCell');
+        } else if (formattedValue < 2) {
+          className = className.replace('errorCell', '').trim();
+        } else {
+          className = '';
+        }
+
         return {
           ...props,
           value: formattedValue,
-          error: null,
+          className: className,
         };
       },
       valueFormatter: params => {
