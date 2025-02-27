@@ -42,7 +42,7 @@ const createValueHandlers = dispatch => ({
     const parsed = parseFloat(
       value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
     );
-    return isNaN(parsed) ? null : parsed;
+    return isNaN(parsed) ? 0 : parsed;
   },
 
   valueFormatter: params => {
