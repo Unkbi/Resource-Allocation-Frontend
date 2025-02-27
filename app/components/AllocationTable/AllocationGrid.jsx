@@ -90,7 +90,7 @@ export default function AllocationGrid({
   const dispatch = useDispatch();
   const { projects } = useSelector(state => state.projects);
   const { teams, teamAllocations } = useSelector(state => state.teams);
-
+  const [dataFetched, setDataFetched] = useState(false);
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
     initialState: getInitialState(
@@ -328,22 +328,23 @@ export default function AllocationGrid({
             prevRows.map(row =>
               row.id === id
                 ? {
+                  ...row,
+                  [selectedCell]: {
+                    allocationId: row[selectedCell]?.allocationId || null,
+                    value: formattedCellValue,
+                  },
+                  totalEffort: calculateTotalEffort({
                     ...row,
                     [selectedCell]: {
                       allocationId: row[selectedCell]?.allocationId || null,
                       value: formattedCellValue,
                     },
-                    totalEffort: calculateTotalEffort({
-                      ...row,
-                      [selectedCell]: {
-                        allocationId: row[selectedCell]?.allocationId || null,
-                        value: formattedCellValue,
-                      },
-                    }),
-                  }
+                  }),
+                }
                 : row
             )
           );
+          setDataFetched(true);
         } catch (err) {
           console.error('Cell update failed:', err);
         } finally {
@@ -377,8 +378,10 @@ export default function AllocationGrid({
         // apiRef.current.setCellFocus(params.id, nextField);
       }
       setTimeout(() => {
+        if (dataFetched) {
+          dispatch(showToastAction(true, 'Data updated successfully', 'success'));
+        }
         setRefreshKey(prevKey => prevKey + 1);
-        dispatch(showToastAction(true, 'Data updated successfully', 'success'));
       }, 1000);
     }
     if (event.key === 'Tab') {

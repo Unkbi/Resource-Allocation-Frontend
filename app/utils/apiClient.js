@@ -76,11 +76,20 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post(`${apiBaseURL}/refresh-token`, {
-          'Agentlang.Kernel.Identity/RefreshToken': {
-            RefreshToken: refreshToken,
+        const response = await axios.post(
+          `${apiBaseURL}/refresh-token`,
+          {
+            'Agentlang.Kernel.Identity/RefreshToken': {
+              RefreshToken: refreshToken,
+            },
           },
-        });
+          {
+            headers: {
+              Authorization: `Bearer ${getToken()}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
         const data = response?.data?.result['authentication-result'];
         const newToken = data['id-token'];

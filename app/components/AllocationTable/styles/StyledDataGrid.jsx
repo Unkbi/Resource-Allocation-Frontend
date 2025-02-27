@@ -27,7 +27,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
     },
   },
-
+  '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
+    boxShadow: 'none !important',
+  },
   [`& .${gridClasses.columnHeader}`]: {
     '&.prime-header': {},
     '&.secondary-header': {},

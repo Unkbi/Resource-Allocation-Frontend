@@ -73,7 +73,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
             teams: teamName,
             teamsId: teamId,
             resourceType: resource.Type,
-            hasProject: true, // Enables Add Project CTA for respective resource in case of empty allocations data.
+            hasProject: true, 
             W1: null,
           }));
         }
@@ -184,11 +184,11 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
     results.forEach(({ status, value }) => {
       if (status === 'fulfilled') {
         const { resourcesResult, allocationsResult, team } = value;
-
         if (
           resourcesResult.status === 'fulfilled' &&
           allocationsResult.status === 'fulfilled'
         ) {
+          console.log('updatedResource', resourcesResult.result.payload[0]);
           const updatedResource = formatResources(
             resourcesResult.result.payload[0],
             team.Name
@@ -211,6 +211,11 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
       }
     });
 
+  Array.isArray(allResources) && allResources.sort((a, b) => {
+  const resourceA = a.resource?.toLowerCase() || '';
+  const resourceB = b.resource?.toLowerCase() || '';
+  return resourceA.localeCompare(resourceB);
+});
     if (allResources.length > 0) {
       dispatch(updateResources(allResources));
     }
