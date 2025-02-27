@@ -24,7 +24,6 @@ import {
   getInitialState,
   getFinalColumns,
   getGroupingColDef,
-  groupPage,
   getCellClassName,
   getInitialRowsState,
 } from './AllocationGridUtils';
@@ -49,7 +48,6 @@ export default function AllocationGrid({
   loading,
 }) {
   const apiRef = useGridApiRef();
-  const [anchorEl, setAnchorEl] = useState(null);
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -368,15 +366,6 @@ export default function AllocationGrid({
         const allocationData = row[field];
         setSelectedAllocationId(allocationData?.allocationId);
       }
-      const visibleColumns = apiRef.current.getVisibleColumns();
-      const currentIndex = visibleColumns.findIndex(
-        c => c.field === params.field
-      );
-      const nextIndex = currentIndex + 1;
-      if (nextIndex < visibleColumns.length) {
-        const nextField = visibleColumns[nextIndex].field;
-        // apiRef.current.setCellFocus(params.id, nextField);
-      }
       setTimeout(() => {
         if (dataFetched) {
           dispatch(showToastAction(true, 'Data updated successfully', 'success'));
@@ -408,8 +397,8 @@ export default function AllocationGrid({
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
-        isCellEditable={params => !params.row.hasButton}
         key={refreshKey}
+        isCellEditable={params => !params.row.hasButton}
         onCellKeyDown={handleCellKeyDown}
         onCellClick={params => {
           handleDoubleClick(params);
