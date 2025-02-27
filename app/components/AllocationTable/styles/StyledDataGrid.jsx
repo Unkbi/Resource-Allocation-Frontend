@@ -100,7 +100,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     display: 'none',
   },
   '& .errorCell': {
-    border: '1px solid red !important',
+    '& input': {
+      border: '1px solid red !important',
+      backgroundColor: 'rgb(126,10,15, 0.1) !important',
+    }
   },
   '& .MuiDataGrid-filler--pinnedLeft': {
     width: '240px',

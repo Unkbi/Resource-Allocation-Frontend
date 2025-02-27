@@ -1,153 +1,145 @@
 import clsx from 'clsx';
-import { getWeekNumber } from '@/app/utils/common';
-import { TOTAL_FUTURE_WEEKS } from '@/app/constants/constants';
+import {
+  getWeekNumber,
+  addWeeks,
+  formatDate,
+  getStartOfPreviousWeek,
+  getWeeksDifference,
+} from '@/app/utils/common';
+import {
+  TOTAL_FUTURE_WEEKS,
+  VALIDATION_LIMITS,
+} from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 
-const WEEK_COUNT = TOTAL_FUTURE_WEEKS + 2;
-
-const getStartDate = () => {
-  const now = new Date();
-  const day = now.getDay();
-  // Adjust starting day of the week
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  now.setDate(diff);
-  now.setDate(now.getDate() - 7);
-  return now;
+const WEEK_CONFIG = {
+  TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 2,
+  COLUMN_WIDTH: 50,
+  MAX_VALUE: 2,
+  DECIMAL_PRECISION: 1,
 };
 
-const getMonthYear = date => {
-  return date.toLocaleString('default', { month: 'short', year: 'numeric' });
-};
+const getStartDate = () => getStartOfPreviousWeek(new Date());
 
-const addDays = (date, days) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-};
+const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
+  field: getWeekNumber(weekDate),
+  headerName: getWeekNumber(weekDate),
+  width: WEEK_CONFIG.COLUMN_WIDTH,
+  type: 'number',
+  editable: true,
+  filterable: false,
+  sortable: false,
+  disableColumnMenu: true,
+  headerClassName: clsx('weekly-header', {
+    'current-week-header': isCurrentWeek,
+  }),
+  cellClassName: params =>
+    params.value == null ? 'weeklyCell' : clsx('super-app', 'weeklyCell'),
+});
 
-const getCurrentWeekIndex = startDate => {
-  const today = new Date();
-  const diffTime = today - startDate;
-  return Math.floor(diffTime / (7 * 24 * 60 * 60 * 1000));
-};
+const createValueHandlers = dispatch => ({
+  valueParser: value => {
+    const parsed = parseFloat(
+      value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
+    );
+    return isNaN(parsed) ? 0 : parsed;
+  },
+
+  valueFormatter: params => {
+    const value = Number(params);
+    return value !== 0 ? Math.round(value * 10) / 10 : '';
+  },
+
+  valueGetter: params => {
+    if (
+      params?.value &&
+      typeof params === 'object' &&
+      params?.value !== undefined
+    ) {
+      return Math.round(params.value * 10) / 10;
+    } else {
+      return null;
+    }
+  },
+
+  preProcessEditCellProps: params => {
+    const { props } = params;
+    let numericValue = parseFloat(props.value) || 0;
+    const formattedValue = Math.round(numericValue * 10) / 10;
+    const hasError = formattedValue > 2;
+
+    let className = props.className || '';
+    if (hasError) {
+      dispatch(
+        showToastAction(
+          true,
+          'Invalid input. Please enter a number between 0 and 2.',
+          'error'
+        )
+      );
+      if (!className) {
+        className = clsx(className, 'errorCell');
+      }
+    } else if (formattedValue < 2) {
+      className = className.replace('errorCell', '').trim();
+    } else {
+      className = '';
+    }
+
+    return {
+      ...props,
+      value: formattedValue !== 0 ? formattedValue : null,
+      className: className,
+    };
+  },
+});
 
 export const generateWeeklyColumns = (startDate, dispatch) => {
-  const currentWeekIndex = getCurrentWeekIndex(startDate);
-  return Array.from({ length: WEEK_COUNT }, (_, i) => {
-    const isCurrentWeek = i === currentWeekIndex;
-    return {
-      field: getWeekNumber(addDays(startDate, i * 7)),
-      headerName: getWeekNumber(addDays(startDate, i * 7)),
-      width: 50,
-      type: 'number',
-      valueParser: value => {
-        let parsedValue = value
-          .replace(/[^0-9.]/g, '')
-          .replace(/(?<=\..*)\./g, '');
-        let numericValue = parseFloat(parsedValue) || null;
-        return numericValue;
-      },
-      preProcessEditCellProps: params => {
-        const { props } = params;
-        let numericValue = parseFloat(props.value) || 0;
-        const formattedValue = Math.round(numericValue * 10) / 10;
-        if (formattedValue > 2) {
-          dispatch(
-            showToastAction(
-              true,
-              'Invalid input. Please enter a number between 0 and 2.',
-              'error'
-            )
-          );
-        }
-        return {
-          ...props,
-          value: formattedValue,
-          error: formattedValue > 2 ? true : null,
-        };
-      },
-      valueFormatter: params => {
-        const value = Number(params);
-        return value !== 0 ? Math.round(value * 10) / 10 : '';
-      },
-      valueGetter: params => {
-        if (
-          params?.value &&
-          typeof params === 'object' &&
-          params?.value !== undefined
-        ) {
-          return Math.round(params.value * 10) / 10;
-        } else {
-          return null;
-        }
-      },
-      editable: true,
-      filterable: false,
-      headerClassName: clsx('weekly-header', {
-        'current-week-header': isCurrentWeek,
-      }),
-      cellClassName: params => {
-        if (params.value == null) {
-          return 'weeklyCell';
-        }
+  const currentWeekIndex = getWeeksDifference(startDate, new Date());
 
-        return clsx('super-app', {
-          weeklyCell: 'weeklyCell',
-        });
-      },
-      disableColumnMenu: true,
-      sortable: false,
+  return Array.from({ length: WEEK_CONFIG.TOTAL_WEEKS }, (_, i) => {
+    const weekDate = addWeeks(startDate, i);
+    return {
+      ...createBaseColumnConfig(weekDate, i === currentWeekIndex),
+      ...(dispatch ? createValueHandlers(dispatch) : {}),
     };
   });
 };
 
 const generateColumnGroupingModel = startDate => {
   const groups = [];
-  const currentDate = new Date(startDate);
-  let currentMonthYear = getMonthYear(currentDate);
-  let weekFields = [];
+  let currentGroup = null;
 
-  for (let i = 0; i < WEEK_COUNT; i++) {
-    const weekDate = addDays(startDate, i * 7);
-    const weekMonthYear = getMonthYear(weekDate);
+  for (let i = 0; i < WEEK_CONFIG.TOTAL_WEEKS; i++) {
+    const weekDate = addWeeks(startDate, i);
+    const monthYear = formatDate(weekDate, 'MMM yyyy');
 
-    if (weekMonthYear !== currentMonthYear) {
-      if (weekFields.length > 0) {
-        groups.push({
-          groupId: currentMonthYear,
-          headerClassName: 'grouping-header',
-          children: weekFields.map(field => ({ field })),
-        });
-      }
-      currentMonthYear = weekMonthYear;
-      weekFields = [];
-    }
-
-    weekFields.push(getWeekNumber(addDays(startDate, i * 7)));
-    if (i + 1 === WEEK_COUNT) {
-      groups.push({
-        groupId: currentMonthYear,
+    if (!currentGroup || currentGroup.groupId !== monthYear) {
+      currentGroup && groups.push(currentGroup);
+      currentGroup = {
+        groupId: monthYear,
         headerClassName: 'grouping-header',
-        children: weekFields.map(field => ({ field })),
-      });
+        children: [],
+      };
     }
+
+    currentGroup.children.push({ field: getWeekNumber(weekDate) });
   }
 
+  currentGroup && groups.push(currentGroup);
   return groups;
 };
 
 const startDate = getStartDate();
-export const columns = [...generateWeeklyColumns(startDate)];
+
+export const columns = generateWeeklyColumns(startDate);
 export const columnGroupingModel = generateColumnGroupingModel(startDate);
-export const getAllColumnsWithWeek = (columns, dispatch) => {
-  return [...columns, ...generateWeeklyColumns(startDate, dispatch)];
-};
 
-const allWeekColumns = generateWeeklyColumns(startDate);
+export const getAllColumnsWithWeek = (existingColumns = [], dispatch) => [
+  ...existingColumns,
+  ...generateWeeklyColumns(startDate, dispatch),
+];
 
-export const aggregationModel = allWeekColumns
+export const aggregationModel = columns
   .filter(column => column.field.startsWith('W'))
-  .reduce((acc, column) => {
-    acc[column.field] = 'sum';
-    return acc;
-  }, {});
+  .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
