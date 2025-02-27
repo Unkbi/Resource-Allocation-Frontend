@@ -1,4 +1,4 @@
-import { useState, lazy, useEffect } from 'react';
+import { useState, lazy, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -59,6 +59,7 @@ export default function AllocationGrid({
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const [rowsState, setRowsState] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { open, message, type, position } = useSelector(state => state.toast);
 
   const normalizeRow = row => {
@@ -280,71 +281,76 @@ export default function AllocationGrid({
     }
   };
 
-  useEffect(() => {
-    console.log(rowsState, 'row');
-  }, [rowsState]);
-  const handleCellUpdate = updated => {
-    console.log(updated, 'upadted');
-    try {
-      const { project, projectId, id } = updated || {};
-      let formattedCellValue = Math.round(updated[selectedCell] * 10) / 10;
-      let resourceId = updated?.resourceId;
+  const handleCellUpdate = useCallback(
+    async (newRow, oldRow) => {
+      if (newRow[selectedCell] !== oldRow[selectedCell]?.value) {
+        try {
+          const { project, projectId, id } = newRow || {};
+          let formattedCellValue = Math.round(newRow[selectedCell] * 10) / 10;
+          let resourceId = newRow?.resourceId;
+          if (
+            (selectedAllocationId && formattedCellValue < 0) ||
+            formattedCellValue > 2
+          ) {
+            return;
+          }
 
-      if (formattedCellValue && formattedCellValue <= 2) {
-        if (selectedAllocationId) {
-          const putPayload = {
-            resourceId: resourceId,
-            allocationId: selectedAllocationId,
-            putData: {
-              'ResourceAllocation.Core/Allocation': {
-                AllocationEntered: formattedCellValue,
+          if (selectedAllocationId) {
+            const putPayload = {
+              resourceId: resourceId,
+              allocationId: selectedAllocationId,
+              putData: {
+                'ResourceAllocation.Core/Allocation': {
+                  AllocationEntered: formattedCellValue,
+                },
               },
-            },
-          };
-          dispatch(updateResourceAllocation(putPayload));
-        } else {
-          const postPayload = {
-            resourceId: resourceId,
-            postData: {
-              'ResourceAllocation.Core/Allocation': {
-                Resource: resourceId,
-                Project: projectId,
-                ProjectName: project,
-                Period: getMondayOfWeek(selectedCell),
-                AllocationEntered: formattedCellValue,
+            };
+            dispatch(updateResourceAllocation(putPayload));
+          } else {
+            const postPayload = {
+              resourceId: resourceId,
+              postData: {
+                'ResourceAllocation.Core/Allocation': {
+                  Resource: resourceId,
+                  Project: projectId,
+                  ProjectName: project,
+                  Period: getMondayOfWeek(selectedCell),
+                  AllocationEntered: formattedCellValue,
+                },
               },
-            },
-          };
-          dispatch(setResourceAllocation(postPayload));
-        }
-        setRowsState(prevRows =>
-          prevRows.map(row =>
-            row.id === id
-              ? {
-                  ...row,
-                  [selectedCell]: {
-                    allocationId: row[selectedCell]?.allocationId || null,
-                    value: formattedCellValue,
-                  },
-                  totalEffort: calculateTotalEffort({
+            };
+            dispatch(setResourceAllocation(postPayload));
+          }
+          setRowsState(prevRows =>
+            prevRows.map(row =>
+              row.id === id
+                ? {
                     ...row,
                     [selectedCell]: {
                       allocationId: row[selectedCell]?.allocationId || null,
                       value: formattedCellValue,
                     },
-                  }),
-                }
-              : row
-          )
-        );
+                    totalEffort: calculateTotalEffort({
+                      ...row,
+                      [selectedCell]: {
+                        allocationId: row[selectedCell]?.allocationId || null,
+                        value: formattedCellValue,
+                      },
+                    }),
+                  }
+                : row
+            )
+          );
+        } catch (err) {
+          console.error('Cell update failed:', err);
+        } finally {
+          setSelectedAllocationId(null);
+          setSelectedCell(null);
+        }
       }
-    } catch (err) {
-      console.error('Cell update failed:', err);
-    } finally {
-      setSelectedAllocationId(null);
-      setSelectedCell(null);
-    }
-  };
+    },
+    [selectedCell, selectedAllocationId, dispatch]
+  );
 
   const handleCellKeyDown = (params, event) => {
     if (['e', 'E', '+', '-'].includes(event.key)) {
@@ -365,8 +371,11 @@ export default function AllocationGrid({
       const nextIndex = currentIndex + 1;
       if (nextIndex < visibleColumns.length) {
         const nextField = visibleColumns[nextIndex].field;
-        apiRef.current.setCellFocus(params.id, nextField);
+        // apiRef.current.setCellFocus(params.id, nextField);
       }
+      setTimeout(() => {
+        setRefreshKey(prevKey => prevKey + 1);
+      }, 1000);
     }
     if (event.key === 'Tab') {
       event.preventDefault();
@@ -374,7 +383,6 @@ export default function AllocationGrid({
       const { field, formattedValue, row } = params || {};
       if (formattedValue) {
         const allocationData = row[field];
-        console.log(selectedAllocationId, 'selectedAllocationId');
         setSelectedAllocationId(allocationData?.allocationId);
       }
       const visibleColumns = apiRef.current.getVisibleColumns();
@@ -382,9 +390,11 @@ export default function AllocationGrid({
         c => c.field === params.field
       );
       const nextIndex = currentIndex + 1;
-      apiRef.current.stopRowEditMode({ id: params.id });
-      const nextField = visibleColumns[nextIndex].field;
-      apiRef.current.setCellFocus(params.id, nextField);
+      if (nextIndex < visibleColumns.length) {
+        apiRef.current.stopRowEditMode({ id: params.id });
+        const nextField = visibleColumns[nextIndex].field;
+        apiRef.current.setCellFocus(params.id, nextField);
+      }
     }
   };
 
@@ -392,14 +402,12 @@ export default function AllocationGrid({
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
         isCellEditable={params => !params.row.hasButton}
-        key={rowsState.length}
+        key={refreshKey}
         onCellKeyDown={handleCellKeyDown}
         onCellClick={params => {
           handleDoubleClick(params);
         }}
-        processRowUpdate={newRow => {
-          handleCellUpdate(newRow);
-        }}
+        processRowUpdate={handleCellUpdate}
         // onCellEditStop={(params, event) => {
         //   if (params.reason === GridCellEditStopReasons.cellFocusOut) {
         //     event.defaultMuiPrevented = true;

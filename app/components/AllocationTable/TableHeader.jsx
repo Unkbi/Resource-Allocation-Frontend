@@ -1,13 +1,22 @@
 import clsx from 'clsx';
-import { getWeekNumber, addWeeks, formatDate, getStartOfPreviousWeek, getWeeksDifference } from '@/app/utils/common';
-import { TOTAL_FUTURE_WEEKS, VALIDATION_LIMITS } from '@/app/constants/constants';
+import {
+  getWeekNumber,
+  addWeeks,
+  formatDate,
+  getStartOfPreviousWeek,
+  getWeeksDifference,
+} from '@/app/utils/common';
+import {
+  TOTAL_FUTURE_WEEKS,
+  VALIDATION_LIMITS,
+} from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const WEEK_CONFIG = {
   TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 2,
   COLUMN_WIDTH: 50,
   MAX_VALUE: 2,
-  DECIMAL_PRECISION: 1
+  DECIMAL_PRECISION: 1,
 };
 
 const getStartDate = () => getStartOfPreviousWeek(new Date());
@@ -21,13 +30,18 @@ const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
   filterable: false,
   sortable: false,
   disableColumnMenu: true,
-  headerClassName: clsx('weekly-header', { 'current-week-header': isCurrentWeek }),
-  cellClassName: params => params.value == null ? 'weeklyCell' : clsx('super-app', 'weeklyCell')
+  headerClassName: clsx('weekly-header', {
+    'current-week-header': isCurrentWeek,
+  }),
+  cellClassName: params =>
+    params.value == null ? 'weeklyCell' : clsx('super-app', 'weeklyCell'),
 });
 
-const createValueHandlers = (dispatch) => ({
+const createValueHandlers = dispatch => ({
   valueParser: value => {
-    const parsed = parseFloat(value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, ''));
+    const parsed = parseFloat(
+      value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
+    );
     return isNaN(parsed) ? null : parsed;
   },
 
@@ -63,7 +77,9 @@ const createValueHandlers = (dispatch) => ({
           'error'
         )
       );
-      className = clsx(className, 'errorCell');
+      if (!className) {
+        className = clsx(className, 'errorCell');
+      }
     } else if (formattedValue < 2) {
       className = className.replace('errorCell', '').trim();
     } else {
@@ -72,7 +88,7 @@ const createValueHandlers = (dispatch) => ({
 
     return {
       ...props,
-      value: formattedValue,
+      value: formattedValue !== 0 ? formattedValue : null,
       className: className,
     };
   },
@@ -85,12 +101,12 @@ export const generateWeeklyColumns = (startDate, dispatch) => {
     const weekDate = addWeeks(startDate, i);
     return {
       ...createBaseColumnConfig(weekDate, i === currentWeekIndex),
-      ...(dispatch ? createValueHandlers(dispatch) : {})
+      ...(dispatch ? createValueHandlers(dispatch) : {}),
     };
   });
 };
 
-const generateColumnGroupingModel = (startDate) => {
+const generateColumnGroupingModel = startDate => {
   const groups = [];
   let currentGroup = null;
 
@@ -103,7 +119,7 @@ const generateColumnGroupingModel = (startDate) => {
       currentGroup = {
         groupId: monthYear,
         headerClassName: 'grouping-header',
-        children: []
+        children: [],
       };
     }
 
@@ -121,7 +137,7 @@ export const columnGroupingModel = generateColumnGroupingModel(startDate);
 
 export const getAllColumnsWithWeek = (existingColumns = [], dispatch) => [
   ...existingColumns,
-  ...generateWeeklyColumns(startDate, dispatch)
+  ...generateWeeklyColumns(startDate, dispatch),
 ];
 
 export const aggregationModel = columns
