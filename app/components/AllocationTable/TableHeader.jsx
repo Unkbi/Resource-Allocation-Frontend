@@ -42,7 +42,7 @@ const createValueHandlers = dispatch => ({
     const parsed = parseFloat(
       value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
     );
-    return isNaN(parsed) ? 0 : parsed;
+    return isNaN(parsed) ? null : parsed;
   },
 
   valueFormatter: params => {
@@ -65,7 +65,7 @@ const createValueHandlers = dispatch => ({
   preProcessEditCellProps: params => {
     const { props } = params;
     let numericValue = parseFloat(props.value) || 0;
-    const formattedValue = Math.round(numericValue * 10) / 10;
+    const formattedValue = Math.round(numericValue * 10) / 10 || null;
     const hasError = formattedValue > 2;
 
     let className = props.className || '';
@@ -88,7 +88,7 @@ const createValueHandlers = dispatch => ({
 
     return {
       ...props,
-      value: formattedValue !== 0 ? formattedValue : null,
+      value: formattedValue,
       className: className,
     };
   },

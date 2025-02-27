@@ -284,17 +284,15 @@ export default function AllocationGrid({
 
   const handleCellUpdate = useCallback(
     async (newRow, oldRow) => {
-      if (newRow[selectedCell] !== oldRow[selectedCell]?.value) {
+      const newValue = newRow[selectedCell];
+      const oldValue = oldRow[selectedCell]?.value;
+      if (newValue !== oldValue) {
         try {
           const { project, projectId, id } = newRow || {};
           let formattedCellValue = Math.round(newRow[selectedCell] * 10) / 10;
           let resourceId = newRow?.resourceId;
-          if (
-            (selectedAllocationId && formattedCellValue < 0) ||
-            formattedCellValue > 2
-          ) {
-            return;
-          }
+          if (formattedCellValue > 2) return;
+          if (!selectedAllocationId && formattedCellValue === 0) return;
 
           if (selectedAllocationId) {
             const putPayload = {
@@ -366,12 +364,22 @@ export default function AllocationGrid({
         const allocationData = row[field];
         setSelectedAllocationId(allocationData?.allocationId);
       }
-      setTimeout(() => {
-        if (dataFetched) {
-          dispatch(showToastAction(true, 'Data updated successfully', 'success'));
-        }
-        setRefreshKey(prevKey => prevKey + 1);
-      }, 1000);
+      const visibleColumns = apiRef.current.getVisibleColumns();
+      const currentIndex = visibleColumns.findIndex(
+        c => c.field === params.field
+      );
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < visibleColumns.length) {
+        const nextField = visibleColumns[nextIndex].field;
+        apiRef.current.setCellFocus(params.id, nextField);
+      }
+      // for future reference -> 
+      // setTimeout(() => {
+      //   if (dataFetched) {
+      //     dispatch(showToastAction(true, 'Data updated successfully', 'success'));
+      //   }
+      //   setRefreshKey(prevKey => prevKey + 1);
+      // }, 1000);
     }
     if (event.key === 'Tab') {
       event.preventDefault();
