@@ -415,12 +415,6 @@ export default function AllocationGrid({
           handleDoubleClick(params);
         }}
         processRowUpdate={handleCellUpdate}
-        // onCellEditStop={(params, event) => {
-        //   if (params.reason === GridCellEditStopReasons.cellFocusOut) {
-        //     event.defaultMuiPrevented = true;
-        //     apiRef.current.stopRowEditMode({ id: params.id });
-        //   }
-        // }}
         onProcessRowUpdateError={err => {
           console.error('Row update failed:', err);
         }}
@@ -493,7 +487,6 @@ export default function AllocationGrid({
         }
         groupingColDef={getGroupingColDef(groupBy)}
         hideFooter
-        // editMode="cell"
         editMode="row"
         aggregationRowsCount={params => {
           return params.rowNode.children?.length || 1;
