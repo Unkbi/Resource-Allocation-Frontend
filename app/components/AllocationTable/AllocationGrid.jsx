@@ -273,6 +273,9 @@ export default function AllocationGrid({
       .map(column => column.field);
 
   const handleDoubleClick = params => {
+    if (params?.cellMode === 'view') {
+      apiRef.current.startRowEditMode({ id: params.id });
+    }
     setSelectedCell(params.field);
     const { field, formattedValue, row } = params || {};
     if (formattedValue) {
@@ -375,6 +378,7 @@ export default function AllocationGrid({
       }
       setTimeout(() => {
         setRefreshKey(prevKey => prevKey + 1);
+        dispatch(showToastAction(true, 'Data updated successfully', 'success'));
       }, 1000);
     }
     if (event.key === 'Tab') {
