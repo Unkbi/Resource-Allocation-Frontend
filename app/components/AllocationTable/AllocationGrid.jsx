@@ -315,19 +315,19 @@ export default function AllocationGrid({
             prevRows.map(row =>
               row.id === id
                 ? {
-                  ...row,
-                  [selectedCell]: {
-                    allocationId: row[selectedCell]?.allocationId || null,
-                    value: formattedCellValue,
-                  },
-                  totalEffort: calculateTotalEffort({
                     ...row,
                     [selectedCell]: {
                       allocationId: row[selectedCell]?.allocationId || null,
                       value: formattedCellValue,
                     },
-                  }),
-                }
+                    totalEffort: calculateTotalEffort({
+                      ...row,
+                      [selectedCell]: {
+                        allocationId: row[selectedCell]?.allocationId || null,
+                        value: formattedCellValue,
+                      },
+                    }),
+                  }
                 : row
             )
           );
@@ -344,9 +344,10 @@ export default function AllocationGrid({
   );
 
   const handleCellKeyDown = (params, event) => {
-    if (['e', 'E', '+', '-'].includes(event.key)) {
+    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
       event.preventDefault();
     }
+
     if (event.key === 'Enter') {
       event.preventDefault();
       setSelectedCell(params.field);
@@ -364,7 +365,7 @@ export default function AllocationGrid({
         const nextField = visibleColumns[nextIndex].field;
         apiRef.current.setCellFocus(params.id, nextField);
       }
-      // for future reference -> 
+      // for future reference ->
       // setTimeout(() => {
       //   if (dataFetched) {
       //     dispatch(showToastAction(true, 'Data updated successfully', 'success'));
