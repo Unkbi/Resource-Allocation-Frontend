@@ -139,7 +139,7 @@ export const AddRowButton = ({
         ? resourceProjects
         : teamsResources?.[teamsId]?.length ?
           teamsResources?.[teamsId] :
-          resources?.[0]?.result || [],
+          resources?.result || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
@@ -163,7 +163,7 @@ export const AddRowButton = ({
   };
   return (
     <MainBox onKeyDown={handleKeyDown}>
-      {isSearchMode && resources.length > 0 ? (
+      {isSearchMode && resources?.result.length > 0 ? (
         <Autocomplete
           {...defaultProps}
           id="open-on-focus"
@@ -178,11 +178,11 @@ export const AddRowButton = ({
           popupIcon={null}
           slots={{ popper: StyledPopper }}
           renderOption={(props, option, { selected }) => {
-            const { key, ...optionProps } = props;
+            const { key, id, ...optionProps } = props;
             return (
               <Box
                 component="li"
-                key={key}
+                key={`${key}${id}`}
                 {...optionProps}
                 sx={{
                   display: 'flex',

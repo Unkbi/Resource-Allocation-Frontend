@@ -14,14 +14,6 @@ const projectColumnConfig = [
     headerClassName: 'prime-header',
     cellClassName: 'prime-cell',
   },
-  // {
-  //   field: 'teams',
-  //   headerName: 'Teams',
-  //   width: 200,
-  //   disableColumnMenu: true,
-  //   headerClassName: 'secondary-header',
-  //   cellClassName: 'secondary-cell',
-  // },
   {
     field: 'totalEffort',
     headerName: 'Total Effort',
@@ -51,10 +43,9 @@ export default function ProjectAllocation() {
   }, []);
 
   useEffect(() => {
-    if (projects && projects.length > 0 && !allocationsFetched) {
+    if (projects?.result && projects?.result.length > 0 && !allocationsFetched) {
       dispatch(resetAllocations());
-      // Fetch allocations for each project
-      dispatch(fetchAllProjectAllocations(projects[0].result));
+      dispatch(fetchAllProjectAllocations(projects.result));
       setAllocationsFetched(true);
     }
   }, [projects, allocationsFetched]);

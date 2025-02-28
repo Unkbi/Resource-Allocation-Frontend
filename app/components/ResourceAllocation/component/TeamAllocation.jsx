@@ -42,16 +42,15 @@ export default function TeamAllocation() {
   }, []);
 
   useEffect(() => {
-    if (teams && teams.length > 0 && !resourcesFetched) {
+    if (teams?.result && teams?.result.length > 0 && !resourcesFetched) {
       dispatch(resetResources());
-      dispatch(fetchResourcesAgainstTeams(teams[0].result));
+      dispatch(fetchResourcesAgainstTeams(teams.result));
       setResourcesFetched(true);
     }
   }, [teams, resourcesFetched]);
 
   return (
     <>
-      {/* {loading && <CenteredLoader />} */}
       <AllocationGrid
         loading={loading || dataProcessing}
         groupBy="teams"

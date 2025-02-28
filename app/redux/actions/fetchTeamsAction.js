@@ -24,25 +24,17 @@ export const fetchAllTeams = () => async dispatch => {
   }
 };
 
-const formatResources = (resourcesData, teamName) => {
-  const updatedArray = resourcesData.result.map(obj => ({
-    ...obj,
-    teams: teamName,
-  }));
 
-  return updatedArray;
-};
 
 const formatAllocations = (data, resources, teamId, teamName) => {
   const allocationsData = data.result;
   const allocationMap = new Map();
 
   if (
-    allocationsData.length === 0 ||
-    Object.keys(allocationsData?.[0]).length === 0
+    allocationsData.length === 0
   ) {
     let obj = [];
-    if (resources.length === 0) {
+    if (resources.result.length === 0) {
       obj = [
         {
           id: teamId,
@@ -59,8 +51,8 @@ const formatAllocations = (data, resources, teamId, teamName) => {
         },
       ];
     } else {
-      if (Array.isArray(resources) && resources.length !== 0) {
-        const uniqueRecords = removeDuplicateResources(resources);
+      if (Array.isArray(resources.result) && resources?.result.length !== 0) {
+        const uniqueRecords = removeDuplicateResources(resources?.result);
 
         if (uniqueRecords.length > 0) {
           obj = uniqueRecords.map(resource => ({
@@ -89,7 +81,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
     const periodDate = new Date(allocation.Period);
     const weekNumber = getWeekNumber(periodDate);
 
-    const matchingTeamResource = resources.find(
+    const matchingTeamResource = Array.isArray(resources?.result) &&  resources?.result.find(
       team =>
         team.FullName === allocation.ResourceName ||
         team.Id === allocation.Resource
@@ -194,15 +186,10 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
           resourcesResult.status === 'fulfilled' &&
           allocationsResult.status === 'fulfilled'
         ) {
-          console.log('updatedResource', resourcesResult.result.payload[0]);
-          const updatedResource = formatResources(
-            resourcesResult.result.payload[0],
-            team.Name
-          );
-
+          
           const formattedAllocations = formatAllocations(
-            allocationsResult.result.payload[0],
-            updatedResource,
+            allocationsResult.result.payload,
+            resourcesResult.result.payload,
             team.Id,
             team.Name
           );

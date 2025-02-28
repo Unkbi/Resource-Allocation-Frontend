@@ -84,7 +84,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: groupBy == "project" ? true : false,
         renderCell: params => {
-          const allocationsOfAddedResource = teamAllocations?.[0].result.filter(
+          const allocationsOfAddedResource = teamAllocations?.result.filter(
             resource => resource.Resource === params.row.resourceId
           );
           const uniqueProjectNames = [
@@ -99,7 +99,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.[0]?.result.filter(
+                resourceProjects={projects?.result.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
@@ -150,14 +150,6 @@ export const getCellClassName = (params, updatedRows) => {
       const projectName = params.rowNode.groupingKey;
 
       const projectRows = updatedRows.filter(row => row.teams === projectName);
-      // const sum = projectRows.reduce((total, row) => {
-      //   return total + (Number(row[params.field])) || 0;
-      // }, 0);
-
-      // // Now use this sum for your conditional styling
-      // if (sum === 0) return 'no-allocation';
-      // if (sum > 0 && sum <= 20) return 'low-allocation';
-
       const totalRows = projectRows.length;
 
       const aggregatedValue = projectRows.reduce((sum, row) => {
