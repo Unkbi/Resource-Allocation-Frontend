@@ -124,21 +124,27 @@ const StyledInput = styled(TextField)(({ theme }) => ({
 export const AddRowButton = ({
   project,
   handleAddRow,
+  teamsId,
   onClick,
   buttonName = 'Add Resource',
   resourceProjects,
 }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const { teamsResources } = useSelector(state => state.teams);
   const { resources } = useSelector(state => state.resources);
 
   const defaultProps = {
     options:
       buttonName === 'Add Project'
         ? resourceProjects
-        : resources?.[0]?.result || [],
+        : teamsResources?.[teamsId]?.length ?
+          teamsResources?.[teamsId] :
+          resources?.[0]?.result || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
+  // In teams tab, we are setting the options to the resources array from the redux store for the selected team, else we are setting the options to all the resources.
+
   const inputRef = useRef(null);
 
   const handleButtonClick = () => {
