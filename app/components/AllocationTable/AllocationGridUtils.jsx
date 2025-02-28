@@ -44,7 +44,7 @@ export const getFinalColumns = (
   const allColumns = getAllColumnsWithWeek(columns, dispatch);
   if (groupBy === 'organization') {
     return allColumns || [];
-  } else {
+  } else if (groupBy === 'teams') {
     return [
       ...(allColumns?.slice(0, 1) || []),
       {
@@ -82,7 +82,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: groupBy == "project" ? true : false,
+        sortable: groupBy == 'project' ? true : false,
         renderCell: params => {
           const allocationsOfAddedResource = teamAllocations?.result.filter(
             resource => resource.Resource === params.row.resourceId
@@ -117,9 +117,41 @@ export const getFinalColumns = (
       },
       ...(allColumns?.slice(1) || []),
     ];
+  } else if (groupBy === 'project') {
+    return [
+      ...(allColumns?.slice(0, 1) || []),
+      {
+        field: 'resource',
+        headerName: 'Resource',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: false,
+        renderCell: params => {
+          if (params.row.hasButton) {
+            return (
+              <AddRowButton
+                project={params.row.project}
+                handleAddRow={handleAddRow}
+                buttonName={
+                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
+                }
+                onClick={event => {
+                  setSelectedProject(params.row.project),
+                    setSelectedTeam(params.row.teams);
+                }}
+              />
+            );
+          }
+          if (params.value) {
+            return <CustomAvatar value={params.value} showFullName={true} />;
+          }
+        },
+      },
+      ...(allColumns?.slice(1) || []),
+    ];
   }
 };
-
 export const groupPage = groupBy => {
   const groupPages = {
     project: 'Project Name',
