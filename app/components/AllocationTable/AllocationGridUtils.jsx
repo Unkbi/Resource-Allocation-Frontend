@@ -60,6 +60,7 @@ export const getFinalColumns = (
               <AddRowButton
                 project={params.row.project}
                 handleAddRow={handleAddRow}
+                teamsId={params.row.teamsId}
                 buttonName={
                   groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
                 }
@@ -206,13 +207,22 @@ export const getInitialRowsState = (updatedRows, groupBy) => {
       ),
     ];
   } else if (groupBy === 'teams') {
+    // Get unique teams for teams and teamsId to avoid duplicate teams
+    let unique_teams = {};
+    rowsWithTotalEffort.forEach(row => {
+      if (row.teamsId && !unique_teams[row.teamsId])
+        unique_teams[row.teamsId] = row.teams;
+      else if(!unique_teams[row.teamsId]) unique_teams[row.teams] = row.teams;
+    });
+
     return [
       ...rowsWithTotalEffort,
-      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.teams))).map(
+      ...Array.from(new Set(Object.keys(unique_teams))).map(
         teams => ({
-          id: `${teams}-add-resource`,
+          id: `${unique_teams?.[teams]}-add-resource`,
           project: '',
-          teams: teams,
+          teams: unique_teams?.[teams],
+          teamsId: teams,
           resource: '',
           role: '',
           totalEffort: '',

@@ -13,6 +13,31 @@ export const calculateTotalEffort = row => {
       return sum + numericValue;
     }, 0);
 };
+export const getStartOfPreviousWeek = (date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff - 7);
+  return d;
+};
+
+export const addWeeks = (date, weeks) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + weeks * 7);
+  return result;
+};
+
+export const getWeeksDifference = (startDate, endDate) => {
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.floor((endDate - startDate) / msPerWeek);
+};
+
+export const formatDate = (date, format) => {
+  return date.toLocaleDateString('en-US', {
+    month: format.includes('MMM') ? 'short' : 'numeric',
+    year: 'numeric'
+  });
+};
 
 /**
  * Calculates the week number for a given date.

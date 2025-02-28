@@ -12,6 +12,7 @@ const initialState = {
   resources: [],
   allAllocations: [],
   teamAllocations: [],
+  teamsResources: {},
   loading: false,
   dataProcessing: false,
   error: null,
@@ -35,6 +36,9 @@ const teamsSlice = createSlice({
     },
     setTeamsDataProcessing: (state, action) => {
       state.dataProcessing = action.payload;
+    },
+    setTeamsResources: (state, action) => {
+      state.teamsResources[action.payload.id] = action.payload.resource;
     },
   },
   extraReducers: builder => {
@@ -103,6 +107,6 @@ const teamsSlice = createSlice({
   },
 });
 
-export const { updateResources, resetResources, setTeamsDataProcessing } =
+export const { updateResources, resetResources, setTeamsDataProcessing, setTeamsResources } =
   teamsSlice.actions;
 export default teamsSlice.reducer;

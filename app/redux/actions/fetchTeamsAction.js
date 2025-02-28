@@ -7,6 +7,7 @@ import {
 } from '@/app/services/teamServices';
 import {
   setTeamsDataProcessing,
+  setTeamsResources,
   updateResources,
 } from '../reducers/teamsReducer';
 import {
@@ -164,6 +165,11 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
         resourcesPromise,
         allocationsPromise,
       ]);
+
+      // Update the resources for the team
+      let teamsResources = resourcesResult?.result?.payload?.[0]?.result || [];
+      dispatch(setTeamsResources({ id: resourcesResult?.team?.Id, resource: teamsResources }));
+
       return {
         resourcesResult,
         allocationsResult,
