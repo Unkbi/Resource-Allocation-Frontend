@@ -31,10 +31,10 @@ const formatAllocations = (data, resources, teamId, teamName) => {
   const allocationMap = new Map();
 
   if (
-    allocationsData.length === 0
+    Array.isArray(allocationsData) && allocationsData.length === 0
   ) {
     let obj = [];
-    if (resources.result.length === 0) {
+    if (resources?.result.length === 0) {
       obj = [
         {
           id: teamId,
@@ -75,7 +75,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
     return obj;
   }
 
-  allocationsData.forEach(allocation => {
+  Array.isArray(allocationsData) && allocationsData.forEach(allocation => {
     if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
     const periodDate = new Date(allocation.Period);
@@ -127,7 +127,6 @@ const formatAllocations = (data, resources, teamId, teamName) => {
       allocationMap.set(uniqueId, newAllocation);
     }
   });
-  // Converting Map back to an array
   return Array.from(allocationMap.values());
 };
 
@@ -167,7 +166,7 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
       ]);
 
       // Update the resources for the team
-      let teamsResources = resourcesResult?.result?.payload?.[0]?.result || [];
+      let teamsResources = resourcesResult?.result?.payload?.result || [];
       dispatch(setTeamsResources({ id: resourcesResult?.team?.Id, resource: teamsResources }));
 
       return {
@@ -178,15 +177,13 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
     });
 
     const results = await Promise.allSettled(teamPromises);
-
-    results.forEach(({ status, value }) => {
+    Array.isArray(results) && results.forEach(({ status, value }) => {
       if (status === 'fulfilled') {
         const { resourcesResult, allocationsResult, team } = value;
         if (
           resourcesResult.status === 'fulfilled' &&
           allocationsResult.status === 'fulfilled'
         ) {
-          
           const formattedAllocations = formatAllocations(
             allocationsResult.result.payload,
             resourcesResult.result.payload,
