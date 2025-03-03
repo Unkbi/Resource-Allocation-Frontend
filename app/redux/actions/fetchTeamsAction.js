@@ -95,11 +95,10 @@ const formatAllocations = (data, resources, teamId, teamName) => {
     // Using Resource + Team ID + Project ID as the unique identifier
     const uniqueId = `${allocation.Resource}-${teamId}-${allocation.Project}`;
     const existingAllocation = allocationMap.get(uniqueId);
-
     if (existingAllocation) {
       if (isWithin20WeeksRange(allocation.Period)) {
         existingAllocation[weekNumber] = {
-          allocationId: allocation.Allocation,
+          allocationId: allocation.Id,
           value: allocation.AllocationEntered,
         };
         existingAllocation.totalEffort += allocation.AllocationEntered;
@@ -119,7 +118,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
 
       if (isWithin20WeeksRange(allocation.Period)) {
         newAllocation[weekNumber] = {
-          allocationId: allocation.Allocation,
+          allocationId: allocation.Id,
           value: allocation.AllocationEntered,
         };
       }

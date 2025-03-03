@@ -36,7 +36,7 @@ const formatAllocations = (allocationsData, projectId) => {
     if (existingAllocation) {
       if (allWeeks.includes(weekNumber)) {
         existingAllocation[weekNumber] = {
-          allocationId: allocation.Allocation,
+          allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
         };
         existingAllocation.totalEffort += allocation.AllocationEntered || null;
@@ -59,7 +59,7 @@ const formatAllocations = (allocationsData, projectId) => {
 
       if (allWeeks.includes(weekNumber)) {
         newAllocation[weekNumber] = {
-          allocationId: allocation.Allocation,
+          allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
         };
       }
