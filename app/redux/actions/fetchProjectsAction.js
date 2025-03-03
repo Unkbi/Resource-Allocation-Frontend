@@ -36,7 +36,7 @@ const formatAllocations = (allocationsData, projectId) => {
     if (existingAllocation) {
       if (allWeeks.includes(weekNumber)) {
         existingAllocation[weekNumber] = {
-          allocationId: allocation.Allocation,
+          allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
         };
         existingAllocation.totalEffort += allocation.AllocationEntered || null;
@@ -59,7 +59,7 @@ const formatAllocations = (allocationsData, projectId) => {
 
       if (allWeeks.includes(weekNumber)) {
         newAllocation[weekNumber] = {
-          allocationId: allocation.Allocation,
+          allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
         };
       }
@@ -82,14 +82,14 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
       const postData = {
         'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
           Project: project.Id,
-          StartDate: '2025-01-01',
-          EndDate: '2025-12-31',
+          StartDate: '2025-02-20',
+          EndDate: '2032-01-01',
         },
       };
       try {
         const result = await dispatch(getProjectAllocations(postData));
         if (result.meta.requestStatus === 'fulfilled') {
-          const allocationsData = result.payload[0];
+          const allocationsData = result.payload;
           const formattedAllocations = formatAllocations(
             allocationsData,
             project.Id

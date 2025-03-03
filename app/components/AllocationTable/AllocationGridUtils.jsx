@@ -44,7 +44,7 @@ export const getFinalColumns = (
   const allColumns = getAllColumnsWithWeek(columns, dispatch);
   if (groupBy === 'organization') {
     return allColumns || [];
-  } else {
+  } else if (groupBy === 'teams') {
     return [
       ...(allColumns?.slice(0, 1) || []),
       {
@@ -82,14 +82,14 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: groupBy == "project" ? true : false,
+        sortable: groupBy == 'project' ? true : false,
         renderCell: params => {
-          const allocationsOfAddedResource = teamAllocations?.[0].result.filter(
+          const allocationsOfAddedResource = Array.isArray(teamAllocations.result) && teamAllocations.result.filter(
             resource => resource.Resource === params.row.resourceId
           );
           const uniqueProjectNames = [
             ...new Set(
-              allocationsOfAddedResource.map(item => item.ProjectName)
+              Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.map(item => item.ProjectName) || []
             ),
           ];
 
@@ -99,7 +99,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.[0]?.result.filter(
+                resourceProjects={projects?.result.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
@@ -117,9 +117,41 @@ export const getFinalColumns = (
       },
       ...(allColumns?.slice(1) || []),
     ];
+  } else if (groupBy === 'project') {
+    return [
+      ...(allColumns?.slice(0, 1) || []),
+      {
+        field: 'resource',
+        headerName: 'Resource',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: false,
+        renderCell: params => {
+          if (params.row.hasButton) {
+            return (
+              <AddRowButton
+                project={params.row.project}
+                handleAddRow={handleAddRow}
+                buttonName={
+                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
+                }
+                onClick={event => {
+                  setSelectedProject(params.row.project),
+                    setSelectedTeam(params.row.teams);
+                }}
+              />
+            );
+          }
+          if (params.value) {
+            return <CustomAvatar value={params.value} showFullName={true} />;
+          }
+        },
+      },
+      ...(allColumns?.slice(1) || []),
+    ];
   }
 };
-
 export const groupPage = groupBy => {
   const groupPages = {
     project: 'Project Name',
@@ -150,14 +182,6 @@ export const getCellClassName = (params, updatedRows) => {
       const projectName = params.rowNode.groupingKey;
 
       const projectRows = updatedRows.filter(row => row.teams === projectName);
-      // const sum = projectRows.reduce((total, row) => {
-      //   return total + (Number(row[params.field])) || 0;
-      // }, 0);
-
-      // // Now use this sum for your conditional styling
-      // if (sum === 0) return 'no-allocation';
-      // if (sum > 0 && sum <= 20) return 'low-allocation';
-
       const totalRows = projectRows.length;
 
       const aggregatedValue = projectRows.reduce((sum, row) => {
@@ -220,7 +244,7 @@ export const getInitialRowsState = (updatedRows, groupBy) => {
     rowsWithTotalEffort.forEach(row => {
       if (row.teamsId && !unique_teams[row.teamsId])
         unique_teams[row.teamsId] = row.teams;
-      else if(!unique_teams[row.teamsId]) unique_teams[row.teams] = row.teams;
+      else if (!unique_teams[row.teamsId]) unique_teams[row.teams] = row.teams;
     });
 
     return [

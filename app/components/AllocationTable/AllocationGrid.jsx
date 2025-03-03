@@ -103,34 +103,21 @@ export default function AllocationGrid({
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: selectedProject,
-      projectId: getProjectOrTeamIdByName(projects[0]?.result, selectedProject),
+      projectId: getProjectOrTeamIdByName(projects?.result, selectedProject),
       resource: resource.FullName,
       role: resource.Role,
       totalEffort: resource.totalHours,
-      ...Object.keys(updatedRows[0])
-        .filter(key => key.startsWith('W'))
-        .reduce((acc, week) => {
-          acc[week] = { allocationId: null, value: '' };
-          return acc;
-        }, {}),
       hasButton: false,
     };
     const newRowForTeams = {
       id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
       resourceId: resource.Id,
       project: '',
-      teamsId: getProjectOrTeamIdByName(teams[0]?.result, selectedTeam),
+      teamsId: getProjectOrTeamIdByName(teams?.result, selectedTeam),
       resource: resource.FullName,
       teams: selectedTeam,
       role: resource.Role,
       totalEffort: resource.totalHours,
-      //Looks like this is not required. So commenting out for now.
-      // ...Object.keys(updatedRows[0])
-      //   .filter(key => key.startsWith('W'))
-      //   .reduce((acc, week) => {
-      //     acc[week] = '';
-      //     return acc;
-      //   }, {}),
       hasButton: false,
       hasProject: true,
     };
@@ -155,8 +142,12 @@ export default function AllocationGrid({
 
       try {
         await new Promise((resolve, reject) => {
+          const obj = {
+            "Team": `:ResourceAllocation.Core/Team,${newRowForTeams.teamsId}`,
+            "Resource": `:ResourceAllocation.Core/Resource,${newRowForTeams.resourceId}`,
+          }
           dispatch(
-            addResourceToTeam(newRowForTeams.teamsId, newRowForTeams.resourceId)
+            addResourceToTeam(obj.Team, obj.Resource)
           )
             .then(resolve)
             .catch(reject);
@@ -187,14 +178,14 @@ export default function AllocationGrid({
       );
     };
 
-    const allocationsOfAddedResource = teamAllocations?.[0].result.filter(
+    const allocationsOfAddedResource = Array.isArray(teamAllocations?.result) && teamAllocations?.result.filter(
       resource => resource.Resource === selectedResourceId
     );
 
     const allocationMap = new Map();
     const allWeeks = generateAllWeeks();
 
-    allocationsOfAddedResource?.forEach(allocation => {
+    Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.forEach(allocation => {
       if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
       const periodDate = new Date(allocation.Period);
@@ -218,7 +209,7 @@ export default function AllocationGrid({
 
     if (
       !checkEntryExists(
-        teamAllocations?.[0].result,
+        teamAllocations?.result,
         selectedResourceId,
         project.Name,
         project.Id
@@ -353,9 +344,10 @@ export default function AllocationGrid({
   );
 
   const handleCellKeyDown = (params, event) => {
-    if (['e', 'E', '+', '-'].includes(event.key)) {
+    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
       event.preventDefault();
     }
+
     if (event.key === 'Enter') {
       event.preventDefault();
       setSelectedCell(params.field);
@@ -373,7 +365,7 @@ export default function AllocationGrid({
         const nextField = visibleColumns[nextIndex].field;
         apiRef.current.setCellFocus(params.id, nextField);
       }
-      // for future reference -> 
+      // for future reference ->
       // setTimeout(() => {
       //   if (dataFetched) {
       //     dispatch(showToastAction(true, 'Data updated successfully', 'success'));
@@ -402,6 +394,7 @@ export default function AllocationGrid({
     }
   };
 
+  console.log(rowsState, 'rowState');
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
