@@ -84,7 +84,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: groupBy == 'project' ? true : false,
         renderCell: params => {
-          const allocationsOfAddedResource = teamAllocations?.result.filter(
+          const allocationsOfAddedResource = Array.isArray(teamAllocations.result) && teamAllocations.result.filter(
             resource => resource.Resource === params.row.resourceId
           );
           const uniqueProjectNames = [
@@ -244,7 +244,7 @@ export const getInitialRowsState = (updatedRows, groupBy) => {
     rowsWithTotalEffort.forEach(row => {
       if (row.teamsId && !unique_teams[row.teamsId])
         unique_teams[row.teamsId] = row.teams;
-      else if(!unique_teams[row.teamsId]) unique_teams[row.teams] = row.teams;
+      else if (!unique_teams[row.teamsId]) unique_teams[row.teams] = row.teams;
     });
 
     return [

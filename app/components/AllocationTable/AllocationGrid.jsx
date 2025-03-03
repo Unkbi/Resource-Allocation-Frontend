@@ -178,14 +178,14 @@ export default function AllocationGrid({
       );
     };
 
-    const allocationsOfAddedResource = teamAllocations?.result.filter(
+    const allocationsOfAddedResource = Array.isArray(teamAllocations?.result) && teamAllocations?.result.filter(
       resource => resource.Resource === selectedResourceId
     );
 
     const allocationMap = new Map();
     const allWeeks = generateAllWeeks();
 
-    allocationsOfAddedResource?.forEach(allocation => {
+    Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.forEach(allocation => {
       if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
       const periodDate = new Date(allocation.Period);
@@ -315,19 +315,19 @@ export default function AllocationGrid({
             prevRows.map(row =>
               row.id === id
                 ? {
+                  ...row,
+                  [selectedCell]: {
+                    allocationId: row[selectedCell]?.allocationId || null,
+                    value: formattedCellValue,
+                  },
+                  totalEffort: calculateTotalEffort({
                     ...row,
                     [selectedCell]: {
                       allocationId: row[selectedCell]?.allocationId || null,
                       value: formattedCellValue,
                     },
-                    totalEffort: calculateTotalEffort({
-                      ...row,
-                      [selectedCell]: {
-                        allocationId: row[selectedCell]?.allocationId || null,
-                        value: formattedCellValue,
-                      },
-                    }),
-                  }
+                  }),
+                }
                 : row
             )
           );
