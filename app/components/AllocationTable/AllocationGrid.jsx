@@ -393,6 +393,8 @@ export default function AllocationGrid({
       }
     }
   };
+
+  console.log(rowsState, 'rowState');
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid

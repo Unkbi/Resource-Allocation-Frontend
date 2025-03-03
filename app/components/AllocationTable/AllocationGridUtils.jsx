@@ -89,7 +89,7 @@ export const getFinalColumns = (
           );
           const uniqueProjectNames = [
             ...new Set(
-              Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.map(item => item.ProjectName)
+              Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.map(item => item.ProjectName) || []
             ),
           ];
 
