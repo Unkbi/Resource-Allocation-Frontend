@@ -19,7 +19,7 @@ const WEEK_CONFIG = {
   DECIMAL_PRECISION: 1,
 };
 
-const getStartDate = () => getStartOfPreviousWeek(new Date());
+export const getStartDate = () => getStartOfPreviousWeek(new Date());
 
 const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
   field: getWeekNumber(weekDate),
@@ -106,9 +106,18 @@ export const generateWeeklyColumns = (startDate, dispatch) => {
   });
 };
 
-const generateColumnGroupingModel = startDate => {
+export const generateColumnGroupingModel = (startDate, allColumns) => {
+  const nonWeeklyColumns = allColumns.filter(column => column.primaryColumn);
   const groups = [];
   let currentGroup = null;
+  nonWeeklyColumns.forEach(column => {
+    groups.push({
+      groupId: `empty-group-${column.field}`,
+      headerClassName: 'empty-group-header',
+      headerName: '',
+      children: [{ field: column.field, headerName: '' }],
+    });
+  });
 
   for (let i = 0; i < WEEK_CONFIG.TOTAL_WEEKS; i++) {
     const weekDate = addWeeks(startDate, i);
@@ -133,7 +142,6 @@ const generateColumnGroupingModel = startDate => {
 const startDate = getStartDate();
 
 export const columns = generateWeeklyColumns(startDate);
-export const columnGroupingModel = generateColumnGroupingModel(startDate);
 
 export const getAllColumnsWithWeek = (existingColumns = [], dispatch) => [
   ...existingColumns,

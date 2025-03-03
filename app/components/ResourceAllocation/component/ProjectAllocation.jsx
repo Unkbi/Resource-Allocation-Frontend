@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { columnGroupingModel } from '../../AllocationTable/TableHeader';
+// import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 
@@ -13,6 +13,7 @@ const projectColumnConfig = [
     width: 200,
     headerClassName: 'prime-header',
     cellClassName: 'prime-cell',
+    primaryColumn: true,
   },
   {
     field: 'totalEffort',
@@ -29,6 +30,7 @@ const projectColumnConfig = [
     headerClassName: 'secondary-header',
     cellClassName: 'secondary-cell',
     headerAlign: 'left',
+    primaryColumn: true,
   },
 ];
 
@@ -43,7 +45,11 @@ export default function ProjectAllocation() {
   }, []);
 
   useEffect(() => {
-    if (projects?.result && projects?.result.length > 0 && !allocationsFetched) {
+    if (
+      projects?.result &&
+      projects?.result.length > 0 &&
+      !allocationsFetched
+    ) {
       dispatch(resetAllocations());
       dispatch(fetchAllProjectAllocations(projects.result));
       setAllocationsFetched(true);
@@ -55,7 +61,7 @@ export default function ProjectAllocation() {
       <AllocationGrid
         groupBy="project"
         columns={projectColumnConfig}
-        columnGroupingModel={columnGroupingModel}
+        // columnGroupingModel={columnGroupingModel}
         data={allocations}
         loading={loading || dataProcessing}
       />
