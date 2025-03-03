@@ -194,7 +194,6 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
           resourcesResult.status === 'fulfilled' &&
           allocationsResult.status === 'fulfilled'
         ) {
-          console.log('updatedResource', resourcesResult.result.payload[0]);
           const updatedResource = formatResources(
             resourcesResult.result.payload[0],
             team.Name

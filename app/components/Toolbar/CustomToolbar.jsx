@@ -15,7 +15,6 @@ import { performChangeView } from '@/app/redux/actions/allocationViewAction';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
-  GridToolbarExport,
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
 import MyProjectIcon from '../TableIcons/MyProjectIcon';
@@ -23,6 +22,7 @@ import AllProjectIcon from '../TableIcons/AllProjectIcon';
 import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
 import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
 import TooltipButton from '../Button/TooltipButton';
+import CustomExport from './CustomExport';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -283,18 +283,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                 },
               }}
             />
-            <GridToolbarExport
-              slotProps={{
-                tooltip: { title: 'Export data' },
-                button: {
-                  variant: 'outlined',
-                  sx: { color: '#555', borderColor: '#ddd' },
-                  startIcon: (
-                    <img src="/images/icons/export.svg" alt="export" />
-                  ),
-                },
-              }}
-            />
+            <CustomExport />
             <GridToolbarFilterButton
               slotProps={{
                 tooltip: { title: 'Filter' },
