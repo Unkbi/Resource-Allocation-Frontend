@@ -1,5 +1,5 @@
 import { useState, lazy, useEffect, useCallback } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   useGridApiRef,
