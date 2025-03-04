@@ -1,5 +1,5 @@
 import { useState, lazy, useEffect, useCallback } from 'react';
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   useGridApiRef,
@@ -384,7 +384,16 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     }
   };
 
-  console.log(rowsState, 'rowState');
+  useEffect(() => {
+    const handleCellFocusOut = params => {
+      const rowId = params.id;
+      if (apiRef.current.getRowMode(rowId) === 'edit') {
+        apiRef.current.stopRowEditMode({ id: rowId });
+      }
+    };
+
+    apiRef.current.subscribeEvent('cellFocusOut', handleCellFocusOut);
+  }, [apiRef, selectedCell]);
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
