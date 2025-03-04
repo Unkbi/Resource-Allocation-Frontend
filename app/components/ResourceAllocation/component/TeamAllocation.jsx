@@ -1,6 +1,6 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { columnGroupingModel } from '../../AllocationTable/TableHeader';
+// import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -17,15 +17,16 @@ const teamsColumnConfig = [
     width: 200,
     headerClassName: 'prime-header',
     cellClassName: 'prime-cell',
+    primaryColumn: true,
   },
   {
     field: 'resourceType',
     headerName: 'Resource Type',
     width: 200,
-    disableColumnMenu: true,
     sortable: false,
     headerClassName: 'secondary-header',
     cellClassName: 'secondary-cell',
+    primaryColumn: true,
   },
 ];
 
@@ -55,7 +56,7 @@ export default function TeamAllocation() {
         loading={loading || dataProcessing}
         groupBy="teams"
         columns={teamsColumnConfig}
-        columnGroupingModel={columnGroupingModel}
+        // columnGroupingModel={columnGroupingModel}
         data={resources}
       />
       {!resources && !loading && (

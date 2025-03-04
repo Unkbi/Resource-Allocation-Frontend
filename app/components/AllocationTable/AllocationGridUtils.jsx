@@ -54,6 +54,7 @@ export const getFinalColumns = (
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         sortable: false,
+        primaryColumn: true,
         renderCell: params => {
           if (params.row.hasButton) {
             return (
@@ -83,10 +84,13 @@ export const getFinalColumns = (
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         sortable: groupBy == 'project' ? true : false,
+        primaryColumn: true,
         renderCell: params => {
-          const allocationsOfAddedResource = Array.isArray(teamAllocations.result) && teamAllocations.result.filter(
-            resource => resource.Resource === params.row.resourceId
-          );
+          const allocationsOfAddedResource =
+            Array.isArray(teamAllocations.result) &&
+            teamAllocations.result.filter(
+              resource => resource.Resource === params.row.resourceId
+            );
           const uniqueProjectNames = [
             ...new Set(
               Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.map(item => item.ProjectName) || []
@@ -127,6 +131,7 @@ export const getFinalColumns = (
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         sortable: false,
+        primaryColumn: true,
         renderCell: params => {
           if (params.row.hasButton) {
             return (
@@ -249,25 +254,23 @@ export const getInitialRowsState = (updatedRows, groupBy) => {
 
     return [
       ...rowsWithTotalEffort,
-      ...Array.from(new Set(Object.keys(unique_teams))).map(
-        teams => ({
-          id: `${unique_teams?.[teams]}-add-resource`,
-          project: '',
-          teams: unique_teams?.[teams],
-          teamsId: teams,
-          resource: '',
-          role: '',
-          totalEffort: '',
-          resourceId: '',
-          hasButton: true,
-          ...Object.keys(updatedRows[0])
-            .filter(key => key.startsWith('W'))
-            .reduce((acc, week) => {
-              acc[week] = '';
-              return acc;
-            }, {}),
-        })
-      ),
+      ...Array.from(new Set(Object.keys(unique_teams))).map(teams => ({
+        id: `${unique_teams?.[teams]}-add-resource`,
+        project: '',
+        teams: unique_teams?.[teams],
+        teamsId: teams,
+        resource: '',
+        role: '',
+        totalEffort: '',
+        resourceId: '',
+        hasButton: true,
+        ...Object.keys(updatedRows[0])
+          .filter(key => key.startsWith('W'))
+          .reduce((acc, week) => {
+            acc[week] = '';
+            return acc;
+          }, {}),
+      })),
     ];
   } else {
     return updatedRows;
