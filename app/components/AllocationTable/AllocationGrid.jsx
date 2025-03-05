@@ -260,6 +260,9 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       .map(column => column.field);
 
   const handleDoubleClick = params => {
+    if (params.rowNode.type === 'group' || !params.isEditable) {
+      return;
+    }
     if (params?.cellMode === 'view') {
       apiRef.current.startRowEditMode({ id: params.id });
     }
@@ -346,6 +349,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
       event.preventDefault();
     }
+    if (params.rowNode.type === 'group' || !params.isEditable) {
+      return;
+    }
+    const mode = apiRef.current.getRowMode(params.id);
     setSelectedCell(params.field);
     if (formattedValue) {
       const allocationData = row[field];
@@ -356,23 +363,28 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       c => c.field === params.field
     );
     const nextIndex = currentIndex + 1;
-    const nextField = visibleColumns[nextIndex].field;
     if (event.key === 'Enter') {
       event.preventDefault();
       if (nextIndex < visibleColumns.length) {
+        const nextField = visibleColumns[nextIndex].field;
         apiRef.current.setCellFocus(params.id, nextField);
       }
     }
     if (event.key === 'Tab' || event.key === 'ArrowRight') {
       // event.preventDefault();
       if (nextIndex < visibleColumns.length) {
-        apiRef.current.stopRowEditMode({ id: params.id });
+        const nextField = visibleColumns[nextIndex].field;
+        if (mode === 'edit') {
+          apiRef.current.stopRowEditMode({ id: params.id });
+        }
         apiRef.current.setCellFocus(params.id, nextField);
       }
     }
     if (event.key === 'ArrowLeft') {
       // event.preventDefault();
-      apiRef.current.stopRowEditMode({ id: params.id });
+      if (mode === 'edit') {
+        apiRef.current.stopRowEditMode({ id: params.id });
+      }
       const editableColumm = visibleColumns.filter(c => c.editable);
       const currentIndex = editableColumm.findIndex(
         c => c.field === params.field
@@ -385,6 +397,19 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     }
   };
 
+  useEffect(() => {
+    const handleCellFocusOut = params => {
+      if (params.rowNode.type === 'group' || !params.isEditable) {
+        return;
+      }
+      const rowId = params.id;
+      if (apiRef.current.getRowMode(rowId) === 'edit') {
+        apiRef.current.stopRowEditMode({ id: rowId });
+      }
+    };
+
+    apiRef.current.subscribeEvent('cellFocusOut', handleCellFocusOut);
+  }, [apiRef, selectedCell]);
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -401,7 +426,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
-        loading={loading}
+        loading={loading || !rowsState.length}
         disableRowSelectionOnClick
         initialState={initialState}
         columnHeaderHeight={30}
