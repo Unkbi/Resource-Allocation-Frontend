@@ -56,6 +56,11 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const { open, message, type, position } = useSelector(state => state.toast);
   const startDate = getStartDate();
 
+  const dispatch = useDispatch();
+  const { projects } = useSelector(state => state.projects);
+  const { teams, teamAllocations } = useSelector(state => state.teams);
+  const [dataFetched, setDataFetched] = useState(false);
+
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
       if (key.startsWith('W')) {
@@ -78,13 +83,9 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       totalEffort: calculateTotalEffort(normalizeRow(row)),
     }));
     setUpdatedRows(updatedRows);
-    setRowsState(() => getInitialRowsState(updatedRows, groupBy));
-  }, [data, groupBy]);
+    setRowsState(() => getInitialRowsState(updatedRows, groupBy, teams));
+  }, [data, groupBy, teams]);
 
-  const dispatch = useDispatch();
-  const { projects } = useSelector(state => state.projects);
-  const { teams, teamAllocations } = useSelector(state => state.teams);
-  const [dataFetched, setDataFetched] = useState(false);
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
     initialState: getInitialState(

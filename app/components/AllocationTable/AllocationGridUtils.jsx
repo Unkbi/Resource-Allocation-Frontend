@@ -220,7 +220,7 @@ export const getCellClassName = (params, updatedRows) => {
   return '';
 };
 
-export const getInitialRowsState = (updatedRows, groupBy) => {
+export const getInitialRowsState = (updatedRows, groupBy, teams) => {
   const rowsWithTotalEffort = updatedRows.map(row => ({
     ...row,
     totalEffort: calculateTotalEffort(row),
@@ -249,10 +249,17 @@ export const getInitialRowsState = (updatedRows, groupBy) => {
   } else if (groupBy === 'teams') {
     // Get unique teams for teams and teamsId to avoid duplicate teams
     let unique_teams = {};
+    let teams_with_name = {};
+    teams?.result?.forEach(team => {
+      teams_with_name[team?.Name] = team?.Id
+    })
+
     rowsWithTotalEffort.forEach(row => {
       if (row.teamsId && !unique_teams[row.teamsId])
         unique_teams[row.teamsId] = row.teams;
-      else if (!unique_teams[row.teamsId]) unique_teams[row.teams] = row.teams;
+      else if (!unique_teams[row.teamsId] && teams_with_name?.[row?.teams]){
+        unique_teams[teams_with_name[row.teams]] = row.teams;
+      }
     });
 
     return [
