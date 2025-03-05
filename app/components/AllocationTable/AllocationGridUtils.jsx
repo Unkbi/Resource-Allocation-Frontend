@@ -93,7 +93,9 @@ export const getFinalColumns = (
             );
           const uniqueProjectNames = [
             ...new Set(
-              Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.map(item => item.ProjectName) || []
+              (Array.isArray(allocationsOfAddedResource) &&
+                allocationsOfAddedResource.map(item => item.ProjectName)) ||
+                []
             ),
           ];
 
@@ -171,6 +173,7 @@ export const getGroupingColDef = groupBy => ({
   renderHeader: () => groupPage(groupBy),
   renderCell: params => params.value,
   filterable: false,
+  isEditable: false,
   headerClassName: 'prime-header',
 });
 
