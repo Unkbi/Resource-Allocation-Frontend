@@ -8,17 +8,23 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Close';
 import {
   GridRowModes,
-  DataGrid,
+  DataGridPremium,
   GridToolbarContainer,
   GridActionsCellItem,
   GridRowEditStopReasons,
-} from '@mui/x-data-grid';
+  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+  useKeepGroupedColumnsHidden,
+  useGridApiRef,
+} from '@mui/x-data-grid-premium';
 import {
-//   randomCreatedDate,
-//   randomTraderName,
+  //   randomCreatedDate,
+  //   randomTraderName,
   randomId,
-//   randomArrayItem,
+  //   randomArrayItem,
 } from '@mui/x-data-grid-generator';
+import { getInitialState } from './AllocationGridUtils';
+import { generateColumnGroupingModel } from './TableHeader';
+import { StyledDataGrid } from './styles/StyledDataGrid';
 
 const roles = ['Market', 'Finance', 'Development'];
 // const randomRole = () => {
@@ -68,11 +74,11 @@ function EditToolbar(props) {
 
   const handleClick = () => {
     const id = randomId();
-    setRows((oldRows) => [
+    setRows(oldRows => [
       ...oldRows,
       { id, name: '', age: '', role: '', isNew: true },
     ]);
-    setRowModesModel((oldModel) => ({
+    setRowModesModel(oldModel => ({
       ...oldModel,
       [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
     }));
@@ -87,101 +93,122 @@ function EditToolbar(props) {
   );
 }
 
-export default function FullFeaturedCrudGrid({rows, setRows, columns, rowModesModel, setRowModesModel}) {
-//   const [rows, setRows] = React.useState(initialRows);
-
+export default function FullFeaturedCrudGrid({
+  rows,
+  setRows,
+  columns,
+  rowModesModel,
+  setRowModesModel,
+  startDate,
+}) {
+  //   const [rows, setRows] = React.useState(initialRows);
+  // const apiRef = useGridApiRef();
+  // const initialState = useKeepGroupedColumnsHidden({
+  //   apiRef,
+  //   initialState: getInitialState(
+  //     'teams',
+  //     'updatedRows',
+  //     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+  //   ),
+  // });
+  const initialState = getInitialState(
+    'teams',
+    'updatedRows',
+    GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+  );
   const handleRowEditStop = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
       event.defaultMuiPrevented = true;
     }
-    alert("Edit stopped");
-    console.log("params", params)
+    alert('Edit stopped');
+    console.log('params', params);
   };
 
-  const processRowUpdate = (newRow) => {
+  const processRowUpdate = newRow => {
     const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+    setRows(rows.map(row => (row.id === newRow.id ? updatedRow : row)));
+
     return updatedRow;
   };
 
-  const handleRowModesModelChange = (newRowModesModel) => {
+  const handleRowModesModelChange = newRowModesModel => {
     setRowModesModel(newRowModesModel);
   };
 
-//   const columns = [
-//     { field: 'name', headerName: 'Name', width: 180, editable: true },
-//     {
-//       field: 'age',
-//       headerName: 'Age',
-//       type: 'number',
-//       width: 80,
-//       align: 'left',
-//       headerAlign: 'left',
-//       editable: true,
-//     },
-//     {
-//       field: 'joinDate',
-//       headerName: 'Join date',
-//       type: 'date',
-//       width: 180,
-//       editable: true,
-//     },
-//     {
-//       field: 'role',
-//       headerName: 'Department',
-//       width: 220,
-//       editable: true,
-//       type: 'singleSelect',
-//       valueOptions: ['Market', 'Finance', 'Development'],
-//     },
-//     {
-//       field: 'actions',
-//       type: 'actions',
-//       headerName: 'Actions',
-//       width: 100,
-//       cellClassName: 'actions',
-//       getActions: ({ id }) => {
-//         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+  //   const columns = [
+  //     { field: 'name', headerName: 'Name', width: 180, editable: true },
+  //     {
+  //       field: 'age',
+  //       headerName: 'Age',
+  //       type: 'number',
+  //       width: 80,
+  //       align: 'left',
+  //       headerAlign: 'left',
+  //       editable: true,
+  //     },
+  //     {
+  //       field: 'joinDate',
+  //       headerName: 'Join date',
+  //       type: 'date',
+  //       width: 180,
+  //       editable: true,
+  //     },
+  //     {
+  //       field: 'role',
+  //       headerName: 'Department',
+  //       width: 220,
+  //       editable: true,
+  //       type: 'singleSelect',
+  //       valueOptions: ['Market', 'Finance', 'Development'],
+  //     },
+  //     {
+  //       field: 'actions',
+  //       type: 'actions',
+  //       headerName: 'Actions',
+  //       width: 100,
+  //       cellClassName: 'actions',
+  //       getActions: ({ id }) => {
+  //         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
-//         if (isInEditMode) {
-//           return [
-//             <GridActionsCellItem
-//               icon={<SaveIcon />}
-//               label="Save"
-//               sx={{
-//                 color: 'primary.main',
-//               }}
-//               onClick={handleSaveClick(id)}
-//             />,
-//             <GridActionsCellItem
-//               icon={<CancelIcon />}
-//               label="Cancel"
-//               className="textPrimary"
-//               onClick={handleCancelClick(id)}
-//               color="inherit"
-//             />,
-//           ];
-//         }
+  //         if (isInEditMode) {
+  //           return [
+  //             <GridActionsCellItem
+  //               icon={<SaveIcon />}
+  //               label="Save"
+  //               sx={{
+  //                 color: 'primary.main',
+  //               }}
+  //               onClick={handleSaveClick(id)}
+  //             />,
+  //             <GridActionsCellItem
+  //               icon={<CancelIcon />}
+  //               label="Cancel"
+  //               className="textPrimary"
+  //               onClick={handleCancelClick(id)}
+  //               color="inherit"
+  //             />,
+  //           ];
+  //         }
 
-//         return [
-//           <GridActionsCellItem
-//             icon={<EditIcon />}
-//             label="Edit"
-//             className="textPrimary"
-//             onClick={handleEditClick(id)}
-//             color="inherit"
-//           />,
-//           <GridActionsCellItem
-//             icon={<DeleteIcon />}
-//             label="Delete"
-//             onClick={handleDeleteClick(id)}
-//             color="inherit"
-//           />,
-//         ];
-//       },
-//     },
-//   ];
-console.log("finalColumns", columns)
+  //         return [
+  //           <GridActionsCellItem
+  //             icon={<EditIcon />}
+  //             label="Edit"
+  //             className="textPrimary"
+  //             onClick={handleEditClick(id)}
+  //             color="inherit"
+  //           />,
+  //           <GridActionsCellItem
+  //             icon={<DeleteIcon />}
+  //             label="Delete"
+  //             onClick={handleDeleteClick(id)}
+  //             color="inherit"
+  //           />,
+  //         ];
+  //       },
+  //     },
+  //   ];
+  console.log('finalColumns', columns);
 
   return (
     <Box
@@ -196,12 +223,21 @@ console.log("finalColumns", columns)
         },
       }}
     >
-      <DataGrid
+      <DataGridPremium
         rows={rows}
         columns={columns}
+        isCellEditable={params => !params.row.hasButton}
         editMode="row"
+        initialState={initialState}
+        columnHeaderHeight={30}
+        defaultGroupingExpansionDepth={-1}
+        columnGroupHeaderHeight={22}
+        getAggregationPosition={groupNode =>
+          groupNode.depth === -1 ? null : 'inline'
+        }
         rowModesModel={rowModesModel}
         onRowModesModelChange={handleRowModesModelChange}
+        columnGroupingModel={generateColumnGroupingModel(startDate, columns)}
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
         slots={{ toolbar: EditToolbar }}

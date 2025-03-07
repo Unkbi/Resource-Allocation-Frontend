@@ -43,7 +43,7 @@ import FullFeaturedCrudGrid from './DefaultDataGrid';
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
 export default function AllocationGrid({ groupBy, columns, data, loading }) {
-  // const apiRef = useGridApiRef();
+  const apiRef = useGridApiRef();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
   // const [isSearchMode, setIsSearchMode] = useState(false);
@@ -55,7 +55,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const [rowsState, setRowsState] = useState([]);
   // const [refreshKey, setRefreshKey] = useState(0);
   // const { open, message, type, position } = useSelector(state => state.toast);
-  // const startDate = getStartDate();
+  const startDate = getStartDate();
 
   const dispatch = useDispatch();
   // const { projects } = useSelector(state => state.projects);
@@ -88,15 +88,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     setUpdatedRows(updatedRows);
     setRowsState(() => getInitialRowsState(updatedRows, groupBy, teams));
   }, [data, groupBy, teams]);
-
-  // const initialState = useKeepGroupedColumnsHidden({
-  //   apiRef,
-  //   initialState: getInitialState(
-  //     groupBy,
-  //     updatedRows,
-  //     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
-  //   ),
-  // });
 
   const handleAddRow = async (e, resource) => {
     const newRowForProject = {
@@ -415,31 +406,39 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   //   apiRef.current.subscribeEvent('cellFocusOut', handleCellFocusOut);
   // }, [apiRef, selectedCell]);
 
-  const handleEditClick = (id) => () => {
+  const handleEditClick = id => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
   };
 
-  const handleSaveClick = (id) => () => {
+  const handleSaveClick = id => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
-  const handleDeleteClick = (id) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+  const handleDeleteClick = id => () => {
+    setRows(rows.filter(row => row.id !== id));
   };
 
-  const handleCancelClick = (id) => () => {
+  const handleCancelClick = id => () => {
     setRowModesModel({
       ...rowModesModel,
       [id]: { mode: GridRowModes.View, ignoreModifications: true },
     });
 
-    const editedRow = rows.find((row) => row.id === id);
+    const editedRow = rows.find(row => row.id === id);
     if (editedRow.isNew) {
-      setRows(rows.filter((row) => row.id !== id));
+      setRows(rows.filter(row => row.id !== id));
     }
   };
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <FullFeaturedCrudGrid
+        rows={rowsState}
+        setRows={setRowsState}
+        columns={finalColumns}
+        rowModesModel={rowModesModel}
+        setRowModesModel={setRowModesModel}
+        startDate={startDate}
+      />
       {/* <StyledDataGrid
         // key={refreshKey}
         // isCellEditable={params => !params.row.hasButton}
@@ -534,11 +533,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         open={open}
         position={position}
       /> */}
-      <FullFeaturedCrudGrid rows={rowsState} 
-                            setRows={setRowsState} 
-                            columns={finalColumns} 
-                            rowModesModel={rowModesModel} 
-                            setRowModesModel={setRowModesModel}/>
       {/* <FullFeaturedCrudGrid/> */}
     </Box>
   );
