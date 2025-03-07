@@ -59,6 +59,7 @@ export const getFinalColumns = (
           if (params.row.hasButton) {
             return (
               <AddRowButton
+                row={params.row}
                 project={params.row.project}
                 handleAddRow={handleAddRow}
                 teamsId={params.row.teamsId}
@@ -93,13 +94,17 @@ export const getFinalColumns = (
             );
           const uniqueProjectNames = [
             ...new Set(
-              Array.isArray(allocationsOfAddedResource) && allocationsOfAddedResource.map(item => item.ProjectName) || []
+              (Array.isArray(allocationsOfAddedResource) &&
+                allocationsOfAddedResource.map(item => item.ProjectName)) ||
+                []
             ),
           ];
 
           if (params.row.hasProject && !params.row.project) {
             return (
               <AddRowButton
+                row={params.row}
+                teamsId={params.row.teamsId}
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
@@ -142,6 +147,8 @@ export const getFinalColumns = (
           if (params.row.hasButton) {
             return (
               <AddRowButton
+                row={params.row}
+                teamsId={params.row.teamsId}
                 project={params.row.project}
                 handleAddRow={handleAddRow}
                 buttonName={
@@ -177,6 +184,7 @@ export const getGroupingColDef = groupBy => ({
   renderHeader: () => groupPage(groupBy),
   renderCell: params => params.value,
   filterable: false,
+  isEditable: false,
   headerClassName: 'prime-header',
 });
 
