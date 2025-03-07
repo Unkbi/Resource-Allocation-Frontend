@@ -38,28 +38,31 @@ import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import { getTeamAllocations } from '@/app/services/teamServices';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
+import FullFeaturedCrudGrid from './DefaultDataGrid';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
 export default function AllocationGrid({ groupBy, columns, data, loading }) {
-  const apiRef = useGridApiRef();
+  // const apiRef = useGridApiRef();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
-  const [isSearchMode, setIsSearchMode] = useState(false);
-  const [filterButtonEl, setFilterButtonEl] = useState(null);
-  const [selectedCell, setSelectedCell] = useState(null);
-  const [selectedAllocationId, setSelectedAllocationId] = useState(null);
+  // const [isSearchMode, setIsSearchMode] = useState(false);
+  // const [filterButtonEl, setFilterButtonEl] = useState(null);
+  // const [selectedCell, setSelectedCell] = useState(null);
+  // const [selectedAllocationId, setSelectedAllocationId] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const [rowsState, setRowsState] = useState([]);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { open, message, type, position } = useSelector(state => state.toast);
-  const startDate = getStartDate();
+  // const [refreshKey, setRefreshKey] = useState(0);
+  // const { open, message, type, position } = useSelector(state => state.toast);
+  // const startDate = getStartDate();
 
   const dispatch = useDispatch();
-  const { projects } = useSelector(state => state.projects);
+  // const { projects } = useSelector(state => state.projects);
   const { teams, teamAllocations } = useSelector(state => state.teams);
-  const [dataFetched, setDataFetched] = useState(false);
+  // const [dataFetched, setDataFetched] = useState(false);
+
+  const [rowModesModel, setRowModesModel] = useState({});
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -86,14 +89,14 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     setRowsState(() => getInitialRowsState(updatedRows, groupBy, teams));
   }, [data, groupBy, teams]);
 
-  const initialState = useKeepGroupedColumnsHidden({
-    apiRef,
-    initialState: getInitialState(
-      groupBy,
-      updatedRows,
-      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
-    ),
-  });
+  // const initialState = useKeepGroupedColumnsHidden({
+  //   apiRef,
+  //   initialState: getInitialState(
+  //     groupBy,
+  //     updatedRows,
+  //     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+  //   ),
+  // });
 
   const handleAddRow = async (e, resource) => {
     const newRowForProject = {
@@ -248,265 +251,295 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     dispatch
   );
 
-  const showField = [
-    GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
-    ...columns.map(col => col.field),
-    ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
-  ];
+  // const showField = [
+  //   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+  //   ...columns.map(col => col.field),
+  //   ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
+  // ];
 
-  const getTogglableColumns = columns =>
-    columns
-      .filter(column => column.field !== groupBy)
-      .filter(column => showField.includes(column.field))
-      .map(column => column.field);
+  // const getTogglableColumns = columns =>
+  //   columns
+  //     .filter(column => column.field !== groupBy)
+  //     .filter(column => showField.includes(column.field))
+  //     .map(column => column.field);
 
-  const handleDoubleClick = params => {
-    if (params.rowNode.type === 'group' || !params.isEditable) {
-      return;
-    }
-    if (params?.cellMode === 'view') {
-      apiRef.current.startRowEditMode({ id: params.id });
-    }
-    setSelectedCell(params.field);
-    const { field, formattedValue, row } = params || {};
-    if (formattedValue) {
-      const allocationData = row[field];
-      setSelectedAllocationId(allocationData?.allocationId);
-    }
+  // const handleDoubleClick = params => {
+  //   if (params.rowNode.type === 'group' || !params.isEditable) {
+  //     return;
+  //   }
+  //   if (params?.cellMode === 'view') {
+  //     apiRef.current.startRowEditMode({ id: params.id });
+  //   }
+  //   setSelectedCell(params.field);
+  //   const { field, formattedValue, row } = params || {};
+  //   if (formattedValue) {
+  //     const allocationData = row[field];
+  //     setSelectedAllocationId(allocationData?.allocationId);
+  //   }
+  // };
+
+  // const handleCellUpdate = useCallback(
+  //   async (newRow, oldRow) => {
+  //     const newValue = newRow[selectedCell];
+  //     const oldValue = oldRow[selectedCell]?.value;
+  //     if (newValue !== oldValue) {
+  //       try {
+  //         const { project, projectId, id } = newRow || {};
+  //         let formattedCellValue = Math.round(newRow[selectedCell] * 10) / 10;
+  //         let resourceId = newRow?.resourceId;
+  //         if (formattedCellValue > 2) return;
+  //         if (!selectedAllocationId && formattedCellValue === 0) return;
+
+  //         if (selectedAllocationId) {
+  //           const putPayload = {
+  //             resourceId: resourceId,
+  //             allocationId: selectedAllocationId,
+  //             putData: {
+  //               'ResourceAllocation.Core/Allocation': {
+  //                 AllocationEntered: formattedCellValue,
+  //               },
+  //             },
+  //           };
+  //           dispatch(updateResourceAllocation(putPayload));
+  //         } else {
+  //           const postPayload = {
+  //             resourceId: resourceId,
+  //             postData: {
+  //               'ResourceAllocation.Core/Allocation': {
+  //                 Resource: resourceId,
+  //                 Project: projectId,
+  //                 ProjectName: project,
+  //                 Period: getMondayOfWeek(selectedCell),
+  //                 AllocationEntered: formattedCellValue,
+  //               },
+  //             },
+  //           };
+  //           dispatch(setResourceAllocation(postPayload));
+  //         }
+  //         setRowsState(prevRows =>
+  //           prevRows.map(row =>
+  //             row.id === id
+  //               ? {
+  //                   ...row,
+  //                   [selectedCell]: {
+  //                     allocationId: row[selectedCell]?.allocationId || null,
+  //                     value: formattedCellValue,
+  //                   },
+  //                   totalEffort: calculateTotalEffort({
+  //                     ...row,
+  //                     [selectedCell]: {
+  //                       allocationId: row[selectedCell]?.allocationId || null,
+  //                       value: formattedCellValue,
+  //                     },
+  //                   }),
+  //                 }
+  //               : row
+  //           )
+  //         );
+  //         setDataFetched(true);
+  //       } catch (err) {
+  //         console.error('Cell update failed:', err);
+  //       } finally {
+  //         setSelectedAllocationId(null);
+  //         setSelectedCell(null);
+  //       }
+  //     }
+  //   },
+  //   [selectedCell, selectedAllocationId, dispatch]
+  // );
+
+  // const handleCellKeyDown = (params, event) => {
+  //   const { field, formattedValue, row } = params || {};
+  //   if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+  //     event.preventDefault();
+  //   }
+  //   if (params.rowNode.type === 'group' || !params.isEditable) {
+  //     return;
+  //   }
+  //   const mode = apiRef.current.getRowMode(params.id);
+  //   setSelectedCell(params.field);
+  //   if (formattedValue) {
+  //     const allocationData = row[field];
+  //     setSelectedAllocationId(allocationData?.allocationId);
+  //   }
+  //   const visibleColumns = apiRef.current.getVisibleColumns();
+  //   const currentIndex = visibleColumns.findIndex(
+  //     c => c.field === params.field
+  //   );
+  //   const nextIndex = currentIndex + 1;
+  //   if (event.key === 'Enter') {
+  //     event.preventDefault();
+  //     if (nextIndex < visibleColumns.length) {
+  //       const nextField = visibleColumns[nextIndex].field;
+  //       apiRef.current.setCellFocus(params.id, nextField);
+  //     }
+  //   }
+  //   if (event.key === 'Tab' || event.key === 'ArrowRight') {
+  //     // event.preventDefault();
+  //     if (nextIndex < visibleColumns.length) {
+  //       const nextField = visibleColumns[nextIndex].field;
+  //       if (mode === 'edit') {
+  //         apiRef.current.stopRowEditMode({ id: params.id });
+  //       }
+  //       apiRef.current.setCellFocus(params.id, nextField);
+  //     }
+  //   }
+  //   if (event.key === 'ArrowLeft') {
+  //     // event.preventDefault();
+  //     if (mode === 'edit') {
+  //       apiRef.current.stopRowEditMode({ id: params.id });
+  //     }
+  //     const editableColumm = visibleColumns.filter(c => c.editable);
+  //     const currentIndex = editableColumm.findIndex(
+  //       c => c.field === params.field
+  //     );
+  //     const prevIndex = currentIndex - 1;
+  //     if (prevIndex >= 0) {
+  //       const prevField = editableColumm[prevIndex].field;
+  //       apiRef.current.setCellFocus(params.id, prevField);
+  //     }
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   const handleCellFocusOut = params => {
+  //     if (params.rowNode.type === 'group' || !params.isEditable) {
+  //       return;
+  //     }
+  //     const rowId = params.id;
+  //     if (apiRef.current.getRowMode(rowId) === 'edit') {
+  //       apiRef.current.stopRowEditMode({ id: rowId });
+  //     }
+  //   };
+
+  //   apiRef.current.subscribeEvent('cellFocusOut', handleCellFocusOut);
+  // }, [apiRef, selectedCell]);
+
+  const handleEditClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
   };
 
-  const handleCellUpdate = useCallback(
-    async (newRow, oldRow) => {
-      const newValue = newRow[selectedCell];
-      const oldValue = oldRow[selectedCell]?.value;
-      if (newValue !== oldValue) {
-        try {
-          const { project, projectId, id } = newRow || {};
-          let formattedCellValue = Math.round(newRow[selectedCell] * 10) / 10;
-          let resourceId = newRow?.resourceId;
-          if (formattedCellValue > 2) return;
-          if (!selectedAllocationId && formattedCellValue === 0) return;
-
-          if (selectedAllocationId) {
-            const putPayload = {
-              resourceId: resourceId,
-              allocationId: selectedAllocationId,
-              putData: {
-                'ResourceAllocation.Core/Allocation': {
-                  AllocationEntered: formattedCellValue,
-                },
-              },
-            };
-            dispatch(updateResourceAllocation(putPayload));
-          } else {
-            const postPayload = {
-              resourceId: resourceId,
-              postData: {
-                'ResourceAllocation.Core/Allocation': {
-                  Resource: resourceId,
-                  Project: projectId,
-                  ProjectName: project,
-                  Period: getMondayOfWeek(selectedCell),
-                  AllocationEntered: formattedCellValue,
-                },
-              },
-            };
-            dispatch(setResourceAllocation(postPayload));
-          }
-          setRowsState(prevRows =>
-            prevRows.map(row =>
-              row.id === id
-                ? {
-                    ...row,
-                    [selectedCell]: {
-                      allocationId: row[selectedCell]?.allocationId || null,
-                      value: formattedCellValue,
-                    },
-                    totalEffort: calculateTotalEffort({
-                      ...row,
-                      [selectedCell]: {
-                        allocationId: row[selectedCell]?.allocationId || null,
-                        value: formattedCellValue,
-                      },
-                    }),
-                  }
-                : row
-            )
-          );
-          setDataFetched(true);
-        } catch (err) {
-          console.error('Cell update failed:', err);
-        } finally {
-          setSelectedAllocationId(null);
-          setSelectedCell(null);
-        }
-      }
-    },
-    [selectedCell, selectedAllocationId, dispatch]
-  );
-
-  const handleCellKeyDown = (params, event) => {
-    const { field, formattedValue, row } = params || {};
-    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
-      event.preventDefault();
-    }
-    if (params.rowNode.type === 'group' || !params.isEditable) {
-      return;
-    }
-    const mode = apiRef.current.getRowMode(params.id);
-    setSelectedCell(params.field);
-    if (formattedValue) {
-      const allocationData = row[field];
-      setSelectedAllocationId(allocationData?.allocationId);
-    }
-    const visibleColumns = apiRef.current.getVisibleColumns();
-    const currentIndex = visibleColumns.findIndex(
-      c => c.field === params.field
-    );
-    const nextIndex = currentIndex + 1;
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      if (nextIndex < visibleColumns.length) {
-        const nextField = visibleColumns[nextIndex].field;
-        apiRef.current.setCellFocus(params.id, nextField);
-      }
-    }
-    if (event.key === 'Tab' || event.key === 'ArrowRight') {
-      // event.preventDefault();
-      if (nextIndex < visibleColumns.length) {
-        const nextField = visibleColumns[nextIndex].field;
-        if (mode === 'edit') {
-          apiRef.current.stopRowEditMode({ id: params.id });
-        }
-        apiRef.current.setCellFocus(params.id, nextField);
-      }
-    }
-    if (event.key === 'ArrowLeft') {
-      // event.preventDefault();
-      if (mode === 'edit') {
-        apiRef.current.stopRowEditMode({ id: params.id });
-      }
-      const editableColumm = visibleColumns.filter(c => c.editable);
-      const currentIndex = editableColumm.findIndex(
-        c => c.field === params.field
-      );
-      const prevIndex = currentIndex - 1;
-      if (prevIndex >= 0) {
-        const prevField = editableColumm[prevIndex].field;
-        apiRef.current.setCellFocus(params.id, prevField);
-      }
-    }
+  const handleSaveClick = (id) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
-  useEffect(() => {
-    const handleCellFocusOut = params => {
-      if (params.rowNode.type === 'group' || !params.isEditable) {
-        return;
-      }
-      const rowId = params.id;
-      if (apiRef.current.getRowMode(rowId) === 'edit') {
-        apiRef.current.stopRowEditMode({ id: rowId });
-      }
-    };
+  const handleDeleteClick = (id) => () => {
+    setRows(rows.filter((row) => row.id !== id));
+  };
 
-    apiRef.current.subscribeEvent('cellFocusOut', handleCellFocusOut);
-  }, [apiRef, selectedCell]);
+  const handleCancelClick = (id) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true },
+    });
+
+    const editedRow = rows.find((row) => row.id === id);
+    if (editedRow.isNew) {
+      setRows(rows.filter((row) => row.id !== id));
+    }
+  };
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
-      <StyledDataGrid
-        key={refreshKey}
-        isCellEditable={params => !params.row.hasButton}
-        onCellKeyDown={handleCellKeyDown}
-        onCellClick={params => {
-          handleDoubleClick(params);
-        }}
-        processRowUpdate={handleCellUpdate}
-        onProcessRowUpdateError={err => {
-          console.error('Row update failed:', err);
-        }}
-        rows={rowsState}
+      {/* <StyledDataGrid
+        // key={refreshKey}
+        // isCellEditable={params => !params.row.hasButton}
+        // onCellKeyDown={handleCellKeyDown}
+        // onCellClick={params => {
+        //   handleDoubleClick(params);
+        // }}
+        // processRowUpdate={handleCellUpdate}
+        // onProcessRowUpdateError={err => {
+        //   console.error('Row update failed:', err);
+        // }}
+        rows={rowsState}x
         columns={finalColumns}
         apiRef={apiRef}
         loading={loading || !rowsState.length}
         disableRowSelectionOnClick
-        initialState={initialState}
-        columnHeaderHeight={30}
-        columnGroupHeaderHeight={22}
+        // initialState={initialState}
+        // columnHeaderHeight={30}
+        // columnGroupHeaderHeight={22}
         columnGroupingModel={generateColumnGroupingModel(
           startDate,
           finalColumns
         )}
-        defaultGroupingExpansionDepth={1}
-        getRowClassName={params => `super-app-theme--${params.row.status}`}
-        disableAutosize
-        getCellClassName={params => getCellClassName(params, updatedRows)}
-        slots={{
-          toolbar: CustomToolbar,
-          columnMenu: props => {
-            return <CustomColumnMenu {...props} apiRef={apiRef} />;
-          },
-        }}
-        slotProps={{
-          loadingOverlay: {
-            variant: 'skeleton',
-            noRowsVariant: 'skeleton',
-          },
-          panel: {
-            anchorEl: filterButtonEl,
-            className: 'parent-grid-panel',
-          },
-          columnsManagement: {
-            getTogglableColumns,
-          },
-          toolbar: {
-            setFilterButtonEl,
-          },
-          columnsPanel: {
-            className: 'styleColumnMenu',
-            sx: ColumnManagementStyles,
-          },
-          filterPanel: {
-            columnsSort: 'asc',
-            className: 'filterPopup',
-            filterFormProps: {
-              columnInputProps: {
-                size: 'small',
-                sx: { mt: 'auto' },
-              },
-              operatorInputProps: {
-                size: 'small',
-                sx: { mt: 'auto' },
-              },
-              valueInputProps: {
-                InputComponentProps: {
-                  size: 'small',
-                },
-              },
-              deleteIconProps: {
-                sx: {
-                  '& .MuiSvgIcon-root': { color: '#d32f2f' },
-                },
-              },
-            },
-            sx: FilterPanelStyles,
-          },
-        }}
-        getAggregationPosition={groupNode =>
-          groupNode.depth === -1 ? null : 'inline'
-        }
-        groupingColDef={getGroupingColDef(groupBy)}
-        hideFooter
-        editMode="row"
-        aggregationRowsCount={params => {
-          return params.rowNode.children?.length || 1;
-        }}
+        // defaultGroupingExpansionDepth={1}
+        // getRowClassName={params => `super-app-theme--${params.row.status}`}
+        // disableAutosize
+        // getCellClassName={params => getCellClassName(params, updatedRows)}
+        // slots={{
+        //   toolbar: CustomToolbar,
+        //   columnMenu: props => {
+        //     return <CustomColumnMenu {...props} apiRef={apiRef} />;
+        //   },
+        // }}
+        // slotProps={{
+        //   loadingOverlay: {
+        //     variant: 'skeleton',
+        //     noRowsVariant: 'skeleton',
+        //   },
+        //   panel: {
+        //     anchorEl: filterButtonEl,
+        //     className: 'parent-grid-panel',
+        //   },
+        //   columnsManagement: {
+        //     getTogglableColumns,
+        //   },
+        //   toolbar: {
+        //     setFilterButtonEl,
+        //   },
+        //   columnsPanel: {
+        //     className: 'styleColumnMenu',
+        //     sx: ColumnManagementStyles,
+        //   },
+        //   filterPanel: {
+        //     columnsSort: 'asc',
+        //     className: 'filterPopup',
+        //     filterFormProps: {
+        //       columnInputProps: {
+        //         size: 'small',
+        //         sx: { mt: 'auto' },
+        //       },
+        //       operatorInputProps: {
+        //         size: 'small',
+        //         sx: { mt: 'auto' },
+        //       },
+        //       valueInputProps: {
+        //         InputComponentProps: {
+        //           size: 'small',
+        //         },
+        //       },
+        //       deleteIconProps: {
+        //         sx: {
+        //           '& .MuiSvgIcon-root': { color: '#d32f2f' },
+        //         },
+        //       },
+        //     },
+        //     sx: FilterPanelStyles,
+        //   },
+        // }}
+        // getAggregationPosition={groupNode =>
+        //   groupNode.depth === -1 ? null : 'inline'
+        // }
+        // groupingColDef={getGroupingColDef(groupBy)}
+        // hideFooter
+        // editMode="row"
+        // aggregationRowsCount={params => {
+        //   return params.rowNode.children?.length || 1;
+        // }}
       />
       <CustomSnackbar
         message={message}
         type={type}
         open={open}
         position={position}
-      />
+      /> */}
+      <FullFeaturedCrudGrid rows={rowsState} 
+                            setRows={setRowsState} 
+                            columns={finalColumns} 
+                            rowModesModel={rowModesModel} 
+                            setRowModesModel={setRowModesModel}/>
+      {/* <FullFeaturedCrudGrid/> */}
     </Box>
   );
 }
