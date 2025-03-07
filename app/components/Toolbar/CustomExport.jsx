@@ -2,11 +2,23 @@ import React, { memo } from 'react'
 import { download, mkConfig } from "export-to-csv";
 import { GridExcelExportMenuItem, GridToolbarExportContainer, useGridApiContext } from '@mui/x-data-grid-premium';
 import { MenuItem, styled } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
 
 const GridToolbarExport = () => {
+  const view = useSelector(state => state.allocationView.view);
   const apiRef = useGridApiContext();
-  const csvConfig = mkConfig({ useKeysAsHeaders: true, filename: "exported_data" });
-  const isGroupedByTeams = true;
+  
+  const isGroupedByTeams = view != 'Projects';
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric'
+  }).replace(/\//g, '-');
+
+  const csvConfig = mkConfig({
+    useKeysAsHeaders: true,
+    filename: `${view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
+  });
 
   const excelPostProcess = (wb) => {
     const ws = wb.worksheet;
@@ -117,7 +129,10 @@ const GridToolbarExport = () => {
 
   return (
     <GridToolbarExportContainer>
-      <GridExcelExportMenuItem options={{ exceljsPostProcess: excelPostProcess }} />
+      <GridExcelExportMenuItem options={{
+        exceljsPostProcess: excelPostProcess,
+        fileName: `${view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
+      }} />
       <CsvExportMenuItem />
     </GridToolbarExportContainer>
   );
