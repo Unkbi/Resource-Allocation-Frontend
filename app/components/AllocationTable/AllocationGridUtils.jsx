@@ -13,7 +13,7 @@ export const getInitialState = (
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
 ) => ({
   rowGrouping: {
-    model: [groupBy],
+    model: groupBy === 'teams' ? [groupBy, 'resource'] : [groupBy],
   },
   sorting: {
     sortModel: [
@@ -113,10 +113,16 @@ export const getFinalColumns = (
               />
             );
           }
-          if (params.value) {
-            return params.value;
-          }
-          return null;
+          if (params.value) return params.value;
+
+          const projects_set = [
+            ...new Set(params?.rowNode?.children?.map(child => params.api.getRow(child)?.project))
+          ].filter(Boolean);
+
+          return projects_set.length ?
+            `${projects_set[0]}${projects_set.length > 1 ?
+              ` +${projects_set.length - 1}` : ''}` : '';
+
         },
       },
       ...(allColumns?.slice(1) || []),
@@ -212,7 +218,7 @@ export const getCellClassName = (params, updatedRows) => {
     }
   }
   if (params.rowNode?.type === 'group') {
-    return 'firstGroupsRow';
+    return params.rowNode?.groupingField === 'teams' ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   return '';
 };
@@ -254,31 +260,12 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     rowsWithTotalEffort.forEach(row => {
       if (row.teamsId && !unique_teams[row.teamsId])
         unique_teams[row.teamsId] = row.teams;
-      else if (!unique_teams[row.teamsId] && teams_with_name?.[row?.teams]){
+      else if (!unique_teams[row.teamsId] && teams_with_name?.[row?.teams]) {
         unique_teams[teams_with_name[row.teams]] = row.teams;
       }
     });
 
-    return [
-      ...rowsWithTotalEffort,
-      ...Array.from(new Set(Object.keys(unique_teams))).map(teams => ({
-        id: `${unique_teams?.[teams]}-add-resource`,
-        project: '',
-        teams: unique_teams?.[teams],
-        teamsId: teams,
-        resource: '',
-        role: '',
-        totalEffort: '',
-        resourceId: '',
-        hasButton: true,
-        ...Object.keys(updatedRows[0])
-          .filter(key => key.startsWith('W'))
-          .reduce((acc, week) => {
-            acc[week] = '';
-            return acc;
-          }, {}),
-      })),
-    ];
+    return rowsWithTotalEffort;
   } else {
     return updatedRows;
   }

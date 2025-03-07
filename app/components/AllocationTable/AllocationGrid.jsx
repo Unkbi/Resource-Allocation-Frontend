@@ -313,19 +313,19 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
             prevRows.map(row =>
               row.id === id
                 ? {
+                  ...row,
+                  [selectedCell]: {
+                    allocationId: row[selectedCell]?.allocationId || null,
+                    value: formattedCellValue,
+                  },
+                  totalEffort: calculateTotalEffort({
                     ...row,
                     [selectedCell]: {
                       allocationId: row[selectedCell]?.allocationId || null,
                       value: formattedCellValue,
                     },
-                    totalEffort: calculateTotalEffort({
-                      ...row,
-                      [selectedCell]: {
-                        allocationId: row[selectedCell]?.allocationId || null,
-                        value: formattedCellValue,
-                      },
-                    }),
-                  }
+                  }),
+                }
                 : row
             )
           );
@@ -385,6 +385,16 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     }
   };
 
+  const onRowClick = useCallback(
+    (params) => {
+      const rowNode = apiRef.current.getRowNode(params.id);
+      if (rowNode && rowNode.type === 'group') {
+        apiRef.current.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
+      }
+    },
+    [apiRef],
+  );
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -400,10 +410,12 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         }}
         rows={rowsState}
         columns={finalColumns}
+        onRowClick={groupBy === 'teams' ? onRowClick : () => null}
         apiRef={apiRef}
         loading={loading}
         disableRowSelectionOnClick
         initialState={initialState}
+        rowGroupingColumnMode={groupBy === 'teams' ? "multiple" : "single"}
         columnHeaderHeight={30}
         columnGroupHeaderHeight={22}
         columnGroupingModel={generateColumnGroupingModel(
@@ -468,7 +480,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         getAggregationPosition={groupNode =>
           groupNode.depth === -1 ? null : 'inline'
         }
-        groupingColDef={getGroupingColDef(groupBy)}
+        groupingColDef={groupBy === 'teams' ? null : getGroupingColDef(groupBy)} //change here
         hideFooter
         editMode="row"
         aggregationRowsCount={params => {

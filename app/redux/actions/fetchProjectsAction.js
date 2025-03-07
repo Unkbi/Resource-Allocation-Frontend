@@ -25,7 +25,7 @@ const formatAllocations = (allocationsData, projectId) => {
   const allocationMap = new Map();
   const allWeeks = generateAllWeeks();
 
-  allocationsData.result.forEach(allocation => {
+  allocationsData?.result?.forEach(allocation => {
     if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
     const periodDate = new Date(allocation.Period);

@@ -88,7 +88,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-columnHeader:focus': {
     outline: 'none',
   },
-  '& .MuiDataGrid-groupingCriteriaCellToggle button': {
+  '& .MuiDataGrid-groupingCriteriaCell span[style*="white-space: pre"]': {
     display: 'none',
   },
   '& .MuiDataGrid-groupingCriteriaCell': {
@@ -97,9 +97,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-cellContent': {
     paddingLeft: '8px',
   },
-  '& .MuiDataGrid-groupingCriteriaCellToggle': {
-    display: 'none',
-  },
+  // '& .MuiDataGrid-groupingCriteriaCellToggle': {
+  //   display: 'none',
+  // },
   '& .MuiDataGrid-aggregationColumnHeaderLabel': {
     display: 'none',
   },
@@ -209,6 +209,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   },
   '& .firstGroupsRow': {
     backgroundColor: '#E9EFF8',
+  },
+  '& .secondGroupsRow': {
+    backgroundColor: '#f0f8ff',
   },
   '& .MuiDataGrid-cell:focus-within': {
     outline: 'none',

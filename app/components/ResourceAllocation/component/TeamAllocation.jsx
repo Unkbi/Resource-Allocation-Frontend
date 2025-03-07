@@ -1,13 +1,11 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-// import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchAllTeams,
   fetchResourcesAgainstTeams,
 } from '@/app/redux/actions/fetchTeamsAction';
-import CenteredLoader from '../../Shared/Loader/CenteredLoader';
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
 
 const teamsColumnConfig = [
@@ -27,6 +25,21 @@ const teamsColumnConfig = [
     headerClassName: 'secondary-header',
     cellClassName: 'secondary-cell',
     primaryColumn: true,
+    renderCell: (params) => {
+      if (params.value) {
+        return params.value;
+      } else {
+        const uniqueResourceTypes = [
+          ...new Set(params?.rowNode?.children?.map(child => params.api.getRow(child)?.resourceType))
+        ].filter(Boolean);
+        
+        return uniqueResourceTypes.length
+          ? uniqueResourceTypes.length > 1
+            ? `${uniqueResourceTypes[0]} +${uniqueResourceTypes.length - 1}`
+            : uniqueResourceTypes[0]
+          : '';
+      }
+    }
   },
 ];
 
