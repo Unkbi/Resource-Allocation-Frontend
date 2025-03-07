@@ -163,7 +163,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     setIsSearchMode(false);
   };
 
-  const handleAddProject = (e, project) => {
+  const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
       return data.some(
         item =>
@@ -218,7 +218,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
           if (
             row.resourceId === selectedResourceId &&
             row.teams === selectedTeam &&
-            row.project === ''
+            row.project === '' &&
+            row.id === curRow.id
           ) {
             const key = selectedResourceId;
             const allocations = allocationMap.get(key) || {};

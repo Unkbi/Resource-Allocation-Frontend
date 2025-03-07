@@ -122,6 +122,7 @@ const StyledInput = styled(TextField)(({ theme }) => ({
 }));
 
 export const AddRowButton = ({
+  row,
   project,
   handleAddRow,
   teamsId,
@@ -132,14 +133,14 @@ export const AddRowButton = ({
   const [isSearchMode, setIsSearchMode] = useState(false);
   const { teamsResources } = useSelector(state => state.teams);
   const { resources } = useSelector(state => state.resources);
-
+  
   const defaultProps = {
     options:
-      buttonName === 'Add Project'
+    buttonName === 'Add Project'
         ? resourceProjects
-        : teamsResources?.[teamsId]?.length ?
-          teamsResources?.[teamsId] :
-          resources?.result || [],
+    : teamsResources?.[teamsId]?.length ?
+    teamsResources?.[teamsId] :
+    resources?.result || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
@@ -169,7 +170,7 @@ export const AddRowButton = ({
           id="open-on-focus"
           onChange={(event, newValue) => {
             if (newValue) {
-              handleAddRow(event, newValue);
+              handleAddRow(event, newValue, row);
             }
             setIsSearchMode(false);
           }}
