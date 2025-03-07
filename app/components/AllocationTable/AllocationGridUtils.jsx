@@ -59,6 +59,7 @@ export const getFinalColumns = (
           if (params.row.hasButton) {
             return (
               <AddRowButton
+                row={params.row}
                 project={params.row.project}
                 handleAddRow={handleAddRow}
                 teamsId={params.row.teamsId}
@@ -102,6 +103,8 @@ export const getFinalColumns = (
           if (params.row.hasProject && !params.row.project) {
             return (
               <AddRowButton
+                row={params.row}
+                teamsId={params.row.teamsId}
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
@@ -138,6 +141,8 @@ export const getFinalColumns = (
           if (params.row.hasButton) {
             return (
               <AddRowButton
+                row={params.row}
+                teamsId={params.row.teamsId}
                 project={params.row.project}
                 handleAddRow={handleAddRow}
                 buttonName={
