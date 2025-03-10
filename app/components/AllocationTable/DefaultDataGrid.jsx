@@ -103,7 +103,7 @@ export default function FullFeaturedCrudGrid({
   setRowModesModel,
   startDate,
 }) {
-    console.log('rows', rows);
+    // console.log('rows', rows);
   //   const [rows, setRows] = React.useState(initialRows);
   // const apiRef = useGridApiRef();
   // const initialState = useKeepGroupedColumnsHidden({
@@ -272,7 +272,7 @@ console.log("columns", columns);
         rowModesModel={rowModesModel}
         onRowModesModelChange={handleRowModesModelChange}
         columnGroupingModel={generateColumnGroupingModel(startDate, columns)}
-        onRowEditStop={handleRowEditStop}
+        // onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
         slots={{
               toolbar: CustomToolbar,

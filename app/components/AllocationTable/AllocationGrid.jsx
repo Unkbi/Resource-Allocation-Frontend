@@ -64,6 +64,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
 
   const [rowModesModel, setRowModesModel] = useState({});
 
+  // console.log("rowState", rowsState);
+
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
       if (key.startsWith('W')) {
@@ -250,6 +252,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     setSelectedResourceId,
     dispatch
   );
+
+  // console.log("finalColumns", finalColumns);
 
   // const showField = [
   //   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -445,6 +449,65 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       event.preventDefault();
     }
   }
+
+  const handleCellUpdate = (newRow, oldRow) => {
+    Object.keys(newRow).forEach(key => {
+      if (key.startsWith('W')) {
+        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+
+        // API call to update the data, if any changes are made.
+        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
+          if (oldRow[key]?.allocationId) {
+            // PUT API call to update the data.
+            console.log("Calling Put API to update the data");
+            console.log("key", key);
+            console.log("oldRow[key]", oldRow[key]);
+            console.log("newRow[key]", newRow[key]);
+            const putPayload = {
+              resourceId: oldRow.resourceId,
+              allocationId: oldRow[key]?.allocationId,
+              putData: {
+                'ResourceAllocation.Core/Allocation': {
+                  AllocationEntered: formattedCellValue,
+                },
+              },
+            };
+            dispatch(updateResourceAllocation(putPayload));
+          } else {
+            // POST API call to update the data.
+            console.log("Calling Post API to update the data");
+            console.log("key", key);
+            console.log("oldRow[key]", oldRow[key]);
+            console.log("newRow[key]", newRow[key]);
+            const postPayload = {
+              resourceId: oldRow.resourceId,
+              postData: {
+                'ResourceAllocation.Core/Allocation': {
+                  Resource: oldRow.resourceId,
+                  Project: oldRow.projectId,
+                  ProjectName: oldRow.project,
+                  Period: getMondayOfWeek(key),
+                  AllocationEntered: formattedCellValue,
+                },
+              },
+            };
+            dispatch(setResourceAllocation(postPayload));
+          }
+        }
+
+        newRow[key] = {
+          allocationId: oldRow[key]?.allocationId || null,
+          value: newRow[key],
+        };
+      }});
+      
+    return newRow;
+  }
+
+  const handleRowModesModelChange = newRowModesModel => {
+    setRowModesModel(newRowModesModel);
+  };
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       {/* <FullFeaturedCrudGrid
@@ -456,15 +519,17 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         startDate={startDate}
       /> */}
       <StyledDataGrid
-        // isCellEditable={params => !params.row.hasButton} /*Check with Sumit*/
+        isCellEditable={params => !params.row.hasButton} 
         onCellKeyDown={handleCellKeyDown}
-        // onCellClick={params => { /*Check with Sumit*/
+        rowModesModel={rowModesModel}
+        onRowModesModelChange={handleRowModesModelChange}
+        // onCellClick={params => { 
         //   handleDoubleClick(params);
         // }}
-        // processRowUpdate={handleCellUpdate} /*Change to Default handleCellUpdate*/
-        // onProcessRowUpdateError={err => {
-        //   console.error('Row update failed:', err);
-        // }}
+        processRowUpdate={handleCellUpdate}
+        onProcessRowUpdateError={err => {
+          console.error('Row update failed:', err);
+        }}
         rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
@@ -547,6 +612,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         // onCellEditStop={params => {
         //   console.log("onCellEditStop => params : ", params)
         // }}
+        onCellEditCommit={params => {
+          console.log("onCellEditCommit => params : ", params)
+        }
+      }
       />
       <CustomSnackbar
         message={message}

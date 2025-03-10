@@ -134,7 +134,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     padding: '3px',
     lineHeight: '45px',
     '&.MuiDataGrid-cell--editing:focus-within': {
-      // outline: 'none',
+      outline: 'none',
     },
     '&.MuiDataGrid-cell.MuiDataGrid-cell--editing': {
       padding: '0',

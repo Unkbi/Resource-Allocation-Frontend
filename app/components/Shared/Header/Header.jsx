@@ -111,6 +111,7 @@ const Header = () => {
   };
 
   function handleListKeyDown(event) {
+    console.log("Handle List Key Down : event.key", event.key);
     if (event.key === 'Tab') {
       event.preventDefault();
       setOpen(false);

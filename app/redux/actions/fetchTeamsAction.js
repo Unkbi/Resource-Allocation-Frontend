@@ -190,9 +190,11 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
             team.Name
           );
 
+          //
           const final = formattedAllocations.filter(
             data => data.teams === team.Name
           );
+          // console.log('final', final);
           allResources = [...allResources, ...final];
         }
       } else {
