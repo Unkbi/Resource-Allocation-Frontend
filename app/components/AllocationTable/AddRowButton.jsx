@@ -133,7 +133,6 @@ export const AddRowButton = ({
   const [isSearchMode, setIsSearchMode] = useState(false);
   const { teamsResources } = useSelector(state => state.teams);
   const { resources } = useSelector(state => state.resources);
-  
   const defaultProps = {
     options:
     buttonName === 'Add Project'
