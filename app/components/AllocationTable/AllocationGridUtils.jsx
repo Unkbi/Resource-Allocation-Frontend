@@ -256,13 +256,13 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     let unique_teams = {};
     let teams_with_name = {};
     teams?.result?.forEach(team => {
-      teams_with_name[team?.Name] = team?.Id;
-    });
+      teams_with_name[team?.Name] = team?.Id
+    })
 
     rowsWithTotalEffort.forEach(row => {
       if (row.teamsId && !unique_teams[row.teamsId])
         unique_teams[row.teamsId] = row.teams;
-      else if (!unique_teams[row.teamsId] && teams_with_name?.[row?.teams]) {
+      else if (!unique_teams[row.teamsId] && teams_with_name?.[row?.teams]){
         unique_teams[teams_with_name[row.teams]] = row.teams;
       }
     });
