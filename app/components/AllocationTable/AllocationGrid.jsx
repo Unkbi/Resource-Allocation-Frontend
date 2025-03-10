@@ -40,21 +40,21 @@ import { getTeamAllocations } from '@/app/services/teamServices';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 import FullFeaturedCrudGrid from './DefaultDataGrid';
 
-const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
+// const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
+import CustomToolbar from '../Toolbar/CustomToolbar';
 
 export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const apiRef = useGridApiRef();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
   // const [isSearchMode, setIsSearchMode] = useState(false);
-  // const [filterButtonEl, setFilterButtonEl] = useState(null);
+  const [filterButtonEl, setFilterButtonEl] = useState(null);
   // const [selectedCell, setSelectedCell] = useState(null);
   // const [selectedAllocationId, setSelectedAllocationId] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const [rowsState, setRowsState] = useState([]);
-  // const [refreshKey, setRefreshKey] = useState(0);
-  // const { open, message, type, position } = useSelector(state => state.toast);
+  const { open, message, type, position } = useSelector(state => state.toast);
   const startDate = getStartDate();
 
   const dispatch = useDispatch();
@@ -78,6 +78,15 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       return normalized;
     }, {});
   };
+
+  const initialState = useKeepGroupedColumnsHidden({
+    apiRef,
+    initialState: getInitialState(
+      groupBy,
+      updatedRows,
+      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+    ),
+  });
 
   useEffect(() => {
     const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
@@ -248,11 +257,11 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   //   ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
   // ];
 
-  // const getTogglableColumns = columns =>
-  //   columns
-  //     .filter(column => column.field !== groupBy)
-  //     .filter(column => showField.includes(column.field))
-  //     .map(column => column.field);
+  const getTogglableColumns = columns =>
+    columns
+      .filter(column => column.field !== groupBy)
+      .filter(column => showField.includes(column.field))
+      .map(column => column.field);
 
   // const handleDoubleClick = params => {
   //   if (params.rowNode.type === 'group' || !params.isEditable) {
@@ -429,102 +438,114 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       setRows(rows.filter(row => row.id !== id));
     }
   };
+
+  const handleCellKeyDown = (params, event) => {
+    // Preventing Key Events for Editing.
+    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+      event.preventDefault();
+    }
+  }
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
-      <FullFeaturedCrudGrid
+      {/* <FullFeaturedCrudGrid
         rows={rowsState}
         setRows={setRowsState}
         columns={finalColumns}
         rowModesModel={rowModesModel}
         setRowModesModel={setRowModesModel}
         startDate={startDate}
-      />
-      {/* <StyledDataGrid
-        // key={refreshKey}
-        // isCellEditable={params => !params.row.hasButton}
-        // onCellKeyDown={handleCellKeyDown}
-        // onCellClick={params => {
+      /> */}
+      <StyledDataGrid
+        // isCellEditable={params => !params.row.hasButton} /*Check with Sumit*/
+        onCellKeyDown={handleCellKeyDown}
+        // onCellClick={params => { /*Check with Sumit*/
         //   handleDoubleClick(params);
         // }}
-        // processRowUpdate={handleCellUpdate}
+        // processRowUpdate={handleCellUpdate} /*Change to Default handleCellUpdate*/
         // onProcessRowUpdateError={err => {
         //   console.error('Row update failed:', err);
         // }}
-        rows={rowsState}x
+        rows={rowsState}
         columns={finalColumns}
         apiRef={apiRef}
         loading={loading || !rowsState.length}
         disableRowSelectionOnClick
-        // initialState={initialState}
-        // columnHeaderHeight={30}
-        // columnGroupHeaderHeight={22}
+        initialState={initialState}
+        columnHeaderHeight={30}
+        columnGroupHeaderHeight={22}
         columnGroupingModel={generateColumnGroupingModel(
           startDate,
           finalColumns
         )}
-        // defaultGroupingExpansionDepth={1}
-        // getRowClassName={params => `super-app-theme--${params.row.status}`}
-        // disableAutosize
-        // getCellClassName={params => getCellClassName(params, updatedRows)}
-        // slots={{
-        //   toolbar: CustomToolbar,
-        //   columnMenu: props => {
-        //     return <CustomColumnMenu {...props} apiRef={apiRef} />;
-        //   },
+        defaultGroupingExpansionDepth={1}
+        getRowClassName={params => `super-app-theme--${params.row.status}`}
+        disableAutosize
+        getCellClassName={params => getCellClassName(params, updatedRows)}
+        slots={{
+          toolbar: CustomToolbar,
+          columnMenu: props => {
+            return <CustomColumnMenu {...props} apiRef={apiRef} />;
+          },
+        }}
+        slotProps={{
+          loadingOverlay: {
+            variant: 'skeleton',
+            noRowsVariant: 'skeleton',
+          },
+          panel: {
+            anchorEl: filterButtonEl,
+            className: 'parent-grid-panel',
+          },
+          columnsManagement: {
+            getTogglableColumns,
+          },
+          toolbar: {
+            setFilterButtonEl,
+          },
+          columnsPanel: {
+            className: 'styleColumnMenu',
+            sx: ColumnManagementStyles,
+          },
+          filterPanel: {
+            columnsSort: 'asc',
+            className: 'filterPopup',
+            filterFormProps: {
+              columnInputProps: {
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              operatorInputProps: {
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              valueInputProps: {
+                InputComponentProps: {
+                  size: 'small',
+                },
+              },
+              deleteIconProps: {
+                sx: {
+                  '& .MuiSvgIcon-root': { color: '#d32f2f' },
+                },
+              },
+            },
+            sx: FilterPanelStyles,
+          },
+        }}
+        getAggregationPosition={groupNode =>
+          groupNode.depth === -1 ? null : 'inline'
+        }
+        groupingColDef={getGroupingColDef(groupBy)}
+        hideFooter
+        editMode="row"
+        aggregationRowsCount={params => {
+          return params.rowNode.children?.length || 1;
+        }}
+        // onCellEditStart={params => {
+        //   console.log("onCellEditStart => params : ", params)
         // }}
-        // slotProps={{
-        //   loadingOverlay: {
-        //     variant: 'skeleton',
-        //     noRowsVariant: 'skeleton',
-        //   },
-        //   panel: {
-        //     anchorEl: filterButtonEl,
-        //     className: 'parent-grid-panel',
-        //   },
-        //   columnsManagement: {
-        //     getTogglableColumns,
-        //   },
-        //   toolbar: {
-        //     setFilterButtonEl,
-        //   },
-        //   columnsPanel: {
-        //     className: 'styleColumnMenu',
-        //     sx: ColumnManagementStyles,
-        //   },
-        //   filterPanel: {
-        //     columnsSort: 'asc',
-        //     className: 'filterPopup',
-        //     filterFormProps: {
-        //       columnInputProps: {
-        //         size: 'small',
-        //         sx: { mt: 'auto' },
-        //       },
-        //       operatorInputProps: {
-        //         size: 'small',
-        //         sx: { mt: 'auto' },
-        //       },
-        //       valueInputProps: {
-        //         InputComponentProps: {
-        //           size: 'small',
-        //         },
-        //       },
-        //       deleteIconProps: {
-        //         sx: {
-        //           '& .MuiSvgIcon-root': { color: '#d32f2f' },
-        //         },
-        //       },
-        //     },
-        //     sx: FilterPanelStyles,
-        //   },
-        // }}
-        // getAggregationPosition={groupNode =>
-        //   groupNode.depth === -1 ? null : 'inline'
-        // }
-        // groupingColDef={getGroupingColDef(groupBy)}
-        // hideFooter
-        // editMode="row"
-        // aggregationRowsCount={params => {
-        //   return params.rowNode.children?.length || 1;
+        // onCellEditStop={params => {
+        //   console.log("onCellEditStop => params : ", params)
         // }}
       />
       <CustomSnackbar
@@ -532,7 +553,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         type={type}
         open={open}
         position={position}
-      /> */}
+      />
       {/* <FullFeaturedCrudGrid/> */}
     </Box>
   );

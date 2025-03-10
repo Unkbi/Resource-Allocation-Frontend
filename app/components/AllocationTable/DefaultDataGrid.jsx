@@ -25,6 +25,8 @@ import {
 import { getInitialState } from './AllocationGridUtils';
 import { generateColumnGroupingModel } from './TableHeader';
 import { StyledDataGrid } from './styles/StyledDataGrid';
+import { CustomColumnMenu } from './components/CustomColumnMenu';
+import CustomToolbar from '../Toolbar/CustomToolbar';
 
 const roles = ['Market', 'Finance', 'Development'];
 // const randomRole = () => {
@@ -101,6 +103,7 @@ export default function FullFeaturedCrudGrid({
   setRowModesModel,
   startDate,
 }) {
+    console.log('rows', rows);
   //   const [rows, setRows] = React.useState(initialRows);
   // const apiRef = useGridApiRef();
   // const initialState = useKeepGroupedColumnsHidden({
@@ -111,6 +114,7 @@ export default function FullFeaturedCrudGrid({
   //     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
   //   ),
   // });
+  const [selectedCell, setSelectedCell] = React.useState('');
   const initialState = getInitialState(
     'teams',
     'updatedRows',
@@ -124,14 +128,43 @@ export default function FullFeaturedCrudGrid({
     console.log('params', params);
   };
 
-  const processRowUpdate = newRow => {
-    const updatedRow = { ...newRow, isNew: false };
-    setRows(rows.map(row => (row.id === newRow.id ? updatedRow : row)));
+  const processRowUpdate = (newRow, oldRow) => {
+    console.log('oldRow', oldRow);
+    console.log('newRow', newRow);
+    // const updatedRow = { ...newRow, isNew: false };
+    // setRows(rows.map(row => (row.id === newRow.id ? updatedRow : row)));
+    // setRows(rows.map(row => (row.id === newRow.id ? updatedRow : row)));
+    // setRows(prevRows =>
+    //     prevRows.map(row =>
+    //       row.id === newRow.id
+    //         ? {
+    //             ...oldRow,
+    //             [selectedCell]: {
+    //               allocationId: row[selectedCell]?.allocationId || null,
+    //               value: newRow[selectedCell],
+    //             },
+    //             totalEffort: 100
+    //             // totalEffort: calculateTotalEffort({
+    //             //   ...row,
+    //             //   [selectedCell]: {
+    //             //     allocationId: row[selectedCell]?.allocationId || null,
+    //             //     value: newRow[selectedCell].value,
+    //             //   },
+    //             // }),
+    //           }
+    //         : row
+    //     )
+    //   );
 
-    return updatedRow;
+
+    return {...oldRow, [selectedCell]: {
+        allocationId: oldRow[selectedCell]?.allocationId || null,
+        value: newRow[selectedCell].toFixed(1),
+    }}
   };
 
   const handleRowModesModelChange = newRowModesModel => {
+    // alert('Row modes model changed');
     setRowModesModel(newRowModesModel);
   };
 
@@ -208,12 +241,13 @@ export default function FullFeaturedCrudGrid({
   //       },
   //     },
   //   ];
-  console.log('finalColumns', columns);
-
+//   console.log('finalColumns', columns);
+console.log("initialState", initialState);
+console.log("columns", columns);
   return (
     <Box
       sx={{
-        height: 500,
+        // height: 500,
         width: '100%',
         '& .actions': {
           color: 'text.secondary',
@@ -223,7 +257,7 @@ export default function FullFeaturedCrudGrid({
         },
       }}
     >
-      <DataGridPremium
+      <StyledDataGrid
         rows={rows}
         columns={columns}
         isCellEditable={params => !params.row.hasButton}
@@ -240,9 +274,17 @@ export default function FullFeaturedCrudGrid({
         columnGroupingModel={generateColumnGroupingModel(startDate, columns)}
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
-        slots={{ toolbar: EditToolbar }}
+        slots={{
+              toolbar: CustomToolbar,
+              columnMenu: props => {
+                return <CustomColumnMenu {...props} apiRef={apiRef} />;
+              },
+            }}
         slotProps={{
           toolbar: { setRows, setRowModesModel },
+        }}
+        onCellClick={params => {
+            setSelectedCell(params.field);
         }}
       />
     </Box>

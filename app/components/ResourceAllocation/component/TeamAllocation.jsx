@@ -27,7 +27,24 @@ const teamsColumnConfig = [
     headerClassName: 'secondary-header',
     cellClassName: 'secondary-cell',
     primaryColumn: true,
-  },
+  }
+  // {
+  //   field: 'totalEffort',
+  //   headerName: 'Total Effort',
+  //   width: 150,
+  //   valueFormatter: params => {
+  //     const value = Number(params);
+  //     return value && typeof value === 'number' && value !== 0
+  //       ? value.toFixed(1)
+  //       : null;
+  //   },
+  //   type: 'number',
+  //   sortable: false,
+  //   headerClassName: 'secondary-header',
+  //   cellClassName: 'secondary-cell',
+  //   headerAlign: 'left',
+  //   primaryColumn: true,
+  // }
 ];
 
 export default function TeamAllocation() {
