@@ -1,4 +1,4 @@
-import { useState, lazy, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -35,22 +35,16 @@ import {
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
-import { showToastAction } from '@/app/redux/actions/toastAction';
 import { getTeamAllocations } from '@/app/services/teamServices';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
-import FullFeaturedCrudGrid from './DefaultDataGrid';
 
-// const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 import CustomToolbar from '../Toolbar/CustomToolbar';
 
 export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const apiRef = useGridApiRef();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
-  // const [isSearchMode, setIsSearchMode] = useState(false);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
-  // const [selectedCell, setSelectedCell] = useState(null);
-  // const [selectedAllocationId, setSelectedAllocationId] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const [rowsState, setRowsState] = useState([]);
@@ -58,13 +52,9 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const startDate = getStartDate();
 
   const dispatch = useDispatch();
-  // const { projects } = useSelector(state => state.projects);
+  const { projects } = useSelector(state => state.projects);
   const { teams, teamAllocations } = useSelector(state => state.teams);
-  // const [dataFetched, setDataFetched] = useState(false);
-
   const [rowModesModel, setRowModesModel] = useState({});
-
-  // console.log("rowState", rowsState);
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -164,8 +154,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         console.error('Error in handleAddRow:', error);
       }
     }
-
-    setIsSearchMode(false);
   };
 
   const handleAddProject = (e, project, curRow) => {
@@ -253,195 +241,17 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     dispatch
   );
 
-  // console.log("finalColumns", finalColumns);
-
-  // const showField = [
-  //   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
-  //   ...columns.map(col => col.field),
-  //   ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
-  // ];
+  const showField = [
+    GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+    ...columns.map(col => col.field),
+    ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
+  ];
 
   const getTogglableColumns = columns =>
     columns
       .filter(column => column.field !== groupBy)
       .filter(column => showField.includes(column.field))
       .map(column => column.field);
-
-  // const handleDoubleClick = params => {
-  //   if (params.rowNode.type === 'group' || !params.isEditable) {
-  //     return;
-  //   }
-  //   if (params?.cellMode === 'view') {
-  //     apiRef.current.startRowEditMode({ id: params.id });
-  //   }
-  //   setSelectedCell(params.field);
-  //   const { field, formattedValue, row } = params || {};
-  //   if (formattedValue) {
-  //     const allocationData = row[field];
-  //     setSelectedAllocationId(allocationData?.allocationId);
-  //   }
-  // };
-
-  // const handleCellUpdate = useCallback(
-  //   async (newRow, oldRow) => {
-  //     const newValue = newRow[selectedCell];
-  //     const oldValue = oldRow[selectedCell]?.value;
-  //     if (newValue !== oldValue) {
-  //       try {
-  //         const { project, projectId, id } = newRow || {};
-  //         let formattedCellValue = Math.round(newRow[selectedCell] * 10) / 10;
-  //         let resourceId = newRow?.resourceId;
-  //         if (formattedCellValue > 2) return;
-  //         if (!selectedAllocationId && formattedCellValue === 0) return;
-
-  //         if (selectedAllocationId) {
-  //           const putPayload = {
-  //             resourceId: resourceId,
-  //             allocationId: selectedAllocationId,
-  //             putData: {
-  //               'ResourceAllocation.Core/Allocation': {
-  //                 AllocationEntered: formattedCellValue,
-  //               },
-  //             },
-  //           };
-  //           dispatch(updateResourceAllocation(putPayload));
-  //         } else {
-  //           const postPayload = {
-  //             resourceId: resourceId,
-  //             postData: {
-  //               'ResourceAllocation.Core/Allocation': {
-  //                 Resource: resourceId,
-  //                 Project: projectId,
-  //                 ProjectName: project,
-  //                 Period: getMondayOfWeek(selectedCell),
-  //                 AllocationEntered: formattedCellValue,
-  //               },
-  //             },
-  //           };
-  //           dispatch(setResourceAllocation(postPayload));
-  //         }
-  //         setRowsState(prevRows =>
-  //           prevRows.map(row =>
-  //             row.id === id
-  //               ? {
-  //                   ...row,
-  //                   [selectedCell]: {
-  //                     allocationId: row[selectedCell]?.allocationId || null,
-  //                     value: formattedCellValue,
-  //                   },
-  //                   totalEffort: calculateTotalEffort({
-  //                     ...row,
-  //                     [selectedCell]: {
-  //                       allocationId: row[selectedCell]?.allocationId || null,
-  //                       value: formattedCellValue,
-  //                     },
-  //                   }),
-  //                 }
-  //               : row
-  //           )
-  //         );
-  //         setDataFetched(true);
-  //       } catch (err) {
-  //         console.error('Cell update failed:', err);
-  //       } finally {
-  //         setSelectedAllocationId(null);
-  //         setSelectedCell(null);
-  //       }
-  //     }
-  //   },
-  //   [selectedCell, selectedAllocationId, dispatch]
-  // );
-
-  // const handleCellKeyDown = (params, event) => {
-  //   const { field, formattedValue, row } = params || {};
-  //   if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
-  //     event.preventDefault();
-  //   }
-  //   if (params.rowNode.type === 'group' || !params.isEditable) {
-  //     return;
-  //   }
-  //   const mode = apiRef.current.getRowMode(params.id);
-  //   setSelectedCell(params.field);
-  //   if (formattedValue) {
-  //     const allocationData = row[field];
-  //     setSelectedAllocationId(allocationData?.allocationId);
-  //   }
-  //   const visibleColumns = apiRef.current.getVisibleColumns();
-  //   const currentIndex = visibleColumns.findIndex(
-  //     c => c.field === params.field
-  //   );
-  //   const nextIndex = currentIndex + 1;
-  //   if (event.key === 'Enter') {
-  //     event.preventDefault();
-  //     if (nextIndex < visibleColumns.length) {
-  //       const nextField = visibleColumns[nextIndex].field;
-  //       apiRef.current.setCellFocus(params.id, nextField);
-  //     }
-  //   }
-  //   if (event.key === 'Tab' || event.key === 'ArrowRight') {
-  //     // event.preventDefault();
-  //     if (nextIndex < visibleColumns.length) {
-  //       const nextField = visibleColumns[nextIndex].field;
-  //       if (mode === 'edit') {
-  //         apiRef.current.stopRowEditMode({ id: params.id });
-  //       }
-  //       apiRef.current.setCellFocus(params.id, nextField);
-  //     }
-  //   }
-  //   if (event.key === 'ArrowLeft') {
-  //     // event.preventDefault();
-  //     if (mode === 'edit') {
-  //       apiRef.current.stopRowEditMode({ id: params.id });
-  //     }
-  //     const editableColumm = visibleColumns.filter(c => c.editable);
-  //     const currentIndex = editableColumm.findIndex(
-  //       c => c.field === params.field
-  //     );
-  //     const prevIndex = currentIndex - 1;
-  //     if (prevIndex >= 0) {
-  //       const prevField = editableColumm[prevIndex].field;
-  //       apiRef.current.setCellFocus(params.id, prevField);
-  //     }
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   const handleCellFocusOut = params => {
-  //     if (params.rowNode.type === 'group' || !params.isEditable) {
-  //       return;
-  //     }
-  //     const rowId = params.id;
-  //     if (apiRef.current.getRowMode(rowId) === 'edit') {
-  //       apiRef.current.stopRowEditMode({ id: rowId });
-  //     }
-  //   };
-
-  //   apiRef.current.subscribeEvent('cellFocusOut', handleCellFocusOut);
-  // }, [apiRef, selectedCell]);
-
-  const handleEditClick = id => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-  };
-
-  const handleSaveClick = id => () => {
-    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-  };
-
-  const handleDeleteClick = id => () => {
-    setRows(rows.filter(row => row.id !== id));
-  };
-
-  const handleCancelClick = id => () => {
-    setRowModesModel({
-      ...rowModesModel,
-      [id]: { mode: GridRowModes.View, ignoreModifications: true },
-    });
-
-    const editedRow = rows.find(row => row.id === id);
-    if (editedRow.isNew) {
-      setRows(rows.filter(row => row.id !== id));
-    }
-  };
 
   const handleCellKeyDown = (params, event) => {
     // Preventing Key Events for Editing.
@@ -458,11 +268,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         // API call to update the data, if any changes are made.
         if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
           if (oldRow[key]?.allocationId) {
+
             // PUT API call to update the data.
-            console.log("Calling Put API to update the data");
-            console.log("key", key);
-            console.log("oldRow[key]", oldRow[key]);
-            console.log("newRow[key]", newRow[key]);
             const putPayload = {
               resourceId: oldRow.resourceId,
               allocationId: oldRow[key]?.allocationId,
@@ -474,11 +281,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
             };
             dispatch(updateResourceAllocation(putPayload));
           } else {
+            
             // POST API call to update the data.
-            console.log("Calling Post API to update the data");
-            console.log("key", key);
-            console.log("oldRow[key]", oldRow[key]);
-            console.log("newRow[key]", newRow[key]);
             const postPayload = {
               resourceId: oldRow.resourceId,
               postData: {
@@ -510,22 +314,11 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
 
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
-      {/* <FullFeaturedCrudGrid
-        rows={rowsState}
-        setRows={setRowsState}
-        columns={finalColumns}
-        rowModesModel={rowModesModel}
-        setRowModesModel={setRowModesModel}
-        startDate={startDate}
-      /> */}
       <StyledDataGrid
         isCellEditable={params => !params.row.hasButton} 
         onCellKeyDown={handleCellKeyDown}
         rowModesModel={rowModesModel}
         onRowModesModelChange={handleRowModesModelChange}
-        // onCellClick={params => { 
-        //   handleDoubleClick(params);
-        // }}
         processRowUpdate={handleCellUpdate}
         onProcessRowUpdateError={err => {
           console.error('Row update failed:', err);
@@ -606,16 +399,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         aggregationRowsCount={params => {
           return params.rowNode.children?.length || 1;
         }}
-        // onCellEditStart={params => {
-        //   console.log("onCellEditStart => params : ", params)
-        // }}
-        // onCellEditStop={params => {
-        //   console.log("onCellEditStop => params : ", params)
-        // }}
-        onCellEditCommit={params => {
-          console.log("onCellEditCommit => params : ", params)
-        }
-      }
       />
       <CustomSnackbar
         message={message}
@@ -623,7 +406,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         open={open}
         position={position}
       />
-      {/* <FullFeaturedCrudGrid/> */}
     </Box>
   );
 }
