@@ -71,15 +71,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     }, {});
   };
 
-  const initialState = useKeepGroupedColumnsHidden({
-    apiRef,
-    initialState: getInitialState(
-      groupBy,
-      updatedRows,
-      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
-    ),
-  });
-
   useEffect(() => {
     const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
     const updatedRows = mapData.map(row => ({
@@ -90,6 +81,15 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     setRowsState(() => getInitialRowsState(updatedRows, groupBy, teams));
   }, [data, groupBy, teams]);
 
+  const initialState = useKeepGroupedColumnsHidden({
+    apiRef,
+    initialState: getInitialState(
+      groupBy,
+      updatedRows,
+      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+    ),
+  });
+  
   const handleAddRow = async (e, resource) => {
     const newRowForProject = {
       id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
@@ -281,7 +281,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
             };
             dispatch(updateResourceAllocation(putPayload));
           } else {
-            
+
             // POST API call to update the data.
             const postPayload = {
               resourceId: oldRow.resourceId,
