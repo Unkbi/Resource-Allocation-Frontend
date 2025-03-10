@@ -38,12 +38,12 @@ const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
 });
 
 const createValueHandlers = dispatch => ({
-  // valueParser: value => {
-  //   const parsed = parseFloat(
-  //     value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
-  //   );
-  //   return isNaN(parsed) ? null : parsed;
-  // },
+  valueParser: value => {
+    const parsed = parseFloat(
+      value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
+    );
+    return isNaN(parsed) ? null : parsed;
+  },
 
   valueFormatter: (value) => {
     if (!value) {
