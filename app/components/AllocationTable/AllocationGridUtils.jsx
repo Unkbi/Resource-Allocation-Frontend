@@ -32,8 +32,6 @@ export const getInitialState = (
 export const getFinalColumns = (
   columns,
   groupBy,
-  setSelectedProject,
-  handleAddRow,
   setSelectedTeam,
   handleAddProject,
   setSelectedResourceId,
@@ -56,23 +54,6 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          if (params.row.hasButton) {
-            return (
-              <AddRowButton
-                row={params.row}
-                project={params.row.project}
-                handleAddRow={handleAddRow}
-                teamsId={params.row.teamsId}
-                buttonName={
-                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
-                }
-                onClick={event => {
-                  setSelectedProject(params.row.project),
-                    setSelectedTeam(params.row.teams);
-                }}
-              />
-            );
-          }
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
           }
@@ -144,23 +125,6 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          if (params.row.hasButton) {
-            return (
-              <AddRowButton
-                row={params.row}
-                teamsId={params.row.teamsId}
-                project={params.row.project}
-                handleAddRow={handleAddRow}
-                buttonName={
-                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
-                }
-                onClick={event => {
-                  setSelectedProject(params.row.project),
-                    setSelectedTeam(params.row.teams);
-                }}
-              />
-            );
-          }
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
           }
@@ -238,25 +202,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
   }));
 
   if (groupBy === 'project') {
-    return [
-      ...rowsWithTotalEffort,
-      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.project))).map(
-        project => ({
-          id: `${project}-add-resource`,
-          project: project,
-          resource: '',
-          role: '',
-          totalEffort: '',
-          hasButton: true,
-          ...Object.keys(updatedRows[0])
-            .filter(key => key.startsWith('W'))
-            .reduce((acc, week) => {
-              acc[week] = '';
-              return acc;
-            }, {}),
-        })
-      ),
-    ];
+    return rowsWithTotalEffort;
   } else if (groupBy === 'teams') {
     // Get unique teams for teams and teamsId to avoid duplicate teams
     let unique_teams = {};

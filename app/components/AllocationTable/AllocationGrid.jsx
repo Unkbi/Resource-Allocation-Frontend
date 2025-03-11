@@ -9,9 +9,7 @@ import {
   calculateTotalEffort,
   generateAllWeeks,
   getMondayOfWeek,
-  getProjectOrTeamIdByName,
   getWeekNumber,
-  isResourceInProject,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -23,7 +21,6 @@ import './styles/AllocationGrid.css';
 import {
   getInitialState,
   getFinalColumns,
-  getGroupingColDef,
   getCellClassName,
   getInitialRowsState,
 } from './AllocationGridUtils';
@@ -32,34 +29,26 @@ import {
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
-import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
-import { showToastAction } from '@/app/redux/actions/toastAction';
-import { getTeamAllocations } from '@/app/services/teamServices';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 
 const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
 
-export default function AllocationGrid({ groupBy, columns, data, loading }) {
+export default function AllocationGrid({ groupBy, columns, data, loading, rowsState, setRowsState, selectedTeam, setSelectedTeam }) {
   const apiRef = useGridApiRef();
-  const [selectedProject, setSelectedProject] = useState('');
-  const [selectedTeam, setSelectedTeam] = useState('');
-  const [isSearchMode, setIsSearchMode] = useState(false);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedAllocationId, setSelectedAllocationId] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
-  const [rowsState, setRowsState] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const { open, message, type, position } = useSelector(state => state.toast);
   const startDate = getStartDate();
 
   const dispatch = useDispatch();
-  const { projects } = useSelector(state => state.projects);
   const { teams, teamAllocations } = useSelector(state => state.teams);
-  const [dataFetched, setDataFetched] = useState(false);
+  // const [dataFetched, setDataFetched] = useState(false);
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -94,74 +83,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
     ),
   });
-
-  const handleAddRow = async (e, resource) => {
-    const newRowForProject = {
-      id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
-      resourceId: resource.Id,
-      project: selectedProject,
-      projectId: getProjectOrTeamIdByName(projects?.result, selectedProject),
-      resource: resource.FullName,
-      role: resource.Role,
-      totalEffort: resource.totalHours,
-      hasButton: false,
-    };
-    const newRowForTeams = {
-      id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
-      resourceId: resource.Id,
-      project: '',
-      teamsId: getProjectOrTeamIdByName(teams?.result, selectedTeam),
-      resource: resource.FullName,
-      teams: selectedTeam,
-      role: resource.Role,
-      totalEffort: resource.totalHours,
-      hasButton: false,
-      hasProject: true,
-    };
-    if (groupBy === 'project') {
-      if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
-        setRowsState(prevRows =>
-          prevRows.flatMap(row =>
-            row.id === `${selectedProject}-add-resource`
-              ? [newRowForProject, row]
-              : [row]
-          )
-        );
-      }
-    } else if (groupBy === 'teams') {
-      setRowsState(prevRows =>
-        prevRows.flatMap(row =>
-          row.id === `${selectedTeam}-add-resource`
-            ? [newRowForTeams, row]
-            : [row]
-        )
-      );
-
-      try {
-        await new Promise((resolve, reject) => {
-          const obj = {
-            Team: `:ResourceAllocation.Core/Team,${newRowForTeams.teamsId}`,
-            Resource: `:ResourceAllocation.Core/Resource,${newRowForTeams.resourceId}`,
-          };
-          dispatch(addResourceToTeam(obj.Team, obj.Resource))
-            .then(resolve)
-            .catch(reject);
-        });
-
-        const teamAllocationPostData = {
-          'ResourceAllocation.Core/GetTeamAllocations': {
-            TeamId: newRowForTeams.teamsId,
-          },
-        };
-
-        dispatch(getTeamAllocations(teamAllocationPostData));
-      } catch (error) {
-        console.error('Error in handleAddRow:', error);
-      }
-    }
-
-    setIsSearchMode(false);
-  };
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
@@ -240,8 +161,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
-    setSelectedProject,
-    handleAddRow,
     setSelectedTeam,
     handleAddProject,
     setSelectedResourceId,
@@ -333,7 +252,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
                 : row
             )
           );
-          setDataFetched(true);
         } catch (err) {
           console.error('Cell update failed:', err);
         } finally {
@@ -401,7 +319,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const onRowClick = useCallback(
     (params) => {
       const rowNode = apiRef.current.getRowNode(params.id);
-      if (rowNode && rowNode.type === 'group') {
+      if (rowNode && rowNode.type === 'group' && rowNode.groupingField != 'teams') {
         apiRef.current.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
       }
     },
@@ -507,7 +425,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         getAggregationPosition={groupNode =>
           groupNode.depth === -1 ? null : 'inline'
         }
-        groupingColDef={groupBy === 'teams' ? null : getGroupingColDef(groupBy)} //change here
         hideFooter
         editMode="row"
         aggregationRowsCount={params => {
