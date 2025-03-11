@@ -11,6 +11,7 @@ import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { AddRowIcon } from '../../AllocationTable/AddRowButton';
 import { getTeamAllocations } from '@/app/services/teamServices';
 import { getProjectOrTeamIdByName } from '@/app/utils/common';
+import { Tooltip } from '@mui/material';
 
 export default function TeamAllocation() {
   const [resourcesFetched, setResourcesFetched] = useState(false);
@@ -48,7 +49,7 @@ export default function TeamAllocation() {
       hasButton: false,
       hasProject: true,
     };
-    setRowsState( [...rowsState,newRowForTeams]);
+    setRowsState([...rowsState, newRowForTeams]);
 
     try {
       await new Promise((resolve, reject) => {
@@ -82,17 +83,29 @@ export default function TeamAllocation() {
       cellClassName: 'prime-cell',
       primaryColumn: true,
       renderCell: (params) => {
+        const cell_value = params.value?.length > 19 ? params.value?.slice(0, 18) + "..." : params.value;
         return (
-          <div style={{ width: '100%' }}>
-            <span>{params.value}</span>
-            <AddRowIcon
-              team_name={params.value}
-              handleAddRow={handleAddRow}
-              onClick={() => {
-                setSelectedTeam(params?.formattedValue);
-              }}
-            />
-          </div>
+          <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
+            popper: {
+              modifiers: [
+                {
+                  name: "offset",
+                  options: { offset: [0, 10] },
+                },
+              ],
+            }
+          }}>
+            <div style={{ width: '100%' }}>
+              <span>{cell_value}</span>
+              <AddRowIcon
+                team_name={params.value}
+                handleAddRow={handleAddRow}
+                onClick={() => {
+                  setSelectedTeam(params?.formattedValue);
+                }}
+              />
+            </div>
+          </Tooltip>
         )
       }
     },

@@ -77,7 +77,7 @@ export const getFinalColumns = (
             ...new Set(
               (Array.isArray(allocationsOfAddedResource) &&
                 allocationsOfAddedResource.map(item => item.ProjectName)) ||
-                []
+              []
             ),
           ];
 
@@ -104,6 +104,25 @@ export const getFinalColumns = (
           const projects_set = [
             ...new Set(params?.rowNode?.children?.map(child => params.api.getRow(child)?.project))
           ].filter(Boolean);
+
+
+          if (projects_set.length > 1) {
+            const cell_value = projects_set?.[0]?.length > 18 ? projects_set?.[0]?.slice(0, 15) + "..." : projects_set?.[0];
+            return (
+              <div>
+                {cell_value}
+                <span style={{
+                  backgroundColor: "#E9EFF8",
+                  color: "#000",
+                  paddingRight: 4,
+                  paddingLeft: 4,
+                  marginLeft: 8,
+                  fontSize: 12,
+                  borderRadius: 2,
+                }}>+{projects_set?.length - 1}</span>
+              </div>
+            )
+          }
 
           return projects_set.length ?
             `${projects_set[0]}${projects_set.length > 1 ?
