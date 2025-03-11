@@ -133,13 +133,19 @@ export const AddRowButton = ({
   const [isSearchMode, setIsSearchMode] = useState(false);
   const { teamsResources } = useSelector(state => state.teams);
   const { resources } = useSelector(state => state.resources);
+  const { allocations } = useSelector(state => state.projects);
+  const { view } = useSelector(state => state.allocationView);
+
+  const resourcesForCurrentProject = allocations.filter(row => row.project == project).map(row =>row.resourceId)
   const defaultProps = {
     options:
-    buttonName === 'Add Project'
+      buttonName === 'Add Project'
         ? resourceProjects
-    : teamsResources?.[teamsId]?.length ?
-    teamsResources?.[teamsId] :
-    resources?.result || [],
+        : view === 'Projects' 
+          ? resources.result.filter((resource) => !resourcesForCurrentProject.includes(resource.Id)) || []
+          : teamsResources?.[teamsId]?.length 
+            ? teamsResources?.[teamsId]
+            : resources?.result || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
