@@ -45,21 +45,17 @@ const createValueHandlers = dispatch => ({
     return isNaN(parsed) ? null : parsed;
   },
 
-  valueFormatter: params => {
-    const value = Number(params);
-    return value !== 0 ? Math.round(value * 10) / 10 : '';
-  },
-
-  valueGetter: params => {
-    if (
-      params?.value &&
-      typeof params === 'object' &&
-      params?.value !== undefined
-    ) {
-      return Math.round(params.value * 10) / 10;
-    } else {
-      return null;
+  valueFormatter: (value) => {
+    if (!value) {
+      return value;
     }
+    if(typeof value === 'number') {
+      return value.toFixed(1);
+    }
+    return value;
+  },
+  valueGetter: params => {
+    return params?.value ?? null;
   },
 
   preProcessEditCellProps: params => {

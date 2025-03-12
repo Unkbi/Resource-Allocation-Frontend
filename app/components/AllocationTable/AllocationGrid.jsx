@@ -1,4 +1,4 @@
-import { useState, lazy, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -33,22 +33,19 @@ import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 
-const CustomToolbar = lazy(() => import('../Toolbar/CustomToolbar'));
+import CustomToolbar from '../Toolbar/CustomToolbar';
 
 export default function AllocationGrid({ groupBy, columns, data, loading, rowsState, setRowsState, selectedTeam, setSelectedTeam }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
-  const [selectedCell, setSelectedCell] = useState(null);
-  const [selectedAllocationId, setSelectedAllocationId] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { open, message, type, position } = useSelector(state => state.toast);
   const startDate = getStartDate();
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
-  // const [dataFetched, setDataFetched] = useState(false);
+  const [rowModesModel, setRowModesModel] = useState({});
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -179,37 +176,19 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
       .filter(column => showField.includes(column.field))
       .map(column => column.field);
 
-  const handleDoubleClick = params => {
-    if (params.rowNode.type === 'group' || !params.isEditable) {
-      return;
-    }
-    if (params?.cellMode === 'view') {
-      apiRef.current.startRowEditMode({ id: params.id });
-    }
-    setSelectedCell(params.field);
-    const { field, formattedValue, row } = params || {};
-    if (formattedValue) {
-      const allocationData = row[field];
-      setSelectedAllocationId(allocationData?.allocationId);
-    }
-  };
+  const handleCellUpdate = (newRow, oldRow) => {
+    Object.keys(newRow).forEach(key => {
+      if (key.startsWith('W')) {
+        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
 
-  const handleCellUpdate = useCallback(
-    async (newRow, oldRow) => {
-      const newValue = newRow[selectedCell];
-      const oldValue = oldRow[selectedCell]?.value;
-      if (newValue !== oldValue) {
-        try {
-          const { project, projectId, id } = newRow || {};
-          let formattedCellValue = Math.round(newRow[selectedCell] * 10) / 10;
-          let resourceId = newRow?.resourceId;
-          if (formattedCellValue > 2) return;
-          if (!selectedAllocationId && formattedCellValue === 0) return;
+        // API call to update the data, if any changes are made.
+        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
+          if (oldRow[key]?.allocationId) {
 
-          if (selectedAllocationId) {
+            // PUT API call to update the data.
             const putPayload = {
-              resourceId: resourceId,
-              allocationId: selectedAllocationId,
+              resourceId: oldRow.resourceId,
+              allocationId: oldRow[key]?.allocationId,
               putData: {
                 'ResourceAllocation.Core/Allocation': {
                   AllocationEntered: formattedCellValue,
@@ -218,103 +197,39 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
             };
             dispatch(updateResourceAllocation(putPayload));
           } else {
+
+            // POST API call to update the data.
             const postPayload = {
-              resourceId: resourceId,
+              resourceId: oldRow.resourceId,
               postData: {
                 'ResourceAllocation.Core/Allocation': {
-                  Resource: resourceId,
-                  Project: projectId,
-                  ProjectName: project,
-                  Period: getMondayOfWeek(selectedCell),
+                  Resource: oldRow.resourceId,
+                  Project: oldRow.projectId,
+                  ProjectName: oldRow.project,
+                  Period: getMondayOfWeek(key),
                   AllocationEntered: formattedCellValue,
                 },
               },
             };
             dispatch(setResourceAllocation(postPayload));
           }
-          setRowsState(prevRows =>
-            prevRows.map(row =>
-              row.id === id
-                ? {
-                  ...row,
-                  [selectedCell]: {
-                    allocationId: row[selectedCell]?.allocationId || null,
-                    value: formattedCellValue,
-                  },
-                  totalEffort: calculateTotalEffort({
-                    ...row,
-                    [selectedCell]: {
-                      allocationId: row[selectedCell]?.allocationId || null,
-                      value: formattedCellValue,
-                    },
-                  }),
-                }
-                : row
-            )
-          );
-        } catch (err) {
-          console.error('Cell update failed:', err);
-        } finally {
-          setSelectedAllocationId(null);
-          setSelectedCell(null);
         }
-      }
-    },
-    [selectedCell, selectedAllocationId, dispatch]
-  );
+
+        newRow[key] = {
+          allocationId: oldRow[key]?.allocationId || null,
+          value: newRow[key],
+        };
+      }});
+      
+    return newRow;
+  }
 
   const handleCellKeyDown = (params, event) => {
-    const { field, formattedValue, row } = params || {};
+    // Preventing Key Events for Editing.
     if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
       event.preventDefault();
     }
-    if (params.rowNode.type === 'group' || !params.isEditable) {
-      return;
-    }
-    const mode = apiRef.current.getRowMode(params.id);
-    setSelectedCell(params.field);
-    if (formattedValue) {
-      const allocationData = row[field];
-      setSelectedAllocationId(allocationData?.allocationId);
-    }
-    const visibleColumns = apiRef.current.getVisibleColumns();
-    const currentIndex = visibleColumns.findIndex(
-      c => c.field === params.field
-    );
-    const nextIndex = currentIndex + 1;
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      if (nextIndex < visibleColumns.length) {
-        const nextField = visibleColumns[nextIndex].field;
-        apiRef.current.setCellFocus(params.id, nextField);
-      }
-    }
-    if (event.key === 'Tab' || event.key === 'ArrowRight') {
-      // event.preventDefault();
-      if (nextIndex < visibleColumns.length) {
-        const nextField = visibleColumns[nextIndex].field;
-        if (mode === 'edit') {
-          apiRef.current.stopRowEditMode({ id: params.id });
-        }
-        apiRef.current.setCellFocus(params.id, nextField);
-      }
-    }
-    if (event.key === 'ArrowLeft') {
-      // event.preventDefault();
-      if (mode === 'edit') {
-        apiRef.current.stopRowEditMode({ id: params.id });
-      }
-      const editableColumm = visibleColumns.filter(c => c.editable);
-      const currentIndex = editableColumm.findIndex(
-        c => c.field === params.field
-      );
-      const prevIndex = currentIndex - 1;
-      if (prevIndex >= 0) {
-        const prevField = editableColumm[prevIndex].field;
-        apiRef.current.setCellFocus(params.id, prevField);
-      }
-    }
-  };
+  }
 
   const onRowClick = useCallback(
     (params) => {
@@ -326,29 +241,17 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
     [apiRef],
   );
 
-  useEffect(() => {
-    const handleCellFocusOut = params => {
-      if (params.rowNode.type === 'group' || !params.isEditable) {
-        return;
-      }
-      const rowId = params.id;
-      if (apiRef.current.getRowMode(rowId) === 'edit') {
-        apiRef.current.stopRowEditMode({ id: rowId });
-      }
-    };
-
-    apiRef.current.subscribeEvent('cellFocusOut', handleCellFocusOut);
-  }, [apiRef, selectedCell]);
+  const handleRowModesModelChange = newRowModesModel => {
+    setRowModesModel(newRowModesModel);
+  };
 
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
-        key={refreshKey}
         isCellEditable={params => !params.row.hasButton}
         onCellKeyDown={handleCellKeyDown}
-        onCellClick={params => {
-          handleDoubleClick(params);
-        }}
+        rowModesModel={rowModesModel}
+        onRowModesModelChange={handleRowModesModelChange}
         processRowUpdate={handleCellUpdate}
         onProcessRowUpdateError={err => {
           console.error('Row update failed:', err);
