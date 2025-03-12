@@ -2,7 +2,7 @@ import React, { memo } from 'react'
 import { download, mkConfig } from "export-to-csv";
 import { GridExcelExportMenuItem, GridToolbarExportContainer, useGridApiContext } from '@mui/x-data-grid-premium';
 import { MenuItem, styled } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 const GridToolbarExport = () => {
   const view = useSelector(state => state.allocationView.view);
