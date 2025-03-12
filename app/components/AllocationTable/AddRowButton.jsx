@@ -167,12 +167,8 @@ export const AddRowButton = ({
     }, 0);
   };
   const handleKeyDown = event => {
-    if (isSearchMode && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+    if (isSearchMode && ['ArrowUp', 'ArrowDown','e','E'].includes(event.key)) {
       event.stopPropagation();
-    }
-    if (isSearchMode  &&  ['e', 'E'].includes(event.key)){
-      console.log("e")
-      return ;
     }
   };
 
@@ -228,7 +224,7 @@ export const AddRowButton = ({
             );
           }}
           renderInput={params => (
-          <StyledInput {...params} inputRef={inputRef} onKeyDown={handleKeyDown} />
+          <StyledInput {...params} inputRef={inputRef}/>
           )}
         />
       ) : (
