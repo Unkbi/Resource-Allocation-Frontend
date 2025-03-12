@@ -72,6 +72,7 @@ export default function TeamAllocation() {
     } catch (error) {
       console.error('Error in handleAddRow:', error);
     }
+    return newRowForTeams?.id;
   };
 
   const teamsColumnConfig = [
@@ -84,6 +85,17 @@ export default function TeamAllocation() {
       primaryColumn: true,
       renderCell: (params) => {
         const cell_value = params.value?.length > 19 ? params.value?.slice(0, 18) + "..." : params.value;
+
+        const handleOnAdd = async (e, res) => {
+          try {
+            let new_row_id = await handleAddRow(e, res);
+            const rowNode = params.api.getRowNode(new_row_id);
+            params.api.setRowChildrenExpansion(rowNode?.parent, true);
+          } catch(e) {
+            console.warn('Something went wrong while expanding resource.');
+          }
+        }
+
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
             popper: {
@@ -99,7 +111,7 @@ export default function TeamAllocation() {
               <span>{cell_value}</span>
               <AddRowIcon
                 team_name={params.value}
-                handleAddRow={handleAddRow}
+                handleAddRow={handleOnAdd}
                 onClick={() => {
                   setSelectedTeam(params?.formattedValue);
                 }}
