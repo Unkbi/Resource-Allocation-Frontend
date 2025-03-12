@@ -150,7 +150,7 @@ export const getFinalColumns = (
                 }
                 onClick={event => {
                   setSelectedProject(params.row.project),
-                    setSelectedTeam(params.row.teams);
+                  setSelectedTeam(params.row.teams);
                 }}
               />
             );

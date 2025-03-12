@@ -131,18 +131,23 @@ export const AddRowButton = ({
   resourceProjects,
 }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const { teamsResources } = useSelector(state => state.teams);
-  const { resources } = useSelector(state => state.resources);
-  const { allocations } = useSelector(state => state.projects);
-  const { view } = useSelector(state => state.allocationView);
-
-  const resourcesForCurrentProject = allocations.filter(row => row.project == project).map(row =>row.resourceId)
+  const [selectedResources, setSelectedResources] = useState([]);
+  const { teamsResources } = useSelector((state) => state.teams);
+  const { resources } = useSelector((state) => state.resources);
+  const { allocations } = useSelector((state) => state.projects);
+  const { view } = useSelector((state) => state.allocationView);
+  
+  // Resources already allocated to the current project
+  const resourcesForCurrentProject = allocations.filter((row) => row.project === project).map((row) => row.resourceId);
+  // Merging current selected resources with the already allocated resources
+   const mergedResources = [...new Set([...selectedResources, ...resourcesForCurrentProject])];
+  
   const defaultProps = {
     options:
       buttonName === 'Add Project'
         ? resourceProjects
         : view === 'Projects' 
-          ? resources.result.filter((resource) => !resourcesForCurrentProject.includes(resource.Id)) || []
+          ? resources.result.filter((resource) => !mergedResources.includes(resource.Id)) || []
           : teamsResources?.[teamsId]?.length 
             ? teamsResources?.[teamsId]
             : resources?.result || [],
@@ -150,7 +155,6 @@ export const AddRowButton = ({
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
   // In teams tab, we are setting the options to the resources array from the redux store for the selected team, else we are setting the options to all the resources.
-
   const inputRef = useRef(null);
 
   const handleButtonClick = () => {
@@ -163,8 +167,17 @@ export const AddRowButton = ({
     }, 0);
   };
   const handleKeyDown = event => {
-    if (isSearchMode && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+    if (isSearchMode && ['ArrowUp', 'ArrowDown','e','E'].includes(event.key)) {
       event.stopPropagation();
+    }
+  };
+
+  const handleResourceSelect = (event, newValue) => {
+    if (newValue) {
+      // Add the new resource to the selected list
+      setSelectedResources((prev) => [...prev, newValue.Id]);
+      handleAddRow(event, newValue, row);
+      setIsSearchMode(false);
     }
   };
   return (
@@ -173,12 +186,7 @@ export const AddRowButton = ({
         <Autocomplete
           {...defaultProps}
           id="open-on-focus"
-          onChange={(event, newValue) => {
-            if (newValue) {
-              handleAddRow(event, newValue, row);
-            }
-            setIsSearchMode(false);
-          }}
+          onChange={handleResourceSelect}
           onBlur={() => setIsSearchMode(false)}
           open={true}
           popupIcon={null}
@@ -216,7 +224,7 @@ export const AddRowButton = ({
             );
           }}
           renderInput={params => (
-            <StyledInput {...params} inputRef={inputRef} />
+          <StyledInput {...params} inputRef={inputRef}/>
           )}
         />
       ) : (
