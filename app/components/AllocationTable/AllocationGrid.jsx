@@ -44,6 +44,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
   const apiRef = useGridApiRef();
   const [selectedProject, setSelectedProject] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
+  const [selectedOrganization, setSelectedOrganization] = useState('');
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
@@ -153,6 +154,27 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
       } catch (error) {
         console.error('Error in handleAddRow:', error);
       }
+    } else if (groupBy === 'organization') {
+      const newRowForOrganization = {
+        id: `${selectedOrganization}-${resource.FullName}-${rowsState.length + 1}`,
+        resourceId: resource.Id,
+        project: '',
+        teamsId: '',
+        organization: selectedOrganization,
+        resource: resource.FullName,
+        teams: selectedOrganization,
+        role: resource.Role,
+        totalEffort: resource.totalHours,
+        hasButton: false,
+        hasProject: true,
+      };
+      setRowsState(prevRows =>
+        prevRows.flatMap(row =>
+          row.id === `${selectedOrganization}-add-resource`
+            ? [newRowForOrganization, row]
+            : [row]
+        )
+      );
     }
   };
 
@@ -238,7 +260,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     setSelectedTeam,
     handleAddProject,
     setSelectedResourceId,
-    dispatch
+    dispatch,
+    setSelectedOrganization
   );
 
   const showField = [

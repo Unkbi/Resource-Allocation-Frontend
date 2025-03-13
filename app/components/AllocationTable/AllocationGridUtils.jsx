@@ -37,14 +37,15 @@ export const getFinalColumns = (
   setSelectedTeam,
   handleAddProject,
   setSelectedResourceId,
-  dispatch
+  dispatch,
+  setSelectedOrganization
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const allColumns = getAllColumnsWithWeek(columns, dispatch);
   if (groupBy === 'organization') {
     return allColumns || [];
-  } else if (groupBy === 'teams') {
+  } else if (groupBy === 'teams' || groupBy === 'organization') {
     return [
       ...(allColumns?.slice(0, 1) || []),
       {
@@ -278,6 +279,27 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
         role: '',
         totalEffort: '',
         resourceId: '',
+        hasButton: true,
+        ...Object.keys(updatedRows[0])
+          .filter(key => key.startsWith('W'))
+          .reduce((acc, week) => {
+            acc[week] = '';
+            return acc;
+          }, {}),
+      })),
+    ];
+  } else if (groupBy === 'organization') {
+    return [
+      ...rowsWithTotalEffort,
+      ...Array.from(
+        new Set(rowsWithTotalEffort?.map(row => row.organization))
+      ).map(organization => ({
+        id: `${organization}-add-resource`,
+        project: '',
+        organization: organization,
+        resource: '',
+        role: '',
+        totalEffort: '',
         hasButton: true,
         ...Object.keys(updatedRows[0])
           .filter(key => key.startsWith('W'))
