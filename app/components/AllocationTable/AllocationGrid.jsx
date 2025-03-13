@@ -258,81 +258,34 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
         if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
           event.preventDefault();
         }
-    
-        // console.log("rowModesModel : ", rowModesModel);
-        const currentCell = apiRef.current.getCellElement(params.id, params.field)
-        console.log("CurrentCell : ", currentCell)
-        let nextCell = apiRef.current.getCellElement(params.id, params.field).nextElementSibling
-        while(nextCell?.role !== 'gridcell') {
-          if(nextCell.nextElementSibling == null) {
-            nextCell = nextCell.parentElement.nextElementSibling.firstChild
+  
+        if(['Tab', 'Enter'].includes(event.key)) {
+          const currentCell = apiRef.current.getCellElement(params.id, params.field)
+          let nextCell = currentCell.nextElementSibling
+
+          // Find Next Cell
+          while(nextCell?.role !== 'gridcell') {
+            if(nextCell.nextElementSibling == null) {
+              nextCell = nextCell.parentElement.nextElementSibling.firstChild
+            }
+            else{
+              nextCell = nextCell.nextElementSibling
+            }
           }
-          else{
-            nextCell = nextCell.nextElementSibling
+
+          // Handling Tab Key Event
+          if(event.key === 'Tab' && (rowModesModel && Object.keys(rowModesModel).length === 0)) {
+            event.preventDefault();
+            nextCell.focus()
+          }
+      
+          // Handling Enter Key Event
+          if(event.key === 'Enter' && (rowModesModel && Object.keys(rowModesModel).length > 0)) {
+            event.preventDefault();
+            event.stopPropagation()
+            apiRef.current.stopRowEditMode({id : params.id, field : params.field})
           }
         }
-        console.log("NextCell : ", nextCell)
-        if(event.key === 'Tab' && (rowModesModel && Object.keys(rowModesModel).length === 0)) {
-          event.preventDefault();
-          nextCell.focus()
-        }
-    
-        if(event.key === 'Enter' && (rowModesModel && Object.keys(rowModesModel).length > 0)) {
-          event.preventDefault();
-          event.stopPropagation()
-          // nextCell.focus()
-          // setRowModesModel({})
-          apiRef.current.stopRowEditMode({id : params.id, field : params.field})
-        }
-        // nextCell = nextCell.role === 'gridcell' ? nextCell : nextCell.nextElementSibling.nextElementSibling
-        // const nextNextCell = nextCell.nextElementSibling
-    
-        // console.log("currentCell.parentElement.nextElementSibling : ", currentCell.parentElement.nextElementSibling);
-        // console.log("currentCell.parentElement.nextElementSibling.firstChild : ", currentCell.parentElement.nextElementSibling.firstChild);
-        // console.log("currentCell.parentElement.nextElementSibling.firstChild.nextSibling : ", currentCell.parentElement.nextElementSibling.firstChild.nextSibling);
-        // console.log("nextCell : ", nextCell);
-        // console.log("nextNextCell : ", nextNextCell);
-        // nextCell.focus()
-    
-        // if(event.key === 'Tab' && (rowModesModel && Object.keys(rowModesModel).length === 0)) {
-        //   event.preventDefault();
-        //   const nextCell = event.target.nextElementSibling
-        //   // console.log("event : ", event.target.nextElementSibling);
-        //   // console.log("Parent : ", event.target.nextElementSibling.parentElement.nextElementSibling.querySelector('.MuiDataGrid-cell'))
-          
-        //   if (event.target.nextElementSibling.role === 'gridcell') {
-        //     // event.target.nextElementSibling.focus()
-        //     nextCell.focus()
-        //   } else {
-        //     event.target.parentElement.nextElementSibling.querySelector('.MuiDataGrid-cell').focus()
-        //   }
-        // }
-    
-        // if(event.key === 'Enter' && (rowModesModel && Object.keys(rowModesModel).length > 0)) {
-        //   event.preventDefault();
-        //   // console.log("apiRef.current : ", Object.keys(apiRef.current.getSelectedCellsAsArray()).forEach(id => console.log(apiRef.current.getC)));
-    
-        //   console.log("event : ", event.target);
-        //   console.log("params : ", params);
-        //   console.log("Params getCellElement : ", apiRef.current.getCellElement(params.id, params.field));
-        //   console.log("apiRef.current.getSelectedCellsAsArray() : ", apiRef.current.getSelectedCellsAsArray());
-    
-    
-        //   // apiRef.current.getSelectedCellsAsArray()
-        //   apiRef.current.getCellElement(params.id, params.field).nextElementSibling.focus()
-        //   event.stopPropagation()
-        //   setRowModesModel({})
-        //   if(event.target.classList.contains('secondGroupsRow')) {
-        //     event.ta
-        //   }
-        //   for ( let id in rowModesModel ){
-        //     console.log("id : ", id);
-        //     console.log("rowModesModel[id] : ", rowModesModel[id].fieldToFocus);
-        //     console.log("apiRef.current.getCellById : ", apiRef.current.getCellElement(id, rowModesModel[id].fieldToFocus));
-        //     apiRef.current.getCellElement(id, rowModesModel[id].fieldToFocus).nextElementSibling.focus()
-        //   }
-        //   // nextCell.focus()
-        // }
       }
 
   const handleCellUpdate = (newRow, oldRow) => {
