@@ -258,6 +258,34 @@ export default function AllocationGrid({ groupBy, columns, data, loading }) {
     if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
       event.preventDefault();
     }
+
+    if(['Tab', 'Enter'].includes(event.key)) {
+      const currentCell = apiRef.current.getCellElement(params.id, params.field)
+      let nextCell = currentCell.nextElementSibling
+
+      // Find Next Cell
+      while(nextCell?.role !== 'gridcell') {
+        if(nextCell.nextElementSibling == null) {
+          nextCell = nextCell.parentElement.nextElementSibling.firstChild
+        }
+        else{
+          nextCell = nextCell.nextElementSibling
+        }
+      }
+
+      // Handling Tab Key Event
+      if(event.key === 'Tab' && (rowModesModel && Object.keys(rowModesModel).length === 0)) {
+        event.preventDefault();
+        nextCell.focus()
+      }
+  
+      // Handling Enter Key Event
+      if(event.key === 'Enter' && (rowModesModel && Object.keys(rowModesModel).length > 0)) {
+        event.preventDefault();
+        event.stopPropagation()
+        apiRef.current.stopRowEditMode({id : params.id, field : params.field})
+      }
+    }
   }
 
   const handleCellUpdate = (newRow, oldRow) => {
