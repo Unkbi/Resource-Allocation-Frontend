@@ -23,7 +23,7 @@ export default function OrganizationAllocation() {
   const { organizations, allocations, loading, dataProcessing, error } = useSelector(
     state => state.organizations
   );
-  console.log("organizations", organizations);
+  
   const dispatch = useDispatch();
   useEffect(() => {
     setAllocationsFetched(false);
@@ -46,7 +46,7 @@ export default function OrganizationAllocation() {
         <AllocationGrid 
           groupBy="organization"
           columns={organizationColumnConfig}
-          data={demoRows}
+          data={allocations}
           loading={loading || dataProcessing}
         />
       </>

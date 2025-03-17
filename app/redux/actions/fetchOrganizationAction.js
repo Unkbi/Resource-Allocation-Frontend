@@ -17,11 +17,11 @@ export const fetchAllOrganizations = () => async dispatch => {
   try {
     await dispatch(getAllOrganizations());
   } catch (error) {
-    console.error('Error fetching projects data:', error);
+    console.error('Error fetching organizations data:', error);
   }
 };
 
-const formatAllocations = (allocationsData, projectId) => {
+const formatAllocations = (allocationsData, organizationId, organizationName) => {
   const allocationMap = new Map();
   const allWeeks = generateAllWeeks();
 
@@ -30,7 +30,7 @@ const formatAllocations = (allocationsData, projectId) => {
 
     const periodDate = new Date(allocation.Period);
     const weekNumber = getWeekNumber(periodDate);
-    const key = `${allocation.Resource}-${projectId}`;
+    const key = `${allocation.Resource}-${organizationId}`;
     const existingAllocation = allocationMap.get(key);
 
     if (existingAllocation) {
@@ -45,8 +45,10 @@ const formatAllocations = (allocationsData, projectId) => {
       const newAllocation = {
         id: key,
         resourceId: allocation.Resource,
+        organization: organizationName,
+        organizationId: organizationId,
         project: allocation.ProjectName,
-        projectId: projectId,
+        projectId: allocation.ProjectId,
         resource: allocation.ResourceName,
         totalEffort: allocation.AllocationEntered,
         role: 'Trader',
@@ -90,7 +92,8 @@ export const fetchAllOrganizationAllocations = organization => async dispatch =>
           const allocationsData = result.payload;
           const formattedAllocations = formatAllocations(
             allocationsData,
-            organization.Id
+            organization.Id,
+            organization.Name
           );
           return formattedAllocations;
         } else {
