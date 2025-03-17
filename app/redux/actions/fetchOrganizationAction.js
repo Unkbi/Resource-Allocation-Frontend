@@ -48,7 +48,7 @@ const formatAllocations = (allocationsData, organizationId, organizationName) =>
         organization: organizationName,
         organizationId: organizationId,
         project: allocation.ProjectName,
-        projectId: allocation.ProjectId,
+        projectId: allocation.Project,
         resource: allocation.ResourceName,
         totalEffort: allocation.AllocationEntered,
         role: 'Trader',
