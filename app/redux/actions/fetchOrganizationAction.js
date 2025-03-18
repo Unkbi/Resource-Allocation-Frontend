@@ -30,7 +30,7 @@ const formatAllocations = (allocationsData, organizationId, organizationName) =>
 
     const periodDate = new Date(allocation.Period);
     const weekNumber = getWeekNumber(periodDate);
-    const key = `${allocation.Resource}-${organizationId}`;
+    const key = `${allocation.Resource}-${allocation.Project}`;
     const existingAllocation = allocationMap.get(key);
 
     if (existingAllocation) {
