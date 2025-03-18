@@ -1,0 +1,26 @@
+const initialState = {
+  isOpen: false,
+  title: 'Default Title',
+  submitButtonText: 'Submit',
+  onSubmit: null,
+  formState: {
+    formType: 'assign_allocation',
+  },
+};
+
+const dialogReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case 'OPEN_DIALOG':
+      return {
+        ...state,
+        isOpen: true,
+        ...action.payload,
+      };
+    case 'CLOSE_DIALOG':
+      return initialState;
+    default:
+      return state;
+  }
+};
+
+export default dialogReducer;

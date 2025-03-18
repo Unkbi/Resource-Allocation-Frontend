@@ -1,6 +1,17 @@
-"use client";
+'use client';
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, TextField, InputAdornment, styled, Box, colors } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  TextField,
+  InputAdornment,
+  styled,
+  Box,
+  colors,
+  Button,
+} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Grow from '@mui/material/Grow';
@@ -11,85 +22,86 @@ import MenuList from '@mui/material/MenuList';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { performLogout } from '@/app/redux/actions/authActions';
-
+import { openDialog } from '@/app/redux/actions/dialogAction';
+import AllocationForm from '../../AllocationTable/components/AllocationForm';
 
 const MainAppBar = styled(AppBar)(({ theme }) => ({
-  marginLeft: "74px",
-  width: "calc(100% - 74px)",
-  zIndex: "91",
-  boxShadow: "0 1px 0 0 #DDE1E4",
-  background: "#fff",
-  "& h6": {
+  marginLeft: '74px',
+  width: 'calc(100% - 74px)',
+  zIndex: '91',
+  boxShadow: '0 1px 0 0 #DDE1E4',
+  background: '#fff',
+  '& h6': {
     color: theme.custom.primaryColor,
     fontFamily: "'Manrope', serif",
-    fontWeight: "800",
-    fontSize: "18px",
-    lineHeight: "22px"
+    fontWeight: '800',
+    fontSize: '18px',
+    lineHeight: '22px',
   },
-  "& .searchBar": {
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    border: "1px solid #D6DCE1",
-    borderRadius: "4px",
-    width: "184px",
-    height: "32px",
-    "& input": {
-      padding: "2px 10px",
-      fontSize: "12px",
-      color: "#757575",
-      height: "30px",
-      boxSizing: "border-box",
-      color: "#212121"
+  '& .searchBar': {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    width: '184px',
+    height: '32px',
+    '& input': {
+      padding: '2px 10px',
+      fontSize: '12px',
+      color: '#757575',
+      height: '30px',
+      boxSizing: 'border-box',
+      color: '#212121',
     },
-    "& .MuiInputBase-adornedStart": {
-      display: "flex",
-      flexDirection: "row-reverse",
+    '& .MuiInputBase-adornedStart': {
+      display: 'flex',
+      flexDirection: 'row-reverse',
     },
-    "& svg": {
-      width: "20px",
-      marginRight: "5px"
-    }
+    '& svg': {
+      width: '20px',
+      marginRight: '5px',
+    },
   },
-  "& .toobarRow": {
-    minHeight: "54px",
-    paddingLeft: "15px",
-    paddingRight: "15px"
+  '& .toobarRow': {
+    minHeight: '54px',
+    paddingLeft: '15px',
+    paddingRight: '15px',
   },
-  "& .settingIcon": {
-    padding: "0"
+  '& .settingIcon': {
+    padding: '0',
   },
-  "& .profileLogo":{
-    backgroundColor: "#1c2d5f",
-    width: "22px",
-    height: "22px",
-    borderRadius: "50%",
-    fontSize: "10px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: "700",
-    lineHeight: "21px",
-    color: "#fff",
-    paddingTop:"0px"
+  '& .profileLogo': {
+    backgroundColor: '#1c2d5f',
+    width: '22px',
+    height: '22px',
+    borderRadius: '50%',
+    fontSize: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: '700',
+    lineHeight: '21px',
+    color: '#fff',
+    paddingTop: '0px',
   },
-  "& .profileMenu":{
+  '& .profileMenu': {
     backgroundColor: '#FFFFFF',
     boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
-    marginTop: "16px",
-    minWidth: "160px",
-    "& li":{
+    marginTop: '16px',
+    minWidth: '160px',
+    '& li': {
       fontFamily: "'Manrope', serif",
-      fontWeight: "500",
-      fontSize: "14px",
-      lineHeight: "22px",
-      color:"#212121",
-      "& .MuiTouchRipple-root":{
-        display:"none"
+      fontWeight: '500',
+      fontSize: '14px',
+      lineHeight: '22px',
+      color: '#212121',
+      '& .MuiTouchRipple-root': {
+        display: 'none',
       },
-      "&.Mui-focusVisible":{
+      '&.Mui-focusVisible': {
         backgroundColor: '#FFFFFF',
-      }
-    }
-  }
+      },
+    },
+  },
 }));
 
 const Header = () => {
@@ -97,13 +109,13 @@ const Header = () => {
   const anchorRef = React.useRef(null);
   const router = useRouter();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.user);
+  const { user } = useSelector(state => state.user);
 
   const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
+    setOpen(prevOpen => !prevOpen);
   };
 
-  const handleClose = (event) => {
+  const handleClose = event => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
       return;
     }
@@ -128,18 +140,30 @@ const Header = () => {
     prevOpen.current = open;
   }, [open]);
 
-  const handleLogout = (e) => {
-    dispatch(performLogout())
-    router.push("/login");
-  }
+  const handleLogout = e => {
+    dispatch(performLogout());
+    router.push('/login');
+  };
 
   const { FirstName, LastName } = user || {};
+  const handleOpenDialog = () => {
+    dispatch(
+      openDialog({
+        title: 'Add Resource',
+        submitButtonText: 'Save',
+        formState: {
+          formType: 'add_allocation',
+        },
+      })
+    );
+  };
+  const handleSubmit = formData => {
+    console.log('Form Data:', formData);
+  };
   return (
     <MainAppBar>
-      <Toolbar className='toobarRow'>
-        <Typography variant="h6">
-          Resource Allocation
-        </Typography>
+      <Toolbar className="toobarRow">
+        <Typography variant="h6">Resource Allocation</Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
           <Box className="searchBar">
             <TextField
@@ -156,13 +180,14 @@ const Header = () => {
               variant="standard"
             />
           </Box>
-          <IconButton className='settingIcon'>
-            <img src={"/images/icons/help-icon.svg"} alt='' width={22} />
+          <IconButton className="settingIcon">
+            <img src={'/images/icons/help-icon.svg'} alt="" width={22} />
           </IconButton>
-          <IconButton className='settingIcon'>
-            <img src={"/images/icons/setting.svg"} alt='' width={22} />
+          <IconButton className="settingIcon">
+            <img src={'/images/icons/setting.svg'} alt="" width={22} />
           </IconButton>
-          <Box lineHeight={'10px'}
+          <Box
+            lineHeight={'10px'}
             onClick={handleToggle}
             ref={anchorRef}
             id="composition-button"
@@ -170,12 +195,14 @@ const Header = () => {
             sx={{ cursor: 'pointer' }}
           >
             <Typography variant="h4" className="profileLogo">
-              {`${FirstName?.[0] || ""}${LastName?.[0] || ""}`.toUpperCase()}
+              {`${FirstName?.[0] || ''}${LastName?.[0] || ''}`.toUpperCase()}
             </Typography>
             {/* <img src={"/images/icons/profile.svg"} alt='' /> */}
           </Box>
         </Box>
+        <Button onClick={handleOpenDialog}>Open Dialog</Button>
       </Toolbar>
+      <AllocationForm />
       <Popper
         open={open}
         anchorEl={anchorRef.current}
