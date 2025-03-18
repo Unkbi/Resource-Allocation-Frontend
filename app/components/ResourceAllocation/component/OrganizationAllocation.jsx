@@ -1,7 +1,5 @@
 "use client"
 import AllocationGrid from "@/app/components/AllocationTable/AllocationGrid";
-// import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { demoRows } from '../../AllocationTable/data';
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllOrganizationAllocations } from '@/app/redux/actions/fetchOrganizationAction';
