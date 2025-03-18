@@ -364,7 +364,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            <Button className="selectedDate">Default</Button>
+            <Button className="selectedDate">Jan 25 - Dec 25</Button>
 
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />

@@ -19,8 +19,8 @@ const MainBox = styled(Box)(({ theme }) => ({
     padding: "0",
     alignItems: "center",
     opacity: "0.6",
-    padding: "10px 8px",
-    marginBottom: "5px",
+    padding: "8px 2px",
+    // marginBottom: "6px",
     cursor: "pointer",
     "&.active": {
       opacity: "1",
@@ -38,7 +38,7 @@ const MainBox = styled(Box)(({ theme }) => ({
     lineHeight: "12px",
   },
   "& .logo": {
-    marginBottom: "20px"
+    marginBottom: "12px"
   }
 }));
 
@@ -48,22 +48,31 @@ const Sidebar = () => {
   const pathname = usePathname();
 
   const menuItems = [
-    { text: 'Dashboard', icon: "/images/icons/dashboard.svg", url: "" },
-    { text: 'Allocation', icon: "/images/icons/allocation.svg", url: "/allocation" },
-    { text: 'Projects', icon: "/images/icons/projects.svg", url: "" },
-    { text: 'People', icon: "/images/icons/people.svg", url: "" },
-    { text: 'Reports', icon: "/images/icons/reports.svg", url: "" },
+    { text: '', icon: "/images/icons/Vector.svg", url: "/" },
+    { text: '', icon: "/images/icons/WatchLaterRounded.svg", url: "/allocation" },
+    { text: '', icon: "/images/icons/FolderIcon.svg", url: "/project" },
+    { text: '', icon: "/images/icons/peopleIcon.svg", url: "/people" },
+    { text: '', icon: "/images/icons/ReportsIcon.svg", url: "/report" },
   ];
+
+  const extraMenuItems = [
+    { text: '', icon: "/images/icons/SettingsIcon.svg", url: "" },
+    { text: '', icon: "/images/icons/Notifications.svg", url: "" },
+    { text: '', icon: "/images/icons/helpIcon.svg", url: "" },
+    { text: '', icon: "/images/icons/sidebar-left.svg", url: "" },
+    { text: '', icon: "/images/icons/exiticon.svg", url: "" },
+  ];
+
 
   useEffect(() => {
     const currentMenuItem = menuItems.find(item => item.url === pathname);
     if (currentMenuItem) {
-      setSelectedMenu(currentMenuItem.text);
+      setSelectedMenu(currentMenuItem.url);
     }
   }, [pathname]);
 
   const handleMenuClick = (text, url) => {
-    setSelectedMenu(text);
+    setSelectedMenu(url);
     router.push(url);
   };
 
@@ -73,11 +82,12 @@ const Sidebar = () => {
         <Link href={''}>
           <img alt="logo" src="/images/icons/cio-logo.svg" />
         </Link>
+        <img src="/images/icons/Line1.svg"/>
       </Box>
       <List>
         {menuItems.map((item, index) => (
           <MenuItem
-            className={`menuList ${selectedMenu === item.text ? 'active' : ''}`}
+            className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
             key={index}
             onClick={() => handleMenuClick(item.text, item.url)}
           >
@@ -86,6 +96,23 @@ const Sidebar = () => {
           </MenuItem>
         ))}
       </List>
+      <img src="/images/icons/Line2.svg"/>
+      {/* Extra Menu Items (New items) */}
+      <Box sx={{ marginTop: '120px', paddingTop: '20px' }}>
+        <List>
+          {extraMenuItems.map((item, index) => (
+            <MenuItem
+              className={`menuList ${selectedMenu === item.text ? 'active' : ''}`}
+              key={index}
+              onClick={() => handleMenuClick(item.text, item.url)}
+              aria-label={item.text}
+            >
+              <img src={item.icon} alt={item.text} />
+              <Typography className='menuText'>{item.text}</Typography>
+            </MenuItem>
+          ))}
+        </List>
+      </Box>
     </MainBox>
   );
 };
