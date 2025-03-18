@@ -57,6 +57,7 @@ const createValueHandlers = dispatch => ({
   valueGetter: params => {
     return params?.value ?? null;
   },
+
   preProcessEditCellProps: params => {
     const { props } = params;
     let numericValue = parseFloat(props.value) || 0;
