@@ -176,6 +176,41 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
       .filter(column => showField.includes(column.field))
       .map(column => column.field);
 
+  const handleCellKeyDown = (params, event) => {
+    // Preventing Key Events for Editing.
+    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+      event.preventDefault();
+    }
+
+    if(['Tab', 'Enter'].includes(event.key)) {
+      const currentCell = apiRef.current.getCellElement(params.id, params.field)
+      let nextCell = currentCell.nextElementSibling
+
+      // Find Next Cell
+      while(nextCell?.role !== 'gridcell') {
+        if(nextCell.nextElementSibling == null) {
+          nextCell = nextCell.parentElement.nextElementSibling.firstChild
+        }
+        else{
+          nextCell = nextCell.nextElementSibling
+        }
+      }
+
+      // Handling Tab Key Event
+      if(event.key === 'Tab' && (rowModesModel && Object.keys(rowModesModel).length === 0)) {
+        event.preventDefault();
+        nextCell.focus()
+      }
+  
+      // Handling Enter Key Event
+      if(event.key === 'Enter' && (rowModesModel && Object.keys(rowModesModel).length > 0)) {
+        event.preventDefault();
+        event.stopPropagation()
+        apiRef.current.stopRowEditMode({id : params.id, field : params.field})
+      }
+    }
+  }
+  
   const handleCellUpdate = (newRow, oldRow) => {
     Object.keys(newRow).forEach(key => {
       if (key.startsWith('W')) {
@@ -222,13 +257,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
       }});
       
     return newRow;
-  }
-
-  const handleCellKeyDown = (params, event) => {
-    // Preventing Key Events for Editing.
-    if (['e', 'E', '+', '-', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
-      event.preventDefault();
-    }
   }
 
   const onRowClick = useCallback(
