@@ -14,7 +14,7 @@ const GridToolbarExport = () => {
   }).replace(/\//g, '-');
 
   const csvConfig = mkConfig({ useKeysAsHeaders: true,
-     filename: `${view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
+     filename: `${view === 'Organizations' ? 'Organization_Allocation' : view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
     });
 
   const excelPostProcess = (wb) => {
@@ -80,7 +80,7 @@ const GridToolbarExport = () => {
   return (
     <GridToolbarExportContainer>
       <GridExcelExportMenuItem options={{ exceljsPostProcess: excelPostProcess,
-        fileName: `${view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
+        fileName: `${view === 'Organizations' ? 'Organization_Allocation' : view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
         }} />
       <CsvExportMenuItem />
     </GridToolbarExportContainer>

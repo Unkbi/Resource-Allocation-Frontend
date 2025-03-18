@@ -43,7 +43,7 @@ export const getFinalColumns = (
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const allColumns = getAllColumnsWithWeek(columns, dispatch);
-  
+
   if (groupBy === 'teams' || groupBy === 'organization') {
     return [
       ...(allColumns?.slice(0, 1) || []),
@@ -67,8 +67,9 @@ export const getFinalColumns = (
                   groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
                 }
                 onClick={event => {
-                  setSelectedProject(params.row.project),
-                    setSelectedTeam(params.row.teams);
+                  setSelectedOrganization(params.row.organization),
+                  setSelectedTeam(params.row.teams)
+                  setSelectedProject(params.row.project)
                 }}
               />
             );
@@ -113,7 +114,7 @@ export const getFinalColumns = (
                 )}
                 onClick={event => {
                   setSelectedTeam(params.row.teams),
-                    setSelectedResourceId(params.row.resourceId);
+                  setSelectedResourceId(params.row.resourceId);
                 }}
               />
             );
