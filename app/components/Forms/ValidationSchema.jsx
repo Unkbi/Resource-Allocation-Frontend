@@ -1,10 +1,6 @@
-// validationSchemas.js
 import * as Yup from 'yup';
 
-export const addProjectValidationSchema = Yup.object({
-  projectName: Yup.string().required('Project Name is required'),
-  projectDescription: Yup.string().required('Project Description is required'),
-});
+export const addProjectValidationSchema = Yup.object({});
 
 export const addResourceValidationSchema = Yup.object({
   resourceName: Yup.string().required('Resource Name is required'),

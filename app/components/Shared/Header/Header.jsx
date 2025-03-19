@@ -149,17 +149,16 @@ const Header = () => {
   const handleOpenDialog = () => {
     dispatch(
       openDialog({
-        title: 'Add Resource',
-        submitButtonText: 'Save',
+        title: 'Add Project',
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
         formState: {
-          formType: 'add_allocation',
+          formType: 'add_project',
         },
       })
     );
   };
-  const handleSubmit = formData => {
-    console.log('Form Data:', formData);
-  };
+
   return (
     <MainAppBar>
       <Toolbar className="toobarRow">

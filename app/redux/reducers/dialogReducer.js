@@ -1,6 +1,6 @@
 const initialState = {
   isOpen: false,
-  title: 'Default Title',
+  title: '',
   submitButtonText: 'Submit',
   onSubmit: null,
   formState: {

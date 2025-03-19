@@ -28,7 +28,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     position: 'fixed',
     right: 0,
     top: 0,
-    width: '372px',
+    width: '380px',
     height: '100vh',
     maxHeight: 'none',
   },
@@ -36,24 +36,25 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 
 const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   margin: 0,
-  padding: '16px',
+  padding: '20px',
   height: '52px',
-  fontFamily: 'Manrope',
+  fontFamily: 'Open Sans',
   fontWeight: 800,
   fontSize: '15px',
   lineHeight: 'normal',
   letterSpacing: '0px',
-  color: '#313F68',
+  color: '#FFFF',
   display: 'flex',
   alignItems: 'center',
   fontStyle: 'normal',
+  background: '#1C2D5F',
 }));
 
 const StyledIconButton = styled(IconButton)(({ theme }) => ({
   position: 'absolute',
   right: 16,
   top: 20,
-  color: '#424242',
+  color: '#FFF',
   width: '14px',
   height: '14px',
 }));
@@ -62,7 +63,7 @@ const StyledSubmitButton = styled(Button)(({ theme }) => ({
   width: '86px',
   height: '36px',
   borderRadius: '4px',
-  fontFamily: 'Manrope',
+  fontFamily: 'Open Sans',
   fontWeight: '700',
   fontSize: '12px',
   lineHeight: '100%',
@@ -76,7 +77,7 @@ const StyledCancelButton = styled(Button)(({ theme }) => ({
   borderBlockColor: '#1C2D5F',
   borderRadius: '4px',
   borderWidth: '1px',
-  fontFamily: 'Manrope',
+  fontFamily: 'Open Sans',
   fontWeight: '700',
   fontSize: '12px',
   lineHeight: '100%',
@@ -89,9 +90,9 @@ const CustomDialog = ({ children, onSubmit }) => {
   const dialogState = useSelector(state => state.globalDialog);
   const {
     isOpen,
-    title = 'Default Title',
+    title = '',
     submitButtonText = 'Submit',
-    FormComponent,
+    cancelButtonText = 'Cancel',
   } = dialogState;
 
   const handleClose = () => {
@@ -108,7 +109,7 @@ const CustomDialog = ({ children, onSubmit }) => {
         <DialogContent>{children}</DialogContent>
         <DialogActions>
           <StyledCancelButton variant="outlined" onClick={handleClose}>
-            Cancel
+            {cancelButtonText}
           </StyledCancelButton>
           <StyledSubmitButton onClick={onSubmit} variant="contained">
             {submitButtonText}

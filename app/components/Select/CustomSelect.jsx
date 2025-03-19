@@ -1,19 +1,9 @@
 import React from 'react';
-import { Field, ErrorMessage } from 'formik';
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  styled,
-} from '@mui/material';
+import { Select, MenuItem, styled } from '@mui/material';
 
-// Styled Select Component
-const StyledSelect = styled(Select)(({ theme }) => ({
-  height: '38px',
-  width: '340px',
-  borderRadius: '0px',
+const StyledSelect = styled(Select)(({ theme, width }) => ({
+  height: '36px',
+  width: width || '340px',
   '& .MuiOutlinedInput-root': {
     backgroundColor: '#fff',
     '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -25,41 +15,37 @@ const StyledSelect = styled(Select)(({ theme }) => ({
   },
 }));
 
-// Styled MenuItem Component
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
-  fontFamily: 'Manrope, sans-serif',
+  fontFamily: 'Open Sans',
   fontSize: '14px',
 }));
 
-// Styled FormControl Component
-const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  width: '340px',
-  marginBottom: '16px',
-  height: '38px',
-}));
-
-const CustomSelect = ({
-  name,
-  label,
-  options,
-  value,
-  onChange,
-  onBlur,
-  error,
-  helperText,
-}) => {
+const CustomSelect = ({ name, options, value, onChange, onBlur, width }) => {
   return (
-    // <StyledFormControl fullWidth margin="normal" error={error}>
-    <StyledSelect name={name} value={value} onChange={onChange} onBlur={onBlur}>
+    <StyledSelect
+      name={name}
+      value={value || ''}
+      onChange={onChange}
+      onBlur={onBlur}
+      width={width}
+      IconComponent={() => (
+        <img
+          src="/images/icons/dropdown-icon.svg"
+          alt="dropdown"
+          style={{
+            position: 'absolute',
+            right: '10px',
+            bottom: '15px',
+          }}
+        />
+      )}
+    >
       {options.map(option => (
         <StyledMenuItem key={option.value} value={option.value}>
           {option.label}
         </StyledMenuItem>
       ))}
     </StyledSelect>
-    //   {helperText && <FormHelperText>{helperText}</FormHelperText>}
-    //   <ErrorMessage name={name} component="div" />
-    // </StyledFormControl>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Formik, Form } from 'formik';
+import { Formik } from 'formik';
 import { useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
 import AddProjectForm from '../../Forms/AddProjectForm';
@@ -25,6 +25,13 @@ const AllocationForm = () => {
     allocate: '',
     week: '',
     capacity: '',
+    startDate: '',
+    endDate: '',
+    projectName: '',
+    sponser: '',
+    allowOvertime: '',
+    location: '',
+    manager: '',
   };
 
   const getValidationSchema = formType => {

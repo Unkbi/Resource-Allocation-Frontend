@@ -1,45 +1,12 @@
 import React from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import {
-  TextField,
-  Button,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Box,
-  Typography,
-} from '@mui/material';
-import {
-  addAllocationValidationSchema,
-  addProjectValidationSchema,
-} from './ValidationSchema';
+import { TextField, Box, Typography } from '@mui/material';
 import CustomSelect from '../Select/CustomSelect';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
-
-// Initial Form Values
-const initialValues = {
-  team: '',
-  design: '',
-  resource: '',
-  resourceType: '',
-  project: '',
-  allocate: '',
-  week: '',
-  capacity: '',
-};
+import CustomDatePicker from '../DatePicker/CustomDatePicker';
 
 const AddAllocationForm = ({ formikProps }) => {
   const { values, handleChange, handleBlur } = formikProps;
-
-  const teamOptions = [
-    { value: 'Team A', label: 'Team A' },
-    { value: 'Team B', label: 'Team B' },
-    { value: 'Team C', label: 'Team C' },
-  ];
-
   const projectOptions = [
     { value: 'Design 1', label: 'Design 1' },
     { value: 'Design 2', label: 'Design 2' },
@@ -54,7 +21,6 @@ const AddAllocationForm = ({ formikProps }) => {
 
   return (
     <Box>
-      {/* Resource Field */}
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Resource</StyledLabel>
         <CustomSelect
@@ -65,7 +31,6 @@ const AddAllocationForm = ({ formikProps }) => {
           onBlur={handleBlur}
         />
       </Box>
-      {/* Project Field */}
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Resource</StyledLabel>
         <CustomSelect
@@ -88,7 +53,7 @@ const AddAllocationForm = ({ formikProps }) => {
           <Typography
             sx={{
               color: '#313F68',
-              fontFamily: 'Manrope',
+              fontFamily: 'Open Sans',
               fontSize: '12px',
               fontStyle: 'normal',
               fontWeight: '700',
@@ -99,10 +64,21 @@ const AddAllocationForm = ({ formikProps }) => {
         </Box>
         <Box sx={{ pb: 2, pt: 2 }}>
           <StyledLabel>Date Range</StyledLabel>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+            <CustomDatePicker
+              handleChange={handleChange}
+              value={values.startDate}
+              placeholder={'Start Date'}
+            />
+            <CustomDatePicker
+              handleChange={handleChange}
+              value={values.endDate}
+              placeholder={'Start Date'}
+            />
+          </Box>
         </Box>
         <Box>
           <StyledLabel>Capacity</StyledLabel>
-          {/* Capacity Field */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: '22px' }}>
             <StyledInput
               as={TextField}
