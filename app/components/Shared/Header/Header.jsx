@@ -72,7 +72,7 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
   },
   '& .settingIcon': {
     padding: '0',
-    borderRadius: 'inherit',
+    borderRadius: '3px',
   },
 }));
 
@@ -190,10 +190,10 @@ const Header = () => {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '25px',
-              height: '25px',
+              width: "30px",          
+              height: "30px",  
               backgroundColor: '#0A1B39',
-              borderRadius: '50%',
+              borderRadius: '8px',
               '&:hover': {
                 backgroundColor: '#0A1B39', // Keep the color consistent on hover
               },
