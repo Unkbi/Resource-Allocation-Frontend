@@ -556,7 +556,6 @@ export default function Project() {
     }
 
     const handleMenuClose = (params) => {
-        console.log("params", params)
         setAnchorEl(null)
         setSelectedRow(null)
     }
