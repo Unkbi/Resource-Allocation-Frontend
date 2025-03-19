@@ -209,7 +209,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     [dispatch]
   );
   const handleClick = () => {
-    setActive((prev) => !prev);
+    setActive(prev => !prev);
   };
   return (
     <Box
@@ -324,7 +324,10 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                   placement="bottom"
                   onClick={handleClick}
                 >
-                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} fontSize={'18'} />
+                  <MyTeamsIcon
+                    color={active ? '#344665' : '#99A2B2'}
+                    fontSize={'18'}
+                  />
                 </TooltipButton>
                 <TooltipButton
                   msg="All Teams"
