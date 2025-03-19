@@ -18,6 +18,7 @@ const StyledPickersLayout = styled(PickersLayout)({
 
 const CustomTextField = styled(TextField)({
   height: '36px',
+  width: '160px',
   '& .MuiInputBase-root': {
     height: '36px',
     fontFamily: 'Open Sans',
@@ -36,14 +37,23 @@ const CustomTextField = styled(TextField)({
   },
 });
 
-export default function CustomDatePicker({ placeholder }) {
-  const [value, setValue] = React.useState(dayjs('2022-04-17'));
+export default function CustomDatePicker({
+  name,
+  value,
+  placeholder,
+  formikProps,
+}) {
+  const { setFieldValue } = formikProps;
 
+  const handleDateChange = newValue => {
+    const formattedDate = newValue ? newValue.toISOString() : null;
+    setFieldValue(name, formattedDate);
+  };
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
-        value={value}
-        onChange={newValue => setValue(newValue)}
+        value={value ? dayjs(value) : null}
+        onChange={handleDateChange}
         slots={{
           layout: StyledPickersLayout,
           textField: CustomTextField,

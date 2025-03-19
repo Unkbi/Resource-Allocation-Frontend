@@ -1,10 +1,10 @@
 const initialState = {
   isOpen: false,
   title: '',
-  submitButtonText: 'Submit',
-  onSubmit: null,
+  submitButtonText: '',
+  cancelButtonText: '',
   formState: {
-    formType: 'assign_allocation',
+    formType: '',
   },
 };
 

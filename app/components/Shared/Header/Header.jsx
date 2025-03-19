@@ -10,7 +10,6 @@ import {
   styled,
   Box,
   colors,
-  Button,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
@@ -22,6 +21,8 @@ import MenuList from '@mui/material/MenuList';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close'; // Close icon import
+import { openDialog } from '@/app/redux/actions/dialogAction';
+import AllocationForm from '../../AllocationTable/components/AllocationForm';
 
 const MainAppBar = styled(AppBar)(({ theme }) => ({
   marginLeft: '74px',
@@ -116,25 +117,48 @@ const Header = () => {
     {
       icon: '/images/icons/AllocationIcon.svg',
       alt: 'Allocation Icon',
-      text: 'Add Allocation',
+      title: 'Add Allocation',
+      type: 'add_allocation',
     },
     {
       icon: '/images/icons/ProjectIcon.svg',
       alt: 'Project Icon',
-      text: 'Add Project',
+      title: 'Add Project',
+      type: 'add_project',
     },
-    { icon: '/images/icons/TeamIcon.svg', alt: 'Team Icon', text: 'Add Team' },
+    {
+      icon: '/images/icons/TeamIcon.svg',
+      alt: 'Team Icon',
+      title: 'Add Team',
+      type: 'add_team',
+    },
     {
       icon: '/images/icons/ResourceIcon.svg',
       alt: 'Resource Icon',
-      text: 'Add Resource',
+      title: 'Add Resource',
+      type: 'add_resource',
     },
     {
       icon: '/images/icons/corporate_fare.svg',
       alt: 'Organization Icon',
-      text: 'Add Organization',
+      title: 'Add Organization',
+      type: 'add_organization',
     },
   ];
+
+  const handleOpenDialog = (title, formType) => {
+    setOpenAddMenu(false);
+    dispatch(
+      openDialog({
+        title: title,
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formState: {
+          formType: formType,
+        },
+      })
+    );
+  };
 
   return (
     <MainAppBar>
@@ -226,6 +250,7 @@ const Header = () => {
                   {menuItems.map((item, index) => (
                     <MenuItem
                       key={index}
+                      onClick={() => handleOpenDialog(item.title, item.type)}
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -240,7 +265,7 @@ const Header = () => {
                         width={20}
                         style={{ marginRight: 8 }}
                       />
-                      {item.text}
+                      {item.title}
                     </MenuItem>
                   ))}
                 </MenuList>
@@ -249,6 +274,7 @@ const Header = () => {
           </Grow>
         )}
       </Popper>
+      <AllocationForm />
     </MainAppBar>
   );
 };

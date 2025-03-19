@@ -5,13 +5,8 @@ export const StyledInput = styled(TextField)(
     '& .MuiOutlinedInput-root': {
       borderRadius: '4px',
       height: height || '36px',
-      backgroundColor: '#fff',
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#1C2D5F',
-      },
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#1C2D5F',
-      },
+      backgroundColor: '#FFF',
+      fontSize: '12px',
     },
     width: width || '100%',
     margin: margin || '0',

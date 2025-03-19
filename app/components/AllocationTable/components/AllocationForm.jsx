@@ -12,10 +12,10 @@ import {
   addResourceValidationSchema,
   assignAllocationValidationSchema,
 } from '../../Forms/ValidationSchema';
+import dayjs from 'dayjs';
 
 const AllocationForm = () => {
   const { formType } = useSelector(state => state.globalDialog.formState);
-
   const initialValues = {
     team: '',
     design: '',
@@ -36,7 +36,7 @@ const AllocationForm = () => {
 
   const getValidationSchema = formType => {
     switch (formType) {
-      case 'add_project':
+      case 'Add Project':
         return addProjectValidationSchema;
       case 'add_resource':
         return addResourceValidationSchema;

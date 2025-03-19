@@ -4,6 +4,7 @@ import { Select, MenuItem, styled } from '@mui/material';
 const StyledSelect = styled(Select)(({ theme, width }) => ({
   height: '36px',
   width: width || '340px',
+  fontSize: '12px',
   '& .MuiOutlinedInput-root': {
     backgroundColor: '#fff',
     '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -17,7 +18,7 @@ const StyledSelect = styled(Select)(({ theme, width }) => ({
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   fontFamily: 'Open Sans',
-  fontSize: '14px',
+  fontSize: '12px',
 }));
 
 const CustomSelect = ({ name, options, value, onChange, onBlur, width }) => {

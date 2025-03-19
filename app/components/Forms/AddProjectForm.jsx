@@ -15,7 +15,7 @@ const AddProjectForm = ({ formikProps }) => {
 
   return (
     <Box>
-      <Box sx={{ pb: 1 }}>
+      <Box sx={{ pb: 2 }}>
         <StyledLabel>Project Name</StyledLabel>
         <StyledInput
           as={TextField}
@@ -25,7 +25,7 @@ const AddProjectForm = ({ formikProps }) => {
           onBlur={handleBlur}
         />
       </Box>
-      <Box sx={{ pb: 1 }}>
+      <Box sx={{ pb: 2 }}>
         <StyledLabel>Sponser</StyledLabel>
         <StyledInput
           as={TextField}
@@ -35,7 +35,7 @@ const AddProjectForm = ({ formikProps }) => {
           onBlur={handleBlur}
         />
       </Box>
-      <Box sx={{ pb: 1 }}>
+      <Box sx={{ pb: 2 }}>
         <StyledLabel>Manager</StyledLabel>
         <StyledInput
           as={TextField}
@@ -45,7 +45,7 @@ const AddProjectForm = ({ formikProps }) => {
           onBlur={handleBlur}
         />
       </Box>
-      <Box sx={{ pb: 1 }}>
+      <Box sx={{ pb: 2 }}>
         <StyledLabel>Location</StyledLabel>
         <StyledInput
           as={TextField}
@@ -60,7 +60,7 @@ const AddProjectForm = ({ formikProps }) => {
           pb: 2,
           display: 'flex',
           alignItems: 'flex-start',
-          gap: '10px',
+          justifyContent: 'space-between',
         }}
       >
         <Box>
@@ -91,23 +91,27 @@ const AddProjectForm = ({ formikProps }) => {
           pb: 2,
           display: 'flex',
           alignItems: 'flex-start',
-          gap: '10px',
+          justifyContent: 'space-between',
         }}
       >
         <Box>
           <StyledLabel>Start Date</StyledLabel>
           <CustomDatePicker
+            name="startDate"
             handleChange={handleChange}
-            value={values.startDate || null}
+            value={values.startDate}
             placeholder={'Start Date'}
+            formikProps={formikProps}
           />
         </Box>
         <Box>
           <StyledLabel>End Date</StyledLabel>
           <CustomDatePicker
+            name="endDate"
             handleChange={handleChange}
-            value={values.endDate || null}
+            value={values.endDate}
             placeholder={'Start Date'}
+            formikProps={formikProps}
           />
         </Box>
       </Box>
