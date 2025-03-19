@@ -6,8 +6,6 @@ import ProjectToolbar from "../../Toolbar/ProjectToolbar";
 import { useState } from "react";
 
 const ProjectTable = ({columns, rows}) => {
-    console.log("columns", columns);
-    console.log("rows", rows);
     const apiRef = useGridApiRef();
     const [filterButtonEl, setFilterButtonEl] = useState(null);
     return (
