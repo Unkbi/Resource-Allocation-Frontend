@@ -50,7 +50,7 @@ const Sidebar = () => {
   const menuItems = [
     { text: 'Dashboard', icon: "/images/icons/dashboard.svg", url: "" },
     { text: 'Allocation', icon: "/images/icons/allocation.svg", url: "/allocation" },
-    { text: 'Projects', icon: "/images/icons/projects.svg", url: "" },
+    { text: 'Projects', icon: "/images/icons/projects.svg", url: "/project" },
     { text: 'People', icon: "/images/icons/people.svg", url: "" },
     { text: 'Reports', icon: "/images/icons/reports.svg", url: "" },
   ];
