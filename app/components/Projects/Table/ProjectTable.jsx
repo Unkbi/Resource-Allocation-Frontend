@@ -13,6 +13,7 @@ const ProjectTable = ({columns, rows}) => {
             apiRef={apiRef}
             columns={columns}
             rows={rows}
+            hideFooter={true}
             slots={{
                 toolbar: ProjectToolbar
             }}
