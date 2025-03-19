@@ -21,33 +21,36 @@ import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { performLogout } from '@/app/redux/actions/authActions';
-import { openDialog } from '@/app/redux/actions/dialogAction';
-import AllocationForm from '../../AllocationTable/components/AllocationForm';
+import CloseIcon from '@mui/icons-material/Close'; // Close icon import
 
 const MainAppBar = styled(AppBar)(({ theme }) => ({
   marginLeft: '74px',
   width: 'calc(100% - 74px)',
   zIndex: '91',
   boxShadow: '0 1px 0 0 #DDE1E4',
-  background: '#fff',
+  background: '#EBEFFC',
   '& h6': {
     color: theme.custom.primaryColor,
     fontFamily: "'Manrope', serif",
-    fontWeight: '800',
+    // fontFamily: "Open Sans",
+    fontWeight: 'SemiBold',
     fontSize: '18px',
     lineHeight: '22px',
   },
   '& .searchBar': {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: '#FFFFFF',
     border: '1px solid #D6DCE1',
+    boxShadow: '0 1px 0 0 #DDE1E4',
     borderRadius: '4px',
-    width: '184px',
-    height: '32px',
+    width: '445px',
+    height: '33px',
+    transition: 'width 0.3s ease-in-out',
     '& input': {
       padding: '2px 10px',
       fontSize: '12px',
       color: '#757575',
+      width: '410px',
+      // height: "32px",
       height: '30px',
       boxSizing: 'border-box',
       color: '#212121',
@@ -68,96 +71,70 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
   },
   '& .settingIcon': {
     padding: '0',
-  },
-  '& .profileLogo': {
-    backgroundColor: '#1c2d5f',
-    width: '22px',
-    height: '22px',
-    borderRadius: '50%',
-    fontSize: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '700',
-    lineHeight: '21px',
-    color: '#fff',
-    paddingTop: '0px',
-  },
-  '& .profileMenu': {
-    backgroundColor: '#FFFFFF',
-    boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
-    marginTop: '16px',
-    minWidth: '160px',
-    '& li': {
-      fontFamily: "'Manrope', serif",
-      fontWeight: '500',
-      fontSize: '14px',
-      lineHeight: '22px',
-      color: '#212121',
-      '& .MuiTouchRipple-root': {
-        display: 'none',
-      },
-      '&.Mui-focusVisible': {
-        backgroundColor: '#FFFFFF',
-      },
-    },
+    borderRadius: 'inherit',
   },
 }));
 
 const Header = () => {
-  const [open, setOpen] = React.useState(false);
+  const [openAddMenu, setOpenAddMenu] = React.useState(false);
+  const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.user);
 
-  const handleToggle = () => {
-    setOpen(prevOpen => !prevOpen);
+  const handleAddMenuToggle = () => {
+    setOpenAddMenu(prevOpen => !prevOpen);
   };
-
   const handleClose = event => {
-    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+    if (
+      anchorRef.current?.contains(event.target) ||
+      anchorRefAdd.current?.contains(event.target)
+    ) {
       return;
     }
-    setOpen(false);
+    setOpenAddMenu(false);
   };
 
   function handleListKeyDown(event) {
-    if (event.key === 'Tab') {
+    if (event.key === 'Tab' || event.key === 'Escape') {
       event.preventDefault();
-      setOpen(false);
-    } else if (event.key === 'Escape') {
-      setOpen(false);
+      setOpenAddMenu(false);
     }
   }
 
   // return focus to the button when we transitioned from !open -> open
-  const prevOpen = React.useRef(open);
+  const prevOpenAdd = React.useRef(openAddMenu);
+
   React.useEffect(() => {
-    if (prevOpen.current === true && open === false) {
-      anchorRef.current.focus();
+    if (prevOpenAdd.current === true && openAddMenu === false) {
+      anchorRefAdd.current.focus();
     }
-    prevOpen.current = open;
-  }, [open]);
+    prevOpenAdd.current = openAddMenu;
+  }, [openAddMenu]);
 
-  const handleLogout = e => {
-    dispatch(performLogout());
-    router.push('/login');
-  };
-
-  const { FirstName, LastName } = user || {};
-  const handleOpenDialog = () => {
-    dispatch(
-      openDialog({
-        title: 'Add Project',
-        submitButtonText: 'Add',
-        cancelButtonText: 'Cancel',
-        formState: {
-          formType: 'add_project',
-        },
-      })
-    );
-  };
+  const menuItems = [
+    {
+      icon: '/images/icons/AllocationIcon.svg',
+      alt: 'Allocation Icon',
+      text: 'Add Allocation',
+    },
+    {
+      icon: '/images/icons/ProjectIcon.svg',
+      alt: 'Project Icon',
+      text: 'Add Project',
+    },
+    { icon: '/images/icons/TeamIcon.svg', alt: 'Team Icon', text: 'Add Team' },
+    {
+      icon: '/images/icons/ResourceIcon.svg',
+      alt: 'Resource Icon',
+      text: 'Add Resource',
+    },
+    {
+      icon: '/images/icons/corporate_fare.svg',
+      alt: 'Organization Icon',
+      text: 'Add Organization',
+    },
+  ];
 
   return (
     <MainAppBar>
@@ -166,7 +143,7 @@ const Header = () => {
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
           <Box className="searchBar">
             <TextField
-              placeholder="Search"
+              placeholder="Search..."
               size="small"
               InputProps={{
                 startAdornment: (
@@ -179,32 +156,41 @@ const Header = () => {
               variant="standard"
             />
           </Box>
-          <IconButton className="settingIcon">
-            <img src={'/images/icons/help-icon.svg'} alt="" width={22} />
-          </IconButton>
-          <IconButton className="settingIcon">
-            <img src={'/images/icons/setting.svg'} alt="" width={22} />
-          </IconButton>
-          <Box
-            lineHeight={'10px'}
-            onClick={handleToggle}
-            ref={anchorRef}
-            id="composition-button"
-            aria-controls={open ? 'composition-menu' : undefined}
-            sx={{ cursor: 'pointer' }}
+
+          <IconButton
+            className="settingIcon"
+            onClick={handleAddMenuToggle}
+            ref={anchorRefAdd}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '25px',
+              height: '25px',
+              backgroundColor: '#0A1B39',
+              borderRadius: '50%',
+              '&:hover': {
+                backgroundColor: '#0A1B39', // Keep the color consistent on hover
+              },
+              '&:focus': {
+                backgroundColor: '#0A1B39', // Keep the color consistent on focus
+              },
+            }}
           >
-            <Typography variant="h4" className="profileLogo">
-              {`${FirstName?.[0] || ''}${LastName?.[0] || ''}`.toUpperCase()}
-            </Typography>
-            {/* <img src={"/images/icons/profile.svg"} alt='' /> */}
-          </Box>
+            {/* Toggle the icon here based on the openAddMenu state */}
+            {openAddMenu ? (
+              <CloseIcon sx={{ color: '#fff', width: 22, height: 30 }} />
+            ) : (
+              <img src={'/images/icons/addbutton.svg'} alt="" width={30} />
+            )}
+          </IconButton>
         </Box>
-        <Button onClick={handleOpenDialog}>Open Dialog</Button>
       </Toolbar>
-      <AllocationForm />
+
       <Popper
-        open={open}
-        anchorEl={anchorRef.current}
+        open={openAddMenu}
+        anchorEl={anchorRefAdd.current}
         role={undefined}
         placement="bottom-start"
         transition
@@ -218,15 +204,45 @@ const Header = () => {
                 placement === 'bottom-start' ? 'left top' : 'left bottom',
             }}
           >
-            <Paper className="profileMenu">
+            <Paper
+              className="AddMenu"
+              sx={{
+                boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.06)',
+              }}
+            >
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList
-                  autoFocusItem={open}
-                  id="composition-menu"
-                  aria-labelledby="composition-button"
+                  autoFocusItem={openAddMenu}
+                  id="Add-menu"
+                  aria-labelledby="Add-button"
                   onKeyDown={handleListKeyDown}
+                  sx={{
+                    gap: '8px',
+                    margin: ' 5px',
+                    paddingTop: '18px',
+                    paddingBottom: '12px',
+                  }}
                 >
-                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                  {menuItems.map((item, index) => (
+                    <MenuItem
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        paddingLeft: 2,
+                        paddingBottom: 2,
+                        gap: 1,
+                      }}
+                    >
+                      <img
+                        src={item.icon}
+                        alt={item.alt}
+                        width={20}
+                        style={{ marginRight: 8 }}
+                      />
+                      {item.text}
+                    </MenuItem>
+                  ))}
                 </MenuList>
               </ClickAwayListener>
             </Paper>
