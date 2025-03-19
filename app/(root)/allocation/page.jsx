@@ -3,10 +3,12 @@ import styles from '../../page.module.css';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import TeamAllocation from '@/app/components/ResourceAllocation/component/TeamAllocation';
+import OrganizationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
 import ProjectAllocation from '@/app/components/ResourceAllocation/component/ProjectAllocation';
 import { useEffect } from 'react';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
+import { fetchAllOrganizations } from '@/app/redux/actions/fetchOrganizationAction';
 
 export default function Allocation() {
   const dispatch = useDispatch();
@@ -18,14 +20,15 @@ export default function Allocation() {
   useEffect(() => {
     dispatch(fetchAllResources());
     dispatch(fetchAllProjects());
+    dispatch(fetchAllOrganizations())
   }, []);
 
   const getContentByRole = view => {
     switch (view) {
       case 'Projects':
         return <ProjectAllocation />;
-      // case 'Organizations':
-      //   return <OrganizationAllocation />;
+      case 'Organizations':
+        return <OrganizationAllocation />;
       case 'Teams':
         return <TeamAllocation />;
       default:

@@ -37,6 +37,7 @@ import CustomToolbar from '../Toolbar/CustomToolbar';
 
 export default function AllocationGrid({ groupBy, columns, data, loading, rowsState, setRowsState, selectedTeam, setSelectedTeam }) {
   const apiRef = useGridApiRef();
+
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
@@ -161,7 +162,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
     setSelectedTeam,
     handleAddProject,
     setSelectedResourceId,
-    dispatch
+    dispatch,
+    setSelectedOrganization
   );
 
   const showField = [

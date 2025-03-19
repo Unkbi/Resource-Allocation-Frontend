@@ -198,7 +198,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const viewOptions = [
     'Teams',
     'Projects',
-    // 'Organizations'
+    'Organizations'
   ];
   const [active, setActive] = useState(false);
 

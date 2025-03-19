@@ -15,10 +15,9 @@ const GridToolbarExport = () => {
     year: 'numeric'
   }).replace(/\//g, '-');
 
-  const csvConfig = mkConfig({
-    useKeysAsHeaders: true,
-    filename: `${view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
-  });
+  const csvConfig = mkConfig({ useKeysAsHeaders: true,
+     filename: `${view === 'Organizations' ? 'Organization_Allocation' : view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
+    });
 
   const excelPostProcess = (wb) => {
     const ws = wb.worksheet;
@@ -129,10 +128,9 @@ const GridToolbarExport = () => {
 
   return (
     <GridToolbarExportContainer>
-      <GridExcelExportMenuItem options={{
-        exceljsPostProcess: excelPostProcess,
-        fileName: `${view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
-      }} />
+      <GridExcelExportMenuItem options={{ exceljsPostProcess: excelPostProcess,
+        fileName: `${view === 'Organizations' ? 'Organization_Allocation' : view === 'Projects' ? 'Project_Allocation' : 'Teams_Allocation'}_${currentDate}`
+        }} />
       <CsvExportMenuItem />
     </GridToolbarExportContainer>
   );
