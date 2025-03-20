@@ -14,13 +14,14 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     justifyContent: 'flex-end',
   },
   '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
+    padding: theme.spacing(2.5),
     height: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
     height: '56px',
+    boxShadow:'-7px -6px 7px rgba(0, 0, 0, 0.06)'
   },
   '& .MuiPaper-root': {
     margin: 0,
@@ -36,10 +37,10 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 
 const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   margin: 0,
-  padding: '20px',
+  padding: theme.spacing(2, 2.5),
   height: '52px',
   fontFamily: 'Open Sans',
-  fontWeight: 800,
+  fontWeight: 600,
   fontSize: '15px',
   lineHeight: 'normal',
   letterSpacing: '0px',
@@ -69,6 +70,7 @@ const StyledSubmitButton = styled(Button)(({ theme }) => ({
   lineHeight: '100%',
   letterSpacing: '0px',
   textAlign: 'center',
+  textTransform: 'none'
 }));
 
 const StyledCancelButton = styled(Button)(({ theme }) => ({
@@ -83,6 +85,7 @@ const StyledCancelButton = styled(Button)(({ theme }) => ({
   lineHeight: '100%',
   letterSpacing: '0px',
   textAlign: 'center',
+  textTransform: 'none'
 }));
 
 const CustomDialog = ({ children, onSubmit }) => {

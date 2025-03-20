@@ -7,7 +7,11 @@ export const StyledInput = styled(TextField)(
       height: height || '36px',
       backgroundColor: '#FFF',
       fontSize: '12px',
+      "& fieldset":{
+        borderColor:"#D6DCE1"
+      }
     },
+    
     width: width || '100%',
     margin: margin || '0',
     padding: padding || '0',

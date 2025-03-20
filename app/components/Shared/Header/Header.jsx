@@ -189,8 +189,8 @@ const Header = () => {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              width: "30px",          
-              height: "30px",  
+              width: '30px',
+              height: '30px',
               backgroundColor: '#0A1B39',
               borderRadius: '8px',
               '&:hover': {
