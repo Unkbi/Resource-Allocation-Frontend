@@ -27,7 +27,12 @@ const dialogSlice = createSlice({
       state.formState.initialData = initialData || {};
     },
     closeDialog: (state) => {
-      return initialState;
+      state.isOpen = false;
+      state.title = '';
+      state.submitButtonText = '';
+      state.cancelButtonText = '';
+      state.formState.formType = '';
+      state.formState.initialData = {};
     },
     updateDialogData: (state, action) => {
       const { title, submitButtonText, cancelButtonText, formType, initialData } = action.payload;

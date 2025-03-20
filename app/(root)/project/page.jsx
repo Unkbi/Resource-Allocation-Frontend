@@ -2,13 +2,15 @@
 import ProjectTable from "@/app/components/Projects/Table/ProjectTable";
 import { Box, styled } from "@mui/system";
 import { IconButton, Menu, MenuItem, Tab, Tabs } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { generateRandomColor, getInitials } from "@/app/utils/common";
 import MoreVertIcon from "@mui/icons-material/MoreVert"
-import { useDispatch } from "react-redux";
-import { openDialog } from "@/app/redux/reducers/dialogReducer";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
+import { closeDialog, openDialog } from "@/app/redux/reducers/dialogReducer";
+import CustomAvatar from "@/app/components/Avatar/CustomAvatar";
 
-const projects = {
+const demoProjects = {
     "result": [
         {
             "CostCurrency": "USD",
@@ -425,24 +427,43 @@ const StatusPill = styled('div')(({ theme, status }) => ({
   }));
 
 export default function Project() {
+    const dispatch = useDispatch()
+    const { projects, updating } = useSelector(state => state.projects)
     const [anchorEl, setAnchorEl] = useState(null)
     const [selectedRow, setSelectedRow] = useState(null)
-    const [rows, setRows] = useState(projects.result)
-    const dispatch = useDispatch();
+    const [rows, setRows] = useState(projects?.result || null)
+
+    console.log("projects", projects)
+
+    useEffect(() => {
+      if(!updating){
+        dispatch(fetchAllProjects());
+        dispatch(closeDialog())
+      }
+    },[updating])
+
+    useEffect(() => {
+      setRows(projects?.result)
+    }, [projects])
     
+    // console.log("modifyData(rows) : ", modifyData(rows))
     const modifyData = (data) => {
+      console.log("data : ", data)
+      if(data) {
         return data.map((item) => {
             return {
                 ...item,
                 id: item.Id,
                 Owner: {
                     name : item.Owner,
-                    bgColor: generateRandomColor(),
+                    bgColor: "#fff",
                     initials: getInitials(item.Owner),
                 },
             }
         })
-    }
+      }
+      return []
+  }
 
     const handleOpenDialog = (title, formType, row) => {
       dispatch(
@@ -470,10 +491,11 @@ export default function Project() {
           renderCell: (params) => {
             const owner = params.value
             return (
-              <PersonContainer>
-                <AvatarCircle bgcolor={owner.bgColor}>{owner.initials}</AvatarCircle>
-                <span>{owner.name}</span>
-              </PersonContainer>
+              // <PersonContainer>
+              //   <AvatarCircle bgcolor={owner.bgColor}>{owner.initials}</AvatarCircle>
+              //   <span>{owner.name}</span>
+              // </PersonContainer>
+              <CustomAvatar value={owner.name} showFullName={true} />
             )
           },
         },
@@ -485,10 +507,11 @@ export default function Project() {
           renderCell: (params) => {
             const manager = params.value
             return (
-              <PersonContainer>
-                <AvatarCircle bgcolor={generateRandomColor()}>CS</AvatarCircle>
-                <span>{manager}</span>
-              </PersonContainer>
+              // <PersonContainer>
+              //   <AvatarCircle bgcolor={generateRandomColor()}>CS</AvatarCircle>
+              //   <span>{manager}</span>
+              // </PersonContainer>
+              <CustomAvatar value={manager} showFullName={true} />
             )
           },
         },

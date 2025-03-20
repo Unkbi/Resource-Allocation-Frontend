@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Formik } from 'formik';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
 import AddProjectForm from '../../Forms/AddProjectForm';
 import AddResourceForm from '../../Forms/AddResourceForm';
@@ -12,6 +12,8 @@ import {
   addResourceValidationSchema,
   assignAllocationValidationSchema,
 } from '../../Forms/ValidationSchema';
+import { addProject, updateProject } from '@/app/services/projectServices';
+import { closeDialog } from '@/app/redux/reducers/dialogReducer';
 
 const initialValuesMap = {
   add_project: {
@@ -49,6 +51,8 @@ const initialValuesMap = {
 const AllocationForm = () => {
   const { formType } = useSelector((state) => state.globalDialog.formState);
   const [formValue, setFormValue] = useState(initialValuesMap[formType] || {});
+  const dispatch = useDispatch();
+  const { initialData } = useSelector((state) => state.globalDialog.formState);
 
 
   const getValidationSchema = (formType) => {
@@ -68,7 +72,38 @@ const AllocationForm = () => {
 
   const handleSubmit = (values) => {
     console.log('Form Data:', values);
+    let postData = {}    
     // Handle form submission
+    switch (formType) {
+      case 'add_project':
+        postData = {
+          "ResourceAllocation.Core/Project": {
+            ...values,
+            Description: "string",
+          }
+        }
+        try{
+          dispatch(addProject(postData));
+        }
+        catch(e){
+          console.log(e)
+        }
+      case 'edit_project':
+          postData = {
+            "ResourceAllocation.Core/Project": {
+              ...values,
+              Description: "string",
+            }
+          }
+          try{
+            dispatch(updateProject({postData, projectId : initialData.Id}));
+          }
+          catch(e){
+            console.log(e)
+          }
+      default:
+        return;
+    }
   };
 
   const getFormComponent = (formType, formikProps) => {

@@ -13,6 +13,7 @@ const initialState = {
   loading: false,
   dataProcessing: false,
   error: null,
+  updating: false,
 };
 
 const projectsSlice = createSlice({
@@ -53,27 +54,36 @@ const projectsSlice = createSlice({
       //Handle addProject API call
       .addCase(addProject.pending, state => {
         state.loading = true;
+        state.updating = true;
         state.error = null;
       })
       .addCase(addProject.fulfilled, (state, action) => {
         state.loading = false;
-        state.projects = action.payload;
-      })
+        state.updating = false;
+      //   state.projects = {
+      //     ...state.projects,
+      //     results: [...state.projects.results, action.payload],
+      // }
+    })
       .addCase(addProject.rejected, (state, action) => {
         state.loading = false;
+        state.updating = false;
         state.error = action.payload;
       })
       //Handle updateProject API call
       .addCase(updateProject.pending, state => {
         state.loading = true;
+        state.updating = true;
         state.error = null;
       })
       .addCase(updateProject.fulfilled, (state, action) => {
         state.loading = false;
+        state.updating = false;
         state.projects = action.payload;
       })
       .addCase(updateProject.rejected, (state, action) => {
         state.loading = false;
+        state.updating = false;
         state.error = action.payload;
       })
       //Handle deleteProject API call

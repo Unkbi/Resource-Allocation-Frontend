@@ -15,7 +15,6 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
       const rowData = {
         StartDate: initialData.StartDate || '',
         EndDate: initialData.EndDate || '',
-        ProjectName: initialData.Name || '',
         Owner: initialData.Owner?.name || '',
         AllowOvertime: initialData.AllowOvertime || '',
         Location: initialData.Location || '',
@@ -29,25 +28,24 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
   }, [initialData]);
 
   const projectTypeOptions = [
-    { value: 'Transformation', label: 'Transformation' },
-    { value: 'GTB (Grow-the-business)', label: 'GTB (Grow-the-business)' },
-    { value: 'RTB (Run-th-business)', label: 'RTB (Run-th-business)' },
-    { value: 'PTO', label: 'PTO' },
-    { value: 'Admin', label: 'Admin' },
-    { value: 'Misc', label: 'Misc' },
+    { value: 'Key Initiative', label: 'Key Initiative' },
+    { value: 'RTB', label: 'RTB (Run-th-business)' },
+    { value: 'CTB', label: 'CTB' },
+    { value: 'STB', label: 'STB' },
+    { value: 'Ongoing', label: 'Ongoing' },
   ];
   const allowOverTimeOptions = [
     { value: true, label: "Yes" },
-    { value: false, label: 'No' },
+    { value: false, label: "No" },
   
   ];
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Proposed', label: 'Proposed' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Paused', label: 'Paused' },
     { value: 'Completed', label: 'Completed' },
+    { value: 'Paused', label: 'Paused' },
+    { value: 'Terminated', label: 'Terminated' },
   ];
 
   return (

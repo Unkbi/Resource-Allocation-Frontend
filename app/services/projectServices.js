@@ -24,10 +24,10 @@ export const addProject = createAsyncThunk(
 
 export const updateProject = createAsyncThunk(
   '/project/update',
-  async (postData, { rejectWithValue }) => {
+  async ({postData, projectId}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(
-        `${API_PROJECT_PORTFOLIO}/Project`,
+        `${API_PROJECT_PORTFOLIO}/Project/${projectId}`,
         postData
       );
       return response.data;
