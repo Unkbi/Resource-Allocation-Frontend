@@ -18,7 +18,7 @@ import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
-import { useRouter } from 'next/navigation';
+import { useRouter ,usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close'; // Close icon import
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
@@ -70,9 +70,9 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
     paddingLeft: '15px',
     paddingRight: '15px',
   },
-  '& .settingIcon': {
-    padding: '0',
-    borderRadius: '3px',
+  "& .settingIcon": {
+    padding: "0",
+    borderRadius: "5px",
   },
 }));
 
@@ -81,6 +81,7 @@ const Header = () => {
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useDispatch();
 
   const handleAddMenuToggle = () => {
@@ -145,7 +146,7 @@ const Header = () => {
       type: 'add_organization',
     },
   ];
-
+  
   const handleOpenDialog = (title, formType) => {
     setOpenAddMenu(false);
     dispatch(
@@ -159,10 +160,32 @@ const Header = () => {
     );
   };
 
+  const getTitleFromPathname = (pathname) => {
+    switch(pathname) {
+      case '/allocation':
+        return 'Resource Allocation';
+      case '/project':
+        return 'Projects';
+      case '/people':
+        return 'People';
+      case '/report':
+        return 'Reports';
+      case '/settings':
+        return ;
+      case '/notifications':
+        return ;
+      case '/help':
+        return ;
+      default:
+        return 'Executive Dashboard'; 
+    }
+  };
   return (
     <MainAppBar>
       <Toolbar className="toobarRow">
-        <Typography variant="h6">Resource Allocation</Typography>
+        <Typography variant="h6">
+        {getTitleFromPathname(pathname)} 
+        </Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
           <Box className="searchBar">
             <TextField
@@ -180,34 +203,32 @@ const Header = () => {
             />
           </Box>
 
-          <IconButton
-            className="settingIcon"
-            onClick={handleAddMenuToggle}
-            ref={anchorRefAdd}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '30px',
-              height: '30px',
-              backgroundColor: '#0A1B39',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: '#0A1B39', // Keep the color consistent on hover
-              },
-              '&:focus': {
-                backgroundColor: '#0A1B39', // Keep the color consistent on focus
-              },
-            }}
-          >
-            {/* Toggle the icon here based on the openAddMenu state */}
-            {openAddMenu ? (
-              <CloseIcon sx={{ color: '#fff', width: 22, height: 30 }} />
-            ) : (
-              <img src={'/images/icons/addbutton.svg'} alt="" width={30} />
-            )}
-          </IconButton>
+         <IconButton className="settingIcon" 
+          onClick={handleAddMenuToggle} 
+          ref={anchorRefAdd}
+          sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "30px",          
+          height: "30px",        
+          backgroundColor: "#0A1B39",   
+          borderRadius: "8px", 
+          '&:hover': {
+          backgroundColor: "#0A1B39", 
+         },
+         '&:focus': {
+         backgroundColor: "#0A1B39", 
+          },
+          }}>
+       {/* Toggle the icon here based on the openAddMenu state */}
+          {openAddMenu ? (
+          <CloseIcon sx={{ color: '#fff', width: 22, height: 30 }} />
+          ) : (
+          <img src={"/images/icons/addbutton.svg"} alt='' width={30} />
+          )}
+         </IconButton>
         </Box>
       </Toolbar>
 
