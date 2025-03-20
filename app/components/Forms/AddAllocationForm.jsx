@@ -212,23 +212,23 @@ import StyledLabel from "../Label/StyledLabel"
 import { StyledInput } from "../Input/StyledInput"
 import CustomDatePicker from "../DatePicker/CustomDatePicker"
 import StyledRadioButton from "../RadioButton/StyledRadioButton"
+import { useSelector } from "react-redux"
 
 const AddAllocationForm = ({ formikProps }) => {
   const { values, handleChange, handleBlur, setFieldValue } = formikProps
   const [capacityOption, setCapacityOption] = useState("")
   const [customCapacity, setCustomCapacity] = useState("")
+  const { projects } = useSelector((state) => state.projects) 
+  const { resources } = useSelector((state) => state.resources)
 
-  const projectOptions = [
-    { value: "Design 1", label: "Design 1" },
-    { value: "Design 2", label: "Design 2" },
-    { value: "Design 3", label: "Design 3" },
-  ]
+  const projectOptions = projects?.result?.map((project) => ({
+    value: project.Id,
+    label: project.Name,
+  }))
 
-  const resourceTypeOptions = [
-    { value: "Type A", label: "Type A" },
-    { value: "Type B", label: "Type B" },
-    { value: "Type C", label: "Type C" },
-  ]
+  const resourceTypeOptions = resources && resources.result.map((resource)=>{
+    return{value: resource.Id, label:resource.FullName}
+  })
 
   const handleCapacityChange = (event) => {
     const value = event.target.value

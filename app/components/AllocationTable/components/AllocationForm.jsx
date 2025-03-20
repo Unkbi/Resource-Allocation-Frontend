@@ -14,6 +14,8 @@ import {
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import { closeDialog } from '@/app/redux/reducers/dialogReducer';
+import { getMondayOfWeek } from '@/app/utils/common';
+import { setResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
 
 const initialValuesMap = {
   add_project: {
@@ -53,6 +55,7 @@ const AllocationForm = () => {
   const [formValue, setFormValue] = useState(initialValuesMap[formType] || {});
   const dispatch = useDispatch();
   const { initialData } = useSelector((state) => state.globalDialog.formState);
+  const { projects } = useSelector((state) => state.projects);
 
 
   const getValidationSchema = (formType) => {
@@ -101,6 +104,20 @@ const AllocationForm = () => {
           catch(e){
             console.log(e)
           }
+      case 'add_allocation':
+          const postPayload = {
+            resourceId: values.Resource,
+            postData: {
+              'ResourceAllocation.Core/Allocation': {
+                Resource: values.Resource,
+                Project: values.Project,
+                ProjectName: projects?.result?.filter(project => project.Id === values.Project)[0].Name,
+                Period: values.StartDate,
+                AllocationEntered: values.AllocationEntered,
+              },
+            },
+          };
+          dispatch(setResourceAllocation(postPayload));
       default:
         return;
     }
