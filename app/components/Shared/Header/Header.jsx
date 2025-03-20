@@ -61,7 +61,7 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
   },
   "& .settingIcon": {
     padding: "0",
-    borderRadius: "inherit",
+    borderRadius: "5px",
   },
 }));
 
@@ -117,6 +117,12 @@ const Header = () => {
         return 'People';
       case '/report':
         return 'Reports';
+      case '/settings':
+        return ;
+      case '/notifications':
+        return ;
+      case '/help':
+        return ;
       default:
         return 'Executive Dashboard'; 
     }
@@ -152,10 +158,10 @@ const Header = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          width: "25px",          
-          height: "25px",        
+          width: "30px",          
+          height: "30px",        
           backgroundColor: "#0A1B39",   
-          borderRadius: "50%", 
+          borderRadius: "8px", 
           '&:hover': {
           backgroundColor: "#0A1B39", 
          },
