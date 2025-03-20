@@ -64,6 +64,7 @@ export default function ProjectAllocation() {
       filterable: false,
       isEditable: false,
       renderCell: (params) => {
+        const [hover, setHover] = useState(false);
         const cell_value = params.value?.length > 19 ? params.value?.slice(0, 18) + "..." : params.value;
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
@@ -75,16 +76,22 @@ export default function ProjectAllocation() {
                 },
               ],
             }
-          }}>
+          }}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          >
             <div style={{ width: '100%' }}>
               <span>{cell_value}</span>
-              <AddRowIcon
-                team_name={params.value}
-                handleAddRow={handleAddRow}
-                onClick={() => {
-                  setSelectedProject(params?.formattedValue);
-                }}
-              />
+              {
+                hover &&
+                  <AddRowIcon
+                  team_name={params.value}
+                  handleAddRow={handleAddRow}
+                  onClick={() => {
+                    setSelectedProject(params?.formattedValue);
+                  }}
+                  />
+            }
             </div>
           </Tooltip>
         )
