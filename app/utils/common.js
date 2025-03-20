@@ -194,3 +194,24 @@ export const generateAllWeeks = () => {
 
   return weeks;
 };
+
+ // Function to generate a random color in hex format
+ export const generateRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
+
+export const getInitials = (fullName) => {
+  if (!fullName) return 'MJ';
+  // Split the full name by spaces
+  const nameParts = fullName.split(' ');
+
+  // Extract the first letter of each part of the name
+  const initials = nameParts.map(part => part.charAt(0).toUpperCase()).join('');
+
+  return initials;
+}
