@@ -82,12 +82,18 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     },
   },
   border: 'none',
+  '& .MuiDataGrid-groupingCriteriaCell span[style*="white-space: pre"]': {
+    display: 'none',
+  },
+  '& .MuiDataGrid-groupingCriteriaCell': {
+    padding: '0',
+  },
   '& .MuiDataGrid-cellContent': {
     paddingLeft: '8px',
   },
-  '& .MuiDataGrid-groupingCriteriaCellToggle': {
-    display: 'none',
-  },
+  // '& .MuiDataGrid-groupingCriteriaCellToggle': {
+  //   display: 'none',
+  // },
   '& .MuiDataGrid-aggregationColumnHeaderLabel': {
     display: 'none',
   },
@@ -193,7 +199,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     // border: '#7AB17A',
   },
   '& .firstGroupsRow': {
-    backgroundColor: '#E9EFF8',
+    backgroundColor: '#E4E6EC',
+  },
+  '& .secondGroupsRow': {
+    backgroundColor: '#F4F3F6',
   },
   '& .MuiDataGrid-row--editing': {
     boxShadow: 'none',

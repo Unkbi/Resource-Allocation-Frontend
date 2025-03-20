@@ -13,7 +13,7 @@ export const getInitialState = (
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
 ) => ({
   rowGrouping: {
-    model: [groupBy],
+    model: groupBy === 'teams' ? [groupBy, 'resource'] : [groupBy],
   },
   sorting: {
     sortModel: [
@@ -32,8 +32,6 @@ export const getInitialState = (
 export const getFinalColumns = (
   columns,
   groupBy,
-  setSelectedProject,
-  handleAddRow,
   setSelectedTeam,
   handleAddProject,
   setSelectedResourceId,
@@ -56,23 +54,6 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          if (params.row.hasButton) {
-            return (
-              <AddRowButton
-                row={params.row}
-                project={params.row.project}
-                handleAddRow={handleAddRow}
-                teamsId={params.row.teamsId}
-                buttonName={
-                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
-                }
-                onClick={event => {
-                  setSelectedProject(params.row.project),
-                    setSelectedTeam(params.row.teams);
-                }}
-              />
-            );
-          }
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
           }
@@ -96,7 +77,7 @@ export const getFinalColumns = (
             ...new Set(
               (Array.isArray(allocationsOfAddedResource) &&
                 allocationsOfAddedResource.map(item => item.ProjectName)) ||
-                []
+              []
             ),
           ];
 
@@ -118,10 +99,35 @@ export const getFinalColumns = (
               />
             );
           }
-          if (params.value) {
-            return params.value;
+          if (params.value) return params.value;
+
+          const projects_set = [
+            ...new Set(params?.rowNode?.children?.map(child => params.api.getRow(child)?.project))
+          ].filter(Boolean);
+
+
+          if (projects_set.length > 1) {
+            const cell_value = projects_set?.[0]?.length > 18 ? projects_set?.[0]?.slice(0, 15) + "..." : projects_set?.[0];
+            return (
+              <div>
+                {cell_value}
+                <span style={{
+                  backgroundColor: "#E9EFF8",
+                  color: "#000",
+                  paddingRight: 4,
+                  paddingLeft: 4,
+                  marginLeft: 8,
+                  fontSize: 12,
+                  borderRadius: 2,
+                }}>+{projects_set?.length - 1}</span>
+              </div>
+            )
           }
-          return null;
+
+          return projects_set.length ?
+            `${projects_set[0]}${projects_set.length > 1 ?
+              ` +${projects_set.length - 1}` : ''}` : '';
+
         },
       },
       ...(allColumns?.slice(1) || []),
@@ -138,23 +144,6 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          if (params.row.hasButton) {
-            return (
-              <AddRowButton
-                row={params.row}
-                teamsId={params.row.teamsId}
-                project={params.row.project}
-                handleAddRow={handleAddRow}
-                buttonName={
-                  groupBy === 'teams' ? 'Assign Allocation' : 'Add Resource'
-                }
-                onClick={event => {
-                  setSelectedProject(params.row.project),
-                  setSelectedTeam(params.row.teams);
-                }}
-              />
-            );
-          }
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
           }
@@ -220,7 +209,7 @@ export const getCellClassName = (params, updatedRows) => {
     }
   }
   if (params.rowNode?.type === 'group') {
-    return 'firstGroupsRow';
+    return params.rowNode?.groupingField === 'teams' ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   return '';
 };
@@ -232,25 +221,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
   }));
 
   if (groupBy === 'project') {
-    return [
-      ...rowsWithTotalEffort,
-      ...Array.from(new Set(rowsWithTotalEffort?.map(row => row.project))).map(
-        project => ({
-          id: `${project}-add-resource`,
-          project: project,
-          resource: '',
-          role: '',
-          totalEffort: '',
-          hasButton: true,
-          ...Object.keys(updatedRows[0])
-            .filter(key => key.startsWith('W'))
-            .reduce((acc, week) => {
-              acc[week] = '';
-              return acc;
-            }, {}),
-        })
-      ),
-    ];
+    return rowsWithTotalEffort;
   } else if (groupBy === 'teams') {
     // Get unique teams for teams and teamsId to avoid duplicate teams
     let unique_teams = {};
@@ -262,31 +233,12 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     rowsWithTotalEffort.forEach(row => {
       if (row.teamsId && !unique_teams[row.teamsId])
         unique_teams[row.teamsId] = row.teams;
-      else if (!unique_teams[row.teamsId] && teams_with_name?.[row?.teams]){
+      else if (!unique_teams[row.teamsId] && teams_with_name?.[row?.teams]) {
         unique_teams[teams_with_name[row.teams]] = row.teams;
       }
     });
 
-    return [
-      ...rowsWithTotalEffort,
-      ...Array.from(new Set(Object.keys(unique_teams))).map(teams => ({
-        id: `${unique_teams?.[teams]}-add-resource`,
-        project: '',
-        teams: unique_teams?.[teams],
-        teamsId: teams,
-        resource: '',
-        role: '',
-        totalEffort: '',
-        resourceId: '',
-        hasButton: true,
-        ...Object.keys(updatedRows[0])
-          .filter(key => key.startsWith('W'))
-          .reduce((acc, week) => {
-            acc[week] = '';
-            return acc;
-          }, {}),
-      })),
-    ];
+    return rowsWithTotalEffort;
   } else {
     return updatedRows;
   }
