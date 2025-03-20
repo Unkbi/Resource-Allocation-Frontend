@@ -7,7 +7,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { IconButton, styled } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
-import { closeDialog } from '@/app/redux/actions/dialogAction';
+import { closeDialog } from '@/app/redux/reducers/dialogReducer';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-container': {

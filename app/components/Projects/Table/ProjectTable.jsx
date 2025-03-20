@@ -26,6 +26,7 @@ const ProjectTable = ({columns, rows}) => {
                 },
                 '& .MuiDataGrid-columnHeader': {
                     padding: '0 16px',
+                    borderRight: 'none',
                 }
             }}
             slotProps={{

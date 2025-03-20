@@ -206,6 +206,7 @@ export const generateAllWeeks = () => {
 };
 
 export const getInitials = (fullName) => {
+  if (!fullName) return 'MJ';
   // Split the full name by spaces
   const nameParts = fullName.split(' ');
 
