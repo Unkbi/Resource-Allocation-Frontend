@@ -26,6 +26,7 @@ import {
 } from './AllocationGridUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  removeResourceAllocation,
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
@@ -35,7 +36,16 @@ import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 
 import CustomToolbar from '../Toolbar/CustomToolbar';
 
-export default function AllocationGrid({ groupBy, columns, data, loading, rowsState, setRowsState, selectedTeam, setSelectedTeam }) {
+export default function AllocationGrid({
+  groupBy,
+  columns,
+  data,
+  loading,
+  rowsState,
+  setRowsState,
+  selectedTeam,
+  setSelectedTeam,
+}) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
@@ -182,44 +192,77 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
       event.preventDefault();
     }
 
-    if(['Tab', 'Enter'].includes(event.key)) {
-      const currentCell = apiRef.current.getCellElement(params.id, params.field)
-      let nextCell = currentCell.nextElementSibling
+    // Handling Ctrl+V and Cmd+V (Mac)
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v') {
+      const isViewMode =
+        rowModesModel && Object.keys(rowModesModel).length === 0;
+
+      if (isViewMode) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.nativeEvent.stopImmediatePropagation();
+        return false;
+      }
+    }
+
+    if (['Tab', 'Enter'].includes(event.key)) {
+      const currentCell = apiRef.current.getCellElement(
+        params.id,
+        params.field
+      );
+      let nextCell = currentCell.nextElementSibling;
 
       // Find Next Cell
-      while(nextCell?.role !== 'gridcell') {
-        if(nextCell.nextElementSibling == null) {
-          nextCell = nextCell.parentElement.nextElementSibling.firstChild
-        }
-        else{
-          nextCell = nextCell.nextElementSibling
+      while (nextCell?.role !== 'gridcell') {
+        if (nextCell.nextElementSibling == null) {
+          nextCell = nextCell.parentElement.nextElementSibling.firstChild;
+        } else {
+          nextCell = nextCell.nextElementSibling;
         }
       }
 
       // Handling Tab Key Event
-      if(event.key === 'Tab' && (rowModesModel && Object.keys(rowModesModel).length === 0)) {
+      if (
+        event.key === 'Tab' &&
+        rowModesModel &&
+        Object.keys(rowModesModel).length === 0
+      ) {
         event.preventDefault();
-        nextCell.focus()
+        nextCell.focus();
       }
-  
+
       // Handling Enter Key Event
-      if(event.key === 'Enter' && (rowModesModel && Object.keys(rowModesModel).length > 0)) {
+      if (
+        event.key === 'Enter' &&
+        rowModesModel &&
+        Object.keys(rowModesModel).length > 0
+      ) {
         event.preventDefault();
-        event.stopPropagation()
-        apiRef.current.stopRowEditMode({id : params.id, field : params.field})
+        event.stopPropagation();
+        apiRef.current.stopRowEditMode({ id: params.id, field: params.field });
       }
     }
-  }
-  
+  };
+
   const handleCellUpdate = (newRow, oldRow) => {
     Object.keys(newRow).forEach(key => {
       if (key.startsWith('W')) {
         let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+        if (
+          newRow[key] === null &&
+          formattedCellValue === 0 &&
+          oldRow[key]?.allocationId
+        ) {
+          const deletePayload = {
+            resourceId: oldRow.resourceId,
+            allocationId: oldRow[key]?.allocationId,
+          };
+          dispatch(removeResourceAllocation(deletePayload));
+        }
 
         // API call to update the data, if any changes are made.
         if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
-          if (oldRow[key]?.allocationId) {
-
+          if (oldRow[key]?.allocationId && newRow[key] !== null) {
             // PUT API call to update the data.
             const putPayload = {
               resourceId: oldRow.resourceId,
@@ -232,7 +275,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
             };
             dispatch(updateResourceAllocation(putPayload));
           } else {
-
             // POST API call to update the data.
             const postPayload = {
               resourceId: oldRow.resourceId,
@@ -254,19 +296,27 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
           allocationId: oldRow[key]?.allocationId || null,
           value: newRow[key],
         };
-      }});
-      
+      }
+    });
+
     return newRow;
-  }
+  };
 
   const onRowClick = useCallback(
-    (params) => {
+    params => {
       const rowNode = apiRef.current.getRowNode(params.id);
-      if (rowNode && rowNode.type === 'group' && rowNode.groupingField != 'teams') {
-        apiRef.current.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
+      if (
+        rowNode &&
+        rowNode.type === 'group' &&
+        rowNode.groupingField != 'teams'
+      ) {
+        apiRef.current.setRowChildrenExpansion(
+          params.id,
+          !rowNode.childrenExpanded
+        );
       }
     },
-    [apiRef],
+    [apiRef]
   );
 
   const handleRowModesModelChange = newRowModesModel => {
@@ -291,7 +341,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, rowsSt
         loading={loading || !rowsState.length}
         disableRowSelectionOnClick
         initialState={initialState}
-        rowGroupingColumnMode={groupBy === 'teams' ? "multiple" : "single"}
+        rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
         columnHeaderHeight={30}
         columnGroupHeaderHeight={22}
         columnGroupingModel={generateColumnGroupingModel(
