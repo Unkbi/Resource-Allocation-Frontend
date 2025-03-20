@@ -45,10 +45,11 @@ export default function CustomDatePicker({
 }) {
   const { setFieldValue } = formikProps;
 
-  const handleDateChange = newValue => {
-    const formattedDate = newValue ? newValue.toISOString() : null;
+  const handleDateChange = (newValue) => {
+    const formattedDate = newValue ? dayjs(newValue).format('YYYY-MM-DD') : null;
     setFieldValue(name, formattedDate);
   };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker

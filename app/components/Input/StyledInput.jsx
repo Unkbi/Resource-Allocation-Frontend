@@ -11,6 +11,7 @@ export const StyledInput = styled(TextField)(
         borderColor:"#D6DCE1"
       }
     },
+    
     width: width || '100%',
     margin: margin || '0',
     padding: padding || '0',

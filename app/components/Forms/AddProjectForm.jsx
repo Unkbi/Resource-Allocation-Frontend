@@ -1,12 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TextField, Box, Typography } from '@mui/material';
 import CustomSelect from '../Select/CustomSelect';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
+import { useSelector } from 'react-redux';
 
-const AddProjectForm = ({ formikProps }) => {
+const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
   const { values, handleChange, handleBlur } = formikProps;
+  const {initialData } = useSelector(state => state.globalDialog.formState);
+
+  useEffect(() => {
+    if (initialData) {
+      const rowData = {
+        StartDate: initialData.StartDate || '',
+        EndDate: initialData.EndDate || '',
+        ProjectName: initialData.Name || '',
+        Owner: initialData.Owner?.name || '',
+        AllowOvertime: initialData.AllowOvertime || '',
+        Location: initialData.Location || '',
+        Manager: initialData.Manager || '',
+        Name: initialData.Name || '',
+        Type: initialData.Type || '',
+        Status: initialData.Status || '',
+      };
+      setFormValue(rowData);
+    }
+  }, [initialData]);
 
   const projectTypeOptions = [
     { value: 'Transformation', label: 'Transformation' },

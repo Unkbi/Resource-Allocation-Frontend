@@ -13,42 +13,47 @@ import {
   assignAllocationValidationSchema,
 } from '../../Forms/ValidationSchema';
 
-const initialValues = {
+const initialValuesMap = {
+  add_project: {
+    StartDate: '',
+    EndDate: '',
+    Name: '',
+    Owner: '',
+    AllowOvertime: '',
+    Location: '',
+    Manager: '',
+    Status:"",
+    Type:""
+  },
+  add_resource: {
+    Resource: '',
+    Type: '',
+    Skills: '',
+  },
+  add_allocation: {
+   Resource: '',
+  Project: '',
   StartDate: '',
   EndDate: '',
-  Name: '',
-  Owner: '',
-  AllowOvertime: '',
-  Location: '',
-  Manager: '',
-  Status:"",
-  Type:""
+  AllocationEntered: '',
+  },
+  assign_allocation: {
+    Resource: '',
+    Project: '',
+    StartDate: '',
+    EndDate: '',
+    Hours: '',
+  },
 };
+
 const AllocationForm = () => {
-  const { formType, initialData } = useSelector(state => state.globalDialog.formState);
-  const [formValue, setFormValue] = useState(initialValues)
+  const { formType } = useSelector((state) => state.globalDialog.formState);
+  const [formValue, setFormValue] = useState(initialValuesMap[formType] || {});
 
-  useEffect(() => {
-    if (initialData) {
-      const rowData = {
-        StartDate: initialData.StartDate || '',
-        EndDate: initialData.EndDate || '',
-        ProjectName: initialData.Name || '',
-        Owner: initialData.Owner?.name || '',
-        AllowOvertime: initialData.AllowOvertime || '',
-        Location: initialData.Location || '',
-        Manager: initialData.Manager || '',
-        Name: initialData.Name || '',
-        Type: initialData.Type || '',
-        Status: initialData.Status || '',
-      };
-      setFormValue(rowData);
-    }
-  }, [initialData]);
 
-  const getValidationSchema = formType => {
+  const getValidationSchema = (formType) => {
     switch (formType) {
-      case 'Add Project':
+      case 'add_project':
         return addProjectValidationSchema;
       case 'add_resource':
         return addResourceValidationSchema;
@@ -61,7 +66,7 @@ const AllocationForm = () => {
     }
   };
 
-  const handleSubmit = values => {
+  const handleSubmit = (values) => {
     console.log('Form Data:', values);
     // Handle form submission
   };
@@ -71,7 +76,7 @@ const AllocationForm = () => {
       case 'add_project':
         return <AddProjectForm formikProps={formikProps} />;
       case 'edit_project':
-        return <AddProjectForm formikProps={formikProps} />;
+        return <AddProjectForm formikProps={formikProps} setFormValue={setFormValue} />;
       case 'add_resource':
         return <AddResourceForm formikProps={formikProps} />;
       case 'add_allocation':
@@ -90,7 +95,7 @@ const AllocationForm = () => {
       validationSchema={getValidationSchema(formType)}
       onSubmit={handleSubmit}
     >
-      {formikProps => (
+      {(formikProps) => (
         <CustomDialog onSubmit={formikProps.handleSubmit}>
           {getFormComponent(formType, formikProps)}
         </CustomDialog>
