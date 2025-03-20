@@ -15,8 +15,8 @@ import { Tooltip } from '@mui/material';
 
 export default function TeamAllocation() {
   const [resourcesFetched, setResourcesFetched] = useState(false);
-  const [rowsState, setRowsState] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('');
+  const {rowState} = useSelector(state => state.dataGrid);
 
   const dispatch = useDispatch();
   const { teams, resources, loading, dataProcessing, error } = useSelector(
@@ -36,44 +36,44 @@ export default function TeamAllocation() {
     }
   }, [teams, resourcesFetched]);
 
-  const handleAddRow = async (e, resource) => {
-    const newRowForTeams = {
-      id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
-      resourceId: resource.Id,
-      project: '',
-      teamsId: getProjectOrTeamIdByName(teams?.result, selectedTeam),
-      resource: resource.FullName,
-      teams: selectedTeam,
-      role: resource.Role,
-      totalEffort: resource.totalHours,
-      hasButton: false,
-      hasProject: true,
-    };
-    setRowsState([...rowsState, newRowForTeams]);
+  // const handleAddRow = async (e, resource) => {
+  //   const newRowForTeams = {
+  //     id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
+  //     resourceId: resource.Id,
+  //     project: '',
+  //     teamsId: getProjectOrTeamIdByName(teams?.result, selectedTeam),
+  //     resource: resource.FullName,
+  //     teams: selectedTeam,
+  //     role: resource.Role,
+  //     totalEffort: resource.totalHours,
+  //     hasButton: false,
+  //     hasProject: true,
+  //   };
+  //   setRowsState([...rowsState, newRowForTeams]);
 
-    try {
-      await new Promise((resolve, reject) => {
-        const obj = {
-          Team: `:ResourceAllocation.Core/Team,${newRowForTeams.teamsId}`,
-          Resource: `:ResourceAllocation.Core/Resource,${newRowForTeams.resourceId}`,
-        };
-        dispatch(addResourceToTeam(obj.Team, obj.Resource))
-          .then(resolve)
-          .catch(reject);
-      });
+  //   try {
+  //     await new Promise((resolve, reject) => {
+  //       const obj = {
+  //         Team: `:ResourceAllocation.Core/Team,${newRowForTeams.teamsId}`,
+  //         Resource: `:ResourceAllocation.Core/Resource,${newRowForTeams.resourceId}`,
+  //       };
+  //       dispatch(addResourceToTeam(obj.Team, obj.Resource))
+  //         .then(resolve)
+  //         .catch(reject);
+  //     });
 
-      const teamAllocationPostData = {
-        'ResourceAllocation.Core/GetTeamAllocations': {
-          TeamId: newRowForTeams.teamsId,
-        },
-      };
+  //     const teamAllocationPostData = {
+  //       'ResourceAllocation.Core/GetTeamAllocations': {
+  //         TeamId: newRowForTeams.teamsId,
+  //       },
+  //     };
 
-      dispatch(getTeamAllocations(teamAllocationPostData));
-    } catch (error) {
-      console.error('Error in handleAddRow:', error);
-    }
-    return newRowForTeams?.id;
-  };
+  //     dispatch(getTeamAllocations(teamAllocationPostData));
+  //   } catch (error) {
+  //     console.error('Error in handleAddRow:', error);
+  //   }
+  //   return newRowForTeams?.id;
+  // };
 
   const teamsColumnConfig = [
     {
@@ -86,15 +86,15 @@ export default function TeamAllocation() {
       renderCell: (params) => {
         const cell_value = params.value?.length > 19 ? params.value?.slice(0, 18) + "..." : params.value;
 
-        const handleOnAdd = async (e, res) => {
-          try {
-            let new_row_id = await handleAddRow(e, res);
-            const rowNode = params.api.getRowNode(new_row_id);
-            params.api.setRowChildrenExpansion(rowNode?.parent, true);
-          } catch(e) {
-            console.warn('Something went wrong while expanding resource.');
-          }
-        }
+        // const handleOnAdd = async (e, res) => {
+        //   try {
+        //     let new_row_id = await handleAddRow(e, res);
+        //     const rowNode = params.api.getRowNode(new_row_id);
+        //     params.api.setRowChildrenExpansion(rowNode?.parent, true);
+        //   } catch(e) {
+        //     console.warn('Something went wrong while expanding resource.');
+        //   }
+        // }
 
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
@@ -153,8 +153,6 @@ export default function TeamAllocation() {
         loading={loading || dataProcessing}
         groupBy="teams"
         columns={teamsColumnConfig}
-        rowsState={rowsState}
-        setRowsState={setRowsState}
         selectedTeam={selectedTeam}
         setSelectedTeam={setSelectedTeam}
         // columnGroupingModel={columnGroupingModel}

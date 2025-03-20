@@ -16,6 +16,8 @@ import { addProject, updateProject } from '@/app/services/projectServices';
 import { closeDialog } from '@/app/redux/reducers/dialogReducer';
 import { generateAllMondays, getMondayOfWeek } from '@/app/utils/common';
 import { setResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
+import { setRowState } from '@/app/redux/reducers/dataGridReducer';
+import { useGridApiRef } from '@mui/x-data-grid-premium';
 
 const initialValuesMap = {
   add_project: {
@@ -26,8 +28,8 @@ const initialValuesMap = {
     AllowOvertime: '',
     Location: '',
     Manager: '',
-    Status:"",
-    Type:""
+    Status: "",
+    Type: ""
   },
   add_resource: {
     Resource: '',
@@ -35,11 +37,11 @@ const initialValuesMap = {
     Skills: '',
   },
   add_allocation: {
-   Resource: '',
-  Project: '',
-  StartDate: '',
-  EndDate: '',
-  AllocationEntered: '',
+    Resource: '',
+    Project: '',
+    StartDate: '',
+    EndDate: '',
+    AllocationEntered: '',
   },
   assign_allocation: {
     Resource: '',
@@ -57,6 +59,8 @@ const AllocationForm = () => {
   const { initialData } = useSelector((state) => state.globalDialog.formState);
   const { projects } = useSelector((state) => state.projects);
 
+  const apiRef = useGridApiRef();
+  const {rowState} = useSelector(state => state.dataGrid);
 
   const getValidationSchema = (formType) => {
     switch (formType) {
@@ -73,6 +77,29 @@ const AllocationForm = () => {
     }
   };
 
+  const handleOnAdd = async (new_row_id) => {
+    try {
+      const rowNode = apiRef.current.getRowNode(new_row_id);
+      apiRef.current.setRowChildrenExpansion(rowNode?.parent, true);
+    } catch (e) {
+      console.warn('Something went wrong while expanding resource.');
+    }
+  }
+
+  const handleAddRow = async ({ resource_id, resource }) => {
+    const newRowForTeams = {
+      id: resource_id,
+      resourceId: resource_id,
+      project: '',
+      resource: resource,
+      role: 'jnjsnc',
+      totalEffort: 0,
+      hasButton: false,
+      hasProject: true,
+    };
+    dispatch(setRowState([...rowState, newRowForTeams]));
+    handleOnAdd(newRowForTeams?.id);
+  };
   const handleSubmit = async (values) => {
     const allMondays = generateAllMondays(values.StartDate, values.EndDate);
     let postData = {};
@@ -90,7 +117,7 @@ const AllocationForm = () => {
           console.log(e);
         }
         break;
-  
+
       case 'edit_project':
         postData = {
           "ResourceAllocation.Core/Project": {
@@ -104,7 +131,7 @@ const AllocationForm = () => {
           console.log(e);
         }
         break;
-  
+
       case 'add_allocation':
         try {
           const allocationPromises = allMondays.map((monday) => {
@@ -120,15 +147,16 @@ const AllocationForm = () => {
                 },
               },
             };
+            handleAddRow({ resource_id: values.Resource, resource: values.Resource });
             return dispatch(setResourceAllocation(postPayload));
           });
-  
+
           await Promise.all(allocationPromises);
         } catch (e) {
           console.error('Error creating allocations:', e);
         }
         break;
-  
+
       default:
         return;
     }
