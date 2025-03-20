@@ -1,4 +1,5 @@
 import {
+  deleteResourceAllocations,
   postResourceAllocations,
   putResourceAllocations,
 } from '@/app/services/allocationServices';
@@ -42,6 +43,21 @@ const resourceAllocationsSlice = createSlice({
         state.allocation = action.payload;
       })
       .addCase(putResourceAllocations.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // Handle delete resource allocation
+    builder
+      .addCase(deleteResourceAllocations.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteResourceAllocations.fulfilled, (state, action) => {
+        state.loading = false;
+        state.allocation = action.payload;
+      })
+      .addCase(deleteResourceAllocations.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

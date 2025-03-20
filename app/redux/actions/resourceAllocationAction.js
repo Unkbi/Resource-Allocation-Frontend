@@ -1,4 +1,5 @@
 import {
+  deleteResourceAllocations,
   postResourceAllocations,
   putResourceAllocations,
 } from '@/app/services/allocationServices';
@@ -16,5 +17,13 @@ export const updateResourceAllocation = allocationData => async dispatch => {
     await dispatch(putResourceAllocations(allocationData));
   } catch (error) {
     console.error('Error updating resource allocation:', error);
+  }
+};
+
+export const removeResourceAllocation = allocationData => async dispatch => {
+  try {
+    await dispatch(deleteResourceAllocations(allocationData));
+  } catch (error) {
+    console.error('Error deleting resource allocation:', error);
   }
 };

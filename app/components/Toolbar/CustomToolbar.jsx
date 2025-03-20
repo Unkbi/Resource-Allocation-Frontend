@@ -23,6 +23,7 @@ import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
 import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
 import TooltipButton from '../Button/TooltipButton';
 import CustomExport from './CustomExport';
+import { generateFirstAndLastMonthYear } from '@/app/utils/common';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -202,6 +203,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   ];
   const [active, setActive] = useState(false);
 
+  const { first, last } = generateFirstAndLastMonthYear();
+
   const handleViewChange = useCallback(
     event => {
       dispatch(performChangeView(event.target.value));
@@ -367,7 +370,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            <Button className="selectedDate">Default</Button>
+            <Button className="selectedDate">{`${first} - ${last}`}</Button>
 
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
