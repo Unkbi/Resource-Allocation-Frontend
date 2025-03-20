@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Formik } from 'formik';
 import { useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
@@ -12,27 +12,39 @@ import {
   addResourceValidationSchema,
   assignAllocationValidationSchema,
 } from '../../Forms/ValidationSchema';
-import dayjs from 'dayjs';
 
+const initialValues = {
+  StartDate: '',
+  EndDate: '',
+  Name: '',
+  Owner: '',
+  AllowOvertime: '',
+  Location: '',
+  Manager: '',
+  Status:"",
+  Type:""
+};
 const AllocationForm = () => {
-  const { formType } = useSelector(state => state.globalDialog.formState);
-  const initialValues = {
-    team: '',
-    design: '',
-    resource: '',
-    resourceType: '',
-    project: '',
-    allocate: '',
-    week: '',
-    capacity: '',
-    startDate: '',
-    endDate: '',
-    projectName: '',
-    sponser: '',
-    allowOvertime: '',
-    location: '',
-    manager: '',
-  };
+  const { formType, initialData } = useSelector(state => state.globalDialog.formState);
+  const [formValue, setFormValue] = useState(initialValues)
+
+  useEffect(() => {
+    if (initialData) {
+      const rowData = {
+        StartDate: initialData.StartDate || '',
+        EndDate: initialData.EndDate || '',
+        ProjectName: initialData.Name || '',
+        Owner: initialData.Owner?.name || '',
+        AllowOvertime: initialData.AllowOvertime || '',
+        Location: initialData.Location || '',
+        Manager: initialData.Manager || '',
+        Name: initialData.Name || '',
+        Type: initialData.Type || '',
+        Status: initialData.Status || '',
+      };
+      setFormValue(rowData);
+    }
+  }, [initialData]);
 
   const getValidationSchema = formType => {
     switch (formType) {
@@ -58,6 +70,8 @@ const AllocationForm = () => {
     switch (formType) {
       case 'add_project':
         return <AddProjectForm formikProps={formikProps} />;
+      case 'edit_project':
+        return <AddProjectForm formikProps={formikProps} />;
       case 'add_resource':
         return <AddResourceForm formikProps={formikProps} />;
       case 'add_allocation':
@@ -71,7 +85,8 @@ const AllocationForm = () => {
 
   return (
     <Formik
-      initialValues={initialValues}
+      enableReinitialize
+      initialValues={formValue}
       validationSchema={getValidationSchema(formType)}
       onSubmit={handleSubmit}
     >

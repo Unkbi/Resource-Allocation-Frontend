@@ -5,6 +5,8 @@ import { IconButton, Menu, MenuItem, Tab, Tabs } from "@mui/material";
 import { useState } from "react";
 import { generateRandomColor, getInitials } from "@/app/utils/common";
 import MoreVertIcon from "@mui/icons-material/MoreVert"
+import { useDispatch } from "react-redux";
+import { openDialog } from "@/app/redux/actions/dialogAction";
 
 const projects = {
     "result": [
@@ -426,6 +428,7 @@ export default function Project() {
     const [anchorEl, setAnchorEl] = useState(null)
     const [selectedRow, setSelectedRow] = useState(null)
     const [rows, setRows] = useState(projects.result)
+    const dispatch = useDispatch();
     
     const modifyData = (data) => {
         return data.map((item) => {
@@ -441,6 +444,21 @@ export default function Project() {
         })
     }
 
+    const handleOpenDialog = (title, formType, row) => {
+      console.log(row,"row");
+      
+      dispatch(
+        openDialog({
+          title: title,
+          submitButtonText: 'Update',
+          cancelButtonText: 'Cancel',
+          formState: {
+            formType: formType,
+            initialData: row,
+          },
+        })
+      );
+    };
     const columns = [
         {
           field: "Name",
@@ -542,7 +560,7 @@ export default function Project() {
                   horizontal: "right",
                 }}
               >
-                <MenuItem onClick={() => handleMenuClose(params)}>Edit Project</MenuItem>
+                <MenuItem onClick={() => handleOpenDialog("Edit Project", "edit_project",params.row)}>Edit Project</MenuItem>
                 <MenuItem onClick={() => handleMenuClose(params)}>Delete Project</MenuItem>
               </Menu>
             </>

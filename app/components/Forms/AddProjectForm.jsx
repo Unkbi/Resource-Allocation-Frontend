@@ -7,20 +7,37 @@ import CustomDatePicker from '../DatePicker/CustomDatePicker';
 
 const AddProjectForm = ({ formikProps }) => {
   const { values, handleChange, handleBlur } = formikProps;
-  const options = [
-    { value: 'Type A', label: 'Type A' },
-    { value: 'Type B', label: 'Type B' },
-    { value: 'Type C', label: 'Type C' },
+
+  const projectTypeOptions = [
+    { value: 'Transformation', label: 'Transformation' },
+    { value: 'GTB (Grow-the-business)', label: 'GTB (Grow-the-business)' },
+    { value: 'RTB (Run-th-business)', label: 'RTB (Run-th-business)' },
+    { value: 'PTO', label: 'PTO' },
+    { value: 'Admin', label: 'Admin' },
+    { value: 'Misc', label: 'Misc' },
+  ];
+  const allowOverTimeOptions = [
+    { value: true, label: "Yes" },
+    { value: false, label: 'No' },
+  
+  ];
+
+  const statusOptions = [
+    { value: 'Active', label: 'Active' },
+    { value: 'Proposed', label: 'Proposed' },
+    { value: 'Approved', label: 'Approved' },
+    { value: 'Paused', label: 'Paused' },
+    { value: 'Completed', label: 'Completed' },
   ];
 
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Project Name</StyledLabel>
+        <StyledLabel>Name</StyledLabel>
         <StyledInput
           as={TextField}
-          name="projectName"
-          value={values.projectName}
+          name="Name"
+          value={values.Name}
           onChange={handleChange}
           onBlur={handleBlur}
         />
@@ -29,8 +46,8 @@ const AddProjectForm = ({ formikProps }) => {
         <StyledLabel>Sponser</StyledLabel>
         <StyledInput
           as={TextField}
-          name="sponser"
-          value={values.sponser}
+          name="Owner"
+          value={values.Owner}
           onChange={handleChange}
           onBlur={handleBlur}
         />
@@ -39,8 +56,8 @@ const AddProjectForm = ({ formikProps }) => {
         <StyledLabel>Manager</StyledLabel>
         <StyledInput
           as={TextField}
-          name="manager"
-          value={values.manager}
+          name="Manager"
+          value={values.Manager}
           onChange={handleChange}
           onBlur={handleBlur}
         />
@@ -49,8 +66,8 @@ const AddProjectForm = ({ formikProps }) => {
         <StyledLabel>Location</StyledLabel>
         <StyledInput
           as={TextField}
-          name="location"
-          value={values.location}
+          name="Location"
+          value={values.Location}
           onChange={handleChange}
           onBlur={handleBlur}
         />
@@ -66,9 +83,9 @@ const AddProjectForm = ({ formikProps }) => {
         <Box>
           <StyledLabel>Project Type</StyledLabel>
           <CustomSelect
-            name="projectType"
-            options={options}
-            value={values.projectType}
+            name="Type"
+            options={projectTypeOptions}
+            value={values.Type}
             onChange={handleChange}
             onBlur={handleBlur}
             width={'160px'}
@@ -77,9 +94,9 @@ const AddProjectForm = ({ formikProps }) => {
         <Box>
           <StyledLabel>Allow Overtime</StyledLabel>
           <CustomSelect
-            name="allowOvertime"
-            options={options}
-            value={values.allowOvertime}
+            name="AllowOvertime"
+            options={allowOverTimeOptions}
+            value={values.AllowOvertime}
             onChange={handleChange}
             onBlur={handleBlur}
             width={'160px'}
@@ -97,9 +114,9 @@ const AddProjectForm = ({ formikProps }) => {
         <Box>
           <StyledLabel>Start Date</StyledLabel>
           <CustomDatePicker
-            name="startDate"
+            name="StartDate"
             handleChange={handleChange}
-            value={values.startDate}
+            value={values.StartDate}
             placeholder={'Start Date'}
             formikProps={formikProps}
           />
@@ -107,14 +124,22 @@ const AddProjectForm = ({ formikProps }) => {
         <Box>
           <StyledLabel>End Date</StyledLabel>
           <CustomDatePicker
-            name="endDate"
+            name="EndDate"
             handleChange={handleChange}
-            value={values.endDate}
-            placeholder={'Start Date'}
+            value={values.EndDate}
+            placeholder={'End Date'}
             formikProps={formikProps}
           />
         </Box>
       </Box>
+      <StyledLabel>Status</StyledLabel>
+          <CustomSelect
+            name="Status"
+            options={statusOptions}
+            value={values.Status}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
     </Box>
   );
 };
