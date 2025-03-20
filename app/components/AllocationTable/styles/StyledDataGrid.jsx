@@ -199,10 +199,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     // border: '#7AB17A',
   },
   '& .firstGroupsRow': {
-    backgroundColor: '#E4E6EC',
+    backgroundColor: '#E9EFF8',
   },
   '& .secondGroupsRow': {
-    backgroundColor: '#F4F3F6',
+    backgroundColor: '#F0F7FF',
   },
   '& .MuiDataGrid-row--editing': {
     boxShadow: 'none',

@@ -179,11 +179,19 @@ export const getCellClassName = (params, updatedRows) => {
       typeof params.field === 'string' &&
       params.field.startsWith('W') &&
       params.rowNode?.type === 'group' &&
-      params.rowNode?.groupingField === 'teams'
+      (params.rowNode?.groupingField === 'teams' ||
+      params.rowNode?.groupingField === 'resource')
     ) {
       const projectName = params.rowNode.groupingKey;
-
-      const projectRows = updatedRows.filter(row => row.teams === projectName);
+      let projectRows = []
+      if( params.rowNode?.groupingField === 'teams')
+      {
+        projectRows = updatedRows.filter(row => row.teams === projectName);
+      }
+      else if( params.rowNode?.groupingField === 'resource')
+      {
+        projectRows = updatedRows.filter(row => row.resource === projectName)
+      }
       const totalRows = projectRows.length;
 
       const aggregatedValue = projectRows.reduce((sum, row) => {

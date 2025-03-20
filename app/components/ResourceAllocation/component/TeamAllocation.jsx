@@ -109,13 +109,13 @@ export default function TeamAllocation() {
           }}>
             <div style={{ width: '100%' }}>
               <span>{cell_value}</span>
-              <AddRowIcon
+              {/* <AddRowIcon
                 team_name={params.value}
                 handleAddRow={handleOnAdd}
                 onClick={() => {
                   setSelectedTeam(params?.formattedValue);
                 }}
-              />
+              /> */}
             </div>
           </Tooltip>
         )
