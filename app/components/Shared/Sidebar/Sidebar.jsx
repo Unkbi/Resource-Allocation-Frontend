@@ -132,7 +132,6 @@ const menuItems = [
     { text: '', icon: "/images/icons/Notifications.svg", url: "/notifications" },
     { text: '', icon: "/images/icons/helpIcon.svg", url: "/help" },
     { text: '', icon: "/images/icons/sidebar-left.svg", url: "/expand" },
-    // { text: '', icon: "/images/icons/exiticon.svg", url: "" },
   ];
 
 
@@ -176,7 +175,7 @@ const menuItems = [
       <img src="/images/icons/Line2.svg"/>
       </Box>
       </Box>
-      {/* Extra Menu Items (New items) */}
+      
       <Box  className= "extra-menuitems-parent" sx={{ marginTop: '4px', paddingTop: '20px' }}>
         <List>
           {extraMenuItems.map((item, index) => (
