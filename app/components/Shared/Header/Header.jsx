@@ -21,7 +21,7 @@ import MenuList from '@mui/material/MenuList';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close'; // Close icon import
-import { openDialog } from '@/app/redux/actions/dialogAction';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
 
 const MainAppBar = styled(AppBar)(({ theme }) => ({
@@ -153,9 +153,8 @@ const Header = () => {
         title: title,
         submitButtonText: 'Add',
         cancelButtonText: 'Cancel',
-        formState: {
-          formType: formType,
-        },
+        formType: formType,
+        initialData: null,
       })
     );
   };

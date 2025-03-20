@@ -2,6 +2,9 @@ import { createSlice } from '@reduxjs/toolkit';
 import {
   getAllProjects,
   getProjectAllocations,
+  addProject,
+  updateProject,
+  deleteProject
 } from '@/app/services/projectServices';
 
 const initialState = {
@@ -46,6 +49,45 @@ const projectsSlice = createSlice({
       .addCase(getAllProjects.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      //Handle addProject API call
+      .addCase(addProject.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addProject.fulfilled, (state, action) => {
+        state.loading = false;
+        state.projects = action.payload;
+      })
+      .addCase(addProject.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      //Handle updateProject API call
+      .addCase(updateProject.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProject.fulfilled, (state, action) => {
+        state.loading = false;
+        state.projects = action.payload;
+      })
+      .addCase(updateProject.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      //Handle deleteProject API call
+      .addCase(deleteProject.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteProject.fulfilled, (state, action) => {
+        state.loading = false;
+        state.projects = action.payload;
+      })
+      .addCase(deleteProject.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload
       })
       // Handle getProjectAllocations API call
       .addCase(getProjectAllocations.pending, state => {
