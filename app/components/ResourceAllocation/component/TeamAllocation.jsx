@@ -3,23 +3,18 @@ import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  addResourceToTeam,
   fetchAllTeams,
   fetchResourcesAgainstTeams,
 } from '@/app/redux/actions/fetchTeamsAction';
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
-import { AddRowIcon } from '../../AllocationTable/AddRowButton';
-import { getTeamAllocations } from '@/app/services/teamServices';
-import { getProjectOrTeamIdByName } from '@/app/utils/common';
 import { Tooltip } from '@mui/material';
 
 export default function TeamAllocation() {
   const [resourcesFetched, setResourcesFetched] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState('');
-  const {rowState} = useSelector(state => state.dataGrid);
 
   const dispatch = useDispatch();
-  const { teams, resources, loading, dataProcessing, error } = useSelector(
+  const { teams, resources, loading, dataProcessing } = useSelector(
     state => state.teams
   );
 
@@ -36,45 +31,6 @@ export default function TeamAllocation() {
     }
   }, [teams, resourcesFetched]);
 
-  // const handleAddRow = async (e, resource) => {
-  //   const newRowForTeams = {
-  //     id: `${selectedTeam}-${resource.FullName}-${rowsState.length + 1}`,
-  //     resourceId: resource.Id,
-  //     project: '',
-  //     teamsId: getProjectOrTeamIdByName(teams?.result, selectedTeam),
-  //     resource: resource.FullName,
-  //     teams: selectedTeam,
-  //     role: resource.Role,
-  //     totalEffort: resource.totalHours,
-  //     hasButton: false,
-  //     hasProject: true,
-  //   };
-  //   setRowsState([...rowsState, newRowForTeams]);
-
-  //   try {
-  //     await new Promise((resolve, reject) => {
-  //       const obj = {
-  //         Team: `:ResourceAllocation.Core/Team,${newRowForTeams.teamsId}`,
-  //         Resource: `:ResourceAllocation.Core/Resource,${newRowForTeams.resourceId}`,
-  //       };
-  //       dispatch(addResourceToTeam(obj.Team, obj.Resource))
-  //         .then(resolve)
-  //         .catch(reject);
-  //     });
-
-  //     const teamAllocationPostData = {
-  //       'ResourceAllocation.Core/GetTeamAllocations': {
-  //         TeamId: newRowForTeams.teamsId,
-  //       },
-  //     };
-
-  //     dispatch(getTeamAllocations(teamAllocationPostData));
-  //   } catch (error) {
-  //     console.error('Error in handleAddRow:', error);
-  //   }
-  //   return newRowForTeams?.id;
-  // };
-
   const teamsColumnConfig = [
     {
       field: 'teams',
@@ -84,18 +40,7 @@ export default function TeamAllocation() {
       cellClassName: 'prime-cell',
       primaryColumn: true,
       renderCell: (params) => {
-        const cell_value = params.value?.length > 19 ? params.value?.slice(0, 18) + "..." : params.value;
-
-        // const handleOnAdd = async (e, res) => {
-        //   try {
-        //     let new_row_id = await handleAddRow(e, res);
-        //     const rowNode = params.api.getRowNode(new_row_id);
-        //     params.api.setRowChildrenExpansion(rowNode?.parent, true);
-        //   } catch(e) {
-        //     console.warn('Something went wrong while expanding resource.');
-        //   }
-        // }
-
+        const cell_value = params.value?.length > 21 ? params.value?.slice(0, 19) + "..." : params.value;
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
             popper: {
@@ -109,13 +54,6 @@ export default function TeamAllocation() {
           }}>
             <div style={{ width: '100%' }}>
               <span>{cell_value}</span>
-              {/* <AddRowIcon
-                team_name={params.value}
-                handleAddRow={handleOnAdd}
-                onClick={() => {
-                  setSelectedTeam(params?.formattedValue);
-                }}
-              /> */}
             </div>
           </Tooltip>
         )

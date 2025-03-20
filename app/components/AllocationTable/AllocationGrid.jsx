@@ -34,6 +34,7 @@ import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import CustomToolbar from '../Toolbar/CustomToolbar';
+import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 
 export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam }) {
   const apiRef = useGridApiRef();
@@ -41,7 +42,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const { open, message, type, position } = useSelector(state => state.toast);
-  const {rowState} = useSelector(state => state.dataGrid);
+  const { rowState } = useSelector(state => state.dataGrid);
+  const { expandRowId } = useSelector(state => state.allocationView);
   const startDate = getStartDate();
 
   const dispatch = useDispatch();
@@ -73,6 +75,17 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
     let new_row_state = getInitialRowsState(updatedRows, groupBy, teams);
     dispatch(setRowState(new_row_state));
   }, [data, groupBy, teams]);
+
+  useEffect(() => {
+    try {
+      if (groupBy === 'teams' && expandRowId !== null && !(loading || !rowState.length)) {
+        apiRef.current.setRowChildrenExpansion(expandRowId, true);
+        dispatch(setExpandRowId(null));
+      }
+    } catch (error) {
+      console.warn('Error in setting row expansion', error);
+    }
+  }, [expandRowId, loading || !rowState.length]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -287,16 +300,15 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         rows={rowState}
         columns={finalColumns}
         rowSelection={true}
-        cellSelection={true}
-        disableMultipleRowSelection={false}
-        onRowSelectionModelChange={(newSelection, params) => {
-          let x = params.api.getRow(newSelection[0])
-          console.log('selected row => ',x, newSelection)
-        }}
+        // cellSelection={true}
+        // disableMultipleRowSelection={false}
+        // onRowSelectionModelChange={(newSelection, params) => {
+        //   let x = params.api.getRow(newSelection[0])
+        // }}
         onRowClick={groupBy === 'teams' ? onRowClick : () => null}
         apiRef={apiRef}
         loading={loading || !rowState.length}
-        // disableRowSelectionOnClick
+        disableRowSelectionOnClick
         initialState={initialState}
         rowGroupingColumnMode={groupBy === 'teams' ? "multiple" : "single"}
         columnHeaderHeight={30}

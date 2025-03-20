@@ -6,7 +6,6 @@ import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 import { getProjectOrTeamIdByName, isResourceInProject } from '@/app/utils/common';
-import { AddRowIcon } from '../../AllocationTable/AddRowButton';
 import { Tooltip } from '@mui/material';
 
 
@@ -64,8 +63,7 @@ export default function ProjectAllocation() {
       filterable: false,
       isEditable: false,
       renderCell: (params) => {
-        const [hover, setHover] = useState(false);
-        const cell_value = params.value?.length > 19 ? params.value?.slice(0, 18) + "..." : params.value;
+        const cell_value = params.value?.length > 21 ? params.value?.slice(0, 19) + "..." : params.value;
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
             popper: {
@@ -77,21 +75,9 @@ export default function ProjectAllocation() {
               ],
             }
           }}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
           >
             <div style={{ width: '100%' }}>
               <span>{cell_value}</span>
-              {
-                hover &&
-                  <AddRowIcon
-                  team_name={params.value}
-                  handleAddRow={handleAddRow}
-                  onClick={() => {
-                    setSelectedProject(params?.formattedValue);
-                  }}
-                  />
-            }
             </div>
           </Tooltip>
         )
