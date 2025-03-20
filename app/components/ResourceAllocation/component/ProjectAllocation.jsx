@@ -5,7 +5,6 @@ import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 // import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
-import { getProjectOrTeamIdByName, isResourceInProject } from '@/app/utils/common';
 import { Tooltip } from '@mui/material';
 
 
@@ -13,7 +12,6 @@ export default function ProjectAllocation() {
   const [allocationsFetched, setAllocationsFetched] = useState(false);
   const [rowsState, setRowsState] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('');
-  const [selectedProject, setSelectedProject] = useState('');
 
   const { projects, allocations, loading, dataProcessing } = useSelector(
     state => state.projects
@@ -35,22 +33,6 @@ export default function ProjectAllocation() {
       setAllocationsFetched(true);
     }
   }, [projects, allocationsFetched]);
-
-  const handleAddRow = async (e, resource) => {
-    const newRowForProject = {
-      id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
-      resourceId: resource.Id,
-      project: selectedProject,
-      projectId: getProjectOrTeamIdByName(projects?.result, selectedProject),
-      resource: resource.FullName,
-      role: resource.Role,
-      totalEffort: resource.totalHours,
-      hasButton: false,
-    };
-    if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
-      setRowsState([...rowsState, newRowForProject]);
-    }
-  };
 
   const projectColumnConfig = [
     {

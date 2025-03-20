@@ -205,7 +205,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio } from "@mui/material"
 import CustomSelect from "../Select/CustomSelect"
 import StyledLabel from "../Label/StyledLabel"
@@ -218,16 +218,49 @@ const AddAllocationForm = ({ formikProps }) => {
   const { values, handleChange, handleBlur, setFieldValue } = formikProps
   const [capacityOption, setCapacityOption] = useState("")
   const [customCapacity, setCustomCapacity] = useState("")
-  const { projects } = useSelector((state) => state.projects) 
+  const [projectOptions, setProjectOptions] = useState([]);
+  const { projects } = useSelector((state) => state.projects)
   const { resources } = useSelector((state) => state.resources)
+  const { resources: project_resource } = useSelector((state) => state.teams)
 
-  const projectOptions = projects?.result?.map((project) => ({
-    value: project.Id,
-    label: project.Name,
-  }))
+  useEffect(() => {
+    let projectByResources = {};
+    let avaiableProjects = [];
+    try {
+      project_resource?.forEach((resource) => {
+        let projects_by_resource = projectByResources[resource?.resourceId];
+        if (projects_by_resource) {
+          projectByResources[resource?.resourceId]?.push(resource?.projectId);
+        } else {
+          projectByResources[resource?.resourceId] = [resource?.projectId];
+        }
+      });
+      projects?.result?.forEach((project) => {
+        if (values.Resource) {
+          if (!projectByResources[values.Resource].includes(project.Id)) {
+            avaiableProjects.push({
+              value: project.Id,
+              label: project.Name,
+            });;
+          }
+        } else {
+          avaiableProjects.push({
+            value: project.Id,
+            label: project.Name,
+          });
+        }
+      });
+    } catch (e) {
+      avaiableProjects = projects?.result?.map((project) => ({
+        value: project.Id,
+        label: project.Name,
+      }));
+    }
+    setProjectOptions(avaiableProjects);
+  }, [values.Resource, project_resource, projects])
 
-  const resourceTypeOptions = resources && resources.result.map((resource)=>{
-    return{value: resource.Id, label:resource.FullName}
+  const resourceTypeOptions = resources && resources.result.map((resource) => {
+    return { value: resource.Id, label: resource.FullName }
   })
 
   const handleCapacityChange = (event) => {
