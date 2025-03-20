@@ -8,9 +8,9 @@ import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
-import { useRouter } from 'next/navigation';
+import { useRouter ,usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import CloseIcon from '@mui/icons-material/Close'; // Close icon import
+import CloseIcon from '@mui/icons-material/Close';
 
 
 const MainAppBar = styled(AppBar)(({ theme }) => ({
@@ -70,6 +70,7 @@ const Header = () => {
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useDispatch();
 
   const handleAddMenuToggle = () => {
@@ -106,12 +107,25 @@ const Header = () => {
     { icon: '/images/icons/ResourceIcon.svg', alt: 'Resource Icon', text: 'Add Resource' },
     { icon: '/images/icons/corporate_fare.svg', alt: 'Organization Icon', text: 'Add Organization' },
   ];
-
+  const getTitleFromPathname = (pathname) => {
+    switch(pathname) {
+      case '/allocation':
+        return 'Resource Allocation';
+      case '/project':
+        return 'Projects';
+      case '/people':
+        return 'People';
+      case '/report':
+        return 'Reports';
+      default:
+        return 'Executive Dashboard'; 
+    }
+  };
   return (
     <MainAppBar >
       <Toolbar className='toobarRow'>
         <Typography variant="h6">
-       Resource Allocation
+        {getTitleFromPathname(pathname)} 
         </Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
           <Box className="searchBar">
@@ -143,10 +157,10 @@ const Header = () => {
           backgroundColor: "#0A1B39",   
           borderRadius: "50%", 
           '&:hover': {
-          backgroundColor: "#0A1B39", // Keep the color consistent on hover
+          backgroundColor: "#0A1B39", 
          },
          '&:focus': {
-         backgroundColor: "#0A1B39", // Keep the color consistent on focus
+         backgroundColor: "#0A1B39", 
           },
           }}>
        {/* Toggle the icon here based on the openAddMenu state */}
