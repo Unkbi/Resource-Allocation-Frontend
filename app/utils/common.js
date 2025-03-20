@@ -101,6 +101,24 @@ export const getMondayOfWeek = weekStr => {
   return weekMonday.toLocaleDateString('en-CA');
 };
 
+export function generateAllMondays(startDate, endDate) {
+  const mondays = [];
+  const currentDate = new Date(startDate);
+  if (currentDate.getDay() !== 1) {
+    currentDate.setDate(currentDate.getDate() + ((1 - currentDate.getDay() + 7) % 7));
+  }
+  while (currentDate <= new Date(endDate)) {
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    mondays.push(formattedDate);
+    currentDate.setDate(currentDate.getDate() + 7);
+  }
+
+  return mondays;
+}
+
 /**
  * Checks whether the given string is a valid UUID.
  * @param {string} uuid - UUID string to test.

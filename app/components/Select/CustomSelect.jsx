@@ -41,7 +41,7 @@ const CustomSelect = ({ name, options, value, onChange, onBlur, width }) => {
         />
       )}
     >
-      {options.map(option => (
+      {options?.map(option => (
         <StyledMenuItem key={option.value} value={option.value}>
           {option.label}
         </StyledMenuItem>

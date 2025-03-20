@@ -14,7 +14,7 @@ import {
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import { closeDialog } from '@/app/redux/reducers/dialogReducer';
-import { getMondayOfWeek } from '@/app/utils/common';
+import { generateAllMondays, getMondayOfWeek } from '@/app/utils/common';
 import { setResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
 
 const initialValuesMap = {
@@ -73,51 +73,62 @@ const AllocationForm = () => {
     }
   };
 
-  const handleSubmit = (values) => {
-    console.log('Form Data:', values);
-    let postData = {}    
-    // Handle form submission
+  const handleSubmit = async (values) => {
+    const allMondays = generateAllMondays(values.StartDate, values.EndDate);
+    let postData = {};
     switch (formType) {
       case 'add_project':
         postData = {
           "ResourceAllocation.Core/Project": {
             ...values,
             Description: "string",
-          }
-        }
-        try{
+          },
+        };
+        try {
           dispatch(addProject(postData));
+        } catch (e) {
+          console.log(e);
         }
-        catch(e){
-          console.log(e)
-        }
+        break;
+  
       case 'edit_project':
-          postData = {
-            "ResourceAllocation.Core/Project": {
-              ...values,
-              Description: "string",
-            }
-          }
-          try{
-            dispatch(updateProject({postData, projectId : initialData.Id}));
-          }
-          catch(e){
-            console.log(e)
-          }
+        postData = {
+          "ResourceAllocation.Core/Project": {
+            ...values,
+            Description: "string",
+          },
+        };
+        try {
+          dispatch(updateProject({ postData, projectId: initialData.Id }));
+        } catch (e) {
+          console.log(e);
+        }
+        break;
+  
       case 'add_allocation':
-          const postPayload = {
-            resourceId: values.Resource,
-            postData: {
-              'ResourceAllocation.Core/Allocation': {
-                Resource: values.Resource,
-                Project: values.Project,
-                ProjectName: projects?.result?.filter(project => project.Id === values.Project)[0].Name,
-                Period: values.StartDate,
-                AllocationEntered: values.AllocationEntered,
+        try {
+          const allocationPromises = allMondays.map((monday) => {
+            const postPayload = {
+              resourceId: values.Resource,
+              postData: {
+                'ResourceAllocation.Core/Allocation': {
+                  Resource: values.Resource,
+                  Project: values.Project,
+                  ProjectName: projects?.result?.filter((project) => project.Id === values.Project)[0].Name,
+                  Period: monday,
+                  AllocationEntered: values.AllocationEntered,
+                },
               },
-            },
-          };
-          dispatch(setResourceAllocation(postPayload));
+            };
+            return dispatch(setResourceAllocation(postPayload));
+          });
+  
+          await Promise.all(allocationPromises);
+        } catch (e) {
+          console.error('Error creating allocations:', e);
+        }
+        break;
+  
       default:
         return;
     }
