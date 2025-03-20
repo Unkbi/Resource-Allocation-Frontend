@@ -33,7 +33,7 @@ const AddProjectForm = ({ formikProps }) => {
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Name</StyledLabel>
+        <StyledLabel>Project Name</StyledLabel>
         <StyledInput
           as={TextField}
           name="Name"
