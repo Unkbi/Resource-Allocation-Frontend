@@ -6,7 +6,7 @@ import { useState } from "react";
 import { generateRandomColor, getInitials } from "@/app/utils/common";
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 import { useDispatch } from "react-redux";
-import { openDialog } from "@/app/redux/actions/dialogAction";
+import { openDialog } from "@/app/redux/reducers/dialogReducer";
 
 const projects = {
     "result": [
@@ -445,17 +445,13 @@ export default function Project() {
     }
 
     const handleOpenDialog = (title, formType, row) => {
-      console.log(row,"row");
-      
       dispatch(
         openDialog({
           title: title,
           submitButtonText: 'Update',
           cancelButtonText: 'Cancel',
-          formState: {
-            formType: formType,
-            initialData: row,
-          },
+          formType: formType,
+          initialData: row,
         })
       );
     };
