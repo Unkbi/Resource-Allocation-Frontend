@@ -61,6 +61,7 @@ const AllocationForm = () => {
   const { projects } = useSelector((state) => state.projects);
 
   const { teams, teamsResources } = useSelector(state => state.teams);
+  const { allocations } = useSelector(state => state.dataGrid);
 
   const getValidationSchema = (formType) => {
     switch (formType) {
@@ -154,16 +155,13 @@ const AllocationForm = () => {
             return;
           }
           await Promise.all(allocationPromises)
-            .then(() => {
-              dispatch(resetResources());
-              dispatch(fetchResourcesAgainstTeams(teams.result));
-            })
-            .finally(() => {
+            .then(async () => {
               let new_resource = getTeamByResourceId(values.Resource);
               dispatch(closeDialog());
-              setTimeout(() => {
-                handleOnAdd(new_resource?.team?.Name, new_resource?.FullName);
-              }, 100);
+              return dispatch(fetchResourcesAgainstTeams([new_resource?.team], allocations))
+                .then(() => {
+                  handleOnAdd(new_resource?.team?.Name, new_resource?.FullName);
+                });
             });
         } catch (e) {
           console.error('Error creating allocations:', e);

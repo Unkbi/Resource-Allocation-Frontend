@@ -15,6 +15,7 @@ import {
   isWithin20WeeksRange,
   removeDuplicateResources,
 } from '@/app/utils/common';
+import { setAllocations } from '../reducers/dataGridReducer';
 
 export const fetchAllTeams = () => async dispatch => {
   try {
@@ -129,7 +130,7 @@ const formatAllocations = (data, resources, teamId, teamName) => {
   return Array.from(allocationMap.values());
 };
 
-export const fetchResourcesAgainstTeams = teams => async dispatch => {
+export const fetchResourcesAgainstTeams = (teams, allocations = null) => async dispatch => {
   try {
     dispatch(setTeamsDataProcessing(true));
     let allResources = [];
@@ -176,9 +177,24 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
     });
 
     const results = await Promise.allSettled(teamPromises);
-    Array.isArray(results) && results.forEach(({ status, value }) => {
+
+    const preload_result = [];
+    if (allocations && results?.length === 1) {
+      Object.keys(allocations)?.forEach((key) => {
+        console.log('key', key);
+        if (key === teams[0].Id) {
+          preload_result.push(results[0]);
+        } else {
+          preload_result.push({ status: 'fulfilled', value: allocations[key] });
+        }
+      });
+    }
+
+    const iterator = allocations && preload_result?.length ? preload_result : results;
+    Array.isArray(iterator) && iterator.forEach(({ status, value }) => {
       if (status === 'fulfilled') {
         const { resourcesResult, allocationsResult, team } = value;
+        dispatch(setAllocations({ team_id: team.Id, value: { resourcesResult, allocationsResult, team } }));
         if (
           resourcesResult.status === 'fulfilled' &&
           allocationsResult.status === 'fulfilled'
@@ -200,11 +216,11 @@ export const fetchResourcesAgainstTeams = teams => async dispatch => {
       }
     });
 
-  Array.isArray(allResources) && allResources.sort((a, b) => {
-  const resourceA = a.resource?.toLowerCase() || '';
-  const resourceB = b.resource?.toLowerCase() || '';
-  return resourceA.localeCompare(resourceB);
-});
+    Array.isArray(allResources) && allResources.sort((a, b) => {
+      const resourceA = a.resource?.toLowerCase() || '';
+      const resourceB = b.resource?.toLowerCase() || '';
+      return resourceA.localeCompare(resourceB);
+    });
     if (allResources.length > 0) {
       dispatch(updateResources(allResources));
     }

@@ -78,14 +78,14 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
   useEffect(() => {
     try {
-      if (groupBy === 'teams' && expandRowId !== null && !(loading || !rowState.length)) {
+      if (groupBy === 'teams' && expandRowId !== null && rowState?.length) {
         apiRef.current.setRowChildrenExpansion(expandRowId, true);
         dispatch(setExpandRowId(null));
       }
     } catch (error) {
       console.warn('Error in setting row expansion', error);
     }
-  }, [expandRowId, loading || !rowState.length]);
+  }, [expandRowId, rowState?.length]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
