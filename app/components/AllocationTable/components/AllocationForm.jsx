@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Formik } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
@@ -14,8 +14,11 @@ import {
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import { closeDialog } from '@/app/redux/reducers/dialogReducer';
-import { generateAllMondays, getMondayOfWeek } from '@/app/utils/common';
+import { generateAllMondays } from '@/app/utils/common';
 import { setResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
+import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
+import { resetResources } from '@/app/redux/reducers/teamsReducer';
+import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 
 const initialValuesMap = {
   add_project: {
@@ -26,8 +29,8 @@ const initialValuesMap = {
     AllowOvertime: '',
     Location: '',
     Manager: '',
-    Status:"",
-    Type:""
+    Status: "",
+    Type: ""
   },
   add_resource: {
     Resource: '',
@@ -35,11 +38,11 @@ const initialValuesMap = {
     Skills: '',
   },
   add_allocation: {
-   Resource: '',
-  Project: '',
-  StartDate: '',
-  EndDate: '',
-  AllocationEntered: '',
+    Resource: '',
+    Project: '',
+    StartDate: '',
+    EndDate: '',
+    AllocationEntered: '',
   },
   assign_allocation: {
     Resource: '',
@@ -57,6 +60,8 @@ const AllocationForm = () => {
   const { initialData } = useSelector((state) => state.globalDialog.formState);
   const { projects } = useSelector((state) => state.projects);
 
+  const { teams, teamsResources } = useSelector(state => state.teams);
+  const { allocations } = useSelector(state => state.dataGrid);
 
   const getValidationSchema = (formType) => {
     switch (formType) {
@@ -71,6 +76,29 @@ const AllocationForm = () => {
       default:
         return null;
     }
+  };
+
+  const handleOnAdd = (team, resource) => {
+    let row_id = `auto-generated-row-teams/${team}-resource/${resource}`;
+    dispatch(setExpandRowId(row_id));
+  }
+
+  const getTeamByResourceId = (resourceId) => {
+    let new_user = null;
+    Object.keys(teamsResources)?.forEach((team) => {
+      teamsResources?.[team]?.forEach((resource) => {
+        if (resource?.Id == resourceId) {
+          new_user = { ...resource, teamId: team };
+        }
+      })
+    });
+
+    teams?.result?.forEach((team) => {
+      if (team?.Id == new_user?.teamId) {
+        new_user = { team: team, ...new_user };
+      }
+    });
+    return new_user;
   };
 
   const handleSubmit = async (values) => {
@@ -90,7 +118,7 @@ const AllocationForm = () => {
           console.log(e);
         }
         break;
-  
+
       case 'edit_project':
         postData = {
           "ResourceAllocation.Core/Project": {
@@ -104,7 +132,7 @@ const AllocationForm = () => {
           console.log(e);
         }
         break;
-  
+
       case 'add_allocation':
         try {
           const allocationPromises = allMondays.map((monday) => {
@@ -114,21 +142,32 @@ const AllocationForm = () => {
                 'ResourceAllocation.Core/Allocation': {
                   Resource: values.Resource,
                   Project: values.Project,
-                  ProjectName: projects?.result?.filter((project) => project.Id === values.Project)[0].Name,
+                  ProjectName: projects?.result?.filter((project) => project.Id === values.Project)?.[0]?.Name,
                   Period: monday,
                   AllocationEntered: values.AllocationEntered,
                 },
               },
             };
+
             return dispatch(setResourceAllocation(postPayload));
           });
-  
-          await Promise.all(allocationPromises);
+          if (!allocationPromises?.length) {
+            return;
+          }
+          await Promise.all(allocationPromises)
+            .then(async () => {
+              let new_resource = getTeamByResourceId(values.Resource);
+              dispatch(closeDialog());
+              return dispatch(fetchResourcesAgainstTeams([new_resource?.team], allocations))
+                .then(() => {
+                  handleOnAdd(new_resource?.team?.Name, new_resource?.FullName);
+                });
+            });
         } catch (e) {
           console.error('Error creating allocations:', e);
         }
         break;
-  
+
       default:
         return;
     }

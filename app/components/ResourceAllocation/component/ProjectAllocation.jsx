@@ -5,8 +5,6 @@ import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 // import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
-import { getProjectOrTeamIdByName, isResourceInProject } from '@/app/utils/common';
-import { AddRowIcon } from '../../AllocationTable/AddRowButton';
 import { Tooltip } from '@mui/material';
 
 
@@ -14,7 +12,6 @@ export default function ProjectAllocation() {
   const [allocationsFetched, setAllocationsFetched] = useState(false);
   const [rowsState, setRowsState] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('');
-  const [selectedProject, setSelectedProject] = useState('');
 
   const { projects, allocations, loading, dataProcessing } = useSelector(
     state => state.projects
@@ -37,22 +34,6 @@ export default function ProjectAllocation() {
     }
   }, [projects, allocationsFetched]);
 
-  const handleAddRow = async (e, resource) => {
-    const newRowForProject = {
-      id: `${selectedProject}-${resource.FullName}-${rowsState.length + 1}`,
-      resourceId: resource.Id,
-      project: selectedProject,
-      projectId: getProjectOrTeamIdByName(projects?.result, selectedProject),
-      resource: resource.FullName,
-      role: resource.Role,
-      totalEffort: resource.totalHours,
-      hasButton: false,
-    };
-    if (!isResourceInProject(rowsState, selectedProject, resource.FullName)) {
-      setRowsState([...rowsState, newRowForProject]);
-    }
-  };
-
   const projectColumnConfig = [
     {
       field: 'project',
@@ -64,8 +45,7 @@ export default function ProjectAllocation() {
       filterable: false,
       isEditable: false,
       renderCell: (params) => {
-        const [hover, setHover] = useState(false);
-        const cell_value = params.value?.length > 19 ? params.value?.slice(0, 18) + "..." : params.value;
+        const cell_value = params.value?.length > 21 ? params.value?.slice(0, 19) + "..." : params.value;
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
             popper: {
@@ -77,21 +57,9 @@ export default function ProjectAllocation() {
               ],
             }
           }}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
           >
             <div style={{ width: '100%' }}>
               <span>{cell_value}</span>
-              {
-                hover &&
-                  <AddRowIcon
-                  team_name={params.value}
-                  handleAddRow={handleAddRow}
-                  onClick={() => {
-                    setSelectedProject(params?.formattedValue);
-                  }}
-                  />
-            }
             </div>
           </Tooltip>
         )
