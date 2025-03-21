@@ -1,11 +1,23 @@
 import { ColumnManagementStyles, FilterPanelStyles, StyledDataGrid } from "../../AllocationTable/styles/StyledDataGrid";
 import {
+    GridColumnMenu,
     useGridApiRef
   } from '@mui/x-data-grid-premium';
 import ProjectToolbar from "../../Toolbar/ProjectToolbar";
 import { useState } from "react";
-
-const ProjectTable = ({columns, rows}) => {
+function CustomColumnMenu(props) {
+    return (
+      <GridColumnMenu
+        {...props}
+        slots={{
+            columnMenuAggregationItem: null,
+            columnMenuGroupingItem: null,
+        }}
+      />
+    );
+  }
+  
+const ProjectTable = ({columns, rows, loading}) => {
     const apiRef = useGridApiRef();
     const [filterButtonEl, setFilterButtonEl] = useState(null);
     return (
@@ -14,10 +26,13 @@ const ProjectTable = ({columns, rows}) => {
             columns={columns}
             rows={rows}
             hideFooter={true}
+            loading={loading}
             slots={{
-                toolbar: ProjectToolbar
+                toolbar: ProjectToolbar,
+                columnMenu: CustomColumnMenu
             }}
             sx={{
+                height: '500px',
                 '& .MuiDataGrid-columnSeparator': {
                     display: 'none', // This removes the vertical lines between columns
                 },

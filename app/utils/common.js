@@ -13,7 +13,7 @@ export const calculateTotalEffort = row => {
       return sum + numericValue;
     }, 0);
 };
-export const getStartOfPreviousWeek = (date) => {
+export const getStartOfPreviousWeek = date => {
   const d = new Date(date);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
@@ -35,7 +35,7 @@ export const getWeeksDifference = (startDate, endDate) => {
 export const formatDate = (date, format) => {
   return date.toLocaleDateString('en-US', {
     month: format.includes('MMM') ? 'short' : 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 };
 
@@ -56,26 +56,43 @@ export const getWeekNumber = date => {
  * @param {Date | string} date - The date to check. Can be a Date object or a string in a date format.
  * @returns {boolean} - Returns true if the date is in the previous week, current week, or next 20 weeks, false otherwise.
  */
-export const isWithin20WeeksRange = date => {
-  const givenDate = new Date(date).setHours(0, 0, 0, 0);
+
+/* previous issue: if local timezone is behind UTC (like pacific time), then some dates might still 
+be in the previous day when converted to UTC, causing W11 to be outside of expected range in some cases
+*/
+export const isWithin20WeeksRange = (date) => {
+  const givenDate = new Date(date); // new date object from the given date
+  givenDate.setUTCHours(0, 0, 0, 0); // set time to the start of day (UTC) to avoid timezone issues
+
+  // helper to calculate the monday of a given date's week (UTC based)
+  const getMonday = (d) => {
+    const date = new Date(d);
+    const day = date.getUTCDay(); // get the current day of the week (0 = sunday, 1 = monday, ...)
+    const diff = day === 0 ? -6 : 1 - day; // if sunday (0), move back 6 days otherwise move to the most recent monday
+    date.setUTCDate(date.getUTCDate() + diff); // adjust to monday
+    return date;
+  };
+
+  // get todays date and reset its time to the start of the day (UTC)
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setUTCHours(0, 0, 0, 0);
 
-  const dayOfWeek = today.getDay();
-  const startOfCurrentWeek = new Date(today);
-  startOfCurrentWeek.setDate(
-    today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
-  );
+  // determine the monday of the current week
+  const startOfCurrentWeek = getMonday(today);
 
+  // determine the monday of the previous week by subtracting 7 days
   const startOfPreviousWeek = new Date(startOfCurrentWeek);
-  startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
+  startOfPreviousWeek.setUTCDate(startOfCurrentWeek.getUTCDate() - 7);
 
   const endOfNext20Weeks = new Date(startOfCurrentWeek);
-  endOfNext20Weeks.setDate(
-    startOfCurrentWeek.getDate() + TOTAL_FUTURE_WEEKS * 7
-  );
+  endOfNext20Weeks.setUTCDate(startOfCurrentWeek.getUTCDate() + (TOTAL_FUTURE_WEEKS * 7));
 
-  return givenDate >= startOfPreviousWeek && givenDate <= endOfNext20Weeks;
+  // convert given date to its week's monday for consistent comparisons
+  const givenTime = getMonday(givenDate).getTime();
+  const startTime = startOfPreviousWeek.getTime();
+  const endTime = endOfNext20Weeks.getTime();
+  // true if the given date falls within the range of the previous week, current week, or next 20 weeks
+  return givenTime >= startTime && givenTime <= endTime;
 };
 
 /**
@@ -105,7 +122,9 @@ export function generateAllMondays(startDate, endDate) {
   const mondays = [];
   const currentDate = new Date(startDate);
   if (currentDate.getDay() !== 1) {
-    currentDate.setDate(currentDate.getDate() + ((1 - currentDate.getDay() + 7) % 7));
+    currentDate.setDate(
+      currentDate.getDate() + ((1 - currentDate.getDay() + 7) % 7)
+    );
   }
   while (currentDate <= new Date(endDate)) {
     const year = currentDate.getFullYear();
@@ -213,8 +232,8 @@ export const generateAllWeeks = () => {
   return weeks;
 };
 
- // Function to generate a random color in hex format
- export const generateRandomColor = () => {
+// Function to generate a random color in hex format
+export const generateRandomColor = () => {
   const letters = '0123456789ABCDEF';
   let color = '#';
   for (let i = 0; i < 6; i++) {
@@ -223,7 +242,7 @@ export const generateAllWeeks = () => {
   return color;
 };
 
-export const getInitials = (fullName) => {
+export const getInitials = fullName => {
   if (!fullName) return 'MJ';
   // Split the full name by spaces
   const nameParts = fullName.split(' ');
@@ -232,4 +251,49 @@ export const getInitials = (fullName) => {
   const initials = nameParts.map(part => part.charAt(0).toUpperCase()).join('');
 
   return initials;
-}
+};
+/**
+ * Returns a string representing the month and year in the format "Mon YY".
+ * @param {Date} date - The date object to format.
+ * @returns {string} - Formatted string like "Jan 25".
+ */
+const getMonthYearString = date => {
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const shortYear = date.getFullYear().toString().slice(-2);
+  return `${monthNames[date.getMonth()]} ${shortYear}`;
+};
+
+/**
+ * Returns the first and last month/year of the 22-week period.
+ * @returns {{first: string, last: string}} - Object containing first and last month/year strings.
+ */
+export const generateFirstAndLastMonthYear = () => {
+  const today = new Date();
+  const currentDay = today.getDay();
+
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - ((currentDay + 6) % 7));
+  startDate.setHours(0, 0, 0, 0);
+
+  const firstWeekDate = new Date(startDate);
+  const lastWeekDate = new Date(startDate);
+  lastWeekDate.setDate(startDate.getDate() + 20 * 7);
+
+  const firstMonthYear = getMonthYearString(firstWeekDate);
+  const lastMonthYear = getMonthYearString(lastWeekDate);
+
+  return { first: firstMonthYear, last: lastMonthYear };
+};

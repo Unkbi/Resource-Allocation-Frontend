@@ -55,7 +55,7 @@ const initialValuesMap = {
 
 const AllocationForm = () => {
   const { formType } = useSelector((state) => state.globalDialog.formState);
-  const [formValue, setFormValue] = useState(initialValuesMap[formType] || {});
+  const [formValue, setFormValue] = useState(initialValuesMap[formType] || initialValuesMap.add_project);
   const dispatch = useDispatch();
   const { initialData } = useSelector((state) => state.globalDialog.formState);
   const { projects } = useSelector((state) => state.projects);

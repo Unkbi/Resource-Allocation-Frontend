@@ -198,6 +198,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     backgroundColor: '#C4E5C4',
     // border: '#7AB17A',
   },
+  '& .over-occupied': {
+    backgroundColor: '#FFCD9C',
+  },
   '& .firstGroupsRow': {
     backgroundColor: '#E9EFF8',
   },

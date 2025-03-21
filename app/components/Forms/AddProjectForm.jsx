@@ -16,7 +16,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
         StartDate: initialData.StartDate || '',
         EndDate: initialData.EndDate || '',
         Owner: initialData.Owner?.name || '',
-        AllowOvertime: initialData.AllowOvertime || '',
+        AllowOvertime: initialData.AllowOvertime,
         Location: initialData.Location || '',
         Manager: initialData.Manager || '',
         Name: initialData.Name || '',

@@ -35,3 +35,19 @@ export const putResourceAllocations = createAsyncThunk(
     }
   }
 );
+
+export const deleteResourceAllocations = createAsyncThunk(
+  '/allocations/delete',
+  async (params, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.delete(
+        `${API_PROJECT_PORTFOLIO}/Resource/${params.resourceId}/ResourceAllocation/Allocation/${params.allocationId}`
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to delete resource allocation'
+      );
+    }
+  }
+);

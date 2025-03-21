@@ -428,7 +428,7 @@ const StatusPill = styled('div')(({ theme, status }) => ({
 
 export default function Project() {
     const dispatch = useDispatch()
-    const { projects, updating } = useSelector(state => state.projects)
+    const { projects, updating , loading} = useSelector(state => state.projects)
     const [anchorEl, setAnchorEl] = useState(null)
     const [selectedRow, setSelectedRow] = useState(null)
     const [rows, setRows] = useState(projects?.result || null)
@@ -495,7 +495,7 @@ export default function Project() {
               //   <AvatarCircle bgcolor={owner.bgColor}>{owner.initials}</AvatarCircle>
               //   <span>{owner.name}</span>
               // </PersonContainer>
-              <CustomAvatar value={owner.name} showFullName={true} />
+              owner.name &&  <CustomAvatar value={owner.name} showFullName={true} />
             )
           },
         },
@@ -511,7 +511,7 @@ export default function Project() {
               //   <AvatarCircle bgcolor={generateRandomColor()}>CS</AvatarCircle>
               //   <span>{manager}</span>
               // </PersonContainer>
-              <CustomAvatar value={manager} showFullName={true} />
+              manager &&  <CustomAvatar value={manager} showFullName={true} />
             )
           },
         },
@@ -544,7 +544,7 @@ export default function Project() {
           headerName: "Allow Overtime",
           flex: 1,
           minWidth: 130,
-          valueGetter: (params) => (params.value ? "Yes" : "No"),
+          valueGetter: (params) => (params? "Yes" : "No"),
         },
         {
           field: "Status",
@@ -579,7 +579,7 @@ export default function Project() {
                   horizontal: "right",
                 }}
               >
-                <MenuItem onClick={() => handleOpenDialog("Edit Project", "edit_project",params.row)}>Edit Project</MenuItem>
+                <MenuItem onClick={() =>{ handleOpenDialog("Edit Project", "edit_project",params.row), handleMenuClose()}}>Edit Project</MenuItem>
                 <MenuItem onClick={() => handleMenuClose(params)}>Delete Project</MenuItem>
               </Menu>
             </>
@@ -599,7 +599,7 @@ export default function Project() {
 
     return (
         <Box>
-            <ProjectTable columns={columns} rows={modifyData(rows)} />
+            <ProjectTable loading={loading }columns={columns} rows={modifyData(rows)} />
         </Box>
     )
 }

@@ -25,7 +25,7 @@ const CustomSelect = ({ name, options, value, onChange, onBlur, width }) => {
   return (
     <StyledSelect
       name={name}
-      value={value || ''}
+      value={value}
       onChange={onChange}
       onBlur={onBlur}
       width={width}
