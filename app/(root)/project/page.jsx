@@ -579,7 +579,7 @@ export default function Project() {
                   horizontal: "right",
                 }}
               >
-                <MenuItem onClick={() => handleOpenDialog("Edit Project", "edit_project",params.row)}>Edit Project</MenuItem>
+                <MenuItem onClick={() =>{ handleOpenDialog("Edit Project", "edit_project",params.row), handleMenuClose()}}>Edit Project</MenuItem>
                 <MenuItem onClick={() => handleMenuClose(params)}>Delete Project</MenuItem>
               </Menu>
             </>
