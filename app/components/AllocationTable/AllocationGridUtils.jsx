@@ -201,7 +201,11 @@ export const getCellClassName = (params, updatedRows) => {
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === projectName);
       }
-      const totalRows = projectRows.length;
+
+      const uniqueProjectRows = new Set(
+        projectRows.map(item => item.resourceId)
+      );
+      const totalRows = uniqueProjectRows.size;
 
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
@@ -212,17 +216,22 @@ export const getCellClassName = (params, updatedRows) => {
         return sum + numericValue;
       }, 0);
 
-      const percentage = (aggregatedValue / totalRows) * 100;
+      let percentage;
+      if (params.rowNode?.groupingField === 'resource') {
+        percentage = (aggregatedValue / 1) * 100;
+      } else {
+        percentage = (aggregatedValue / totalRows) * 100;
+      }
 
       if (percentage === 0) {
         return 'firstGroupsRow';
-      } else if (percentage < 50) {
+      } else if (percentage <= 50) {
         return 'poor-allocation';
-      } else if (percentage >= 50 && percentage < 80) {
+      } else if (percentage > 50 && percentage <= 80) {
         return 'average-allocation';
-      } else if (percentage >= 80 && percentage < 110) {
+      } else if (percentage > 80 && percentage <= 110) {
         return 'fully-occupied';
-      } else if (percentage >= 110) {
+      } else if (percentage > 110) {
         return 'over-occupied';
       }
     }
