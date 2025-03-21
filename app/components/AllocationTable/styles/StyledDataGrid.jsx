@@ -64,7 +64,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   },
   '& .MuiDataGrid-columnHeader': {
     borderRight: '1px solid #DDE1E4',
-    backgroundColor: '#FBFCFE',
+    backgroundColor: '#F1F6FF',
     padding: '0 16px 10px',
     color: '#313F68',
     fontFamily: "'Manrope', serif",
@@ -197,6 +197,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .fully-occupied': {
     backgroundColor: '#C4E5C4',
     // border: '#7AB17A',
+  },
+  '& .over-occupied': {
+    backgroundColor: '#FFCD9C',
   },
   '& .firstGroupsRow': {
     backgroundColor: '#E9EFF8',

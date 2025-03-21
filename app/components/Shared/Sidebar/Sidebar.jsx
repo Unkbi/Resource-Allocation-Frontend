@@ -118,7 +118,6 @@ const Sidebar = () => {
         router.push("/login");
       }
 
-
 const menuItems = [
     {icon: "/images/icons/Vector.svg", url: "/" },
     {icon: "/images/icons/WatchLaterRounded.svg", url: "/allocation" },

@@ -257,13 +257,16 @@ export default function AllocationGrid({
             resourceId: oldRow.resourceId,
             allocationId: oldRow[key]?.allocationId,
           };
-          dispatch(removeResourceAllocation(deletePayload));
+          dispatch(removeResourceAllocation(deletePayload)).then(() => {
+            setUpdatedRows(prevRows =>
+              prevRows.map(row => (row.id === newRow.id ? newRow : row))
+            );
+          });
         }
 
         // API call to update the data, if any changes are made.
         if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
           if (oldRow[key]?.allocationId && newRow[key] !== null) {
-            // PUT API call to update the data.
             const putPayload = {
               resourceId: oldRow.resourceId,
               allocationId: oldRow[key]?.allocationId,
@@ -273,9 +276,12 @@ export default function AllocationGrid({
                 },
               },
             };
-            dispatch(updateResourceAllocation(putPayload));
+            dispatch(updateResourceAllocation(putPayload)).then(() => {
+              setUpdatedRows(prevRows =>
+                prevRows.map(row => (row.id === newRow.id ? newRow : row))
+              );
+            });
           } else {
-            // POST API call to update the data.
             const postPayload = {
               resourceId: oldRow.resourceId,
               postData: {
@@ -288,7 +294,11 @@ export default function AllocationGrid({
                 },
               },
             };
-            dispatch(setResourceAllocation(postPayload));
+            dispatch(setResourceAllocation(postPayload)).then(() => {
+              setUpdatedRows(prevRows =>
+                prevRows.map(row => (row.id === newRow.id ? newRow : row))
+              );
+            });
           }
         }
 

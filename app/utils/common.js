@@ -118,6 +118,26 @@ export const getMondayOfWeek = weekStr => {
   return weekMonday.toLocaleDateString('en-CA');
 };
 
+export function generateAllMondays(startDate, endDate) {
+  const mondays = [];
+  const currentDate = new Date(startDate);
+  if (currentDate.getDay() !== 1) {
+    currentDate.setDate(
+      currentDate.getDate() + ((1 - currentDate.getDay() + 7) % 7)
+    );
+  }
+  while (currentDate <= new Date(endDate)) {
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    mondays.push(formattedDate);
+    currentDate.setDate(currentDate.getDate() + 7);
+  }
+
+  return mondays;
+}
+
 /**
  * Checks whether the given string is a valid UUID.
  * @param {string} uuid - UUID string to test.
@@ -212,6 +232,26 @@ export const generateAllWeeks = () => {
   return weeks;
 };
 
+// Function to generate a random color in hex format
+export const generateRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
+
+export const getInitials = fullName => {
+  if (!fullName) return 'MJ';
+  // Split the full name by spaces
+  const nameParts = fullName.split(' ');
+
+  // Extract the first letter of each part of the name
+  const initials = nameParts.map(part => part.charAt(0).toUpperCase()).join('');
+
+  return initials;
+};
 /**
  * Returns a string representing the month and year in the format "Mon YY".
  * @param {Date} date - The date object to format.
