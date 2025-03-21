@@ -32,7 +32,7 @@ const ProjectTable = ({columns, rows, loading}) => {
                 columnMenu: CustomColumnMenu
             }}
             sx={{
-                height: '500px',
+                height: '95vh',
                 '& .MuiDataGrid-columnSeparator': {
                     display: 'none', // This removes the vertical lines between columns
                 },
