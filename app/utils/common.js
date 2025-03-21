@@ -242,13 +242,13 @@ export const generateRandomColor = () => {
   return color;
 };
 
-export const getInitials = fullName => {
+export const getInitials = (fullName) => {
   if (!fullName) return 'MJ';
   // Split the full name by spaces
-  const nameParts = fullName.split(' ');
+  const nameParts = fullName?.trim()?.split(' ');
 
   // Extract the first letter of each part of the name
-  const initials = nameParts.map(part => part.charAt(0).toUpperCase()).join('');
+  const initials = nameParts?.map(part => part.charAt(0).toUpperCase()).join('');
 
   return initials;
 };
