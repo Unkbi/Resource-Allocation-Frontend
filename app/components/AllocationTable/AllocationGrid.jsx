@@ -34,7 +34,8 @@ import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 
-import CustomToolbar from '../Toolbar/CustomToolbar';
+// import CustomToolbar from '../Toolbar/CustomToolbar';
+import ToolbarMod from '../Toolbar/ToolbarMod';
 
 export default function AllocationGrid({
   groupBy,
@@ -352,8 +353,12 @@ export default function AllocationGrid({
         getRowClassName={params => `super-app-theme--${params.row.status}`}
         disableAutosize
         getCellClassName={params => getCellClassName(params, updatedRows)}
+        localeText={{
+          toolbarFilters:"",
+          toolbarColumns:"",
+        }}
         slots={{
-          toolbar: CustomToolbar,
+          toolbar: ToolbarMod,
           columnMenu: props => {
             return <CustomColumnMenu {...props} apiRef={apiRef} />;
           },
