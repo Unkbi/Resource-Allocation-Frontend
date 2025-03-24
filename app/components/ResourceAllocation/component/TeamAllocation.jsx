@@ -40,7 +40,13 @@ export default function TeamAllocation() {
       cellClassName: 'prime-cell',
       primaryColumn: true,
       renderCell: (params) => {
-        const cell_value = params.value?.length > 21 ? params.value?.slice(0, 19) + "..." : params.value;
+        const resource_count = [
+          ...new Set(
+            params?.rowNode?.children?.map(
+              child => params.api.getRow(child)
+            )
+          ),
+        ];
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
             popper: {
@@ -52,11 +58,27 @@ export default function TeamAllocation() {
               ],
             }
           }}>
-            <div style={{ width: '100%' }}>
-              <span>{cell_value}</span>
+          <div style={{
+              display: 'flex',
+              width: '100%',
+              minWidth: 0,
+            }}>
+              <span style={{
+                flex: '1 1 auto',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {params.value}
+              </span>
+              <span style={{
+                flex: '0 0 auto',
+              }}>
+                ({resource_count.length})
+              </span>
             </div>
           </Tooltip>
-        )
+        );
       }
     },
     {
@@ -74,7 +96,7 @@ export default function TeamAllocation() {
           const uniqueResourceTypes = [
             ...new Set(params?.rowNode?.children?.map(child => params.api.getRow(child)?.resourceType))
           ].filter(Boolean);
-
+  
           return uniqueResourceTypes.length
             ? uniqueResourceTypes.length > 1
               ? `${uniqueResourceTypes[0]} +${uniqueResourceTypes.length - 1}`

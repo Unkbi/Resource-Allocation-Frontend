@@ -45,21 +45,38 @@ export default function ProjectAllocation() {
       filterable: false,
       isEditable: false,
       renderCell: (params) => {
-        const cell_value = params.value?.length > 21 ? params.value?.slice(0, 19) + "..." : params.value;
+        const resource_count = params?.rowNode?.children?.length || ""
+
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
-            popper: {
+              popper: {
               modifiers: [
                 {
                   name: "offset",
                   options: { offset: [0, 10] },
                 },
               ],
-            }
-          }}
+              }
+            }}
           >
-            <div style={{ width: '100%' }}>
-              <span>{cell_value}</span>
+            <div style={{
+              display: 'flex',
+              width: '100%',
+              minWidth: 0,
+            }}>
+              <span style={{
+                flex: '1 1 auto',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {params.value}
+              </span>
+              <span style={{
+                flex: '0 0 auto',
+              }}>
+                ({resource_count})
+              </span>
             </div>
           </Tooltip>
         )
@@ -69,18 +86,20 @@ export default function ProjectAllocation() {
       field: 'totalEffort',
       headerName: 'Total Effort',
       width: 150,
-      valueFormatter: params => {
-        const value = Number(params);
-        return value && typeof value === 'number' && value !== 0
-          ? Math.round(value * 10) / 10
-          : null;
-      },
       type: 'number',
       sortable: false,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
+      renderCell: (params) => {
+        const value = Number(params.value);
+        const formattedValue =
+          value && typeof value === 'number' && value !== 0
+            ? Math.round(value * 10) / 10
+            : null;
+        return <span style={{ fontWeight: 'bold' }}>{formattedValue}</span>;
+      },
     },
   ];
 

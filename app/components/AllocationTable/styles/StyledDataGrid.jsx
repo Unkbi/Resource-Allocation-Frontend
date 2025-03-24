@@ -5,19 +5,20 @@ import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
-      width: '240px !important',
+      // width: '240px !important',
       fontSize: '14px',
     },
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
     {
-      width: '240px !important',
+      // width: '240px !important',
+      fontWeight:"bold"
     },
   [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
     {
       outline: 'none',
     },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
-    width: '240px',
+    // width: '240px',
   },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
     {
@@ -73,6 +74,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       // alignItems: 'flex-start',
       '& .MuiDataGrid-columnHeaderTitle': {
         fontSize: '14px',
+        fontWeight:"bold",
       },
     },
   },
@@ -157,7 +159,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       alignItems: 'center',
       '& .MuiDataGrid-columnHeaderTitle': {
         fontFamily: "'Manrope', serif",
-        fontWeight: '500',
+        fontWeight:"bold",
         fontSize: '12px',
         color: '#fff',
       },
