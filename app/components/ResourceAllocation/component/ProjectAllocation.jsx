@@ -5,7 +5,9 @@ import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 // import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
-import { Tooltip } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 
 
 export default function ProjectAllocation() {
@@ -34,6 +36,20 @@ export default function ProjectAllocation() {
     }
   }, [projects, allocationsFetched]);
 
+  const handleAddClick =(params)=>{
+    dispatch(
+      openDialog({
+        title: "Add Allocation",
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: "add_allocation",
+        initialData: {  
+          Project: params.value 
+        },
+      })
+    );
+  }
+
   const projectColumnConfig = [
     {
       field: 'project',
@@ -45,8 +61,7 @@ export default function ProjectAllocation() {
       filterable: false,
       isEditable: false,
       renderCell: (params) => {
-        const resource_count = params?.rowNode?.children?.length || ""
-
+        const resource_count = params?.rowNode?.children?.length || "";
         return (
           <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
               popper: {
@@ -59,27 +74,13 @@ export default function ProjectAllocation() {
               }
             }}
           >
-            <div style={{
-              display: 'flex',
-              width: '100%',
-              minWidth: 0,
-            }}>
-              <span style={{
-                flex: '1 1 auto',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {params.value}
-              </span>
-              <span style={{
-                flex: '0 0 auto',
-              }}>
-                ({resource_count})
-              </span>
-            </div>
+            <CustomAddIcon
+            value={params.value}
+            count={resource_count}
+            onClick={() => handleAddClick(params)}
+            />
           </Tooltip>
-        )
+        );
       }
     },
     {
@@ -102,7 +103,7 @@ export default function ProjectAllocation() {
       },
     },
   ];
-
+ 
   return (
     <>
       <AllocationGrid

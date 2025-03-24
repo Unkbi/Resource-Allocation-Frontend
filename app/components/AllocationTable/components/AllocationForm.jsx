@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Formik } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
@@ -63,6 +63,10 @@ const AllocationForm = () => {
   const { teams, teamsResources } = useSelector(state => state.teams);
   const { allocations } = useSelector(state => state.dataGrid);
 
+  useEffect(() => {
+    setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+  }, [formType]);
+  
   const getValidationSchema = (formType) => {
     switch (formType) {
       case 'add_project':
@@ -182,7 +186,7 @@ const AllocationForm = () => {
       case 'add_resource':
         return <AddResourceForm formikProps={formikProps} />;
       case 'add_allocation':
-        return <AddAllocationForm formikProps={formikProps} />;
+        return <AddAllocationForm formikProps={formikProps} setFormValue={setFormValue} />;
       case 'assign_allocation':
         return <AssignAllocationForm formikProps={formikProps} />;
       default:

@@ -9,14 +9,34 @@ import CustomDatePicker from "../DatePicker/CustomDatePicker"
 import StyledRadioButton from "../RadioButton/StyledRadioButton"
 import { useSelector } from "react-redux"
 
-const AddAllocationForm = ({ formikProps }) => {
-  const { values, handleChange, handleBlur, setFieldValue } = formikProps
+const AddAllocationForm = ({ formikProps , setFormValue}) => {
+  const { values, handleChange, handleBlur, setFieldValue} = formikProps
   const [capacityOption, setCapacityOption] = useState("")
   const [customCapacity, setCustomCapacity] = useState("")
   const [projectOptions, setProjectOptions] = useState([]);
   const { projects } = useSelector((state) => state.projects)
   const { resources } = useSelector((state) => state.resources)
   const { resources: project_resource } = useSelector((state) => state.teams)
+  const {initialData } = useSelector(state => state.globalDialog.formState);
+  useEffect(() => {
+    if (initialData) {
+      const filteredProject = projects?.result?.find(
+        project => project.Name === initialData.Project
+      );
+      const filteredResource = resources?.result?.find(
+        resource => resource.FullName === initialData.Resource
+      );
+      const rowData = {
+        Resource: filteredResource?.Id || '',
+        Project: filteredProject?.Id || '',
+        StartDate: initialData.StartDate || '',
+        EndDate: initialData.EndDate || '',
+        AllocationEntered: initialData.AllocationEntered || '',
+      };
+      setFormValue(rowData);
+    }
+  }, [initialData, projects]);
+
 
   useEffect(() => {
     let projectByResources = {};
@@ -82,7 +102,7 @@ const AddAllocationForm = ({ formikProps }) => {
         <CustomSelect
           name="Resource"
           options={resourceTypeOptions}
-          value={values.Resource}
+          value={values.Resource ||""}
           onChange={handleChange}
           onBlur={handleBlur}
         />
@@ -92,7 +112,7 @@ const AddAllocationForm = ({ formikProps }) => {
         <CustomSelect
           name="Project"
           options={projectOptions}
-          value={values.Project}
+          value={values.Project ||""}
           onChange={handleChange}
           onBlur={handleBlur}
         />
@@ -124,14 +144,14 @@ const AddAllocationForm = ({ formikProps }) => {
             <CustomDatePicker
               name="StartDate"
               handleChange={handleChange}
-              value={values.StartDate}
+              value={values.StartDate ||""}
               placeholder={"Start Date"}
               formikProps={formikProps}
             />
             <CustomDatePicker
               name="EndDate"
               handleChange={handleChange}
-              value={values.EndDate}
+              value={values.EndDate ||""}
               placeholder={"End Date"}
               formikProps={formikProps}
             />
