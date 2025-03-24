@@ -1,47 +1,33 @@
 "use client";
-
-import * as React from "react";
+import React,{createContext, useState} from "react";
 import CssBaseline from "@mui/material/CssBaseline";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Roboto } from "next/font/google";
+import { ThemeProvider } from "@mui/material/styles";
 import { NextAppDirEmotionCacheProvider } from "./EmotionCache";
+import { getTheme } from "./theme";
 
-const roboto = Roboto({
-  weight: ["300", "400", "500", "700"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-});
-
-const themeOptions = {
-  typography: {
-    fontSize: 12,
-    fontFamily: roboto.style.fontFamily,
-  },
-  palette: {
-    background: {
-      default: "#ffffff",
-    },
-    primary: {
-      main: "#1976d2",
-    },
-    text: {
-      primary: "#300000",
-    },
-  },
-};
-
-const theme = createTheme(themeOptions);
+export const ThemeContext = createContext(null);
 
 export default function ThemeRegistry({ children }) {
+  const [mode, setMode] = useState('light'); 
+  const [primaryColor, setPrimaryColor] = useState('#1C2D5F'); 
+  const [fontSize, setFontSize] = useState('md');
+
+  const theme = getTheme(mode, primaryColor, fontSize);
+
+  const toggleMode = () => setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
+
+  const changePrimaryColor = (color) => setPrimaryColor(color);
+  const changeFontSize = (adjustment) => {
+    setFontSize((prev) => Math.max(10, prev + adjustment)); 
+  };
   return (
     <NextAppDirEmotionCacheProvider options={{ key: "mui" }}>
+      <ThemeContext.Provider value={{ toggleMode, changePrimaryColor, changeFontSize, mode, primaryColor, fontSize }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {children}
       </ThemeProvider>
+      </ThemeContext.Provider>
     </NextAppDirEmotionCacheProvider>
   );
 }
-
-
-

@@ -1,12 +1,7 @@
 "use client";
-import styles from "../../page.module.css";
+
+import { Box } from "@mui/material";
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        Home Page
-       </main>
-    </div>
-  );
+  return <Box>Dashboard</Box>;
 }

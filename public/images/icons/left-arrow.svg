@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18px" height="18px" viewBox="0 0 18 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>left-arrow</title>
+    <g id="V9" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="left-arrow">
+            <polygon id="Rectangle-Copy-15" transform="translate(9, 9) scale(-1, 1) translate(-9, -9)" points="-6.36685826e-16 -5.81677563e-15 18 -5.81016716e-15 18 18 -6.36685826e-16 18"></polygon>
+            <polyline id="Path-Copy-4" stroke="#344665" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(9, 9) scale(-1, 1) translate(-9, -9)" points="6 15 12 9 6 3"></polyline>
+        </g>
+    </g>
+</svg>
