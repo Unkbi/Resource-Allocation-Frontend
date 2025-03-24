@@ -33,7 +33,10 @@ const MainBox = styled(Box)(({ theme }) => ({
     cursor: "pointer",
     "&.active": {
       opacity: "1",
-      backgroundColor: theme.custom.ternaryColor
+      backgroundColor: theme.custom.ternaryColor,
+      margin :"7px",
+      borderRadius :"4px",
+      
     }
   },
   "& .logo": {
@@ -76,7 +79,7 @@ const MainBox = styled(Box)(({ theme }) => ({
 
 
 const Sidebar = () => {
-  const [selectedMenu, setSelectedMenu] = useState('Dashboard');
+  const [selectedMenu, setSelectedMenu] = useState('allocation');
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -119,18 +122,18 @@ const Sidebar = () => {
       }
 
 const menuItems = [
-    {icon: "/images/icons/Vector.svg", url: "/" },
-    {icon: "/images/icons/WatchLaterRounded.svg", url: "/allocation" },
-    {icon: "/images/icons/FolderIcon.svg", url: "/project" },
-    {icon: "/images/icons/peopleIcon.svg", url: "/people" },
-    {icon: "/images/icons/ReportsIcon.svg", url: "/report" },
+    {icon: "/images/icons/DashboardRounded.svg", url: "/", disabled: false },
+    {icon: "/images/icons/WatchLaterRoundedd.svg", url: "/allocation", disabled: false },
+    {icon: "/images/icons/FolderFileOpen.svg", url: "/project", disabled: false },
+    {icon: "/images/icons/SupervisedUserCircleRounded.svg", url: "/people", disabled: true },
+    {icon: "/images/icons/PollRounded.svg", url: "/report", disabled: true },
   ];
 
   const extraMenuItems = [
-    { text: '', icon: "/images/icons/SettingsIcon.svg", url: "/settings" },
-    { text: '', icon: "/images/icons/Notifications.svg", url: "/notifications" },
-    { text: '', icon: "/images/icons/helpIcon.svg", url: "/help" },
-    { text: '', icon: "/images/icons/sidebar-left.svg", url: "/expand" },
+    { icon: "/images/icons/SettingsIcon.svg", url: "/settings", disabled: true }, 
+    { icon: "/images/icons/Notifications.svg", url: "/notifications", disabled: true }, 
+    { icon: "/images/icons/helpIcon.svg", url: "/help", disabled: true },
+    { icon: "/images/icons/sidebar-left.svg", url: "/expand", disabled: true },
   ];
 
 
@@ -141,7 +144,8 @@ const menuItems = [
     }
   }, [pathname]);
 
-  const handleMenuClick = (text, url) => {
+  const handleMenuClick = (url, disabled) => {
+    if (disabled) return; 
     setSelectedMenu(url);
     router.push(url);
   };
@@ -155,22 +159,26 @@ const menuItems = [
         <img src="/images/icons/Line1.svg"/>
       </Box>
       <Box className= "items-parent">
-        <Box className= "test-parent">
-     <Box className="menu-items-parent">
+        <Box className= "items-parent-wrapper">
+          <Box className="menu-items-parent">
       <List>
         {menuItems.map((item, index) => (
           <MenuItem
             className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
             key={index}
-            onClick={() => handleMenuClick(item.text, item.url)}
-          >
-            <img src={item.icon} alt={item.text} />
-            <Typography className='menuText'>{item.text}</Typography>
-          </MenuItem>
-        ))}
-      </List>
-      </Box>
-      <Box className="line-container" sx={{marginTop:"-20px"}}>
+                onClick={() => handleMenuClick(item.url, item.disabled)}
+                sx={{
+                  opacity: item.disabled ? 0.5 : 1,
+                  cursor: item.disabled ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <img src={item.icon} alt={item.text} />
+              </MenuItem>
+            ))}
+          </List>
+        </Box>
+
+        <Box className="line-container" sx={{marginTop:"-20px"}}>
       <img src="/images/icons/Line2.svg"/>
       </Box>
       </Box>
@@ -181,20 +189,22 @@ const menuItems = [
             <MenuItem
               className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
               key={index}
-              onClick={() => handleMenuClick(item.text, item.url)}
-              aria-label={item.text}
-            >
-              <img src={item.icon} alt={item.text} sx={{ width: '16px', height: '16px' }} />
-              <Typography className='menuText'>{item.text}</Typography>
-            </MenuItem>
-          ))}
-        </List>
+              onClick={() => handleMenuClick(item.url, item.disabled)}
+                sx={{
+                  opacity: item.disabled ? 0.5 : 1,
+                  cursor: item.disabled ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <img src={item.icon} alt={item.text} sx={{ width: '16px', height: '16px' }} />
+              </MenuItem>
+            ))}
+          </List>
           <Box lineHeight={'10px'}
             onClick={handleToggle}
             ref={anchorRef}
             id="composition-button"
             aria-controls={open ? 'composition-menu' : undefined}
-            sx={{ cursor: 'pointer' ,marginBottom:"15px" }}
+            sx={{ cursor: 'pointer' ,marginBottom:"9px" }}
           >
             <img src={"/images/icons/profile.svg"} className="profle-img" alt='' />
           </Box>
