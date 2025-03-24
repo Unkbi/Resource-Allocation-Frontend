@@ -204,7 +204,7 @@ const menuItems = [
             ref={anchorRef}
             id="composition-button"
             aria-controls={open ? 'composition-menu' : undefined}
-            sx={{ cursor: 'pointer' ,marginBottom:"15px" }}
+            sx={{ cursor: 'pointer' ,marginBottom:"9px" }}
           >
             <img src={"/images/icons/profile.svg"} className="profle-img" alt='' />
           </Box>
