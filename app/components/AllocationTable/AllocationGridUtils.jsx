@@ -6,6 +6,8 @@ import CustomAvatar from '../Avatar/CustomAvatar';
 import { calculateTotalEffort } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
 import { useSelector } from 'react-redux';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { CustomAddIcon } from './CustomAddIcon';
 
 export const getInitialState = (
   groupBy,
@@ -40,6 +42,19 @@ export const getFinalColumns = (
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const allColumns = getAllColumnsWithWeek(columns, dispatch);
+  const handleAddClick = (params) => { 
+    dispatch(
+      openDialog({
+        title: "Add Allocation",
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: "add_allocation",
+        initialData: {
+          Resource: params.value 
+        },
+      })
+    );
+  }
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -55,7 +70,11 @@ export const getFinalColumns = (
         primaryColumn: true,
         renderCell: params => {
           if (params.value) {
-            return <CustomAvatar value={params.value} showFullName={true} />;
+            return <>
+            <CustomAvatar value={params.value} showFullName={true} />  
+            <CustomAddIcon
+            onClick={() => handleAddClick(params)}
+            /></>;
           }
         },
       },
