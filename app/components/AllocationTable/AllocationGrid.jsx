@@ -180,8 +180,11 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+    "__row_group_by_columns_group_teams__",
+    "__row_group_by_columns_group_resource__",
     ...columns.map(col => col.field),
-    ...finalColumns.filter(i => i.field === 'resource').map(col => col.field),
+    ...finalColumns.filter(i => i.field === 'resource' && groupBy==="project").map(col => col.field),
+    ...finalColumns.filter(i => i.field === 'project').map(col => col.field),
   ];
 
   const getTogglableColumns = columns =>
@@ -374,9 +377,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         getCellClassName={params => getCellClassName(params, updatedRows)}
         slots={{
           toolbar: CustomToolbar,
-          columnMenu: props => {
-            return <CustomColumnMenu {...props} apiRef={apiRef} />;
-          },
+          // columnMenu: CustomColumnMenu
+          // columnMenu: props => {
+          //   return <CustomColumnMenu {...props} apiRef={apiRef} />;
+          // },
         }}
         slotProps={{
           loadingOverlay: {

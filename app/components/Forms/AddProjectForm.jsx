@@ -61,7 +61,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Sponser</StyledLabel>
+        <StyledLabel>Sponsor</StyledLabel>
         <StyledInput
           as={TextField}
           name="Owner"

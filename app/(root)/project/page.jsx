@@ -433,7 +433,6 @@ export default function Project() {
     const [selectedRow, setSelectedRow] = useState(null)
     const [rows, setRows] = useState(projects?.result || null)
 
-    console.log("projects", projects)
 
     useEffect(() => {
       if(!updating){
@@ -448,7 +447,6 @@ export default function Project() {
     
     // console.log("modifyData(rows) : ", modifyData(rows))
     const modifyData = (data) => {
-      console.log("data : ", data)
       if(data) {
         return data.map((item) => {
             return {

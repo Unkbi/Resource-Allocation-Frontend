@@ -26,7 +26,7 @@ export const getInitialState = (
       ...aggregationModel,
     },
   },
-  pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD] },
+  pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, "__row_group_by_columns_group_teams__"] },
 });
 
 export const getFinalColumns = (
@@ -67,7 +67,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: groupBy == 'project' ? true : false,
         primaryColumn: true,
-        renderCell: params => {
+        renderCell: params => {    
           const allocationsOfAddedResource =
             Array.isArray(teamAllocations.result) &&
             teamAllocations.result.filter(
@@ -80,7 +80,7 @@ export const getFinalColumns = (
                 []
             ),
           ];
-
+          const isGroupExpanded = params.rowNode.childrenExpanded;
           if (params.row.hasProject && !params.row.project) {
             return (
               <AddRowButton
@@ -116,8 +116,8 @@ export const getFinalColumns = (
                 : projects_set?.[0];
             return (
               <div>
-                {cell_value}
-                <span
+                {!isGroupExpanded && cell_value}
+                {!isGroupExpanded && <span
                   style={{
                     backgroundColor: '#E9EFF8',
                     color: '#000',
@@ -129,7 +129,7 @@ export const getFinalColumns = (
                   }}
                 >
                   +{projects_set?.length - 1}
-                </span>
+                </span>}
               </div>
             );
           }

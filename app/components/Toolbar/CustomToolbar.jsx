@@ -359,12 +359,12 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
               </>
             )}
           </Box>
-          <Divider orientation="vertical" flexItem />
-          <Box className="dayWeekBlock">
+          {/* <Divider orientation="vertical" flexItem /> */}
+          {/* <Box className="dayWeekBlock">
             <Button>Day</Button>
             <Button className="selected">Week</Button>
             <Button>Month</Button>
-          </Box>
+          </Box> */}
           <Divider orientation="vertical" flexItem />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <IconButton size="medium" className="nextPrevIcon">
