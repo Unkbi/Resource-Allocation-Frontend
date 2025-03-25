@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { closeDialog, openDialog } from "@/app/redux/reducers/dialogReducer";
 import CustomAvatar from "@/app/components/Avatar/CustomAvatar";
+import DeleteDialog from "@/app/components/Dialog/DeleteDialog";
+import { deleteProject, getAllProjects} from '@/app/services/projectServices';
 
 const demoProjects = {
     "result": [
@@ -432,7 +434,8 @@ export default function Project() {
     const [anchorEl, setAnchorEl] = useState(null)
     const [selectedRow, setSelectedRow] = useState(null)
     const [rows, setRows] = useState(projects?.result || null)
-
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState(null);    
 
     useEffect(() => {
       if(!updating){
@@ -462,6 +465,19 @@ export default function Project() {
       }
       return []
   }
+
+  const handleConfirmDelete = () => {
+    if (!projectToDelete?.Id) return;
+    dispatch(deleteProject(projectToDelete.Id))
+    .then(() => dispatch(getAllProjects()));
+      setDeleteDialogOpen(false);
+    setProjectToDelete(null);
+  };
+  
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setProjectToDelete(null);
+  };
 
     const handleOpenDialog = (title, formType, row) => {
       dispatch(
@@ -578,7 +594,7 @@ export default function Project() {
                 }}
               >
                 <MenuItem onClick={() =>{ handleOpenDialog("Edit Project", "edit_project",params.row), handleMenuClose()}}>Edit Project</MenuItem>
-                <MenuItem onClick={() => handleMenuClose(params)}>Delete Project</MenuItem>
+                <MenuItem onClick={() => { setProjectToDelete(params.row); setDeleteDialogOpen(true); handleMenuClose() }}>Delete Project</MenuItem>
               </Menu>
             </>
           ),
@@ -598,6 +614,14 @@ export default function Project() {
     return (
         <Box>
             <ProjectTable loading={loading }columns={columns} rows={modifyData(rows)} />
+            <DeleteDialog
+              open={deleteDialogOpen}
+              onConfirm={handleConfirmDelete}
+              onCancel={handleCancelDelete}
+              title="Are you sure you want to delete this project?"
+              >
+              This will permanently delete the project.
+              </DeleteDialog>
         </Box>
     )
 }
