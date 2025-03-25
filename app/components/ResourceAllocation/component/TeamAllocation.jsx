@@ -12,12 +12,12 @@ import { Tooltip } from '@mui/material';
 export default function TeamAllocation() {
   const [resourcesFetched, setResourcesFetched] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState('');
-
+  
   const dispatch = useDispatch();
   const { teams, resources, loading, dataProcessing } = useSelector(
     state => state.teams
   );
-
+  
   useEffect(() => {
     setResourcesFetched(false);
     dispatch(fetchAllTeams());
@@ -30,6 +30,16 @@ export default function TeamAllocation() {
       setResourcesFetched(true);
     }
   }, [teams, resourcesFetched]);
+
+  const getTeam = (params) => {
+    if (params.rowNode.type === 'group' && params.rowNode.groupingField === 'teams') {
+      // Find the team by name in the teams array
+      const teamName = params.rowNode.groupingKey;
+      const team = teams?.result?.find(t => t.Name === teamName);  
+      return team;
+    }
+    return null;
+  }
 
   const teamsColumnConfig = [
     {
@@ -82,6 +92,28 @@ export default function TeamAllocation() {
       }
     },
     {
+      field: 'teamStatus',
+      headerName: 'Status',
+      width: 100,
+      type: 'string',
+      isEditable: false,
+      renderCell: (params) => {
+        const team = getTeam(params);
+        return team ? (<span>{team?.Status ?? "N/A"}</span>) : null;
+      }
+    },
+    {
+      field: 'teamAllocationManager',
+      headerName: 'Allocation Manager',
+      width: 150,
+      type: 'string',
+      isEditable: false,
+      renderCell: (params) => {
+        const team = getTeam(params);
+        return team ? (<span>{team?.AllocationManager ?? "N/A"}</span>) : null;
+      }
+    },
+    {
       field: 'resourceType',
       headerName: 'Resource Type',
       width: 200,
@@ -107,6 +139,7 @@ export default function TeamAllocation() {
     },
   ];
 
+  console.log({resources})
   return (
     <>
       <AllocationGrid
@@ -115,6 +148,14 @@ export default function TeamAllocation() {
         columns={teamsColumnConfig}
         selectedTeam={selectedTeam}
         setSelectedTeam={setSelectedTeam}
+        initialState={{
+          columns: {
+            columnVisibilityModel: {
+              teamAllocationManager: false,
+              teamStatus: false,
+            },
+          },
+        }}
         // columnGroupingModel={columnGroupingModel}
         data={resources}
       />

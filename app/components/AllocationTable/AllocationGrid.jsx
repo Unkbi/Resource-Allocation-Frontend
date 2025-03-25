@@ -37,7 +37,7 @@ import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import CustomToolbar from '../Toolbar/CustomToolbar';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 
-export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam }) {
+export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
@@ -90,11 +90,14 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
-    initialState: getInitialState(
-      groupBy,
-      updatedRows,
-      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
-    ),
+    initialState: {
+      ...getInitialState(
+        groupBy,
+        updatedRows,
+        GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+      ),
+      ..._initialState,
+    },
   });
 
   const handleAddProject = (e, project, curRow) => {
