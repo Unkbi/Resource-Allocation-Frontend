@@ -56,10 +56,6 @@ export const getWeekNumber = date => {
  * @param {Date | string} date - The date to check. Can be a Date object or a string in a date format.
  * @returns {boolean} - Returns true if the date is in the previous week, current week, or next 20 weeks, false otherwise.
  */
-
-/* previous issue: if local timezone is behind UTC (like pacific time), then some dates might still 
-be in the previous day when converted to UTC, causing W11 to be outside of expected range in some cases
-*/
 export const isWithin20WeeksRange = (date) => {
   const givenDate = new Date(date); // new date object from the given date
   givenDate.setUTCHours(0, 0, 0, 0); // set time to the start of day (UTC) to avoid timezone issues
@@ -73,9 +69,9 @@ export const isWithin20WeeksRange = (date) => {
     return date;
   };
 
-  // get todays date and reset its time to the start of the day (UTC)
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  // creates a new date that represents midnight UTC of current local date
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
   // determine the monday of the current week
   const startOfCurrentWeek = getMonday(today);
