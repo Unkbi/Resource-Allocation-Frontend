@@ -343,6 +343,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
     setRowModesModel(newRowModesModel);
   };
 
+  const filterColumns = ({ columns }) => {
+    return getTogglableColumns(columns);
+  };
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -408,6 +412,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
             columnsSort: 'asc',
             className: 'filterPopup',
             filterFormProps: {
+              filterColumns,
               columnInputProps: {
                 size: 'small',
                 sx: { mt: 'auto' },

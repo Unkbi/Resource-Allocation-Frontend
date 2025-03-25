@@ -289,7 +289,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             <CustomExport />
             <GridToolbarFilterButton
               slotProps={{
-                tooltip: { title: 'Filter' },
+                tooltip: { title: 'Filters' },
                 button: {
                   variant: 'outlined',
                   sx: { color: '#555', borderColor: '#ddd' },
