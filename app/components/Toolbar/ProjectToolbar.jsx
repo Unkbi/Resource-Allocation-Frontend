@@ -6,6 +6,19 @@ import {
     GridToolbarFilterButton,
   } from '@mui/x-data-grid';
 
+  const commonButtonStyles = {
+    backgroundColor: 'rgba(242, 245, 250, 0.3)',
+    border: '1px solid rgb(214, 220, 225)',
+    borderRadius: '4px',
+    height: '32px',
+    padding: '5px 12px',
+    fontSize: '13px',
+    color: 'rgb(33, 33, 33)',
+    fontFamily: 'Manrope, serif',
+    fontWeight: '600',
+    textTransform: 'none',
+};
+
 const StyledGridToolbarColumnsButton = styled(GridToolbarColumnsButton)({
     "& .MuiButton-startIcon": {
       marginRight: 0,
@@ -18,6 +31,15 @@ const StyledGridToolbarColumnsButton = styled(GridToolbarColumnsButton)({
       width: 0,
       padding: 0,
       overflow: "hidden",
+    },
+    '& .filterColBlock': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+       '& button': commonButtonStyles,
+      },
+    '& .columns-button' :{
+textTransform :'none',
     },
 })
 
@@ -41,6 +63,7 @@ const ProjectToolbar = ({ setFilterButtonEl }) => {
                 <Tab value="businessImpact" label="Business Impact" />
             </Tabs>
             <Box>
+            <Box className="filterColBlock">   
             <GridToolbarContainer ref={setFilterButtonEl}>
                 <StyledGridToolbarColumnsButton
                 slotProps={{
@@ -51,6 +74,7 @@ const ProjectToolbar = ({ setFilterButtonEl }) => {
                             <img src="/images/icons/columns.svg" alt="columns" />
                         ),
                         className: 'columns-button',
+                        sx: commonButtonStyles,
                 },
                 }}
                 />
@@ -63,10 +87,13 @@ const ProjectToolbar = ({ setFilterButtonEl }) => {
                     startIcon: (
                         <img src="/images/icons/filter.svg" alt="filter" />
                     ),
+                    className: 'columns-button',
+                    sx: commonButtonStyles,
                     },
                 }}
                 />
             </GridToolbarContainer>
+            </Box>
             </Box>
         </Box>
     )
