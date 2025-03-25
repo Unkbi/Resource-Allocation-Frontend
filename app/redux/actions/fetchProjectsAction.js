@@ -21,7 +21,7 @@ export const fetchAllProjects = () => async dispatch => {
   }
 };
 
-const formatAllocations = (allocationsData, projectId) => {
+const formatAllocations = (allocationsData, project) => {
   const allocationMap = new Map();
   const allWeeks = generateAllWeeks();
 
@@ -30,7 +30,7 @@ const formatAllocations = (allocationsData, projectId) => {
 
     const periodDate = new Date(allocation.Period);
     const weekNumber = getWeekNumber(periodDate);
-    const key = `${allocation.Resource}-${projectId}`;
+    const key = `${allocation.Resource}-${project.Id}`;
     const existingAllocation = allocationMap.get(key);
 
     if (existingAllocation) {
@@ -38,6 +38,16 @@ const formatAllocations = (allocationsData, projectId) => {
         existingAllocation[weekNumber] = {
           allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
+          projectStatus: project.Status ?? 'Status',
+          projectSponsor: project.Owner,
+          projectManager: project.Manager,
+          projectLocation: project.Location,
+          projectType: project.Type,
+          projectOvertimeAllowed: project.AllowOvertime,
+          projectCost: project.Cost,
+          projectCurrency: project.CostCurrency,
+          projectStartDate: project.StartDate,
+          projectEndDate: project.EndDate,
         };
         existingAllocation.totalEffort += allocation.AllocationEntered || null;
       }
@@ -46,7 +56,17 @@ const formatAllocations = (allocationsData, projectId) => {
         id: key,
         resourceId: allocation.Resource,
         project: allocation.ProjectName,
-        projectId: projectId,
+        projectId: project.Id,
+        projectSponsor: project.Owner,
+        projectManager: project.Manager,
+        projectStatus: project.Status ?? 'Status',
+        projectLocation: project.Location,
+        projectType: project.Type,
+        projectOvertimeAllowed: project.AllowOvertime,
+        projectCost: project.Cost,
+        projectCurrency: project.CostCurrency,
+        projectStartDate: project.StartDate,
+        projectEndDate: project.EndDate,
         resource: allocation.ResourceName,
         totalEffort: allocation.AllocationEntered,
         role: 'Trader',
@@ -92,7 +112,7 @@ export const fetchAllProjectAllocations = projects => async dispatch => {
           const allocationsData = result.payload;
           const formattedAllocations = formatAllocations(
             allocationsData,
-            project.Id
+            project
           );
           return formattedAllocations;
         } else {
