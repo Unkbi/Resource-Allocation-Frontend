@@ -35,6 +35,7 @@ const MainBox = styled(Box)(({ theme }) => ({
   margin: '0 -16px',
   '& .MuiInputBase-formControl': {
     padding: '0 !important',
+    width: 200,
   },
   '& .MuiOutlinedInput-input': {
     height: '51px',
@@ -131,15 +132,135 @@ export const AddRowButton = ({
   resourceProjects,
 }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const { teamsResources } = useSelector(state => state.teams);
-  const { resources } = useSelector(state => state.resources);
+  const [selectedResources, setSelectedResources] = useState([]);
+  const { teamsResources } = useSelector((state) => state.teams);
+  const { resources } = useSelector((state) => state.resources);
+  const { allocations } = useSelector((state) => state.projects);
+  const { view } = useSelector((state) => state.allocationView);
+  
+  // Resources already allocated to the current project
+  const resourcesForCurrentProject = allocations.filter((row) => row.project === project).map((row) => row.resourceId);
+  // Merging current selected resources with the already allocated resources
+  const mergedResources = [...new Set([...selectedResources, ...resourcesForCurrentProject])];
   const defaultProps = {
     options:
-    buttonName === 'Add Project'
+      buttonName === 'Add Project'
         ? resourceProjects
-    : teamsResources?.[teamsId]?.length ?
-    teamsResources?.[teamsId] :
-    resources?.result || [],
+        : view === 'Projects' 
+          ? resources.result.filter((resource) => !mergedResources.includes(resource.Id)) || []
+          : teamsResources?.[teamsId]?.length 
+            ? teamsResources?.[teamsId]
+            : resources?.result || [],
+    getOptionLabel: option =>
+      buttonName === 'Add Project' ? option.Name : option.FullName,
+  };
+  // In teams tab, we are setting the options to the resources array from the redux store for the selected team, else we are setting the options to all the resources.
+  const inputRef = useRef(null);
+
+  const handleButtonClick = () => {
+    setIsSearchMode(true);
+    onClick();
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
+  };
+  const handleKeyDown = event => {
+    if (isSearchMode && ['ArrowUp', 'ArrowDown','e','E'].includes(event.key)) {
+      event.stopPropagation();
+    }
+  };
+
+  const handleResourceSelect = (event, newValue) => {
+    if (newValue) {
+      // Add the new resource to the selected list
+      setSelectedResources((prev) => [...prev, newValue.Id]);
+      handleAddRow(event, newValue, row);
+      setIsSearchMode(false);
+    }
+  };
+  return (
+    <MainBox onKeyDown={handleKeyDown}>
+      {isSearchMode && resources?.result.length > 0 ? (
+        <Autocomplete
+          {...defaultProps}
+          id="open-on-focus"
+          onChange={handleResourceSelect}
+          onBlur={() => setIsSearchMode(false)}
+          open={true}
+          popupIcon={null}
+          slots={{ popper: StyledPopper }}
+          renderOption={(props, option, { selected }) => {
+            const { key, id, ...optionProps } = props;
+            return (
+              <Box
+                component="li"
+                key={`${key}${id}`}
+                {...optionProps}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '8px 16px',
+                  borderBottom: `1px solid ${'#eaecef'}`,
+                }}
+              >
+                {buttonName !== 'Add Project' && (
+                  <CustomAvatar value={option.FullName} />
+                )}
+                {/* Resource Details */}
+
+                <Box sx={{ flexGrow: 1 }}>
+                  <span>
+                    {buttonName === 'Add Project'
+                      ? option.Name
+                      : option.FullName}
+                  </span>
+                  {buttonName !== 'Add Project' && (
+                    <span className="userEamil">{option.Email}</span>
+                  )}
+                </Box>
+              </Box>
+            );
+          }}
+          renderInput={params => (
+          <StyledInput {...params} inputRef={inputRef}/>
+          )}
+        />
+      ) : (
+        <StyledButton
+          variant="text"
+          size="small"
+          startIcon={<AddIcon />}
+          onClick={handleButtonClick}
+        >
+          {buttonName}
+        </StyledButton>
+      )}
+    </MainBox>
+  );
+};
+
+export const AddRowIcon = ({
+  handleAddRow,
+  team_name,
+  onClick,
+  buttonName = 'Add Resource',
+  resourceProjects = [],
+}) => {
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const { teams, teamsResources } = useSelector(state => state.teams);
+  const { resources } = useSelector(state => state.resources);
+
+  let teamsId = teams?.result?.find(team => team_name == team.Name)?.Id;
+
+  const defaultProps = {
+    options:
+      buttonName === 'Add Project'
+        ? resourceProjects
+        : teamsResources?.[teamsId]?.length ?
+          teamsResources?.[teamsId] :
+          resources?.result || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
@@ -162,14 +283,24 @@ export const AddRowButton = ({
     }
   };
   return (
-    <MainBox onKeyDown={handleKeyDown}>
+    <MainBox sx={{
+      position: 'absolute',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      width: 210,
+      margin: '-36px -30px',
+    }} onKeyDown={handleKeyDown}>
       {isSearchMode && resources?.result.length > 0 ? (
         <Autocomplete
           {...defaultProps}
           id="open-on-focus"
+          sx={{
+            marginTop: -2
+          }}
           onChange={(event, newValue) => {
             if (newValue) {
-              handleAddRow(event, newValue, row);
+              handleAddRow(event, newValue);
             }
             setIsSearchMode(false);
           }}
@@ -214,14 +345,15 @@ export const AddRowButton = ({
           )}
         />
       ) : (
-        <StyledButton
-          variant="text"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={handleButtonClick}
-        >
-          {buttonName}
-        </StyledButton>
+        <AddIcon onClick={handleButtonClick} sx={{
+          backgroundColor: '#1C2D5F',
+          color: '#fff',
+          fontSize: 20,
+          marginRight: 1,
+          borderRadius: '2px',
+          cursor: 'pointer',
+        }}
+        />
       )}
     </MainBox>
   );

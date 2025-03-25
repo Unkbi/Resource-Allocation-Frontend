@@ -23,6 +23,7 @@ import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
 import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
 import TooltipButton from '../Button/TooltipButton';
 import CustomExport from './CustomExport';
+import { generateFirstAndLastMonthYear } from '@/app/utils/common';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -202,6 +203,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   ];
   const [active, setActive] = useState(false);
 
+  const { first, last } = generateFirstAndLastMonthYear();
+
   const handleViewChange = useCallback(
     event => {
       dispatch(performChangeView(event.target.value));
@@ -209,7 +212,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     [dispatch]
   );
   const handleClick = () => {
-    setActive((prev) => !prev);
+    setActive(prev => !prev);
   };
   return (
     <Box
@@ -286,7 +289,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             <CustomExport />
             <GridToolbarFilterButton
               slotProps={{
-                tooltip: { title: 'Filter' },
+                tooltip: { title: 'Filters' },
                 button: {
                   variant: 'outlined',
                   sx: { color: '#555', borderColor: '#ddd' },
@@ -324,7 +327,10 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                   placement="bottom"
                   onClick={handleClick}
                 >
-                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} fontSize={'18'} />
+                  <MyTeamsIcon
+                    color={active ? '#344665' : '#99A2B2'}
+                    fontSize={'18'}
+                  />
                 </TooltipButton>
                 <TooltipButton
                   msg="All Teams"
@@ -353,18 +359,18 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
               </>
             )}
           </Box>
-          <Divider orientation="vertical" flexItem />
-          <Box className="dayWeekBlock">
+          {/* <Divider orientation="vertical" flexItem /> */}
+          {/* <Box className="dayWeekBlock">
             <Button>Day</Button>
             <Button className="selected">Week</Button>
             <Button>Month</Button>
-          </Box>
+          </Box> */}
           <Divider orientation="vertical" flexItem />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            <Button className="selectedDate">Default</Button>
+            <Button className="selectedDate">{`${first} - ${last}`}</Button>
 
             <IconButton size="medium" className="nextPrevIcon">
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />

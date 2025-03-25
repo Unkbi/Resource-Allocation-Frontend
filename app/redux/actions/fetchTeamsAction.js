@@ -15,6 +15,7 @@ import {
   isWithin20WeeksRange,
   removeDuplicateResources,
 } from '@/app/utils/common';
+import { setAllocations } from '../reducers/dataGridReducer';
 
 export const fetchAllTeams = () => async dispatch => {
   try {
@@ -26,13 +27,18 @@ export const fetchAllTeams = () => async dispatch => {
 
 
 
-const formatAllocations = (data, resources, teamId, teamName) => {
+const formatAllocations = (
+  data,
+  resources,
+  teamId,
+  teamName,
+  teamStatus,
+  teamAllocationManager
+) => {
   const allocationsData = data.result;
   const allocationMap = new Map();
 
-  if (
-    Array.isArray(allocationsData) && allocationsData.length === 0
-  ) {
+  if (Array.isArray(allocationsData) && allocationsData.length === 0) {
     let obj = [];
     if (resources?.result.length === 0) {
       obj = [
@@ -44,6 +50,8 @@ const formatAllocations = (data, resources, teamId, teamName) => {
           resource: '',
           totalEffort: '',
           role: '',
+          teamStatus: teamStatus ?? '',
+          teamAllocationManager: teamAllocationManager ?? '',
           teams: teamName,
           teamsId: teamId,
           resourceType: '',
@@ -65,8 +73,10 @@ const formatAllocations = (data, resources, teamId, teamName) => {
             role: resource.Role,
             teams: teamName,
             teamsId: teamId,
+            teamStatus: teamStatus ?? '',
+            teamAllocationManager: teamAllocationManager ?? '',
             resourceType: resource.Type,
-            hasProject: true, 
+            hasProject: true,
             W1: null,
           }));
         }
@@ -75,145 +85,193 @@ const formatAllocations = (data, resources, teamId, teamName) => {
     return obj;
   }
 
-  Array.isArray(allocationsData) && allocationsData.forEach(allocation => {
-    if (!allocation.Period || allocation.AllocationEntered === 0) return;
+  Array.isArray(allocationsData) &&
+    allocationsData.forEach(allocation => {
+      if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
-    const periodDate = new Date(allocation.Period);
-    const weekNumber = getWeekNumber(periodDate);
+      const periodDate = new Date(allocation.Period);
+      const weekNumber = getWeekNumber(periodDate);
 
-    const matchingTeamResource = Array.isArray(resources?.result) &&  resources?.result.find(
-      team =>
-        team.FullName === allocation.ResourceName ||
-        team.Id === allocation.Resource
-    );
+      const matchingTeamResource =
+        Array.isArray(resources?.result) &&
+        resources?.result.find(
+          team =>
+            team.FullName === allocation.ResourceName ||
+            team.Id === allocation.Resource
+        );
 
-    const role = matchingTeamResource ? matchingTeamResource.Role : 'N/A';
-    const resourceType = matchingTeamResource
-      ? matchingTeamResource.Type
-      : 'N/A';
+      const role = matchingTeamResource ? matchingTeamResource.Role : 'N/A';
+      const resourceType = matchingTeamResource
+        ? matchingTeamResource.Type
+        : 'N/A';
 
-    // Using Resource + Team ID + Project ID as the unique identifier
-    const uniqueId = `${allocation.Resource}-${teamId}-${allocation.Project}`;
-    const existingAllocation = allocationMap.get(uniqueId);
-    if (existingAllocation) {
-      if (isWithin20WeeksRange(allocation.Period)) {
-        existingAllocation[weekNumber] = {
-          allocationId: allocation.Id,
-          value: allocation.AllocationEntered,
+      // Using Resource + Team ID + Project ID as the unique identifier
+      const uniqueId = `${allocation.Resource}-${teamId}-${allocation.Project}`;
+      const existingAllocation = allocationMap.get(uniqueId);
+      if (existingAllocation) {
+        if (isWithin20WeeksRange(allocation.Period)) {
+          existingAllocation[weekNumber] = {
+            allocationId: allocation.Id,
+            value: allocation.AllocationEntered,
+          };
+          existingAllocation.totalEffort += allocation.AllocationEntered;
+          existingAllocation.teamStatus = teamStatus ?? '';
+          existingAllocation.teamAllocationManager =
+            teamAllocationManager ?? '';
+        }
+      } else {
+        const newAllocation = {
+          id: uniqueId,
+          resourceId: allocation.Resource || '',
+          project: allocation.ProjectName || '',
+          projectId: allocation.Project || '',
+          resource: allocation.ResourceName || '',
+          totalEffort: allocation.AllocationEntered || '',
+          teamStatus: teamStatus ?? '',
+          teamAllocationManager: teamAllocationManager ?? '',
+          role,
+          teams: teamName,
+          resourceType,
         };
-        existingAllocation.totalEffort += allocation.AllocationEntered;
-      }
-    } else {
-      const newAllocation = {
-        id: uniqueId,
-        resourceId: allocation.Resource || '',
-        project: allocation.ProjectName || '',
-        projectId: allocation.Project || '',
-        resource: allocation.ResourceName || '',
-        totalEffort: allocation.AllocationEntered || '',
-        role,
-        teams: teamName,
-        resourceType,
-      };
 
-      if (isWithin20WeeksRange(allocation.Period)) {
-        newAllocation[weekNumber] = {
-          allocationId: allocation.Id,
-          value: allocation.AllocationEntered,
-        };
-      }
+        if (isWithin20WeeksRange(allocation.Period)) {
+          newAllocation[weekNumber] = {
+            allocationId: allocation.Id,
+            value: allocation.AllocationEntered,
+          };
+        }
 
-      allocationMap.set(uniqueId, newAllocation);
-    }
-  });
+        allocationMap.set(uniqueId, newAllocation);
+      }
+    });
   return Array.from(allocationMap.values());
 };
 
-export const fetchResourcesAgainstTeams = teams => async dispatch => {
-  try {
-    dispatch(setTeamsDataProcessing(true));
-    let allResources = [];
+export const fetchResourcesAgainstTeams =
+  (teams, allocations = null) =>
+  async dispatch => {
+    try {
+      dispatch(setTeamsDataProcessing(true));
+      let allResources = [];
 
-    const teamPromises = teams.map(async team => {
-      const teamResourcesPostData = {
-        'ResourceAllocation.Core/GetTeamResources': {
-          TeamId: team.Id,
-        },
-      };
+      const teamPromises = teams.map(async team => {
+        const teamResourcesPostData = {
+          'ResourceAllocation.Core/GetTeamResources': {
+            TeamId: team.Id,
+          },
+        };
 
-      const teamAllocationPostData = {
-        'ResourceAllocation.Core/GetTeamAllocations': {
-          TeamId: team.Id,
-        },
-      };
+        const teamAllocationPostData = {
+          'ResourceAllocation.Core/GetTeamAllocations': {
+            TeamId: team.Id,
+          },
+        };
 
-      const resourcesPromise = dispatch(
-        getResourcesAgainstTeams(teamResourcesPostData)
-      )
-        .then(result => ({ status: 'fulfilled', result, team }))
-        .catch(error => ({ status: 'rejected', error, team }));
+        const resourcesPromise = dispatch(
+          getResourcesAgainstTeams(teamResourcesPostData)
+        )
+          .then(result => ({ status: 'fulfilled', result, team }))
+          .catch(error => ({ status: 'rejected', error, team }));
 
-      const allocationsPromise = dispatch(
-        getTeamAllocations(teamAllocationPostData)
-      )
-        .then(result => ({ status: 'fulfilled', result, team }))
-        .catch(error => ({ status: 'rejected', error, team }));
+        const allocationsPromise = dispatch(
+          getTeamAllocations(teamAllocationPostData)
+        )
+          .then(result => ({ status: 'fulfilled', result, team }))
+          .catch(error => ({ status: 'rejected', error, team }));
 
-      const [resourcesResult, allocationsResult] = await Promise.all([
-        resourcesPromise,
-        allocationsPromise,
-      ]);
+        const [resourcesResult, allocationsResult] = await Promise.all([
+          resourcesPromise,
+          allocationsPromise,
+        ]);
 
-      // Update the resources for the team
-      let teamsResources = resourcesResult?.result?.payload?.result || [];
-      dispatch(setTeamsResources({ id: resourcesResult?.team?.Id, resource: teamsResources }));
+        // Update the resources for the team
+        let teamsResources = resourcesResult?.result?.payload?.result || [];
+        dispatch(
+          setTeamsResources({
+            id: resourcesResult?.team?.Id,
+            teamStatus: resourcesResult?.status,
+            teamAllocationManager: resourcesResult?.team?.AllocationManager,
+            resource: teamsResources,
+          })
+        );
 
-      return {
-        resourcesResult,
-        allocationsResult,
-        team,
-      };
-    });
+        return {
+          resourcesResult,
+          allocationsResult,
+          team,
+        };
+      });
 
-    const results = await Promise.allSettled(teamPromises);
-    Array.isArray(results) && results.forEach(({ status, value }) => {
-      if (status === 'fulfilled') {
-        const { resourcesResult, allocationsResult, team } = value;
-        if (
-          resourcesResult.status === 'fulfilled' &&
-          allocationsResult.status === 'fulfilled'
-        ) {
-          const formattedAllocations = formatAllocations(
-            allocationsResult.result.payload,
-            resourcesResult.result.payload,
-            team.Id,
-            team.Name
-          );
+      const results = await Promise.allSettled(teamPromises);
 
-          const final = formattedAllocations.filter(
-            data => data.teams === team.Name
-          );
-          allResources = [...allResources, ...final];
-        }
-      } else {
-        console.error('Failed to fetch data for team:', value.team.Name);
+      const preload_result = [];
+      if (allocations && results?.length === 1) {
+        Object.keys(allocations)?.forEach(key => {
+          console.log('key', key);
+          if (key === teams[0].Id) {
+            preload_result.push(results[0]);
+          } else {
+            preload_result.push({
+              status: 'fulfilled',
+              value: allocations[key],
+            });
+          }
+        });
       }
-    });
 
-  Array.isArray(allResources) && allResources.sort((a, b) => {
-  const resourceA = a.resource?.toLowerCase() || '';
-  const resourceB = b.resource?.toLowerCase() || '';
-  return resourceA.localeCompare(resourceB);
-});
-    if (allResources.length > 0) {
-      dispatch(updateResources(allResources));
+      const iterator =
+        allocations && preload_result?.length ? preload_result : results;
+      Array.isArray(iterator) &&
+        iterator.forEach(({ status, value }) => {
+          if (status === 'fulfilled') {
+            const { resourcesResult, allocationsResult, team } = value;
+            dispatch(
+              setAllocations({
+                team_id: team.Id,
+                value: { resourcesResult, allocationsResult, team },
+              })
+            );
+            if (
+              resourcesResult.status === 'fulfilled' &&
+              allocationsResult.status === 'fulfilled'
+            ) {
+              const formattedAllocations = formatAllocations(
+                allocationsResult.result.payload,
+                resourcesResult.result.payload,
+                team.Id,
+                team.Name,
+                team.Status,
+                team.AllocationManager
+              );
+
+              const final = formattedAllocations.filter(
+                data => data.teams === team.Name
+              );
+              allResources = [...allResources, ...final];
+            }
+          } else {
+            console.error('Failed to fetch data for team:', value.team.Name);
+          }
+        });
+
+      Array.isArray(allResources) &&
+        allResources.sort((a, b) => {
+          const resourceA = a.resource?.toLowerCase() || '';
+          const resourceB = b.resource?.toLowerCase() || '';
+          return resourceA.localeCompare(resourceB);
+        });
+      if (allResources.length > 0) {
+        dispatch(updateResources(allResources));
+      }
+    } catch (error) {
+      console.error(
+        'Error fetching resources and allocations for teams:',
+        error
+      );
+    } finally {
+      dispatch(setTeamsDataProcessing(false));
     }
-  } catch (error) {
-    console.error('Error fetching resources and allocations for teams:', error);
-  } finally {
-    dispatch(setTeamsDataProcessing(false));
-  }
-};
+  };
 
 export const fetchAllAllocations = () => async dispatch => {
   try {

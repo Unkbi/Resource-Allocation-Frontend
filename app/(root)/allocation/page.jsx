@@ -3,7 +3,6 @@ import styles from '../../page.module.css';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import TeamAllocation from '@/app/components/ResourceAllocation/component/TeamAllocation';
-// import OrganizationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
 import ProjectAllocation from '@/app/components/ResourceAllocation/component/ProjectAllocation';
 import { useEffect } from 'react';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';

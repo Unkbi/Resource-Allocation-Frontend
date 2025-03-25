@@ -2,44 +2,23 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-// import { columnGroupingModel } from '../../AllocationTable/TableHeader';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
+import { Tooltip } from '@mui/material';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 
-const projectColumnConfig = [
-  {
-    field: 'project',
-    headerName: 'Project Name',
-    width: 200,
-    headerClassName: 'prime-header',
-    cellClassName: 'prime-cell',
-    primaryColumn: true,
-  },
-  {
-    field: 'totalEffort',
-    headerName: 'Total Effort',
-    width: 150,
-    valueFormatter: params => {
-      const value = Number(params);
-      return value && typeof value === 'number' && value !== 0
-        ? Math.round(value * 10) / 10
-        : null;
-    },
-    type: 'number',
-    sortable: false,
-    headerClassName: 'secondary-header',
-    cellClassName: 'secondary-cell',
-    headerAlign: 'left',
-    primaryColumn: true,
-  },
-];
 
 export default function ProjectAllocation() {
   const [allocationsFetched, setAllocationsFetched] = useState(false);
-  const { projects, allocations, loading, dataProcessing, error } = useSelector(
+  const [rowsState, setRowsState] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState('');
+
+  const { projects, allocations, loading, dataProcessing } = useSelector(
     state => state.projects
   );
   const dispatch = useDispatch();
+
   useEffect(() => {
     setAllocationsFetched(false);
   }, []);
@@ -56,11 +35,247 @@ export default function ProjectAllocation() {
     }
   }, [projects, allocationsFetched]);
 
+  const handleAddClick =(params)=>{
+    dispatch(
+      openDialog({
+        title: "Add Allocation",
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: "add_allocation",
+        initialData: {  
+          Project: params.value 
+        },
+      })
+    );
+  }
+
+  const getFirstChild = (params) => {
+    if (params.rowNode.children && params.rowNode.children.length > 0) {
+      const firstChildId = params.rowNode.children[0];
+      const firstChildRow = params.api.getRow(firstChildId);
+      return firstChildRow;
+    }
+    return null;
+  }
+
+  const projectColumnConfig = [
+    {
+      field: 'project',
+      headerName: 'Project Name',
+      width: 200,
+      headerClassName: 'prime-header',
+      cellClassName: 'prime-cell',
+      primaryColumn: true,
+      filterable: false,
+      isEditable: false,
+      renderCell: (params) => {
+        const resource_count = params?.rowNode?.children?.length || "";
+        return (
+          <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
+            popper: {
+              modifiers: [
+                {
+                  name: "offset",
+                  options: { offset: [0, 10] },
+                },
+              ],
+            }
+          }}
+          >
+            <CustomAddIcon
+              value={params.value}
+              count={resource_count}
+              onClick={() => handleAddClick(params)}
+            />
+          </Tooltip>
+        );
+      }
+    },
+    {
+      field: 'projectSponsor',
+      headerName: 'Project Sponsor',
+      width: 148,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectSponsor ?? 'N/A'}</span>) : null;
+      },
+    },
+    {
+      field: 'projectManager',
+      headerName: 'Project Manager',
+      width: 148,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectManager ?? 'N/A'}</span>) : null;
+      },
+    },
+    { field: 'projectStatus',
+      headerName: 'Status',
+      width: 84,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectStatus ?? 'N/A'}</span>) : null;
+      },
+    },
+    {
+      field: 'projectLocation',
+      headerName: 'Location',
+      width: 92,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectLocation ?? 'N/A'}</span>) : null;
+      },
+    },
+    {
+      field: 'projectType',
+      headerName: 'Project Type',
+      width: 116,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectType ?? 'N/A'}</span>) : null;
+      },
+    },
+    { 
+      field: "projectOvertimeAllowed",
+      headerName: "Overtime?",
+      width: 102, // min-width without eliding.
+      type: 'boolean',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        console.log({firstChild, state: firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'})
+        return firstChild ? (<span>{firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}</span>) : null;
+      },
+    },
+    {
+      field: "projectCost",
+      headerName: "Cost",
+      width: 90,
+      type: 'string ',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectCost ?? 'N/A'}</span>) : null;
+      },
+    },
+    {
+      field: "projectCurrency", 
+      headerName: "Currency",
+      width: 100,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectCurrency ?? 'N/A'}</span>) : null;
+      },
+    },
+    {
+      field: 'projectStartDate',
+      headerName: 'Start Date',
+      width: 100,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectStartDate ?? 'N/A'}</span>) : null;
+      },
+    },
+    {
+      field: 'projectEndDate',
+      headerName: 'End Date',
+      width: 100,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (<span>{firstChild.projectEndDate ?? 'N/A'}</span>) : null;
+      },
+    },
+    {
+      field: 'totalEffort',
+      headerName: 'Total Effort',
+      width: 106,
+      type: 'number',
+      sortable: false,
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      headerAlign: 'left',
+      primaryColumn: true,
+      renderCell: (params) => {
+        const value = Number(params.value);
+        const formattedValue =
+          value && typeof value === 'number' && value !== 0
+            ? Math.round(value * 10) / 10
+            : null;
+        return <span style={{ fontWeight: 'bold' }}>{formattedValue}</span>;
+      },
+    },
+  ];
+ 
   return (
     <>
       <AllocationGrid
         groupBy="project"
         columns={projectColumnConfig}
+        rowsState={rowsState}
+        setRowsState={setRowsState}
+        selectedTeam={selectedTeam}
+        setSelectedTeam={setSelectedTeam}
+        initialState={{
+          columns: {
+            columnVisibilityModel: {
+              projectSponsor: false,
+              projectManager: false,
+              projectStatus: false,
+              projectLocation: false,
+              projectType: false,
+              projectOvertimeAllowed: false,
+              projectCost: false,
+              projectCurrency: false,
+              projectStartDate: false,
+              projectEndDate: false,
+            },
+          },
+        }}
         // columnGroupingModel={columnGroupingModel}
         data={allocations}
         loading={loading || dataProcessing}

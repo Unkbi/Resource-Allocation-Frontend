@@ -14,6 +14,7 @@ export const getTheme = (mode, primaryColor, fontSize) => {
       },
     },
     typography: {
+      fontFamily: "Open Sans",
       fontSize: BASE_FONT_SIZE + fontSizeMap[fontSize],
       h1: { fontSize: BASE_FONT_SIZE + 16 + fontSizeMap[fontSize] },
       h2: { fontSize: BASE_FONT_SIZE + 12 + fontSizeMap[fontSize] },
