@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { TextField, Box } from '@mui/material';
+import { TextField, Box, Typography } from '@mui/material';
 import CustomSelect from '../Select/CustomSelect';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
@@ -7,208 +7,215 @@ import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useSelector } from 'react-redux';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
-  const { values, handleChange, handleBlur, touched, errors, setValues } = formikProps;
-  const { initialData } = useSelector((state) => state.globalDialog.formState);
+  const { values, handleChange, handleBlur, errors, touched ,resetForm,setTouched } = formikProps
+  const { initialData } = useSelector((state) => state.globalDialog.formState)
 
   useEffect(() => {
     if (initialData) {
       const rowData = {
-        StartDate: initialData.StartDate ?? '',
-        EndDate: initialData.EndDate ?? '',
-        Owner: initialData.Owner?.name ?? '',
-        AllowOvertime: initialData.AllowOvertime ?? false,
-        Location: initialData.Location ?? '',
-        Manager: initialData.Manager ?? '',
-        Name: initialData.Name ?? '',
-        Type: initialData.Type ?? '',
-        Status: initialData.Status ?? '',
-      };
-      setValues(rowData);
-      formikProps.resetForm({ values: rowData });
-      formikProps.setTouched({}); 
+        StartDate: initialData.StartDate || '',
+        EndDate: initialData.EndDate || '',
+        Owner: initialData.Owner?.name || '',
+        AllowOvertime: initialData.AllowOvertime ?? '', // Use nullish coalescing
+        Location: initialData.Location || '',
+        Manager: initialData.Manager || '',
+        Name: initialData.Name || '',
+        Type: initialData.Type || '',
+        Status: initialData.Status || '',
+      }
+      setFormValue(rowData)
+      formikProps.resetForm({ values: rowData })
+      formikProps.setTouched({})
     }
-  }, [initialData, setValues]);
+  }, [initialData])
+  
 
   const projectTypeOptions = [
-    { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB (Run-the-business)' },
-    { value: 'CTB', label: 'CTB' },
-    { value: 'STB', label: 'STB' },
-    { value: 'Ongoing', label: 'Ongoing' },
-  ];
+    { value: "Key Initiative", label: "Key Initiative" },
+    { value: "RTB", label: "RTB (Run-th-business)" },
+    { value: "CTB", label: "CTB" },
+    { value: "STB", label: "STB" },
+    { value: "Ongoing", label: "Ongoing" },
+  ]
   const allowOverTimeOptions = [
-    { value: true, label: 'Yes' },
-    { value: false, label: 'No' },
-  ];
+    { value: true, label: "Yes" },
+    { value: false, label: "No" },
+  ]
+
   const statusOptions = [
-    { value: 'Active', label: 'Active' },
-    { value: 'Proposed', label: 'Proposed' },
-    { value: 'Completed', label: 'Completed' },
-    { value: 'Paused', label: 'Paused' },
-    { value: 'Terminated', label: 'Terminated' },
-  ];
+    { value: "Active", label: "Active" },
+    { value: "Proposed", label: "Proposed" },
+    { value: "Completed", label: "Completed" },
+    { value: "Paused", label: "Paused" },
+    { value: "Terminated", label: "Terminated" },
+  ]
 
-  const errorTextStyle = {
-    '& .MuiFormHelperText-root': {
-      fontSize: '0.75rem',
-      marginLeft: '0px',
-    },
-  };
-
-  const autofillStyles = {
-    '&:-webkit-autofill': {
-      WebkitBoxShadow: '0 0 0 100px white inset',
-    },
-    '&:focus': {
-      backgroundColor: 'white',
-    },
-  };
-  
+  // Error display helper
+  const showError = (fieldName) => {
+    return touched[fieldName] && errors[fieldName] ? (
+      <Typography
+        color="error"
+        sx={{
+          fontSize: "12px",
+          mt: 0.5,
+          fontFamily: "Open Sans",
+        }}
+      >
+        {errors[fieldName]}
+      </Typography>
+    ) : null
+  }
 
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Project Name</StyledLabel>
+        <StyledLabel>
+          Project Name <span style={{ color: "red" }}>*</span>
+        </StyledLabel>
         <StyledInput
           as={TextField}
           name="Name"
           value={values.Name}
-          autoComplete="off"
           onChange={handleChange}
           onBlur={handleBlur}
-          error={touched.Name && Boolean(errors.Name)} 
-          helperText={touched.Name && errors.Name} 
-          sx={errorTextStyle}
+          error={touched.Name && Boolean(errors.Name)}
         />
+        {showError("Name")}
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Sponsor</StyledLabel>
+        <StyledLabel>
+          Sponsor <span style={{ color: "red" }}>*</span>
+        </StyledLabel>
         <StyledInput
           as={TextField}
-          autoComplete="off"
           name="Owner"
           value={values.Owner}
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Owner && Boolean(errors.Owner)}
-          helperText={touched.Owner && errors.Owner}
-          sx={errorTextStyle}
         />
+        {showError("Owner")}
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Manager</StyledLabel>
+        <StyledLabel>
+          Manager <span style={{ color: "red" }}>*</span>
+        </StyledLabel>
         <StyledInput
           as={TextField}
           name="Manager"
-          autoComplete="off"
           value={values.Manager}
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Manager && Boolean(errors.Manager)}
-          helperText={touched.Manager && errors.Manager}
-          sx={errorTextStyle}
         />
+        {showError("Manager")}
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Location</StyledLabel>
+        <StyledLabel>
+          Location <span style={{ color: "red" }}>*</span>
+        </StyledLabel>
         <StyledInput
           as={TextField}
           name="Location"
           value={values.Location}
-          autoComplete="off"
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Location && Boolean(errors.Location)}
-          helperText={touched.Location && errors.Location}
-          sx={errorTextStyle}
         />
+        {showError("Location")}
       </Box>
       <Box
         sx={{
           pb: 2,
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
         }}
       >
-        <Box>
-          <StyledLabel>Project Type</StyledLabel>
+        <Box sx={{ width: "48%" }}>
+          <StyledLabel>
+            Project Type <span style={{ color: "red" }}>*</span>
+          </StyledLabel>
           <CustomSelect
             name="Type"
             options={projectTypeOptions}
             value={values.Type}
-            autoComplete="off"
             onChange={handleChange}
             onBlur={handleBlur}
-            width={'160px'}
-            error={touched.Type && Boolean(errors.Type)}  
-            helperText={touched.Type && errors.Type}  
-            sx={errorTextStyle}
+            width={"100%"}
+            error={touched.Type && Boolean(errors.Type)}
           />
+          {showError("Type")}
         </Box>
-        <Box>
-          <StyledLabel>Allow Overtime</StyledLabel>
+        <Box sx={{ width: "48%" }}>
+          <StyledLabel>
+            Allow Overtime <span style={{ color: "red" }}>*</span>
+          </StyledLabel>
           <CustomSelect
             name="AllowOvertime"
             options={allowOverTimeOptions}
             value={values.AllowOvertime}
-            autoComplete="off"
             onChange={handleChange}
             onBlur={handleBlur}
-            width={'160px'}
+            width={"100%"}
             error={touched.AllowOvertime && Boolean(errors.AllowOvertime)}
-            helperText={touched.AllowOvertime && errors.AllowOvertime}
-            sx={errorTextStyle}
           />
+          {showError("AllowOvertime")}
         </Box>
       </Box>
       <Box
         sx={{
           pb: 2,
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
         }}
       >
-        <Box>
-          <StyledLabel>Start Date</StyledLabel>
+        <Box sx={{ width: "48%" }}>
+          <StyledLabel>
+            Start Date <span style={{ color: "red" }}>*</span>
+          </StyledLabel>
           <CustomDatePicker
             name="StartDate"
-            onChange={handleChange}
+            handleChange={handleChange}
             value={values.StartDate}
-            placeholder={'Start Date'}
+            placeholder={"Start Date"}
             formikProps={formikProps}
-            error={touched.StartDate && Boolean(errors.StartDate)} 
-            helperText={touched.StartDate && errors.StartDate} 
-            sx={errorTextStyle}
+            error={touched.StartDate && Boolean(errors.StartDate)}
           />
+          {showError("StartDate")}
         </Box>
-        <Box>
-          <StyledLabel>End Date</StyledLabel>
+        <Box sx={{ width: "48%" }}>
+          <StyledLabel>
+            End Date <span style={{ color: "red" }}>*</span>
+          </StyledLabel>
           <CustomDatePicker
             name="EndDate"
+            handleChange={handleChange}
             value={values.EndDate}
-            placeholder={'End Date'}
+            placeholder={"End Date"}
             formikProps={formikProps}
             error={touched.EndDate && Boolean(errors.EndDate)}
-            helperText={touched.EndDate && errors.EndDate} 
-            sx={errorTextStyle}
           />
+          {showError("EndDate")}
         </Box>
       </Box>
-      <StyledLabel>Status</StyledLabel>
-      <CustomSelect
-        name="Status"
-        options={statusOptions}
-        value={values.Status}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        error={touched.Status && Boolean(errors.Status)}
-        helperText={touched.Status && errors.Status}
-        sx={errorTextStyle}
-      />
+      <Box sx={{ pb: 2 }}>
+        <StyledLabel>
+          Status <span style={{ color: "red" }}>*</span>
+        </StyledLabel>
+        <CustomSelect
+          name="Status"
+          options={statusOptions}
+          value={values.Status}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          error={touched.Status && Boolean(errors.Status)}
+        />
+        {showError("Status")}
+      </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default AddProjectForm;
+export default AddProjectForm
