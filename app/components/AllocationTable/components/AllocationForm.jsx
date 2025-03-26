@@ -61,7 +61,8 @@ const AllocationForm = () => {
   const { initialData } = useSelector((state) => state.globalDialog.formState);
   const { projects } = useSelector((state) => state.projects);
 
-  const { teams, teamsResources } = useSelector(state => state.teams);
+  const { teams, teamsResources, calendarDate } = useSelector(state => state.teams);
+  const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
 
   useEffect(() => {
@@ -170,7 +171,7 @@ const AllocationForm = () => {
             .then(async () => {
               let new_resource = getTeamByResourceId(values.Resource);
               dispatch(closeDialog());
-              return dispatch(fetchResourcesAgainstTeams([new_resource?.team], allocations))
+              return dispatch(fetchResourcesAgainstTeams([new_resource?.team], allocations, startDate, endDate))
                 .then(() => {
                   handleOnAdd(new_resource?.team?.Name, new_resource?.FullName);
                 });
