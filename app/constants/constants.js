@@ -227,3 +227,5 @@ export const PUBLIC_ROUTES = [
   '/reset-password',
   "/callback"
 ];
+
+export const DEFAULT_LOCALE = 'en-gb';
