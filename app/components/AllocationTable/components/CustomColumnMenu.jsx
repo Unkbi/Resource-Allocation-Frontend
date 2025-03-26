@@ -1,6 +1,10 @@
 import { ListItemIcon, ListItemText, MenuItem, styled } from '@mui/material';
-import { GridColumnMenu } from '@mui/x-data-grid-premium';
-import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications';
+import { GridColumnMenu, GRID_COLUMN_MENU_SLOTS } from '@mui/x-data-grid-premium';
+//import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications';
+import GroupIcon from '@mui/icons-material/Groups';
+import PersonIcon from '@mui/icons-material/Person';
+import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 const StyledPopper = styled(GridColumnMenu)(({}) => ({
   backgroundColor: '#ffffff',
@@ -15,11 +19,13 @@ const StyledPopper = styled(GridColumnMenu)(({}) => ({
     alignItems: 'flex-start !important',
   },
 }));
-export const CustomColumnMenu = props => {
-  const { colDef, apiRef } = props;
-  const isPinnedColumn = apiRef.current.isColumnPinned(colDef.field) === 'left';
-  const currentPinnedColumns = apiRef.current.getPinnedColumns();
-  const currentLeftPinnedColumns = currentPinnedColumns.left || [];
+
+const CustomUserMenuItems = ({ apiRef }) => {
+  const [teamsExpanded, setTeamsExpanded] = useState(true);
+  const [resourcesExpanded, setResourcesExpanded] = useState(false);
+  const view = useSelector((state) => state.allocationView.view);
+
+  /* freeze click not in use
   const handleFreezClick = () => {
     apiRef.current.setPinnedColumns({
       left: [...currentLeftPinnedColumns, colDef.field],
@@ -34,22 +40,121 @@ export const CustomColumnMenu = props => {
       left: updatedLeftPinnedColumns,
     });
   };
+  */
+
+  // get group row IDs by depth: teams/projects = 0, resources = 1
+  const getGroupRowIdsByDepth = (targetDepth) => {
+    const tree = apiRef.current.state.rows.tree;
+    const groupIds = [];
+
+    for (const id in tree) {
+      const node = tree[id];
+      if (node?.type === 'group' && node?.depth === targetDepth) {
+        groupIds.push(id);
+      }
+    }
+
+    return groupIds;
+  };
+
+  // check if all rows with given IDs are expanded
+  const areAllExpanded = (ids) =>
+    ids.length > 0 && ids.every(id => apiRef.current.getRowNode(id)?.childrenExpanded !== false);
+
+  // collapse or uncollapse rows
+  const toggleGroupRows = (ids, shouldExpand) => {
+    requestAnimationFrame(() => {
+      ids.forEach(id => {
+        try {
+          apiRef.current.setRowChildrenExpansion(id, shouldExpand);
+        } catch (err) {
+          console.warn(`failed to toggle group ${id}`, err);
+        }
+      });
+    });
+  };
+  
+  // update state on menu open
+  useEffect(() => {
+    const teamIds = getGroupRowIdsByDepth(0);
+    const resourceIds = getGroupRowIdsByDepth(1);
+
+    setTeamsExpanded(areAllExpanded(teamIds));
+    setResourcesExpanded(areAllExpanded(resourceIds));
+  }, []);
+
+  // toggle team/project rows (depth 0)
+  const handleToggleTeams = () => {
+    const teamIds = getGroupRowIdsByDepth(0);
+    const shouldExpand = !teamsExpanded;
+    toggleGroupRows(teamIds, shouldExpand);
+    setTeamsExpanded(shouldExpand);
+    apiRef.current.hideColumnMenu();
+  };
+
+  // toggle resource rows (depth 1)
+  const handleToggleResources = () => {
+    const teamIds = getGroupRowIdsByDepth(0);
+    const resourceIds = getGroupRowIdsByDepth(1);
+    const shouldExpand = !resourcesExpanded;
+
+    if (shouldExpand && !areAllExpanded(teamIds)) {
+      toggleGroupRows(teamIds, true);
+      setTeamsExpanded(true);
+    }
+
+    toggleGroupRows(resourceIds, shouldExpand);
+    setResourcesExpanded(shouldExpand);
+    apiRef.current.hideColumnMenu();
+  };
+
+  return (
+    <>
+      <MenuItem onClick={handleToggleTeams}>
+        <ListItemIcon><GroupIcon fontSize="small" /></ListItemIcon>
+        <ListItemText>
+          {teamsExpanded
+            ? view === 'Projects' ? 'Collapse All Projects' : 'Collapse All Teams'
+            : view === 'Projects' ? 'Expand All Projects' : 'Expand All Teams'}
+        </ListItemText>
+      </MenuItem>
+
+      {view !== 'Projects' && (
+        <MenuItem onClick={handleToggleResources}>
+          <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>
+            {resourcesExpanded ? 'Collapse All Resources' : 'Expand All Resources'}
+          </ListItemText>
+        </MenuItem>
+      )}
+    </>
+  );
+};
+
+export const CustomColumnMenu = (props) => {
+  const { apiRef, ...otherProps } = props;
 
   return (
     <StyledPopper
-      {...props}
+      {...otherProps}
       slots={{
-        columnMenuUserItem: MenuItem,
+        ...GRID_COLUMN_MENU_SLOTS,
+        columnMenuUserItem: () => <CustomUserMenuItems apiRef={apiRef} />,
         columnMenuSortItem: null,
-        columnMenuFilterItem: null,
-        columnMenuHideItem: null,
-        columnMenuManageItem: null,
-        columnMenuPinningItem: null,
         columnMenuAggregationItem: null,
         columnMenuGroupingItem: null,
-        columnMenuColumnsItem: null,
       }}
       slotProps={{
+        columnMenuUserItem: {
+          displayOrder: 0,
+        },
+        columnMenuColumnsItem: {
+          displayOrder: 2,
+        },
+        columnMenuPinningItem: {
+          displayOrder: 99,
+        },
+        /* freeze click not in use
         columnMenuUserItem: {
           displayOrder: 15,
           onClick: isPinnedColumn ? handleUnFreezClick : handleFreezClick,
@@ -64,6 +169,7 @@ export const CustomColumnMenu = props => {
             </>
           ),
         },
+        */
       }}
     />
   );
