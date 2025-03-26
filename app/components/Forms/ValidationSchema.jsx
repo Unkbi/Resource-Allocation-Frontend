@@ -2,7 +2,7 @@ import * as Yup from 'yup';
 
 
 export const addProjectValidationSchema = Yup.object({
-    Name: Yup.string().required('Project Name is required'),
+    Name: Yup.string().max(90,'Reached Max Characters').required('Project Name is required'),
     Owner: Yup.string().required('Sponsor is required'),
     Manager: Yup.string().required('Manager is required'),
     Location: Yup.string().required('Location is required'),
