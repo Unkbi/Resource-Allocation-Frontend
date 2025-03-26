@@ -1,5 +1,6 @@
 import React from 'react';
-import { Select, MenuItem, styled } from '@mui/material';
+import { Select, MenuItem, styled ,FormHelperText } from '@mui/material';
+import {FormControl} from '@mui/material';
 
 const StyledSelect = styled(Select)(({ theme, width }) => ({
   height: '36px',
@@ -21,8 +22,14 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   fontSize: '12px',
 }));
 
-const CustomSelect = ({ name, options, value, onChange, onBlur, width }) => {
+const CustomSelect = ({ name, options, value, onChange, onBlur, width,error, helperText  }) => {
   return (
+    <FormControl
+    style={{
+      width: width || '340px',
+    }}
+    error={error} 
+  >
     <StyledSelect
       name={name}
       value={value}
@@ -47,6 +54,13 @@ const CustomSelect = ({ name, options, value, onChange, onBlur, width }) => {
         </StyledMenuItem>
       ))}
     </StyledSelect>
+     {error && <FormHelperText  style={{
+             fontSize: '0.75rem',
+             marginLeft: '0px',
+          }}>
+            {helperText}
+      </FormHelperText>}
+    </FormControl>
   );
 };
 

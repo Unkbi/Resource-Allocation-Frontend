@@ -1,57 +1,45 @@
 import React, { useEffect } from 'react';
-import { TextField, Box, Typography } from '@mui/material';
+import { TextField, Box } from '@mui/material';
 import CustomSelect from '../Select/CustomSelect';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useSelector } from 'react-redux';
-import { Formik } from 'formik';
-import { addProjectValidationSchema } from './ValidationSchema';
-import CustomDialog from '../Dialog/CustomDialog';
 
-const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
-  const { values, handleChange, handleBlur } = formikProps;
-  const {initialData } = useSelector(state => state.globalDialog.formState);
+const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
+  const { values, handleChange, handleBlur, touched, errors, setValues } = formikProps;
+  const { initialData } = useSelector((state) => state.globalDialog.formState);
 
   useEffect(() => {
     if (initialData) {
       const rowData = {
-        StartDate: initialData.StartDate || '',
-        EndDate: initialData.EndDate || '',
-        Owner: initialData.Owner?.name || '',
-        AllowOvertime: initialData.AllowOvertime,
-        Location: initialData.Location || '',
-        Manager: initialData.Manager || '',
-        Name: initialData.Name || '',
-        Type: initialData.Type || '',
-        Status: initialData.Status || '',
+        StartDate: initialData.StartDate ?? '',
+        EndDate: initialData.EndDate ?? '',
+        Owner: initialData.Owner?.name ?? '',
+        AllowOvertime: initialData.AllowOvertime ?? false,
+        Location: initialData.Location ?? '',
+        Manager: initialData.Manager ?? '',
+        Name: initialData.Name ?? '',
+        Type: initialData.Type ?? '',
+        Status: initialData.Status ?? '',
       };
-      setFormValue(rowData);
+      setValues(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({}); 
     }
-  }, [initialData]);
-
-  const handleSubmit = () =>{
-   console.log("ok")
-  }
+  }, [initialData, setValues]);
 
   const projectTypeOptions = [
     { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB (Run-th-business)' },
+    { value: 'RTB', label: 'RTB (Run-the-business)' },
     { value: 'CTB', label: 'CTB' },
     { value: 'STB', label: 'STB' },
     { value: 'Ongoing', label: 'Ongoing' },
   ];
   const allowOverTimeOptions = [
-    { value: true, label: "Yes" },
-    { value: false, label: "No" },
-  
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
   ];
-  const errorTextStyle = {
-    '& .MuiFormHelperText-root': {
-      fontSize: '0.75rem', 
-      marginLeft: '0px', 
-    },
-  };
   const statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Proposed', label: 'Proposed' },
@@ -60,26 +48,24 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
     { value: 'Terminated', label: 'Terminated' },
   ];
 
-  const initialValues = {
-    Name: '',
-    Owner: '',
-    Manager: '',
-    Location: '',
-    Type: '',
-    AllowOvertime: true,
-    StartDate: '',
-    EndDate: '',
-    Status: '',
-  }
+  const errorTextStyle = {
+    '& .MuiFormHelperText-root': {
+      fontSize: '0.75rem',
+      marginLeft: '0px',
+    },
+  };
+
+  const autofillStyles = {
+    '&:-webkit-autofill': {
+      WebkitBoxShadow: '0 0 0 100px white inset',
+    },
+    '&:focus': {
+      backgroundColor: 'white',
+    },
+  };
+  
 
   return (
-    <Formik
-    initialValues={initialValues}
-    validationSchema={addProjectValidationSchema} 
-    onSubmit={handleSubmit}
-  >
-     {({ values, handleChange, handleBlur, handleSubmit, touched, errors }) => (
-    <form onSubmit={handleSubmit} autoComplete="off">
     <Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Project Name</StyledLabel>
@@ -87,6 +73,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
           as={TextField}
           name="Name"
           value={values.Name}
+          autoComplete="off"
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Name && Boolean(errors.Name)} 
@@ -98,6 +85,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
         <StyledLabel>Sponsor</StyledLabel>
         <StyledInput
           as={TextField}
+          autoComplete="off"
           name="Owner"
           value={values.Owner}
           onChange={handleChange}
@@ -112,6 +100,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
         <StyledInput
           as={TextField}
           name="Manager"
+          autoComplete="off"
           value={values.Manager}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -126,6 +115,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
           as={TextField}
           name="Location"
           value={values.Location}
+          autoComplete="off"
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Location && Boolean(errors.Location)}
@@ -147,6 +137,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
             name="Type"
             options={projectTypeOptions}
             value={values.Type}
+            autoComplete="off"
             onChange={handleChange}
             onBlur={handleBlur}
             width={'160px'}
@@ -161,12 +152,12 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
             name="AllowOvertime"
             options={allowOverTimeOptions}
             value={values.AllowOvertime}
+            autoComplete="off"
             onChange={handleChange}
             onBlur={handleBlur}
             width={'160px'}
-            formikProps={formikProps}
-            error={touched.AllowOvertime && Boolean(errors.AllowOvertime)} 
-            helperText={touched.AllowOvertime && errors.AllowOvertime} 
+            error={touched.AllowOvertime && Boolean(errors.AllowOvertime)}
+            helperText={touched.AllowOvertime && errors.AllowOvertime}
             sx={errorTextStyle}
           />
         </Box>
@@ -183,7 +174,7 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
           <StyledLabel>Start Date</StyledLabel>
           <CustomDatePicker
             name="StartDate"
-            handleChange={handleChange}
+            onChange={handleChange}
             value={values.StartDate}
             placeholder={'Start Date'}
             formikProps={formikProps}
@@ -196,7 +187,6 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
           <StyledLabel>End Date</StyledLabel>
           <CustomDatePicker
             name="EndDate"
-            handleChange={handleChange}
             value={values.EndDate}
             placeholder={'End Date'}
             formikProps={formikProps}
@@ -207,25 +197,17 @@ const AddProjectForm = ({ formikProps, setFormValue =()=>{}}) => {
         </Box>
       </Box>
       <StyledLabel>Status</StyledLabel>
-          <CustomSelect
-            name="Status"
-            options={statusOptions}
-            value={values.Status}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            formikProps={formikProps}
-          />
+      <CustomSelect
+        name="Status"
+        options={statusOptions}
+        value={values.Status}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        error={touched.Status && Boolean(errors.Status)}
+        helperText={touched.Status && errors.Status}
+        sx={errorTextStyle}
+      />
     </Box>
-    </form>
-     )}
-    
-    
-    
-    </Formik>
-    
-
-    
-    
   );
 };
 

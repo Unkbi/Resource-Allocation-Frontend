@@ -3,9 +3,10 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TextField } from '@mui/material';
+import { TextField ,FormHelperText} from '@mui/material';
 import { styled } from '@mui/system';
 import { PickersLayout } from '@mui/x-date-pickers';
+import {FormControl} from '@mui/material';
 
 const StyledPickersLayout = styled(PickersLayout)({
   '.MuiDateCalendar-root': {
@@ -42,6 +43,8 @@ export default function CustomDatePicker({
   value,
   placeholder,
   formikProps,
+  error, 
+  helperText,
 }) {
   const { setFieldValue } = formikProps;
 
@@ -51,6 +54,12 @@ export default function CustomDatePicker({
   };
 
   return (
+    <FormControl
+    style={{
+      width: '160px',
+    }}
+    error={error}
+  >
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
         value={value ? dayjs(value) : null}
@@ -76,5 +85,14 @@ export default function CustomDatePicker({
         }}
       />
     </LocalizationProvider>
+    {error && (
+        <FormHelperText
+          style={{
+            fontSize: '0.75rem',
+            marginLeft: '0px',
+          }}>{helperText}
+          </FormHelperText>
+          )}
+    </FormControl>
   );
 }
