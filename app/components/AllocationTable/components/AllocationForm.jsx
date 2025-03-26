@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Formik } from 'formik';
+import { Formik, ErrorMessage } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
 import AddProjectForm from '../../Forms/AddProjectForm';
@@ -19,6 +19,7 @@ import { setResourceAllocation } from '@/app/redux/actions/resourceAllocationAct
 import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import { Box, Typography } from '@mui/material';
 
 const initialValuesMap = {
   add_project: {
@@ -105,7 +106,14 @@ const AllocationForm = () => {
     return new_user;
   };
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async (values, { setSubmitting, setErrors, validateForm }) => {
+    const errors = await validateForm(values);
+    if (Object.keys(errors).length > 0) {
+      setErrors(errors);
+      setSubmitting(false);
+      return;
+    }
+    
     const allMondays = generateAllMondays(values.StartDate, values.EndDate);
     let postData = {};
     switch (formType) {
@@ -175,6 +183,7 @@ const AllocationForm = () => {
       default:
         return;
     }
+     setSubmitting(false);
   };
 
   const getFormComponent = (formType, formikProps) => {
@@ -193,6 +202,22 @@ const AllocationForm = () => {
         return <div>No form selected</div>;
     }
   };
+  const FormErrorMessage = ({ name }) => (
+    <ErrorMessage name={name}>
+      {(msg) => (
+        <Typography 
+          color="error" 
+          sx={{ 
+            fontSize: '12px', 
+            mt: 0.5, 
+            fontFamily: 'Open Sans'
+          }}
+        >
+          {msg}
+        </Typography>
+      )}
+    </ErrorMessage>
+  );
 
   return (
     <Formik
@@ -200,10 +225,35 @@ const AllocationForm = () => {
       initialValues={formValue}
       validationSchema={getValidationSchema(formType)}
       onSubmit={handleSubmit}
+      validateOnChange={true}
+      validateOnBlur={true}
     >
       {(formikProps) => (
-        <CustomDialog onSubmit={formikProps.handleSubmit}>
-          {getFormComponent(formType, formikProps)}
+        <CustomDialog 
+          onSubmit={formikProps.handleSubmit}
+          isSubmitting={formikProps.isSubmitting}
+          isValid={formikProps.isValid}
+        >
+          <Box>
+            {getFormComponent(formType, {
+              ...formikProps,
+              FormErrorMessage 
+            })}
+            {formikProps.status && (
+              <Typography 
+                color="error" 
+                sx={{ 
+                  fontSize: '14px', 
+                  mt: 2, 
+                  textAlign: 'center',
+                  fontFamily: 'Open Sans',
+                  fontWeight: 600
+                }}
+              >
+                {formikProps.status}
+              </Typography>
+            )}
+          </Box>
         </CustomDialog>
       )}
     </Formik>
