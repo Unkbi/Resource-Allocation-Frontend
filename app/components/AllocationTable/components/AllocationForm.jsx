@@ -123,7 +123,6 @@ const AllocationForm = () => {
           "ResourceAllocation.Core/Project": {
             ...values,
             Description: "string",
-            Notes: "string ", 
           },
         };
         try {
@@ -138,7 +137,6 @@ const AllocationForm = () => {
           "ResourceAllocation.Core/Project": {
             ...values,
             Description: "string",
-            Notes: "string "
           },
         };
         try {
