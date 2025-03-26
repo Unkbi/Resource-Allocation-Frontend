@@ -47,7 +47,7 @@ export const getTeamAllocations = createAsyncThunk(
   async (postData, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        `${API_PROJECT_PORTFOLIO}/GetTeamAllocations`,
+        `${API_PROJECT_PORTFOLIO}/GetTeamAllocationsForPeriod`,
         postData
       );
      

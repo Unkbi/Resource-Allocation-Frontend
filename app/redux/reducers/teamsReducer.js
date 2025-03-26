@@ -6,6 +6,7 @@ import {
   getTeamAllocations,
   postTeamResource,
 } from '@/app/services/teamServices';
+import { generateFirstAndLastMonthYear } from '@/app/utils/common';
 
 const initialState = {
   teams: null,
@@ -16,6 +17,10 @@ const initialState = {
   loading: false,
   dataProcessing: false,
   error: null,
+  calendarDate: {
+    startDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', true),
+    endDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', false)
+  }
 };
 
 const teamsSlice = createSlice({
@@ -39,6 +44,9 @@ const teamsSlice = createSlice({
     },
     setTeamsResources: (state, action) => {
       state.teamsResources[action.payload.id] = action.payload.resource;
+    },
+    updateStartAndEndDate: (state, action) => {
+      state.calendarDate = action.payload;
     },
   },
   extraReducers: builder => {
@@ -107,6 +115,6 @@ const teamsSlice = createSlice({
   },
 });
 
-export const { updateResources, resetResources, setTeamsDataProcessing, setTeamsResources } =
+export const { updateResources, resetResources, setTeamsDataProcessing, setTeamsResources, updateStartAndEndDate } =
   teamsSlice.actions;
 export default teamsSlice.reducer;

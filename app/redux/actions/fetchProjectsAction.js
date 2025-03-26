@@ -8,8 +8,6 @@ import {
 } from '../reducers/projectsReducer';
 import {
   getWeekNumber,
-  isWithin20WeeksRange,
-  getMondayOfWeek,
   generateAllWeeks,
 } from '@/app/utils/common';
 
@@ -95,15 +93,15 @@ const formatAllocations = (allocationsData, project) => {
   return Array.from(allocationMap.values());
 };
 
-export const fetchAllProjectAllocations = projects => async dispatch => {
+export const fetchAllProjectAllocations = (projects, StartDate, EndDate) => async dispatch => {
   try {
     dispatch(setDataProcessing(true));
     const allocationPromises = projects.map(async project => {
       const postData = {
         'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
           Project: project.Id,
-          StartDate: '2025-02-20',
-          EndDate: '2032-01-01',
+          StartDate: StartDate,
+          EndDate: EndDate,
         },
       };
       try {

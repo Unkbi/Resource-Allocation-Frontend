@@ -448,7 +448,6 @@ export default function Project() {
       setRows(projects?.result)
     }, [projects])
     
-    // console.log("modifyData(rows) : ", modifyData(rows))
     const modifyData = (data) => {
       if(data) {
         return data.map((item) => {

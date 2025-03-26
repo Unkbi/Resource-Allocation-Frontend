@@ -10,26 +10,26 @@ import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { Tooltip } from '@mui/material';
 
 export default function TeamAllocation() {
-  const [resourcesFetched, setResourcesFetched] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState('');
   
   const dispatch = useDispatch();
-  const { teams, resources, loading, dataProcessing } = useSelector(
+  const { teams, resources, loading, dataProcessing, calendarDate } = useSelector(
     state => state.teams
   );
+  const { startDate, endDate } = calendarDate || {};
   
   useEffect(() => {
-    setResourcesFetched(false);
-    dispatch(fetchAllTeams());
+    if (!teams?.result?.length) {
+      dispatch(fetchAllTeams());
+    }
   }, []);
 
   useEffect(() => {
-    if (teams?.result && teams?.result.length > 0 && !resourcesFetched) {
+    if (teams?.result.length && startDate && endDate) {
       dispatch(resetResources());
-      dispatch(fetchResourcesAgainstTeams(teams.result));
-      setResourcesFetched(true);
+      dispatch(fetchResourcesAgainstTeams(teams.result, null, startDate, endDate));
     }
-  }, [teams, resourcesFetched]);
+  }, [teams, calendarDate]);
 
   const getTeam = (params) => {
     if (params.rowNode.type === 'group' && params.rowNode.groupingField === 'teams') {
@@ -139,7 +139,6 @@ export default function TeamAllocation() {
     },
   ];
 
-  console.log({resources})
   return (
     <>
       <AllocationGrid
