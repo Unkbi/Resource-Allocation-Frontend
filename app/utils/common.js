@@ -1,3 +1,4 @@
+import { addDays, format, subDays, weeksToDays } from 'date-fns';
 import { TOTAL_FUTURE_WEEKS } from '../constants/constants';
 
 // Calculate total effort from weekly columns
@@ -32,9 +33,9 @@ export const getWeeksDifference = (startDate, endDate) => {
   return Math.floor((endDate - startDate) / msPerWeek);
 };
 
-export const formatDate = (date, format) => {
+export const formatDate = (date, dateFormat) => {
   return date.toLocaleDateString('en-US', {
-    month: format.includes('MMM') ? 'short' : 'numeric',
+    month: dateFormat.includes('MMM') ? 'short' : 'numeric',
     year: 'numeric',
   });
 };
@@ -248,48 +249,18 @@ export const getInitials = (fullName) => {
 
   return initials;
 };
-/**
- * Returns a string representing the month and year in the format "Mon YY".
- * @param {Date} date - The date object to format.
- * @returns {string} - Formatted string like "Jan 25".
- */
-const getMonthYearString = date => {
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const shortYear = date.getFullYear().toString().slice(-2);
-  return `${monthNames[date.getMonth()]} ${shortYear}`;
-};
 
 /**
  * Returns the first and last month/year of the 22-week period.
  * @returns {{first: string, last: string}} - Object containing first and last month/year strings.
  */
-export const generateFirstAndLastMonthYear = () => {
-  const today = new Date();
-  const currentDay = today.getDay();
-
-  const startDate = new Date(today);
-  startDate.setDate(today.getDate() - ((currentDay + 6) % 7));
-  startDate.setHours(0, 0, 0, 0);
-
-  const firstWeekDate = new Date(startDate);
-  const lastWeekDate = new Date(startDate);
-  lastWeekDate.setDate(startDate.getDate() + 20 * 7);
-
-  const firstMonthYear = getMonthYearString(firstWeekDate);
-  const lastMonthYear = getMonthYearString(lastWeekDate);
-
-  return { first: firstMonthYear, last: lastMonthYear };
+export const generateFirstAndLastMonthYear = (start, dateFormat, currentDate = false, previousStartDate = false) => {
+  let today = start ? new Date(start) : new Date();
+  if (currentDate) {
+    return format(today, dateFormat);
+  }
+  if (previousStartDate) {
+    return format(subDays(today, weeksToDays(TOTAL_FUTURE_WEEKS)), dateFormat);
+  }
+  return format(addDays(today, weeksToDays(TOTAL_FUTURE_WEEKS)), dateFormat);
 };

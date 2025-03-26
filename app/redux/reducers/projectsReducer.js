@@ -6,6 +6,7 @@ import {
   updateProject,
   deleteProject
 } from '@/app/services/projectServices';
+import { generateFirstAndLastMonthYear } from '@/app/utils/common';
 
 const initialState = {
   projects: null,
@@ -14,6 +15,10 @@ const initialState = {
   dataProcessing: false,
   error: null,
   updating: false,
+  calendarDate: {
+    startDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', true),
+    endDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', false)
+  }  
 };
 
 const projectsSlice = createSlice({
@@ -34,6 +39,9 @@ const projectsSlice = createSlice({
     },
     setDataProcessing: (state, action) => {
       state.dataProcessing = action.payload;
+    },
+    updateProjectStartAndEndDate: (state, action) => {
+      state.calendarDate = action.payload;
     },
   },
   extraReducers: builder => {
@@ -114,6 +122,6 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { updateAllocations, resetAllocations, setDataProcessing } =
+export const { updateAllocations, resetAllocations, setDataProcessing, updateProjectStartAndEndDate } =
   projectsSlice.actions;
 export default projectsSlice.reducer;

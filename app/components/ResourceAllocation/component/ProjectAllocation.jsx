@@ -10,30 +10,21 @@ import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 
 
 export default function ProjectAllocation() {
-  const [allocationsFetched, setAllocationsFetched] = useState(false);
   const [rowsState, setRowsState] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('');
 
-  const { projects, allocations, loading, dataProcessing } = useSelector(
+  const { projects, allocations, loading, dataProcessing, calendarDate } = useSelector(
     state => state.projects
   );
+  const { startDate, endDate } = calendarDate || {};
   const dispatch = useDispatch();
 
   useEffect(() => {
-    setAllocationsFetched(false);
-  }, []);
-
-  useEffect(() => {
-    if (
-      projects?.result &&
-      projects?.result.length > 0 &&
-      !allocationsFetched
-    ) {
+    if (projects?.result?.length && startDate && endDate) {
       dispatch(resetAllocations());
-      dispatch(fetchAllProjectAllocations(projects.result));
-      setAllocationsFetched(true);
+      dispatch(fetchAllProjectAllocations(projects.result, startDate, endDate));
     }
-  }, [projects, allocationsFetched]);
+  }, [projects, calendarDate]);
 
   const handleAddClick =(params)=>{
     dispatch(
@@ -170,7 +161,6 @@ export default function ProjectAllocation() {
       primaryColumn: true,
       renderCell: (params) => {
         const firstChild = getFirstChild(params);
-        console.log({firstChild, state: firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'})
         return firstChild ? (<span>{firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}</span>) : null;
       },
     },

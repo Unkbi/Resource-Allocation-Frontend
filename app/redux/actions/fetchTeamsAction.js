@@ -148,7 +148,7 @@ const formatAllocations = (
 };
 
 export const fetchResourcesAgainstTeams =
-  (teams, allocations = null) =>
+  (teams, allocations = null, StartDate, EndDate) =>
   async dispatch => {
     try {
       dispatch(setTeamsDataProcessing(true));
@@ -157,13 +157,15 @@ export const fetchResourcesAgainstTeams =
       const teamPromises = teams.map(async team => {
         const teamResourcesPostData = {
           'ResourceAllocation.Core/GetTeamResources': {
-            TeamId: team.Id,
+            TeamId: team.Id
           },
         };
 
         const teamAllocationPostData = {
-          'ResourceAllocation.Core/GetTeamAllocations': {
+          'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
             TeamId: team.Id,
+            StartDate,
+            EndDate
           },
         };
 
@@ -207,7 +209,6 @@ export const fetchResourcesAgainstTeams =
       const preload_result = [];
       if (allocations && results?.length === 1) {
         Object.keys(allocations)?.forEach(key => {
-          console.log('key', key);
           if (key === teams[0].Id) {
             preload_result.push(results[0]);
           } else {
