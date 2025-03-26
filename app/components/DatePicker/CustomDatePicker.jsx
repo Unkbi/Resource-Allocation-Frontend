@@ -7,6 +7,12 @@ import { TextField ,FormHelperText} from '@mui/material';
 import { styled } from '@mui/system';
 import { PickersLayout } from '@mui/x-date-pickers';
 import {FormControl} from '@mui/material';
+import 'dayjs/locale/en-gb';
+import updateLocale from 'dayjs/plugin/updateLocale';
+import { DEFAULT_LOCALE } from '@/app/constants/constants';
+
+dayjs.extend(updateLocale);
+dayjs.updateLocale(DEFAULT_LOCALE, { weekStart: 1 });
 
 const StyledPickersLayout = styled(PickersLayout)({
   '.MuiDateCalendar-root': {
@@ -60,8 +66,9 @@ export default function CustomDatePicker({
     }}
     error={error}
   >
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
       <DatePicker
+        displayWeekNumber
         value={value ? dayjs(value) : null}
         onChange={handleDateChange}
         slots={{
