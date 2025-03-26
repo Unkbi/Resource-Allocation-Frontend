@@ -123,6 +123,7 @@ const AllocationForm = () => {
           "ResourceAllocation.Core/Project": {
             ...values,
             Description: "string",
+            Notes: "string ", 
           },
         };
         try {
@@ -137,6 +138,7 @@ const AllocationForm = () => {
           "ResourceAllocation.Core/Project": {
             ...values,
             Description: "string",
+            Notes: "string "
           },
         };
         try {
@@ -158,6 +160,7 @@ const AllocationForm = () => {
                   ProjectName: projects?.result?.filter((project) => project.Id === values.Project)?.[0]?.Name,
                   Period: monday,
                   AllocationEntered: values.AllocationEntered,
+                  Notes: values.Comment || "",
                 },
               },
             };

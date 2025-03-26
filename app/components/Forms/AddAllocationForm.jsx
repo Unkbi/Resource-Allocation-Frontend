@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio } from "@mui/material"
+import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input } from "@mui/material"
 import CustomSelect from "../Select/CustomSelect"
 import StyledLabel from "../Label/StyledLabel"
-import { StyledInput } from "../Input/StyledInput"
+import { StyledCommentInput, StyledInput } from "../Input/StyledInput"
 import CustomDatePicker from "../DatePicker/CustomDatePicker"
 import StyledRadioButton from "../RadioButton/StyledRadioButton"
 import { useSelector } from "react-redux"
@@ -209,6 +209,19 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           </RadioGroup>
         </Box>
       </Box>
+
+  <Box sx={{ pb: 2  ,pt :2 }}>
+  <StyledLabel>Comment</StyledLabel>
+   <StyledCommentInput
+    name="Comment"
+    value={values.Comment || ""}
+    onChange={handleChange}
+    onBlur={handleBlur}
+    multiline
+    rows={4} 
+    />
+  </Box>
+
     </Box>
   )
 }
