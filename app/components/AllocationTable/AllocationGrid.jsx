@@ -385,9 +385,9 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         slots={{
           toolbar: CustomToolbar,
           // columnMenu: CustomColumnMenu
-          // columnMenu: props => {
-          //   return <CustomColumnMenu {...props} apiRef={apiRef} />;
-          // },
+          columnMenu: props => {
+            return <CustomColumnMenu {...props} apiRef={apiRef} />;
+          },
         }}
         slotProps={{
           loadingOverlay: {
