@@ -314,7 +314,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
         newRow[key] = {
           allocationId: oldRow[key]?.allocationId || null,
-          value: newRow[key],
+          value: formattedCellValue !== 0 ? formattedCellValue: null,
         };
       }
     });
