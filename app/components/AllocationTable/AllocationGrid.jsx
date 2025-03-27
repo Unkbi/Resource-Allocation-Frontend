@@ -30,12 +30,12 @@ import {
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
-import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import CustomToolbar from '../Toolbar/CustomToolbar';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
 
 export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState }) {
   const apiRef = useGridApiRef();
@@ -50,6 +50,42 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
   const [rowModesModel, setRowModesModel] = useState({});
+  const [cellSelectionModel, setCellSelectionModel] = useState({});
+  
+  const { isOpen } = useSelector((state) => state.globalDialog);
+
+  const handleKeyUp = (e) => {
+
+    const getDateRange = () => {
+      const dateRange = [...new Set(apiRef.current.getSelectedCellsAsArray().map(cell => cell.field))]
+      if(dateRange.length > 1) {
+        return [getMondayOfWeek(dateRange[0]), getMondayOfWeek(dateRange[dateRange.length - 1])]
+      }
+      else {
+        return [getMondayOfWeek(dateRange[0]), '']
+      }
+    }
+    
+    if(cellSelectionModel && Object.keys(cellSelectionModel).length > 0 && apiRef.current.getSelectedCellsAsArray().length >= 2) {
+      const resourcesSelected = [...new Set(Object.keys(cellSelectionModel).map(row => apiRef.current.getRow(row)?.resource))]
+      const projectsSelected = [...new Set(Object.keys(cellSelectionModel).map(row => apiRef.current.getRow(row)?.project))]
+      
+      dispatch(
+        openDialog({
+          title: "Add Allocation",
+          submitButtonText: 'Add',
+          cancelButtonText: 'Cancel',
+          formType: "add_allocation",
+          initialData: {
+            Resource: resourcesSelected,
+            StartDate: getDateRange()[0],
+            EndDate: getDateRange()[1],
+            Project: projectsSelected,
+          },
+        })
+      )
+    }
+  }
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -87,6 +123,25 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       console.warn('Error in setting row expansion', error);
     }
   }, [expandRowId, rowState?.length]);
+
+   // Use useEffect to add the key-up listener once
+   useEffect(() => {
+    const handleDocumentKeyUp = (e) => handleKeyUp(e);
+
+    // Bind keyUp event on component mount
+    document.addEventListener('mouseup', handleDocumentKeyUp);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      document.removeEventListener('mouseup', handleDocumentKeyUp);
+    };
+  }, [cellSelectionModel]);
+  
+  useEffect(() => {
+    if(!isOpen) {
+      setCellSelectionModel({});
+    }
+  },[isOpen])
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -347,9 +402,57 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
     return getTogglableColumns(columns);
   };
 
+  const handleCellSelectionModelChange = useCallback((newModel) => {
+    // Filter out Rows outside the current group boundary
+    const isRowWithinGroup = (row) => {
+      const selectedCells = apiRef.current.getSelectedCellsAsArray()
+      if(selectedCells && selectedCells.length > 0) {
+        if(groupBy === 'project') {
+          // Previously selected project
+          const currentProjectSelected = apiRef.current.getRow(selectedCells[0].id)?.projectId
+          if(row.projectId !== currentProjectSelected) {
+            return false
+          }
+        }
+        if(groupBy === 'teams') {
+          // Previously selected team
+          const currentResourceSelected = apiRef.current.getRow(selectedCells[0].id)?.resourceId
+          if(row.resourceId !== currentResourceSelected) {
+            return false
+          }
+        }
+      }
+      return true
+    }
+
+    // Get Only Valid Fields, i.e. Fields starting with 'W'
+    const getNewModelWithValidFields = (row) => {
+      const newModelWithValidFields = {}
+      Object.keys(row).forEach((key) => {
+        if (key.startsWith('W')) {
+          newModelWithValidFields[key] = row[key]
+        }
+      })
+      return newModelWithValidFields
+    }
+    
+    let filteredModel = {}
+    Object.keys(newModel).forEach((key) => {
+      if (!key.startsWith('auto-generated')) { // Filter out auto-generated rows
+        if(isRowWithinGroup(apiRef.current.getRow(key))) {
+          const newModelWithValidFields = getNewModelWithValidFields(newModel[key])
+          if(newModelWithValidFields && Object.keys(newModelWithValidFields).length > 0) {
+            filteredModel[key] = newModelWithValidFields
+          }
+        }
+      }})
+      setCellSelectionModel(filteredModel);
+  }, []);
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
+        cellSelection
         isCellEditable={params => !params.row.hasButton}
         onCellKeyDown={handleCellKeyDown}
         rowModesModel={rowModesModel}
@@ -382,12 +485,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         getRowClassName={params => `super-app-theme--${params.row.status}`}
         disableAutosize
         getCellClassName={params => getCellClassName(params, updatedRows)}
+        cellSelectionModel={cellSelectionModel}
+        onCellSelectionModelChange={handleCellSelectionModelChange}
         slots={{
           toolbar: CustomToolbar,
-          // columnMenu: CustomColumnMenu
-          // columnMenu: props => {
-          //   return <CustomColumnMenu {...props} apiRef={apiRef} />;
-          // },
         }}
         slotProps={{
           loadingOverlay: {

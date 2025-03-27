@@ -26,13 +26,13 @@ const projectsSlice = createSlice({
   initialState,
   reducers: {
     updateAllocations: (state, action) => {
-      const uniqueAllocations = action.payload.filter(
-        newAlloc =>
-          !state.allocations.some(
-            existingAlloc => existingAlloc.id === newAlloc.id
-          )
-      );
-      state.allocations = [...state.allocations, ...uniqueAllocations];
+      // const uniqueAllocations = action.payload.filter(
+      //   newAlloc =>
+      //     !state.allocations.some(
+      //       existingAlloc => existingAlloc.id === newAlloc.id
+      //     )
+      // );
+      state.allocations = [...state.allocations, ...action.payload];
     },
     resetAllocations: state => {
       state.allocations = [];
