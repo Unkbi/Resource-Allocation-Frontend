@@ -329,7 +329,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           </GridToolbarContainer>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box className="projectIcon">
+          {/* <Box className="projectIcon">
             {view === 'Projects' ? (
               <>
                 <TooltipButton
@@ -385,7 +385,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                 </TooltipButton>
               </>
             )}
-          </Box>
+          </Box> */}
           {/* <Divider orientation="vertical" flexItem /> */}
           {/* <Box className="dayWeekBlock">
             <Button>Day</Button>
