@@ -11,9 +11,6 @@ import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 export default function Allocation() {
   const dispatch = useDispatch();
   const view = useSelector(state => state.allocationView.view);
-  useEffect(() => {
-    document.title = view || 'Resource Allocation';
-  }, [view]);
 
   useEffect(() => {
     dispatch(fetchAllResources());

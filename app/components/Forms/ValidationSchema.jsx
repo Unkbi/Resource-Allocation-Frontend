@@ -1,17 +1,46 @@
 import * as Yup from 'yup';
 
 
-export const addProjectValidationSchema = Yup.object({
-  Name: Yup.string().max(90,'Reached Max Characters').required('Project Name is required'),
-  Owner: Yup.string().required("Sponsor is required"),
-  Manager: Yup.string().required("Manager is required"),
-  Location: Yup.string().required("Location is required"),
+export const addProjectValidationSchema = (projects = [])=> {
+  const projectNames = Array.isArray(projects?.result)? projects?.result?.map((project) => project.Name?.toLowerCase().trim()): [];
+
+  return  Yup.object({
+  Name: Yup.string().max(90,'Reached Max Characters').required('Project Name is required').test(
+    'unique-name',
+    'Project Name already exists. Please choose another name.',
+    (value) => {
+      if (!value) return true;
+      return !projectNames.includes(value.toLowerCase().trim());
+    } ,
+  ),
   Type: Yup.string().required("Project type is required"),
   AllowOvertime: Yup.boolean().required("Allow overtime selection is required"),
-  StartDate: Yup.date().required("Start date is required"),
-  EndDate: Yup.date().required("End date is required").min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
-  Status: Yup.string().required("Status is required"),
+  StartDate: Yup.date()
+    .nullable()
+    .typeError('Invalid date format')
+    .test(
+      'required-if-end-date',
+      'Start date is required if end date is provided',
+      function (value) {
+        const { EndDate } = this.parent;
+        return !EndDate || value !== null;
+      }
+    ),
+
+  EndDate: Yup.date()
+    .nullable()
+    .typeError('Invalid date format')
+    .test(
+      'required-if-start-date',
+      'End date is required if start date is provided',
+      function (value) {
+        const { StartDate } = this.parent;
+        return !StartDate || value !== null;
+      })
+    .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
+  Status: Yup.string().default('Active').required('Status is required'),
 })
+}
 
 export const addResourceValidationSchema = Yup.object({
   Resource: Yup.string().required("Resource is required"),

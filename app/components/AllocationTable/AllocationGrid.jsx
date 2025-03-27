@@ -369,7 +369,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
         newRow[key] = {
           allocationId: oldRow[key]?.allocationId || null,
-          value: newRow[key],
+          value: formattedCellValue !== 0 ? formattedCellValue: null,
         };
       }
     });
@@ -489,6 +489,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         onCellSelectionModelChange={handleCellSelectionModelChange}
         slots={{
           toolbar: CustomToolbar,
+          // columnMenu: CustomColumnMenu
+          columnMenu: props => {
+            return <CustomColumnMenu {...props} apiRef={apiRef} />;
+          },
         }}
         slotProps={{
           loadingOverlay: {

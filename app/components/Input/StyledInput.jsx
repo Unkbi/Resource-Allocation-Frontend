@@ -1,17 +1,32 @@
-import { styled, TextField } from '@mui/material';
+import { FormHelperText, styled, TextField } from '@mui/material';
 
 export const StyledInput = styled(TextField)(
-  ({ theme, width, margin, padding, height }) => ({
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '4px',
-      height: height || '36px',
-      backgroundColor: '#FFF',
-      fontSize: '12px',
-      "& fieldset":{
-        borderColor:"#D6DCE1"
+  ({ theme, width, margin, padding, height , error}) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '4px',
+    height: height || '36px',
+    backgroundColor: '#FFF',
+    fontSize: '12px',
+    "& fieldset":{
+      borderColor:"#D6DCE1"
       }
     },
-    
+    '& fieldset': {
+      borderColor: error ? theme.palette.error.main : '#D6DCE1',
+    },
+    '&:hover fieldset': {
+      borderColor: error ? theme.palette.error.main : '#D6DCE1',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: error ? theme.palette.error.main : '#D6DCE1',
+    },
+    '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+      WebkitAppearance: 'none',
+      margin: 0,
+    },
+    '& input[type="number"]': {
+      MozAppearance: 'textfield',
+    },
     width: width || '100%',
     margin: margin || '0',
     padding: padding || '0',
@@ -39,3 +54,9 @@ export const StyledCommentInput = styled(TextField)(
     padding: padding || '0',
   })
 );
+
+export const StyledFormHelperText = styled(FormHelperText)(({ theme }) => ({
+  color: theme.palette.error.main,
+  marginLeft: 0,
+  fontSize: '0.75rem',
+}));
