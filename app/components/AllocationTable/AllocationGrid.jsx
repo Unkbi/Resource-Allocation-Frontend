@@ -30,6 +30,7 @@ import {
   setResourceAllocation,
   updateResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
+import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
