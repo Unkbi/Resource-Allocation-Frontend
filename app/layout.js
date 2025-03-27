@@ -38,6 +38,25 @@ function LayoutContent({ children }) {
   }, []);
 
   useEffect(() => {
+   const getTitleByPath = (pathname) => {
+     switch(pathname) {
+       case '/allocation':
+         return 'Allocation';
+       case '/project':
+         return 'Projects';
+       case '/people':
+         return 'People';
+       case '/report':
+         return 'Reports';
+       default:
+         return 'Dashboard'; 
+     }
+   };
+   document.title = getTitleByPath(pathname);
+ }, [pathname]);
+
+
+  useEffect(() => {
     if (!isClient) return; 
     if (isLoggedIn && isPublicRoute) {
       router.replace('/allocation');
