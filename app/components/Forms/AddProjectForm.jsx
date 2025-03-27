@@ -13,15 +13,15 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   useEffect(() => {
     if (initialData) {
       const rowData = {
-        StartDate: initialData.StartDate || '',
-        EndDate: initialData.EndDate || '',
+        StartDate: initialData.StartDate || null,
+        EndDate: initialData.EndDate || null,
         Owner: initialData.Owner?.name || '',
         AllowOvertime: initialData.AllowOvertime ?? '', // Use nullish coalescing
         Location: initialData.Location || '',
         Manager: initialData.Manager || '',
         Name: initialData.Name || '',
         Type: initialData.Type || '',
-        Status: initialData.Status || '',
+        Status: initialData.Status || 'Active',
       }
       setFormValue(rowData)
       formikProps.resetForm({ values: rowData })
@@ -84,7 +84,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          Sponsor <span style={{ color: "red" }}>*</span>
+          Sponsor 
         </StyledLabel>
         <StyledInput
           as={TextField}
@@ -98,7 +98,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          Manager <span style={{ color: "red" }}>*</span>
+          Manager 
         </StyledLabel>
         <StyledInput
           as={TextField}
@@ -112,7 +112,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          Location <span style={{ color: "red" }}>*</span>
+          Location 
         </StyledLabel>
         <StyledInput
           as={TextField}
@@ -173,12 +173,12 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       >
         <Box sx={{ width: "48%" }}>
           <StyledLabel>
-            Start Date <span style={{ color: "red" }}>*</span>
+            Start Date 
           </StyledLabel>
           <CustomDatePicker
             name="StartDate"
             handleChange={handleChange}
-            value={values.StartDate}
+            value={values.StartDate  || null}
             placeholder={"Start Date"}
             formikProps={formikProps}
             error={touched.StartDate && Boolean(errors.StartDate)}
@@ -187,12 +187,12 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         </Box>
         <Box sx={{ width: "48%" }}>
           <StyledLabel>
-            End Date <span style={{ color: "red" }}>*</span>
+            End Date 
           </StyledLabel>
           <CustomDatePicker
             name="EndDate"
             handleChange={handleChange}
-            value={values.EndDate}
+            value={values.EndDate || null}
             placeholder={"End Date"}
             formikProps={formikProps}
             error={touched.EndDate && Boolean(errors.EndDate)}

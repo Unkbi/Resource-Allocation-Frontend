@@ -72,7 +72,7 @@ const AllocationForm = () => {
   const getValidationSchema = (formType) => {
     switch (formType) {
       case 'add_project':
-        return addProjectValidationSchema;
+        return addProjectValidationSchema(projects);
       case 'add_resource':
         return addResourceValidationSchema;
       case 'add_allocation':
