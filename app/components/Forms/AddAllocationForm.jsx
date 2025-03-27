@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input } from "@mui/material"
+import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText } from "@mui/material"
 import CustomSelect from "../Select/CustomSelect"
 import StyledLabel from "../Label/StyledLabel"
-import { StyledCommentInput, StyledInput } from "../Input/StyledInput"
+import { StyledCommentInput, StyledFormHelperText, StyledInput } from "../Input/StyledInput"
 import CustomDatePicker from "../DatePicker/CustomDatePicker"
 import StyledRadioButton from "../RadioButton/StyledRadioButton"
 import { useSelector } from "react-redux"
@@ -88,11 +88,34 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     }
   }
 
+  const handleKeyPress = (e) => {
+    if (['e', 'E', '+', '-'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const handleCustomCapacityChange = (event) => {
-    const value = event.target.value
-    setCustomCapacity(value)
-    setCapacityOption("custom")
-    setFieldValue("AllocationEntered", Number(value))
+    const value = event.target.value;
+    if (/^[0-9]*\.?[0-9]*$/.test(value) || value === "") {
+      setCustomCapacity(value);
+      setCapacityOption("custom");
+      const numValue = value === "" ? "" : Number(value);
+      setFieldValue("AllocationEntered", numValue);
+    }
+  };
+
+  const handleCustomCapacityBlur = (e) => {
+    let formattedValue = e.target.value
+    if (formattedValue && !isNaN(formattedValue)) {
+      const numValue = Number(formattedValue)
+      formattedValue = (Math.round(numValue * 10) / 10).toString()
+      if (formattedValue.indexOf('.') === -1 && numValue <= 2) {
+        formattedValue = formattedValue + '.0'
+      }
+      setCustomCapacity(formattedValue)
+      setFieldValue("AllocationEntered", Number(formattedValue))
+    }
+    handleBlur(e)
   }
 
   return (
@@ -190,23 +213,31 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               borderColor="#f8b3d9"
             />
             <FormControlLabel
-              value="custom"
-              control={<Radio sx={{ display: "none" }} />}
-              label={
-                <StyledInput
-                  as={TextField}
-                  name="customCapacity"
-                  type="number"
-                  width="60px"
-                  value={customCapacity}
-                  onChange={handleCustomCapacityChange}
-                  onBlur={handleBlur}
-                  onClick={() => setCapacityOption("custom")}
-                />
-              }
-              sx={{ margin: 0 }}
-            />
+            value="custom"
+            control={<Radio sx={{ display: "none" }} />}
+            label={
+              <StyledInput
+                as={TextField}
+                name="AllocationEntered"
+                type="number"
+                width="60px"
+                height= "32px"
+                value={customCapacity}
+                onChange={handleCustomCapacityChange}
+                onKeyPress={handleKeyPress}
+                onBlur={handleCustomCapacityBlur}
+                onClick={() => setCapacityOption("custom")}
+                error={formikProps.touched.AllocationEntered && Boolean(formikProps.errors.AllocationEntered)}
+              />
+            }
+            sx={{ margin: 0 }}
+          />
           </RadioGroup>
+          {formikProps.touched.AllocationEntered && Boolean(formikProps.errors.AllocationEntered)&& (
+          <StyledFormHelperText>
+            {formikProps.errors.AllocationEntered}
+          </StyledFormHelperText>
+        )}
         </Box>
       </Box>
 
