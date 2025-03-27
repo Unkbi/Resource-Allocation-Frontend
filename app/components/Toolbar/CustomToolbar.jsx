@@ -319,9 +319,15 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                 tooltip: { title: 'Filters' },
                 button: {
                   variant: 'outlined',
-                  sx: { color: '#555', borderColor: '#ddd' },
-                  startIcon: (
-                    <img src="/images/icons/filter.svg" alt="filter" />
+                  sx: { color: '#555', borderColor: '#ddd',
+                    ".MuiButton-startIcon": { marginRight: '5px' },
+                    "& .MuiBadge-root span": { top: '-12px', right: '3px'},
+                    "& .MuiBadge-root svg": { display: "none" },
+                  },
+                  component: (props) => (
+                    <Button {...props} startIcon={<img src="/images/icons/filter.svg" alt="filter" />}>
+                      {props.children}
+                    </Button>
                   ),
                 },
               }}
