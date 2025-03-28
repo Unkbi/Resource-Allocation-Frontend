@@ -12,7 +12,7 @@ import {
 } from '../reducers/teamsReducer';
 import {
   getWeekNumber,
-  isWithin20WeeksRange,
+  isWithinSelectedRange,
   removeDuplicateResources,
 } from '@/app/utils/common';
 import { setAllocations } from '../reducers/dataGridReducer';
@@ -33,7 +33,9 @@ const formatAllocations = (
   teamId,
   teamName,
   teamStatus,
-  teamAllocationManager
+  teamAllocationManager,
+  startDate,     
+  endDate  
 ) => {
   const allocationsData = data.result;
   const allocationMap = new Map();
@@ -109,7 +111,7 @@ const formatAllocations = (
       const uniqueId = `${allocation.Resource}-${teamId}-${allocation.Project}`;
       const existingAllocation = allocationMap.get(uniqueId);
       if (existingAllocation) {
-        if (isWithin20WeeksRange(allocation.Period)) {
+        if (isWithinSelectedRange(allocation.Period, startDate, endDate)) {
           existingAllocation[weekNumber] = {
             allocationId: allocation.Id,
             value: allocation.AllocationEntered,
@@ -134,7 +136,7 @@ const formatAllocations = (
           resourceType,
         };
 
-        if (isWithin20WeeksRange(allocation.Period)) {
+        if (isWithinSelectedRange(allocation.Period, startDate, endDate)) {
           newAllocation[weekNumber] = {
             allocationId: allocation.Id,
             value: allocation.AllocationEntered,
@@ -153,6 +155,19 @@ export const fetchResourcesAgainstTeams =
     try {
       dispatch(setTeamsDataProcessing(true));
       let allResources = [];
+      
+  // helper to get monday of the week before given date
+  const getPreviousMonday = (d) => {
+    const date = new Date(d);
+    const day = date.getDay(); // get day of week (0 = sunday, 1 = monday, etc.)
+    const diff = day === 0 ? -6 : 1 - day; // calculate shift to reach monday
+    date.setDate(date.getDate() + diff - 7); // subtract extra 7 days to get previous week's monday
+    date.setHours(0, 0, 0, 0); // reset time to midnight
+    return date;
+  };
+
+  // calculate monday of the previous week based on start date
+  const adjustedStartDate = getPreviousMonday(StartDate);
 
       const teamPromises = teams.map(async team => {
         const teamResourcesPostData = {
@@ -164,7 +179,7 @@ export const fetchResourcesAgainstTeams =
         const teamAllocationPostData = {
           'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
             TeamId: team.Id,
-            StartDate,
+            StartDate: adjustedStartDate.toISOString().split('T')[0],
             EndDate
           },
         };
@@ -242,7 +257,9 @@ export const fetchResourcesAgainstTeams =
                 team.Id,
                 team.Name,
                 team.Status,
-                team.AllocationManager
+                team.AllocationManager,
+                adjustedStartDate,
+                EndDate  
               );
 
               const final = formattedAllocations.filter(

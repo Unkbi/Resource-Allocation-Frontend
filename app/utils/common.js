@@ -57,39 +57,27 @@ export const getWeekNumber = date => {
  * @param {Date | string} date - The date to check. Can be a Date object or a string in a date format.
  * @returns {boolean} - Returns true if the date is in the previous week, current week, or next 20 weeks, false otherwise.
  */
-export const isWithin20WeeksRange = (date) => {
-  const givenDate = new Date(date); // new date object from the given date
-  givenDate.setUTCHours(0, 0, 0, 0); // set time to the start of day (UTC) to avoid timezone issues
-
-  // helper to calculate the monday of a given date's week (UTC based)
-  const getMonday = (d) => {
-    const date = new Date(d);
-    const day = date.getUTCDay(); // get the current day of the week (0 = sunday, 1 = monday, ...)
-    const diff = day === 0 ? -6 : 1 - day; // if sunday (0), move back 6 days otherwise move to the most recent monday
-    date.setUTCDate(date.getUTCDate() + diff); // adjust to monday
-    return date;
+export const isWithinSelectedRange = (date, startDate, endDate) => {
+  // helper to get monday of given date in utc
+  const getMondayUTC = (input) => {
+    const d = new Date(input);
+    const utcDay = d.getUTCDay(); // 0 = sunday, 1 = monday, etc.
+    const diff = utcDay === 0 ? -6 : 1 - utcDay; // shift to previous monday
+    d.setUTCDate(d.getUTCDate() + diff);
+    d.setUTCHours(0, 0, 0, 0); // set time to midnight utc
+    return d;
   };
 
-  // creates a new date that represents midnight UTC of current local date
-  const now = new Date();
-  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  
+  const weekDate = getMondayUTC(date); // get monday for the date being checked
+  const rangeStart = getMondayUTC(startDate); // get monday of the selected start date
+  const rangeEnd = getMondayUTC(new Date(endDate).setDate(new Date(endDate).getDate() - 14)); // get monday two weeks before the end date to exclude current and next week
 
-  // determine the monday of the current week
-  const startOfCurrentWeek = getMonday(today);
+  const isInRange =
+    weekDate.getTime() >= rangeStart.getTime() &&
+    weekDate.getTime() <= rangeEnd.getTime();
 
-  // determine the monday of the previous week by subtracting 7 days
-  const startOfPreviousWeek = new Date(startOfCurrentWeek);
-  startOfPreviousWeek.setUTCDate(startOfCurrentWeek.getUTCDate() - 7);
-
-  const endOfNext20Weeks = new Date(startOfCurrentWeek);
-  endOfNext20Weeks.setUTCDate(startOfCurrentWeek.getUTCDate() + (TOTAL_FUTURE_WEEKS * 7));
-
-  // convert given date to its week's monday for consistent comparisons
-  const givenTime = getMonday(givenDate).getTime();
-  const startTime = startOfPreviousWeek.getTime();
-  const endTime = endOfNext20Weeks.getTime();
-  // true if the given date falls within the range of the previous week, current week, or next 20 weeks
-  return givenTime >= startTime && givenTime <= endTime;
+  return isInRange;
 };
 
 /**
