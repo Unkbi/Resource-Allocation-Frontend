@@ -413,20 +413,52 @@ const PersonContainer = styled('div')(() => ({
     justifyContent: 'flex-start'
 }))
 
-const StatusPill = styled('div')(({ theme, status }) => ({
+const StatusPill = styled('div')(({ theme, status }) => {
+  let backgroundColor, textColor;
+
+  switch (status) {
+    case 'Active':
+      backgroundColor = '#4B9F471A'; 
+      textColor = '#4B9F47'; 
+      break;
+    case 'Proposed':
+      backgroundColor = '#5041AB1A'; 
+      textColor = '#5041AB'; 
+      break;
+    case 'Approved':
+      backgroundColor = '#2772F01A'; 
+      textColor = '#2772F0'; 
+      break;
+    case 'Paused':
+      backgroundColor = '#E6521F1A';
+      textColor = '#E6521F';
+      break;
+    case 'Completed':
+      backgroundColor = '#F5B5441A'; 
+      textColor = '#F5B544'; 
+      break;
+    default:
+      backgroundColor = '#e0e0e0'; 
+      textColor = '#6c757d'; 
+  }
+
+  return {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '4px 12px',
-    borderRadius: '20px',
-    fontSize: '14px',
-    fontWeight: 500,
-    minWidth: '100px',
+    borderRadius: '4px',
+    fontFamily: "Open Sans",
+    fontsize: '12px',
+    fontStyle: 'normal',
+    fontweight: 400,
+    lineheight: '16px', 
+    width: '86px',
     height: '28px',
-    backgroundColor:
-      status === 'Approved' || status === 'Completed' ? '#ecf9ef' : '#fff8e7',
-    color: status === 'Approved' || status === 'Completed' ? '#229e60' : '#d88e32',
-  }));
+    backgroundColor,
+    color: textColor,
+  };
+});
+
 
 export default function Project() {
     const dispatch = useDispatch()

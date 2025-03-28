@@ -47,7 +47,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     { value: "Proposed", label: "Proposed" },
     { value: "Completed", label: "Completed" },
     { value: "Paused", label: "Paused" },
-    { value: "Terminated", label: "Terminated" },
+    { value: "Approved", label: "Approved" },
   ]
 
   // Error display helper
