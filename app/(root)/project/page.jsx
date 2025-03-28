@@ -535,18 +535,6 @@ export default function Project() {
           minWidth: 150,
         },
         {
-          field: "StartDate",
-          headerName: "Start Date",
-          flex: 1,
-          minWidth: 120,
-        },
-        {
-          field: "EndDate",
-          headerName: "End Date",
-          flex: 1,
-          minWidth: 120,
-        },
-        {
           field: "Type",
           headerName: "Type",
           flex: 1,
@@ -567,6 +555,18 @@ export default function Project() {
           renderCell: (params) => (
             <StatusPill status={params.value}>{params.value}</StatusPill>
           ),
+        },
+        {
+          field: "StartDate",
+          headerName: "Start Date",
+          flex: 1,
+          minWidth: 120,
+        },
+        {
+          field: "EndDate",
+          headerName: "End Date",
+          flex: 1,
+          minWidth: 120,
         },
         {
           field: "actions",
