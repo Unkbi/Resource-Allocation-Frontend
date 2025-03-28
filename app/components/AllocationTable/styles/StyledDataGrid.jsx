@@ -81,7 +81,16 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-row': {
     '&:hover': {
       backgroundColor: '#FBFCFE',
+      '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
+        backgroundColor: '#FBFCFE !important',
+      },
     },
+  },
+  '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.firstGroupsRow': {
+    backgroundColor: '#e9eff8 !important',
+  },
+    '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.secondGroupsRow': {
+    backgroundColor: '#f0f7ff !important',
   },
   border: 'none',
   '& .MuiDataGrid-groupingCriteriaCell span[style*="white-space: pre"]': {
