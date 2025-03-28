@@ -20,6 +20,7 @@ import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
+import { useRouter, usePathname } from 'next/navigation';
 
 const initialValuesMap = {
   add_project: {
@@ -66,6 +67,8 @@ const AllocationForm = () => {
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
   const { view } = useSelector(state => state.allocationView);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
@@ -137,7 +140,19 @@ const AllocationForm = () => {
           },
         };
         try {
-          dispatch(addProject(postData));
+          dispatch(addProject(postData))
+          .then(() => {
+            // After successfully adding the project, route to Projects page
+            if (pathname !== '/project') {
+              router.replace('/project');
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to add project:", error);
+          });
+          if(pathname !== '/project') {
+            router.replace('/project');
+          }
         } catch (e) {
           console.log(e);
         }
