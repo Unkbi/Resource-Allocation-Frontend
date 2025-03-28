@@ -315,8 +315,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       if (key.startsWith('W')) {
         let formattedCellValue = Math.round(newRow[key] * 10) / 10;
         if (
-          newRow[key] === null &&
-          formattedCellValue === 0 &&
+          (newRow[key] === null || newRow[key] === undefined) &&
+          (formattedCellValue === 0 || isNaN(formattedCellValue)) &&
           oldRow[key]?.allocationId
         ) {
           const deletePayload = {
@@ -370,7 +370,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
         newRow[key] = {
           allocationId: oldRow[key]?.allocationId || null,
-          value: formattedCellValue !== 0 ? formattedCellValue: null,
+          value: (formattedCellValue !== 0 && !isNaN(formattedCellValue)) ? formattedCellValue: null,
         };
       }
     });
