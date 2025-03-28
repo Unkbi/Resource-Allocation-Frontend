@@ -49,15 +49,21 @@ export const addResourceValidationSchema = Yup.object({
 })
 
 export const addAllocationValidationSchema = Yup.object({
-  Resource: Yup.string().required("Resource is required"),
-  Project: Yup.string().required("Project is required"),
-  StartDate: Yup.date().required("Start date is required"),
-  EndDate: Yup.date().required("End date is required").min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
-  AllocationEntered: Yup.number()
-    .required("Allocation is required")
-    .min(0, "Allocation must be a positive number")
-    .max(2, "Allocation cannot exceed 2.0"),
-});
+    Resource: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Resource')
+      .required('Resource is required'),
+    Project: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Project')
+      .required('Project is required'),
+    StartDate: Yup.date().required("Start date is required"),
+    EndDate: Yup.date().required("End date is required").min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
+    AllocationEntered: Yup.number()
+      .required("Allocation is required")
+      .min(0, "Allocation must be a positive number")
+      .max(1, "Allocation cannot exceed 1.0"),
+  })
 
 export const assignAllocationValidationSchema = Yup.object({
   Resource: Yup.string().required("Resource is required"),

@@ -16,19 +16,20 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const { projects } = useSelector((state) => state.projects)
   const { resources } = useSelector((state) => state.resources)
-  const { resources: project_resource } = useSelector((state) => state.teams)
   const {initialData } = useSelector(state => state.globalDialog.formState);
+  const [multipleResourceError, setMultipleResourceError] = useState(false);
+  const [multipleProjectError, setMultipleProjectError] = useState(false);
   useEffect(() => {
     if (initialData) {
-      const filteredProject = projects?.result?.find(
-        project => project.Name === initialData.Project
-      );
-      const filteredResource = resources?.result?.find(
-        resource => resource.FullName === initialData.Resource
-      );
+      const filteredProject = projects?.result?.filter(
+        project => initialData.Project?.includes(project.Name)
+      ).map(projects => projects.Id);
+      const filteredResource = resources?.result?.filter(
+        resource => initialData.Resource?.includes(resource.FullName)
+      ).map(resource => resource.Id);
       const rowData = {
-        Resource: filteredResource?.Id || '',
-        Project: filteredProject?.Id || '',
+        Resource: filteredResource || [],
+        Project: filteredProject || [],
         StartDate: initialData.StartDate || '',
         EndDate: initialData.EndDate || '',
         AllocationEntered: initialData.AllocationEntered || '',
@@ -39,40 +40,12 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
 
 
   useEffect(() => {
-    let projectByResources = {};
-    let avaiableProjects = [];
-    try {
-      project_resource?.forEach((resource) => {
-        let projects_by_resource = projectByResources[resource?.resourceId];
-        if (projects_by_resource) {
-          projectByResources[resource?.resourceId]?.push(resource?.projectId);
-        } else {
-          projectByResources[resource?.resourceId] = [resource?.projectId];
-        }
-      });
-      projects?.result?.forEach((project) => {
-        if (values.Resource) {
-          if (!projectByResources[values.Resource].includes(project.Id)) {
-            avaiableProjects.push({
-              value: project.Id,
-              label: project.Name,
-            });;
-          }
-        } else {
-          avaiableProjects.push({
-            value: project.Id,
-            label: project.Name,
-          });
-        }
-      });
-    } catch (e) {
-      avaiableProjects = projects?.result?.map((project) => ({
-        value: project.Id,
-        label: project.Name,
-      }));
-    }
+    const avaiableProjects = projects?.result?.map((project) => ({
+                                value: project.Id,
+                                label: project.Name,
+                              }));
     setProjectOptions(avaiableProjects);
-  }, [values.Resource, project_resource, projects])
+  },[projects])
 
   const resourceTypeOptions = resources && resources.result.map((resource) => {
     return { value: resource.Id, label: resource.FullName }
@@ -118,6 +91,30 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     handleBlur(e)
   }
 
+  const handleResourceDropdownChange = (e) => {
+    if(values.Project.length > 1 && e.target.value.length > 1){
+      // Do not allow multiple resources to be selected.
+      setMultipleResourceError(true);
+      setTimeout(() => {
+        setMultipleResourceError(false);
+      }, 2000);
+      return;
+    }
+    handleChange(e)
+  }
+
+  const handleProjectDropdownChange = (e) => {
+    if(values.Resource.length > 1 && e.target.value.length > 1){
+      // Do not allow multiple projects to be selected.
+      setMultipleProjectError(true);
+      setTimeout(() => {
+        setMultipleProjectError(false);
+      }, 2000);
+      return;
+    }
+    handleChange(e)  
+  }
+
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
@@ -125,9 +122,12 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
         <CustomSelect
           name="Resource"
           options={resourceTypeOptions}
-          value={values.Resource ||""}
-          onChange={handleChange}
+          value={values.Resource || []}
+          onChange={handleResourceDropdownChange}
           onBlur={handleBlur}
+          multiple
+          error={multipleResourceError}
+          helperText={"Please select only one option."}
         />
       </Box>
       <Box sx={{ pb: 2 }}>
@@ -135,9 +135,12 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
         <CustomSelect
           name="Project"
           options={projectOptions}
-          value={values.Project ||""}
-          onChange={handleChange}
+          value={values.Project || []}
+          onChange={handleProjectDropdownChange}
           onBlur={handleBlur}
+          multiple
+          error={multipleProjectError}
+          helperText={"Please select only one option."}
         />
       </Box>
       <Box>

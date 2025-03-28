@@ -14,12 +14,12 @@ import {
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import { closeDialog } from '@/app/redux/reducers/dialogReducer';
-import { generateAllMondays } from '@/app/utils/common';
-import { setResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
+import { generateAllMondays, getWeekNumber } from '@/app/utils/common';
+import { setResourceAllocation, updateResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
 import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
-import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
+import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 
 const initialValuesMap = {
   add_project: {
@@ -39,8 +39,8 @@ const initialValuesMap = {
     Skills: '',
   },
   add_allocation: {
-    Resource: '',
-    Project: '',
+    Resource: [],
+    Project: [],
     StartDate: '',
     EndDate: '',
     AllocationEntered: '',
@@ -64,6 +64,8 @@ const AllocationForm = () => {
   const { teams, teamsResources, calendarDate } = useSelector(state => state.teams);
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
+  const { rowState } = useSelector(state => state.dataGrid);
+  const { view } = useSelector(state => state.allocationView);
 
   useEffect(() => {
     setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
@@ -107,6 +109,15 @@ const AllocationForm = () => {
     return new_user;
   };
 
+  const getAllocationPresent = (project, resource, period) => {
+    for( let i = 0; i < rowState?.length; i++) {
+      if(rowState[i]?.projectId === project && rowState[i]?.resourceId === resource) {
+        return rowState[i][getWeekNumber(new Date(period))];
+      }
+    }
+    return false
+  }
+
   const handleSubmit = async (values, { setSubmitting, setErrors, validateForm }) => {
     const errors = await validateForm(values);
     if (Object.keys(errors).length > 0) {
@@ -148,35 +159,73 @@ const AllocationForm = () => {
 
       case 'add_allocation':
         try {
-          const allocationPromises = allMondays.map((monday) => {
-            const postPayload = {
-              resourceId: values.Resource,
-              postData: {
-                'ResourceAllocation.Core/Allocation': {
-                  Resource: values.Resource,
-                  Project: values.Project,
-                  ProjectName: projects?.result?.filter((project) => project.Id === values.Project)?.[0]?.Name,
-                  Period: monday,
-                  AllocationEntered: values.AllocationEntered,
-                  Notes: values.Comment || "",
-                },
-              },
-            };
+          const filteredProjects = projects?.result?.filter((project) => 
+            values.Project.includes(project.Id)
+          ) || [];
 
-            return dispatch(setResourceAllocation(postPayload));
+          const allocationPromises = allMondays.flatMap((monday) => {
+            return values.Resource.flatMap(resource => {
+              return filteredProjects.map(project => {
+                const allocation = getAllocationPresent(project.Id, resource, monday)
+
+                if (allocation && allocation?.allocationId && allocation?.value) {
+                  if(allocation?.value !== values.AllocationEntered) {
+                    const putPayload = {
+                      resourceId: resource,
+                      allocationId: allocation?.allocationId,
+                      putData: {
+                        'ResourceAllocation.Core/Allocation': {
+                          AllocationEntered: values.AllocationEntered,
+                        },
+                      },
+                    };
+                    return dispatch(updateResourceAllocation(putPayload))
+                  }
+                } else {
+                    const postPayload = {
+                    resourceId: resource,
+                    postData: {
+                      'ResourceAllocation.Core/Allocation': {
+                        Resource: resource,
+                        Project: project.Id,
+                        ProjectName: project.Name,
+                        Period: monday,
+                        AllocationEntered: values.AllocationEntered,
+                        Notes: values.Comment || "",
+                },
+                    },
+                  };
+                  return dispatch(setResourceAllocation(postPayload));
+                }
+              })
+            })
           });
           if (!allocationPromises?.length) {
             return;
           }
           await Promise.all(allocationPromises)
             .then(async () => {
-              let new_resource = getTeamByResourceId(values.Resource);
+              let new_resources = values.Resource.map(resource => getTeamByResourceId(resource));
+              const teams = [...new Set(new_resources.map(resource => resource?.team))];
               dispatch(closeDialog());
-              return dispatch(fetchResourcesAgainstTeams([new_resource?.team], allocations, startDate, endDate))
-                .then(() => {
-                  handleOnAdd(new_resource?.team?.Name, new_resource?.FullName);
-                });
-            });
+
+              if(view === 'Teams')
+                {
+                  return dispatch(fetchResourcesAgainstTeams(teams, allocations, startDate, endDate))
+                  .then(() => {
+                    new_resources.forEach((resource) => {
+                      handleOnAdd(resource?.team?.Name, resource?.FullName);
+                    })
+                  });
+                }
+              else if(view === 'Projects')
+                {
+                return dispatch(fetchAllProjectAllocations(filteredProjects, startDate, endDate))
+                  .then(() => {
+                    // Code For Scroll to Row to be added.
+                  });
+                }
+            })
         } catch (e) {
           console.error('Error creating allocations:', e);
         }

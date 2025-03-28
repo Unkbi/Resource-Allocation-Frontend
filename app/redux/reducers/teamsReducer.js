@@ -28,13 +28,14 @@ const teamsSlice = createSlice({
   initialState,
   reducers: {
     updateResources: (state, action) => {
-      const uniqueResources = action.payload.filter(
-        newAlloc =>
-          !state.resources.some(
-            existingAlloc => existingAlloc.id === newAlloc.id
-          )
-      );
-      state.resources = [...state.resources, ...uniqueResources];
+      // const uniqueResources = action.payload.filter(
+      //   newAlloc =>
+      //     !state.resources.some(
+      //       existingAlloc => existingAlloc.id === newAlloc.id
+      //     )
+      // );
+      // state.resources = [...state.resources, ...uniqueResources];
+      state.resources = action.payload;
     },
     resetResources: state => {
       state.resources = [];
