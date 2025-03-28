@@ -12,7 +12,7 @@ import { CustomAddIcon } from './CustomAddIcon';
 export const getInitialState = (
   groupBy,
   updatedRows,
-  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
 ) => ({
   rowGrouping: {
     model: groupBy === 'teams' ? [groupBy, 'resource'] : [groupBy],
@@ -21,12 +21,6 @@ export const getInitialState = (
     sortModel: [
       { field: GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, sort: 'asc' },
     ],
-  },
-  aggregation: {
-    model: {
-      totalEffort: 'sum',
-      ...aggregationModel,
-    },
   },
   pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, "__row_group_by_columns_group_teams__"] },
 });
@@ -37,11 +31,13 @@ export const getFinalColumns = (
   setSelectedTeam,
   handleAddProject,
   setSelectedResourceId,
-  dispatch
+  dispatch,
+  startDate,
+  endDate
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
-  const allColumns = getAllColumnsWithWeek(columns, dispatch);
+  const allColumns = getAllColumnsWithWeek(columns, dispatch, startDate, endDate);
   const handleAddClick = (params) => { 
     dispatch(
       openDialog({

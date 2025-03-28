@@ -8,12 +8,11 @@ import {
 } from '@/app/utils/common';
 import {
   TOTAL_FUTURE_WEEKS,
-  VALIDATION_LIMITS,
 } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const WEEK_CONFIG = {
-  TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 2,
+  TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 1,
   COLUMN_WIDTH: 50,
   MAX_VALUE: 2,
   DECIMAL_PRECISION: 1,
@@ -90,9 +89,9 @@ const createValueHandlers = dispatch => ({
   },
 });
 
-export const generateWeeklyColumns = (startDate, dispatch) => {
-  const currentWeekIndex = getWeeksDifference(startDate, new Date());
-
+export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
+  const currentWeekIndex = getWeeksDifference(startDate, endDate);
+  
   return Array.from({ length: WEEK_CONFIG.TOTAL_WEEKS }, (_, i) => {
     const weekDate = addWeeks(startDate, i);
     return {
@@ -135,15 +134,13 @@ export const generateColumnGroupingModel = (startDate, allColumns) => {
   return groups;
 };
 
-const startDate = getStartDate();
-
-export const columns = generateWeeklyColumns(startDate);
-
-export const getAllColumnsWithWeek = (existingColumns = [], dispatch) => [
+export const getAllColumnsWithWeek = (existingColumns = [], dispatch, startDate, endDate) => [
   ...existingColumns,
-  ...generateWeeklyColumns(startDate, dispatch),
+  ...generateWeeklyColumns(startDate, endDate, dispatch),
 ];
 
-export const aggregationModel = columns
+export const aggregationModel = (startDate, endDate) => {
+  return generateWeeklyColumns(startDate, endDate)
   .filter(column => column.field.startsWith('W'))
-  .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
+  .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});;
+};

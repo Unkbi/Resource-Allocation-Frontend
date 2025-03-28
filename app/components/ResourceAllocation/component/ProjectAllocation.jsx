@@ -247,6 +247,8 @@ export default function ProjectAllocation() {
         groupBy="project"
         columns={projectColumnConfig}
         rowsState={rowsState}
+        startDate={startDate}
+        endDate={endDate}
         setRowsState={setRowsState}
         selectedTeam={selectedTeam}
         setSelectedTeam={setSelectedTeam}
@@ -266,7 +268,6 @@ export default function ProjectAllocation() {
             },
           },
         }}
-        // columnGroupingModel={columnGroupingModel}
         data={allocations}
         loading={loading || dataProcessing}
       />

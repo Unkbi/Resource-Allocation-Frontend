@@ -1,4 +1,4 @@
-import { addDays, format, subDays, weeksToDays } from 'date-fns';
+import { addDays, format, startOfWeek, subDays, weeksToDays } from 'date-fns';
 import { TOTAL_FUTURE_WEEKS } from '../constants/constants';
 
 // Calculate total effort from weekly columns
@@ -250,6 +250,10 @@ export const getInitials = (fullName) => {
   return initials;
 };
 
+export const getMonday = (date) => {
+  return startOfWeek(date, { weekStartsOn: 1 });
+};
+
 /**
  * Returns the first and last month/year of the 22-week period.
  * @returns {{first: string, last: string}} - Object containing first and last month/year strings.
@@ -257,10 +261,25 @@ export const getInitials = (fullName) => {
 export const generateFirstAndLastMonthYear = (start, dateFormat, currentDate = false, previousStartDate = false) => {
   let today = start ? new Date(start) : new Date();
   if (currentDate) {
-    return format(today, dateFormat);
+    const currentDateMonday = getMonday(today);
+    return format(currentDateMonday, dateFormat);
   }
   if (previousStartDate) {
-    return format(subDays(today, weeksToDays(TOTAL_FUTURE_WEEKS)), dateFormat);
+    const previousMonday = getMonday(subDays(today, weeksToDays(TOTAL_FUTURE_WEEKS)));
+    return format(previousMonday, dateFormat);
   }
-  return format(addDays(today, weeksToDays(TOTAL_FUTURE_WEEKS)), dateFormat);
+  const futureDateMonday = getMonday(addDays(today, weeksToDays(TOTAL_FUTURE_WEEKS)));
+  return format(futureDateMonday, dateFormat);
+};
+
+export const getStartAndEndDateForView = (view, projectsCalendar, teamsCalendar) => {
+  let startDate, endDate;
+  if (view === 'Teams') {
+    startDate = teamsCalendar.startDate;
+    endDate = teamsCalendar.endDate;
+  } else {
+    startDate = projectsCalendar.startDate;
+    endDate = projectsCalendar.endDate;
+  }
+  return { startDate, endDate };
 };

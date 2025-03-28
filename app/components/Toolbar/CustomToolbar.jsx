@@ -17,13 +17,8 @@ import {
   GridToolbarContainer,
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
-import MyProjectIcon from '../TableIcons/MyProjectIcon';
-import AllProjectIcon from '../TableIcons/AllProjectIcon';
-import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
-import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
-import TooltipButton from '../Button/TooltipButton';
 import CustomExport from './CustomExport';
-import { generateFirstAndLastMonthYear } from '@/app/utils/common';
+import { generateFirstAndLastMonthYear, getStartAndEndDateForView } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 
@@ -200,14 +195,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const view = useSelector(state => state.allocationView.view);
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { calendarDate: projectsCalendar } = useSelector(state => state.projects);
-  let startDate, endDate;
-  if (view === 'Teams') {
-    startDate = teamsCalendar.startDate;
-    endDate = teamsCalendar.endDate;
-  } else {
-    startDate = projectsCalendar.startDate;
-    endDate = projectsCalendar.endDate;
-  }
+  const { startDate, endDate } = getStartAndEndDateForView(view, projectsCalendar, teamsCalendar);
 
   const viewOptions = [
     'Teams',

@@ -32,13 +32,13 @@ import {
 } from '@/app/redux/actions/resourceAllocationAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
-import { generateColumnGroupingModel, getStartDate } from './TableHeader';
+import { aggregationModel, generateColumnGroupingModel, getStartDate } from './TableHeader';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import CustomToolbar from '../Toolbar/CustomToolbar';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 
-export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState }) {
+export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState, startDate, endDate }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
@@ -46,7 +46,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const { open, message, type, position } = useSelector(state => state.toast);
   const { rowState } = useSelector(state => state.dataGrid);
   const { expandRowId } = useSelector(state => state.allocationView);
-  const startDate = getStartDate();
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
@@ -87,6 +86,12 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       )
     }
   }
+
+  const [aggregation, setAggregation] = useState({
+      totalEffort: 'sum',
+      ...aggregationModel(startDate, endDate),
+  });
+
 
   const normalizeRow = row => {
     return Object.keys(row).reduce((normalized, key) => {
@@ -150,11 +155,20 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       ...getInitialState(
         groupBy,
         updatedRows,
-        GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
+        GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
       ),
-      ..._initialState,
+      ..._initialState
     },
   });
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      setAggregation({
+        totalEffort: 'sum',
+        ...aggregationModel(startDate, endDate),
+      })
+    }
+  }, [startDate, endDate]);
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
@@ -234,7 +248,9 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
     setSelectedTeam,
     handleAddProject,
     setSelectedResourceId,
-    dispatch
+    dispatch,
+    startDate,
+    endDate
   );
 
   const showField = [
@@ -463,6 +479,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
           console.error('Row update failed:', err);
         }}
         rows={rowState}
+        aggregationModel={aggregation}
         columns={finalColumns}
         rowSelection={true}
         // cellSelection={true}

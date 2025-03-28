@@ -144,6 +144,8 @@ export default function TeamAllocation() {
       <AllocationGrid
         loading={loading || dataProcessing}
         groupBy="teams"
+        startDate={startDate}
+        endDate={endDate}
         columns={teamsColumnConfig}
         selectedTeam={selectedTeam}
         setSelectedTeam={setSelectedTeam}
@@ -155,7 +157,6 @@ export default function TeamAllocation() {
             },
           },
         }}
-        // columnGroupingModel={columnGroupingModel}
         data={resources}
       />
       {!resources && !loading && (
