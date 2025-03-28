@@ -83,6 +83,18 @@ export default function TeamAllocation() {
               </span>
               <span style={{
                 flex: '0 0 auto',
+                display: "flex",
+                width: "24px",
+                height: "24px",
+                padding: "4px 3px",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                color:"#F1F1F1",
+                marginTop: "13px",
+                borderRadius: "4px",
+                fontSize:"12px",
+                background:" #7881A5",
               }}>
                 ({resource_count.length})
               </span>
