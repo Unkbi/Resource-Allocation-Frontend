@@ -27,6 +27,15 @@ const ProjectTable = ({columns, rows, loading}) => {
             rows={rows}
             hideFooter={true}
             loading={loading}
+            initialState={{
+                columns: {
+                  columnVisibilityModel: {
+                    Owner: false, 
+                    Manager: false, 
+                    Location: false, 
+                  },
+                },
+              }}
             slots={{
                 toolbar: ProjectToolbar,
                 columnMenu: CustomColumnMenu
