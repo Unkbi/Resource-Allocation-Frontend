@@ -53,6 +53,7 @@ export const CustomAddIcon = ({
                 alignItems: "center",
                 color:"#F1F1F1",
                 fontSize:"12px",
+                fontWeight:"600",
                 borderRadius: "4px",
                 background:" #7881A5",
               }}

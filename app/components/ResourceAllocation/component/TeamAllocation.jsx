@@ -94,6 +94,7 @@ export default function TeamAllocation() {
                 marginTop: "13px",
                 borderRadius: "4px",
                 fontSize:"12px",
+                fontWeight:"600",
                 background:" #7881A5",
               }}>
                 ({resource_count.length})
