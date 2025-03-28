@@ -19,6 +19,9 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const {initialData } = useSelector(state => state.globalDialog.formState);
   const [multipleResourceError, setMultipleResourceError] = useState(false);
   const [multipleProjectError, setMultipleProjectError] = useState(false);
+  const [closeResourceMenu, setCloseResourceMenu] = useState(false);
+  const [closeProjectMenu, setCloseProjectMenu] = useState(false);
+
   useEffect(() => {
     if (initialData) {
       const filteredProject = projects?.result?.filter(
@@ -92,28 +95,34 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   }
 
   const handleResourceDropdownChange = (e) => {
-    if(values.Project.length > 1 && e.target.value.length > 1){
+    const selected = e.target.value;
+    if (values.Project.length > 1 && selected.length > 1) {
       // Do not allow multiple resources to be selected.
       setMultipleResourceError(true);
+      setCloseResourceMenu(true);
       setTimeout(() => {
         setMultipleResourceError(false);
+        setCloseResourceMenu(false);
       }, 2000);
       return;
     }
-    handleChange(e)
-  }
+    handleChange(e);
+  };
 
   const handleProjectDropdownChange = (e) => {
-    if(values.Resource.length > 1 && e.target.value.length > 1){
+    const selected = e.target.value;
+    if (values.Resource.length > 1 && selected.length > 1) {
       // Do not allow multiple projects to be selected.
       setMultipleProjectError(true);
+      setCloseProjectMenu(true);
       setTimeout(() => {
         setMultipleProjectError(false);
+        setCloseProjectMenu(false);
       }, 2000);
       return;
     }
-    handleChange(e)  
-  }
+    handleChange(e);
+  };
 
   return (
     <Box>
@@ -128,6 +137,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           multiple
           error={multipleResourceError}
           helperText={"Please select only one option."}
+          forceClose={closeResourceMenu}
         />
       </Box>
       <Box sx={{ pb: 2 }}>
@@ -141,6 +151,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           multiple
           error={multipleProjectError}
           helperText={"Please select only one option."}
+          forceClose={closeProjectMenu}
         />
       </Box>
       <Box>
