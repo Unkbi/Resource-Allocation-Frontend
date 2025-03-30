@@ -285,7 +285,6 @@ const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
     // 'Organizations'
   ];
   const [active, setActive] = useState(false);
-
   const first = generateFirstAndLastMonthYear(startDate, 'MMM yy', true);
   const last = generateFirstAndLastMonthYear(endDate, 'MMM yy', true);
 
@@ -504,11 +503,10 @@ const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
                                 
                                 </Box>
                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                             <IconButton onClick={() => changeCalendarDate('prev')} size="medium" className="nextPrevIcon">
-              <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
-            </IconButton>
-            <Button className="selectedDate">{`${first} - ${last}`}</Button>
-
+                                    <IconButton onClick={() => changeCalendarDate('prev')} size="medium" className="nextPrevIcon">
+                                      <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
+                                    </IconButton>
+                                 <Button className="selectedDate">{`${first} - ${last}`}</Button>
             <IconButton onClick={() => changeCalendarDate('next')} size="medium" className="nextPrevIcon">
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
