@@ -216,6 +216,9 @@ export const DEFAULT_COLOR = '#1C2D5F';
 export const BASE_FONT_SIZE = 16;
 
 export const TOTAL_FUTURE_WEEKS = 20; //Configurable weeks count (Previous + Current + 20 weeks)
+export const TOTAL_FUTURE_WEEKS_ARROW = 4;
+export const DATE_FORMAT = 'yyyy-MM-dd';
+export const DISPLAY_DATE_FORMAT = 'MMM yyyy';
 
 export const API_PROJECT_PORTFOLIO = '/api/ResourceAllocation.Core';
 

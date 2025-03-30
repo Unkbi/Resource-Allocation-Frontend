@@ -10,6 +10,8 @@ import {
   getWeekNumber,
   generateAllWeeks,
 } from '@/app/utils/common';
+import { format } from 'date-fns';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 export const fetchAllProjects = () => async dispatch => {
   try {
@@ -30,6 +32,7 @@ const formatAllocations = (allocationsData, project) => {
     const weekNumber = getWeekNumber(periodDate);
     const key = `${allocation.Resource}-${project.Id}`;
     const existingAllocation = allocationMap.get(key);
+    const formattedDate = format(periodDate, DATE_FORMAT);    
 
     if (existingAllocation) {
       if (allWeeks.includes(weekNumber)) {
@@ -46,6 +49,7 @@ const formatAllocations = (allocationsData, project) => {
           projectCurrency: project.CostCurrency,
           projectStartDate: project.StartDate,
           projectEndDate: project.EndDate,
+          period: formattedDate
         };
         existingAllocation.totalEffort += allocation.AllocationEntered || null;
       }
@@ -72,13 +76,18 @@ const formatAllocations = (allocationsData, project) => {
         resourceType: 'FTE',
       };
       allWeeks.forEach(week => {
-        newAllocation[week] = null;
+        newAllocation[week] = {
+          allocationId: null,
+          value: null,
+          period: formattedDate
+        };
       });
 
       if (allWeeks.includes(weekNumber)) {
         newAllocation[weekNumber] = {
           allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
+          period: formattedDate
         };
       }
       newAllocation.totalEffort = allWeeks.reduce(
@@ -107,12 +116,9 @@ export const fetchAllProjectAllocations = (projects, StartDate, EndDate) => asyn
       try {
         const result = await dispatch(getProjectAllocations(postData));
         if (result.meta.requestStatus === 'fulfilled') {
-          const allocationsData = result.payload;
-          const formattedAllocations = formatAllocations(
-            allocationsData,
-            project
-          );
-          return formattedAllocations;
+          return {
+            result, project
+          };
         } else {
           throw new Error(
             `Request for project ${project.Id} was not fulfilled`
@@ -127,16 +133,13 @@ export const fetchAllProjectAllocations = (projects, StartDate, EndDate) => asyn
       }
     });
 
-    const results = await Promise.allSettled(allocationPromises);
+    const apiResponse = await Promise.allSettled(allocationPromises);
 
-    let allAllocations = [];
-    results.forEach(result => {
-      if (result.status === 'fulfilled' && result.value) {
-        allAllocations = [...allAllocations, ...result.value];
-      } else if (result.status === 'rejected') {
-        console.error('A project allocation request failed:', result.reason);
-      }
-    });
+    const allAllocations = apiResponse
+      .filter(result => result.status === 'fulfilled' && result?.value?.result?.payload)
+      .flatMap(result => 
+        formatAllocations(result.value.result.payload, result.value.project)
+      );
 
     if (allAllocations.length > 0) {
       dispatch(updateAllocations(allAllocations));

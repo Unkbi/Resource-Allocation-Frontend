@@ -7,6 +7,7 @@ import {
   postTeamResource,
 } from '@/app/services/teamServices';
 import { generateFirstAndLastMonthYear } from '@/app/utils/common';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 const initialState = {
   teams: null,
@@ -18,8 +19,8 @@ const initialState = {
   dataProcessing: false,
   error: null,
   calendarDate: {
-    startDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', true),
-    endDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', false)
+    startDate: generateFirstAndLastMonthYear(null, DATE_FORMAT, true),
+    endDate: generateFirstAndLastMonthYear(null, DATE_FORMAT, false)
   }
 };
 
@@ -28,13 +29,6 @@ const teamsSlice = createSlice({
   initialState,
   reducers: {
     updateResources: (state, action) => {
-      // const uniqueResources = action.payload.filter(
-      //   newAlloc =>
-      //     !state.resources.some(
-      //       existingAlloc => existingAlloc.id === newAlloc.id
-      //     )
-      // );
-      // state.resources = [...state.resources, ...uniqueResources];
       state.resources = action.payload;
     },
     resetResources: state => {
@@ -43,8 +37,10 @@ const teamsSlice = createSlice({
     setTeamsDataProcessing: (state, action) => {
       state.dataProcessing = action.payload;
     },
-    setTeamsResources: (state, action) => {
-      state.teamsResources[action.payload.id] = action.payload.resource;
+    setAllTeamsResources: (state, action) => {
+      action.payload.forEach(payload => {
+        state.teamsResources[payload.id] = payload.resource;
+      });
     },
     updateStartAndEndDate: (state, action) => {
       state.calendarDate = action.payload;
@@ -116,6 +112,6 @@ const teamsSlice = createSlice({
   },
 });
 
-export const { updateResources, resetResources, setTeamsDataProcessing, setTeamsResources, updateStartAndEndDate } =
+export const { updateResources, resetResources, setTeamsDataProcessing, updateStartAndEndDate, setAllTeamsResources } =
   teamsSlice.actions;
 export default teamsSlice.reducer;

@@ -21,6 +21,7 @@ import CustomExport from './CustomExport';
 import { generateFirstAndLastMonthYear, getStartAndEndDateForView } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -223,8 +224,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
 
     const action = isTeams ? updateStartAndEndDate : updateProjectStartAndEndDate;
 
-    const startKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', isNext, !isNext);
-    const endKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', !isNext);
+    const startKey = generateFirstAndLastMonthYear(startDate, DATE_FORMAT, false, !isNext, true);
+    const endKey = generateFirstAndLastMonthYear(endDate, DATE_FORMAT, false, !isNext, true);
 
     dispatch(action({startDate: startKey, endDate: endKey}));
   };

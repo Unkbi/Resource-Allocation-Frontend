@@ -37,6 +37,8 @@ import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import CustomToolbar from '../Toolbar/CustomToolbar';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { format, isAfter, isBefore } from 'date-fns';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState, startDate, endDate }) {
   const apiRef = useGridApiRef();
@@ -55,19 +57,25 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const { isOpen } = useSelector((state) => state.globalDialog);
 
   const handleKeyUp = (e) => {
-
-    const getDateRange = () => {
-      const dateRange = [...new Set(apiRef.current.getSelectedCellsAsArray().map(cell => cell.field))]
-      if(dateRange.length > 1) {
-        return [getMondayOfWeek(dateRange[0]), getMondayOfWeek(dateRange[dateRange.length - 1])]
-      }
-      else {
-        return [getMondayOfWeek(dateRange[0]), '']
-      }
-    }
     
     if(cellSelectionModel && Object.keys(cellSelectionModel).length > 0 && apiRef.current.getSelectedCellsAsArray().length >= 2) {
-      const resourcesSelected = [...new Set(Object.keys(cellSelectionModel).map(row => apiRef.current.getRow(row)?.resource))]
+      const resourcesSelected = [];
+      let StartDate, EndDate;
+      Object.entries(cellSelectionModel).forEach(([row, weeks]) => {
+        const currentRowData = apiRef.current.getRow(row);
+      
+        Object.keys(weeks).forEach((weekN) => {
+          const period = currentRowData?.[weekN]?.period;
+          if (period) {
+            StartDate = StartDate ? (isBefore(period, StartDate) ? period : StartDate) : period;
+            EndDate = EndDate ? (isAfter(period, EndDate) ? period : EndDate) : period;
+          }
+        });
+      
+        if (currentRowData?.resource && !resourcesSelected.includes(currentRowData.resource)) {
+          resourcesSelected.push(currentRowData.resource);
+        }
+      });
       const projectsSelected = [...new Set(Object.keys(cellSelectionModel).map(row => apiRef.current.getRow(row)?.project))]
       
       dispatch(
@@ -78,8 +86,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
           formType: "add_allocation",
           initialData: {
             Resource: resourcesSelected,
-            StartDate: getDateRange()[0],
-            EndDate: getDateRange()[1],
+            StartDate,
+            EndDate,
             Project: projectsSelected,
           },
         })
@@ -195,6 +203,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
         const periodDate = new Date(allocation.Period);
         const weekNumber = getWeekNumber(periodDate);
+        const formattedDate = format(periodDate, DATE_FORMAT);
 
         const weekObj = {};
         allWeeks.forEach(week => {
@@ -205,6 +214,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
           weekObj[weekNumber] = {
             allocationId: allocation.Allocation,
             value: allocation.AllocationEntered || null,
+            period: formattedDate
           };
         }
 
@@ -338,6 +348,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
           const deletePayload = {
             resourceId: oldRow.resourceId,
             allocationId: oldRow[key]?.allocationId,
+            period: oldRow[key]?.period
           };
           dispatch(removeResourceAllocation(deletePayload)).then(() => {
             setUpdatedRows(prevRows =>
@@ -363,7 +374,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
                 prevRows.map(row => (row.id === newRow.id ? newRow : row))
               );
             });
-          } else {
+          } else if (formattedCellValue) {
             const postPayload = {
               resourceId: oldRow.resourceId,
               postData: {
@@ -371,7 +382,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
                   Resource: oldRow.resourceId,
                   Project: oldRow.projectId,
                   ProjectName: oldRow.project,
-                  Period: getMondayOfWeek(key),
+                  Period: getMondayOfWeek(key, oldRow[key]?.period),
                   AllocationEntered: formattedCellValue,
                 },
               },
@@ -386,7 +397,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
         newRow[key] = {
           allocationId: oldRow[key]?.allocationId || null,
-          value: (formattedCellValue !== 0 && !isNaN(formattedCellValue)) ? formattedCellValue: null,
+          value: (formattedCellValue !== 0 && !isNaN(formattedCellValue)) ? formattedCellValue: null,          
+          period: oldRow[key]?.period
         };
       }
     });
@@ -465,7 +477,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       }})
       setCellSelectionModel(filteredModel);
   }, []);
-
+  
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
