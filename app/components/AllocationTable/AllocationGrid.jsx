@@ -34,7 +34,7 @@ import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { generateColumnGroupingModel, getStartDate } from './TableHeader';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
-import CustomToolbar from '../Toolbar/CustomToolbar';
+import ToolbarMod from '../Toolbar/ToolbarMod';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 
@@ -488,8 +488,12 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         getCellClassName={params => getCellClassName(params, updatedRows)}
         cellSelectionModel={cellSelectionModel}
         onCellSelectionModelChange={handleCellSelectionModelChange}
+        localeText={{
+          toolbarFilters:"",
+          toolbarColumns:"",
+        }}
         slots={{
-          toolbar: CustomToolbar,
+          toolbar: ToolbarMod,
           // columnMenu: CustomColumnMenu
           columnMenu: props => {
             return <CustomColumnMenu {...props} apiRef={apiRef} />;
