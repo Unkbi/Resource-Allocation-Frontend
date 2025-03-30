@@ -7,6 +7,7 @@ import {
   deleteProject
 } from '@/app/services/projectServices';
 import { generateFirstAndLastMonthYear } from '@/app/utils/common';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 const initialState = {
   projects: null,
@@ -16,8 +17,8 @@ const initialState = {
   error: null,
   updating: false,
   calendarDate: {
-    startDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', true),
-    endDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', false)
+    startDate: generateFirstAndLastMonthYear(null, DATE_FORMAT, true),
+    endDate: generateFirstAndLastMonthYear(null, DATE_FORMAT, false)
   }  
 };
 

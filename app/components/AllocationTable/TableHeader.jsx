@@ -7,6 +7,7 @@ import {
   getWeeksDifference,
 } from '@/app/utils/common';
 import {
+  DISPLAY_DATE_FORMAT,
   TOTAL_FUTURE_WEEKS,
 } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
@@ -116,7 +117,7 @@ export const generateColumnGroupingModel = (startDate, allColumns) => {
 
   for (let i = 0; i < WEEK_CONFIG.TOTAL_WEEKS; i++) {
     const weekDate = addWeeks(startDate, i);
-    const monthYear = formatDate(weekDate, 'MMM yyyy');
+    const monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
 
     if (!currentGroup || currentGroup.groupId !== monthYear) {
       currentGroup && groups.push(currentGroup);
