@@ -6,6 +6,8 @@ import CustomAvatar from '../Avatar/CustomAvatar';
 import { calculateTotalEffort } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
 import { useSelector } from 'react-redux';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { CustomAddIcon } from './CustomAddIcon';
 
 export const getInitialState = (
   groupBy,
@@ -26,7 +28,7 @@ export const getInitialState = (
       ...aggregationModel,
     },
   },
-  pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD] },
+  pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, "__row_group_by_columns_group_teams__"] },
 });
 
 export const getFinalColumns = (
@@ -40,6 +42,19 @@ export const getFinalColumns = (
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const allColumns = getAllColumnsWithWeek(columns, dispatch);
+  const handleAddClick = (params) => { 
+    dispatch(
+      openDialog({
+        title: "Add Allocation",
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: "add_allocation",
+        initialData: {
+          Resource: params.value 
+        },
+      })
+    );
+  }
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -55,7 +70,11 @@ export const getFinalColumns = (
         primaryColumn: true,
         renderCell: params => {
           if (params.value) {
-            return <CustomAvatar value={params.value} showFullName={true} />;
+            return <>
+            <CustomAvatar value={params.value} showFullName={true} />  
+            <CustomAddIcon
+            onClick={() => handleAddClick(params)}
+            /></>;
           }
         },
       },
@@ -67,7 +86,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: groupBy == 'project' ? true : false,
         primaryColumn: true,
-        renderCell: params => {
+        renderCell: params => {    
           const allocationsOfAddedResource =
             Array.isArray(teamAllocations.result) &&
             teamAllocations.result.filter(
@@ -77,10 +96,10 @@ export const getFinalColumns = (
             ...new Set(
               (Array.isArray(allocationsOfAddedResource) &&
                 allocationsOfAddedResource.map(item => item.ProjectName)) ||
-              []
+                []
             ),
           ];
-
+          const isGroupExpanded = params.rowNode.childrenExpanded;
           if (params.row.hasProject && !params.row.project) {
             return (
               <AddRowButton
@@ -102,32 +121,43 @@ export const getFinalColumns = (
           if (params.value) return params.value;
 
           const projects_set = [
-            ...new Set(params?.rowNode?.children?.map(child => params.api.getRow(child)?.project))
+            ...new Set(
+              params?.rowNode?.children?.map(
+                child => params.api.getRow(child)?.project
+              )
+            ),
           ].filter(Boolean);
 
-
           if (projects_set.length > 1) {
-            const cell_value = projects_set?.[0]?.length > 18 ? projects_set?.[0]?.slice(0, 15) + "..." : projects_set?.[0];
+            const cell_value =
+              projects_set?.[0]?.length > 18
+                ? projects_set?.[0]?.slice(0, 15) + '...'
+                : projects_set?.[0];
             return (
               <div>
-                {cell_value}
-                <span style={{
-                  backgroundColor: "#E9EFF8",
-                  color: "#000",
-                  paddingRight: 4,
-                  paddingLeft: 4,
-                  marginLeft: 8,
-                  fontSize: 12,
-                  borderRadius: 2,
-                }}>+{projects_set?.length - 1}</span>
+                {!isGroupExpanded && cell_value}
+                {!isGroupExpanded && <span
+                  style={{
+                    backgroundColor: '#E9EFF8',
+                    color: '#000',
+                    paddingRight: 4,
+                    paddingLeft: 4,
+                    marginLeft: 8,
+                    fontSize: 12,
+                    borderRadius: 2,
+                  }}
+                >
+                  +{projects_set?.length - 1}
+                </span>}
               </div>
-            )
+            );
           }
 
-          return projects_set.length ?
-            `${projects_set[0]}${projects_set.length > 1 ?
-              ` +${projects_set.length - 1}` : ''}` : '';
-
+          return projects_set.length
+            ? `${projects_set[0]}${
+                projects_set.length > 1 ? ` +${projects_set.length - 1}` : ''
+              }`
+            : '';
         },
       },
       ...(allColumns?.slice(1) || []),
@@ -180,19 +210,21 @@ export const getCellClassName = (params, updatedRows) => {
       params.field.startsWith('W') &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
-      params.rowNode?.groupingField === 'resource')
+        params.rowNode?.groupingField === 'resource')
     ) {
       const projectName = params.rowNode.groupingKey;
-      let projectRows = []
-      if( params.rowNode?.groupingField === 'teams')
-      {
+      let projectRows = [];
+
+      if (params.rowNode?.groupingField === 'teams') {
         projectRows = updatedRows.filter(row => row.teams === projectName);
+      } else if (params.rowNode?.groupingField === 'resource') {
+        projectRows = updatedRows.filter(row => row.resource === projectName);
       }
-      else if( params.rowNode?.groupingField === 'resource')
-      {
-        projectRows = updatedRows.filter(row => row.resource === projectName)
-      }
-      const totalRows = projectRows.length;
+
+      const uniqueProjectRows = new Set(
+        projectRows.map(item => item.resourceId)
+      );
+      const totalRows = uniqueProjectRows.size;
 
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
@@ -203,21 +235,30 @@ export const getCellClassName = (params, updatedRows) => {
         return sum + numericValue;
       }, 0);
 
-      const percentage = (aggregatedValue / totalRows) * 100;
+      let percentage;
+      if (params.rowNode?.groupingField === 'resource') {
+        percentage = (aggregatedValue / 1) * 100;
+      } else {
+        percentage = (aggregatedValue / totalRows) * 100;
+      }
 
       if (percentage === 0) {
         return 'firstGroupsRow';
-      } else if (percentage <= 20) {
+      } else if (percentage <= 50) {
         return 'poor-allocation';
-      } else if (percentage > 20 && percentage <= 50) {
+      } else if (percentage > 50 && percentage <= 80) {
         return 'average-allocation';
-      } else if (percentage > 50) {
+      } else if (percentage > 80 && percentage <= 110) {
         return 'fully-occupied';
+      } else if (percentage > 110) {
+        return 'over-occupied';
       }
     }
   }
   if (params.rowNode?.type === 'group') {
-    return params.rowNode?.groupingField === 'teams' ? 'firstGroupsRow' : 'secondGroupsRow';
+    return params.rowNode?.groupingField === 'teams'
+      ? 'firstGroupsRow'
+      : 'secondGroupsRow';
   }
   return '';
 };
@@ -235,8 +276,8 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     let unique_teams = {};
     let teams_with_name = {};
     teams?.result?.forEach(team => {
-      teams_with_name[team?.Name] = team?.Id
-    })
+      teams_with_name[team?.Name] = team?.Id;
+    });
 
     rowsWithTotalEffort.forEach(row => {
       if (row.teamsId && !unique_teams[row.teamsId])

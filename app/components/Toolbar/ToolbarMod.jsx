@@ -24,7 +24,8 @@ import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
 import TooltipButton from '../Button/TooltipButton';
 import CustomExport from './CustomExport';
 import { generateFirstAndLastMonthYear } from '@/app/utils/common';
-
+import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
+import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -81,7 +82,6 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   padding: '7px 14px 5px 14px',
   '& .filterColBlock': {
-
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
@@ -268,14 +268,25 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
 const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const view = useSelector(state => state.allocationView.view);
+  const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
+  const { calendarDate: projectsCalendar } = useSelector(state => state.projects);
+  let startDate, endDate;
+  if (view === 'Teams') {
+    startDate = teamsCalendar.startDate;
+    endDate = teamsCalendar.endDate;
+  } else {
+    startDate = projectsCalendar.startDate;
+    endDate = projectsCalendar.endDate;
+  }
+
   const viewOptions = [
     'Teams',
     'Projects',
     // 'Organizations'
   ];
   const [active, setActive] = useState(false);
-
-  const { first, last } = generateFirstAndLastMonthYear();
+  const first = generateFirstAndLastMonthYear(startDate, 'MMM yy', true);
+  const last = generateFirstAndLastMonthYear(endDate, 'MMM yy', true);
 
   const handleViewChange = useCallback(
     event => {
@@ -286,6 +297,19 @@ const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
   const handleClick = () => {
     setActive(prev => !prev);
   };
+
+  const changeCalendarDate = (type) => {
+    const isTeams = view === 'Teams';
+    const isNext = type === 'next';
+
+    const action = isTeams ? updateStartAndEndDate : updateProjectStartAndEndDate;
+
+    const startKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', isNext, !isNext);
+    const endKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', !isNext);
+
+    dispatch(action({startDate: startKey, endDate: endKey}));
+  };
+
   return (
     <Box
       display={'flex'}
@@ -479,12 +503,11 @@ const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
                                 
                                 </Box>
                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton size="medium" className="nextPrevIcon">
-              <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
-            </IconButton>
-            <Button className="selectedDate">{`${first} - ${last}`}</Button>
-
-            <IconButton size="medium" className="nextPrevIcon">
+                                    <IconButton onClick={() => changeCalendarDate('prev')} size="medium" className="nextPrevIcon">
+                                      <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
+                                    </IconButton>
+                                 <Button className="selectedDate">{`${first} - ${last}`}</Button>
+            <IconButton onClick={() => changeCalendarDate('next')} size="medium" className="nextPrevIcon">
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
 
