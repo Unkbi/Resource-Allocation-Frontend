@@ -98,7 +98,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          Manager 
+          Project Manager 
         </StyledLabel>
         <StyledInput
           as={TextField}
