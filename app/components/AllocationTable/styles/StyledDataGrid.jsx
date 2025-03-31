@@ -212,6 +212,22 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .over-occupied': {
     backgroundColor: '#FFCD9C',
   },
+ '& .poor-allocation-secondGroup': {
+  backgroundColor: 'rgba(246, 200, 200, 0.40)', 
+  borderBottom: '2px solid #DE8787',
+  },
+  '& .average-allocation-secondGroup': {
+    backgroundColor: 'rgba(255, 241, 211, 0.40)', 
+    borderBottom: '2px solid #EED297', 
+  },
+  '& .fully-occupied-secondGroup': {
+    backgroundColor: 'rgba(196, 229, 196, 0.40)', 
+    borderBottom: '2px solid #92C892', 
+  },
+  '& .over-occupied-secondGroup': {
+    backgroundColor: 'rgba(255, 205, 156,  0.4)',
+    borderBottom: '2px solid #FFCD9C', 
+  },
   '& .firstGroupsRow': {
     backgroundColor: '#E9EFF8',
   },

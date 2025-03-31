@@ -237,18 +237,31 @@ export const getCellClassName = (params, updatedRows) => {
       } else {
         percentage = (aggregatedValue / totalRows) * 100;
       }
-
+     if (params.rowNode?.groupingField === 'teams'){
+       if (percentage === 0) {
+         return 'firstGroupsRow';
+       } else if (percentage <= 50) {
+         return 'poor-allocation';
+       } else if (percentage > 50 && percentage <= 80) {
+         return 'average-allocation';
+       } else if (percentage > 80 && percentage <= 110) {
+         return 'fully-occupied';
+       } else if (percentage > 110) {
+         return 'over-occupied';
+       }
+     }else{
       if (percentage === 0) {
         return 'firstGroupsRow';
       } else if (percentage <= 50) {
-        return 'poor-allocation';
+        return 'poor-allocation-secondGroup';
       } else if (percentage > 50 && percentage <= 80) {
-        return 'average-allocation';
+        return 'average-allocation-secondGroup';
       } else if (percentage > 80 && percentage <= 110) {
-        return 'fully-occupied';
+        return 'fully-occupied-secondGroup';
       } else if (percentage > 110) {
-        return 'over-occupied';
+        return 'over-occupied-secondGroup';
       }
+     }
     }
   }
   if (params.rowNode?.type === 'group') {
