@@ -15,12 +15,13 @@ import { useDispatch } from 'react-redux';
 import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
 
 const MainContent = styled(Box, {
-  shouldForwardProp: prop => prop !== 'isLoggedIn', 
-})(({ theme, isLoggedIn }) => {
+  shouldForwardProp: (prop) => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
+})(({ theme, isLoggedIn ,sidebarExpanded }) => {
   return {
     background: '#fff',
-    marginLeft: `${isLoggedIn ? '74px' : '0'}`,
+    marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
     paddingTop: `${isLoggedIn ? '52px' : '0'}`,
+    transition: 'margin-left 0.3s ease-in-out',
   };
 });
 
@@ -29,6 +30,7 @@ function LayoutContent({ children }) {
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const [isUserLoginIn,setIsUserLoginIn]=useState(null);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
@@ -75,9 +77,9 @@ function LayoutContent({ children }) {
 
   return (
     <>
-      {!isPublicRoute && <Header />}
-      {!isPublicRoute && <SideBar />}
-      <MainContent isLoggedIn={isUserLoginIn}>{children}</MainContent>
+      {!isPublicRoute && <Header isExpanded={sidebarExpanded} sidebarExpanded={sidebarExpanded} toggleSidebar={() => setSidebarExpanded((prev) => !prev)} />}
+      {!isPublicRoute &&  <SideBar  sidebarExpanded={sidebarExpanded} toggleSidebar={() => setSidebarExpanded((prev) => !prev)} />}
+      <MainContent isLoggedIn={isUserLoginIn} sidebarExpanded={sidebarExpanded}>{children}</MainContent>
       <MuiXLicense />
     </>
   );

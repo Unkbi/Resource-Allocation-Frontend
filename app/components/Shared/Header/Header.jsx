@@ -24,9 +24,13 @@ import CloseIcon from '@mui/icons-material/Close'; // Close icon import
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
 
-const MainAppBar = styled(AppBar)(({ theme }) => ({
-  marginLeft: '74px',
-  width: 'calc(100% - 74px)',
+
+const MainAppBar = styled(AppBar, {
+  shouldForwardProp: (prop) => prop !== 'sidebarExpanded',
+})(({ theme, sidebarExpanded }) => ({
+  marginLeft: sidebarExpanded ? '276px' : '74px',
+  width: `calc(100% - ${sidebarExpanded ? '276px' : '74px'})`,
+  transition: 'margin-left 0.3s ease-in-out, width 0.3s ease-in-out',
   zIndex: '91',
   boxShadow: '0 1px 0 0 #DDE1E4',
   background: '#EBEFFC',
@@ -76,7 +80,7 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
   },
 }));
 
-const Header = () => {
+const Header = ({sidebarExpanded}) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
@@ -181,7 +185,7 @@ const Header = () => {
     }
   };
   return (
-    <MainAppBar>
+    <MainAppBar sidebarExpanded={sidebarExpanded}>
       <Toolbar className="toobarRow">
         <Typography variant="h6">
         {getTitleFromPathname(pathname)} 
