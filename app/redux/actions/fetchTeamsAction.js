@@ -17,7 +17,7 @@ import {
   removeDuplicateResources,
 } from '@/app/utils/common';
 import { setAllocations } from '../reducers/dataGridReducer';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { DATE_FORMAT } from '@/app/constants/constants';
 
 export const fetchAllTeams = () => async dispatch => {
@@ -93,7 +93,7 @@ const formatAllocations = (
     allocationsData.forEach(allocation => {
       if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
-      const periodDate = new Date(allocation.Period);
+      const periodDate = parseISO(allocation.Period);
       const weekNumber = getWeekNumber(periodDate);
       const formattedDate = format(periodDate, DATE_FORMAT);
 

@@ -1,4 +1,4 @@
-import { addDays, eachDayOfInterval, format, getWeek, getYear, setWeek, startOfISOWeek, startOfWeek, subDays, weeksToDays } from 'date-fns';
+import { addDays, eachDayOfInterval, format, getWeek, getYear, setWeek, startOfISOWeek, startOfWeek, subDays, subWeeks, weeksToDays } from 'date-fns';
 import { DATE_FORMAT, TOTAL_FUTURE_WEEKS, TOTAL_FUTURE_WEEKS_ARROW } from '../constants/constants';
 
 // Calculate total effort from weekly columns
@@ -26,11 +26,6 @@ export const addWeeks = (date, weeks) => {
   const result = new Date(date);
   result.setDate(result.getDate() + weeks * 7);
   return result;
-};
-
-export const getWeeksDifference = (startDate, endDate) => {
-  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-  return Math.floor((endDate - startDate) / msPerWeek);
 };
 
 export const formatDate = (date, dateFormat) => {
@@ -213,6 +208,17 @@ export const getInitials = (fullName) => {
 
 export const getMonday = (date) => {
   return startOfWeek(date, { weekStartsOn: 1 });
+};
+
+export const generateTMinusOneStartEndDate = (isStartDate) => {
+  let today = new Date();
+  const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 }); 
+  if (isStartDate) {
+    return format(lastWeeksMonday, DATE_FORMAT);
+  } else {
+    const futureDateMonday = getMonday(addDays(lastWeeksMonday, weeksToDays(TOTAL_FUTURE_WEEKS)));
+    return format(futureDateMonday, DATE_FORMAT);
+  }
 };
 
 /**

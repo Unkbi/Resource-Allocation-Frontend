@@ -22,6 +22,7 @@ import { generateFirstAndLastMonthYear, getStartAndEndDateForView } from '@/app/
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { DATE_FORMAT } from '@/app/constants/constants';
+import { parseISO } from 'date-fns';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -205,8 +206,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   ];
   const [active, setActive] = useState(false);
 
-  const first = generateFirstAndLastMonthYear(startDate, 'MMM yy', true);
-  const last = generateFirstAndLastMonthYear(endDate, 'MMM yy', true);
+  const first = generateFirstAndLastMonthYear(parseISO(startDate), 'MMM yy', true);
+  const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM yy', true);
 
   const handleViewChange = useCallback(
     event => {

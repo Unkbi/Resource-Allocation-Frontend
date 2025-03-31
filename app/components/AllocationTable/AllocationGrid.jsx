@@ -32,12 +32,12 @@ import {
 } from '@/app/redux/actions/resourceAllocationAction';
 import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
-import { aggregationModel, generateColumnGroupingModel, getStartDate } from './TableHeader';
+import { aggregationModel, generateColumnGroupingModel } from './TableHeader';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import CustomToolbar from '../Toolbar/CustomToolbar';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { format, isAfter, isBefore } from 'date-fns';
+import { format, isAfter, isBefore, parseISO } from 'date-fns';
 import { DATE_FORMAT } from '@/app/constants/constants';
 
 export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState, startDate, endDate }) {
@@ -201,7 +201,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       allocationsOfAddedResource.forEach(allocation => {
         if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
-        const periodDate = new Date(allocation.Period);
+        const periodDate = parseISO(allocation.Period);
         const weekNumber = getWeekNumber(periodDate);
         const formattedDate = format(periodDate, DATE_FORMAT);
 
@@ -477,7 +477,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       }})
       setCellSelectionModel(filteredModel);
   }, []);
-  
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid

@@ -10,7 +10,7 @@ import {
   getWeekNumber,
   generateAllWeeks,
 } from '@/app/utils/common';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { DATE_FORMAT } from '@/app/constants/constants';
 
 export const fetchAllProjects = () => async dispatch => {
@@ -28,7 +28,7 @@ const formatAllocations = (allocationsData, project) => {
   allocationsData?.result?.forEach(allocation => {
     if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
-    const periodDate = new Date(allocation.Period);
+    const periodDate = parseISO(allocation.Period);
     const weekNumber = getWeekNumber(periodDate);
     const key = `${allocation.Resource}-${project.Id}`;
     const existingAllocation = allocationMap.get(key);

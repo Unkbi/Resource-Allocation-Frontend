@@ -6,8 +6,7 @@ import {
   getTeamAllocations,
   postTeamResource,
 } from '@/app/services/teamServices';
-import { generateFirstAndLastMonthYear } from '@/app/utils/common';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import { generateTMinusOneStartEndDate } from '@/app/utils/common';
 
 const initialState = {
   teams: null,
@@ -19,8 +18,8 @@ const initialState = {
   dataProcessing: false,
   error: null,
   calendarDate: {
-    startDate: generateFirstAndLastMonthYear(null, DATE_FORMAT, true),
-    endDate: generateFirstAndLastMonthYear(null, DATE_FORMAT, false)
+    startDate: generateTMinusOneStartEndDate(true),
+    endDate: generateTMinusOneStartEndDate(false)
   }
 };
 

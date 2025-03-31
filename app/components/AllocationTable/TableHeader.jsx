@@ -1,16 +1,15 @@
 import clsx from 'clsx';
 import {
   getWeekNumber,
-  addWeeks,
   formatDate,
   getStartOfPreviousWeek,
-  getWeeksDifference,
 } from '@/app/utils/common';
 import {
   DISPLAY_DATE_FORMAT,
   TOTAL_FUTURE_WEEKS,
 } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import { addWeeks, differenceInWeeks, format, parseISO } from 'date-fns';
 
 const WEEK_CONFIG = {
   TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 1,
@@ -91,10 +90,12 @@ const createValueHandlers = dispatch => ({
 });
 
 export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
-  const currentWeekIndex = getWeeksDifference(startDate, endDate);
+  const isoStart = parseISO(startDate);
+  const isoEnd = parseISO(endDate);
+  const currentWeekIndex = differenceInWeeks(isoStart, isoEnd);
   
   return Array.from({ length: WEEK_CONFIG.TOTAL_WEEKS }, (_, i) => {
-    const weekDate = addWeeks(startDate, i);
+    const weekDate = addWeeks(isoStart, i);
     return {
       ...createBaseColumnConfig(weekDate, i === currentWeekIndex),
       ...(dispatch ? createValueHandlers(dispatch) : {}),
