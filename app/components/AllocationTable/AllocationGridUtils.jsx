@@ -198,6 +198,9 @@ export const getGroupingColDef = groupBy => ({
 });
 
 export const getCellClassName = (params, updatedRows) => {
+  if (params?.field === 'totalEffort') {
+    return 'total-effort-cell';
+  }
   if (params && params.field && typeof params.field === 'string') {
     if (
       params &&
@@ -213,7 +216,7 @@ export const getCellClassName = (params, updatedRows) => {
 
       if (params.rowNode?.groupingField === 'teams') {
         projectRows = updatedRows.filter(row => row.teams === projectName);
-      } else if (params.rowNode?.groupingField === 'resource') {
+      }else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === projectName);
       }
 
@@ -252,7 +255,7 @@ export const getCellClassName = (params, updatedRows) => {
     }
   }
   if (params.rowNode?.type === 'group') {
-    return params.rowNode?.groupingField === 'teams'
+    return params.rowNode?.groupingField === 'teams' || params.rowNode?.groupingField === 'project'
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
   }

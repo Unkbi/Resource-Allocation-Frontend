@@ -1,4 +1,5 @@
 import { getInitialsColor } from '@/app/utils/common';
+import { BackHand } from '@mui/icons-material';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
@@ -11,7 +12,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
     {
       // width: '240px !important',
-      fontWeight:"bold"
+      fontWeight:"bold",
     },
   [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
     {
@@ -29,7 +30,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
         left: '0px',
         width: '5px',
         height: '40px',
-        backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
+        // backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
       },
     },
   '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
@@ -62,6 +63,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     color: '#313F68',
     fontFamily: "'Manrope', serif",
     fontWeight: '500',
+    backgroundColor :" rgb(240, 247, 255)",
   },
   '& .MuiDataGrid-columnHeader': {
     borderRight: '1px solid #DDE1E4',
@@ -221,6 +223,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-row--editing': {
     boxShadow: 'none',
   },
+  '& .total-effort-cell' : {
+     backgroundColor: '#E9EFF8',
+},
   '& .empty-group-header': {
     '& .MuiDataGrid-columnHeaderTitleContainer': {
       display: 'none',
