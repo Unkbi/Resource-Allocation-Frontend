@@ -225,6 +225,8 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   },
   '& .total-effort-cell' : {
      backgroundColor: '#E9EFF8',
+},'& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
+  backgroundColor: '#E9EFF8 !important',
 },
   '& .empty-group-header': {
     '& .MuiDataGrid-columnHeaderTitleContainer': {
