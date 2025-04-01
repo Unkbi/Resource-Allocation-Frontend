@@ -92,7 +92,9 @@ const createValueHandlers = dispatch => ({
 export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
-  const currentWeekIndex = differenceInWeeks(new Date(), isoStart);
+  const currentDate = new Date();
+  const isoString = format(currentDate, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+  const currentWeekIndex = differenceInWeeks( isoString ,isoStart  );
  
   return Array.from({ length: WEEK_CONFIG.TOTAL_WEEKS }, (_, i) => {
     const weekDate = addWeeks(isoStart, i);
