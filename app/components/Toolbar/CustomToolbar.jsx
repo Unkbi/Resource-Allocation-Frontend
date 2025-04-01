@@ -225,8 +225,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
 
     const action = isTeams ? updateStartAndEndDate : updateProjectStartAndEndDate;
 
-    const startKey = generateFirstAndLastMonthYear(startDate, DATE_FORMAT, false, !isNext, true);
-    const endKey = generateFirstAndLastMonthYear(endDate, DATE_FORMAT, false, !isNext, true);
+    const startKey = generateFirstAndLastMonthYear(parseISO(startDate), DATE_FORMAT, false, !isNext, true);
+    const endKey = generateFirstAndLastMonthYear(parseISO(endDate), DATE_FORMAT, false, !isNext, true);
 
     dispatch(action({startDate: startKey, endDate: endKey}));
   };
