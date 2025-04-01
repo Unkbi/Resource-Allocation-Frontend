@@ -58,11 +58,32 @@ const CustomSelect = ({
     if (forceClose) setOpen(false);
   }, [forceClose]);
 
+  
+  
   const renderValue = (selected) => {
-    const selectedLabels = options
-      .filter(option => selected.includes(option.value))
+    // Handle case where selected is boolean or not an array
+    let selectedLabels;
+    if (!Array.isArray(selected)) {
+      selectedLabels = options?.filter(option => selected === option.value).map(option => option.label);
+      return (
+        <Typography
+          component="span"
+          sx={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            fontSize: '12px',
+          }}
+        >
+          {selectedLabels}
+        </Typography>
+      );
+    }
+  
+     selectedLabels = options?.filter(option => selected.includes(option.value))
       .map(option => option.label);
-    const joined = selectedLabels.join(', ');
+     const joined = selectedLabels?.join(', ');
+    
     return (
       <Typography
         component="span"
@@ -90,6 +111,7 @@ const CustomSelect = ({
         onChange={onChange}
         onBlur={onBlur}
         open={open}
+        width={width}
         onClose={() => setOpen(false)}
         onOpen={() => setOpen(true)}
         multiple={multiple}

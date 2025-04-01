@@ -5,9 +5,9 @@ import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input,
 import CustomSelect from "../Select/CustomSelect"
 import StyledLabel from "../Label/StyledLabel"
 import { StyledCommentInput, StyledFormHelperText, StyledInput } from "../Input/StyledInput"
-import CustomDatePicker from "../DatePicker/CustomDatePicker"
 import StyledRadioButton from "../RadioButton/StyledRadioButton"
 import { useSelector } from "react-redux"
+import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker"
 
 const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const { values, handleChange, handleBlur, setFieldValue} = formikProps
@@ -135,8 +135,8 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           onChange={handleResourceDropdownChange}
           onBlur={handleBlur}
           multiple
-          error={multipleResourceError}
-          helperText={"Please select only one option."}
+          error={multipleResourceError || (formikProps.touched.Resource && Boolean(formikProps.errors.Resource))}
+          helperText={multipleResourceError ? "Please select only one option." : formikProps.errors.Resource}
           forceClose={closeResourceMenu}
         />
       </Box>
@@ -149,8 +149,8 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           onChange={handleProjectDropdownChange}
           onBlur={handleBlur}
           multiple
-          error={multipleProjectError}
-          helperText={"Please select only one option."}
+          error={multipleProjectError || (formikProps.touched.Project && Boolean(formikProps.errors.Project))}
+          helperText={multipleProjectError ? "Please select only one option." :formikProps.errors.Project}
           forceClose={closeProjectMenu}
         />
       </Box>
@@ -178,19 +178,16 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
         <Box sx={{ pb: 2, pt: 2 }}>
           <StyledLabel>Date Range</StyledLabel>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-            <CustomDatePicker
-              name="StartDate"
-              handleChange={handleChange}
-              value={values.StartDate ||""}
-              placeholder={"Start Date"}
+            <CustomDateRangePicker
+              name = "StartDate"
+              value={{
+                "StartDate":formikProps.values.StartDate,
+                "EndDate":formikProps.values.EndDate}}
+              placeholder="Select Date"
               formikProps={formikProps}
-            />
-            <CustomDatePicker
-              name="EndDate"
-              handleChange={handleChange}
-              value={values.EndDate ||""}
-              placeholder={"End Date"}
-              formikProps={formikProps}
+              error={formikProps.touched.StartDate && Boolean(formikProps.errors.StartDate)}
+              helperText={formikProps.touched.StartDate && formikProps.errors.StartDate}
+              customStyles={true}
             />
           </Box>
         </Box>
