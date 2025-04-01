@@ -142,7 +142,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             value={values.Type}
             onChange={handleChange}
             onBlur={handleBlur}
-            width={"100%"}
+            width={"160px"}
             error={touched.Type && Boolean(errors.Type)}
           />
           {showError("Type")}
@@ -157,7 +157,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             value={values.AllowOvertime}
             onChange={handleChange}
             onBlur={handleBlur}
-            width={"100%"}
+            width={"160px"}
             error={touched.AllowOvertime && Boolean(errors.AllowOvertime)}
           />
           {showError("AllowOvertime")}

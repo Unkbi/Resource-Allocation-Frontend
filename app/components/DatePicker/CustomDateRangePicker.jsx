@@ -7,22 +7,16 @@ import { TextField ,FormHelperText} from '@mui/material';
 import { styled } from '@mui/system';
 import { PickersLayout } from '@mui/x-date-pickers';
 import {FormControl} from '@mui/material';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+ 
 import 'dayjs/locale/en-gb';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { DEFAULT_LOCALE } from '@/app/constants/constants';
-
+import { DateRangePicker } from '@mui/x-date-pickers-pro';
+ 
 dayjs.extend(updateLocale);
 dayjs.updateLocale(DEFAULT_LOCALE, { weekStart: 1 });
-
-const StyledPickersLayout = styled(PickersLayout)({
-  '.MuiDateCalendar-root': {
-    borderRadius: '0px',
-    borderWidth: '0px',
-    border: '0px solid',
-    width: '300px',
-  },
-});
-
+ 
 const CustomTextField = styled(TextField)(({ theme, error }) => ({
   height: '36px',
   width: '160px',
@@ -33,7 +27,7 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
     fontWeight: 500,
     border: error && theme.palette.error.main,
     '&:hover': {
-      border: error && theme.palette.error.main 
+      border: error && theme.palette.error.main
     },
     '&.Mui-focused': {
       border: error && theme.palette.error.main
@@ -53,71 +47,63 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
     },
   },
 }));
-
-export default function CustomDatePicker({ name, value, placeholder, formikProps, error, helperText, customStyles}) {
+ 
+export default function CustomDateRangePicker({ value, placeholder, formikProps, error, helperText, customStyles}) {
   const { setFieldValue } = formikProps
-  const [open, setOpen] = React.useState(false)
+  const selectedDate = [
+    value.StartDate ? dayjs(value.StartDate) : null,
+    value.EndDate ? dayjs(value.EndDate) : null
+  ];
 
   const handleDateChange = (newValue) => {
-    const formattedDate = newValue ? dayjs(newValue).format("YYYY-MM-DD") : null
-    setFieldValue(name, formattedDate)
-    setOpen(false)
+      if (newValue && Array.isArray(newValue)) {
+        const [start, end] = newValue;
+        const formattedStart = start && dayjs(start).format("YYYY-MM-DD");
+        const formattedEnd = end && dayjs(end).format("YYYY-MM-DD");
+        setFieldValue("StartDate", formattedStart);
+        setFieldValue("EndDate", formattedEnd);
+      }
   }
 
-  const handleInputClick = () => {
-    setOpen(true)
-  }
+ 
   return (
-    <FormControl
-      style={{
-        width: '160px',
-      }}
-      error={error}
-    >
+    <FormControl error={error}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
-        <DatePicker
-          displayWeekNumber
-          value={value ? dayjs(value) : null}
-          onChange={handleDateChange}
-          open={open}
-          onOpen={() => setOpen(true)}
-          onClose={() => setOpen(false)}
-          slots={{
-            layout: StyledPickersLayout,
-            textField: CustomTextField,
-            openPickerIcon: () => (
-              <img
-                src="/images/icons/calendar.svg"
-                alt="Calendar"
-                style={{
-                  width: '13px',
-                  height: '14.4px',
-                }}
-              />
-            ),
+          <DateRangePicker calendars={1}
+           displayWeekNumber
+           value= {selectedDate}
+           onChange={(newValue) => handleDateChange(newValue)}
+           localeText={{ start: '', end: '' }} 
+           slots={{
+            textField: CustomTextField
           }}
           slotProps={{
-            desktopPaper: {
-              ...(customStyles ? {
-                sx: {
-                  position: "absolute",
-                  top: "-130px",
-                  left: name === "EndDate"? "-120px" : ""
-                }
-              } : {})
-            },
             textField: {
-              placeholder: placeholder,
+              variant: 'outlined',
               error: error,
-              onClick: handleInputClick,
+              placeholder: placeholder,
               InputProps: {
-                readOnly: true,
-                value: value || "" 
+                endAdornment: (
+                  <img
+                    src="/images/icons/calendar.svg"
+                    alt="Calendar"
+                    style={{ width: '13px', height: '14.4px', cursor:"pointer" }}
+                  />
+                ),
               },
             },
-          
+            desktopPaper: {
+              ...(customStyles
+                ? {
+                    sx: {
+                      position: 'absolute',
+                      top: '-130px',
+                    },
+                  }
+                : {}),
+            },
           }}
-        />
+           />
       </LocalizationProvider>
       {error && (
         <FormHelperText

@@ -58,7 +58,7 @@ export const addAllocationValidationSchema = Yup.object({
       .min(1, 'You must select at least one Project')
       .required('Project is required'),
     StartDate: Yup.date().required("Start date is required"),
-    EndDate: Yup.date().required("End date is required").min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
+    // EndDate: Yup.date().required("End date is required").min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
     AllocationEntered: Yup.number()
       .required("Allocation is required")
       .min(0, "Allocation must be a positive number")
