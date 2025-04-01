@@ -61,7 +61,7 @@ export const getFinalColumns = (
         headerName: 'Resource',
         width: 200,
         headerClassName: 'secondary-header',
-        cellClassName: 'secondary-cell',
+        cellClassName: 'resource-cell',
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
@@ -166,7 +166,7 @@ export const getFinalColumns = (
         headerName: 'Resource',
         width: 200,
         headerClassName: 'secondary-header',
-        cellClassName: 'secondary-cell',
+        cellClassName: params => (params.row.project ? 'blue-background' : ''),
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
@@ -200,6 +200,9 @@ export const getGroupingColDef = groupBy => ({
 export const getCellClassName = (params, updatedRows) => {
   if (params?.field === 'totalEffort') {
     return 'total-effort-cell';
+  }
+  if (params?.field === 'project') {
+    return 'project-name-blue';
   }
   if (params && params.field && typeof params.field === 'string') {
     if (
@@ -267,6 +270,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     ...row,
     totalEffort: calculateTotalEffort(row),
   }));
+  
 
   if (groupBy === 'project') {
     return rowsWithTotalEffort;

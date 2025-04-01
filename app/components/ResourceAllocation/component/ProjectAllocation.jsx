@@ -57,6 +57,7 @@ export default function ProjectAllocation() {
       width: 200,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
+      cellClassName: getCellClassName,
       primaryColumn: true,
       filterable: false,
       isEditable: false,

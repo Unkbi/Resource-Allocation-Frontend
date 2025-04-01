@@ -20,8 +20,13 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     // width: '240px',
+    backgroundColor :'rgb(240, 247, 255)' ,
+  },
+  [`& .MuiDataGrid-row:hover .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
+    backgroundColor: 'rgb(240, 247, 255) !important', 
   },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
+  
     {
       '&:before': {
         content: '""',
@@ -63,7 +68,8 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     color: '#313F68',
     fontFamily: "'Manrope', serif",
     fontWeight: '500',
-    backgroundColor :" rgb(240, 247, 255)",
+    textAlign :'left',
+    // backgroundColor :" rgb(240, 247, 255)",
   },
   '& .MuiDataGrid-columnHeader': {
     borderRight: '1px solid #DDE1E4',
@@ -190,6 +196,11 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .current-week-header': {
     backgroundColor: 'rgb(43 102 199 / 72%)',
   },
+  '& .blue-background ': {
+  backgroundColor: '#F1F6FF',
+},'& .MuiDataGrid-row--editing .MuiDataGrid-cell.blue-background': {
+  backgroundColor: '#F1F6FF !important',
+},
   '& .MuiDataGrid-columnSeparator--resizable': {
     opacity: '0',
   },
@@ -215,7 +226,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     backgroundColor: '#FFCD9C',
   },
   '& .firstGroupsRow': {
-    backgroundColor: '#E9EFF8',
+    backgroundColor: '#E9EFF8 !important' , 
   },
   '& .secondGroupsRow': {
     backgroundColor: '#F0F7FF',
@@ -227,6 +238,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
      backgroundColor: '#E9EFF8',
 },'& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
   backgroundColor: '#E9EFF8 !important',
+},
+'& .project-name-blue' :{
+  backgroundColor :'#E9EFF8' ,
 },
   '& .empty-group-header': {
     '& .MuiDataGrid-columnHeaderTitleContainer': {
