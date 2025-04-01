@@ -403,7 +403,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       }
     });
 
-    return newRow;
+    return {...newRow , totalEffort: calculateTotalEffort(newRow)};
   };
 
   const onRowClick = useCallback(
