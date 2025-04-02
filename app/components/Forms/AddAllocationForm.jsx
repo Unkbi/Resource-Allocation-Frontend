@@ -192,7 +192,10 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
             />
           </Box>
         </Box>
-        <Box>
+        <Box sx={{ pb: 2, pt: 2 }}>
+          <Box sx={{pb: 2 ,pr:5,display:"flex" ,justifyContent :'space-between',alignItems:'center'}}>
+        <StyledLabel>Allocation Value</StyledLabel>
+        <StyledLabel>Custom</StyledLabel></Box>
           <RadioGroup
             row
             name="capacity-radio-group"
