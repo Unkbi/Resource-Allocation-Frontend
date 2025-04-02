@@ -1,7 +1,7 @@
 import { FormHelperText, styled, TextField } from '@mui/material';
 
 export const StyledInput = styled(TextField)(
-  ({ theme, width, margin, padding, height , error}) => ({
+  ({ theme, width, margin, padding, height , error,}) => ({
   '& .MuiOutlinedInput-root': {
     borderRadius: '4px',
     height: height || '36px',
@@ -13,6 +13,9 @@ export const StyledInput = styled(TextField)(
     },
     '& fieldset': {
       borderColor: error ? theme.palette.error.main : '#D6DCE1',
+    },
+    '&.bold-input .MuiInputBase-input': {
+    fontWeight: 'bold', 
     },
     '&:hover fieldset': {
       borderColor: error ? theme.palette.error.main : '#D6DCE1',
