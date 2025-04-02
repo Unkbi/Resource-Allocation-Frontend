@@ -7,6 +7,7 @@ import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 import { Tooltip } from '@mui/material';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
+import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 
 
 export default function ProjectAllocation() {
@@ -55,7 +56,9 @@ export default function ProjectAllocation() {
       headerName: 'Project Name',
       width: 200,
       headerClassName: 'prime-header',
-      cellClassName: 'prime-cell',
+      // cellClassName: getCellClassName,
+      cellClassName: () => 'project-view-projectName',
+      // getCellClassName: 'project-view-project',
       primaryColumn: true,
       filterable: false,
       isEditable: false,
@@ -226,8 +229,9 @@ export default function ProjectAllocation() {
       width: 106,
       type: 'number',
       sortable: false,
+      cellClassName: getCellClassName,
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      // cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
       renderCell: (params) => {
