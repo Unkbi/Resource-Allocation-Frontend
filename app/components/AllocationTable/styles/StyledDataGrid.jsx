@@ -21,9 +21,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
     // width: '240px',
     backgroundColor: !loading && '#F1F6FF',
     },
-   '& .MuiDataGrid-row:hover': {
-    backgroundColor: 'inherit !important',
-    },
+  //  '& .MuiDataGrid-row:hover': {
+  //   backgroundColor: 'inherit !important',
+  //   },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
     {
       '&:before': {
