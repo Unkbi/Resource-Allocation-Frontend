@@ -60,6 +60,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     if (value === "custom") {
       setFieldValue("allocationEntered", Number(customCapacity))
     } else {
+      setCustomCapacity("");
       setFieldValue("AllocationEntered", Number(value))
     }
   }
@@ -127,7 +128,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Resource <span style={{ color: "red" }}>*</span></StyledLabel>
+        <StyledLabel>Resource</StyledLabel>
         <CustomSelect
           name="Resource"
           options={resourceTypeOptions}
@@ -141,7 +142,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Project <span style={{ color: "red" }}>*</span></StyledLabel>
+        <StyledLabel>Project</StyledLabel>
         <CustomSelect
           name="Project"
           options={projectOptions}
@@ -176,7 +177,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           </Typography>
         </Box>
         <Box sx={{ pb: 2, pt: 2 }}>
-          <StyledLabel>Date Range <span style={{ color: "red" }}>*</span></StyledLabel>
+          <StyledLabel>Date Range</StyledLabel>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
             <CustomDateRangePicker
               name = "StartDate"
@@ -191,7 +192,10 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
             />
           </Box>
         </Box>
-        <Box>
+        <Box sx={{ pb: 2, pt: 2 }}>
+          <Box sx={{pb: 2 ,pr:5,display:"flex" ,justifyContent :'space-between',alignItems:'center'}}>
+        <StyledLabel>Allocation Value</StyledLabel>
+        <StyledLabel>Custom</StyledLabel></Box>
           <RadioGroup
             row
             name="capacity-radio-group"
@@ -206,7 +210,8 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               onChange={handleCapacityChange}
               backgroundColor="#e6f7e6"
               borderColor="#a3d9a3"
-            />
+              sx={{fontWeight: capacityOption === "1.0" ? "bold" : "normal",
+                  }}/>
             <StyledRadioButton
               value="0.5"
               label="0.5"
@@ -214,6 +219,9 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               onChange={handleCapacityChange}
               backgroundColor="#fff8e6"
               borderColor="#ffd580"
+              sx={{
+                fontWeight: capacityOption === "1.0" ? "bold" : "normal",
+              }}
             />
             <StyledRadioButton
               value="0.2"
@@ -222,6 +230,9 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               onChange={handleCapacityChange}
               backgroundColor="#fde6ef"
               borderColor="#f8b3d9"
+              sx={{
+                fontWeight: capacityOption === "1.0" ? "bold" : "normal",
+              }}
             />
             <FormControlLabel
             value="custom"
@@ -239,6 +250,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
                 onBlur={handleCustomCapacityBlur}
                 onClick={() => setCapacityOption("custom")}
                 error={formikProps.touched.AllocationEntered && Boolean(formikProps.errors.AllocationEntered)}
+                className={capacityOption === "custom" ? "bold-input" : ""}
               />
             }
             sx={{ margin: 0 }}
