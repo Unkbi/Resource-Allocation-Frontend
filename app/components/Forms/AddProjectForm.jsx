@@ -12,7 +12,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { resources } = useSelector((state) => state.resources)
 
   const resourceTypeOptions = resources && resources.result.map((resource) => {
-    return { value: resource.Id, label: resource.FullName }
+    return { value: resource.FullName, label: resource.FullName }
   })
 
   useEffect(() => {
