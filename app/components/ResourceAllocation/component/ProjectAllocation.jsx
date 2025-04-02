@@ -58,7 +58,6 @@ export default function ProjectAllocation() {
       headerClassName: 'prime-header',
       // cellClassName: getCellClassName,
       cellClassName: () => 'project-view-projectName',
-      // getCellClassName: 'project-view-project',
       primaryColumn: true,
       filterable: false,
       isEditable: false,

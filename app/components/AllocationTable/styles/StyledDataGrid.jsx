@@ -2,7 +2,7 @@ import { getInitialsColor } from '@/app/utils/common';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
-export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
+export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
       // width: '240px !important',
@@ -19,7 +19,11 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     // width: '240px',
-  },
+    backgroundColor: !loading && '#F1F6FF',
+    },
+   '& .MuiDataGrid-row:hover': {
+    backgroundColor: 'inherit !important',
+    },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
     {
       '&:before': {
