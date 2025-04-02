@@ -15,7 +15,8 @@ export const StyledInput = styled(TextField)(
       borderColor: error ? theme.palette.error.main : '#D6DCE1',
     },
     '&.bold-input .MuiInputBase-input': {
-    fontWeight: 'bold', 
+    fontWeight: 'bold',
+    fontSize : '16px', 
     },
     '&:hover fieldset': {
       borderColor: error ? theme.palette.error.main : '#D6DCE1',

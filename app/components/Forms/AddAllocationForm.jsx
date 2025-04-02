@@ -60,6 +60,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     if (value === "custom") {
       setFieldValue("allocationEntered", Number(customCapacity))
     } else {
+      setCustomCapacity("");
       setFieldValue("AllocationEntered", Number(value))
     }
   }
