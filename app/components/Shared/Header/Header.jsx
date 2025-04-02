@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -23,6 +23,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close'; // Close icon import
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
+import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
 
 const MainAppBar = styled(AppBar, {
@@ -82,11 +84,22 @@ const MainAppBar = styled(AppBar, {
 
 const Header = ({sidebarExpanded}) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
+  const { projects } = useSelector((state) => state.projects)
+  const { resources } = useSelector((state) => state.resources)
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if(projects === null){
+      dispatch(fetchAllProjects());
+    }
+    if(resources === null){
+      dispatch(fetchAllResources());
+    }
+  }, [projects, resources]);
 
   const handleAddMenuToggle = () => {
     setOpenAddMenu(prevOpen => !prevOpen);

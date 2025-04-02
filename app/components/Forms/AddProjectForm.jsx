@@ -82,7 +82,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           value={values.Owner || []}
           onChange={handleChange}
           onBlur={handleBlur}
-          width={"325px"}
+          width={"100%"}
           error={touched.Owner && Boolean(errors.Owner)}
           helperText={ touched.Owner &&  formikProps.errors.Owner}
         />
@@ -97,7 +97,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           value={values.Manager || []}
           onChange={handleChange}
           onBlur={handleBlur}
-          width={"325px"}
+          width={"100%"}
           error={touched.Manager && Boolean(errors.Manager)}
           helperText={formikProps.errors.Manager}
         />
@@ -122,9 +122,11 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
+          width: "100%"
         }}
+        
       >
-        <Box sx={{ width: "48%" }}>
+        <Box >
           <StyledLabel>
             Project Type <span style={{ color: "red" }}>*</span>
           </StyledLabel>
@@ -134,12 +136,12 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             value={values.Type}
             onChange={handleChange}
             onBlur={handleBlur}
-            width={"155px"}
+            width={"160px"}
             error={touched.Type && Boolean(errors.Type)}
             helperText={formikProps.errors.Type}
           />
         </Box>
-        <Box sx={{ width: "48%" }}>
+        <Box>
           <StyledLabel>
             Allow Overtime <span style={{ color: "red" }}>*</span>
           </StyledLabel>
@@ -149,7 +151,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             value={values.AllowOvertime}
             onChange={handleChange}
             onBlur={handleBlur}
-            width={"155px"}
+            width={"160px"}
             error={touched.AllowOvertime && Boolean(errors.AllowOvertime)}
             helperText={formikProps.errors.AllowOvertime}
           />
@@ -186,7 +188,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           options={statusOptions}
           value={values.Status}
           onChange={handleChange}
-          width={"325px"}
+          width={"100%"}
           onBlur={handleBlur}
           error={touched.Status && Boolean(errors.Status)}
           helperText={formikProps.errors.Status}
