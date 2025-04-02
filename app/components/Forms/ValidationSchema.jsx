@@ -62,7 +62,7 @@ export const addAllocationValidationSchema = Yup.object({
     AllocationEntered: Yup.number()
       .required("Allocation is required")
       .min(0, "Allocation must be a positive number")
-      .max(1, "Allocation cannot exceed 1.0"),
+      .max(2, "Allocation cannot exceed 2.0"),
   })
 
 export const assignAllocationValidationSchema = Yup.object({
