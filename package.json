@@ -7,7 +7,7 @@
     "build": "tsc --noEmit && next build",
     "start": "tsc --noEmit && next start",
     "lint": "next lint",
-    "format": "prettier --single-quote --write \"{src,public}/**/*.{js,jsx}\""
+    "format": "prettier --single-quote --write \"{app,public}/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -20,7 +20,6 @@
     "@mui/x-data-grid-premium": "^7.24.1",
     "@mui/x-date-pickers": "^7.28.0",
     "@reduxjs/toolkit": "^2.5.0",
-    "@toolpad/core": "^0.12.0",
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
