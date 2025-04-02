@@ -27,6 +27,15 @@ export const StyledInput = styled(TextField)(
     '& input[type="number"]': {
       MozAppearance: 'textfield',
     },
+    '& .MuiFormHelperText-root': {
+      margin: '4px 0 0 0',
+      fontSize: "0.75rem",
+      lineHeight: '12px',
+      color: error ? theme.palette.error.main : '#6A7178',
+      '&.Mui-error': {
+        color: theme.palette.error.main,
+      }
+    },
     width: width || '100%',
     margin: margin || '0',
     padding: padding || '0',

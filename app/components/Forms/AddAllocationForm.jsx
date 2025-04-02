@@ -127,7 +127,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Resource</StyledLabel>
+        <StyledLabel>Resource <span style={{ color: "red" }}>*</span></StyledLabel>
         <CustomSelect
           name="Resource"
           options={resourceTypeOptions}
@@ -141,7 +141,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Project</StyledLabel>
+        <StyledLabel>Project <span style={{ color: "red" }}>*</span></StyledLabel>
         <CustomSelect
           name="Project"
           options={projectOptions}
@@ -176,7 +176,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           </Typography>
         </Box>
         <Box sx={{ pb: 2, pt: 2 }}>
-          <StyledLabel>Date Range</StyledLabel>
+          <StyledLabel>Date Range <span style={{ color: "red" }}>*</span></StyledLabel>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
             <CustomDateRangePicker
               name = "StartDate"

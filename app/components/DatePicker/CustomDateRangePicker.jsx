@@ -2,17 +2,14 @@ import * as React from 'react';
 import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { TextField ,FormHelperText} from '@mui/material';
+import { TextField ,FormHelperText, Box} from '@mui/material';
 import { styled } from '@mui/system';
-import { PickersLayout } from '@mui/x-date-pickers';
 import {FormControl} from '@mui/material';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
- 
 import 'dayjs/locale/en-gb';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { DEFAULT_LOCALE } from '@/app/constants/constants';
 import { DateRangePicker } from '@mui/x-date-pickers-pro';
+import StyledLabel from '../Label/StyledLabel';
  
 dayjs.extend(updateLocale);
 dayjs.updateLocale(DEFAULT_LOCALE, { weekStart: 1 });
@@ -48,7 +45,7 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
   },
 }));
  
-export default function CustomDateRangePicker({ value, placeholder, formikProps, error, helperText, customStyles}) {
+export default function CustomDateRangePicker({ value, placeholder, formikProps, error, helperText, customStyles, startDateLabel="", endDateLabel=""}) {
   const { setFieldValue } = formikProps
   const selectedDate = [
     value.StartDate ? dayjs(value.StartDate) : null,
@@ -69,6 +66,13 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
   return (
     <FormControl error={error}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+        <Box sx={{display:"flex",flexDirection:"row", gap: "122px"}}>
+          <StyledLabel>
+            {startDateLabel}
+          </StyledLabel>
+          <StyledLabel>
+            {endDateLabel}
+          </StyledLabel></Box>
           <DateRangePicker calendars={1}
            displayWeekNumber
            value= {selectedDate}
@@ -78,6 +82,7 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
             textField: CustomTextField
           }}
           slotProps={{
+            fieldSeparator: { sx: { display:"none" } } ,
             textField: {
               variant: 'outlined',
               error: error,
@@ -103,7 +108,7 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
                 : {}),
             },
           }}
-           />
+       />
       </LocalizationProvider>
       {error && (
         <FormHelperText
