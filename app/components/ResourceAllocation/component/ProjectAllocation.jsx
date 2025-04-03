@@ -90,7 +90,7 @@ export default function ProjectAllocation() {
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -104,7 +104,7 @@ export default function ProjectAllocation() {
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -117,7 +117,7 @@ export default function ProjectAllocation() {
       width: 84,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       renderCell: (params) => {
         const firstChild = getFirstChild(params);
@@ -130,7 +130,7 @@ export default function ProjectAllocation() {
       width: 92,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -144,7 +144,7 @@ export default function ProjectAllocation() {
       width: 116,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -158,7 +158,7 @@ export default function ProjectAllocation() {
       width: 102, // min-width without eliding.
       type: 'boolean',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -172,7 +172,7 @@ export default function ProjectAllocation() {
       width: 90,
       type: 'string ',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -186,7 +186,7 @@ export default function ProjectAllocation() {
       width: 100,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -200,7 +200,7 @@ export default function ProjectAllocation() {
       width: 100,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {
@@ -214,7 +214,7 @@ export default function ProjectAllocation() {
       width: 100,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
       renderCell: (params) => {

@@ -169,7 +169,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
-        cellClassName: params => (groupBy === 'project' ? 'project-view-resource' : ''),
+        cellClassName: params => (groupBy === 'project' ? 'common-NonEditableCells' : ''),
         renderCell: params => {
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;

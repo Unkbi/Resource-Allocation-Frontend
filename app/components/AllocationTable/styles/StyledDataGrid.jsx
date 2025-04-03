@@ -39,10 +39,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
   '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
     boxShadow: 'none !important',
   },
-  '& .project-view-resource' :{
+  '& .common-NonEditableCells' :{
   backgroundColor : '#F1F6FF',
   },
-  '& .MuiDataGrid-row--editing .MuiDataGrid-cell.project-view-resource': {
+  '& .MuiDataGrid-row--editing .MuiDataGrid-cell.common-NonEditableCells': {
   backgroundColor: '#F1F6FF !important',
 },
   '& .project-view-projectName' :{
