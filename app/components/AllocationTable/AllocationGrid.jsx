@@ -80,8 +80,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       
       dispatch(
         openDialog({
-          title: "Add Allocation",
-          submitButtonText: 'Add',
+          title: "Update Allocation",
+          submitButtonText: 'Update',
           cancelButtonText: 'Cancel',
           formType: "add_allocation",
           initialData: {

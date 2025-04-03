@@ -41,8 +41,8 @@ export const getFinalColumns = (
   const handleAddClick = (params) => { 
     dispatch(
       openDialog({
-        title: "Add Allocation",
-        submitButtonText: 'Add',
+        title: "Update Allocation",
+        submitButtonText: 'Update',
         cancelButtonText: 'Cancel',
         formType: "add_allocation",
         initialData: {
