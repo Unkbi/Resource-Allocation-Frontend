@@ -236,9 +236,9 @@ export default function ProjectAllocation() {
       renderCell: (params) => {
         const value = Number(params.value);
         const formattedValue =
-          value && typeof value === 'number' && value !== 0
-            ? Math.round(value * 10) / 10
-            : null;
+        !isNaN(value) && value !== null
+          ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+          : null;
         return <span style={{ fontWeight: 'bold' }}>{formattedValue}</span>;
       },
     },

@@ -97,7 +97,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
     '&:hover': {
       backgroundColor: '#FBFCFE',
       '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
-        backgroundColor: '#FBFCFE !important',
+        backgroundColor: !loading &&'#F1F6FF !important',
       },
     },
   },
