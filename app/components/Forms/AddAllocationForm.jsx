@@ -229,7 +229,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
         </Box>
         <Box sx={{ pb: 2, pt: 2,ml :1/2, }}>
           <Box sx={{pb: 1/2,pr:2,pt:1,display:"flex" ,justifyContent :'space-between',alignItems:'center'}}>
-        <Box sx={{display:'flex',justifyContent :'space-between' ,gap:'150px'}}>
+        <Box sx={{display:'flex',justifyContent :'space-between' ,gap:'153px'}}>
         <StyledLabel>Allocation Value</StyledLabel>
         <StyledLabel>Custom</StyledLabel></Box></Box>
           <RadioGroup
