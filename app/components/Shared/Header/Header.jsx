@@ -135,7 +135,7 @@ const Header = ({sidebarExpanded}) => {
     {
       icon: '/images/icons/AllocationIcon.svg',
       alt: 'Allocation Icon',
-      title: 'Add Allocation',
+      title: 'Update Allocation',
       type: 'add_allocation',
     },
     {
@@ -169,7 +169,7 @@ const Header = ({sidebarExpanded}) => {
     dispatch(
       openDialog({
         title: title,
-        submitButtonText: 'Add',
+        submitButtonText:formType === 'add_allocation' ? 'Update' : 'Add',
         cancelButtonText: 'Cancel',
         formType: formType,
         initialData: null,
