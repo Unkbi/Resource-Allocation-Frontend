@@ -29,10 +29,19 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
     <>
       <IconButton
         size="small"
+        disableRipple
+        disableFocusRipple
         onClick={handleMenuOpen}
-        sx={{ ml: 1 }}
+        sx={{
+          ml: 0.3,
+          padding: '0px', 
+          backgroundColor: 'transparent',
+          '&:hover': {
+            backgroundColor: 'transparent', 
+          },
+        }}
       >
-        <MoreVertIcon fontSize="small" />
+        <MoreVertIcon sx={{ fontSize: 22 }} />
       </IconButton>
       <Menu
         anchorEl={anchorEl}
@@ -41,7 +50,7 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={() => { handleMenuClose(); alert('Edit'); }}>Clone</MenuItem>
+        <MenuItem onClick={() => { handleMenuClose(); alert('Clone'); }}>Clone</MenuItem>
       </Menu>
     </>
   );
@@ -236,10 +245,14 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
-        renderCell: params => {
-          if (params.value) {
-            return <CustomAvatar value={params.value} showFullName={true} />;
-          }
+        renderCell: (params) => {
+          return params.value ? (
+            <ResourceCellWithMenu
+              params={params}
+              handleAddClick={handleAddClick}
+              columnType="resource"
+            />
+          ) : null;
         },
       },
       ...(allColumns?.slice(1) || []),

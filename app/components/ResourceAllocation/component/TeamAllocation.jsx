@@ -9,7 +9,6 @@ import {
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { Tooltip } from '@mui/material';
-import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -84,22 +83,50 @@ export default function TeamAllocation() {
               ],
             }
           }}>
-            <CustomAddIcon
-              value={params.value}
-              count={resource_count.length}
-              onClick={() => handleAddClick(params)}
-              columnType="teams"
-            />
-          </Tooltip>        
+          <div style={{
+              display: 'flex',
+              width: '100%',
+              minWidth: 0,
+            }}>
+              <span style={{
+                flex: '1 1 auto',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {params.value}
+              </span>
+              <span style={{
+                flex: '0 0 auto',
+                display: "flex",
+                width: "24px",
+                height: "24px",
+                padding: "4px 3px",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                color:"#F1F1F1",
+                marginTop: "13px",
+                marginLeft: "8px",
+                borderRadius: "4px",
+                fontSize:"12px",
+                fontWeight:"600",
+                background:" #7881A5",
+              }}>
+                ({resource_count.length})
+              </span>
+            </div>
+          </Tooltip>
         );
       }
     },
     {
       field: 'teamStatus',
       headerName: 'Status',
-      width: 100,
+      width: 90,
       type: 'string',
       isEditable: false,
+      sortable: false,
       renderCell: (params) => {
         const team = getTeam(params);
         return team ? (<span>{team?.Status ?? "N/A"}</span>) : null;
@@ -108,9 +135,10 @@ export default function TeamAllocation() {
     {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
-      width: 150,
+      width: 180,
       type: 'string',
       isEditable: false,
+      sortable: false,
       renderCell: (params) => {
         const team = getTeam(params);
         return team ? (<span>{team?.AllocationManager ?? "N/A"}</span>) : null;
