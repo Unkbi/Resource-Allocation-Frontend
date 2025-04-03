@@ -32,7 +32,7 @@ const CustomAvatar = ({ value, showFullName = false }) => {
     return colors[hash % colors.length];
   };
   return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{ display: "flex", alignItems: "center", minWidth: 0, width: '100%' }}>
       <Avatar
         sx={{
           width: 20,
@@ -40,11 +40,24 @@ const CustomAvatar = ({ value, showFullName = false }) => {
           fontSize: 8,
           marginRight: 1,
           backgroundColor: getInitialsColor(value),
+          flexShrink: 0,
         }}
       >
         {getInitials(value)}
       </Avatar>
-      {showFullName && <span>{value}</span>}
+      {showFullName && (
+        <Box
+          component="span"
+          sx={{
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+            minWidth: 0,
+          }}
+        >
+          {value}
+        </Box>
+      )}
     </Box>
   );
 };

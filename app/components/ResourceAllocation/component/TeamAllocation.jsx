@@ -7,7 +7,9 @@ import {
   fetchResourcesAgainstTeams,
 } from '@/app/redux/actions/fetchTeamsAction';
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { Tooltip } from '@mui/material';
+import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -18,6 +20,20 @@ export default function TeamAllocation() {
   );
   const { startDate, endDate } = calendarDate || {};
   
+  const handleAddClick =(params)=>{
+    dispatch(
+      openDialog({
+        title: "Add Allocation",
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: "add_allocation",
+        initialData: {  
+          Project: params.value 
+        },
+      })
+    );
+  }
+
   useEffect(() => {
     if (!teams?.result?.length) {
       dispatch(fetchAllTeams());
@@ -68,39 +84,13 @@ export default function TeamAllocation() {
               ],
             }
           }}>
-          <div style={{
-              display: 'flex',
-              width: '100%',
-              minWidth: 0,
-            }}>
-              <span style={{
-                flex: '1 1 auto',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {params.value}
-              </span>
-              <span style={{
-                flex: '0 0 auto',
-                display: "flex",
-                width: "24px",
-                height: "24px",
-                padding: "4px 3px",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                color:"#F1F1F1",
-                marginTop: "13px",
-                borderRadius: "4px",
-                fontSize:"12px",
-                fontWeight:"600",
-                background:" #7881A5",
-              }}>
-                ({resource_count.length})
-              </span>
-            </div>
-          </Tooltip>
+            <CustomAddIcon
+              value={params.value}
+              count={resource_count.length}
+              onClick={() => handleAddClick(params)}
+              columnType="teams"
+            />
+          </Tooltip>        
         );
       }
     },
@@ -129,7 +119,7 @@ export default function TeamAllocation() {
     {
       field: 'resourceType',
       headerName: 'Resource Type',
-      width: 200,
+      width: 135,
       sortable: false,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',

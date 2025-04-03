@@ -8,6 +8,52 @@ import { AddRowButton } from './AddRowButton';
 import { useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from './CustomAddIcon';
+import { useState } from 'react';
+import { IconButton, Menu, MenuItem } from '@mui/material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+
+const ResourceCellWithMenu = ({ params, handleAddClick }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleMenuOpen = (event) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const menu = (
+    <>
+      <IconButton
+        size="small"
+        onClick={handleMenuOpen}
+        sx={{ ml: 1 }}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={() => { handleMenuClose(); alert('Edit'); }}>Clone</MenuItem>
+      </Menu>
+    </>
+  );
+
+  return (
+    <CustomAddIcon
+      value={<CustomAvatar value={params.value} showFullName={true} />}
+      onClick={() => handleAddClick(params)}
+      menu={menu}
+    />
+  );
+};
 
 export const getInitialState = (
   groupBy,
@@ -64,14 +110,14 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
-        renderCell: params => {
-          if (params.value) {
-            return <>
-            <CustomAvatar value={params.value} showFullName={true} />  
-            <CustomAddIcon
-            onClick={() => handleAddClick(params)}
-            /></>;
-          }
+        renderCell: (params) => {
+          return params.value ? (
+            <ResourceCellWithMenu
+              params={params}
+              handleAddClick={handleAddClick}
+              columnType="resource"
+            />
+          ) : null;
         },
       },
       {
@@ -125,26 +171,47 @@ export const getFinalColumns = (
           ].filter(Boolean);
 
           if (projects_set.length > 1) {
-            const cell_value =
-              projects_set?.[0]?.length > 18
-                ? projects_set?.[0]?.slice(0, 15) + '...'
-                : projects_set?.[0];
+            const firstProject = projects_set?.[0];
+          
             return (
-              <div>
-                {!isGroupExpanded && cell_value}
-                {!isGroupExpanded && <span
-                  style={{
-                    backgroundColor: '#E9EFF8',
-                    color: '#000',
-                    paddingRight: 4,
-                    paddingLeft: 4,
-                    marginLeft: 8,
-                    fontSize: 12,
-                    borderRadius: 2,
-                  }}
-                >
-                  +{projects_set?.length - 1}
-                </span>}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  minWidth: 0,
+                }}
+              >
+                {!isGroupExpanded && (
+                  <span
+                    style={{
+                      flex: '1 1 auto',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                    }}
+                    title={firstProject}
+                  >
+                    {firstProject}
+                  </span>
+                )}
+                {!isGroupExpanded && (
+                  <span
+                    style={{
+                      flex: '0 0 auto',
+                      backgroundColor: '#E9EFF8',
+                      color: '#000',
+                      paddingRight: 4,
+                      paddingLeft: 4,
+                      marginLeft: 8,
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{projects_set.length - 1}
+                  </span>
+                )}
               </div>
             );
           }

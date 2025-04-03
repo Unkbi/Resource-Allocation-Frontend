@@ -3,81 +3,111 @@ import { Box } from '@mui/material';
 
 export const CustomAddIcon = ({
   value,
-  count = null,  
-  onClick = () => {}
+  count = null,
+  onClick = () => {},
+  menu = null,
+  columnType = "teams",
 }) => {
+  const isResourceColumn = columnType === "resource";
   return (
     <Box
       sx={{
         display: 'flex',
+        alignItems: 'center',
         width: '100%',
         minWidth: 0,
-        alignItems: 'center',
-        
-        '&:hover .add-icon': {
-          display: 'block'
+        position: 'relative',
+        overflow: 'visible',
+
+        '&:hover .icon-overlay': {
+          opacity: 1,
+          visibility: 'visible',
         },
         '&:hover .count': {
-          display: 'none'
-        }
+          opacity: 0,
+          visibility: 'hidden',
+        },
+        '&:hover .text': {
+          paddingRight: menu ? '70px' : count !== null ? '38px' : '0px',
+        },
       }}
     >
-   {value &&<Box sx={{
+      <Box
+        className="text"
+        sx={{
           flex: '1 1 auto',
+          minWidth: 0,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-        }}>
-      { value}
-    </Box>}
-      <Box sx={{
-        flex: '0 0 auto',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-      }}>
-        {count !== null && count !== "" && (
-          <>
-            <Box 
-              className="count"
-              component="span"
-              sx={{
-                display: 'block',
-                flex: '0 0 auto',
-                display: "flex",
-                width: "24px",
-                height: "24px",
-                padding: "4px 3px",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                color:"#F1F1F1",
-                fontSize:"12px",
-                fontWeight:"600",
-                borderRadius: "4px",
-                background:" #7881A5",
-              }}
-            >
-              ({count})
-            </Box>
-            <AddIcon 
-              className="add-icon"
-              sx={{
-                display: 'none',
-                fontSize: 20,
-                backgroundColor: '#1C2D5F',
-                color: '#fff',
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: '#1C2D5F',
-                },
-                borderRadius: '2px',
-              }}
-              onClick={onClick} 
-            />
-          </>
-        )}
+          paddingRight:
+            !isResourceColumn && count !== null ? '38px' : '0px',
+          transition: 'padding-right 0.2s',
+        }}
+      >
+        {value}
       </Box>
+      <Box
+        className="icon-overlay"
+        sx={{
+          position: 'absolute',
+          right: 4,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: menu ? 0.25 : 0,
+          mr: menu ? '-10px' : 0,
+          opacity: 0,
+          visibility: 'hidden',
+          transition: 'opacity 0.2s, visibility 0.2s',
+          zIndex: 2,
+          overflow: 'visible',
+        }}
+      >
+        <AddIcon
+          onClick={onClick}
+          sx={{
+            width: 26,
+            height: 26,
+            fontSize: 20,
+            backgroundColor: '#1C2D5F',
+            color: '#fff',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: '#1C2D5F',
+            },
+          }}
+        />
+        {menu}
+      </Box>
+
+      {count !== null && count !== '' && (
+        <Box
+          className="count"
+          sx={{
+            position: 'absolute',
+            right: 4,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '26px',
+            height: '26px',
+            fontSize: '12px',
+            fontWeight: 500,
+            borderRadius: '4px',
+            background: '#7881A5',
+            color: '#F1F1F1',
+            transition: 'opacity 0.2s',
+            zIndex: 1,
+          }}
+        >
+          ({count})
+        </Box>
+      )}
     </Box>
   );
 };

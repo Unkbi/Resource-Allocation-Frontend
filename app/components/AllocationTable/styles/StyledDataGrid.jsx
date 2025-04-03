@@ -102,9 +102,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-cellContent': {
     paddingLeft: '8px',
   },
-  // '& .MuiDataGrid-groupingCriteriaCellToggle': {
-  //   display: 'none',
-  // },
+  '& .MuiDataGrid-groupingCriteriaCellToggle': {
+    marginLeft: '-10px',
+    marginRight: '4px',
+  },
+  '& .MuiDataGrid-columnHeader[data-field="project"] .MuiDataGrid-groupingCriteriaCellToggle': {
+  marginLeft: '20px !important',
+  marginRight: '20px !important',
+  },
   '& .MuiDataGrid-aggregationColumnHeaderLabel': {
     display: 'none',
   },
