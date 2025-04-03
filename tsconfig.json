@@ -2,11 +2,16 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "module": "commonjs",
     "target": "es2020",
-    "lib": ["es2020", "dom"],
+    "lib": [
+      "es2020",
+      "dom"
+    ],
     "outDir": "dist",
     "rootDir": "app", // Update this to match your source directory
     "strict": true,
@@ -26,6 +31,13 @@
       }
     ]
   },
-  "include": ["app/**/*", ".next/types/**/*.ts"], // Update this to include your source files
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "app/**/*",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".next"
+  ]
 }
