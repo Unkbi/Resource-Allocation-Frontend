@@ -2,7 +2,7 @@ import { getInitialsColor } from '@/app/utils/common';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
-export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
+export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
       // width: '240px !important',
@@ -11,7 +11,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
     {
       // width: '240px !important',
-      fontWeight:"bold"
+      fontWeight:"bold",
     },
   [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
     {
@@ -19,7 +19,11 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     // width: '240px',
-  },
+    backgroundColor: !loading && '#F1F6FF',
+    },
+  //  '& .MuiDataGrid-row:hover': {
+  //   backgroundColor: 'inherit !important',
+  //   },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
     {
       '&:before': {
@@ -29,12 +33,22 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
         left: '0px',
         width: '5px',
         height: '40px',
-        backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
+        // backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
       },
     },
   '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
     boxShadow: 'none !important',
   },
+  '& .common-NonEditableCells' :{
+  backgroundColor : '#F1F6FF',
+  },
+  '& .MuiDataGrid-row--editing .MuiDataGrid-cell.common-NonEditableCells': {
+  backgroundColor: '#F1F6FF !important',
+},
+  '& .project-view-projectName' :{
+    backgroundColor : '#E9EFF8',
+  },
+ 
   [`& .${gridClasses.columnHeader}`]: {
     '&.prime-header': {},
     '&.secondary-header': {},
@@ -62,6 +76,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     color: '#313F68',
     fontFamily: "'Manrope', serif",
     fontWeight: '500',
+    textAlign :'left',
   },
   '& .MuiDataGrid-columnHeader': {
     borderRight: '1px solid #DDE1E4',
@@ -82,7 +97,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     '&:hover': {
       backgroundColor: '#FBFCFE',
       '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
-        backgroundColor: '#FBFCFE !important',
+        backgroundColor: !loading &&'#F1F6FF !important',
       },
     },
   },
@@ -229,7 +244,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     borderBottom: '2px solid #FFCD9C', 
   },
   '& .firstGroupsRow': {
-    backgroundColor: '#E9EFF8',
+    backgroundColor: '#E9EFF8 !important' ,
   },
   '& .secondGroupsRow': {
     backgroundColor: '#F0F7FF',
@@ -237,13 +252,18 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-row--editing': {
     boxShadow: 'none',
   },
+  '& .total-effort-cell' : {
+     backgroundColor: '#E9EFF8',
+},'& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
+  backgroundColor: '#E9EFF8 !important',
+},
   '& .empty-group-header': {
     '& .MuiDataGrid-columnHeaderTitleContainer': {
       display: 'none',
     },
   },
 }));
-
+ 
 export const ColumnManagementStyles = {
   '& .MuiDataGrid-columnsManagementHeader': {
     padding: '0',
