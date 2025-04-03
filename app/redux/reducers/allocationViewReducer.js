@@ -5,6 +5,7 @@ const initialState = {
   loading: false,
   error: null,
   expandRowId: null,
+  cellSelectionData: {}
 };
 
 const viewSlice = createSlice({
@@ -17,10 +18,13 @@ const viewSlice = createSlice({
     setExpandRowId: (state, action) => {
       state.expandRowId = action.payload;
     },
+    setCellSelectionData: (state, action) => {
+      state.cellSelectionData = action.payload;
+    },
   },
   extraReducers: (builder) => {
   },
 });
 
-export const { changeView, setExpandRowId } = viewSlice.actions;
+export const { changeView, setExpandRowId, setCellSelectionData } = viewSlice.actions;
 export default viewSlice.reducer;

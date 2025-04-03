@@ -17,7 +17,7 @@ import { closeDialog } from '@/app/redux/reducers/dialogReducer';
 import { generateAllMondays, getWeekNumber } from '@/app/utils/common';
 import { setResourceAllocation, updateResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
 import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
-import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import { setCellSelectionData, setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { useRouter, usePathname } from 'next/navigation';
@@ -89,6 +89,25 @@ const AllocationForm = () => {
     }
   };
 
+  const handleScrollAndFocus =(resourceId, teamId, period, project)=>{
+    const [{ Id }] = project;
+    const selectedWeeks = period.flatMap((monday)=>getWeekNumber(monday))
+    const weeksObject = {};
+    selectedWeeks.forEach(week => {
+        weeksObject[`${week}`] = true;
+    });
+    let cellData;
+    if (view ==="teams"){
+      cellData = {
+        [`${resourceId}-${teamId}-${Id}`]: weeksObject
+      };
+    }else{
+      cellData = {
+        [`${resourceId}-${Id}`]: weeksObject
+      };
+    }
+    dispatch(setCellSelectionData(cellData))
+  }
   const handleOnAdd = (team, resource) => {
     let row_id = `auto-generated-row-teams/${team}-resource/${resource}`;
     dispatch(setExpandRowId(row_id));
@@ -230,6 +249,7 @@ const AllocationForm = () => {
                   .then(() => {
                     new_resources.forEach((resource) => {
                       handleOnAdd(resource?.team?.Name, resource?.FullName);
+                      handleScrollAndFocus(resource.Id, resource?.teamId, allMondays, filteredProjects)
                     })
                   });
                 }
@@ -237,7 +257,9 @@ const AllocationForm = () => {
                 {
                 return dispatch(fetchAllProjectAllocations(filteredProjects, startDate, endDate))
                   .then(() => {
-                    // Code For Scroll to Row to be added.
+                    new_resources.forEach((resource) => {
+                      handleScrollAndFocus(resource.Id, resource?.teamId, allMondays, filteredProjects)
+                    })
                   });
                 }
             })

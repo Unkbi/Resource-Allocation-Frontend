@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+  gridExpandedSortedRowIdsSelector,
+  gridVisibleColumnDefinitionsSelector,
   useGridApiRef,
   useKeepGroupedColumnsHidden,
 } from '@mui/x-data-grid-premium';
@@ -47,7 +49,12 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const [updatedRows, setUpdatedRows] = useState([]);
   const { open, message, type, position } = useSelector(state => state.toast);
   const { rowState } = useSelector(state => state.dataGrid);
-  const { expandRowId } = useSelector(state => state.allocationView);
+  const { expandRowId, cellSelectionData } = useSelector(state => state.allocationView);
+  const [coordinates, setCoordinates] = useState({
+    rowId: 0,
+    field: 0,
+  });
+
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
@@ -151,11 +158,36 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
     };
   }, [cellSelectionModel]);
   
-  useEffect(() => {
-    if(!isOpen) {
-      setCellSelectionModel({});
+   useEffect(() => {
+    const handleScrollAndFocus = () => {
+      if (!apiRef.current || (Object.keys(cellSelectionModel).length === 0 && Object.keys(cellSelectionData).length === 0)) return;
+      const [rowId] = Object.keys(cellSelectionModel).length > 0 
+      ? Object.keys(cellSelectionModel) 
+      : Object.keys(cellSelectionData);
+
+      const [field] = Object.keys(cellSelectionModel).length > 0 
+      ? Object.keys(cellSelectionModel[rowId]) 
+      : Object.keys(cellSelectionData[rowId]);
+      
+      const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
+      const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
+      const rowIndex = visibleRowIds.indexOf(rowId);
+      const colIndex = visibleColumns.findIndex(col => col.field === field);
+      apiRef?.current.scrollToIndexes({rowIndex, colIndex});
+      setCoordinates({rowId, field})
+      if (rowIndex === -1 || colIndex === -1) {
+        return;
+      }
     }
-  },[isOpen])
+    handleScrollAndFocus()
+  }, [rowState, apiRef, cellSelectionData]);
+
+  useEffect(() => {
+    const { rowId, field } = coordinates;
+    apiRef.current.setCellFocus(rowId, field);
+    setCellSelectionModel({})
+  }, [apiRef, coordinates]);
+
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -335,7 +367,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       }
     }
   };
-
+  
   const handleCellUpdate = (newRow, oldRow) => {
     Object.keys(newRow).forEach(key => {
       if (key.startsWith('W')) {
