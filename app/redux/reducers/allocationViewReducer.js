@@ -4,7 +4,7 @@ const initialState = {
   view: 'Teams',
   loading: false,
   error: null,
-  expandRowId: null,
+  expandRowId: [],
   cellSelectionData: {}
 };
 

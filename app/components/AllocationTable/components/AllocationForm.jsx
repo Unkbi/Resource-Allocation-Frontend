@@ -89,28 +89,36 @@ const AllocationForm = () => {
     }
   };
 
-  const handleScrollAndFocus =(resourceId, teamId, period, project)=>{
-    const [{ Id }] = project;
-    const selectedWeeks = period.flatMap((monday)=>getWeekNumber(monday))
+  const handleScrollAndFocus = (resources, period, projects) => {
+    const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
     const weeksObject = {};
+    
     selectedWeeks.forEach(week => {
-        weeksObject[`${week}`] = true;
+      weeksObject[`${week}`] = true;
     });
-    let cellData;
-    if (view ==="Teams"){
-      cellData = {
-        [`${resourceId}-${teamId}-${Id}`]: weeksObject
-      };
-    }else{
-      cellData = {
-        [`${resourceId}-${Id}`]: weeksObject
-      };
-    }
-    dispatch(setCellSelectionData(cellData))
-  }
-  const handleOnAdd = (team, resource) => {
-    let row_id = `auto-generated-row-teams/${team}-resource/${resource}`;
-    dispatch(setExpandRowId(row_id));
+  
+    const cellData = {};
+    
+    resources?.forEach(resource => {
+      projects?.forEach(project => {
+        const [{ Id }] = Array.isArray(project) ? project : [project];
+        const key = view === "Teams" 
+          ? `${resource.Id}-${resource.teamId}-${Id}`
+          : `${resource.Id}-${Id}`;
+        
+        cellData[key] = weeksObject;
+      });
+    });
+    dispatch(setCellSelectionData({
+      ...cellData,
+      restoreFocus: true
+    }));
+  };
+  const handleOnAdd = (resources) => {
+    const rowIds = resources?.map(resource => 
+      `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`
+    );
+    dispatch(setExpandRowId(rowIds));
   }
 
   const getTeamByResourceId = (resourceId) => {
@@ -247,19 +255,15 @@ const AllocationForm = () => {
                 {
                   return dispatch(fetchResourcesAgainstTeams(teams, allocations, startDate, endDate))
                   .then(() => {
-                    new_resources.forEach((resource) => {
-                      handleOnAdd(resource?.team?.Name, resource?.FullName);
-                      handleScrollAndFocus(resource.Id, resource?.teamId, allMondays, filteredProjects)
-                    })
+                    handleOnAdd(new_resources);
+                    handleScrollAndFocus(new_resources,allMondays, filteredProjects);
                   });
                 }
               else if(view === 'Projects')
                 {
                 return dispatch(fetchAllProjectAllocations(filteredProjects, startDate, endDate))
                   .then(() => {
-                    new_resources.forEach((resource) => {
-                      handleScrollAndFocus(resource.Id, resource?.teamId, allMondays, filteredProjects)
-                    })
+                    handleScrollAndFocus(new_resources,allMondays, filteredProjects);
                   });
                 }
             })
@@ -307,6 +311,12 @@ const AllocationForm = () => {
     </ErrorMessage>
   );
 
+  const onCancel = () => {
+    dispatch(setCellSelectionData({
+      restoreFocus: true
+    }));
+  };
+
   return (
     <Formik
       enableReinitialize
@@ -321,6 +331,7 @@ const AllocationForm = () => {
           onSubmit={formikProps.handleSubmit}
           isSubmitting={formikProps.isSubmitting}
           isValid={formikProps.isValid}
+          onCancel={onCancel}
         >
           <Box>
             {getFormComponent(formType, {

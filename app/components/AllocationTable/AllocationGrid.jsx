@@ -49,12 +49,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const [updatedRows, setUpdatedRows] = useState([]);
   const { open, message, type, position } = useSelector(state => state.toast);
   const { rowState } = useSelector(state => state.dataGrid);
-  const { expandRowId, cellSelectionData } = useSelector(state => state.allocationView);
-  const [coordinates, setCoordinates] = useState({
-    rowId: 0,
-    field: 0,
-  });
-
+  const { expandRowId, cellSelectionData, view} = useSelector(state => state.allocationView);
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
@@ -64,8 +59,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const { isOpen } = useSelector((state) => state.globalDialog);
 
   const handleKeyUp = (e) => {
-    
-    if(cellSelectionModel && Object.keys(cellSelectionModel).length > 0 && apiRef.current.getSelectedCellsAsArray().length >= 2) {
+    if(cellSelectionModel && Object.keys(cellSelectionModel).length > 0 && apiRef.current.getSelectedCellsAsArray().length >= 2 && !cellSelectionModel['restoreFocus'] ) {
       const resourcesSelected = [];
       let StartDate, EndDate;
       Object.entries(cellSelectionModel).forEach(([row, weeks]) => {
@@ -136,9 +130,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
   useEffect(() => {
     try {
-      if (groupBy === 'teams' && expandRowId !== null && rowState?.length) {
-        apiRef.current.setRowChildrenExpansion(expandRowId, true);
-        dispatch(setExpandRowId(null));
+      if (groupBy === 'teams' && expandRowId?.length && rowState?.length) {
+        expandRowId.forEach(rowId => {
+          apiRef.current.setRowChildrenExpansion(rowId, true);
+        });
       }
     } catch (error) {
       console.warn('Error in setting row expansion', error);
@@ -158,11 +153,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
     };
   }, [cellSelectionModel]);
 
-  useEffect(()=>{
-    if(!isOpen){
-      setCellSelectionModel({});
-    }
-  },[isOpen])
   
   useEffect(() => {
     const handleScrollAndFocus = () => {
@@ -184,48 +174,12 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         return;
       }
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
-      setTimeout(() => {
-        if (apiRef.current.getCellElement(rowId, field)) {
-          apiRef.current.setCellFocus(rowId, field);
-          setCellSelectionModel({});
-        }
-      }, 200);
+      setCellSelectionModel(cellSelectionData)
     };
     const timeoutId = setTimeout(handleScrollAndFocus, 100);
-   
+    setExpandRowId(null)
     return () => clearTimeout(timeoutId);
-  }, [rowState, apiRef, cellSelectionData]);
-  
-  //  useEffect(() => {
-  //   const handleScrollAndFocus = () => {
-  //     if (!apiRef.current || (Object.keys(cellSelectionModel).length === 0 && Object.keys(cellSelectionData).length === 0)) return;
-  //     const [rowId] = Object.keys(cellSelectionModel).length > 0 
-  //     ? Object.keys(cellSelectionModel) 
-  //     : Object.keys(cellSelectionData);
-
-  //     const [field] = Object.keys(cellSelectionModel).length > 0 
-  //     ? Object.keys(cellSelectionModel[rowId]) 
-  //     : Object.keys(cellSelectionData[rowId]);
-      
-  //     const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
-  //     const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
-  //     const rowIndex = visibleRowIds.indexOf(rowId);
-  //     const colIndex = visibleColumns.findIndex(col => col.field === field);
-  //     apiRef?.current.scrollToIndexes({rowIndex, colIndex});
-  //     setCoordinates({rowId, field})
-  //     if (rowIndex === -1 || colIndex === -1) {
-  //       return;
-  //     }
-  //   }
-  //   handleScrollAndFocus()
-  // }, [rowState, apiRef, cellSelectionData]);
-
-  // useEffect(() => {
-  //   const { rowId, field } = coordinates;
-  //   apiRef.current.setCellFocus(rowId, field);
-  //   setCellSelectionModel({})
-  // }, [apiRef, coordinates]);
-
+  }, [rowState, apiRef, cellSelectionData, view]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
