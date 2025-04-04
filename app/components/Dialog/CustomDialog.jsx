@@ -88,13 +88,14 @@ const StyledCancelButton = styled(Button)(({ theme }) => ({
   textTransform: 'none'
 }));
 
-const CustomDialog = ({ children, onSubmit }) => {
+const CustomDialog = ({ children, onSubmit, onCancel }) => {
   const dispatch = useDispatch();
   const dialogState = useSelector(state => state.globalDialog);
   const { isOpen, title, submitButtonText, cancelButtonText } = dialogState;
 
   const handleClose = () => {
     dispatch(closeDialog());
+    onCancel()
   };
 
   return (
