@@ -38,8 +38,7 @@ const MainAppBar = styled(AppBar, {
   background: '#EBEFFC',
   '& h6': {
     color: theme.custom.primaryColor,
-    fontFamily: "'Manrope', serif",
-    // fontFamily: "Open Sans",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: 'SemiBold',
     fontSize: '18px',
     lineHeight: '22px',

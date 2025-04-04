@@ -302,7 +302,7 @@ const AllocationForm = () => {
           sx={{ 
             fontSize: '12px', 
             mt: 0.5, 
-            fontFamily: 'Open Sans'
+            fontFamily: theme => theme.typography.fontFamily,
           }}
         >
           {msg}
@@ -345,7 +345,7 @@ const AllocationForm = () => {
                   fontSize: '14px', 
                   mt: 2, 
                   textAlign: 'center',
-                  fontFamily: 'Open Sans',
+                  fontFamily: theme => theme.typography.fontFamily,
                   fontWeight: 600
                 }}
               >

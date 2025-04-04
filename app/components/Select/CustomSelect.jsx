@@ -30,8 +30,8 @@ const StyledSelect = styled(Select)(({ theme, width }) => ({
   },
 }));
 
-const StyledMenuItem = styled(MenuItem)(() => ({
-  fontFamily: 'Open Sans',
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  fontFamily: theme.typography.fontFamily,
   fontSize: '12px',
   height: '32px',
   padding: '8px 12px',
