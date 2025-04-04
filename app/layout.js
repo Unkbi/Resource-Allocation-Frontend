@@ -11,8 +11,9 @@ import { Box, styled } from '@mui/material';
 import { getToken } from './utils/authUtils';
 import { PUBLIC_ROUTES } from './constants/constants';
 import { getUserData } from './redux/actions/authActions';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
+import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
 
 const MainContent = styled(Box, {
   shouldForwardProp: (prop) => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -34,6 +35,7 @@ function LayoutContent({ children }) {
   const router = useRouter();
   const dispatch = useDispatch();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const { open, message, type, position } = useSelector(state => state.toast);
 
   useEffect(() => {
     setIsClient(true); 
@@ -79,7 +81,16 @@ function LayoutContent({ children }) {
     <>
       {!isPublicRoute && <Header isExpanded={sidebarExpanded} sidebarExpanded={sidebarExpanded} toggleSidebar={() => setSidebarExpanded((prev) => !prev)} />}
       {!isPublicRoute &&  <SideBar  sidebarExpanded={sidebarExpanded} toggleSidebar={() => setSidebarExpanded((prev) => !prev)} />}
-      <MainContent isLoggedIn={isUserLoginIn} sidebarExpanded={sidebarExpanded}>{children}</MainContent>
+      <MainContent isLoggedIn={isUserLoginIn} sidebarExpanded={sidebarExpanded}>
+        {children}
+        {/* Snackbar outside MainContent to avoid layout issues */}
+         {open && <CustomSnackbar
+            message={message}
+            type={type}
+            open={open}
+            position={position}
+          />}
+      </MainContent>
       <MuiXLicense />
     </>
   );
