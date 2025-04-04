@@ -238,7 +238,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           <Typography
             sx={{
               color: '#313F68',
-              fontFamily: 'Open Sans',
+              fontFamily: theme => theme.typography.fontFamily,
               fontSize: '12px',
               fontStyle: 'normal',
               fontWeight: '700',

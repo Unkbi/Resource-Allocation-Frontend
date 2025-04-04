@@ -14,7 +14,7 @@ import {
     padding: '5px 12px',
     fontSize: '13px',
     color: 'rgb(33, 33, 33)',
-    fontFamily: 'Manrope, serif',
+    fontFamily: theme => theme.typography.fontFamily,
     fontWeight: '600',
     textTransform: 'none',
 };

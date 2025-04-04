@@ -447,7 +447,7 @@ const StatusPill = styled('div')(({ theme, status }) => {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: '4px',
-    fontFamily: "Open Sans",
+    fontFamily: theme.typography.fontFamily,
     fontsize: '12px',
     fontStyle: 'normal',
     fontweight: 400,

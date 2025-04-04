@@ -74,7 +74,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
     fontSize: '14px',
     padding: '0 16px',
     color: '#313F68',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '500',
     textAlign :'left',
   },
@@ -83,7 +83,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
     backgroundColor: '#F1F6FF',
     padding: '0 16px 10px',
     color: '#313F68',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '500',
     '& .MuiDataGrid-columnHeaderTitleContainer': {
       // alignItems: 'flex-start',
@@ -147,7 +147,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
   },
   '& .weeklyCell': {
     textAlign: 'center',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '500',
     fontSize: '14px',
     color: '#212121',
@@ -161,7 +161,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
     },
     '& .MuiDataGrid-editInputCell': {},
     '& input': {
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '500',
       color: '#313F68',
       fontSize: '14px',
@@ -182,7 +182,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
       justifyContent: 'center',
       alignItems: 'center',
       '& .MuiDataGrid-columnHeaderTitle': {
-        fontFamily: "'Manrope', serif",
+        fontFamily: theme.typography.fontFamily,
         fontWeight:"bold",
         fontSize: '12px',
         color: '#fff',
@@ -278,7 +278,7 @@ export const ColumnManagementStyles = {
     background: '#FFFFFF 0% 0% no-repeat padding-box',
     padding: '0',
     borderRadius: '5px',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '12px',
     fontWeight: '500',
     color: '#212121',
@@ -286,7 +286,7 @@ export const ColumnManagementStyles = {
     '&::placeholder': {
       color: '#757575',
       opacity: 1,
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme => theme.typography.fontFamily,
       fontSize: '14px',
     },
   },
@@ -304,7 +304,7 @@ export const ColumnManagementStyles = {
   '& .MuiDataGrid-columnsManagement': {
     padding: '5px 0',
     color: '#424242',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '14px',
     '& .MuiFormControlLabel-root': {
       margin: '0',
@@ -314,7 +314,7 @@ export const ColumnManagementStyles = {
       },
       '& .MuiTypography-root': {
         color: '#424242',
-        fontFamily: "'Manrope', serif",
+        fontFamily: theme => theme.typography.fontFamily,
         fontSize: '12px',
         fontWeight: '500',
         paddingLeft: '10px',
@@ -332,7 +332,7 @@ export const ColumnManagementStyles = {
       },
       '& .MuiTypography-root': {
         color: '#424242',
-        fontFamily: "'Manrope', serif",
+        fontFamily: theme => theme.typography.fontFamily,
         fontSize: '12px',
         fontWeight: '500',
         paddingLeft: '10px',
@@ -340,7 +340,7 @@ export const ColumnManagementStyles = {
     },
     '& .MuiButtonBase-root': {
       color: '#298AFF',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme => theme.typography.fontFamily,
       fontSize: '11px',
       lineHeight: '30px',
       textTransform: 'none',
@@ -377,7 +377,7 @@ export const FilterPanelStyles = {
     border: '1px solid #D6DCE1',
     borderRadius: '4px',
     color: '#212121',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '13px',
     lineHeight: '16px',
     textTransform: 'none',
@@ -389,7 +389,7 @@ export const FilterPanelStyles = {
     border: '1px solid #D6DCE1',
     borderRadius: '4px',
     color: '#212121',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '13px',
     lineHeight: '16px',
     textTransform: 'none',
@@ -406,7 +406,7 @@ export const FilterPanelStyles = {
   },
   '& .MuiFormLabel-root': {
     color: '#757575',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '13px',
     lineHeight: '16px',
     textTransform: 'none',
@@ -414,7 +414,7 @@ export const FilterPanelStyles = {
   },
   '& .MuiButtonBase-root': {
     color: '#298AFF',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '12px',
     lineHeight: '14px',
     textTransform: 'none',
