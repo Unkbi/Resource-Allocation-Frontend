@@ -128,7 +128,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     setFieldValue("Resource", [newValue[newValue.length - 1].value]);
     setTimeout(() => {
       setMultipleResourceError(false);
-      }, 2000);
+      }, 4000);
     return;
     }else{
     setMultipleResourceError(false);
@@ -145,7 +145,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
       setFieldValue("Project", [newValue[newValue.length - 1].value]); 
       setTimeout(() => {
         setMultipleProjectError(false);
-        }, 2000);
+        }, 4000);
         return;
     }else {
       setMultipleProjectError(false);
@@ -178,7 +178,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   />
   {multipleResourceError && (
   <StyledFormHelperText>
-    Only one Resource can be selected.
+    Only one Resource can be selected, when multiple Projects are selected.
   </StyledFormHelperText>
 )}
 </Box>
@@ -205,7 +205,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   />
   {multipleProjectError && (
   <StyledFormHelperText>
-    Only one Project can be selected.
+    Only one Project can be selected, when multiple Resources are selected.
   </StyledFormHelperText>
    )}
    </Box>
