@@ -97,7 +97,7 @@ const AllocationForm = () => {
         weeksObject[`${week}`] = true;
     });
     let cellData;
-    if (view ==="teams"){
+    if (view ==="Teams"){
       cellData = {
         [`${resourceId}-${teamId}-${Id}`]: weeksObject
       };

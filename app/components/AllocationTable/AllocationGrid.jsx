@@ -157,36 +157,74 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       document.removeEventListener('mouseup', handleDocumentKeyUp);
     };
   }, [cellSelectionModel]);
+
+  useEffect(()=>{
+    if(!isOpen){
+      setCellSelectionModel({});
+    }
+  },[isOpen])
   
-   useEffect(() => {
+  useEffect(() => {
     const handleScrollAndFocus = () => {
       if (!apiRef.current || (Object.keys(cellSelectionModel).length === 0 && Object.keys(cellSelectionData).length === 0)) return;
-      const [rowId] = Object.keys(cellSelectionModel).length > 0 
-      ? Object.keys(cellSelectionModel) 
+      const [rowId] = Object.keys(cellSelectionModel).length > 0
+      ? Object.keys(cellSelectionModel)
       : Object.keys(cellSelectionData);
-
-      const [field] = Object.keys(cellSelectionModel).length > 0 
-      ? Object.keys(cellSelectionModel[rowId]) 
+ 
+      const [field] = Object.keys(cellSelectionModel).length > 0
+      ? Object.keys(cellSelectionModel[rowId])
       : Object.keys(cellSelectionData[rowId]);
-      
+     
       const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
       const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
       const rowIndex = visibleRowIds.indexOf(rowId);
       const colIndex = visibleColumns.findIndex(col => col.field === field);
-      apiRef?.current.scrollToIndexes({rowIndex, colIndex});
-      setCoordinates({rowId, field})
+     
       if (rowIndex === -1 || colIndex === -1) {
         return;
       }
-    }
-    handleScrollAndFocus()
+      apiRef.current.scrollToIndexes({ rowIndex, colIndex });
+      setTimeout(() => {
+        if (apiRef.current.getCellElement(rowId, field)) {
+          apiRef.current.setCellFocus(rowId, field);
+          setCellSelectionModel({});
+        }
+      }, 200);
+    };
+    const timeoutId = setTimeout(handleScrollAndFocus, 100);
+   
+    return () => clearTimeout(timeoutId);
   }, [rowState, apiRef, cellSelectionData]);
+  
+  //  useEffect(() => {
+  //   const handleScrollAndFocus = () => {
+  //     if (!apiRef.current || (Object.keys(cellSelectionModel).length === 0 && Object.keys(cellSelectionData).length === 0)) return;
+  //     const [rowId] = Object.keys(cellSelectionModel).length > 0 
+  //     ? Object.keys(cellSelectionModel) 
+  //     : Object.keys(cellSelectionData);
 
-  useEffect(() => {
-    const { rowId, field } = coordinates;
-    apiRef.current.setCellFocus(rowId, field);
-    setCellSelectionModel({})
-  }, [apiRef, coordinates]);
+  //     const [field] = Object.keys(cellSelectionModel).length > 0 
+  //     ? Object.keys(cellSelectionModel[rowId]) 
+  //     : Object.keys(cellSelectionData[rowId]);
+      
+  //     const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
+  //     const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
+  //     const rowIndex = visibleRowIds.indexOf(rowId);
+  //     const colIndex = visibleColumns.findIndex(col => col.field === field);
+  //     apiRef?.current.scrollToIndexes({rowIndex, colIndex});
+  //     setCoordinates({rowId, field})
+  //     if (rowIndex === -1 || colIndex === -1) {
+  //       return;
+  //     }
+  //   }
+  //   handleScrollAndFocus()
+  // }, [rowState, apiRef, cellSelectionData]);
+
+  // useEffect(() => {
+  //   const { rowId, field } = coordinates;
+  //   apiRef.current.setCellFocus(rowId, field);
+  //   setCellSelectionModel({})
+  // }, [apiRef, coordinates]);
 
 
   const initialState = useKeepGroupedColumnsHidden({
