@@ -123,23 +123,32 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   }
 
   const handleResourceChange = (event, newValue) => {
-    if (values.Project.length > 1) {
-      if (newValue.length > 1) {
-        setFieldValue("Resource", [newValue[newValue.length - 1].value]); 
-        return;
-      }
+    if (values.Project.length > 1 && newValue.length > 1) {
+    setMultipleResourceError(true);
+    setFieldValue("Resource", [newValue[newValue.length - 1].value]);
+    setTimeout(() => {
+      setMultipleResourceError(false);
+      }, 4000);
+    return;
+    }else{
+    setMultipleResourceError(false);
     }
     handleChange({
       target: { name: "Resource", value: newValue.map((item) => item.value) },
     });
   };
   
+  
   const handleProjectChange = (event, newValue) => {
-    if (values.Resource.length > 1) {
-      if (newValue.length > 1) {
-        setFieldValue("Project", [newValue[newValue.length - 1].value]); 
+    if (values.Resource.length > 1 && newValue.length > 1) {
+      setMultipleProjectError(true);
+      setFieldValue("Project", [newValue[newValue.length - 1].value]); 
+      setTimeout(() => {
+        setMultipleProjectError(false);
+        }, 4000);
         return;
-      }
+    }else {
+      setMultipleProjectError(false);
     }
     handleChange({
       target: { name: "Project", value: newValue.map((item) => item.value) },
@@ -167,9 +176,14 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
       <TextField {...params} placeholder="Select Resource" variant="outlined" />
     )}
   />
+  {multipleResourceError && (
+  <StyledFormHelperText>
+    Only one Resource can be selected, when multiple Projects are selected.
+  </StyledFormHelperText>
+)}
 </Box>
 
-   <Box sx={{ pb: 2 }}>
+  <Box sx={{ pb: 2 }}>
   <StyledLabel>Project</StyledLabel>
   <Autocomplete
     sx={commonAutocompleteStyles}
@@ -189,9 +203,15 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
       sx={{ fontSize: "12px", "&::placeholder": { fontSize: "10px" } }} />
     )}
   />
-    </Box>
-      <Box>
-        <Box sx={{ pb: 2, pt: 2 ,}}>
+  {multipleProjectError && (
+  <StyledFormHelperText>
+    Only one Project can be selected, when multiple Resources are selected.
+  </StyledFormHelperText>
+   )}
+   </Box>
+
+   <Box>
+       <Box sx={{ pb: 2, pt: 2 ,}}>
           <StyledLabel>Date Range</StyledLabel>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
             <CustomDateRangePicker
@@ -298,7 +318,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           </StyledFormHelperText>
         )}
         </Box>
-      </Box>
+    </Box>
 
   <Box sx={{ pb: 2  ,pt :2 }}>
   <StyledLabel>Comment</StyledLabel>
