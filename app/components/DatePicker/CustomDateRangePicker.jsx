@@ -78,6 +78,7 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
            value= {selectedDate}
            onChange={(newValue) => handleDateChange(newValue)}
            localeText={{ start: '', end: '' }} 
+           format='MM-DD-YYYY'
            slots={{
             textField: CustomTextField
           }}
