@@ -2,7 +2,7 @@ import { getInitialsColor } from '@/app/utils/common';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
-export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
+export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy}) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
       // width: '240px !important',
@@ -245,6 +245,8 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
   },
   '& .firstGroupsRow': {
     backgroundColor: '#E9EFF8 !important' ,
+    fontWeight:groupBy==='project' ? 'bold' :"",
+    color:groupBy==='project' ?'#313F68' : '' ,
   },
   '& .secondGroupsRow': {
     backgroundColor: '#F0F7FF',
@@ -254,6 +256,8 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading}) => ({
   },
   '& .total-effort-cell' : {
      backgroundColor: '#E9EFF8',
+     textAlign :'center',
+     fontWeight: 'bold',
 },'& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
   backgroundColor: '#E9EFF8 !important',
 },

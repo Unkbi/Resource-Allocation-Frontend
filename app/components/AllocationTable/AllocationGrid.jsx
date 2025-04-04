@@ -501,6 +501,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         // }}
         onRowClick={groupBy === 'teams' ? onRowClick : () => null}
         apiRef={apiRef}
+        groupBy ={groupBy}
         loading={loading || !rowState.length}
         disableRowSelectionOnClick
         initialState={initialState}
