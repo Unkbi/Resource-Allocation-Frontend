@@ -83,7 +83,6 @@ function LayoutContent({ children }) {
       {!isPublicRoute &&  <SideBar  sidebarExpanded={sidebarExpanded} toggleSidebar={() => setSidebarExpanded((prev) => !prev)} />}
       <MainContent isLoggedIn={isUserLoginIn} sidebarExpanded={sidebarExpanded}>
         {children}
-        {/* Snackbar outside MainContent to avoid layout issues */}
          {open && <CustomSnackbar
             message={message}
             type={type}
