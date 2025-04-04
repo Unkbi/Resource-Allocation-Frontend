@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
-import userReducer from '../redux/reducers/authReducer';
-import allocationViewReducer from '../redux/reducers/allocationViewReducer';
+import userReducer from './reducers/authReducer';
+import allocationViewReducer from './reducers/allocationViewReducer';
 import teamsReducer from './reducers/teamsReducer';
 import projectsReducer from './reducers/projectsReducer';
 import resourcesReducer from './reducers/resourcesReducer';
@@ -24,3 +24,6 @@ export const makeStore = () => {
     },
   });
 };
+
+export type RootState = ReturnType<ReturnType<typeof makeStore>['getState']>;
+export type AppDispatch = ReturnType<typeof makeStore>['dispatch'];

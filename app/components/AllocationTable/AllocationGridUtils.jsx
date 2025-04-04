@@ -41,8 +41,8 @@ export const getFinalColumns = (
   const handleAddClick = (params) => { 
     dispatch(
       openDialog({
-        title: "Add Allocation",
-        submitButtonText: 'Add',
+        title: "Update Allocation",
+        submitButtonText: 'Update',
         cancelButtonText: 'Cancel',
         formType: "add_allocation",
         initialData: {
@@ -169,6 +169,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
+        cellClassName: params => (groupBy === 'project' ? 'common-NonEditableCells' : ''),
         renderCell: params => {
           if (params.value) {
             return <CustomAvatar value={params.value} showFullName={true} />;
@@ -198,6 +199,12 @@ export const getGroupingColDef = groupBy => ({
 });
 
 export const getCellClassName = (params, updatedRows) => {
+  if (params?.field === 'totalEffort') {
+    return 'total-effort-cell';
+  }
+  // if (params.rowNode?.groupingField === 'project') {
+  //   return 'project-view-projectName';
+  // }
   if (params && params.field && typeof params.field === 'string') {
     if (
       params &&
@@ -265,7 +272,7 @@ export const getCellClassName = (params, updatedRows) => {
     }
   }
   if (params.rowNode?.type === 'group') {
-    return params.rowNode?.groupingField === 'teams'
+    return params.rowNode?.groupingField === 'teams'  || params.rowNode?.groupingField === 'project'
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
   }

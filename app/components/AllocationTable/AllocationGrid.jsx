@@ -87,8 +87,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       
       dispatch(
         openDialog({
-          title: "Add Allocation",
-          submitButtonText: 'Add',
+          title: "Update Allocation",
+          submitButtonText: 'Update',
           cancelButtonText: 'Cancel',
           formType: "add_allocation",
           initialData: {
@@ -473,7 +473,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       }
     });
 
-    return newRow;
+    return  {...newRow , totalEffort: calculateTotalEffort(newRow)};;
   };
 
   const onRowClick = useCallback(
@@ -571,6 +571,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         // }}
         onRowClick={groupBy === 'teams' ? onRowClick : () => null}
         apiRef={apiRef}
+        groupBy ={groupBy}
         loading={loading || !rowState.length}
         disableRowSelectionOnClick
         initialState={initialState}

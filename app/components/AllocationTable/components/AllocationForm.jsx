@@ -30,7 +30,7 @@ const initialValuesMap = {
     Owner: '',
     AllowOvertime: '',
     Location: '',
-    Manager: '',
+    ProjectManager: '',
     Status: "",
     Type: ""
   },

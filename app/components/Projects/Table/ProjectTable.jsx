@@ -31,7 +31,7 @@ const ProjectTable = ({columns, rows, loading}) => {
                 columns: {
                   columnVisibilityModel: {
                     Owner: false, 
-                    Manager: false, 
+                    ProjectManager: false, 
                     Location: false, 
                   },
                 },

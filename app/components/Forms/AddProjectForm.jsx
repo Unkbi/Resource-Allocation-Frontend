@@ -5,6 +5,7 @@ import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import { useSelector } from 'react-redux';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import Project from '@/app/(root)/project/page';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { values, handleChange, handleBlur, errors, touched ,resetForm,setTouched } = formikProps
@@ -21,9 +22,9 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
         Owner: initialData.Owner?.name || '',
-        AllowOvertime: initialData.AllowOvertime ?? '', // Use nullish coalescing
+        AllowOvertime: initialData.AllowOvertime ?? '',
         Location: initialData.Location || '',
-        Manager: initialData.Manager || '',
+        ProjectManager: initialData.ProjectManager || '',
         Name: initialData.Name || '',
         Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
@@ -92,14 +93,14 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           Project Manager 
         </StyledLabel>
         <CustomSelect
-          name="Manager"
+          name="ProjectManager"
           options={resourceTypeOptions}
-          value={values.Manager || []}
+          value={values.ProjectManager || []}
           onChange={handleChange}
           onBlur={handleBlur}
           width={"100%"}
-          error={touched.Manager && Boolean(errors.Manager)}
-          helperText={formikProps.errors.Manager}
+          error={touched.ProjectManager && Boolean(errors.ProjectManager)}
+          helperText={formikProps.errors.ProjectManager}
         />
       </Box>
       <Box sx={{ pb: 2 }}>
