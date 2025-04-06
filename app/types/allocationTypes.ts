@@ -11,8 +11,7 @@ export interface Allocation {
 }
 
 export interface GetAllAllocationsForPeriodPayload {
-  'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-    TeamId: string;
+  'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
     StartDate: string;
     EndDate: string;
   };
@@ -36,5 +35,5 @@ export interface AllocationGridCell {
   teamStatus: string | null;
   teams: string | null;
   totalEffort: number | null;
-  [key: string]: AllocationGridCellData | string | number | null;
+  [key: string]: AllocationGridCellData | string | number | boolean | null;
 }
