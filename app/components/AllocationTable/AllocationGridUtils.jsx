@@ -245,6 +245,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
+        cellClassName: () => (groupBy === 'project' ? 'common-NonEditableCells' : ''),
         renderCell: (params) => {
           return params.value ? (
             <ResourceCellWithMenu
