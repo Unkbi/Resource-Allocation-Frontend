@@ -1,7 +1,7 @@
 export interface Allocation {
   ProjectName: string | null;
   Id: string;
-  Manager: string | null;
+  ProjectManager: string | null;
   Period: string;
   Resource: string;
   Duration: string | null;
