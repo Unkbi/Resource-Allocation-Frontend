@@ -161,7 +161,7 @@ export const fetchAllProjectAllocations =
             result?.value?.result?.payload &&
             result?.value?.project
           ) {
-            formatAllocations(
+            return formatAllocations(
               result.value.result.payload,
               result.value.project
             );
