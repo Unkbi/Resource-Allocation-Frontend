@@ -60,7 +60,7 @@ export default function TeamAllocation() {
     {
       field: 'teams',
       headerName: 'Teams Name',
-      width: 200,
+      width: 201,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
       primaryColumn: true,
