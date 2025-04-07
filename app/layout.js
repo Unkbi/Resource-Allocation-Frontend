@@ -35,7 +35,7 @@ function LayoutContent({ children }) {
   const router = useRouter();
   const dispatch = useDispatch();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-  const { open, message, type, position } = useSelector(state => state.toast);
+  const { open } = useSelector(state => state.toast);
 
   useEffect(() => {
     setIsClient(true); 
@@ -84,10 +84,7 @@ function LayoutContent({ children }) {
       <MainContent isLoggedIn={isUserLoginIn} sidebarExpanded={sidebarExpanded}>
         {children}
          {open && <CustomSnackbar
-            message={message}
-            type={type}
-            open={open}
-            position={position}
+            sidebarExpanded={sidebarExpanded}
           />}
       </MainContent>
       <MuiXLicense />
