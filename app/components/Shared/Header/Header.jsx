@@ -38,8 +38,7 @@ const MainAppBar = styled(AppBar, {
   background: '#EBEFFC',
   '& h6': {
     color: theme.custom.primaryColor,
-    fontFamily: "'Manrope', serif",
-    // fontFamily: "Open Sans",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: 'SemiBold',
     fontSize: '18px',
     lineHeight: '22px',
@@ -135,7 +134,7 @@ const Header = ({sidebarExpanded}) => {
     {
       icon: '/images/icons/AllocationIcon.svg',
       alt: 'Allocation Icon',
-      title: 'Add Allocation',
+      title: 'Update Allocation',
       type: 'add_allocation',
     },
     {
@@ -169,7 +168,7 @@ const Header = ({sidebarExpanded}) => {
     dispatch(
       openDialog({
         title: title,
-        submitButtonText: 'Add',
+        submitButtonText:formType === 'add_allocation' ? 'Update' : 'Add',
         cancelButtonText: 'Cancel',
         formType: formType,
         initialData: null,

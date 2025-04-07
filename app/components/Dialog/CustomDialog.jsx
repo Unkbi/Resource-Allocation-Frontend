@@ -39,7 +39,7 @@ const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   margin: 0,
   padding: theme.spacing(2, 2.5),
   height: '52px',
-  fontFamily: 'Open Sans',
+  fontFamily: theme.typography.fontFamily,
   fontWeight: 600,
   fontSize: '15px',
   lineHeight: 'normal',
@@ -64,7 +64,7 @@ const StyledSubmitButton = styled(Button)(({ theme }) => ({
   width: '86px',
   height: '36px',
   borderRadius: '4px',
-  fontFamily: 'Open Sans',
+  fontFamily: theme.typography.fontFamily,
   fontWeight: '700',
   fontSize: '12px',
   lineHeight: '100%',
@@ -79,7 +79,7 @@ const StyledCancelButton = styled(Button)(({ theme }) => ({
   borderBlockColor: '#1C2D5F',
   borderRadius: '4px',
   borderWidth: '1px',
-  fontFamily: 'Open Sans',
+  fontFamily: theme.typography.fontFamily,
   fontWeight: '700',
   fontSize: '12px',
   lineHeight: '100%',
@@ -88,13 +88,14 @@ const StyledCancelButton = styled(Button)(({ theme }) => ({
   textTransform: 'none'
 }));
 
-const CustomDialog = ({ children, onSubmit }) => {
+const CustomDialog = ({ children, onSubmit, onCancel }) => {
   const dispatch = useDispatch();
   const dialogState = useSelector(state => state.globalDialog);
   const { isOpen, title, submitButtonText, cancelButtonText } = dialogState;
 
   const handleClose = () => {
     dispatch(closeDialog());
+    onCancel()
   };
 
   return (

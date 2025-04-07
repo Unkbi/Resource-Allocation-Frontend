@@ -15,7 +15,7 @@ export const getResourcesAgainstTeams = createAsyncThunk(
         `${API_PROJECT_PORTFOLIO}/GetTeamResources`,
         postData
       );
-     
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -50,7 +50,7 @@ export const getTeamAllocations = createAsyncThunk(
         `${API_PROJECT_PORTFOLIO}/GetTeamAllocationsForPeriod`,
         postData
       );
-     
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -60,19 +60,23 @@ export const getTeamAllocations = createAsyncThunk(
   }
 );
 
-export const postTeamResource = createAsyncThunk(
-  'team/addResource',
-  async (postData, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(
-        `${API_PROJECT_PORTFOLIO}/TeamResource`,
-        postData
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data || 'Failed to add resource to team'
-      );
-    }
-  }
-);
+/*
+ * Not being used currently in application
+ * Uncomment the following code if you want to handle postTeamResource API call
+ */
+// export const postTeamResource = createAsyncThunk(
+//   'team/addResource',
+//   async (postData, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstance.post(
+//         `${API_PROJECT_PORTFOLIO}/TeamResource`,
+//         postData
+//       );
+//       return response.data;
+//     } catch (error) {
+//       return rejectWithValue(
+//         error.response?.data || 'Failed to add resource to team'
+//       );
+//     }
+//   }
+// );

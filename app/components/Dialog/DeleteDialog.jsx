@@ -5,7 +5,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 const DeleteDialog = ({ open, onCancel, onConfirm, title, children }) => {
   return (
     <Dialog open={open} onCancel={onCancel}>
-      <Box sx={{ textAlign: "center", fontFamily: "Manrope" }}>
+      <Box sx={{ textAlign: "center", fontFamily: theme => theme.typography.fontFamily }}>
         <DialogTitle sx={{ fontWeight: "bold", fontSize: "1.25rem", pt: 4, pl: 3.5, pl: 3.5 }}>
           {title || "Are you sure you want to delete?"}
         </DialogTitle>

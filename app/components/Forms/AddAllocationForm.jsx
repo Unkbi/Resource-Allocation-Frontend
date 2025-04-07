@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText } from "@mui/material"
+import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText, Autocomplete } from "@mui/material"
 import CustomSelect from "../Select/CustomSelect"
 import StyledLabel from "../Label/StyledLabel"
 import { StyledCommentInput, StyledFormHelperText, StyledInput } from "../Input/StyledInput"
@@ -21,6 +21,33 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const [multipleProjectError, setMultipleProjectError] = useState(false);
   const [closeResourceMenu, setCloseResourceMenu] = useState(false);
   const [closeProjectMenu, setCloseProjectMenu] = useState(false);
+
+  const commonAutocompleteStyles = {
+    "& .MuiInputBase-root": { fontSize: "12px" },
+    "& .MuiAutocomplete-tag": { fontSize: "10px", padding: "2px 5px" },
+    "& input": { fontSize: "12px" },
+    "& .MuiAutocomplete-popper": { fontSize: "12px" },
+    "& .MuiAutocomplete-option": { fontSize: "12px", padding: "4px 10px" },
+  };
+  
+  const commonSlotProps = {
+    popper: {
+      modifiers: [
+        {
+          name: "preventOverflow",
+          options: {
+            boundary: "window",
+          },
+        },
+      ],
+    },
+    paper: {
+      sx: {
+        fontSize: "12px",
+      },
+    },
+  };
+  
 
   useEffect(() => {
     if (initialData) {
@@ -95,88 +122,96 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     handleBlur(e)
   }
 
-  const handleResourceDropdownChange = (e) => {
-    const selected = e.target.value;
-    if (values.Project.length > 1 && selected.length > 1) {
-      // Do not allow multiple resources to be selected.
-      setMultipleResourceError(true);
-      setCloseResourceMenu(true);
-      setTimeout(() => {
-        setMultipleResourceError(false);
-        setCloseResourceMenu(false);
-      }, 2000);
-      return;
+  const handleResourceChange = (event, newValue) => {
+    if (values.Project.length > 1 && newValue.length > 1) {
+    setMultipleResourceError(true);
+    setFieldValue("Resource", [newValue[newValue.length - 1].value]);
+    setTimeout(() => {
+      setMultipleResourceError(false);
+      }, 4000);
+    return;
+    }else{
+    setMultipleResourceError(false);
     }
-    handleChange(e);
+    handleChange({
+      target: { name: "Resource", value: newValue.map((item) => item.value) },
+    });
   };
-
-  const handleProjectDropdownChange = (e) => {
-    const selected = e.target.value;
-    if (values.Resource.length > 1 && selected.length > 1) {
-      // Do not allow multiple projects to be selected.
+  
+  
+  const handleProjectChange = (event, newValue) => {
+    if (values.Resource.length > 1 && newValue.length > 1) {
       setMultipleProjectError(true);
-      setCloseProjectMenu(true);
+      setFieldValue("Project", [newValue[newValue.length - 1].value]); 
       setTimeout(() => {
         setMultipleProjectError(false);
-        setCloseProjectMenu(false);
-      }, 2000);
-      return;
+        }, 4000);
+        return;
+    }else {
+      setMultipleProjectError(false);
     }
-    handleChange(e);
+    handleChange({
+      target: { name: "Project", value: newValue.map((item) => item.value) },
+    });
   };
 
   return (
-    <Box>
-      <Box sx={{ pb: 2 }}>
-        <StyledLabel>Resource</StyledLabel>
-        <CustomSelect
-          name="Resource"
-          options={resourceTypeOptions}
-          value={values.Resource || []}
-          onChange={handleResourceDropdownChange}
-          onBlur={handleBlur}
-          multiple
-          error={multipleResourceError || (formikProps.touched.Resource && Boolean(formikProps.errors.Resource))}
-          helperText={multipleResourceError ? "Please select only one option." : formikProps.errors.Resource}
-          forceClose={closeResourceMenu}
-        />
-      </Box>
-      <Box sx={{ pb: 2 }}>
-        <StyledLabel>Project</StyledLabel>
-        <CustomSelect
-          name="Project"
-          options={projectOptions}
-          value={values.Project || []}
-          onChange={handleProjectDropdownChange}
-          onBlur={handleBlur}
-          multiple
-          error={multipleProjectError || (formikProps.touched.Project && Boolean(formikProps.errors.Project))}
-          helperText={multipleProjectError ? "Please select only one option." :formikProps.errors.Project}
-          forceClose={closeProjectMenu}
-        />
-      </Box>
-      <Box>
-        <Box
-          sx={{
-            background: "rgba(28, 45, 95, 0.05)",
-            height: "33px",
-            width: "340px",
-            p: 1,
-          }}
-        >
-          <Typography
-            sx={{
-              color: '#313F68',
-              fontFamily: 'Open Sans',
-              fontSize: '12px',
-              fontStyle: 'normal',
-              fontWeight: '700',
-            }}
-          >
-            Add Bulk Allocation
-          </Typography>
-        </Box>
-        <Box sx={{ pb: 2, pt: 2 }}>
+  <Box>
+  <Box sx={{ pb: 2 }}>
+  <StyledLabel>Resource</StyledLabel>
+  <Autocomplete
+    sx= {commonAutocompleteStyles}
+    multiple
+    size="small"
+    options={resourceTypeOptions || []} 
+    getOptionLabel={(option) => option?.label || ""} 
+    value={
+      Array.isArray(values.Resource)
+        ? resourceTypeOptions?.filter((option) => values.Resource.includes(option.value)) || []
+        : []
+    }
+    onChange={handleResourceChange}
+    slotProps={commonSlotProps}
+    renderInput={(params) => (
+      <TextField {...params} placeholder="Select Resource" variant="outlined" />
+    )}
+  />
+  {multipleResourceError && (
+  <StyledFormHelperText>
+    Only one Resource can be selected, when multiple Projects are selected.
+  </StyledFormHelperText>
+)}
+</Box>
+
+  <Box sx={{ pb: 2 }}>
+  <StyledLabel>Project</StyledLabel>
+  <Autocomplete
+    sx={commonAutocompleteStyles}
+    multiple
+    size="small"
+    options={projectOptions || []} 
+    getOptionLabel={(option) => option?.label || ""}
+    value={
+      Array.isArray(values.Project)
+        ? projectOptions?.filter((option) => values.Project.includes(option.value)) || []
+        : []
+    }
+    onChange={handleProjectChange}
+    slotProps={commonSlotProps}
+    renderInput={(params) => (
+      <TextField {...params} placeholder="Select Project" variant="outlined"
+      sx={{ fontSize: "12px", "&::placeholder": { fontSize: "10px" } }} />
+    )}
+  />
+  {multipleProjectError && (
+  <StyledFormHelperText>
+    Only one Project can be selected, when multiple Resources are selected.
+  </StyledFormHelperText>
+   )}
+   </Box>
+
+   <Box>
+       <Box sx={{ pb: 2, pt: 2 ,}}>
           <StyledLabel>Date Range</StyledLabel>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
             <CustomDateRangePicker
@@ -192,10 +227,31 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
             />
           </Box>
         </Box>
-        <Box sx={{ pb: 2, pt: 2 }}>
-          <Box sx={{pb: 2 ,pr:5,display:"flex" ,justifyContent :'space-between',alignItems:'center'}}>
+        <Box
+          sx={{
+            background: "rgba(28, 45, 95, 0.05)",
+            height: "33px",
+            width: "340px",
+            p: 1,
+          }}
+        >
+          <Typography
+            sx={{
+              color: '#313F68',
+              fontFamily: theme => theme.typography.fontFamily,
+              fontSize: '12px',
+              fontStyle: 'normal',
+              fontWeight: '700',
+            }}
+          >
+            Add Bulk Allocation
+          </Typography>
+        </Box>
+        <Box sx={{ pb: 2, pt: 2,ml :1/2, }}>
+          <Box sx={{pb: 1/2,pr:2,pt:1,display:"flex" ,justifyContent :'space-between',alignItems:'center'}}>
+        <Box sx={{display:'flex',justifyContent :'space-between' ,gap:'153px'}}>
         <StyledLabel>Allocation Value</StyledLabel>
-        <StyledLabel>Custom</StyledLabel></Box>
+        <StyledLabel>Custom</StyledLabel></Box></Box>
           <RadioGroup
             row
             name="capacity-radio-group"
@@ -262,7 +318,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           </StyledFormHelperText>
         )}
         </Box>
-      </Box>
+    </Box>
 
   <Box sx={{ pb: 2  ,pt :2 }}>
   <StyledLabel>Comment</StyledLabel>

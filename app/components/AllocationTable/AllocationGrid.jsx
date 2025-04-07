@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+  gridExpandedSortedRowIdsSelector,
+  gridVisibleColumnDefinitionsSelector,
   useGridApiRef,
   useKeepGroupedColumnsHidden,
 } from '@mui/x-data-grid-premium';
@@ -47,7 +49,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const [updatedRows, setUpdatedRows] = useState([]);
   const { open, message, type, position } = useSelector(state => state.toast);
   const { rowState } = useSelector(state => state.dataGrid);
-  const { expandRowId } = useSelector(state => state.allocationView);
+  const { expandRowId, cellSelectionData, view} = useSelector(state => state.allocationView);
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
@@ -57,8 +59,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const { isOpen } = useSelector((state) => state.globalDialog);
 
   const handleKeyUp = (e) => {
-    
-    if(cellSelectionModel && Object.keys(cellSelectionModel).length > 0 && apiRef.current.getSelectedCellsAsArray().length >= 2) {
+    if(cellSelectionModel && Object.keys(cellSelectionModel).length > 0 && apiRef.current.getSelectedCellsAsArray().length >= 2 && !cellSelectionModel['restoreFocus'] ) {
       const resourcesSelected = [];
       let StartDate, EndDate;
       Object.entries(cellSelectionModel).forEach(([row, weeks]) => {
@@ -80,8 +81,8 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       
       dispatch(
         openDialog({
-          title: "Add Allocation",
-          submitButtonText: 'Add',
+          title: "Update Allocation",
+          submitButtonText: 'Update',
           cancelButtonText: 'Cancel',
           formType: "add_allocation",
           initialData: {
@@ -129,9 +130,10 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
 
   useEffect(() => {
     try {
-      if (groupBy === 'teams' && expandRowId !== null && rowState?.length) {
-        apiRef.current.setRowChildrenExpansion(expandRowId, true);
-        dispatch(setExpandRowId(null));
+      if (groupBy === 'teams' && expandRowId?.length && rowState?.length) {
+        expandRowId.forEach(rowId => {
+          apiRef.current.setRowChildrenExpansion(rowId, true);
+        });
       }
     } catch (error) {
       console.warn('Error in setting row expansion', error);
@@ -150,12 +152,34 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       document.removeEventListener('mouseup', handleDocumentKeyUp);
     };
   }, [cellSelectionModel]);
+
   
   useEffect(() => {
-    if(!isOpen) {
-      setCellSelectionModel({});
-    }
-  },[isOpen])
+    const handleScrollAndFocus = () => {
+      if (!apiRef.current || (Object.keys(cellSelectionModel).length === 0 && Object.keys(cellSelectionData).length === 0)) return;
+      const [rowId] = Object.keys(cellSelectionModel).length > 0
+      ? Object.keys(cellSelectionModel)
+      : Object.keys(cellSelectionData);
+ 
+      const [field] = Object.keys(cellSelectionModel).length > 0
+      ? Object.keys(cellSelectionModel[rowId])
+      : Object.keys(cellSelectionData[rowId]);
+     
+      const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
+      const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
+      const rowIndex = visibleRowIds.indexOf(rowId);
+      const colIndex = visibleColumns.findIndex(col => col.field === field);
+     
+      if (rowIndex === -1 || colIndex === -1) {
+        return;
+      }
+      apiRef.current.scrollToIndexes({ rowIndex, colIndex });
+      setCellSelectionModel(cellSelectionData)
+    };
+    const timeoutId = setTimeout(handleScrollAndFocus, 100);
+    setExpandRowId(null)
+    return () => clearTimeout(timeoutId);
+  }, [rowState, apiRef, cellSelectionData, view]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -335,7 +359,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       }
     }
   };
-
+  
   const handleCellUpdate = (newRow, oldRow) => {
     Object.keys(newRow).forEach(key => {
       if (key.startsWith('W')) {
@@ -403,7 +427,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       }
     });
 
-    return newRow;
+    return  {...newRow , totalEffort: calculateTotalEffort(newRow)};;
   };
 
   const onRowClick = useCallback(
@@ -501,6 +525,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         // }}
         onRowClick={groupBy === 'teams' ? onRowClick : () => null}
         apiRef={apiRef}
+        groupBy ={groupBy}
         loading={loading || !rowState.length}
         disableRowSelectionOnClick
         initialState={initialState}
