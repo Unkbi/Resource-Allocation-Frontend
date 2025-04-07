@@ -58,7 +58,8 @@ export default function ProjectAllocation() {
     {
       field: 'project',
       headerName: 'Project Name',
-      width: 200,
+      minWidth: 200,
+      flex:1,
       headerClassName: 'prime-header',
       // cellClassName: getCellClassName,
       cellClassName: () => 'project-view-projectName',
@@ -95,7 +96,8 @@ export default function ProjectAllocation() {
     {
       field: 'projectSponsor',
       headerName: 'Project Sponsor',
-      width: 148,
+      minWidth: 148,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -109,7 +111,8 @@ export default function ProjectAllocation() {
     {
       field: 'projectManager',
       headerName: 'Project Manager',
-      width: 148,
+      minWidth: 148,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -122,7 +125,8 @@ export default function ProjectAllocation() {
     },
     { field: 'projectStatus',
       headerName: 'Status',
-      width: 84,
+      minWidth: 84,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -135,7 +139,8 @@ export default function ProjectAllocation() {
     {
       field: 'projectLocation',
       headerName: 'Location',
-      width: 92,
+      minWidth: 92,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -149,7 +154,8 @@ export default function ProjectAllocation() {
     {
       field: 'projectType',
       headerName: 'Project Type',
-      width: 116,
+      minWidth: 116,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -163,7 +169,9 @@ export default function ProjectAllocation() {
     { 
       field: "projectOvertimeAllowed",
       headerName: "Overtime?",
-      width: 102, // min-width without eliding.
+      // width: 102, // min-width without eliding.
+      minWidth: 102,
+      flex:1,
       type: 'boolean',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -177,7 +185,8 @@ export default function ProjectAllocation() {
     {
       field: "projectCost",
       headerName: "Cost",
-      width: 90,
+      minWidth: 90,
+      flex:1,
       type: 'string ',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -191,7 +200,8 @@ export default function ProjectAllocation() {
     {
       field: "projectCurrency", 
       headerName: "Currency",
-      width: 100,
+      minWidth: 100,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -205,7 +215,8 @@ export default function ProjectAllocation() {
     {
       field: 'projectStartDate',
       headerName: 'Start Date',
-      width: 100,
+      minWidth: 100,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -219,7 +230,8 @@ export default function ProjectAllocation() {
     {
       field: 'projectEndDate',
       headerName: 'End Date',
-      width: 100,
+      minWidth: 100,
+      flex:1,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -233,13 +245,14 @@ export default function ProjectAllocation() {
     {
       field: 'totalEffort',
       headerName: 'Total Effort',
-      width: 106,
+      minWidth: 106,
+      flex:1,
       type: 'number',
       sortable: false,
       cellClassName: getCellClassName,
       headerClassName: 'secondary-header',
       // cellClassName: 'secondary-cell',
-      headerAlign: 'left',
+      // headerAlign: 'left',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);

@@ -66,7 +66,8 @@ export default function TeamAllocation() {
     {
       field: 'teams',
       headerName: 'Teams Name',
-      width: 201,
+      minWidth: 201,
+      flex:2,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
       primaryColumn: true,
@@ -141,7 +142,8 @@ export default function TeamAllocation() {
     {
       field: 'teamStatus',
       headerName: 'Status',
-      width: 90,
+      minWidth: 90,
+      flex:0.5,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -153,7 +155,8 @@ export default function TeamAllocation() {
     {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
-      width: 180,
+      minWidth: 180,
+      flex:1.5,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -165,7 +168,8 @@ export default function TeamAllocation() {
     {
       field: 'resourceType',
       headerName: 'Resource Type',
-      width: 135,
+      minWidth: 135,
+      flex:0.5,
       sortable: false,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',

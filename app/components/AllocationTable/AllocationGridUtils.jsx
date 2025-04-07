@@ -114,7 +114,8 @@ export const getFinalColumns = (
       {
         field: 'resource',
         headerName: 'Resource',
-        width: 201,
+        minWidth: 201,
+        flex:1.5,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         sortable: false,
@@ -132,7 +133,8 @@ export const getFinalColumns = (
       {
         field: 'project',
         headerName: 'Project',
-        width: 200,
+        minWidth: 200,
+        flex:1.5,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         sortable: groupBy == 'project' ? true : false,

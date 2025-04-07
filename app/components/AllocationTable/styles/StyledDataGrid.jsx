@@ -132,7 +132,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
   },
   '& .MuiDataGrid-row': {
     '&:hover': {
-      backgroundColor: '#FBFCFE',
+      backgroundColor: '#FFFFFF',
       '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
         backgroundColor: (!loading)&& (groupBy==='project' ? '#F1F6FF !important' : '#F7FBFF !important'),
       },
