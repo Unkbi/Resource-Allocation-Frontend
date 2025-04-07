@@ -1,3 +1,5 @@
+import { AllocationGridCell } from './allocationTypes';
+
 export interface Project {
   ProjectManager: string | null;
   CostCurrency: string | null;
@@ -14,4 +16,17 @@ export interface Project {
   Location: string | null;
   __parent__: string | null;
   Status: string | null;
+}
+
+export interface ProjectState {
+  projects: string | null; //Change this
+  allocations: AllocationGridCell[];
+  loading: boolean;
+  dataProcessing: false;
+  error: string | null;
+  updating: boolean;
+  calendarDate: {
+    startDate: string | null;
+    endDate: string | null;
+  };
 }
