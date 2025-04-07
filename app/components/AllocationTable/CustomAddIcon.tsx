@@ -1,11 +1,17 @@
 import AddIcon from '@mui/icons-material/Add';
 import { Box } from '@mui/material';
 
+interface CustomAddIconProps {
+  value?: string | null;
+  count?: number | null;
+  onClick?: () => void;
+}
+
 export const CustomAddIcon = ({
   value,
   count = null,  
   onClick = () => {}
-}) => {
+} : CustomAddIconProps) => {
   return (
     <Box
       sx={{
@@ -36,13 +42,12 @@ export const CustomAddIcon = ({
         alignItems: 'center',
         gap: 1,
       }}>
-        {count !== null && count !== "" && (
+        {count !== null && (
           <>
             <Box 
               className="count"
               component="span"
               sx={{
-                display: 'block',
                 flex: '0 0 auto',
                 display: "flex",
                 width: "24px",

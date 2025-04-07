@@ -1,3 +1,4 @@
+import { ApiResponse } from '.';
 import { AllocationGridCell } from './allocationTypes';
 
 export interface Project {
@@ -19,7 +20,7 @@ export interface Project {
 }
 
 export interface ProjectState {
-  projects: string | null; //Change this
+  projects: ApiResponse<Project[]> | {} | null; //Change this
   allocations: AllocationGridCell[];
   loading: boolean;
   dataProcessing: false;
