@@ -37,7 +37,7 @@ const MainBox = styled(Box)(({ theme }) => ({
             width: "360px",
             margin: "0 auto",
             "& h4": {
-                fontFamily: "'Manrope', serif",
+                fontFamily: theme.typography.fontFamily,
                 color: "#000",
                 fontSize: "32px",
                 fontWeight: "800",
@@ -48,12 +48,12 @@ const MainBox = styled(Box)(({ theme }) => ({
                 fontSize: "15px",
                 fontWeight: "400",
                 marginBottom: "20px",
-                fontFamily: "'Manrope', serif",
+                fontFamily: theme.typography.fontFamily,
             }
         },
         "& .forgot": {
             textAlign: "right",
-            fontFamily: "'Manrope', serif",
+            fontFamily: theme.typography.fontFamily,
             fontWeight: "600",
             fontSize: "14px",
             lineHeight: "17px",
@@ -66,7 +66,7 @@ const MainBox = styled(Box)(({ theme }) => ({
             borderRadius: "4px",
             height: "48px",
             color: "#FFFFFF",
-            fontFamily: "'Manrope', serif",
+            fontFamily: theme.typography.fontFamily,
             fontWeight: "700",
             fontSize: "15px",
             lineHeight: "18px",
@@ -81,7 +81,7 @@ const MainBox = styled(Box)(({ theme }) => ({
             boxShadow: "0 6px 20px 0 rgba(0, 0, 0, 0.04)",
             height: "48px",
             color: "#424242",
-            fontFamily: "'Manrope', serif",
+            fontFamily: theme.typography.fontFamily,
             fontWeight: "600",
             fontSize: "15px",
             lineHeight: "18px",
@@ -94,7 +94,7 @@ const MainBox = styled(Box)(({ theme }) => ({
             borderRadius: "3px",
             border: "none",
             color: "#142B51",
-            fontFamily: "'Manrope', serif",
+            fontFamily: theme.typography.fontFamily,
             fontWeight: "600",
             fontSize: "15px",
             lineHeight: "18px",
@@ -104,7 +104,7 @@ const MainBox = styled(Box)(({ theme }) => ({
         },
         "& .noAccount": {
             color: "#142B51",
-            fontFamily: "'Manrope', serif",
+            fontFamily: theme.typography.fontFamily,
             fontWeight: "500",
             fontSize: "14px",
             lineHeight: "17px",
@@ -115,7 +115,7 @@ const MainBox = styled(Box)(({ theme }) => ({
             }
         },
         "& .orText": {
-            fontFamily: "'Manrope', serif",
+            fontFamily: theme.typography.fontFamily,
             fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
@@ -150,7 +150,7 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#FFFFFF 0% 0% no-repeat padding-box",
                 padding: "2px 12px 3px 12px",
                 borderRadius: "5px",
-                fontFamily: "'Manrope', serif",
+                fontFamily: theme.typography.fontFamily,
                 fontSize: "14px",
                 fontWeight: "normal",
                 color: "#212121",
@@ -158,7 +158,7 @@ const MainBox = styled(Box)(({ theme }) => ({
                 "&::placeholder": {
                     color: "#424242",
                     opacity: 1,
-                    fontFamily: "'Manrope', serif",
+                    fontFamily: theme.typography.fontFamily,
                     fontSize: "14px"
                 },
             },

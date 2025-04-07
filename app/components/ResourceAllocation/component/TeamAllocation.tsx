@@ -7,6 +7,7 @@ import {
   fetchResourcesAgainstTeams,
 } from '@/app/redux/actions/fetchTeamsAction';
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { Tooltip } from '@mui/material';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
@@ -18,6 +19,20 @@ export default function TeamAllocation() {
   const { teams, resources, loading, dataProcessing, calendarDate } =
     useSelector((state: RootState) => state.teams);
   const { startDate, endDate } = calendarDate || {};
+
+  const handleAddClick = (params: GridCellParams) => {
+    dispatch(
+      openDialog({
+        title: 'Add Allocation',
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: 'add_allocation',
+        initialData: {
+          Project: params.value,
+        },
+      })
+    );
+  };
 
   useEffect(() => {
     if (!teams?.result?.length) {
@@ -51,7 +66,7 @@ export default function TeamAllocation() {
     {
       field: 'teams',
       headerName: 'Teams Name',
-      width: 200,
+      width: 201,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
       primaryColumn: true,
@@ -109,6 +124,7 @@ export default function TeamAllocation() {
                   alignItems: 'center',
                   color: '#F1F1F1',
                   marginTop: '13px',
+                  marginLeft: '8px',
                   borderRadius: '4px',
                   fontSize: '12px',
                   fontWeight: '600',
@@ -125,9 +141,10 @@ export default function TeamAllocation() {
     {
       field: 'teamStatus',
       headerName: 'Status',
-      width: 100,
+      width: 90,
       type: 'string',
       isEditable: false,
+      sortable: false,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
         return team ? <span>{team?.Status ?? 'N/A'}</span> : null;
@@ -136,9 +153,10 @@ export default function TeamAllocation() {
     {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
-      width: 150,
+      width: 180,
       type: 'string',
       isEditable: false,
+      sortable: false,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
         return team ? <span>{team?.AllocationManager ?? 'N/A'}</span> : null;
@@ -147,7 +165,7 @@ export default function TeamAllocation() {
     {
       field: 'resourceType',
       headerName: 'Resource Type',
-      width: 200,
+      width: 135,
       sortable: false,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',

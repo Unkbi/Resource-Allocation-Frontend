@@ -6,7 +6,7 @@ const StyledLabel = styled(Typography)(({ theme }) => ({
   color: '#1C2D5F',
   fontWeight: 600,
   fontSize: '12px',
-  fontFamily: 'Open Sans',
+  fontFamily: theme.typography.fontFamily,
   fontStyle: 'normal',
   lineHeight: '16px',
   paddingBottom: '5px',

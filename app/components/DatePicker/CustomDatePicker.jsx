@@ -28,7 +28,7 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
   width: '160px',
   '& .MuiInputBase-root': {
     height: '36px',
-    fontFamily: 'Open Sans',
+    fontFamily: theme.typography.fontFamily,
     fontSize: '12px',
     fontWeight: 500,
     border: error && theme.palette.error.main,
