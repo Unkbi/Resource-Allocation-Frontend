@@ -100,7 +100,7 @@ const formatAllocations = (
           period: formattedDate,
         };
       }
-      console.log('newAllocation : ', newAllocation);
+
       newAllocation.totalEffort = allWeeks.reduce(
         (sum, week) =>
           sum + ((newAllocation[week] as AllocationGridCellData).value ?? 0),
