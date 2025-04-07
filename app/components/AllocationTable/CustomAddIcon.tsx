@@ -2,24 +2,32 @@ import AddIcon from '@mui/icons-material/Add';
 import { Box } from '@mui/material';
 import { Tooltip } from '@mui/material';
 
+interface CustomAddIconProps {
+  value?: string | React.ReactNode | null;
+  count?: number | null;
+  onClick?: () => void;
+  menu?: React.ReactNode | null;
+  columnType?: 'teams' | 'resource';
+}
+
 export const CustomAddIcon = ({
-  value,
+  value = null,
   count = null,
   onClick = () => {},
   menu = null,
-  columnType = "teams",
-}) => {
-  const isResourceColumn = columnType === "resource";
+  columnType = 'teams',
+}: CustomAddIconProps) => {
+  const isResourceColumn = columnType === 'resource';
   return (
-    <Tooltip 
-      title={typeof value === 'string' ? value : ''} 
-      arrow 
+    <Tooltip
+      title={typeof value === 'string' ? value : ''}
+      arrow
       placement="right"
       slotProps={{
         popper: {
           modifiers: [
             {
-              name: "offset",
+              name: 'offset',
               options: {
                 offset: [0, 10],
               },
@@ -50,21 +58,20 @@ export const CustomAddIcon = ({
           },
         }}
       >
-          <Box
-            className="text"
-            sx={{
-              flex: '1 1 auto',
-              minWidth: 0,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              paddingRight:
-                !isResourceColumn && count !== null ? '35px' : '0px',
-              transition: 'padding-right 0.2s',
-            }}
-          >
-            {value}
-          </Box>
+        <Box
+          className="text"
+          sx={{
+            flex: '1 1 auto',
+            minWidth: 0,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            paddingRight: !isResourceColumn && count !== null ? '35px' : '0px',
+            transition: 'padding-right 0.2s',
+          }}
+        >
+          {value}
+        </Box>
         <Box
           className="icon-overlay"
           sx={{
@@ -101,7 +108,7 @@ export const CustomAddIcon = ({
           {menu}
         </Box>
 
-        {count !== null && count !== '' && (
+        {count !== null && (
           <Box
             className="count"
             sx={{
@@ -128,6 +135,5 @@ export const CustomAddIcon = ({
         )}
       </Box>
     </Tooltip>
-
   );
 };

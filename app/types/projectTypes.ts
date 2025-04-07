@@ -1,3 +1,6 @@
+import { ApiResponse } from '.';
+import { AllocationGridCell } from './allocationTypes';
+
 export interface Project {
   ProjectManager: string | null;
   CostCurrency: string | null;
@@ -14,4 +17,25 @@ export interface Project {
   Location: string | null;
   __parent__: string | null;
   Status: string | null;
+}
+
+export interface ProjectState {
+  projects: ApiResponse<Project[]> | {} | null; //Change this
+  allocations: AllocationGridCell[];
+  loading: boolean;
+  dataProcessing: false;
+  error: string | null;
+  updating: boolean;
+  calendarDate: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+}
+
+export interface GetProjectAllocationsForPeriodPayload {
+  'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
+    Project: string;
+    StartDate: string;
+    EndDate: string;
+  };
 }

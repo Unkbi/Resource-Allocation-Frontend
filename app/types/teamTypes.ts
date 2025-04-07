@@ -44,3 +44,10 @@ export interface TeamState {
   error: string | null;
   calendarDate: CalendarDate | null;
 }
+
+export interface TeamResourceResponse {
+  id: string; // Team ID
+  teamStatus: 'fulfilled' | 'rejected'; // Status of the team resource fetch
+  teamAllocationManager: string | null; // Team allocation manager (nullable)
+  resource: Resource[]; // Array of resources
+}
