@@ -21,6 +21,43 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
     // width: '240px',
     backgroundColor: !loading && '#F1F6FF',
     },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="project"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="project"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="resourceType"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamStatus"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamAllocationManager"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamAllocationManager"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+    
   //  '& .MuiDataGrid-row:hover': {
   //   backgroundColor: 'inherit !important',
   //   },
@@ -97,7 +134,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
     '&:hover': {
       backgroundColor: '#FBFCFE',
       '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
-        backgroundColor: !loading &&'#F1F6FF !important',
+        backgroundColor: (!loading)&& (groupBy==='project' ? '#F1F6FF !important' : '#F7FBFF !important'),
       },
     },
   },
