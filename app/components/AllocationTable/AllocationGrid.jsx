@@ -47,7 +47,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
-  const { open, message, type, position } = useSelector(state => state.toast);
   const { rowState } = useSelector(state => state.dataGrid);
   const { expandRowId, cellSelectionData, view} = useSelector(state => state.allocationView);
 
@@ -603,12 +602,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
         aggregationRowsCount={params => {
           return params.rowNode.children?.length || 1;
         }}
-      />
-      <CustomSnackbar
-        message={message}
-        type={type}
-        open={open}
-        position={position}
       />
     </Box>
   );
