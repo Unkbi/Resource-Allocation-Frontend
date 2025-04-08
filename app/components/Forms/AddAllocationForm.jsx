@@ -204,7 +204,17 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     onChange={handleResourceChange}
     slotProps={commonSlotProps}
     renderInput={(params) => (
-      <TextField {...params} placeholder="Select Resource" variant="outlined" />
+      <TextField {...params} 
+      placeholder="Select Resource" 
+      variant="outlined"  
+      error={formikProps.touched.Resource && Boolean(formikProps.errors.Resource)}
+      helperText={formikProps.touched.Resource && formikProps.errors.Resource}
+      FormHelperTextProps={{
+        sx: {
+          fontSize: '12px',
+          textAlign: 'left',
+          marginLeft: '0px',
+        }}}/>
     )}
   />
   {multipleResourceError && (
@@ -230,7 +240,17 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     onChange={handleProjectChange}
     slotProps={commonSlotProps}
     renderInput={(params) => (
-      <TextField {...params} placeholder="Select Project" variant="outlined"
+      <TextField {...params} 
+      placeholder="Select Project" 
+      variant="outlined"  
+      error={formikProps.touched.Project && Boolean(formikProps.errors.Project)}
+      helperText={formikProps.touched.Project && formikProps.errors.Project}
+      FormHelperTextProps={{
+        sx: {
+          fontSize: '12px',
+          textAlign: 'left',
+          marginLeft: '0px',
+        }}}
       sx={{ fontSize: "12px", "&::placeholder": { fontSize: "10px" } }} />
     )}
   />
