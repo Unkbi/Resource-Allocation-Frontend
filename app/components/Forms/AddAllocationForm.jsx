@@ -8,6 +8,8 @@ import { StyledCommentInput, StyledFormHelperText, StyledInput } from "../Input/
 import StyledRadioButton from "../RadioButton/StyledRadioButton"
 import { useSelector } from "react-redux"
 import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker"
+import { useDispatch } from "react-redux"
+import { showToast } from "@/app/redux/reducers/toastReducer"
 
 const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const { values, handleChange, handleBlur, setFieldValue} = formikProps
@@ -21,6 +23,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const [multipleProjectError, setMultipleProjectError] = useState(false);
   const [closeResourceMenu, setCloseResourceMenu] = useState(false);
   const [closeProjectMenu, setCloseProjectMenu] = useState(false);
+  const dispatch = useDispatch()
 
   const commonAutocompleteStyles = {
     "& .MuiInputBase-root": { fontSize: "12px" },
@@ -154,6 +157,34 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
       target: { name: "Project", value: newValue.map((item) => item.value) },
     });
   };
+
+  useEffect(() => {
+    if (!values.StartDate || !values.EndDate || !Array.isArray(values.Project)) return;
+
+    const selectedProjects = projects?.result?.filter(project =>
+      values.Project.includes(project.Id)
+    );
+
+    const outOfRangeProjects = selectedProjects.filter(project => {
+      const projectStart = new Date(project.StartDate);
+      const projectEnd = new Date(project.EndDate);
+      const allocationStart = new Date(values.StartDate);
+      const allocationEnd = new Date(values.EndDate);
+
+      return allocationStart < projectStart || allocationEnd > projectEnd;
+    });
+
+    if (outOfRangeProjects.length > 0) {
+      dispatch(showToast({
+        open: true,
+        message: "Warning: You are allocating outside the project range",
+        type: "warning",
+        position: "bottom-right",
+        autoHideTimer: 4000,
+      }));
+    }
+  }, [values.StartDate, values.EndDate, values.Project, projects]);
+
 
   return (
   <Box>
