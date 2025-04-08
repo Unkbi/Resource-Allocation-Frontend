@@ -242,7 +242,8 @@ export const getFinalColumns = (
       {
         field: 'resource',
         headerName: 'Resource',
-        width: 200,
+        minWidth: 200,
+        flex:1,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         sortable: false,

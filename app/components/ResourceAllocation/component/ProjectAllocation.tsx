@@ -252,7 +252,7 @@ export default function ProjectAllocation() {
       cellClassName: getCellClassName,
       headerClassName: 'secondary-header',
       // cellClassName: 'secondary-cell',
-      // headerAlign: 'left',
+      headerAlign: 'center',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
