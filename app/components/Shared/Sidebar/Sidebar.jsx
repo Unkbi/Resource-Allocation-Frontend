@@ -309,10 +309,14 @@ const menuItems = [
           fontSize: '14px', 
           fontWeight: '500', 
           color: '#95979E',
-          padding :'2px', }}>
+          padding :'2px',
+          textAlign: 'left',
+          display: 'block',
+          width: '100%',
+           }}>
       {user && user.FirstName && user.LastName 
       ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
-       : ''}   {user.Email}
+       : ''}   {user?.Email}
     </Typography>
     <img 
     src={open ? "/images/icons/iconUp.svg" : "/images/icons/icon.svg"}
