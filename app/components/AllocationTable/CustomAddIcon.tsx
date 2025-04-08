@@ -122,7 +122,7 @@ export const CustomAddIcon = ({
               width: '22px',
               height: '22px',
               fontSize: '12px',
-              fontWeight: 500,
+              fontWeight: '700',
               borderRadius: '4px',
               background: '#7881A5',
               color: '#F1F1F1',
