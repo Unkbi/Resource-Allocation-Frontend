@@ -127,11 +127,11 @@ export default function TeamAllocation() {
                   marginLeft: '8px',
                   borderRadius: '4px',
                   fontSize: '12px',
-                  fontWeight: '600',
+                  fontWeight: '700',
                   background: ' #7881A5',
                 }}
               >
-                ({resource_count.length})
+                {resource_count.length}
               </span>
             </div>
           </Tooltip>
