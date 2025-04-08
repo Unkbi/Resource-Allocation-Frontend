@@ -10,12 +10,17 @@ import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import MenuList from '@mui/material/MenuList';
 import { performLogout } from '@/app/redux/actions/authActions';
+import { Button } from '@mui/material';
 
-const MainBox = styled(Box)(({ theme }) => ({
-  width: "74px",
+
+const MainBox = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'sidebarExpanded', 
+})(({ theme, sidebarExpanded }) => ({
+  width: sidebarExpanded ?"276px":"74px",
   position: "fixed",
   left: "0",
   top: "0",
+  zIndex :'1000',
   backgroundColor: theme.custom.bgColor,
   height: "100vh",
   color: theme.custom.secondryColor,
@@ -24,7 +29,9 @@ const MainBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
+  transition: 'width 0.3s ease',
   "& .menuList": {
+    display: 'flex',
     flexDirection: "column",
     padding: "0",
     alignItems: "center",
@@ -37,7 +44,10 @@ const MainBox = styled(Box)(({ theme }) => ({
       margin :"7px",
       borderRadius :"4px",
       
-    }
+    },
+     flexDirection: sidebarExpanded ? 'row' : 'column', 
+    justifyContent: sidebarExpanded ? 'flex-start' : 'center', 
+    paddingLeft: sidebarExpanded ? '10px' : '0', 
   },
   "& .logo": {
     paddingTop: "4px",    
@@ -45,6 +55,10 @@ const MainBox = styled(Box)(({ theme }) => ({
   "& .profle-img": {
     width: "40px",
     height: "40px",
+    marginLeft : sidebarExpanded ? "4px" :"" ,
+  },
+  "& .down-img" :{ 
+   padding  :'6px',
   },
   "& .items-parent": {
     display: "flex",
@@ -57,16 +71,20 @@ const MainBox = styled(Box)(({ theme }) => ({
     height: "24px", 
   },
   "& .profileMenu": {
-    backgroundColor: '#FFFFFF',
     boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
-    marginTop: "16px",
+    marginTop: "12px",
     minWidth: "160px",
+    marginLeft:sidebarExpanded? "0px" :"-7px",
+    marginBottom:sidebarExpanded? "" : "4px",
     "& li": {
-      fontFamily: "'Manrope', serif",
-      fontWeight: "500",
-      fontSize: "14px",
-      lineHeight: "22px",
-      color: "#212121",
+      color:' #95979E',
+      backgroundColor: '#0D1F52',
+      fontFamily: theme.typography.fontFamily,
+     fontsize: '14px',
+     fontStyle:' normal',
+     fontweight: '400',
+     lineheight: 'normal',
+     marginLeft :'0px',
       "& .MuiTouchRipple-root": {
         display: "none"
       },
@@ -78,16 +96,17 @@ const MainBox = styled(Box)(({ theme }) => ({
 }));
 
 
-const Sidebar = () => {
+const Sidebar = ({  toggleSidebar,sidebarExpanded }) => {
   const [selectedMenu, setSelectedMenu] = useState('allocation');
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
   const anchorRef = useRef(null);
-
+  const { user } = useSelector((state) => state.user);
+  
   const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
+  setOpen((prevOpen) => !prevOpen);
   };
 
   function handleListKeyDown(event) {
@@ -100,18 +119,17 @@ const Sidebar = () => {
   }
 
   const handleClose = (event) => {
-    if (anchorRef.current?.contains(event.target)) {
-      return;
+  if (anchorRef.current?.contains(event.target)) {
+    return;
     }
-    setOpen(false);
-  
-  };
+    setOpen(false); 
+  }; 
   
   const prevOpen = useRef(open);
   
   useEffect(() => {
       if (prevOpen.current === true && open === false) {
-        anchorRef.current.focus();
+      anchorRef.current.focus();
       }
       prevOpen.current = open;
       }, [open]);
@@ -122,20 +140,19 @@ const Sidebar = () => {
       }
 
 const menuItems = [
-    {icon: "/images/icons/DashboardRounded.svg", url: "/", disabled: false },
-    {icon: "/images/icons/WatchLaterRoundedd.svg", url: "/allocation", disabled: false },
-    {icon: "/images/icons/FolderFileOpen.svg", url: "/project", disabled: false },
-    {icon: "/images/icons/SupervisedUserCircleRounded.svg", url: "/people", disabled: true },
-    {icon: "/images/icons/PollRounded.svg", url: "/report", disabled: true },
+    {icon: "/images/icons/DashboardRounded.svg",text :"Dashboard" , url: "/", disabled: false },
+    {icon: "/images/icons/WatchLaterRoundedd.svg",text :"Allocation", url: "/allocation", disabled: false },
+    {icon: "/images/icons/FolderFileOpen.svg",text :"Projects", url: "/project", disabled: false },
+    {icon: "/images/icons/SupervisedUserCircleRounded.svg",text :"People", url: "/people", disabled: true },
+    {icon: "/images/icons/PollRounded.svg", url: "/report",text :"Reports", disabled: true },
   ];
 
   const extraMenuItems = [
-    { icon: "/images/icons/SettingsIcon.svg", url: "/settings", disabled: true }, 
-    { icon: "/images/icons/Notifications.svg", url: "/notifications", disabled: true }, 
-    { icon: "/images/icons/helpIcon.svg", url: "/help", disabled: true },
-    { icon: "/images/icons/sidebar-left.svg", url: "/expand", disabled: true },
+    { icon: "/images/icons/Notifications.svg",text :"Notification", url: "/notifications", disabled: true },
+    { icon: "/images/icons/SettingsIcon.svg",text :"Settings", url: "/settings", disabled: true },
+    { icon: "/images/icons/Vectorr.svg",text :"User Profile", url: "/profile", disabled: true },  
+    { icon: "/images/icons/helpIcon.svg",text :"Help Center", url: "/help", disabled: true },
   ];
-
 
   useEffect(() => {
     const currentMenuItem = [...menuItems, ...extraMenuItems].find(item => item.url === pathname);
@@ -150,17 +167,77 @@ const menuItems = [
     router.push(url);
   };
 
+  // const {FirstName ,LastName} = user | {} ; might need in future
   return (
-    <MainBox className="main-parent">
-      <Box className='logo' >
-        <Link href={''}>
-          <img alt="logo" src="/images/icons/cio-logo.svg" />
-        </Link>
-        <img src="/images/icons/Line1.svg"/>
-      </Box>
-      <Box className= "items-parent">
-        <Box className= "items-parent-wrapper">
-          <Box className="menu-items-parent">
+  <MainBox className="main-parent" sidebarExpanded={sidebarExpanded} >
+  <Box className='logo' sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '1px 17px', height: '76px' }}>
+  <Box 
+    className="logo-parent" 
+    sx={{ 
+      display: 'flex', 
+      flexDirection: sidebarExpanded ? 'row' : 'column', 
+      alignItems: 'center', 
+      height: '90px' ,
+      width: '200px',
+      justifyContent: 'space-between', 
+      gap: sidebarExpanded ? '20px' : '0', 
+      marginRight:  sidebarExpanded ?"40px" :'',
+    }}
+  >
+    <Link href={''} >
+      <img alt="cio-logo" src="/images/icons/cio-logo.svg" />
+      </Link>
+
+      <img 
+        alt="CIO-Image" 
+        src="/images/icons/CIOptimize.svg" 
+        style={{ 
+          display: sidebarExpanded ? 'flex' : 'none',  
+        }} 
+      />
+
+  <Button 
+    onClick={toggleSidebar} 
+    sx={{
+      display: 'flex', 
+      alignItems: 'center', 
+      transition: 'all 0.3s ease-in-out, gap 0.3s ease-in-out', 
+      transform: `translateY(${sidebarExpanded ? '0' : '4px'})`, 
+      justifyContent: sidebarExpanded ? 'flex-start' : 'center', 
+      width: '100%', 
+      marginBottom: '10px',
+      marginLeft :sidebarExpanded ? '3px' :'' ,
+      padding: '0px',
+    }}
+  >
+    <img 
+      src={"/images/icons/sidebar-left.svg"} 
+      className="expand-img" 
+      alt='' 
+      style={{
+        marginRight: sidebarExpanded ? '10px' : '0', 
+      }} 
+    />
+    {sidebarExpanded && (
+      <Typography 
+       sx={{
+       fontSize: '14px',
+       fontWeight: '500',
+       color:"silver" ,
+       textTransform:"none",
+       display: sidebarExpanded ? 'none' : 'block',}}>
+       Collapse
+      </Typography>
+    )}
+  </Button>
+
+  </Box>
+    <img src="/images/icons/line1-expand.svg"/>
+  </Box>
+      
+  <Box className= "items-parent">
+    <Box className= "items-parent-wrapper">
+      <Box className="menu-items-parent" sx={ {marginTop: '15px',}}>
       <List>
         {menuItems.map((item, index) => (
           <MenuItem
@@ -170,80 +247,191 @@ const menuItems = [
                 sx={{
                   opacity: item.disabled ? 0.5 : 1,
                   cursor: item.disabled ? 'not-allowed' : 'pointer',
+                  margin :"8px",
+                  color :'#95979E'
                 }}
               >
-                <img src={item.icon} alt={item.text} />
+                <img src={item.icon} alt={item.text} sx={{ width: '16px', height: '16px' }}/>
+                {sidebarExpanded && <Typography sx={{ marginLeft: '10px' }}>{item.text}</Typography>}
               </MenuItem>
             ))}
           </List>
         </Box>
+        {sidebarExpanded && (
+      <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom:' 100px', }}>
+      <img src="/images/icons/line2-expand.svg" alt="Divider" />
+      </Box>
+      )}
+    </Box>
 
-        <Box className="line-container" sx={{marginTop:"-20px"}}>
-      <img src="/images/icons/Line2.svg"/>
-      </Box>
-      </Box>
-      
-      <Box  className= "extra-menuitems-parent" sx={{ marginTop: '4px', paddingTop: '20px' }}>
-        <List>
-          {extraMenuItems.map((item, index) => (
-            <MenuItem
-              className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
-              key={index}
-              onClick={() => handleMenuClick(item.url, item.disabled)}
-                sx={{
-                  opacity: item.disabled ? 0.5 : 1,
-                  cursor: item.disabled ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <img src={item.icon} alt={item.text} sx={{ width: '16px', height: '16px' }} />
-              </MenuItem>
-            ))}
-          </List>
+    <Box  className= "extra-menuitems-parent" sx={{ marginTop: '0px', paddingTop: '20px' }}>
+    <Box
+    sx={{
+      paddingTop: "0px",
+      marginTop: '0px', 
+    }}>
+   </Box>
+    <Box
+     sx={{
+      marginTop: '15px', 
+    }}>  
+  <Box className ="profile-section">
           <Box lineHeight={'10px'}
             onClick={handleToggle}
             ref={anchorRef}
             id="composition-button"
             aria-controls={open ? 'composition-menu' : undefined}
-            sx={{ cursor: 'pointer' ,marginBottom:"9px" }}
+            sx={{ cursor: 'pointer' ,
+              marginBottom:"9px",
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: sidebarExpanded ? '15px' : '0',
+              marginLeft : sidebarExpanded ? "10px" :"17px",
+              width: sidebarExpanded ?'250px':'',
+              height :sidebarExpanded?'52px' :'',
+              borderRadius :"8px",
+              '&:hover': {
+              background: '#0D1F52', 
+              },
+             '&.active': {
+              background: '#0D1F52',
+            },
+          }}
+          className={selectedMenu === '/profile' ? 'active' : ''} 
           >
             <img src={"/images/icons/profile.svg"} className="profle-img" alt='' />
-          </Box>
-        <Popper
-        open={open}
-        anchorEl={anchorRef.current}
-        role={undefined}
-        placement="bottom-start"
-        transition
-        disablePortal
-      >
-        {({ TransitionProps, placement }) => (
-          <Grow
-            {...TransitionProps}
-            style={{
-              transformOrigin:
-                placement === 'bottom-start' ? 'left top' : 'left bottom',
-            }}
-          >
-            <Paper className="profileMenu">
-              <ClickAwayListener onClickAway={handleClose}>
-                <MenuList
-                  autoFocusItem={open}
-                  id="composition-menu"
-                  aria-labelledby="composition-button"
-                  onKeyDown={handleListKeyDown}
-                >
-                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Grow>
-        )}
-      </Popper>
-      <img src="/images/icons/exiticon.svg" alt="Exit" sx={{paddingTop:"2px"}}/>
+            {sidebarExpanded && (
+              <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'30px'}}>
+            {sidebarExpanded && (
+              <>
+        <Typography 
+        sx={{ 
+          fontSize: '14px', 
+          fontWeight: '500', 
+          color: '#95979E',
+          padding :'2px',
+          textAlign: 'left',
+          display: 'block',
+          width: '100%',
+           }}>
+      {user && user.FirstName && user.LastName 
+      ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
+       : ''}   {user?.Email}
+    </Typography>
+    <img 
+    src={open ? "/images/icons/iconUp.svg" : "/images/icons/icon.svg"}
+    className="down-img"
+    alt=""
+    />
+  </>  
+  )}
+  </Box>
+)}
+        </Box>
+          <Popper
+          open={open}
+          anchorEl={anchorRef.current}
+          role={undefined}
+          placement={ "top-start"}
+          transition
+          disablePortal
+          modifiers={[
+            {
+              name: "offset",
+              options: {
+                offset: [0, 2], 
+              },
+            },
+          ]}
+        >
+          {({ TransitionProps, placement }) => (
+            <Grow
+              {...TransitionProps}
+              style={{
+                transformOrigin: sidebarExpanded
+                  ? "left bottom" 
+                  : "left top",
+                marginTop: sidebarExpanded ? "-12px" : "-4px", 
+              }}
+            >
+              <Paper className="profileMenu" sx={{
+               display: "flex",
+               width: sidebarExpanded?"250px" :"230px",
+               padding: "16px", 
+               flexDirection: "column",
+               marginLeft : "-9px" ,
+               borderRadius : "8px",
+               boxShadow: "0 4px 20px 0 rgba(0, 0, 0, 0.06)",
+              background :'#0D1F52',
+        }}>
+                <ClickAwayListener onClickAway={handleClose}>
+                  <MenuList
+                    autoFocusItem={open}
+                    id="composition-menu"
+                    aria-labelledby="composition-button"
+                    onKeyDown={handleListKeyDown}
+              
+                  >
+                    {extraMenuItems.map((item, index) => (
+                      <MenuItem
+                        key={index}
+                        onClick={() => handleMenuClick(item.url, item.disabled)}
+                        disabled={item.disabled}
+                        sx={{
+                          cursor: item.disabled ? "not-allowed" : "pointer",
+                          opacity: item.disabled ? 0.5 : 1,
+                          background:'#0D1F52',
+                          marginBottom:"6px",
+                          marginLeft:"0px",
+                        }}
+                      >
+                        <img
+                          src={item.icon}
+                          alt={item.text}
+                          style={{ width: "16px", height: "16px", marginRight: "10px" }}
+                        />
+                        {item.text}
+                      </MenuItem>
+                    ))}
+                    <div></div>
+                    {/* Logout Option */}
+                    <MenuItem onClick={handleLogout}>
+                      <img
+                        src="/images/icons/exiticon.svg"
+                        alt="Logout"
+                        style={{ width: "16px", height: "16px", marginRight: "10px",color:' #95979E',
+                        fontFamily: theme => theme.typography.fontFamily,
+                         fontsize: '14px',
+                         fontStyle:' normal',
+                         fontweight: '400',
+                         lineheight: 'normal', 
+                        }}
+                      />
+                      Logout
+                    </MenuItem>
+                  </MenuList>
+                </ClickAwayListener>
+              </Paper>
+            </Grow>
+          )}
+        </Popper>
       </Box>
+
+      <Box className= "logout" 
+      sx={{display:"flex",
+           justifyContent: sidebarExpanded ? 'start' : 'center', 
+           alignItems: 'center',  
+           width: '100%',  
+           }}>
+           </Box>
       </Box>
-    </MainBox>
+    </Box>
+  </Box>
+      
+  </MainBox>
   );
 };
 
 export default Sidebar;
+
+

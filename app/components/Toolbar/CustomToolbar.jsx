@@ -17,15 +17,12 @@ import {
   GridToolbarContainer,
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
-import MyProjectIcon from '../TableIcons/MyProjectIcon';
-import AllProjectIcon from '../TableIcons/AllProjectIcon';
-import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
-import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
-import TooltipButton from '../Button/TooltipButton';
 import CustomExport from './CustomExport';
-import { generateFirstAndLastMonthYear } from '@/app/utils/common';
+import { generateFirstAndLastMonthYear, getStartAndEndDateForView } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
+import { DATE_FORMAT } from '@/app/constants/constants';
+import { parseISO } from 'date-fns';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -67,7 +64,7 @@ const ToolBox1 = styled(Box)(({ theme }) => ({
   },
   '& .projectDropdown': {
     color: '#313F68',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '800',
     fontSize: '15px',
     '& .MuiSelect-select': {
@@ -93,7 +90,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       padding: '5px 12px',
       fontSize: '13px',
       color: '#212121',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '600',
       textTransform: 'none',
     },
@@ -107,7 +104,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     alignItems: 'center',
     '& button': {
       color: '#757575',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '500',
       fontSize: '13px',
       lineHeight: '16px',
@@ -134,7 +131,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     overflow: 'hidden',
     '& button': {
       color: '#757575',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '500',
       fontSize: '13px',
       lineHeight: '16px',
@@ -165,7 +162,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     borderRadius: '4px',
     height: '32px',
     color: '#212121',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '600',
     fontSize: '12px',
     lineHeight: '14px',
@@ -183,7 +180,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   padding: '10px 12px',
   color: '#212121',
-  fontFamily: "'Manrope', serif",
+  fontFamily: theme.typography.fontFamily,
   fontWeight: '400',
   fontSize: '13px',
   '&:hover': {
@@ -200,14 +197,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const view = useSelector(state => state.allocationView.view);
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { calendarDate: projectsCalendar } = useSelector(state => state.projects);
-  let startDate, endDate;
-  if (view === 'Teams') {
-    startDate = teamsCalendar.startDate;
-    endDate = teamsCalendar.endDate;
-  } else {
-    startDate = projectsCalendar.startDate;
-    endDate = projectsCalendar.endDate;
-  }
+  const { startDate, endDate } = getStartAndEndDateForView(view, projectsCalendar, teamsCalendar);
 
   const viewOptions = [
     'Teams',
@@ -216,8 +206,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   ];
   const [active, setActive] = useState(false);
 
-  const first = generateFirstAndLastMonthYear(startDate, 'MMM yy', true);
-  const last = generateFirstAndLastMonthYear(endDate, 'MMM yy', true);
+  const first = generateFirstAndLastMonthYear(parseISO(startDate), 'MMM yy', true);
+  const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM yy', true);
 
   const handleViewChange = useCallback(
     event => {
@@ -235,8 +225,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
 
     const action = isTeams ? updateStartAndEndDate : updateProjectStartAndEndDate;
 
-    const startKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', isNext, !isNext);
-    const endKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', !isNext);
+    const startKey = generateFirstAndLastMonthYear(parseISO(startDate), DATE_FORMAT, false, !isNext, true);
+    const endKey = generateFirstAndLastMonthYear(parseISO(endDate), DATE_FORMAT, false, !isNext, true);
 
     dispatch(action({startDate: startKey, endDate: endKey}));
   };

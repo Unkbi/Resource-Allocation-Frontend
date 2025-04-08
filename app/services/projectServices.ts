@@ -1,6 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../utils/apiClient';
 import { API_PROJECT_PORTFOLIO } from '../constants/constants';
+import { AxiosError } from 'axios';
+import { GetProjectAllocationsForPeriodPayload, Project } from '../types';
 
 export const getAllProjects = createAsyncThunk('/project', async () => {
   const response = await axiosInstance.get(`${API_PROJECT_PORTFOLIO}/Project`);
@@ -9,7 +11,7 @@ export const getAllProjects = createAsyncThunk('/project', async () => {
 
 export const addProject = createAsyncThunk(
   '/project/add',
-  async (postData, { rejectWithValue }) => {
+  async (postData: Project, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
         `${API_PROJECT_PORTFOLIO}/Project`,
@@ -17,14 +19,19 @@ export const addProject = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to add project');
+      return rejectWithValue(
+        (error as AxiosError).response?.data || 'Failed to add project'
+      );
     }
   }
 );
 
 export const updateProject = createAsyncThunk(
   '/project/update',
-  async ({postData, projectId}, { rejectWithValue }) => {
+  async (
+    { postData, projectId }: { postData: Project; projectId: string },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await axiosInstance.put(
         `${API_PROJECT_PORTFOLIO}/Project/${projectId}`,
@@ -32,14 +39,16 @@ export const updateProject = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to update project');
+      return rejectWithValue(
+        (error as AxiosError).response?.data || 'Failed to update project'
+      );
     }
   }
 );
 
 export const deleteProject = createAsyncThunk(
   '/project/delete',
-  async (projectId, { rejectWithValue }) => {
+  async (projectId: string, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.delete(
         `${API_PROJECT_PORTFOLIO}/Project/${projectId}`
@@ -47,7 +56,7 @@ export const deleteProject = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || 'Failed to delete project'
+        (error as AxiosError).response?.data || 'Failed to delete project'
       );
     }
   }
@@ -55,7 +64,10 @@ export const deleteProject = createAsyncThunk(
 
 export const getProjectAllocations = createAsyncThunk(
   '/project/allocations',
-  async (postData, { rejectWithValue }) => {
+  async (
+    postData: GetProjectAllocationsForPeriodPayload,
+    { rejectWithValue }
+  ) => {
     try {
       const response = await axiosInstance.post(
         `${API_PROJECT_PORTFOLIO}/GetProjectAllocationsForPeriod`,
@@ -64,7 +76,7 @@ export const getProjectAllocations = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || 'Failed to fetch allocations'
+        (error as AxiosError).response?.data || 'Failed to fetch allocations'
       );
     }
   }

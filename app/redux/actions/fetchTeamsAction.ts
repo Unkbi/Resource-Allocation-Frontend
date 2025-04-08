@@ -3,21 +3,43 @@ import {
   getAllTeams,
   getResourcesAgainstTeams,
   getTeamAllocations,
-  postTeamResource,
+  /*
+   * Not being used currently in application
+   * Uncomment the following code if you want to handle postTeamResource API call
+   */
+  // postTeamResource,
 } from '@/app/services/teamServices';
 import {
+  setAllTeamsResources,
   setTeamsDataProcessing,
-  setTeamsResources,
   updateResources,
 } from '../reducers/teamsReducer';
 import {
+  getMonday,
+  getMondaysInRange,
   getWeekNumber,
-  isWithin20WeeksRange,
   removeDuplicateResources,
 } from '@/app/utils/common';
 import { setAllocations } from '../reducers/dataGridReducer';
+//@ts-ignore
+import { format, parseISO } from 'date-fns';
+// import parseISO from 'date-fns/parseISO';
+import { DATE_FORMAT } from '@/app/constants/constants';
+import { AppDispatch } from '../store';
+import {
+  Allocation,
+  AllocationGridCell,
+  AllocationGridCellData,
+  ApiResponse,
+  GetTeamAllocationsForPeriodPayload,
+  GetTeamResourcesPayload,
+  Resource,
+  Team,
+  TeamResourceResponse,
+  TeamResources,
+} from '@/app/types';
 
-export const fetchAllTeams = () => async dispatch => {
+export const fetchAllTeams = () => async (dispatch: AppDispatch) => {
   try {
     await dispatch(getAllTeams());
   } catch (error) {
@@ -25,22 +47,22 @@ export const fetchAllTeams = () => async dispatch => {
   }
 };
 
-
-
 const formatAllocations = (
-  data,
-  resources,
-  teamId,
-  teamName,
-  teamStatus,
-  teamAllocationManager
+  data: ApiResponse<Allocation[]>,
+  resources: ApiResponse<Resource[]>,
+  teamId: string,
+  teamName: string,
+  teamStatus: string | null,
+  teamAllocationManager: string | null,
+  startDate: string,
+  endDate: string
 ) => {
   const allocationsData = data.result;
   const allocationMap = new Map();
 
   if (Array.isArray(allocationsData) && allocationsData.length === 0) {
-    let obj = [];
-    if (resources?.result.length === 0) {
+    let obj: AllocationGridCell[] = [];
+    if (resources?.result?.length === 0) {
       obj = [
         {
           id: teamId,
@@ -48,7 +70,7 @@ const formatAllocations = (
           project: '',
           projectId: '',
           resource: '',
-          totalEffort: '',
+          totalEffort: null,
           role: '',
           teamStatus: teamStatus ?? '',
           teamAllocationManager: teamAllocationManager ?? '',
@@ -69,7 +91,7 @@ const formatAllocations = (
             project: '',
             projectId: '',
             resource: resource.FullName,
-            totalEffort: '',
+            totalEffort: null,
             role: resource.Role,
             teams: teamName,
             teamsId: teamId,
@@ -84,13 +106,13 @@ const formatAllocations = (
     }
     return obj;
   }
-
   Array.isArray(allocationsData) &&
     allocationsData.forEach(allocation => {
       if (!allocation.Period || allocation.AllocationEntered === 0) return;
 
-      const periodDate = new Date(allocation.Period);
+      const periodDate = parseISO(allocation.Period);
       const weekNumber = getWeekNumber(periodDate);
+      const formattedDate = format(periodDate, DATE_FORMAT);
 
       const matchingTeamResource =
         Array.isArray(resources?.result) &&
@@ -109,24 +131,22 @@ const formatAllocations = (
       const uniqueId = `${allocation.Resource}-${teamId}-${allocation.Project}`;
       const existingAllocation = allocationMap.get(uniqueId);
       if (existingAllocation) {
-        if (isWithin20WeeksRange(allocation.Period)) {
-          existingAllocation[weekNumber] = {
-            allocationId: allocation.Id,
-            value: allocation.AllocationEntered,
-          };
-          existingAllocation.totalEffort += allocation.AllocationEntered;
-          existingAllocation.teamStatus = teamStatus ?? '';
-          existingAllocation.teamAllocationManager =
-            teamAllocationManager ?? '';
-        }
+        existingAllocation[weekNumber] = {
+          allocationId: allocation.Id,
+          value: allocation.AllocationEntered,
+          period: formattedDate,
+        };
+        existingAllocation.totalEffort += allocation.AllocationEntered;
+        existingAllocation.teamStatus = teamStatus ?? '';
+        existingAllocation.teamAllocationManager = teamAllocationManager ?? '';
       } else {
-        const newAllocation = {
+        const newAllocation: AllocationGridCell = {
           id: uniqueId,
           resourceId: allocation.Resource || '',
           project: allocation.ProjectName || '',
           projectId: allocation.Project || '',
           resource: allocation.ResourceName || '',
-          totalEffort: allocation.AllocationEntered || '',
+          totalEffort: allocation.AllocationEntered || null,
           teamStatus: teamStatus ?? '',
           teamAllocationManager: teamAllocationManager ?? '',
           role,
@@ -134,38 +154,59 @@ const formatAllocations = (
           resourceType,
         };
 
-        if (isWithin20WeeksRange(allocation.Period)) {
-          newAllocation[weekNumber] = {
-            allocationId: allocation.Id,
-            value: allocation.AllocationEntered,
-          };
-        }
+        newAllocation[weekNumber] = {
+          allocationId: allocation.Id,
+          value: allocation.AllocationEntered,
+          period: formattedDate,
+        };
 
         allocationMap.set(uniqueId, newAllocation);
       }
     });
-  return Array.from(allocationMap.values());
+  // add empty allocations with period within date range
+  const allWeeks: string[] = getMondaysInRange(startDate, endDate);
+  const updatedAllocationMap: AllocationGridCell[] = Array.from(
+    allocationMap.values()
+  );
+  updatedAllocationMap.forEach(allocation => {
+    const filteredWeeksArr = Object.values(allocation).filter(
+      item => typeof item === 'object'
+    );
+    const allFilteredDates = filteredWeeksArr
+      .map(obj => obj?.period && format(getMonday(obj.period), DATE_FORMAT))
+      .filter(Boolean);
+    allWeeks
+      .filter(week => !allFilteredDates.includes(week))
+      .forEach(week => {
+        allocation[getWeekNumber(new Date(week))] ??= {
+          allocationId: null,
+          value: null,
+          period: week,
+        };
+      });
+  });
+  return updatedAllocationMap;
 };
 
 export const fetchResourcesAgainstTeams =
-  (teams, allocations = null, StartDate, EndDate) =>
-  async dispatch => {
+  (teams: Team[], allocations = null, StartDate: string, EndDate: string) =>
+  async (dispatch: AppDispatch) => {
     try {
       dispatch(setTeamsDataProcessing(true));
-      let allResources = [];
+      let allResources: AllocationGridCell[] = [];
 
       const teamPromises = teams.map(async team => {
-        const teamResourcesPostData = {
+        const teamResourcesPostData: GetTeamResourcesPayload = {
           'ResourceAllocation.Core/GetTeamResources': {
-            TeamId: team.Id
+            TeamId: team.Id,
           },
         };
 
-        const teamAllocationPostData = {
+        const teamAllocationPostData: GetTeamAllocationsForPeriodPayload = {
           'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
             TeamId: team.Id,
             StartDate,
-            EndDate
+            EndDate,
           },
         };
 
@@ -186,17 +227,6 @@ export const fetchResourcesAgainstTeams =
           allocationsPromise,
         ]);
 
-        // Update the resources for the team
-        let teamsResources = resourcesResult?.result?.payload?.result || [];
-        dispatch(
-          setTeamsResources({
-            id: resourcesResult?.team?.Id,
-            teamStatus: resourcesResult?.status,
-            teamAllocationManager: resourcesResult?.team?.AllocationManager,
-            resource: teamsResources,
-          })
-        );
-
         return {
           resourcesResult,
           allocationsResult,
@@ -206,7 +236,34 @@ export const fetchResourcesAgainstTeams =
 
       const results = await Promise.allSettled(teamPromises);
 
-      const preload_result = [];
+      const allResourceResults: TeamResourceResponse[] = [];
+      results.forEach(result => {
+        if (result.status === 'rejected') {
+          console.error('Failed to fetch data for team:', result.reason);
+          return;
+        }
+        const resrouceResults = result.value?.resourcesResult;
+        if (
+          resrouceResults &&
+          resrouceResults.status === 'fulfilled' &&
+          'result' in resrouceResults
+        ) {
+          const resource = resrouceResults?.result?.payload?.result;
+          allResourceResults.push({
+            id: resrouceResults?.team?.Id,
+            teamStatus: resrouceResults?.status,
+            teamAllocationManager: resrouceResults?.team?.AllocationManager,
+            resource: resource,
+          });
+        }
+      });
+      dispatch(setAllTeamsResources(allResourceResults));
+
+      const preload_result: Array<{
+        status: 'fulfilled' | 'rejected';
+        value?: any;
+        reason?: any;
+      }> = [];
       if (allocations && results?.length === 1) {
         Object.keys(allocations)?.forEach(key => {
           if (key === teams[0].Id) {
@@ -223,9 +280,9 @@ export const fetchResourcesAgainstTeams =
       const iterator =
         allocations && preload_result?.length ? preload_result : results;
       Array.isArray(iterator) &&
-        iterator.forEach(({ status, value }) => {
-          if (status === 'fulfilled') {
-            const { resourcesResult, allocationsResult, team } = value;
+        iterator.forEach(item => {
+          if (item.status === 'fulfilled') {
+            const { resourcesResult, allocationsResult, team } = item?.value;
             dispatch(
               setAllocations({
                 team_id: team.Id,
@@ -242,7 +299,9 @@ export const fetchResourcesAgainstTeams =
                 team.Id,
                 team.Name,
                 team.Status,
-                team.AllocationManager
+                team.AllocationManager,
+                StartDate,
+                EndDate
               );
 
               const final = formattedAllocations.filter(
@@ -251,7 +310,7 @@ export const fetchResourcesAgainstTeams =
               allResources = [...allResources, ...final];
             }
           } else {
-            console.error('Failed to fetch data for team:', value.team.Name);
+            console.error('Failed to fetch data for team:', item?.reason);
           }
         });
 
@@ -274,7 +333,7 @@ export const fetchResourcesAgainstTeams =
     }
   };
 
-export const fetchAllAllocations = () => async dispatch => {
+export const fetchAllAllocations = () => async (dispatch: AppDispatch) => {
   try {
     const postData = {
       'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
@@ -288,16 +347,20 @@ export const fetchAllAllocations = () => async dispatch => {
   }
 };
 
-export const addResourceToTeam = (teamId, resourceId) => async dispatch => {
-  try {
-    const postData = {
-      'ResourceAllocation.Core/TeamResource': {
-        Team: teamId,
-        Resource: resourceId,
-      },
-    };
-    await dispatch(postTeamResource(postData));
-  } catch (error) {
-    console.error('Error adding resource to team:', error);
-  }
-};
+/*
+ * Not being used currently in application
+ * Uncomment the following code if you want to handle postTeamResource API call
+ */
+// export const addResourceToTeam = (teamId, resourceId) => async dispatch => {
+//   try {
+//     const postData = {
+//       'ResourceAllocation.Core/TeamResource': {
+//         Team: teamId,
+//         Resource: resourceId,
+//       },
+//     };
+//     await dispatch(postTeamResource(postData));
+//   } catch (error) {
+//     console.error('Error adding resource to team:', error);
+//   }
+// };

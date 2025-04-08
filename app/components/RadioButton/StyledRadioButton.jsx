@@ -12,6 +12,7 @@ const StyledBox = styled(Box)(({ selected, backgroundColor, borderColor }) => ({
   backgroundColor: selected ? backgroundColor : `${backgroundColor}80`, // 80 is for 50% opacity
   border: selected ? `2px solid ${borderColor}` : `1px solid ${borderColor}`,
   borderRadius: "4px",
+  fontWeight: selected ? "bold" : "normal",
   cursor: "pointer",
 }))
 

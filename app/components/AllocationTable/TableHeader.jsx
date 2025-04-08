@@ -1,19 +1,18 @@
 import clsx from 'clsx';
 import {
   getWeekNumber,
-  addWeeks,
   formatDate,
   getStartOfPreviousWeek,
-  getWeeksDifference,
 } from '@/app/utils/common';
 import {
+  DISPLAY_DATE_FORMAT,
   TOTAL_FUTURE_WEEKS,
-  VALIDATION_LIMITS,
 } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import { addWeeks, differenceInWeeks, format, parseISO } from 'date-fns';
 
 const WEEK_CONFIG = {
-  TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 2,
+  TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 1,
   COLUMN_WIDTH: 50,
   MAX_VALUE: 2,
   DECIMAL_PRECISION: 1,
@@ -90,11 +89,15 @@ const createValueHandlers = dispatch => ({
   },
 });
 
-export const generateWeeklyColumns = (startDate, dispatch) => {
-  const currentWeekIndex = getWeeksDifference(startDate, new Date());
-
+export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
+  const isoStart = parseISO(startDate);
+  const isoEnd = parseISO(endDate);
+  const currentDate = new Date();
+  const isoString = format(currentDate, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+  const currentWeekIndex = differenceInWeeks( isoString ,isoStart  );
+ 
   return Array.from({ length: WEEK_CONFIG.TOTAL_WEEKS }, (_, i) => {
-    const weekDate = addWeeks(startDate, i);
+    const weekDate = addWeeks(isoStart, i);
     return {
       ...createBaseColumnConfig(weekDate, i === currentWeekIndex),
       ...(dispatch ? createValueHandlers(dispatch) : {}),
@@ -117,7 +120,7 @@ export const generateColumnGroupingModel = (startDate, allColumns) => {
 
   for (let i = 0; i < WEEK_CONFIG.TOTAL_WEEKS; i++) {
     const weekDate = addWeeks(startDate, i);
-    const monthYear = formatDate(weekDate, 'MMM yyyy');
+    const monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
 
     if (!currentGroup || currentGroup.groupId !== monthYear) {
       currentGroup && groups.push(currentGroup);
@@ -135,15 +138,13 @@ export const generateColumnGroupingModel = (startDate, allColumns) => {
   return groups;
 };
 
-const startDate = getStartDate();
-
-export const columns = generateWeeklyColumns(startDate);
-
-export const getAllColumnsWithWeek = (existingColumns = [], dispatch) => [
+export const getAllColumnsWithWeek = (existingColumns = [], dispatch, startDate, endDate) => [
   ...existingColumns,
-  ...generateWeeklyColumns(startDate, dispatch),
+  ...generateWeeklyColumns(startDate, endDate, dispatch),
 ];
 
-export const aggregationModel = columns
+export const aggregationModel = (startDate, endDate) => {
+  return generateWeeklyColumns(startDate, endDate)
   .filter(column => column.field.startsWith('W'))
-  .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
+  .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});;
+};

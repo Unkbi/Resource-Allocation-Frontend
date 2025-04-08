@@ -6,14 +6,14 @@ import PersonIcon from '@mui/icons-material/Person';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
-const StyledPopper = styled(GridColumnMenu)(({}) => ({
+const StyledPopper = styled(GridColumnMenu)(({ theme }) => ({
   backgroundColor: '#ffffff',
   boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
   minWidth: '186px',
   '& .MuiListItemText-primary': {
     border: 'none',
     color: '#313F68',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontSize: '14px',
     fontWeight: '600',
     alignItems: 'flex-start !important',

@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -23,17 +23,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close'; // Close icon import
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
+import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
-const MainAppBar = styled(AppBar)(({ theme }) => ({
-  marginLeft: '74px',
-  width: 'calc(100% - 74px)',
+
+const MainAppBar = styled(AppBar, {
+  shouldForwardProp: (prop) => prop !== 'sidebarExpanded',
+})(({ theme, sidebarExpanded }) => ({
+  marginLeft: sidebarExpanded ? '276px' : '74px',
+  width: `calc(100% - ${sidebarExpanded ? '276px' : '74px'})`,
+  transition: 'margin-left 0.3s ease-in-out, width 0.3s ease-in-out',
   zIndex: '91',
   boxShadow: '0 1px 0 0 #DDE1E4',
   background: '#EBEFFC',
   '& h6': {
     color: theme.custom.primaryColor,
-    fontFamily: "'Manrope', serif",
-    // fontFamily: "Open Sans",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: 'SemiBold',
     fontSize: '18px',
     lineHeight: '22px',
@@ -76,13 +81,24 @@ const MainAppBar = styled(AppBar)(({ theme }) => ({
   },
 }));
 
-const Header = () => {
+const Header = ({sidebarExpanded}) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
+  const { projects } = useSelector((state) => state.projects)
+  const { resources } = useSelector((state) => state.resources)
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if(projects === null){
+      dispatch(fetchAllProjects());
+    }
+    if(resources === null){
+      dispatch(fetchAllResources());
+    }
+  }, [projects, resources]);
 
   const handleAddMenuToggle = () => {
     setOpenAddMenu(prevOpen => !prevOpen);
@@ -118,7 +134,7 @@ const Header = () => {
     {
       icon: '/images/icons/AllocationIcon.svg',
       alt: 'Allocation Icon',
-      title: 'Add Allocation',
+      title: 'Update Allocation',
       type: 'add_allocation',
     },
     {
@@ -152,7 +168,7 @@ const Header = () => {
     dispatch(
       openDialog({
         title: title,
-        submitButtonText: 'Add',
+        submitButtonText:formType === 'add_allocation' ? 'Update' : 'Add',
         cancelButtonText: 'Cancel',
         formType: formType,
         initialData: null,
@@ -181,7 +197,7 @@ const Header = () => {
     }
   };
   return (
-    <MainAppBar>
+    <MainAppBar sidebarExpanded={sidebarExpanded}>
       <Toolbar className="toobarRow">
         <Typography variant="h6">
         {getTitleFromPathname(pathname)} 

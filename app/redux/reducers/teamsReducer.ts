@@ -4,23 +4,28 @@ import {
   getAllTeams,
   getResourcesAgainstTeams,
   getTeamAllocations,
-  postTeamResource,
+  /*
+   * Not being used currently in application
+   * Uncomment the following code if you want to handle postTeamResource API call
+   */
+  // postTeamResource,
 } from '@/app/services/teamServices';
-import { generateFirstAndLastMonthYear } from '@/app/utils/common';
+import { generateTMinusOneStartEndDate } from '@/app/utils/common';
+import { Resource, TeamState } from '@/app/types';
 
-const initialState = {
+const initialState: TeamState = {
   teams: null,
   resources: [],
-  allAllocations: [],
-  teamAllocations: [],
+  allAllocations: {},
+  teamAllocations: {},
   teamsResources: {},
   loading: false,
   dataProcessing: false,
   error: null,
   calendarDate: {
-    startDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', true),
-    endDate: generateFirstAndLastMonthYear(null, 'yyyy-MM-dd', false)
-  }
+    startDate: generateTMinusOneStartEndDate(true),
+    endDate: generateTMinusOneStartEndDate(false),
+  },
 };
 
 const teamsSlice = createSlice({
@@ -28,13 +33,6 @@ const teamsSlice = createSlice({
   initialState,
   reducers: {
     updateResources: (state, action) => {
-      // const uniqueResources = action.payload.filter(
-      //   newAlloc =>
-      //     !state.resources.some(
-      //       existingAlloc => existingAlloc.id === newAlloc.id
-      //     )
-      // );
-      // state.resources = [...state.resources, ...uniqueResources];
       state.resources = action.payload;
     },
     resetResources: state => {
@@ -43,8 +41,13 @@ const teamsSlice = createSlice({
     setTeamsDataProcessing: (state, action) => {
       state.dataProcessing = action.payload;
     },
-    setTeamsResources: (state, action) => {
-      state.teamsResources[action.payload.id] = action.payload.resource;
+    setAllTeamsResources: (state, action) => {
+      action.payload.forEach(
+        (payload: { id: string; resource: Resource[] }) => {
+          state.teamsResources = state.teamsResources || {};
+          state.teamsResources[payload.id] = payload.resource;
+        }
+      );
     },
     updateStartAndEndDate: (state, action) => {
       state.calendarDate = action.payload;
@@ -63,7 +66,7 @@ const teamsSlice = createSlice({
       })
       .addCase(getAllTeams.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string | null;
       })
       // Handle getResourcesAgainstTeams API call
       .addCase(getResourcesAgainstTeams.pending, state => {
@@ -75,7 +78,7 @@ const teamsSlice = createSlice({
       })
       .addCase(getResourcesAgainstTeams.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string | null;
       })
       // Handle getAllAllocationsForPeriod API call
       .addCase(getAllAllocationsForPeriod.pending, state => {
@@ -88,7 +91,7 @@ const teamsSlice = createSlice({
       })
       .addCase(getAllAllocationsForPeriod.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string | null;
       })
       // Handle getTeamAllocations API call
       .addCase(getTeamAllocations.pending, state => {
@@ -100,22 +103,31 @@ const teamsSlice = createSlice({
       })
       .addCase(getTeamAllocations.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
-      })
-      // Handle postTeamResource API call
-      .addCase(postTeamResource.pending, state => {
-        state.error = null;
-      })
-      .addCase(postTeamResource.fulfilled, state => {
-        state.loading = false;
-      })
-      .addCase(postTeamResource.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string | null;
       });
+    /*
+     * Not being used currently in application
+     * Uncomment the following code if you want to handle postTeamResource API call
+     */
+    // Handle postTeamResource API call
+    // .addCase(postTeamResource.pending, state => {
+    //   state.error = null;
+    // })
+    // .addCase(postTeamResource.fulfilled, state => {
+    //   state.loading = false;
+    // })
+    // .addCase(postTeamResource.rejected, (state, action) => {
+    //   state.loading = false;
+    //   state.error = action.payload;
+    // });
   },
 });
 
-export const { updateResources, resetResources, setTeamsDataProcessing, setTeamsResources, updateStartAndEndDate } =
-  teamsSlice.actions;
+export const {
+  updateResources,
+  resetResources,
+  setTeamsDataProcessing,
+  updateStartAndEndDate,
+  setAllTeamsResources,
+} = teamsSlice.actions;
 export default teamsSlice.reducer;
