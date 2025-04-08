@@ -93,8 +93,8 @@ export const CustomAddIcon = ({
           <AddIcon
             onClick={onClick}
             sx={{
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               fontSize: 20,
               backgroundColor: '#1C2D5F',
               color: '#fff',
@@ -119,8 +119,8 @@ export const CustomAddIcon = ({
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              width: '24px',
-              height: '24px',
+              width: '22px',
+              height: '22px',
               fontSize: '12px',
               fontWeight: 500,
               borderRadius: '4px',
@@ -130,7 +130,7 @@ export const CustomAddIcon = ({
               zIndex: 1,
             }}
           >
-            ({count})
+            {count}
           </Box>
         )}
       </Box>

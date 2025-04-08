@@ -131,7 +131,7 @@ export default function TeamAllocation() {
                   background: ' #7881A5',
                 }}
               >
-                ({resource_count.length})
+                {resource_count.length}
               </span>
             </div>
           </Tooltip>

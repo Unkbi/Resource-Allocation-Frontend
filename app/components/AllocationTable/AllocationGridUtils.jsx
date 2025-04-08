@@ -101,7 +101,8 @@ export const getFinalColumns = (
         cancelButtonText: 'Cancel',
         formType: "add_allocation",
         initialData: {
-          Resource: params.value 
+          Resource: params.value,
+          Project: params.row.project
         },
       })
     );
