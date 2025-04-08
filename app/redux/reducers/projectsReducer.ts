@@ -4,11 +4,12 @@ import {
   getProjectAllocations,
   addProject,
   updateProject,
-  deleteProject
+  deleteProject,
 } from '@/app/services/projectServices';
 import { generateTMinusOneStartEndDate } from '@/app/utils/common';
+import { ProjectState } from '@/app/types';
 
-const initialState = {
+const initialState: ProjectState = {
   projects: null,
   allocations: [],
   loading: false,
@@ -17,8 +18,8 @@ const initialState = {
   updating: false,
   calendarDate: {
     startDate: generateTMinusOneStartEndDate(true),
-    endDate: generateTMinusOneStartEndDate(false)
-  }  
+    endDate: generateTMinusOneStartEndDate(false),
+  },
 };
 
 const projectsSlice = createSlice({
@@ -57,7 +58,7 @@ const projectsSlice = createSlice({
       })
       .addCase(getAllProjects.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       //Handle addProject API call
       .addCase(addProject.pending, state => {
@@ -68,15 +69,15 @@ const projectsSlice = createSlice({
       .addCase(addProject.fulfilled, (state, action) => {
         state.loading = false;
         state.updating = false;
-      //   state.projects = {
-      //     ...state.projects,
-      //     results: [...state.projects.results, action.payload],
-      // }
-    })
+        //   state.projects = {
+        //     ...state.projects,
+        //     results: [...state.projects.results, action.payload],
+        // }
+      })
       .addCase(addProject.rejected, (state, action) => {
         state.loading = false;
         state.updating = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       //Handle updateProject API call
       .addCase(updateProject.pending, state => {
@@ -92,7 +93,7 @@ const projectsSlice = createSlice({
       .addCase(updateProject.rejected, (state, action) => {
         state.loading = false;
         state.updating = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       //Handle deleteProject API call
       .addCase(deleteProject.pending, state => {
@@ -105,7 +106,7 @@ const projectsSlice = createSlice({
       })
       .addCase(deleteProject.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload
+        state.error = action.payload as string;
       })
       // Handle getProjectAllocations API call
       .addCase(getProjectAllocations.pending, state => {
@@ -117,11 +118,15 @@ const projectsSlice = createSlice({
       })
       .addCase(getProjectAllocations.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const { updateAllocations, resetAllocations, setDataProcessing, updateProjectStartAndEndDate } =
-  projectsSlice.actions;
+export const {
+  updateAllocations,
+  resetAllocations,
+  setDataProcessing,
+  updateProjectStartAndEndDate,
+} = projectsSlice.actions;
 export default projectsSlice.reducer;

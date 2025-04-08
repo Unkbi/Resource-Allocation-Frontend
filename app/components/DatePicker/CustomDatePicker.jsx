@@ -23,17 +23,27 @@ const StyledPickersLayout = styled(PickersLayout)({
   },
 });
 
-const CustomTextField = styled(TextField)({
+const CustomTextField = styled(TextField)(({ theme, error }) => ({
   height: '36px',
   width: '160px',
   '& .MuiInputBase-root': {
     height: '36px',
-    fontFamily: 'Open Sans',
+    fontFamily: theme.typography.fontFamily,
     fontSize: '12px',
     fontWeight: 500,
+    border: error && theme.palette.error.main,
+    '&:hover': {
+      border: error && theme.palette.error.main 
+    },
+    '&.Mui-focused': {
+      border: error && theme.palette.error.main
+    },
     '&::placeholder': {
       color: '#757575',
       opacity: 1,
+    },
+    "& input": {
+      cursor: "pointer",
     },
   },
   '& .MuiIconButton-root': {
@@ -42,64 +52,81 @@ const CustomTextField = styled(TextField)({
       backgroundColor: 'transparent !important',
     },
   },
-});
+}));
 
-export default function CustomDatePicker({
-  name,
-  value,
-  placeholder,
-  formikProps,
-  error, 
-  helperText,
-}) {
-  const { setFieldValue } = formikProps;
+export default function CustomDatePicker({ name, value, placeholder, formikProps, error, helperText, customStyles}) {
+  const { setFieldValue } = formikProps
+  const [open, setOpen] = React.useState(false)
 
   const handleDateChange = (newValue) => {
-    const formattedDate = newValue ? dayjs(newValue).format('YYYY-MM-DD') : null;
-    setFieldValue(name, formattedDate);
-  };
+    const formattedDate = newValue ? dayjs(newValue).format("YYYY-MM-DD") : null
+    setFieldValue(name, formattedDate)
+    setOpen(false)
+  }
 
+  const handleInputClick = () => {
+    setOpen(true)
+  }
   return (
     <FormControl
-    style={{
-      width: '160px',
-    }}
-    error={error}
-  >
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
-      <DatePicker
-        displayWeekNumber
-        value={value ? dayjs(value) : null}
-        onChange={handleDateChange}
-        slots={{
-          layout: StyledPickersLayout,
-          textField: CustomTextField,
-          openPickerIcon: () => (
-            <img
-              src="/images/icons/calendar.svg"
-              alt="Calendar"
-              style={{
-                width: '13px',
-                height: '14.4px',
-              }}
-            />
-          ),
-        }}
-        slotProps={{
-          textField: {
-            placeholder: placeholder,
-          },
-        }}
-      />
-    </LocalizationProvider>
-    {error && (
+      style={{
+        width: '160px',
+      }}
+      error={error}
+    >
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+        <DatePicker
+          displayWeekNumber
+          value={value ? dayjs(value) : null}
+          onChange={handleDateChange}
+          open={open}
+          onOpen={() => setOpen(true)}
+          onClose={() => setOpen(false)}
+          slots={{
+            layout: StyledPickersLayout,
+            textField: CustomTextField,
+            openPickerIcon: () => (
+              <img
+                src="/images/icons/calendar.svg"
+                alt="Calendar"
+                style={{
+                  width: '13px',
+                  height: '14.4px',
+                }}
+              />
+            ),
+          }}
+          slotProps={{
+            desktopPaper: {
+              ...(customStyles ? {
+                sx: {
+                  position: "absolute",
+                  top: "-130px",
+                  left: name === "EndDate"? "-120px" : ""
+                }
+              } : {})
+            },
+            textField: {
+              placeholder: placeholder,
+              error: error,
+              onClick: handleInputClick,
+              InputProps: {
+                readOnly: true,
+                value: value || "" 
+              },
+            },
+          
+          }}
+        />
+      </LocalizationProvider>
+      {error && (
         <FormHelperText
           style={{
             fontSize: '0.75rem',
             marginLeft: '0px',
           }}>{helperText}
-          </FormHelperText>
-          )}
+        </FormHelperText>
+      )}
     </FormControl>
   );
 }

@@ -7,6 +7,9 @@ import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 import { Tooltip } from '@mui/material';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
+import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
+import { AppDispatch, RootState } from '@/app/redux/store';
+import { GridCellParams } from '@mui/x-data-grid';
 
 
 export default function ProjectAllocation() {
@@ -14,23 +17,23 @@ export default function ProjectAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
 
   const { projects, allocations, loading, dataProcessing, calendarDate } = useSelector(
-    state => state.projects
+    (state: RootState) => state.projects
   );
   const { startDate, endDate } = calendarDate || {};
-  const dispatch = useDispatch();
+  const dispatch : AppDispatch = useDispatch();
 
   useEffect(() => {
-    if (projects?.result?.length && startDate && endDate) {
+    if (projects && "result" in projects && projects?.result?.length && startDate && endDate) {
       dispatch(resetAllocations());
       dispatch(fetchAllProjectAllocations(projects.result, startDate, endDate));
     }
   }, [projects, calendarDate]);
 
-  const handleAddClick =(params)=>{
+  const handleAddClick =(params: GridCellParams)=>{
     dispatch(
       openDialog({
-        title: "Add Allocation",
-        submitButtonText: 'Add',
+        title: "Update Allocation",
+        submitButtonText: 'Update',
         cancelButtonText: 'Cancel',
         formType: "add_allocation",
         initialData: {  
@@ -40,10 +43,12 @@ export default function ProjectAllocation() {
     );
   }
 
-  const getFirstChild = (params) => {
-    if (params.rowNode.children && params.rowNode.children.length > 0) {
-      const firstChildId = params.rowNode.children[0];
-      const firstChildRow = params.api.getRow(firstChildId);
+  const getFirstChild = (params : GridCellParams) => {
+    const { rowNode, api } = params;
+    const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+    if (isGridTreeNode && rowNode.children && rowNode.children.length > 0) {
+      const firstChildId = rowNode.children[0];
+      const firstChildRow = api.getRow(firstChildId);
       return firstChildRow;
     }
     return null;
@@ -55,31 +60,36 @@ export default function ProjectAllocation() {
       headerName: 'Project Name',
       width: 200,
       headerClassName: 'prime-header',
-      cellClassName: 'prime-cell',
+      // cellClassName: getCellClassName,
+      cellClassName: () => 'project-view-projectName',
       primaryColumn: true,
       filterable: false,
       isEditable: false,
-      renderCell: (params) => {
-        const resource_count = params?.rowNode?.children?.length || "";
-        return (
-          <Tooltip title={params.value} variant="solid" placement="right" arrow slotProps={{
-            popper: {
-              modifiers: [
-                {
-                  name: "offset",
-                  options: { offset: [0, 10] },
-                },
-              ],
-            }
-          }}
-          >
-            <CustomAddIcon
-              value={params.value}
-              count={resource_count}
-              onClick={() => handleAddClick(params)}
-            />
-          </Tooltip>
-        );
+      renderCell: (params: GridCellParams) => {
+        const { rowNode, api, value = '' } = params;
+        const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+        if (isGridTreeNode && rowNode.children) {
+        const resource_count = rowNode?.children?.length || null;
+          return (
+            <Tooltip title={value as string} placement="right" arrow slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: "offset",
+                    options: { offset: [0, 10] },
+                  },
+                ],
+              }
+            }}
+            >
+              <CustomAddIcon
+                value={value as string}
+                count={resource_count}
+                onClick={() => handleAddClick(params)}
+              />
+            </Tooltip>
+          );
+        }
       }
     },
     {
@@ -88,10 +98,10 @@ export default function ProjectAllocation() {
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params : GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectSponsor ?? 'N/A'}</span>) : null;
       },
@@ -102,10 +112,10 @@ export default function ProjectAllocation() {
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectManager ?? 'N/A'}</span>) : null;
       },
@@ -115,9 +125,9 @@ export default function ProjectAllocation() {
       width: 84,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectStatus ?? 'N/A'}</span>) : null;
       },
@@ -128,10 +138,10 @@ export default function ProjectAllocation() {
       width: 92,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectLocation ?? 'N/A'}</span>) : null;
       },
@@ -142,10 +152,10 @@ export default function ProjectAllocation() {
       width: 116,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params : GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectType ?? 'N/A'}</span>) : null;
       },
@@ -156,10 +166,10 @@ export default function ProjectAllocation() {
       width: 102, // min-width without eliding.
       type: 'boolean',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}</span>) : null;
       },
@@ -170,10 +180,10 @@ export default function ProjectAllocation() {
       width: 90,
       type: 'string ',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectCost ?? 'N/A'}</span>) : null;
       },
@@ -184,10 +194,10 @@ export default function ProjectAllocation() {
       width: 100,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectCurrency ?? 'N/A'}</span>) : null;
       },
@@ -198,10 +208,10 @@ export default function ProjectAllocation() {
       width: 100,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectStartDate ?? 'N/A'}</span>) : null;
       },
@@ -212,10 +222,10 @@ export default function ProjectAllocation() {
       width: 100,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (<span>{firstChild.projectEndDate ?? 'N/A'}</span>) : null;
       },
@@ -226,16 +236,17 @@ export default function ProjectAllocation() {
       width: 106,
       type: 'number',
       sortable: false,
+      cellClassName: getCellClassName,
       headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
+      // cellClassName: 'secondary-cell',
       headerAlign: 'left',
       primaryColumn: true,
-      renderCell: (params) => {
+      renderCell: (params: GridCellParams) => {
         const value = Number(params.value);
         const formattedValue =
-          value && typeof value === 'number' && value !== 0
-            ? Math.round(value * 10) / 10
-            : null;
+        !isNaN(value) && value !== null
+          ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
+          : null;
         return <span style={{ fontWeight: 'bold' }}>{formattedValue}</span>;
       },
     },
@@ -246,10 +257,8 @@ export default function ProjectAllocation() {
       <AllocationGrid
         groupBy="project"
         columns={projectColumnConfig}
-        rowsState={rowsState}
         startDate={startDate}
         endDate={endDate}
-        setRowsState={setRowsState}
         selectedTeam={selectedTeam}
         setSelectedTeam={setSelectedTeam}
         initialState={{

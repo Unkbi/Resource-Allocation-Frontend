@@ -2,7 +2,7 @@ import { getInitialsColor } from '@/app/utils/common';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
-export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
+export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy}) => ({
   [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
     {
       // width: '240px !important',
@@ -11,7 +11,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
     {
       // width: '240px !important',
-      fontWeight:"bold"
+      fontWeight:"bold",
     },
   [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
     {
@@ -19,7 +19,48 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
     // width: '240px',
-  },
+    backgroundColor: !loading && '#F1F6FF',
+    },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="project"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="project"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="resourceType"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamStatus"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamAllocationManager"]`]: {
+    backgroundColor: !loading && '#F7FBFF',
+    },
+  [`& .${gridClasses.cell}[data-field="teamAllocationManager"].secondGroupsRow`]: {
+    backgroundColor: !loading && '#F0F7FF',
+    },
+    
+  //  '& .MuiDataGrid-row:hover': {
+  //   backgroundColor: 'inherit !important',
+  //   },
   [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
     {
       '&:before': {
@@ -29,12 +70,22 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
         left: '0px',
         width: '5px',
         height: '40px',
-        backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
+        // backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
       },
     },
   '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
     boxShadow: 'none !important',
   },
+  '& .common-NonEditableCells' :{
+  backgroundColor : '#F1F6FF',
+  },
+  '& .MuiDataGrid-row--editing .MuiDataGrid-cell.common-NonEditableCells': {
+  backgroundColor: '#F1F6FF !important',
+},
+  '& .project-view-projectName' :{
+    backgroundColor : '#E9EFF8',
+  },
+ 
   [`& .${gridClasses.columnHeader}`]: {
     '&.prime-header': {},
     '&.secondary-header': {},
@@ -60,15 +111,16 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     fontSize: '14px',
     padding: '0 16px',
     color: '#313F68',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '500',
+    textAlign :'left',
   },
   '& .MuiDataGrid-columnHeader': {
     borderRight: '1px solid #DDE1E4',
     backgroundColor: '#F1F6FF',
     padding: '0 16px 10px',
     color: '#313F68',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '500',
     '& .MuiDataGrid-columnHeaderTitleContainer': {
       // alignItems: 'flex-start',
@@ -82,7 +134,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     '&:hover': {
       backgroundColor: '#FBFCFE',
       '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
-        backgroundColor: '#FBFCFE !important',
+        backgroundColor: (!loading)&& (groupBy==='project' ? '#F1F6FF !important' : '#F7FBFF !important'),
       },
     },
   },
@@ -102,9 +154,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-cellContent': {
     paddingLeft: '8px',
   },
-  // '& .MuiDataGrid-groupingCriteriaCellToggle': {
-  //   display: 'none',
-  // },
+  '& .MuiDataGrid-groupingCriteriaCellToggle': {
+    marginLeft: '-10px',
+    marginRight: '4px',
+  },
+  '& .MuiDataGrid-columnHeader[data-field="project"] .MuiDataGrid-groupingCriteriaCellToggle': {
+  marginLeft: '20px !important',
+  marginRight: '20px !important',
+  },
   '& .MuiDataGrid-aggregationColumnHeaderLabel': {
     display: 'none',
   },
@@ -132,7 +189,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   },
   '& .weeklyCell': {
     textAlign: 'center',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '500',
     fontSize: '14px',
     color: '#212121',
@@ -146,7 +203,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     },
     '& .MuiDataGrid-editInputCell': {},
     '& input': {
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '500',
       color: '#313F68',
       fontSize: '14px',
@@ -167,7 +224,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
       justifyContent: 'center',
       alignItems: 'center',
       '& .MuiDataGrid-columnHeaderTitle': {
-        fontFamily: "'Manrope', serif",
+        fontFamily: theme.typography.fontFamily,
         fontWeight:"bold",
         fontSize: '12px',
         color: '#fff',
@@ -229,7 +286,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
     borderBottom: '2px solid #FFCD9C', 
   },
   '& .firstGroupsRow': {
-    backgroundColor: '#E9EFF8',
+    backgroundColor: '#E9EFF8 !important' ,
+    fontWeight:groupBy==='project' ? 'bold' :"",
+    color:groupBy==='project' ?'#313F68' : '' ,
   },
   '& .secondGroupsRow': {
     backgroundColor: '#F0F7FF',
@@ -237,13 +296,20 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme }) => ({
   '& .MuiDataGrid-row--editing': {
     boxShadow: 'none',
   },
+  '& .total-effort-cell' : {
+     backgroundColor: '#E9EFF8',
+     textAlign :'center',
+     fontWeight: 'bold',
+},'& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
+  backgroundColor: '#E9EFF8 !important',
+},
   '& .empty-group-header': {
     '& .MuiDataGrid-columnHeaderTitleContainer': {
       display: 'none',
     },
   },
 }));
-
+ 
 export const ColumnManagementStyles = {
   '& .MuiDataGrid-columnsManagementHeader': {
     padding: '0',
@@ -254,7 +320,7 @@ export const ColumnManagementStyles = {
     background: '#FFFFFF 0% 0% no-repeat padding-box',
     padding: '0',
     borderRadius: '5px',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '12px',
     fontWeight: '500',
     color: '#212121',
@@ -262,7 +328,7 @@ export const ColumnManagementStyles = {
     '&::placeholder': {
       color: '#757575',
       opacity: 1,
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme => theme.typography.fontFamily,
       fontSize: '14px',
     },
   },
@@ -280,7 +346,7 @@ export const ColumnManagementStyles = {
   '& .MuiDataGrid-columnsManagement': {
     padding: '5px 0',
     color: '#424242',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '14px',
     '& .MuiFormControlLabel-root': {
       margin: '0',
@@ -290,7 +356,7 @@ export const ColumnManagementStyles = {
       },
       '& .MuiTypography-root': {
         color: '#424242',
-        fontFamily: "'Manrope', serif",
+        fontFamily: theme => theme.typography.fontFamily,
         fontSize: '12px',
         fontWeight: '500',
         paddingLeft: '10px',
@@ -308,7 +374,7 @@ export const ColumnManagementStyles = {
       },
       '& .MuiTypography-root': {
         color: '#424242',
-        fontFamily: "'Manrope', serif",
+        fontFamily: theme => theme.typography.fontFamily,
         fontSize: '12px',
         fontWeight: '500',
         paddingLeft: '10px',
@@ -316,7 +382,7 @@ export const ColumnManagementStyles = {
     },
     '& .MuiButtonBase-root': {
       color: '#298AFF',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme => theme.typography.fontFamily,
       fontSize: '11px',
       lineHeight: '30px',
       textTransform: 'none',
@@ -353,7 +419,7 @@ export const FilterPanelStyles = {
     border: '1px solid #D6DCE1',
     borderRadius: '4px',
     color: '#212121',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '13px',
     lineHeight: '16px',
     textTransform: 'none',
@@ -365,7 +431,7 @@ export const FilterPanelStyles = {
     border: '1px solid #D6DCE1',
     borderRadius: '4px',
     color: '#212121',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '13px',
     lineHeight: '16px',
     textTransform: 'none',
@@ -382,7 +448,7 @@ export const FilterPanelStyles = {
   },
   '& .MuiFormLabel-root': {
     color: '#757575',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '13px',
     lineHeight: '16px',
     textTransform: 'none',
@@ -390,7 +456,7 @@ export const FilterPanelStyles = {
   },
   '& .MuiButtonBase-root': {
     color: '#298AFF',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme => theme.typography.fontFamily,
     fontSize: '12px',
     lineHeight: '14px',
     textTransform: 'none',

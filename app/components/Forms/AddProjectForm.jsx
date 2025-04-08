@@ -3,12 +3,18 @@ import { TextField, Box, Typography } from '@mui/material';
 import CustomSelect from '../Select/CustomSelect';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
-import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useSelector } from 'react-redux';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import Project from '@/app/(root)/project/page';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { values, handleChange, handleBlur, errors, touched ,resetForm,setTouched } = formikProps
   const { initialData } = useSelector((state) => state.globalDialog.formState)
+  const { resources } = useSelector((state) => state.resources)
+
+  const resourceTypeOptions = resources && resources.result.map((resource) => {
+    return { value: resource.FullName, label: resource.FullName }
+  })
 
   useEffect(() => {
     if (initialData) {
@@ -16,9 +22,9 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
         Owner: initialData.Owner?.name || '',
-        AllowOvertime: initialData.AllowOvertime ?? '', // Use nullish coalescing
+        AllowOvertime: initialData.AllowOvertime ?? '',
         Location: initialData.Location || '',
-        Manager: initialData.Manager || '',
+        ProjectManager: initialData.ProjectManager || '',
         Name: initialData.Name || '',
         Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
@@ -50,21 +56,6 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     { value: "Approved", label: "Approved" },
   ]
 
-  // Error display helper
-  const showError = (fieldName) => {
-    return touched[fieldName] && errors[fieldName] ? (
-      <Typography
-        color="error"
-        sx={{
-          fontSize: "12px",
-          mt: 0.5,
-          fontFamily: "Open Sans",
-        }}
-      >
-        {errors[fieldName]}
-      </Typography>
-    ) : null
-  }
 
   return (
     <Box>
@@ -79,36 +70,38 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Name && Boolean(errors.Name)}
+          helperText={touched.Name && formikProps.errors.Name}
         />
-        {showError("Name")}
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
           Sponsor 
         </StyledLabel>
-        <StyledInput
-          as={TextField}
+        <CustomSelect
           name="Owner"
-          value={values.Owner}
+          options={resourceTypeOptions}
+          value={values.Owner || []}
           onChange={handleChange}
           onBlur={handleBlur}
+          width={"100%"}
           error={touched.Owner && Boolean(errors.Owner)}
+          helperText={ touched.Owner &&  formikProps.errors.Owner}
         />
-        {showError("Owner")}
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
           Project Manager 
         </StyledLabel>
-        <StyledInput
-          as={TextField}
-          name="Manager"
-          value={values.Manager}
+        <CustomSelect
+          name="ProjectManager"
+          options={resourceTypeOptions}
+          value={values.ProjectManager || []}
           onChange={handleChange}
           onBlur={handleBlur}
-          error={touched.Manager && Boolean(errors.Manager)}
+          width={"100%"}
+          error={touched.ProjectManager && Boolean(errors.ProjectManager)}
+          helperText={formikProps.errors.ProjectManager}
         />
-        {showError("Manager")}
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
@@ -121,8 +114,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Location && Boolean(errors.Location)}
+          helperText={touched.Location && formikProps.errors.Location}
         />
-        {showError("Location")}
       </Box>
       <Box
         sx={{
@@ -130,9 +123,11 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
+          width: "100%"
         }}
+        
       >
-        <Box sx={{ width: "48%" }}>
+        <Box >
           <StyledLabel>
             Project Type <span style={{ color: "red" }}>*</span>
           </StyledLabel>
@@ -142,12 +137,12 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             value={values.Type}
             onChange={handleChange}
             onBlur={handleBlur}
-            width={"100%"}
+            width={"160px"}
             error={touched.Type && Boolean(errors.Type)}
+            helperText={formikProps.errors.Type}
           />
-          {showError("Type")}
         </Box>
-        <Box sx={{ width: "48%" }}>
+        <Box>
           <StyledLabel>
             Allow Overtime <span style={{ color: "red" }}>*</span>
           </StyledLabel>
@@ -157,10 +152,10 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             value={values.AllowOvertime}
             onChange={handleChange}
             onBlur={handleBlur}
-            width={"100%"}
+            width={"160px"}
             error={touched.AllowOvertime && Boolean(errors.AllowOvertime)}
+            helperText={formikProps.errors.AllowOvertime}
           />
-          {showError("AllowOvertime")}
         </Box>
       </Box>
       <Box
@@ -171,34 +166,19 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           justifyContent: "space-between",
         }}
       >
-        <Box sx={{ width: "48%" }}>
-          <StyledLabel>
-            Start Date 
-          </StyledLabel>
-          <CustomDatePicker
-            name="StartDate"
-            handleChange={handleChange}
-            value={values.StartDate  || null}
-            placeholder={"Start Date"}
-            formikProps={formikProps}
-            error={touched.StartDate && Boolean(errors.StartDate)}
-          />
-          {showError("StartDate")}
-        </Box>
-        <Box sx={{ width: "48%" }}>
-          <StyledLabel>
-            End Date 
-          </StyledLabel>
-          <CustomDatePicker
-            name="EndDate"
-            handleChange={handleChange}
-            value={values.EndDate || null}
-            placeholder={"End Date"}
-            formikProps={formikProps}
-            error={touched.EndDate && Boolean(errors.EndDate)}
-          />
-          {showError("EndDate")}
-        </Box>
+      <CustomDateRangePicker
+          name = "StartDate"
+          value={{
+            "StartDate":formikProps.values.StartDate,
+            "EndDate":formikProps.values.EndDate}}
+          placeholder="Select Date"
+          endDateLabel="End Date"
+          startDateLabel ="Start Date"
+          formikProps={formikProps}
+          error={formikProps.touched.StartDate && Boolean(formikProps.errors.StartDate)}
+          helperText={formikProps.touched.StartDate && formikProps.errors.StartDate}
+          customStyles={true}
+        />
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
@@ -209,10 +189,11 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           options={statusOptions}
           value={values.Status}
           onChange={handleChange}
+          width={"100%"}
           onBlur={handleBlur}
           error={touched.Status && Boolean(errors.Status)}
+          helperText={formikProps.errors.Status}
         />
-        {showError("Status")}
       </Box>
     </Box>
   )

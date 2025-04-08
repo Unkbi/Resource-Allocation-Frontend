@@ -64,7 +64,7 @@ const ToolBox1 = styled(Box)(({ theme }) => ({
   },
   '& .projectDropdown': {
     color: '#313F68',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '800',
     fontSize: '15px',
     '& .MuiSelect-select': {
@@ -90,7 +90,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       padding: '5px 12px',
       fontSize: '13px',
       color: '#212121',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '600',
       textTransform: 'none',
     },
@@ -104,7 +104,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     alignItems: 'center',
     '& button': {
       color: '#757575',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '500',
       fontSize: '13px',
       lineHeight: '16px',
@@ -131,7 +131,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     overflow: 'hidden',
     '& button': {
       color: '#757575',
-      fontFamily: "'Manrope', serif",
+      fontFamily: theme.typography.fontFamily,
       fontWeight: '500',
       fontSize: '13px',
       lineHeight: '16px',
@@ -162,7 +162,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     borderRadius: '4px',
     height: '32px',
     color: '#212121',
-    fontFamily: "'Manrope', serif",
+    fontFamily: theme.typography.fontFamily,
     fontWeight: '600',
     fontSize: '12px',
     lineHeight: '14px',
@@ -180,7 +180,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   padding: '10px 12px',
   color: '#212121',
-  fontFamily: "'Manrope', serif",
+  fontFamily: theme.typography.fontFamily,
   fontWeight: '400',
   fontSize: '13px',
   '&:hover': {

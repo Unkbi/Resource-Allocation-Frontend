@@ -74,21 +74,32 @@ export const getMondayOfWeek = (weekNumber, date) => {
 export function generateAllMondays(startDate, endDate) {
   const mondays = [];
   const currentDate = new Date(startDate);
-  if (currentDate.getDay() !== 1) {
-    currentDate.setDate(
-      currentDate.getDate() + ((1 - currentDate.getDay() + 7) % 7)
-    );
+  
+  // Set to the previous Monday (or stay if already Monday)
+  currentDate.setDate(currentDate.getDate() - ((currentDate.getDay() + 6) % 7));
+  
+  // If no endDate, return just this Monday
+  if (!endDate) {
+    mondays.push(formatDates(currentDate));
+    return mondays;
   }
-  while (currentDate <= new Date(endDate)) {
-    const year = currentDate.getFullYear();
-    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-    const day = String(currentDate.getDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
-    mondays.push(formattedDate);
+  
+  const endDateObj = new Date(endDate);
+  
+  // Generate all Mondays in the range
+  while (currentDate <= endDateObj) {
+    mondays.push(formatDates(currentDate));
     currentDate.setDate(currentDate.getDate() + 7);
   }
 
   return mondays;
+}
+
+function formatDates(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**

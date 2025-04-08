@@ -79,7 +79,7 @@ const MainBox = styled(Box, {
     "& li": {
       color:' #95979E',
       backgroundColor: '#0D1F52',
-      fontFamily: "Open Sans",
+      fontFamily: theme.typography.fontFamily,
      fontsize: '14px',
      fontStyle:' normal',
      fontweight: '400',
@@ -396,7 +396,7 @@ const menuItems = [
                         src="/images/icons/exiticon.svg"
                         alt="Logout"
                         style={{ width: "16px", height: "16px", marginRight: "10px",color:' #95979E',
-                        fontFamily: "Open Sans",
+                        fontFamily: theme => theme.typography.fontFamily,
                          fontsize: '14px',
                          fontStyle:' normal',
                          fontweight: '400',
