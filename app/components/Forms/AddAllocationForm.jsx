@@ -263,7 +263,6 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
 
    <Box>
        <Box sx={{ pb: 2, pt: 2 ,}}>
-          <StyledLabel>Date Range</StyledLabel>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
             <CustomDateRangePicker
               name = "StartDate"
