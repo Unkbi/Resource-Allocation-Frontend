@@ -8,7 +8,7 @@ import {FormControl} from '@mui/material';
 import 'dayjs/locale/en-gb';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { DEFAULT_LOCALE } from '@/app/constants/constants';
-import { DateRangePicker } from '@mui/x-date-pickers-pro';
+import { DateRangePicker,SingleInputDateRangeField, } from '@mui/x-date-pickers-pro';
 import StyledLabel from '../Label/StyledLabel';
  
 dayjs.extend(updateLocale);
@@ -44,6 +44,27 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
     },
   },
 }));
+
+const StyledsingleInputDateRangeField = {
+  height: '36px',
+  width: '100%',
+  '& .MuiInputBase-root': {
+    height: '36px',
+    fontSize: '12px',
+    fontWeight: 500,
+    '& input': {
+      cursor: 'pointer',
+    },
+  },
+  '& .MuiIconButton-root': {
+    backgroundColor: 'transparent !important',
+    '&:hover': {
+      backgroundColor: 'transparent !important',
+    },
+  },
+};
+
+
  
 export default function CustomDateRangePicker({ value, placeholder, formikProps, error, helperText, customStyles, startDateLabel="", endDateLabel=""}) {
   const { setFieldValue } = formikProps
@@ -62,25 +83,40 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
       }
   }
 
+  const handleClose = () =>{
+      const [start, end] = selectedDate;
+    
+      if (start && !end) {
+        const formattedDate = dayjs(start).format("YYYY-MM-DD");
+        setFieldValue("StartDate", formattedDate);
+        setFieldValue("EndDate", formattedDate);
+      }  
+  }
+
  
   return (
     <FormControl error={error}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
         <Box sx={{display:"flex",flexDirection:"row", gap: "122px"}}>
-          <StyledLabel>
+          {/* <StyledLabel>
             {startDateLabel}
           </StyledLabel>
           <StyledLabel>
             {endDateLabel}
-          </StyledLabel></Box>
-          <DateRangePicker calendars={1}
+          </StyledLabel> */}
+          <StyledLabel>Date Range</StyledLabel>
+          </Box>
+          <Box sx={{ width: '330px' }}>
+          <DateRangePicker 
+           calendars={1}
            displayWeekNumber
            value= {selectedDate}
            onChange={(newValue) => handleDateChange(newValue)}
+           onClose={handleClose}
            localeText={{ start: '', end: '' }} 
            format='MM/DD/YYYY'
            slots={{
-            textField: CustomTextField
+            field: SingleInputDateRangeField,
           }}
           slotProps={{
             fieldSeparator: { sx: { display:"none" } } ,
@@ -88,6 +124,7 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
               variant: 'outlined',
               error: error,
               placeholder: placeholder,
+              sx : StyledsingleInputDateRangeField,
               InputProps: {
                 endAdornment: (
                   <img
@@ -110,6 +147,7 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
             },
           }}
        />
+      </Box>
       </LocalizationProvider>
       {error && (
         <FormHelperText
