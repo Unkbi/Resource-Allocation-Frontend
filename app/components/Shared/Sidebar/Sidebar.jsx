@@ -210,7 +210,8 @@ const menuItems = [
       marginLeft :sidebarExpanded ? '3px' :'' ,
       padding: '0px',
       background: 'transparent', 
-      boxShadow: 'none',         
+      boxShadow: 'none',  
+      minWidth :'0px' ,  
     }}
   >
     <img 
@@ -223,17 +224,6 @@ const menuItems = [
         padding :'0px' ,
       }} 
     />
-    {sidebarExpanded && (
-      <Typography 
-       sx={{
-       fontSize: '14px',
-       fontWeight: '500',
-       color:"silver" ,
-       textTransform:"none",
-       display: sidebarExpanded ? 'none' : 'block',}}>
-       Collapse
-      </Typography>
-    )}
   </Button>
 
   </Box>
