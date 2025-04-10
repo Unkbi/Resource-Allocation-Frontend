@@ -98,12 +98,6 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
     <FormControl error={error}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
         <Box sx={{display:"flex",flexDirection:"row", gap: "122px"}}>
-          {/* <StyledLabel>
-            {startDateLabel}
-          </StyledLabel>
-          <StyledLabel>
-            {endDateLabel}
-          </StyledLabel> */}
           <StyledLabel>Date Range</StyledLabel>
           </Box>
           <Box sx={{ width: '330px' }}>
