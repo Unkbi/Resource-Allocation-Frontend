@@ -149,7 +149,7 @@ const menuItems = [
 
   const extraMenuItems = [
     { icon: "/images/icons/Notifications.svg",text :"Notification", url: "/notifications", disabled: true },
-    { icon: "/images/icons/SettingsIcon.svg",text :"Settings", url: "/settings", disabled: true },
+    { icon: "/images/icons/SettingsIcon.svg",text :"Settings", url: "/settings", disabled: false },
     { icon: "/images/icons/Vectorr.svg",text :"User Profile", url: "/profile", disabled: true },  
     { icon: "/images/icons/helpIcon.svg",text :"Help Center", url: "/help", disabled: true },
   ];
