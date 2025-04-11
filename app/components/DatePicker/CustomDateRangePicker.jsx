@@ -64,8 +64,6 @@ const StyledsingleInputDateRangeField = {
   },
 };
 
-
- 
 export default function CustomDateRangePicker({ value, placeholder, formikProps, error, helperText, customStyles, startDateLabel="", endDateLabel=""}) {
   const { setFieldValue } = formikProps
   const selectedDate = [
@@ -74,26 +72,22 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
   ];
 
   const handleDateChange = (newValue) => {
-      if (newValue && Array.isArray(newValue)) {
-        const [start, end] = newValue;
-        const formattedStart = start && dayjs(start).format("YYYY-MM-DD");
-        const formattedEnd = end && dayjs(end).format("YYYY-MM-DD");
-        setFieldValue("StartDate", formattedStart);
-        setFieldValue("EndDate", formattedEnd);
-      }
-  }
-
-  const handleClose = () =>{
-      const [start, end] = selectedDate;
-    
+    if (newValue && Array.isArray(newValue)) {
+      const [start, end] = newValue;
       if (start && !end) {
         const formattedDate = dayjs(start).format("YYYY-MM-DD");
         setFieldValue("StartDate", formattedDate);
         setFieldValue("EndDate", formattedDate);
-      }  
-  }
+        } 
+        else if (start && end) {
+        const formattedStart = dayjs(start).format("YYYY-MM-DD");
+        const formattedEnd = dayjs(end).format("YYYY-MM-DD");
+        setFieldValue("StartDate", formattedStart);
+        setFieldValue("EndDate", formattedEnd);
+      }
+    }
+  };
 
- 
   return (
     <FormControl error={error}>
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
@@ -106,7 +100,6 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
            displayWeekNumber
            value= {selectedDate}
            onChange={(newValue) => handleDateChange(newValue)}
-           onClose={handleClose}
            localeText={{ start: '', end: '' }} 
            format='MM/DD/YYYY'
            slots={{
