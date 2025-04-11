@@ -66,6 +66,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       
         Object.keys(weeks).forEach((weekN) => {
           const period = currentRowData?.[weekN]?.period;
+          // console.log('week:', weekN, 'period:', currentRowData?.[weekN]?.period);
           if (period) {
             StartDate = StartDate ? (isBefore(period, StartDate) ? period : StartDate) : period;
             EndDate = EndDate ? (isAfter(period, EndDate) ? period : EndDate) : period;
@@ -100,20 +101,38 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       ...aggregationModel(startDate, endDate),
   });
 
+  const normalizeRow = (row) => {
+    const allWeeks = generateAllWeeks();
+    const normalized = { ...row };
 
-  const normalizeRow = row => {
-    return Object.keys(row).reduce((normalized, key) => {
-      if (key.startsWith('W')) {
-        const weekValue = row[key];
-        normalized[key] =
-          typeof weekValue === 'object' && weekValue !== null
-            ? weekValue
-            : { allocationId: null, value: weekValue };
+    allWeeks.forEach((weekKey) => {
+      const weekNumber = weekKey.slice(1);
+      const period = getMondayOfWeek(weekNumber, new Date());
+
+      const value = row[weekKey];
+
+      if (value && typeof value === 'object' && 'value' in value) {
+        normalized[weekKey] = {
+          allocationId: value.allocationId || null,
+          value: value.value,
+          period: period,
+        };
+      } else if (value !== undefined) {
+        normalized[weekKey] = {
+          allocationId: null,
+          value,
+          period,
+        };
       } else {
-        normalized[key] = row[key];
+        normalized[weekKey] = {
+          allocationId: null,
+          value: null,
+          period,
+        };
       }
-      return normalized;
-    }, {});
+    });
+
+    return normalized;
   };
 
   useEffect(() => {

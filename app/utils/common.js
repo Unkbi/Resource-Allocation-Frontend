@@ -1,4 +1,4 @@
-import { addDays, eachDayOfInterval, format, getWeek, getYear, setWeek, startOfISOWeek, startOfWeek, subDays, subWeeks, weeksToDays } from 'date-fns';
+import { addDays, eachDayOfInterval, format, getWeek, getYear, setWeek, startOfISOWeek, startOfWeek, subDays, subWeeks, weeksToDays, startOfISOWeekYear } from 'date-fns';
 import { DATE_FORMAT, TOTAL_FUTURE_WEEKS, TOTAL_FUTURE_WEEKS_ARROW } from '../constants/constants';
 
 // Calculate total effort from weekly columns
@@ -64,11 +64,10 @@ export const getMondaysInRange = (start, end) => {
  * @returns {string} - The Monday date of the given week in YYYY-MM-DD format.
  */
 export const getMondayOfWeek = (weekNumber, date) => {
-  const year = getYear(date);
-  const firstDayOfYear = new Date(year, 0, 1);
-  const weekN = typeof weekNumber !== 'number' ? Number(weekNumber.slice(1)) : weekNumber;
-  const dateInWeek = setWeek(firstDayOfYear, weekN);
-  return format(startOfISOWeek(dateInWeek, { weekStartsOn: 1 }), DATE_FORMAT);
+  const year = date.getFullYear();
+  const startOfFirstWeek = startOfISOWeekYear(new Date(year, 0, 1));
+  const mondayOfTargetWeek = addWeeks(startOfFirstWeek, weekNumber - 1);
+  return format(mondayOfTargetWeek, DATE_FORMAT);
 };
 
 export function generateAllMondays(startDate, endDate) {
