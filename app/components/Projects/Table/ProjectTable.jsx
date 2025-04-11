@@ -42,9 +42,6 @@ const ProjectTable = ({columns, rows, loading}) => {
             }}
             sx={{
                 height: '95vh',
-                '& .MuiDataGrid-cell': {
-                    borderRight: 'none', // This removes the vertical borders between cells
-                },
                 '& .MuiDataGrid-columnHeader': {
                     padding: '0 16px',
                     borderRight: 'none',
