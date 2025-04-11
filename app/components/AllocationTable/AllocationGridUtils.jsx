@@ -9,8 +9,42 @@ import { useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from './CustomAddIcon';
 import { useState } from 'react';
-import { IconButton, Menu, MenuItem } from '@mui/material';
+import { IconButton, Menu, MenuItem,ListItemIcon, ListItemText} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import HistoryIcon from '@mui/icons-material/History';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { styled } from '@mui/material/styles';
+import {Typography} from '@mui/material';
+
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    borderRadius: 4,
+    boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
+    width: '120px',
+  },
+}));
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: 'rgba(20, 43, 81, 0.70)',
+    '& .MuiTypography-root': {
+      color: '#FFFFFF', 
+    },
+    '& .MuiListItemIcon-root': {
+      color: '#FFFFFF', 
+    },
+  },
+  '& .MuiTypography-root': {
+    color: '#424242', 
+  },
+  '& .MuiListItemIcon-root': {
+    minWidth: 32,
+    color: '#1C2D5F', 
+  },
+
+}));
 
 const ResourceCellWithMenu = ({ params, handleAddClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -24,6 +58,14 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  const menuItems = [
+    { label: 'Clone', icon: <ContentCopyIcon fontSize="small" /> },
+    { label: 'Transfer', icon: <SwapHorizIcon fontSize="small" /> },
+    { label: 'History', icon: <HistoryIcon fontSize="small" /> },
+    { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
+  ];
+
 
   const menu = (
     <>
@@ -43,15 +85,41 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
       >
         <MoreVertIcon sx={{ fontSize: 22 }} />
       </IconButton>
-      <Menu
+      <StyledMenu
         anchorEl={anchorEl}
         open={open}
         onClose={handleMenuClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       >
-        <MenuItem onClick={() => { handleMenuClose(); alert('Clone'); }}>Clone</MenuItem>
-      </Menu>
+       {menuItems.map((item) => (
+          <StyledMenuItem
+            key={item.label}
+            onClick={() => {
+            handleMenuClose();
+            }}
+          >
+        <ListItemIcon>{item.icon}</ListItemIcon>
+        <ListItemText   
+          primary={
+         <Typography
+          variant="body2"
+          sx={{
+          color:' #424242',
+          fontFamily: 'Manrope',
+          fontSize: '12px',
+          fontStyle: 'normal',
+          fontWeight: '600',
+          lineHeight:' 18px', 
+          }}
+        >
+        {item.label}
+        </Typography>
+         }
+        />
+      </StyledMenuItem>
+        ))}
+      </StyledMenu>
     </>
   );
 
