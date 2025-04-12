@@ -278,7 +278,6 @@ export const fetchResourcesAgainstTeams =
       });
 
       const results = await Promise.allSettled(teamPromises);
-      console.log(results,"results")
       const allResourceResults: TeamResourceResponse[] = [];
       results.forEach(result => {
         if (result.status === 'rejected') {
@@ -286,7 +285,6 @@ export const fetchResourcesAgainstTeams =
           return;
         }
         const resrouceResults = result.value?.resourcesResult;
-        console.log(resrouceResults,"resrouceResults")
         if (
           resrouceResults &&
           resrouceResults.status === 'fulfilled' &&
