@@ -10,7 +10,7 @@ import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-
+import type { User } from '@/app/types/userTypes';
 
 export default function ProjectAllocation() {
   const [rowsState, setRowsState] = useState([]);
@@ -19,6 +19,19 @@ export default function ProjectAllocation() {
   const { projects, allocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.projects
   );
+
+  const [showOnlyMyProjects, setShowOnlyMyProjects] = useState(false);
+  const user = useSelector((state: RootState) => state.auth.user) as User | null;
+  const fullName = user ? `${user.FirstName} ${user.LastName}`.trim().toLowerCase() : '';
+  
+  const filteredAllocations = showOnlyMyProjects
+    ? allocations.filter(a => a.projectManager?.toLowerCase() === fullName)
+    : allocations;
+  
+  const hasMyProjects = projects?.result?.some(
+    project => project.ProjectManager?.toLowerCase() === fullName
+  );
+ 
   const { startDate, endDate } = calendarDate || {};
   const dispatch : AppDispatch = useDispatch();
 
@@ -277,7 +290,10 @@ export default function ProjectAllocation() {
             },
           },
         }}
-        data={allocations}
+        data={filteredAllocations}
+        showOnlyMyProjects={showOnlyMyProjects}
+        setShowOnlyMyProjects={setShowOnlyMyProjects}
+        hasMyProjects={hasMyProjects}
         loading={loading || dataProcessing}
       />
     </>

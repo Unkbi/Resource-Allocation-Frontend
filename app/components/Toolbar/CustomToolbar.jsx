@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import {
   Box,
   Button,
@@ -8,6 +8,8 @@ import {
   FormControl,
   Divider,
   styled,
+  Popover,
+  Typography
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,6 +25,11 @@ import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
+import TooltipButton from '../Button/TooltipButton';
+import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
+import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
+import MyProjectIcon from '../TableIcons/MyProjectIcon';
+import AllProjectIcon from '../TableIcons/AllProjectIcon';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -192,12 +199,40 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
+const CustomToolbar = React.memo(({ setFilterButtonEl, showOnlyMyTeams, setShowOnlyMyTeams, showOnlyMyProjects, setShowOnlyMyProjects, hasMyTeams, hasMyProjects, view }) => {
   const dispatch = useDispatch();
-  const view = useSelector(state => state.allocationView.view);
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { calendarDate: projectsCalendar } = useSelector(state => state.projects);
   const { startDate, endDate } = getStartAndEndDateForView(view, projectsCalendar, teamsCalendar);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const myTeamsButtonRef = useRef(null);
+  const myProjectsButtonRef = useRef(null);
+  
+  const handleToggle = (isMine) => {
+    if (isMine) {
+      if (view === 'Teams' && !hasMyTeams) {
+        setAnchorEl(myTeamsButtonRef.current);
+        setTimeout(() => setAnchorEl(null), 2000);
+        return;
+      }
+      if (view === 'Projects' && !hasMyProjects) {
+        setAnchorEl(myProjectsButtonRef.current);
+        setTimeout(() => setAnchorEl(null), 2000);
+        return;
+      }
+    }
+    if (view === 'Teams') {
+      setShowOnlyMyTeams(isMine);
+    } else if (view === 'Projects') {
+      setShowOnlyMyProjects(isMine);
+    }
+  };
+
+  const handlePopoverClose = () => {
+    setAnchorEl(null);
+  };
+  
+  const popoverOpen = Boolean(anchorEl);
 
   const viewOptions = [
     'Teams',
@@ -325,64 +360,95 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           </GridToolbarContainer>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          
-          {/* <Box className="projectIcon">
+          <Box className="projectIcon">
             {view === 'Projects' ? (
               <>
                 <TooltipButton
                   msg="My Project"
                   placement="bottom"
-                  onClick={handleClick}
+                  onClick={() => handleToggle(true)}
                 >
-                  <MyProjectIcon color={active ? '#344665' : '#99A2B2'} />
+                  <span ref={myProjectsButtonRef}>
+                    <MyProjectIcon color={showOnlyMyProjects ? '#344665' : '#99A2B2'} />
+                  </span>
                 </TooltipButton>
+                
                 <TooltipButton
                   msg="All Projects"
                   placement="bottom"
-                  onClick={handleClick}
+                  onClick={() => handleToggle(false)}
                 >
-                  <AllProjectIcon color={!active ? '#344665' : '#99A2B2'} />
+                <span ref={myProjectsButtonRef}>
+                  <AllProjectIcon color={!showOnlyMyProjects ? '#344665' : '#99A2B2'} />
+                </span>
                 </TooltipButton>
+
+                <Popover
+                  open={popoverOpen}
+                  anchorEl={anchorEl}
+                  onClose={handlePopoverClose}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                  disableAutoFocus
+                  disableEnforceFocus
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        padding: '8px 16px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 1,
+                      },
+                    },
+                  }}
+                >
+                  <Typography variant="body2">No projects found.</Typography>
+                </Popover>
               </>
             ) : view === 'Teams' ? (
               <>
                 <TooltipButton
                   msg="My Teams"
                   placement="bottom"
-                  onClick={handleClick}
+                  onClick={() => handleToggle(true)}
                 >
-                  <MyTeamsIcon
-                    color={active ? '#344665' : '#99A2B2'}
-                    fontSize={'18'}
-                  />
+                  <span ref={myTeamsButtonRef}>
+                    <MyTeamsIcon sx={{ width: 18, height: 18 }} color={showOnlyMyTeams ? '#344665' : '#99A2B2'} />
+                  </span>
                 </TooltipButton>
+
                 <TooltipButton
                   msg="All Teams"
                   placement="bottom"
-                  onClick={handleClick}
+                  onClick={() => handleToggle(false)}
                 >
-                  <AllTeamsIcon color={!active ? '#344665' : '#99A2B2'} />
+                <span ref={myTeamsButtonRef}>
+                  <AllTeamsIcon color={!showOnlyMyTeams ? '#344665' : '#99A2B2'} />
+                </span>
                 </TooltipButton>
+
+                <Popover
+                  open={popoverOpen}
+                  anchorEl={anchorEl}
+                  onClose={handlePopoverClose}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                  disableAutoFocus
+                  disableEnforceFocus
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        padding: '8px 16px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 1,
+                      },
+                    },
+                  }}
+                >
+                  <Typography variant="body2">No teams found.</Typography>
+                </Popover>
               </>
-            ) : (
-              <>
-                <TooltipButton
-                  msg="My Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-                <TooltipButton
-                  msg="All Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <AllTeamsIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-              </>
-            )}
-          </Box> */}
+            ) : null}
+          </Box>
           {/* <Divider orientation="vertical" flexItem /> */}
           {/* <Box className="dayWeekBlock">
             <Button>Day</Button>

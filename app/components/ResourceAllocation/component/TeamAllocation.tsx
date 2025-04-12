@@ -14,11 +14,34 @@ import { GridCellParams } from '@mui/x-data-grid';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
+  const [showOnlyMyTeams, setShowOnlyMyTeams] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const { teams, resources, loading, dataProcessing, calendarDate } =
     useSelector((state: RootState) => state.teams);
   const { startDate, endDate } = calendarDate || {};
+  
+  const userEmail = useSelector((state: RootState) => state.auth?.user?.Email);
+  const resourceList = useSelector((state: RootState) => state.resources.resources?.result); 
+
+  const userResourcePath =
+    Array.isArray(resourceList) && userEmail
+      ? resourceList.find(r => r.Email?.toLowerCase() === userEmail.toLowerCase())?.__path__ ?? null
+      : null;
+
+  const managedTeamNames = (teams?.result ?? [])
+    .filter(team => team.AllocationManager && team.AllocationManager === userResourcePath)
+    .map(team => team.Name);
+  
+  const filteredResources = showOnlyMyTeams
+    ? (resources ?? []).filter(resource =>
+        managedTeamNames.includes(resource.teams as string)
+      )
+    : (resources ?? []);
+  
+  const hasMyTeams = (resources ?? []).some(resource =>
+    managedTeamNames.includes(resource.teams as string)
+  );
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -214,7 +237,10 @@ export default function TeamAllocation() {
             },
           },
         }}
-        data={resources}
+        data={filteredResources}
+        showOnlyMyTeams={showOnlyMyTeams}
+        setShowOnlyMyTeams={setShowOnlyMyTeams}
+        hasMyTeams={hasMyTeams}
       />
       {!resources && !loading && (
         <div

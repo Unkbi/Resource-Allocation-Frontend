@@ -8,11 +8,13 @@ import resourceAllocationReducer from './reducers/resourceAllocationReducer';
 import toastSlice from './reducers/toastReducer';
 import dialogReducer from './reducers/dialogReducer';
 import dataGridReducer from './reducers/dataGridReducer';
+import authReducer from './reducers/authReducer';
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       user: userReducer,
+      auth: authReducer,
       allocationView: allocationViewReducer,
       teams: teamsReducer,
       projects: projectsReducer,

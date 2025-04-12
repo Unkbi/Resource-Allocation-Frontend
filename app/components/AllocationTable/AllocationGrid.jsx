@@ -42,7 +42,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
 import { DATE_FORMAT } from '@/app/constants/constants';
 
-export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState, startDate, endDate }) {
+export default function AllocationGrid({ groupBy, columns, data, loading, selectedTeam, setSelectedTeam, initialState: _initialState, startDate, endDate, showOnlyMyTeams, setShowOnlyMyTeams, showOnlyMyProjects, setShowOnlyMyProjects, hasMyTeams, hasMyProjects }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
@@ -562,6 +562,13 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
           },
           toolbar: {
             setFilterButtonEl,
+            showOnlyMyTeams,
+            setShowOnlyMyTeams,
+            showOnlyMyProjects,
+            setShowOnlyMyProjects,
+            hasMyTeams,
+            hasMyProjects,
+            view
           },
           columnsPanel: {
             className: 'styleColumnMenu',
