@@ -27,10 +27,16 @@ import {
   generateDateWeekMath,
   generateFirstAndLastMonthYear,
   getStartAndEndDateForView,
+  isObjectEqual,
 } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+  TOTAL_FUTURE_WEEKS_ARROW,
+} from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
@@ -47,6 +53,8 @@ import {
   setCurrentView,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
+import { set } from 'date-fns';
+import DeleteDialog from '../Dialog/DeleteDialog';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -474,6 +482,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     projectsCalendar,
     teamsCalendar
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteView, setDeleteView] = useState(null);
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [selectedView, setSelectedView] = React.useState('0');
@@ -527,29 +537,42 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   };
 
   const changeCalendarDate = type => {
-    const isTeams = view === 'Teams';
+    // const isTeams = view === 'Teams';
     const isNext = type === 'next';
 
-    const action = isTeams
-      ? updateStartAndEndDate
-      : updateProjectStartAndEndDate;
+    // const action = isTeams
+    //   ? updateStartAndEndDate
+    //   : updateProjectStartAndEndDate;
 
-    const startKey = generateFirstAndLastMonthYear(
-      parseISO(startDate),
-      DATE_FORMAT,
-      false,
-      !isNext,
-      true
-    );
-    const endKey = generateFirstAndLastMonthYear(
-      parseISO(endDate),
-      DATE_FORMAT,
-      false,
-      !isNext,
-      true
+    // Handle the saveView changes
+    dispatch(
+      updateCurrentView({
+        isDynamicRange: true,
+        ...(isNext
+          ? {
+              WeekPlus:
+                currentView.WeekPlus != null
+                  ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
+                  : DEFAULT_PROJECT_WEEK_PLUS + 4,
+              WeekMinus:
+                currentView.WeekMinus != null
+                  ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
+                  : DEFAULT_PROJECT_WEEK_MINUS + TOTAL_FUTURE_WEEKS_ARROW,
+            }
+          : {
+              WeekMinus:
+                currentView.WeekMinus != null
+                  ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
+                  : DEFAULT_PROJECT_WEEK_PLUS - TOTAL_FUTURE_WEEKS_ARROW,
+              WeekPlus:
+                currentView.WeekPlus != null
+                  ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
+                  : DEFAULT_PROJECT_WEEK_MINUS - 4,
+            }),
+      })
     );
 
-    dispatch(action({ startDate: startKey, endDate: endKey }));
+    // dispatch(action({ startDate: startKey, endDate: endKey }));
   };
 
   const handleSaveView = () => {
@@ -596,9 +619,21 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     );
   };
 
-  const handleDeleteView = (e, id) => {
+  const handleDeleteView = (e, view) => {
     e.stopPropagation();
-    dispatch(deleteUsersSavedViewAction(id));
+    setDeleteView(view);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteDialogOpen(false);
+    if (deleteView?.Id) {
+      dispatch(deleteUsersSavedViewAction(deleteView.Id));
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   };
 
   const getIcon = viewId => {
@@ -831,7 +866,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                         </ActionIconButton>
                         <ActionIconButton
                           size="small"
-                          onClick={e => handleDeleteView(e, option.Id)}
+                          onClick={e => handleDeleteView(e, option)}
                         >
                           <DeleteActionIcon />
                         </ActionIconButton>
@@ -844,7 +879,10 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           </Box>
           <Button
             startIcon={<AddIcon />}
-            // disabled={true} // Need to handle this via a difference function.
+            disabled={isObjectEqual(
+              savedViews.find(view => view.Id === selectedView),
+              currentView
+            )}
             onClick={handleSaveView}
             sx={{
               border: 'none !important',
@@ -862,6 +900,14 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           <CustomExport />
         </Box>
       </ToolBox2>
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        title="Are you sure you want to delete this View?"
+      >
+        {`This will permanently delete the view : ${deleteView?.Name}`}
+      </DeleteDialog>
     </Box>
   );
 });

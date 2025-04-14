@@ -328,3 +328,23 @@ export const getUserIdFromEmail = (users, email) => {
   const userObj = users.find(user => user.Email === email);
   return userObj ? userObj.Id : null;
 };
+
+export const isObjectEqual = (a, b) => {
+  if (a === b) return true;
+
+  if (typeof a !== typeof b || a == null || b == null) return false;
+
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((el, i) => isObjectEqual(el, b[i]));
+  }
+
+  if (typeof a === 'object') {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every(key => isObjectEqual(a[key], b[key]));
+  }
+
+  return false;
+};

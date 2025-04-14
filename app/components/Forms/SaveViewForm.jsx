@@ -22,6 +22,10 @@ import { StyledInput } from '../Input/StyledInput';
 import MultiSelectWithChips from '../Select/MultiSelectWithChipSmaller';
 import { getTodaysDateDDMMMYYYY } from '@/app/utils/dateUtils';
 import { addWeeks, format, startOfWeek, subWeeks } from 'date-fns';
+import {
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+} from '@/app/constants/constants';
 
 const getColumnLabel = column => {
   const columnLabels = {
@@ -165,16 +169,10 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           : currentView?.MyProjects
             ? 'myProjects'
             : 'allProjects',
-      dateRangeType:
-        currentView?.isDynamicRange || currentView?.isDefaultRange
-          ? 'dynamic'
-          : 'fixed',
-      dynamicDateRangeAdd: currentView?.isDefaultRange
-        ? 19
-        : currentView?.WeekPlus || 0,
-      dynamicDateRangeSubtract: currentView?.isDefaultRange
-        ? 1
-        : currentView?.WeekMinus || 0,
+      dateRangeType: currentView?.isDynamicRange ? 'dynamic' : 'fixed',
+      dynamicDateRangeAdd: currentView?.WeekPlus || DEFAULT_PROJECT_WEEK_PLUS,
+      dynamicDateRangeSubtract:
+        currentView?.WeekMinus || DEFAULT_PROJECT_WEEK_MINUS,
       startDate: '',
       endDate: '',
       showColumns: currentView?.ColumnsVisible || [],

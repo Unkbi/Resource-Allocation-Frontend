@@ -75,7 +75,6 @@ export interface AllocationGridView {
   EndDate: string | null;
   isFixedRange: boolean;
   isDynamicRange: boolean;
-  isDefaultRange: boolean;
   WeekPlus: number | null;
   WeekMinus: number | null;
   Filters: ToolbarFilters[] | null;
