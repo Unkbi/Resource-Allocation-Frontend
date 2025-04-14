@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Formik, ErrorMessage } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
@@ -6,21 +8,45 @@ import AddProjectForm from '../../Forms/AddProjectForm';
 import AddResourceForm from '../../Forms/AddResourceForm';
 import AddAllocationForm from '../../Forms/AddAllocationForm';
 import AssignAllocationForm from '../../Forms/AssignAllocationForm';
+import SaveViewForm from '../../Forms/SaveViewForm';
 import {
   addAllocationValidationSchema,
   addProjectValidationSchema,
   addResourceValidationSchema,
   assignAllocationValidationSchema,
+  nameViewValidationSchema,
+  saveViewValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
-import { closeDialog } from '@/app/redux/reducers/dialogReducer';
-import { generateAllMondays, getWeekNumber } from '@/app/utils/common';
-import { setResourceAllocation, updateResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
+import {
+  closeDialog,
+  updateDialogData,
+} from '@/app/redux/reducers/dialogReducer';
+import {
+  generateAllMondays,
+  getUserIdFromEmail,
+  getWeekNumber,
+} from '@/app/utils/common';
+import {
+  setResourceAllocation,
+  updateResourceAllocation,
+} from '@/app/redux/actions/resourceAllocationAction';
 import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
-import { setCellSelectionData, setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import {
+  setCellSelectionData,
+  setExpandRowId,
+} from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { useRouter, usePathname } from 'next/navigation';
+import {
+  addUsersSavedViewAction,
+  updateUsersSavedViewAction,
+} from '@/app/redux/actions/allocationViewAction';
+import { current } from '@reduxjs/toolkit';
+import { Edit, Group } from 'lucide-react';
+import NameViewForm from '../../Forms/NameViewForm';
+import { openDialog } from '@/app/redux/actions/dialogAction';
 
 const initialValuesMap = {
   add_project: {
@@ -31,8 +57,8 @@ const initialValuesMap = {
     AllowOvertime: '',
     Location: '',
     ProjectManager: '',
-    Status: "",
-    Type: ""
+    Status: '',
+    Type: '',
   },
   add_resource: {
     Resource: '',
@@ -53,16 +79,56 @@ const initialValuesMap = {
     EndDate: '',
     Hours: '',
   },
+  save_view: {
+    groupBy: 'project',
+    showBy: 'allProjects',
+    dateRangeType: 'fixed',
+    startDate: '',
+    endDate: '',
+    showColumns: ['teams', 'resource', 'project', 'resourceType'],
+    filters: [{ filed: 'teams', operator: 'contains', value: '' }],
+    calendarBy: 'week',
+  },
+  new_view: {
+    groupBy: 'project',
+    showBy: 'allProjects',
+    dateRangeType: 'fixed',
+    startDate: '',
+    endDate: '',
+    showColumns: ['teams', 'resource', 'project', 'resourceType'],
+    filters: [{ filed: 'teams', operator: 'contains', value: '' }],
+    calendarBy: 'week',
+  },
+  name_view: {
+    groupBy: '',
+    showBy: '',
+    dateRangeType: '',
+    startDate: '',
+    endDate: '',
+    showColumns: [],
+    filters: [],
+    calendarBy: '',
+    name: '',
+    description: '',
+    isDefault: false,
+  },
 };
 
 const AllocationForm = () => {
-  const { formType } = useSelector((state) => state.globalDialog.formState);
-  const [formValue, setFormValue] = useState(initialValuesMap[formType] || initialValuesMap.add_project);
+  const { formType } = useSelector(state => state.globalDialog.formState);
+  const [formValue, setFormValue] = useState(
+    initialValuesMap[formType] || initialValuesMap.add_project
+  );
   const dispatch = useDispatch();
-  const { initialData } = useSelector((state) => state.globalDialog.formState);
-  const { projects } = useSelector((state) => state.projects);
+  const { initialData } = useSelector(state => state.globalDialog.formState);
+  const { projects } = useSelector(state => state.projects);
+  const { currentView } = useSelector(state => state.allocationView);
+  const { teams, teamsResources, calendarDate } = useSelector(
+    state => state.teams
+  );
+  const { user } = useSelector(state => state.user);
+  const { resources } = useSelector(state => state.resources);
 
-  const { teams, teamsResources, calendarDate } = useSelector(state => state.teams);
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
@@ -70,11 +136,7 @@ const AllocationForm = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
-  }, [formType]);
-  
-  const getValidationSchema = (formType) => {
+  const getValidationSchema = formType => {
     switch (formType) {
       case 'add_project':
         return addProjectValidationSchema(projects);
@@ -84,6 +146,12 @@ const AllocationForm = () => {
         return addAllocationValidationSchema;
       case 'assign_allocation':
         return assignAllocationValidationSchema;
+      case 'new_view':
+        return saveViewValidationSchema;
+      case 'save_view':
+        return saveViewValidationSchema;
+      case 'name_view':
+        return nameViewValidationSchema;
       default:
         return null;
     }
@@ -92,46 +160,51 @@ const AllocationForm = () => {
   const handleScrollAndFocus = (resources, period, projects) => {
     const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
     const weeksObject = {};
-    
+
     selectedWeeks.forEach(week => {
       weeksObject[`${week}`] = true;
     });
-  
+
     const cellData = {};
-    
+
     resources?.forEach(resource => {
       projects?.forEach(project => {
         const [{ Id }] = Array.isArray(project) ? project : [project];
-        const key = view === "Teams" 
-          ? `${resource.Id}-${resource.teamId}-${Id}`
-          : `${resource.Id}-${Id}`;
-        
+        const key =
+          view === 'Teams'
+            ? `${resource.Id}-${resource.teamId}-${Id}`
+            : `${resource.Id}-${Id}`;
+
         cellData[key] = weeksObject;
       });
     });
-    dispatch(setCellSelectionData({
-      ...cellData,
-      restoreFocus: true
-    }));
+    dispatch(
+      setCellSelectionData({
+        ...cellData,
+        restoreFocus: true,
+      })
+    );
   };
-  const handleOnAdd = (resources) => {
-    const rowIds = resources?.map(resource => 
-      `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`
+
+  const handleOnAdd = resources => {
+    const rowIds = resources?.map(
+      resource =>
+        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`
     );
     dispatch(setExpandRowId(rowIds));
-  }
+  };
 
-  const getTeamByResourceId = (resourceId) => {
+  const getTeamByResourceId = resourceId => {
     let new_user = null;
-    Object.keys(teamsResources)?.forEach((team) => {
-      teamsResources?.[team]?.forEach((resource) => {
+    Object.keys(teamsResources)?.forEach(team => {
+      teamsResources?.[team]?.forEach(resource => {
         if (resource?.Id == resourceId) {
           new_user = { ...resource, teamId: team };
         }
-      })
+      });
     });
 
-    teams?.result?.forEach((team) => {
+    teams?.result?.forEach(team => {
       if (team?.Id == new_user?.teamId) {
         new_user = { team: team, ...new_user };
       }
@@ -140,44 +213,52 @@ const AllocationForm = () => {
   };
 
   const getAllocationPresent = (project, resource, period) => {
-    for( let i = 0; i < rowState?.length; i++) {
-      if(rowState[i]?.projectId === project && rowState[i]?.resourceId === resource) {
+    for (let i = 0; i < rowState?.length; i++) {
+      if (
+        rowState[i]?.projectId === project &&
+        rowState[i]?.resourceId === resource
+      ) {
         return rowState[i][getWeekNumber(new Date(period))];
       }
     }
-    return false
-  }
+    return false;
+  };
 
-  const handleSubmit = async (values, { setSubmitting, setErrors, validateForm }) => {
+  const handleSubmit = async (
+    values,
+    { setSubmitting, setErrors, validateForm }
+  ) => {
     const errors = await validateForm(values);
+    const { submitType } = values;
+
     if (Object.keys(errors).length > 0) {
       setErrors(errors);
       setSubmitting(false);
       return;
     }
-    
+
     const allMondays = generateAllMondays(values.StartDate, values.EndDate);
     let postData = {};
     switch (formType) {
       case 'add_project':
         postData = {
-          "ResourceAllocation.Core/Project": {
+          'ResourceAllocation.Core/Project': {
             ...values,
-            Description: "string",
+            Description: 'string',
           },
         };
         try {
           dispatch(addProject(postData))
-          .then(() => {
-            // After successfully adding the project, route to Projects page
-            if (pathname !== '/project') {
-              router.replace('/project');
-            }
-          })
-          .catch((error) => {
-            console.error("Failed to add project:", error);
-          });
-          if(pathname !== '/project') {
+            .then(() => {
+              // After successfully adding the project, route to Projects page
+              if (pathname !== '/project') {
+                router.replace('/project');
+              }
+            })
+            .catch(error => {
+              console.error('Failed to add project:', error);
+            });
+          if (pathname !== '/project') {
             router.replace('/project');
           }
         } catch (e) {
@@ -187,9 +268,9 @@ const AllocationForm = () => {
 
       case 'edit_project':
         postData = {
-          "ResourceAllocation.Core/Project": {
+          'ResourceAllocation.Core/Project': {
             ...values,
-            Description: "string",
+            Description: 'string',
           },
         };
         try {
@@ -201,17 +282,26 @@ const AllocationForm = () => {
 
       case 'add_allocation':
         try {
-          const filteredProjects = projects?.result?.filter((project) => 
-            values.Project.includes(project.Id)
-          ) || [];
+          const filteredProjects =
+            projects?.result?.filter(project =>
+              values.Project.includes(project.Id)
+            ) || [];
 
-          const allocationPromises = allMondays.flatMap((monday) => {
+          const allocationPromises = allMondays.flatMap(monday => {
             return values.Resource.flatMap(resource => {
               return filteredProjects.map(project => {
-                const allocation = getAllocationPresent(project.Id, resource, monday)
+                const allocation = getAllocationPresent(
+                  project.Id,
+                  resource,
+                  monday
+                );
 
-                if (allocation && allocation?.allocationId && allocation?.value) {
-                  if(allocation?.value !== values.AllocationEntered) {
+                if (
+                  allocation &&
+                  allocation?.allocationId &&
+                  allocation?.value
+                ) {
+                  if (allocation?.value !== values.AllocationEntered) {
                     const putPayload = {
                       resourceId: resource,
                       allocationId: allocation?.allocationId,
@@ -221,10 +311,10 @@ const AllocationForm = () => {
                         },
                       },
                     };
-                    return dispatch(updateResourceAllocation(putPayload))
+                    return dispatch(updateResourceAllocation(putPayload));
                   }
                 } else {
-                    const postPayload = {
+                  const postPayload = {
                     resourceId: resource,
                     postData: {
                       'ResourceAllocation.Core/Allocation': {
@@ -233,49 +323,211 @@ const AllocationForm = () => {
                         ProjectName: project.Name,
                         Period: monday,
                         AllocationEntered: values.AllocationEntered,
-                        Notes: values.Comment || "",
-                },
+                        Notes: values.Comment || '',
+                      },
                     },
                   };
                   return dispatch(setResourceAllocation(postPayload));
                 }
-              })
-            })
+              });
+            });
           });
           if (!allocationPromises?.length) {
             return;
           }
-          await Promise.all(allocationPromises)
-            .then(async () => {
-              let new_resources = values.Resource.map(resource => getTeamByResourceId(resource));
-              const teams = [...new Set(new_resources.map(resource => resource?.team))];
-              dispatch(closeDialog());
+          await Promise.all(allocationPromises).then(async () => {
+            let new_resources = values.Resource.map(resource =>
+              getTeamByResourceId(resource)
+            );
+            const teams = [
+              ...new Set(new_resources.map(resource => resource?.team)),
+            ];
+            dispatch(closeDialog());
 
-              if(view === 'Teams')
-                {
-                  return dispatch(fetchResourcesAgainstTeams(teams, allocations, startDate, endDate))
-                  .then(() => {
-                    handleOnAdd(new_resources);
-                    handleScrollAndFocus(new_resources,allMondays, filteredProjects);
-                  });
-                }
-              else if(view === 'Projects')
-                {
-                return dispatch(fetchAllProjectAllocations(filteredProjects, startDate, endDate))
-                  .then(() => {
-                    handleScrollAndFocus(new_resources,allMondays, filteredProjects);
-                  });
-                }
-            })
+            if (view === 'Teams') {
+              return dispatch(
+                fetchResourcesAgainstTeams(
+                  teams,
+                  allocations,
+                  startDate,
+                  endDate
+                )
+              ).then(() => {
+                handleOnAdd(new_resources);
+                handleScrollAndFocus(
+                  new_resources,
+                  allMondays,
+                  filteredProjects
+                );
+              });
+            } else if (view === 'Projects') {
+              return dispatch(
+                fetchAllProjectAllocations(filteredProjects, startDate, endDate)
+              ).then(() => {
+                handleScrollAndFocus(
+                  new_resources,
+                  allMondays,
+                  filteredProjects
+                );
+              });
+            }
+          });
         } catch (e) {
           console.error('Error creating allocations:', e);
+        }
+        break;
+
+      case 'new_view':
+        try {
+          // Open Dialog for name View.
+          dispatch(
+            updateDialogData({
+              title: 'Edit View',
+              submitButtonText: 'Apply',
+              cancelButtonText: 'Cancel',
+              formType: 'name_view',
+              initialData: {
+                ...values,
+                name: '',
+                description: '',
+                isDefault: false,
+              },
+            })
+          );
+        } catch (e) {
+          console.error('Error saving view:', e);
+        }
+        break;
+
+      case 'name_view':
+        try {
+          if (values.id) {
+            // Update the view.
+            const updatedView = {
+              Name: values.name,
+              Description: values.description,
+              isDefault: values.isDefault,
+              ...(values?.dateRangeType !== undefined && {
+                // Conditionally add properties
+                isDynamicRange: values.dateRangeType === 'dynamic',
+              }),
+              ...(values?.dateRangeType !== undefined && {
+                isFixedRange: values.dateRangeType === 'fixed',
+              }),
+              ...(values?.startDate !== undefined && {
+                StartDate: values.startDate,
+              }),
+              ...(values?.endDate !== undefined && {
+                EndDate: values.endDate,
+              }),
+              ...(values?.dynamicDateRangeAdd !== undefined && {
+                WeekPlus: values.dynamicDateRangeAdd,
+              }),
+              ...(values?.dynamicDateRangeSubtract !== undefined && {
+                WeekMinus: values.dynamicDateRangeSubtract,
+              }),
+              ...(values?.groupBy !== undefined && {
+                GroupBy: values.groupBy,
+              }),
+              ...(values?.showColumns !== undefined && {
+                Columns: values.showColumns,
+              }),
+              ...(values?.showBy !== undefined && {
+                ShowBy: values.showBy,
+              }),
+              ...(values?.filters !== undefined && {
+                Filters: values.filters,
+              }),
+            };
+
+            // PUT request.
+            dispatch(updateUsersSavedViewAction(values.id, updatedView));
+            dispatch(closeDialog());
+          } else {
+            const userId = getUserIdFromEmail(
+              resources?.result || [],
+              user?.Email
+            );
+            // Create a new view.
+            const newView = {
+              isDefault: values.isDefault,
+              isDynamicRange:
+                values.dateRangeType === undefined
+                  ? undefined
+                  : values.dateRangeType === 'dynamic',
+              isFixedRange:
+                values.dateRangeType === undefined
+                  ? undefined
+                  : values.dateRangeType === 'fixed',
+              StartDate: values.startDate !== '' ? values.startDate : null,
+              EndDate: values.endDate !== '' ? values.endDate : null,
+              WeekPlus: values.dynamicDateRangeAdd,
+              WeekMinus: values.dynamicDateRangeSubtract,
+              GroupBy: values.groupBy,
+              Columns: values.showColumns,
+              ShowBy: null, // Issues with Backend, need to add [myTeams, allTeams]
+              Name: values.name,
+              Description: values.description,
+              Filters: values.filters,
+              UserId: userId,
+            };
+
+            // POST request to save the view.
+            dispatch(addUsersSavedViewAction(newView));
+            dispatch(closeDialog());
+          }
+        } catch (e) {
+          console.error('Error saving view:', e);
+        }
+        break;
+
+      case 'save_view':
+        try {
+          if (submitType === 'secondary') {
+            // Call Save As Default View API, open Edit View dialog.
+            dispatch(
+              updateDialogData({
+                title: 'Edit View',
+                submitButtonText: 'Apply',
+                secondaryButtonText: '',
+                cancelButtonText: 'Cancel',
+                formType: 'name_view',
+                initialData: {
+                  ...values,
+                  name: '',
+                  description: '',
+                  isDefault: false,
+                },
+              })
+            );
+          } else if (submitType === 'primary') {
+            // Handle saving the view
+            const updatedView = {
+              isDynamicRange: values.dateRangeType === 'dynamic',
+              isFixedRange: values.dateRangeType === 'fixed',
+              StartDate: values.startDate !== '' ? values.startDate : null,
+              EndDate: values.endDate !== '' ? values.endDate : null,
+              WeekPlus: values.dynamicDateRangeAdd,
+              WeekMinus: values.dynamicDateRangeSubtract,
+              GroupBy: values.groupBy,
+              Columns: values.showColumns,
+              ShowBy: null, // Issues with Backend, need to add [myTeams, allTeams]
+              Filters: values.filters,
+            };
+
+            // PUT request to update the view
+            dispatch(updateUsersSavedViewAction(currentView.Id, updatedView));
+            dispatch(closeDialog());
+          }
+        } catch (e) {
+          console.error('Error saving view:', e);
         }
         break;
 
       default:
         return;
     }
-     setSubmitting(false);
+    setSubmitting(false);
   };
 
   const getFormComponent = (formType, formikProps) => {
@@ -283,25 +535,48 @@ const AllocationForm = () => {
       case 'add_project':
         return <AddProjectForm formikProps={formikProps} />;
       case 'edit_project':
-        return <AddProjectForm formikProps={formikProps} setFormValue={setFormValue} />;
+        return (
+          <AddProjectForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'add_resource':
         return <AddResourceForm formikProps={formikProps} />;
       case 'add_allocation':
-        return <AddAllocationForm formikProps={formikProps} setFormValue={setFormValue} />;
+        return (
+          <AddAllocationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'assign_allocation':
         return <AssignAllocationForm formikProps={formikProps} />;
+      case 'new_view':
+        return (
+          <SaveViewForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'save_view':
+        return (
+          <SaveViewForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'name_view':
+        return (
+          <NameViewForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
       default:
         return <div>No form selected</div>;
     }
   };
+
   const FormErrorMessage = ({ name }) => (
     <ErrorMessage name={name}>
-      {(msg) => (
-        <Typography 
-          color="error" 
-          sx={{ 
-            fontSize: '12px', 
-            mt: 0.5, 
+      {msg => (
+        <Typography
+          color="error"
+          sx={{
+            fontSize: '12px',
+            mt: 0.5,
             fontFamily: theme => theme.typography.fontFamily,
           }}
         >
@@ -312,23 +587,32 @@ const AllocationForm = () => {
   );
 
   const onCancel = () => {
-    dispatch(setCellSelectionData({
-      restoreFocus: true
-    }));
+    dispatch(
+      setCellSelectionData({
+        restoreFocus: true,
+      })
+    );
   };
 
   return (
     <Formik
       enableReinitialize
-      initialValues={formValue}
+      initialValues={{ ...formValue, submitType: '' }}
       validationSchema={getValidationSchema(formType)}
       onSubmit={handleSubmit}
       validateOnChange={true}
       validateOnBlur={true}
     >
-      {(formikProps) => (
-        <CustomDialog 
-          onSubmit={formikProps.handleSubmit}
+      {formikProps => (
+        <CustomDialog
+          onSubmit={() => {
+            formikProps.setFieldValue('submitType', 'primary', false); // avoid validation here
+            formikProps.submitForm();
+          }}
+          onSecondarySubmit={() => {
+            formikProps.setFieldValue('submitType', 'secondary', false); // avoid validation here
+            formikProps.submitForm();
+          }}
           isSubmitting={formikProps.isSubmitting}
           isValid={formikProps.isValid}
           onCancel={onCancel}
@@ -336,17 +620,17 @@ const AllocationForm = () => {
           <Box>
             {getFormComponent(formType, {
               ...formikProps,
-              FormErrorMessage 
+              FormErrorMessage,
             })}
             {formikProps.status && (
-              <Typography 
-                color="error" 
-                sx={{ 
-                  fontSize: '14px', 
-                  mt: 2, 
+              <Typography
+                color="error"
+                sx={{
+                  fontSize: '14px',
+                  mt: 2,
                   textAlign: 'center',
                   fontFamily: theme => theme.typography.fontFamily,
-                  fontWeight: 600
+                  fontWeight: 600,
                 }}
               >
                 {formikProps.status}

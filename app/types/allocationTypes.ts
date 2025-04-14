@@ -53,3 +53,72 @@ export interface AllocationGridCell {
     | null
     | undefined;
 }
+
+export interface ToolbarFilters {
+  field: string | null;
+  operator: string | null;
+  value: string | null;
+}
+
+export interface AllocationGridView {
+  Id: string | null;
+  UserId: string | null;
+  Name: string | null;
+  Description: string | null;
+  isDefault: boolean;
+  isProjectDefault: boolean;
+  GroupBy: string | null;
+  MyTeam: boolean;
+  MyProjects: boolean;
+  ColumnsVisible: string[] | null;
+  StartDate: string | null;
+  EndDate: string | null;
+  isFixedRange: boolean;
+  isDynamicRange: boolean;
+  isDefaultRange: boolean;
+  WeekPlus: number | null;
+  WeekMinus: number | null;
+  Filters: ToolbarFilters[] | null;
+}
+
+export interface AllColumns {
+  team: string[];
+  project: string[];
+}
+
+export interface AllocationGridViewState {
+  view: string | null;
+  loading: boolean;
+  error: string | null;
+  columns: AllColumns;
+  expandRowId: any[]; // This has to be changed to a Specific type.
+  cellSelectionData: any; // This has to be changed to a Specific type.
+  currentView: AllocationGridView;
+  savedViews: AllocationGridView[];
+}
+
+export interface GetUsersSavedViewsPayload {
+  'ResourceAllocation.Core/UserAllocationView': {
+    UserId: string;
+  };
+}
+
+export interface GetUsersSavedViewsResponse {
+  isDefault: boolean | null;
+  StartDate: string | null;
+  isFixedRange: boolean | null;
+  WeekPlus: number | null;
+  GroupBy: string | null;
+  Columns: string[] | null;
+  UserId: string | null;
+  ShowBy: string | null;
+  __Id__: string | null;
+  Name: string | null;
+  __path__: string | null;
+  Description: string | null;
+  EndDate: string | null;
+  isDynamicRange: boolean | null;
+  Filters: string[] | null;
+  WeekMinus: number | null;
+  __parent__: boolean | null;
+}

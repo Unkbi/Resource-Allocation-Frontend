@@ -25,7 +25,6 @@ const initialValues = {
 
 const AddResourceForm = ({ onSubmit }) => {
   const handleSubmit = values => {
-    console.log('Form Data:', values);
     // Handle form submission (e.g., API call)
   };
 

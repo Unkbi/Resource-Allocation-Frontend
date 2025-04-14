@@ -4,8 +4,8 @@ import { Typography } from '@mui/material';
 
 const StyledLabel = styled(Typography)(({ theme }) => ({
   color: '#1C2D5F',
-  fontWeight: 600,
-  fontSize: '12px',
+  fontWeight: 700,
+  fontSize: '14px',
   fontFamily: theme.typography.fontFamily,
   fontStyle: 'normal',
   lineHeight: '16px',

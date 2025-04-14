@@ -51,3 +51,81 @@ export const deleteResourceAllocations = createAsyncThunk(
     }
   }
 );
+
+export const getAllSavedViews = createAsyncThunk(
+  '/views/getAllSavedViews',
+  async () => {
+    const response = await axiosInstance.get(
+      `${API_PROJECT_PORTFOLIO}/UserAllocationView`
+    );
+    return response.data;
+  }
+);
+
+export const getUsersSavedViews = createAsyncThunk(
+  '/views/getUsersSavedViews',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_PROJECT_PORTFOLIO}/UserAllocationView`,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to get resources saved views'
+      );
+    }
+  }
+);
+
+export const updateAllocationView = createAsyncThunk(
+  '/views/updateAllocationView',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_PROJECT_PORTFOLIO}/UserAllocationView/${payload.id}`,
+        payload.body
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to update resources saved views'
+      );
+    }
+  }
+);
+
+export const addAllocationView = createAsyncThunk(
+  '/views/addAllocationView',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/UserAllocationView`,
+        payload.body
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to update resources saved views'
+      );
+    }
+  }
+);
+
+export const deleteAllocationView = createAsyncThunk(
+  '/views/deleteAllocationView',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.delete(
+        `${API_PROJECT_PORTFOLIO}/UserAllocationView/${payload.id}`
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to delete resources saved views'
+      );
+    }
+  }
+);
