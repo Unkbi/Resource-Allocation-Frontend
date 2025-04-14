@@ -66,7 +66,7 @@ export default function ProjectAllocation() {
       // cellClassName: getCellClassName,
       cellClassName: () => 'project-view-projectName',
       primaryColumn: true,
-      filterable: false,
+      filterable: true,
       isEditable: false,
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;

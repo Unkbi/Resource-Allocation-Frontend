@@ -178,7 +178,7 @@ const menuItems = [
       flexDirection: sidebarExpanded ? 'row' : 'column', 
       alignItems: 'center', 
       height: '90px' ,
-      width: '200px',
+      width: sidebarExpanded ?'200px': '',
       justifyContent: 'space-between', 
       gap: sidebarExpanded ? '20px' : '0', 
       marginRight:  sidebarExpanded ?"40px" :'',
@@ -198,6 +198,7 @@ const menuItems = [
 
   <Button 
     onClick={toggleSidebar} 
+    disableRipple
     sx={{
       display: 'flex', 
       alignItems: 'center', 
@@ -208,6 +209,9 @@ const menuItems = [
       marginBottom: '10px',
       marginLeft :sidebarExpanded ? '3px' :'' ,
       padding: '0px',
+      background: 'transparent', 
+      boxShadow: 'none',  
+      minWidth :'0px' ,  
     }}
   >
     <img 
@@ -216,19 +220,10 @@ const menuItems = [
       alt='' 
       style={{
         marginRight: sidebarExpanded ? '10px' : '0', 
+        // transition: 'margin 0.7s ease-in-out',
+        padding :'0px' ,
       }} 
     />
-    {sidebarExpanded && (
-      <Typography 
-       sx={{
-       fontSize: '14px',
-       fontWeight: '500',
-       color:"silver" ,
-       textTransform:"none",
-       display: sidebarExpanded ? 'none' : 'block',}}>
-       Collapse
-      </Typography>
-    )}
   </Button>
 
   </Box>
