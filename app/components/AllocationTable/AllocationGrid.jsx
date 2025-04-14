@@ -557,6 +557,15 @@ export default function AllocationGrid({
     setCellSelectionModel(filteredModel);
   }, []);
 
+  const getRowClassName = params => {
+    const rowNode = apiRef.current.getRowNode(params.id);
+    const rowData = apiRef.current.getRow(params.id);
+    if (rowNode?.type === 'leaf' && rowData?.hasAllocation === false) {
+      return 'child-of-zero-allocation-resource';
+    }
+    return '';
+  };
+
   return (
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
@@ -594,14 +603,7 @@ export default function AllocationGrid({
         defaultGroupingExpansionDepth={1}
         disableAutosize
         getCellClassName={params => getCellClassName(params, updatedRows)}
-        getRowClassName={params => {
-          const rowNode = apiRef.current.getRowNode(params.id);
-          const rowData = apiRef.current.getRow(params.id);
-          if (rowNode?.type === 'leaf' && rowData?.hasAllocation === false) {
-            return 'child-of-zero-allocation-resource';
-          }
-          return '';
-        }}
+        getRowClassName={params => getRowClassName(params)}
         cellSelectionModel={cellSelectionModel}
         onCellSelectionModelChange={handleCellSelectionModelChange}
         slots={{
