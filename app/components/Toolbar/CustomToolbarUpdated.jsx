@@ -54,6 +54,7 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { set } from 'date-fns';
+import DeleteDialog from '../Dialog/DeleteDialog';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -481,6 +482,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     projectsCalendar,
     teamsCalendar
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteView, setDeleteView] = useState(null);
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [selectedView, setSelectedView] = React.useState('0');
@@ -616,9 +619,21 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     );
   };
 
-  const handleDeleteView = (e, id) => {
+  const handleDeleteView = (e, view) => {
     e.stopPropagation();
-    dispatch(deleteUsersSavedViewAction(id));
+    setDeleteView(view);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteDialogOpen(false);
+    if (deleteView?.Id) {
+      dispatch(deleteUsersSavedViewAction(deleteView.Id));
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   };
 
   const getIcon = viewId => {
@@ -851,7 +866,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                         </ActionIconButton>
                         <ActionIconButton
                           size="small"
-                          onClick={e => handleDeleteView(e, option.Id)}
+                          onClick={e => handleDeleteView(e, option)}
                         >
                           <DeleteActionIcon />
                         </ActionIconButton>
@@ -885,6 +900,14 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           <CustomExport />
         </Box>
       </ToolBox2>
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        title="Are you sure you want to delete this View?"
+      >
+        {`This will permanently delete the view : ${deleteView?.Name}`}
+      </DeleteDialog>
     </Box>
   );
 });
