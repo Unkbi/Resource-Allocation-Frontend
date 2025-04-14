@@ -1,5 +1,21 @@
-import { addDays, eachDayOfInterval, format, getWeek, getYear, setWeek, startOfISOWeek, startOfWeek, subDays, subWeeks, weeksToDays } from 'date-fns';
-import { DATE_FORMAT, TOTAL_FUTURE_WEEKS, TOTAL_FUTURE_WEEKS_ARROW } from '../constants/constants';
+import {
+  addDays,
+  eachDayOfInterval,
+  format,
+  getWeek,
+  getYear,
+  setWeek,
+  startOfISOWeek,
+  startOfWeek,
+  subDays,
+  subWeeks,
+  weeksToDays,
+} from 'date-fns';
+import {
+  DATE_FORMAT,
+  TOTAL_FUTURE_WEEKS,
+  TOTAL_FUTURE_WEEKS_ARROW,
+} from '../constants/constants';
 
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
@@ -51,7 +67,7 @@ export const getMondaysInRange = (start, end) => {
   });
 
   const mondays = new Set(
-    dates.map((date) => format(startOfISOWeek(date), DATE_FORMAT))
+    dates.map(date => format(startOfISOWeek(date), DATE_FORMAT))
   );
 
   return Array.from(mondays);
@@ -66,7 +82,8 @@ export const getMondaysInRange = (start, end) => {
 export const getMondayOfWeek = (weekNumber, date) => {
   const year = getYear(date);
   const firstDayOfYear = new Date(year, 0, 1);
-  const weekN = typeof weekNumber !== 'number' ? Number(weekNumber.slice(1)) : weekNumber;
+  const weekN =
+    typeof weekNumber !== 'number' ? Number(weekNumber.slice(1)) : weekNumber;
   const dateInWeek = setWeek(firstDayOfYear, weekN);
   return format(startOfISOWeek(dateInWeek, { weekStartsOn: 1 }), DATE_FORMAT);
 };
@@ -74,18 +91,18 @@ export const getMondayOfWeek = (weekNumber, date) => {
 export function generateAllMondays(startDate, endDate) {
   const mondays = [];
   const currentDate = new Date(startDate);
-  
+
   // Set to the previous Monday (or stay if already Monday)
   currentDate.setDate(currentDate.getDate() - ((currentDate.getDay() + 6) % 7));
-  
+
   // If no endDate, return just this Monday
   if (!endDate) {
     mondays.push(formatDates(currentDate));
     return mondays;
   }
-  
+
   const endDateObj = new Date(endDate);
-  
+
   // Generate all Mondays in the range
   while (currentDate <= endDateObj) {
     mondays.push(formatDates(currentDate));
@@ -206,51 +223,94 @@ export const generateRandomColor = () => {
   return color;
 };
 
-export const getInitials = (fullName) => {
+export const getInitials = fullName => {
   if (!fullName) return 'MJ';
   // Split the full name by spaces
   const nameParts = fullName?.trim()?.split(' ');
 
   // Extract the first letter of each part of the name
-  const initials = nameParts?.map(part => part.charAt(0).toUpperCase()).join('');
+  const initials = nameParts
+    ?.map(part => part.charAt(0).toUpperCase())
+    .join('');
 
   return initials;
 };
 
-export const getMonday = (date) => {
+export const getMonday = date => {
   return startOfWeek(date, { weekStartsOn: 1 });
 };
 
-export const generateTMinusOneStartEndDate = (isStartDate) => {
+export const generateTMinusOneStartEndDate = isStartDate => {
   let today = new Date();
-  const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 }); 
+  const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
   if (isStartDate) {
     return format(lastWeeksMonday, DATE_FORMAT);
   } else {
-    const futureDateMonday = getMonday(addDays(lastWeeksMonday, weeksToDays(TOTAL_FUTURE_WEEKS)));
+    const futureDateMonday = getMonday(
+      addDays(lastWeeksMonday, weeksToDays(TOTAL_FUTURE_WEEKS))
+    );
     return format(futureDateMonday, DATE_FORMAT);
   }
+};
+
+export const generateDateWeekMath = (operation, weeks) => {
+  let today = new Date();
+
+  let weeksMonday;
+  switch (operation) {
+    case 'WEEK_MINUS':
+      weeksMonday = startOfWeek(subWeeks(today, weeks), { weekStartsOn: 1 });
+      break;
+    case 'WEEK_PLUS':
+      weeksMonday = startOfWeek(addWeeks(today, weeks), { weekStartsOn: 1 });
+      break;
+    default:
+      weeksMonday = startOfWeek(today, { weekStartsOn: 1 });
+  }
+  return format(weeksMonday, DATE_FORMAT);
 };
 
 /**
  * Returns the first and last month/year of the 22-week period.
  * @returns {{first: string, last: string}} - Object containing first and last month/year strings.
  */
-export const generateFirstAndLastMonthYear = (start, dateFormat, currentDate = false, previousStartDate = false, isArrowClick = false) => {
+export const generateFirstAndLastMonthYear = (
+  start,
+  dateFormat,
+  currentDate = false,
+  previousStartDate = false,
+  isArrowClick = false
+) => {
   let today = start ? new Date(start) : new Date();
   if (currentDate) {
     const currentDateMonday = getMonday(today);
     return format(currentDateMonday, dateFormat);
   }
   if (previousStartDate) {
-    const previousMonday = getMonday(subDays(today, weeksToDays(isArrowClick ? TOTAL_FUTURE_WEEKS_ARROW : TOTAL_FUTURE_WEEKS)));
+    const previousMonday = getMonday(
+      subDays(
+        today,
+        weeksToDays(
+          isArrowClick ? TOTAL_FUTURE_WEEKS_ARROW : TOTAL_FUTURE_WEEKS
+        )
+      )
+    );
     return format(previousMonday, dateFormat);
   }
-  const futureDateMonday = getMonday(addDays(today, weeksToDays(isArrowClick ? TOTAL_FUTURE_WEEKS_ARROW : TOTAL_FUTURE_WEEKS)));
+  const futureDateMonday = getMonday(
+    addDays(
+      today,
+      weeksToDays(isArrowClick ? TOTAL_FUTURE_WEEKS_ARROW : TOTAL_FUTURE_WEEKS)
+    )
+  );
   return format(futureDateMonday, dateFormat);
 };
 
-export const getStartAndEndDateForView = (view, projectsCalendar, teamsCalendar) => {
+export const getStartAndEndDateForView = (
+  view,
+  projectsCalendar,
+  teamsCalendar
+) => {
   let startDate, endDate;
   if (view === 'Teams') {
     startDate = teamsCalendar.startDate;
@@ -260,4 +320,11 @@ export const getStartAndEndDateForView = (view, projectsCalendar, teamsCalendar)
     endDate = projectsCalendar.endDate;
   }
   return { startDate, endDate };
+};
+
+export const getUserIdFromEmail = (users, email) => {
+  // Returning a hardcoded value for testing
+  return '1513e847-8abe-42b6-8743-497d9b8e0e17';
+  const userObj = users.find(user => user.Email === email);
+  return userObj ? userObj.Id : null;
 };

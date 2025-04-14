@@ -228,7 +228,10 @@ export const PUBLIC_ROUTES = [
   '/forgot-password',
   '/signup-otp',
   '/reset-password',
-  "/callback"
+  '/callback',
 ];
 
 export const DEFAULT_LOCALE = 'en-gb';
+
+export const DEFAULT_PROJECT_WEEK_PLUS = 19;
+export const DEFAULT_PROJECT_WEEK_MINUS = 1;

@@ -10,6 +10,7 @@ import {
 import {
   calculateTotalEffort,
   generateAllWeeks,
+  generateDateWeekMath,
   getMondayOfWeek,
   getWeekNumber,
 } from '@/app/utils/common';
@@ -36,11 +37,21 @@ import { CustomColumnMenu } from './components/CustomColumnMenu';
 import { CustomSnackbar } from '../Snackbar/CustomSnackbar';
 import { aggregationModel, generateColumnGroupingModel } from './TableHeader';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
-import CustomToolbar from '../Toolbar/CustomToolbar';
-import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import ToolbarMod from '../Toolbar/ToolbarMod';
+import {
+  setExpandRowId,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+} from '@/app/constants/constants';
+import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
+import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
+import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 
 export default function AllocationGrid({
   groupBy,
@@ -58,15 +69,21 @@ export default function AllocationGrid({
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const { rowState } = useSelector(state => state.dataGrid);
-  const { expandRowId, cellSelectionData, view } = useSelector(
-    state => state.allocationView
-  );
+  const { expandRowId, cellSelectionData, view, savedViews, currentView } =
+    useSelector(state => state.allocationView);
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
   const [rowModesModel, setRowModesModel] = useState({});
   const [cellSelectionModel, setCellSelectionModel] = useState({});
-
+  const [filterModel, setFilterModel] = useState({
+    items: [],
+  });
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState(
+    {
+      ..._initialState?.columns?.columnVisibilityModel, // Initial state
+    } ?? {}
+  );
   const { isOpen } = useSelector(state => state.globalDialog);
 
   const handleKeyUp = e => {
@@ -240,6 +257,85 @@ export default function AllocationGrid({
       });
     }
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (currentView?.ColumnsVisible) {
+      const newColumnVisibilityModel = {
+        ..._initialState?.columns?.columnVisibilityModel,
+        ...currentView?.ColumnsVisible.reduce((acc, column) => {
+          acc[column] = true;
+          return acc;
+        }, {}),
+      };
+      setColumnVisibilityModel(newColumnVisibilityModel);
+    }
+  }, [currentView?.ColumnsVisible]);
+
+  useEffect(() => {
+    if (currentView?.Filters) {
+      setFilterModel({
+        items:
+          currentView?.Filters.map((filter, index) => {
+            return {
+              ...filter,
+              id: index,
+            };
+          }) ?? [],
+      });
+    }
+  }, [currentView?.Filters]);
+
+  useEffect(() => {
+    const isTeams = view === 'Teams';
+    const action = isTeams
+      ? updateStartAndEndDate
+      : updateProjectStartAndEndDate;
+
+    // Fixed Range
+    // if (
+    //   currentView?.isFixedRange &&
+    //   currentView?.StartDate &&
+    //   currentView?.EndDate
+    // ) {
+    //   console.log('dispatching action : for dateRange isFixedRange');
+    //   dispatch(
+    //     action({
+    //       startDate: currentView?.StartDate,
+    //       endDate: currentView?.EndDate,
+    //     })
+    //   );
+    // }
+    if (currentView?.isDefaultRange) {
+      dispatch(
+        action({
+          startDate: generateDateWeekMath(
+            'WEEK_MINUS',
+            DEFAULT_PROJECT_WEEK_MINUS
+          ),
+          endDate: generateDateWeekMath('WEEK_PLUS', DEFAULT_PROJECT_WEEK_PLUS),
+        })
+      );
+    } else if (
+      currentView?.isDynamicRange &&
+      currentView?.WeekMinus &&
+      currentView?.WeekPlus
+    ) {
+      dispatch(
+        action({
+          startDate: generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus),
+          endDate: generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus),
+        })
+      );
+    }
+  }, [
+    currentView?.isFixedRange,
+    currentView?.StateDate,
+    currentView?.EndDate,
+    currentView?.isDynamicRange,
+    currentView?.WeekPlus,
+    currentView?.WeekMinus,
+    currentView?.isDefaultRange,
+  ]);
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
@@ -564,6 +660,32 @@ export default function AllocationGrid({
       return 'child-of-zero-allocation-resource';
     }
     return '';
+  }
+  
+  const handleFilterModelChange = newModel => {
+    // setFilterModel(newModel);
+
+    const filterData = newModel.items.map(item => ({
+      field: item.field,
+      operator: item.operator,
+      value: item.value,
+    }));
+    dispatch(
+      updateCurrentView({
+        Filters: filterData,
+      })
+    );
+  };
+
+  const handleColumnVisibilityModelChange = newModel => {
+    // setColumnVisibilityModel(newModel);
+    dispatch(
+      updateCurrentView({
+        ColumnsVisible: Object.keys(newModel).filter(
+          columnName => newModel[columnName]
+        ),
+      })
+    );
   };
 
   return (
@@ -582,11 +704,6 @@ export default function AllocationGrid({
         aggregationModel={aggregation}
         columns={finalColumns}
         rowSelection={true}
-        // cellSelection={true}
-        // disableMultipleRowSelection={false}
-        // onRowSelectionModelChange={(newSelection, params) => {
-        //   let x = params.api.getRow(newSelection[0])
-        // }}
         onRowClick={groupBy === 'teams' ? onRowClick : () => null}
         apiRef={apiRef}
         groupBy={groupBy}
@@ -606,7 +723,16 @@ export default function AllocationGrid({
         getRowClassName={params => getRowClassName(params)}
         cellSelectionModel={cellSelectionModel}
         onCellSelectionModelChange={handleCellSelectionModelChange}
+        filterModel={filterModel}
+        onFilterModelChange={handleFilterModelChange}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+        localeText={{
+          toolbarFilters: '',
+          toolbarColumns: '',
+        }}
         slots={{
+          // toolbar: ToolbarMod,
           toolbar: CustomToolbar,
           // columnMenu: CustomColumnMenu
           columnMenu: props => {
