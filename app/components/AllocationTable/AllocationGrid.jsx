@@ -171,6 +171,7 @@ export default function AllocationGrid({
     const updatedRows = mapData.map(row => ({
       ...normalizeRow(row),
       totalEffort: calculateTotalEffort(normalizeRow(row)),
+      hasAllocation: calculateTotalEffort(normalizeRow(row)) > 0,
     }));
     setUpdatedRows(updatedRows);
     let new_row_state = getInitialRowsState(updatedRows, groupBy, teams);
@@ -652,6 +653,15 @@ export default function AllocationGrid({
     setCellSelectionModel(filteredModel);
   }, []);
 
+  const getRowClassName = params => {
+    const rowNode = apiRef.current.getRowNode(params.id);
+    const rowData = apiRef.current.getRow(params.id);
+    if (rowNode?.type === 'leaf' && rowData?.hasAllocation === false) {
+      return 'child-of-zero-allocation-resource';
+    }
+    return '';
+  }
+  
   const handleFilterModelChange = newModel => {
     // setFilterModel(newModel);
 
@@ -708,9 +718,9 @@ export default function AllocationGrid({
           finalColumns
         )}
         defaultGroupingExpansionDepth={1}
-        getRowClassName={params => `super-app-theme--${params.row.status}`}
         disableAutosize
         getCellClassName={params => getCellClassName(params, updatedRows)}
+        getRowClassName={params => getRowClassName(params)}
         cellSelectionModel={cellSelectionModel}
         onCellSelectionModelChange={handleCellSelectionModelChange}
         filterModel={filterModel}

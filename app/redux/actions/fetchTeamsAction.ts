@@ -59,7 +59,8 @@ const formatAllocations = (
 ) => {
   const allocationsData = data.result;
   const allocationMap = new Map();
-
+  const resourcesData = resources.result;
+ 
   if (Array.isArray(allocationsData) && allocationsData.length === 0) {
     let obj: AllocationGridCell[] = [];
     if (resources?.result?.length === 0) {
@@ -106,6 +107,7 @@ const formatAllocations = (
     }
     return obj;
   }
+  
   Array.isArray(allocationsData) &&
     allocationsData.forEach(allocation => {
       if (!allocation.Period || allocation.AllocationEntered === 0) return;
@@ -163,6 +165,7 @@ const formatAllocations = (
         allocationMap.set(uniqueId, newAllocation);
       }
     });
+
   // add empty allocations with period within date range
   const allWeeks: string[] = getMondaysInRange(startDate, endDate);
   const updatedAllocationMap: AllocationGridCell[] = Array.from(
@@ -183,8 +186,48 @@ const formatAllocations = (
           value: null,
           period: week,
         };
-      });
+      });  
   });
+ 
+// Build a set of all resource IDs already added via allocations
+const allocatedResourceIds = new Set<string>(
+  updatedAllocationMap
+    .map(item => item.resourceId)
+    .filter((id): id is string => id !== null && id !== undefined)
+);
+
+// Add resources with no allocations
+if (resourcesData && Array.isArray(resourcesData)) {
+  resourcesData.forEach(resource => {
+    if (!allocatedResourceIds.has(resource.Id)) {
+      const defaultEntry: AllocationGridCell = {
+        id: `${resource.Id}-${teamId}`,
+        resourceId: resource.Id,
+        project: '',
+        projectId: '',
+        resource: resource.FullName,
+        totalEffort: null,
+        teamStatus: teamStatus ?? '',
+        teamAllocationManager: teamAllocationManager ?? '',
+        role: resource.Role || '',
+        teams: teamName,
+        resourceType: resource.Type || '',
+      };
+
+      const allWeeks: string[] = getMondaysInRange(startDate, endDate);
+      allWeeks.forEach(week => {
+        const weekNum = getWeekNumber(new Date(week));
+        defaultEntry[weekNum] = {
+          allocationId: null,
+          value: null,
+          period: week,
+        };
+      });
+
+      updatedAllocationMap.push(defaultEntry);
+    }
+  });
+} 
   return updatedAllocationMap;
 };
 
@@ -235,7 +278,6 @@ export const fetchResourcesAgainstTeams =
       });
 
       const results = await Promise.allSettled(teamPromises);
-
       const allResourceResults: TeamResourceResponse[] = [];
       results.forEach(result => {
         if (result.status === 'rejected') {

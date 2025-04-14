@@ -1,3 +1,7 @@
 .parent-grid-panel {
     box-shadow: none;
 }
+
+.MuiDataGrid-row.child-of-zero-allocation-resource {
+  display: none !important;
+}

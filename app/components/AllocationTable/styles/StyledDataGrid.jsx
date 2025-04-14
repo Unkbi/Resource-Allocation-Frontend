@@ -286,7 +286,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy})
     borderBottom: '2px solid #FFCD9C', 
   },
   '& .firstGroupsRow': {
-    backgroundColor: '#E9EFF8 !important' ,
+    backgroundColor: '#F0F7FF !important' ,
     fontWeight:groupBy==='project' ? 'bold' :"",
     color:groupBy==='project' ?'#313F68' : '' ,
   },
