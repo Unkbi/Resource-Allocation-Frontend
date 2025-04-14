@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -13,7 +13,10 @@ import {
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { performChangeView } from '@/app/redux/actions/allocationViewAction';
+import {
+  deleteUsersSavedViewAction,
+  performChangeView,
+} from '@/app/redux/actions/allocationViewAction';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
@@ -21,6 +24,7 @@ import {
 } from '@mui/x-data-grid';
 import CustomExport from './CustomExport';
 import {
+  generateDateWeekMath,
   generateFirstAndLastMonthYear,
   getStartAndEndDateForView,
 } from '@/app/utils/common';
@@ -39,10 +43,13 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import {
+  setCurrentView,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
-  // width: '150px',
   padding: '7px 14px 5px 14px',
   justifyContent: 'space-between',
   alignItems: 'center',
@@ -192,21 +199,6 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     height: '32px',
   },
 }));
-
-// const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
-//   padding: '10px 12px',
-//   color: '#212121',
-//   fontFamily: theme.typography.fontFamily,
-//   fontWeight: '400',
-//   fontSize: '13px',
-//   '&:hover': {
-//     backgroundColor: 'rgb(52 70 101 / 2%) !important',
-//   },
-//   '&.Mui-selected': {
-//     backgroundColor: 'rgb(52 70 101 / 2%) !important',
-//     fontWeight: '600',
-//   },
-// }));
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 140,
@@ -470,7 +462,9 @@ const PreferencesIcon = () => (
 
 const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
-  const { view, savedViews } = useSelector(state => state.allocationView);
+  const { view, savedViews, currentView } = useSelector(
+    state => state.allocationView
+  );
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
   const { calendarDate: projectsCalendar } = useSelector(
     state => state.projects
@@ -494,6 +488,11 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
 
   const handleMenuItemClick = viewId => {
     setSelectedView(viewId);
+    // Set Current View
+    const newView = savedViews?.find(view => view.Id === viewId);
+    if (newView) {
+      dispatch(setCurrentView(newView));
+    }
     handleClose();
   };
 
@@ -503,7 +502,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
       icon: <PeopleIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
     {
-      name: 'Projects',
+      name: 'Project',
       icon: <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
     // 'Organizations'
@@ -554,15 +553,52 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   };
 
   const handleSaveView = () => {
+    if (selectedView === '0') {
+      // Default View is selected, open New View dialog
+      dispatch(
+        openDialog({
+          title: 'Save View',
+          submitButtonText: 'Next',
+          cancelButtonText: 'Cancel',
+          formType: 'new_view',
+          initialData: null,
+        })
+      );
+    } else {
+      dispatch(
+        openDialog({
+          title: 'Save View',
+          submitButtonText: 'Save',
+          secondaryButtonText: 'Save As',
+          cancelButtonText: 'Cancel',
+          formType: 'save_view',
+          initialData: null,
+        })
+      );
+    }
+  };
+
+  const handleEditView = (e, savedViewData) => {
+    e.stopPropagation();
     dispatch(
       openDialog({
-        title: 'Save View',
-        submitButtonText: 'Save',
+        title: 'Edit View',
+        submitButtonText: 'Apply',
         cancelButtonText: 'Cancel',
-        formType: 'save_view',
-        initialData: null,
+        formType: 'name_view',
+        initialData: {
+          id: savedViewData?.Id,
+          name: savedViewData?.Name || '',
+          description: savedViewData?.Description || '',
+          isDefault: savedViewData?.isDefault || false,
+        },
       })
     );
+  };
+
+  const handleDeleteView = (e, id) => {
+    e.stopPropagation();
+    dispatch(deleteUsersSavedViewAction(id));
   };
 
   const getIcon = viewId => {
@@ -575,24 +611,19 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     if (viewId === selectedView) {
       return <ViewOptionCheckedStartIcon />;
     }
-
     return <ViewOptionStartIcon />;
-
-    // Other views based on their icon type
-    switch (iconType) {
-      case 'dashboard':
-        return <DashboardIcon className="icon" />;
-      case 'table':
-        return <TableChartIcon className="icon" />;
-      default:
-        return <ViewListIcon className="icon" />;
-    }
   };
 
   const open = Boolean(anchorEl);
 
   const currentViewName =
     savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
+
+  useEffect(() => {
+    if (currentView?.Name) {
+      setSelectedView(currentView?.Id);
+    }
+  }, [currentView?.Name]);
 
   return (
     <Box
@@ -605,7 +636,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
       <ToolBox1>
         <StyledFormControl size="small">
           <StyledSelect
-            value={view || 'Teams'}
+            value={currentView?.GroupBy || 'Teams'}
             onChange={handleViewChange}
             className="projectDropdown"
             IconComponent={KeyboardArrowDown}
@@ -620,7 +651,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             }}
             renderValue={selected => (
               <MenuItemContent>
-                {selected === 'Projects' ? (
+                {selected === 'Project' ? (
                   <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />
                 ) : (
                   <PeopleIcon sx={{ fontSize: 20, color: '#344665' }} />
@@ -730,41 +761,6 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
               </StyledMenuItem>
             </StyledSelectForWeek>
           </StyledFormControlForWeek>
-          {/* <Box>
-            <ViewButton
-              endIcon={<KeyboardArrowDownIcon />}
-              onClick={handleViewClick}
-              aria-controls={open ? 'view-menu' : undefined}
-              aria-haspopup="true"
-              aria-expanded={open ? 'true' : undefined}
-            >
-              {currentViewName}
-            </ViewButton>
-
-            <StyledMenu
-              id="view-menu"
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
-              MenuListProps={{
-                'aria-labelledby': 'view-button',
-              }}
-            >
-              {saveViewOptions.map(option => (
-                <StyledViewMenuItem
-                  key={option.id}
-                  onClick={() => handleMenuItemClick(option.id)}
-                  className={selectedView === option.id ? 'selected' : ''}
-                >
-                  {option.icon}
-                  {option.name}
-                  {selectedView === option.id && (
-                    <CheckIcon className="checkIcon" />
-                  )}
-                </StyledViewMenuItem>
-              ))}
-            </StyledMenu>
-          </Box> */}
           <Box>
             <ViewButton
               startIcon={<PreferencesIcon />}
@@ -827,12 +823,16 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                     )}
                     {option.Id !== '0' && (
                       <Box className="action-buttons">
-                        <ActionIconButton size="small">
-                          {/* <EditIcon fontSize="small" /> */}
+                        <ActionIconButton
+                          size="small"
+                          onClick={e => handleEditView(e, option)}
+                        >
                           <EditActionIcon />
                         </ActionIconButton>
-                        <ActionIconButton size="small">
-                          {/* <DeleteIcon fontSize="small" /> */}
+                        <ActionIconButton
+                          size="small"
+                          onClick={e => handleDeleteView(e, option.Id)}
+                        >
                           <DeleteActionIcon />
                         </ActionIconButton>
                       </Box>
@@ -844,7 +844,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           </Box>
           <Button
             startIcon={<AddIcon />}
-            // disabled={true}
+            // disabled={true} // Need to handle this via a difference function.
             onClick={handleSaveView}
             sx={{
               border: 'none !important',
@@ -860,70 +860,6 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <CustomExport />
-          {/* <Box className="projectIcon">
-            {view === 'Projects' ? (
-              <>
-                <TooltipButton
-                  msg="My Project"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <MyProjectIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-                <TooltipButton
-                  msg="All Projects"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <AllProjectIcon color={!active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-              </>
-            ) : view === 'Teams' ? (
-              <>
-                <TooltipButton
-                  msg="My Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <MyTeamsIcon
-                    color={active ? '#344665' : '#99A2B2'}
-                    fontSize={'18'}
-                  />
-                </TooltipButton>
-                <TooltipButton
-                  msg="All Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <AllTeamsIcon color={!active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-              </>
-            ) : (
-              <>
-                <TooltipButton
-                  msg="My Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-                <TooltipButton
-                  msg="All Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <AllTeamsIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-              </>
-            )}
-          </Box> */}
-          {/* <Divider orientation="vertical" flexItem /> */}
-          {/* <Box className="dayWeekBlock">
-            <Button>Day</Button>
-            <Button className="selected">Week</Button>
-            <Button>Month</Button>
-          </Box> */}
-          {/* <Divider orientation="vertical" flexItem /> */}
         </Box>
       </ToolBox2>
     </Box>

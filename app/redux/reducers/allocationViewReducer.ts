@@ -1,6 +1,9 @@
 import {
+  addAllocationView,
+  deleteAllocationView,
   getAllSavedViews,
   getUsersSavedViews,
+  updateAllocationView,
 } from '@/app/services/allocationServices';
 import {
   AllocationGridView,
@@ -8,23 +11,27 @@ import {
   GetUsersSavedViewsResponse,
 } from '@/app/types';
 import { createSlice } from '@reduxjs/toolkit';
-// import { set } from 'date-fns';
+
+const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
+  '__row_group_by_columns_group_teams__',
+  '__row_group_by_columns_group_resource__',
+  'project',
+  'resourceType',
+];
+
+const DEFAULT_VISIBLE_PROJECTS_COLUMNS = ['resource', 'totalEffort'];
 
 const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Id: '0',
   UserId: null,
   Name: 'Default View',
+  Description: '',
   isDefault: false,
   isProjectDefault: true,
-  GroupBy: 'teams',
+  GroupBy: 'Teams',
   MyTeam: false,
   MyProjects: false,
-  ColumnsVisible: [
-    '__row_group_by_columns_group_teams__',
-    'resource',
-    'project',
-    'resourceType',
-  ],
+  ColumnsVisible: DEFAULT_VISIBLE_TEAMS_COLUMNS,
   isDefaultRange: true,
   isDynamicRange: false,
   isFixedRange: false,
@@ -35,21 +42,6 @@ const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Filters: [],
 };
 
-const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
-  '__row_group_by_columns_group_teams__',
-  'resource',
-  'project',
-  'resourceType',
-];
-
-const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
-  'teams',
-  'resource',
-  'project',
-  'resourceType',
-  'totalEffort',
-];
-
 const initialState: AllocationGridViewState = {
   view: 'Teams',
   loading: false,
@@ -59,13 +51,25 @@ const initialState: AllocationGridViewState = {
   columns: {
     team: [
       '__row_group_by_columns_group_teams__',
-      'resource',
+      '__row_group_by_columns_group_resource__',
       'project',
       'resourceType',
       'teamStatus',
       'teamAllocationManager',
     ],
-    project: ['teams', 'resource', 'project', 'resourceType', 'totalEffort'],
+    project: [
+      '__row_group_by_columns_group__project__',
+      'projectSponsor',
+      'projectManager',
+      'projectStatus',
+      'projectLocation',
+      'projectType',
+      'projectOvertimeAllowed',
+      'projectCost',
+      'projectCurrency',
+      'projectStartDate',
+      'projectEndDate',
+    ],
   },
   currentView: COMPANY_DEFAULT_VIEW,
   savedViews: [COMPANY_DEFAULT_VIEW],
@@ -79,7 +83,7 @@ const viewSlice = createSlice({
       state.view = action.payload;
       state.currentView = {
         ...state.currentView,
-        GroupBy: action.payload === 'Teams' ? 'teams' : 'projects',
+        GroupBy: action.payload,
         ColumnsVisible:
           action.payload === 'Teams'
             ? DEFAULT_VISIBLE_TEAMS_COLUMNS
@@ -147,6 +151,7 @@ const viewSlice = createSlice({
               Id: view.__Id__,
               UserId: view.UserId,
               Name: view.Name,
+              Description: view.Description,
               isDefault: view.isDefault,
               isProjectDefault: false,
               GroupBy: view.GroupBy,
@@ -167,6 +172,120 @@ const viewSlice = createSlice({
         state.savedViews = [...formatedView, COMPANY_DEFAULT_VIEW];
       })
       .addCase(getUsersSavedViews.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message as string;
+      })
+      // Add new saved view.
+      .addCase(addAllocationView.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addAllocationView.fulfilled, (state, action) => {
+        state.loading = false;
+        const newView = action.payload?.result;
+        const formatedView: AllocationGridView = {
+          Id: newView.__Id__,
+          UserId: newView.UserId,
+          Name: newView.Name,
+          Description: newView.Description,
+          isDefault: newView.isDefault,
+          isProjectDefault: false,
+          GroupBy: newView.GroupBy,
+          MyTeam: newView.ShowBy === 'MyTeam',
+          MyProjects: newView.ShowBy === 'MyProjects',
+          ColumnsVisible: newView.Columns,
+          StartDate: newView.StartDate,
+          EndDate: newView.EndDate,
+          isFixedRange: newView.isFixedRange,
+          isDynamicRange: newView.isDynamicRange,
+          isDefaultRange: !newView.isFixedRange && !newView.isDynamicRange,
+          WeekPlus: newView.WeekPlus,
+          WeekMinus: newView.WeekMinus,
+          Filters: newView.Filters,
+        };
+        state.savedViews = [formatedView, ...state.savedViews];
+        state.currentView = {
+          ...state.currentView,
+          ...formatedView,
+        };
+      })
+      .addCase(addAllocationView.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message as string;
+      })
+      // Update saved view.
+      .addCase(updateAllocationView.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateAllocationView.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedView =
+          action.payload?.result.length > 0 ? action.payload?.result[0] : null;
+        const formatedView: AllocationGridView = {
+          Id: updatedView?.__Id__,
+          UserId: updatedView?.UserId,
+          Name: updatedView?.Name,
+          Description: updatedView?.Description,
+          isDefault: updatedView?.isDefault,
+          isProjectDefault: false,
+          GroupBy: updatedView?.GroupBy,
+          MyTeam: updatedView?.ShowBy === 'MyTeam',
+          MyProjects: updatedView?.ShowBy === 'MyProjects',
+          ColumnsVisible: updatedView?.Columns,
+          StartDate: updatedView?.StartDate,
+          EndDate: updatedView?.EndDate,
+          isFixedRange: updatedView?.isFixedRange,
+          isDynamicRange: updatedView?.isDynamicRange,
+          isDefaultRange:
+            !updatedView?.isFixedRange && !updatedView?.isDynamicRange,
+          WeekPlus: updatedView?.WeekPlus,
+          WeekMinus: updatedView?.WeekMinus,
+          Filters: updatedView?.Filters,
+        };
+
+        // Update saved View list.
+        state.savedViews = state.savedViews.map(view => {
+          if (view.Id === updatedView?.__Id__) {
+            return {
+              ...view,
+              ...formatedView,
+            };
+          }
+          return view;
+        });
+
+        // Update current view if it is the same as updated view.
+        if (updatedView?.__Id__ === state.currentView.Id) {
+          state.currentView = {
+            ...state.currentView,
+            ...formatedView,
+          };
+        }
+      })
+      .addCase(updateAllocationView.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message as string;
+      })
+      // Delete saved view.
+      .addCase(deleteAllocationView.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteAllocationView.fulfilled, (state, action) => {
+        state.loading = false;
+        const deletedView =
+          action.payload?.result.length > 0 ? action.payload?.result[0] : null;
+        if (deletedView) {
+          if (deletedView?.__Id__ === state.currentView.Id) {
+            state.currentView = COMPANY_DEFAULT_VIEW;
+          }
+          state.savedViews = state.savedViews.filter(
+            view => view.Id !== deletedView.__Id__
+          );
+        }
+      })
+      .addCase(deleteAllocationView.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message as string;
       });
