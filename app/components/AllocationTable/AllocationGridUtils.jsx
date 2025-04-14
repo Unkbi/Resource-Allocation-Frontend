@@ -46,7 +46,7 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
 
 }));
 
-const ResourceCellWithMenu = ({ params, handleAddClick }) => {
+const CellWithMenu = ({ params, handleAddClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -89,7 +89,7 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
         anchorEl={anchorEl}
         open={open}
         onClose={handleMenuClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       >
        {menuItems.map((item) => (
@@ -200,7 +200,7 @@ export const getFinalColumns = (
         primaryColumn: true,
         renderCell: params => {
           return params.value ? (
-            <ResourceCellWithMenu
+            <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
               columnType="resource"
@@ -248,8 +248,16 @@ export const getFinalColumns = (
               />
             );
           }
-          if (params.value) return params.value;
-
+          if (params.value) {
+            return (
+              <CellWithMenu
+                params={params}
+                handleAddClick={handleAddClick}
+                icon={<Typography fontSize="12px">{params.value}</Typography>}
+              />
+            );
+          }
+  
           const projects_set = [
             ...new Set(
               params?.rowNode?.children?.map(
@@ -328,7 +336,7 @@ export const getFinalColumns = (
           groupBy === 'project' ? 'common-NonEditableCells' : '',
         renderCell: params => {
           return params.value ? (
-            <ResourceCellWithMenu
+            <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
               columnType="resource"
