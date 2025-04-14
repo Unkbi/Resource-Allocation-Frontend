@@ -1,4 +1,8 @@
 import {
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+} from '@/app/constants/constants';
+import {
   addAllocationView,
   deleteAllocationView,
   getAllSavedViews,
@@ -32,13 +36,12 @@ const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   MyTeam: false,
   MyProjects: false,
   ColumnsVisible: DEFAULT_VISIBLE_TEAMS_COLUMNS,
-  isDefaultRange: true,
-  isDynamicRange: false,
+  isDynamicRange: true,
   isFixedRange: false,
   StartDate: null,
   EndDate: null,
-  WeekPlus: null,
-  WeekMinus: null,
+  WeekPlus: DEFAULT_PROJECT_WEEK_PLUS,
+  WeekMinus: DEFAULT_PROJECT_WEEK_MINUS,
   Filters: [],
 };
 
@@ -162,7 +165,6 @@ const viewSlice = createSlice({
               EndDate: view.EndDate,
               isFixedRange: view.isFixedRange,
               isDynamicRange: view.isDynamicRange,
-              isDefaultRange: !view.isFixedRange && !view.isDynamicRange,
               WeekPlus: view.WeekPlus,
               WeekMinus: view.WeekMinus,
               Filters: view.Filters,
@@ -198,7 +200,6 @@ const viewSlice = createSlice({
           EndDate: newView.EndDate,
           isFixedRange: newView.isFixedRange,
           isDynamicRange: newView.isDynamicRange,
-          isDefaultRange: !newView.isFixedRange && !newView.isDynamicRange,
           WeekPlus: newView.WeekPlus,
           WeekMinus: newView.WeekMinus,
           Filters: newView.Filters,
@@ -237,8 +238,6 @@ const viewSlice = createSlice({
           EndDate: updatedView?.EndDate,
           isFixedRange: updatedView?.isFixedRange,
           isDynamicRange: updatedView?.isDynamicRange,
-          isDefaultRange:
-            !updatedView?.isFixedRange && !updatedView?.isDynamicRange,
           WeekPlus: updatedView?.WeekPlus,
           WeekMinus: updatedView?.WeekMinus,
           Filters: updatedView?.Filters,

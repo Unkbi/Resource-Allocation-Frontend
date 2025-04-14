@@ -305,17 +305,7 @@ export default function AllocationGrid({
     //     })
     //   );
     // }
-    if (currentView?.isDefaultRange) {
-      dispatch(
-        action({
-          startDate: generateDateWeekMath(
-            'WEEK_MINUS',
-            DEFAULT_PROJECT_WEEK_MINUS
-          ),
-          endDate: generateDateWeekMath('WEEK_PLUS', DEFAULT_PROJECT_WEEK_PLUS),
-        })
-      );
-    } else if (
+    if (
       currentView?.isDynamicRange &&
       currentView?.WeekMinus &&
       currentView?.WeekPlus
@@ -334,7 +324,6 @@ export default function AllocationGrid({
     currentView?.isDynamicRange,
     currentView?.WeekPlus,
     currentView?.WeekMinus,
-    currentView?.isDefaultRange,
   ]);
 
   const handleAddProject = (e, project, curRow) => {
@@ -660,8 +649,8 @@ export default function AllocationGrid({
       return 'child-of-zero-allocation-resource';
     }
     return '';
-  }
-  
+  };
+
   const handleFilterModelChange = newModel => {
     // setFilterModel(newModel);
 
