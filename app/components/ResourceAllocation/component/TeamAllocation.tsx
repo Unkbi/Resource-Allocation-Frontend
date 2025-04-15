@@ -213,6 +213,8 @@ export default function TeamAllocation() {
               teamStatus: false,
               __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
               __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
+              project: true,
+              resourceType: true,
               teams: false, // This column has to always be false, as we are using grouping.
               resource: false, // This column has to always be false, as we are using grouping.
             },

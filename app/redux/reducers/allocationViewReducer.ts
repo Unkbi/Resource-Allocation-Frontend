@@ -23,7 +23,11 @@ const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
   'resourceType',
 ];
 
-const DEFAULT_VISIBLE_PROJECTS_COLUMNS = ['resource', 'totalEffort'];
+const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
+  '__row_group_by_columns_group__',
+  'resource',
+  'totalEffort',
+];
 
 const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Id: '0',
@@ -61,7 +65,10 @@ const initialState: AllocationGridViewState = {
       'teamAllocationManager',
     ],
     project: [
-      '__row_group_by_columns_group__project__',
+      '__row_group_by_columns_group__',
+      'resource',
+      'totalEffort',
+      'project',
       'projectSponsor',
       'projectManager',
       'projectStatus',
