@@ -9,14 +9,20 @@ import { useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from './CustomAddIcon';
 import { useState } from 'react';
-import { IconButton, Menu, MenuItem,ListItemIcon, ListItemText} from '@mui/material';
+import {
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import HistoryIcon from '@mui/icons-material/History';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
-import {Typography} from '@mui/material';
+import { Typography } from '@mui/material';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -30,20 +36,19 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   '&:hover': {
     backgroundColor: 'rgba(20, 43, 81, 0.70)',
     '& .MuiTypography-root': {
-      color: '#FFFFFF', 
+      color: '#FFFFFF',
     },
     '& .MuiListItemIcon-root': {
-      color: '#FFFFFF', 
+      color: '#FFFFFF',
     },
   },
   '& .MuiTypography-root': {
-    color: '#424242', 
+    color: '#424242',
   },
   '& .MuiListItemIcon-root': {
     minWidth: 32,
-    color: '#1C2D5F', 
+    color: '#1C2D5F',
   },
-
 }));
 
 const CellWithMenu = ({ params, handleAddClick }) => {
@@ -65,7 +70,6 @@ const CellWithMenu = ({ params, handleAddClick }) => {
     { label: 'History', icon: <HistoryIcon fontSize="small" /> },
     { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
   ];
-
 
   const menu = (
     <>
@@ -92,32 +96,32 @@ const CellWithMenu = ({ params, handleAddClick }) => {
         anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       >
-       {menuItems.map((item) => (
+        {menuItems.map(item => (
           <StyledMenuItem
             key={item.label}
             onClick={() => {
-            handleMenuClose();
+              handleMenuClose();
             }}
           >
-        <ListItemIcon>{item.icon}</ListItemIcon>
-        <ListItemText   
-          primary={
-         <Typography
-          variant="body2"
-          sx={{
-          color:' #424242',
-          fontFamily: 'Manrope',
-          fontSize: '12px',
-          fontStyle: 'normal',
-          fontWeight: '600',
-          lineHeight:' 18px', 
-          }}
-        >
-        {item.label}
-        </Typography>
-         }
-        />
-      </StyledMenuItem>
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText
+              primary={
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: ' #424242',
+                    fontFamily: 'Manrope',
+                    fontSize: '12px',
+                    fontStyle: 'normal',
+                    fontWeight: '600',
+                    lineHeight: ' 18px',
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              }
+            />
+          </StyledMenuItem>
         ))}
       </StyledMenu>
     </>
@@ -257,7 +261,7 @@ export const getFinalColumns = (
               />
             );
           }
-  
+
           const projects_set = [
             ...new Set(
               params?.rowNode?.children?.map(

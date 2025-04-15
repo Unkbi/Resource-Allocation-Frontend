@@ -31,6 +31,8 @@ const getColumnLabel = column => {
   const columnLabels = {
     __row_group_by_columns_group_teams__: 'Teams Name',
     __row_group_by_columns_group_resource__: 'Resource',
+    __row_group_by_columns_group__: 'Project Name',
+    totalEffort: 'Total Effort',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',

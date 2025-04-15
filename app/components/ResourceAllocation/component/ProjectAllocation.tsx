@@ -293,17 +293,19 @@ export default function ProjectAllocation() {
           columns: {
             columnVisibilityModel: {
               project: false,
-              projectSponsor: false,
-              projectManager: false,
-              projectStatus: false,
-              projectLocation: false,
-              projectType: false,
-              projectOvertimeAllowed: false,
               projectCost: false,
               projectCurrency: false,
-              projectStartDate: false,
               projectEndDate: false,
+              projectLocation: false,
+              projectManager: false,
+              projectOvertimeAllowed: false,
+              projectSponsor: false,
+              projectStartDate: false,
+              projectStatus: false,
+              projectType: false,
               totalEffort: true,
+              resource: true, // Always be true
+              __row_group_by_columns_group__: true, // Always be true
             },
           },
         }}
