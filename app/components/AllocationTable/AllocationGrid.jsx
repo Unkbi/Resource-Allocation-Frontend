@@ -66,7 +66,6 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
       
         Object.keys(weeks).forEach((weekN) => {
           const period = currentRowData?.[weekN]?.period;
-          // console.log('week:', weekN, 'period:', currentRowData?.[weekN]?.period);
           if (period) {
             StartDate = StartDate ? (isBefore(period, StartDate) ? period : StartDate) : period;
             EndDate = EndDate ? (isAfter(period, EndDate) ? period : EndDate) : period;
@@ -106,8 +105,7 @@ export default function AllocationGrid({ groupBy, columns, data, loading, select
     const normalized = { ...row };
 
     allWeeks.forEach((weekKey) => {
-      const weekNumber = weekKey.slice(1);
-      const period = getMondayOfWeek(weekNumber, new Date());
+      const period = getMondayOfWeek(weekKey, new Date());
 
       const value = row[weekKey];
 

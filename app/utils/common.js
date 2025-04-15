@@ -64,10 +64,12 @@ export const getMondaysInRange = (start, end) => {
  * @returns {string} - The Monday date of the given week in YYYY-MM-DD format.
  */
 export const getMondayOfWeek = (weekNumber, date) => {
-  const year = date.getFullYear();
-  const startOfFirstWeek = startOfISOWeekYear(new Date(year, 0, 1));
-  const mondayOfTargetWeek = addWeeks(startOfFirstWeek, weekNumber - 1);
-  return format(mondayOfTargetWeek, DATE_FORMAT);
+  const year = getYear(date);
+  const firstDayOfYear = new Date(year, 0, 1);
+  const weekN =
+    typeof weekNumber !== 'number' ? Number(weekNumber.slice(1)) : weekNumber;
+  const dateInWeek = setWeek(firstDayOfYear, weekN);
+  return format(startOfISOWeek(dateInWeek, { weekStartsOn: 1 }), DATE_FORMAT);
 };
 
 export function generateAllMondays(startDate, endDate) {
