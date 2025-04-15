@@ -49,7 +49,7 @@ function LayoutContent({ children }) {
        case '/project':
          return 'Projects';
        case '/people':
-         return 'People';
+         return 'Resource';
        case '/report':
          return 'Reports';
        default:
