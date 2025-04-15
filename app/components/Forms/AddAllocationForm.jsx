@@ -8,6 +8,8 @@ import { StyledCommentInput, StyledFormHelperText, StyledInput } from "../Input/
 import StyledRadioButton from "../RadioButton/StyledRadioButton"
 import { useSelector } from "react-redux"
 import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker"
+import { useDispatch } from "react-redux"
+import { showToast } from "@/app/redux/reducers/toastReducer"
 
 const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const { values, handleChange, handleBlur, setFieldValue} = formikProps
@@ -21,6 +23,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const [multipleProjectError, setMultipleProjectError] = useState(false);
   const [closeResourceMenu, setCloseResourceMenu] = useState(false);
   const [closeProjectMenu, setCloseProjectMenu] = useState(false);
+  const dispatch = useDispatch()
 
   const commonAutocompleteStyles = {
     "& .MuiInputBase-root": { fontSize: "12px" },
@@ -155,6 +158,34 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     });
   };
 
+  useEffect(() => {
+    if (!values.StartDate || !values.EndDate || !Array.isArray(values.Project)) return;
+
+    const selectedProjects = projects?.result?.filter(project =>
+      values.Project.includes(project.Id)
+    );
+
+    const outOfRangeProjects = selectedProjects.filter(project => {
+      const projectStart = new Date(project.StartDate);
+      const projectEnd = new Date(project.EndDate);
+      const allocationStart = new Date(values.StartDate);
+      const allocationEnd = new Date(values.EndDate);
+
+      return allocationStart < projectStart || allocationEnd > projectEnd;
+    });
+
+    if (outOfRangeProjects.length > 0) {
+      dispatch(showToast({
+        open: true,
+        message: "Warning: You are allocating outside the project range",
+        type: "warning",
+        position: "bottom-right",
+        autoHideTimer: 4000,
+      }));
+    }
+  }, [values.StartDate, values.EndDate, values.Project, projects]);
+
+
   return (
   <Box>
   <Box sx={{ pb: 2 }}>
@@ -173,7 +204,17 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     onChange={handleResourceChange}
     slotProps={commonSlotProps}
     renderInput={(params) => (
-      <TextField {...params} placeholder="Select Resource" variant="outlined" />
+      <TextField {...params} 
+      placeholder="Select Resource" 
+      variant="outlined"  
+      error={formikProps.touched.Resource && Boolean(formikProps.errors.Resource)}
+      helperText={formikProps.touched.Resource && formikProps.errors.Resource}
+      FormHelperTextProps={{
+        sx: {
+          fontSize: '12px',
+          textAlign: 'left',
+          marginLeft: '0px',
+        }}}/>
     )}
   />
   {multipleResourceError && (
@@ -199,7 +240,17 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     onChange={handleProjectChange}
     slotProps={commonSlotProps}
     renderInput={(params) => (
-      <TextField {...params} placeholder="Select Project" variant="outlined"
+      <TextField {...params} 
+      placeholder="Select Project" 
+      variant="outlined"  
+      error={formikProps.touched.Project && Boolean(formikProps.errors.Project)}
+      helperText={formikProps.touched.Project && formikProps.errors.Project}
+      FormHelperTextProps={{
+        sx: {
+          fontSize: '12px',
+          textAlign: 'left',
+          marginLeft: '0px',
+        }}}
       sx={{ fontSize: "12px", "&::placeholder": { fontSize: "10px" } }} />
     )}
   />
@@ -212,7 +263,6 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
 
    <Box>
        <Box sx={{ pb: 2, pt: 2 ,}}>
-          <StyledLabel>Date Range</StyledLabel>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
             <CustomDateRangePicker
               name = "StartDate"

@@ -127,11 +127,11 @@ export default function TeamAllocation() {
                   marginLeft: '8px',
                   borderRadius: '4px',
                   fontSize: '12px',
-                  fontWeight: '600',
+                  fontWeight: '700',
                   background: ' #7881A5',
                 }}
               >
-                ({resource_count.length})
+                {resource_count.length}
               </span>
             </div>
           </Tooltip>
@@ -211,6 +211,10 @@ export default function TeamAllocation() {
             columnVisibilityModel: {
               teamAllocationManager: false,
               teamStatus: false,
+              __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
+              __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
+              teams: false, // This column has to always be false, as we are using grouping.
+              resource: false, // This column has to always be false, as we are using grouping.
             },
           },
         }}

@@ -9,14 +9,48 @@ import { useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from './CustomAddIcon';
 import { useState } from 'react';
-import { IconButton, Menu, MenuItem } from '@mui/material';
+import { IconButton, Menu, MenuItem,ListItemIcon, ListItemText} from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import HistoryIcon from '@mui/icons-material/History';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { styled } from '@mui/material/styles';
+import {Typography} from '@mui/material';
 
-const ResourceCellWithMenu = ({ params, handleAddClick }) => {
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    borderRadius: 4,
+    boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
+    width: '120px',
+  },
+}));
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: 'rgba(20, 43, 81, 0.70)',
+    '& .MuiTypography-root': {
+      color: '#FFFFFF', 
+    },
+    '& .MuiListItemIcon-root': {
+      color: '#FFFFFF', 
+    },
+  },
+  '& .MuiTypography-root': {
+    color: '#424242', 
+  },
+  '& .MuiListItemIcon-root': {
+    minWidth: 32,
+    color: '#1C2D5F', 
+  },
+
+}));
+
+const CellWithMenu = ({ params, handleAddClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  const handleMenuOpen = (event) => {
+  const handleMenuOpen = event => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
@@ -24,6 +58,14 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  const menuItems = [
+    { label: 'Clone', icon: <ContentCopyIcon fontSize="small" /> },
+    { label: 'Transfer', icon: <SwapHorizIcon fontSize="small" /> },
+    { label: 'History', icon: <HistoryIcon fontSize="small" /> },
+    { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
+  ];
+
 
   const menu = (
     <>
@@ -34,24 +76,50 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
         onClick={handleMenuOpen}
         sx={{
           ml: 0.3,
-          padding: '0px', 
+          padding: '0px',
           backgroundColor: 'transparent',
           '&:hover': {
-            backgroundColor: 'transparent', 
+            backgroundColor: 'transparent',
           },
         }}
       >
         <MoreVertIcon sx={{ fontSize: 22 }} />
       </IconButton>
-      <Menu
+      <StyledMenu
         anchorEl={anchorEl}
         open={open}
         onClose={handleMenuClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       >
-        <MenuItem onClick={() => { handleMenuClose(); alert('Clone'); }}>Clone</MenuItem>
-      </Menu>
+       {menuItems.map((item) => (
+          <StyledMenuItem
+            key={item.label}
+            onClick={() => {
+            handleMenuClose();
+            }}
+          >
+        <ListItemIcon>{item.icon}</ListItemIcon>
+        <ListItemText   
+          primary={
+         <Typography
+          variant="body2"
+          sx={{
+          color:' #424242',
+          fontFamily: 'Manrope',
+          fontSize: '12px',
+          fontStyle: 'normal',
+          fontWeight: '600',
+          lineHeight:' 18px', 
+          }}
+        >
+        {item.label}
+        </Typography>
+         }
+        />
+      </StyledMenuItem>
+        ))}
+      </StyledMenu>
     </>
   );
 
@@ -67,7 +135,7 @@ const ResourceCellWithMenu = ({ params, handleAddClick }) => {
 export const getInitialState = (
   groupBy,
   updatedRows,
-  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+  GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
 ) => ({
   rowGrouping: {
     model: groupBy === 'teams' ? [groupBy, 'resource'] : [groupBy],
@@ -77,7 +145,12 @@ export const getInitialState = (
       { field: GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, sort: 'asc' },
     ],
   },
-  pinnedColumns: { left: [GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, "__row_group_by_columns_group_teams__"] },
+  pinnedColumns: {
+    left: [
+      GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
+      '__row_group_by_columns_group_teams__',
+    ],
+  },
 });
 
 export const getFinalColumns = (
@@ -92,20 +165,26 @@ export const getFinalColumns = (
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
-  const allColumns = getAllColumnsWithWeek(columns, dispatch, startDate, endDate);
-  const handleAddClick = (params) => { 
+  const allColumns = getAllColumnsWithWeek(
+    columns,
+    dispatch,
+    startDate,
+    endDate
+  );
+  const handleAddClick = params => {
     dispatch(
       openDialog({
-        title: "Update Allocation",
+        title: 'Update Allocation',
         submitButtonText: 'Update',
         cancelButtonText: 'Cancel',
-        formType: "add_allocation",
+        formType: 'add_allocation',
         initialData: {
-          Resource: params.value 
+          Resource: params.value,
+          Project: params.row.project,
         },
       })
     );
-  }
+  };
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -119,9 +198,9 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
-        renderCell: (params) => {
+        renderCell: params => {
           return params.value ? (
-            <ResourceCellWithMenu
+            <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
               columnType="resource"
@@ -137,7 +216,7 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: groupBy == 'project' ? true : false,
         primaryColumn: true,
-        renderCell: params => {    
+        renderCell: params => {
           const allocationsOfAddedResource =
             Array.isArray(teamAllocations.result) &&
             teamAllocations.result.filter(
@@ -169,8 +248,16 @@ export const getFinalColumns = (
               />
             );
           }
-          if (params.value) return params.value;
-
+          if (params.value) {
+            return (
+              <CellWithMenu
+                params={params}
+                handleAddClick={handleAddClick}
+                icon={<Typography fontSize="12px">{params.value}</Typography>}
+              />
+            );
+          }
+  
           const projects_set = [
             ...new Set(
               params?.rowNode?.children?.map(
@@ -181,7 +268,7 @@ export const getFinalColumns = (
 
           if (projects_set.length > 1) {
             const firstProject = projects_set?.[0];
-          
+
             return (
               <div
                 style={{
@@ -245,10 +332,11 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
-        cellClassName: () => (groupBy === 'project' ? 'common-NonEditableCells' : ''),
-        renderCell: (params) => {
+        cellClassName: () =>
+          groupBy === 'project' ? 'common-NonEditableCells' : '',
+        renderCell: params => {
           return params.value ? (
-            <ResourceCellWithMenu
+            <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
               columnType="resource"
@@ -324,35 +412,36 @@ export const getCellClassName = (params, updatedRows) => {
       } else {
         percentage = (aggregatedValue / totalRows) * 100;
       }
-     if (params.rowNode?.groupingField === 'teams'){
-       if (percentage === 0) {
-         return 'firstGroupsRow';
-       } else if (percentage <= 50) {
-         return 'poor-allocation';
-       } else if (percentage > 50 && percentage <= 80) {
-         return 'average-allocation';
-       } else if (percentage > 80 && percentage <= 110) {
-         return 'fully-occupied';
-       } else if (percentage > 110) {
-         return 'over-occupied';
-       }
-     }else{
-      if (percentage === 0) {
-        return 'firstGroupsRow';
-      } else if (percentage <= 50) {
-        return 'poor-allocation-secondGroup';
-      } else if (percentage > 50 && percentage <= 80) {
-        return 'average-allocation-secondGroup';
-      } else if (percentage > 80 && percentage <= 110) {
-        return 'fully-occupied-secondGroup';
-      } else if (percentage > 110) {
-        return 'over-occupied-secondGroup';
+      if (params.rowNode?.groupingField === 'teams') {
+        if (percentage === 0) {
+          return 'firstGroupsRow';
+        } else if (percentage <= 50) {
+          return 'poor-allocation';
+        } else if (percentage > 50 && percentage <= 80) {
+          return 'average-allocation';
+        } else if (percentage > 80 && percentage <= 110) {
+          return 'fully-occupied';
+        } else if (percentage > 110) {
+          return 'over-occupied';
+        }
+      } else {
+        if (percentage === 0) {
+          return 'firstGroupsRow';
+        } else if (percentage <= 50) {
+          return 'poor-allocation-secondGroup';
+        } else if (percentage > 50 && percentage <= 80) {
+          return 'average-allocation-secondGroup';
+        } else if (percentage > 80 && percentage <= 110) {
+          return 'fully-occupied-secondGroup';
+        } else if (percentage > 110) {
+          return 'over-occupied-secondGroup';
+        }
       }
-     }
     }
   }
   if (params.rowNode?.type === 'group') {
-    return params.rowNode?.groupingField === 'teams'  || params.rowNode?.groupingField === 'project'
+    return params.rowNode?.groupingField === 'teams' ||
+      params.rowNode?.groupingField === 'project'
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
   }

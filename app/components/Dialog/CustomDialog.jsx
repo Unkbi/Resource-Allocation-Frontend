@@ -4,7 +4,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { IconButton, styled } from '@mui/material';
+import { Box, IconButton, styled } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeDialog } from '@/app/redux/reducers/dialogReducer';
@@ -21,7 +21,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogActions-root': {
     padding: theme.spacing(1),
     height: '56px',
-    boxShadow:'-7px -6px 7px rgba(0, 0, 0, 0.06)'
+    boxShadow: '-7px -6px 7px rgba(0, 0, 0, 0.06)',
   },
   '& .MuiPaper-root': {
     margin: 0,
@@ -70,7 +70,7 @@ const StyledSubmitButton = styled(Button)(({ theme }) => ({
   lineHeight: '100%',
   letterSpacing: '0px',
   textAlign: 'center',
-  textTransform: 'none'
+  textTransform: 'none',
 }));
 
 const StyledCancelButton = styled(Button)(({ theme }) => ({
@@ -85,17 +85,39 @@ const StyledCancelButton = styled(Button)(({ theme }) => ({
   lineHeight: '100%',
   letterSpacing: '0px',
   textAlign: 'center',
-  textTransform: 'none'
+  textTransform: 'none',
 }));
 
-const CustomDialog = ({ children, onSubmit, onCancel }) => {
+const StyledDialogActionsContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignContent: 'center',
+  width: '100%',
+  padding: '0 12px 0 12px',
+}));
+
+const StyledSubmitButtonContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  alignContent: 'center',
+  width: '100%',
+  gap: 5,
+}));
+
+const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel }) => {
   const dispatch = useDispatch();
   const dialogState = useSelector(state => state.globalDialog);
-  const { isOpen, title, submitButtonText, cancelButtonText } = dialogState;
+  const {
+    isOpen,
+    title,
+    submitButtonText,
+    secondaryButtonText,
+    cancelButtonText,
+  } = dialogState;
 
   const handleClose = () => {
     dispatch(closeDialog());
-    onCancel()
+    onCancel();
   };
 
   return (
@@ -107,12 +129,33 @@ const CustomDialog = ({ children, onSubmit, onCancel }) => {
         </StyledIconButton>
         <DialogContent>{children}</DialogContent>
         <DialogActions>
-          <StyledCancelButton variant="outlined" onClick={handleClose}>
-            {cancelButtonText}
-          </StyledCancelButton>
-          <StyledSubmitButton onClick={onSubmit} variant="contained">
-            {submitButtonText}
-          </StyledSubmitButton>
+          {secondaryButtonText ? (
+            <StyledDialogActionsContainer>
+              <StyledCancelButton variant="outlined" onClick={handleClose}>
+                {cancelButtonText}
+              </StyledCancelButton>
+              <StyledSubmitButtonContainer>
+                <StyledSubmitButton
+                  variant="outlined"
+                  onClick={onSecondarySubmit}
+                >
+                  {secondaryButtonText}
+                </StyledSubmitButton>
+                <StyledSubmitButton onClick={onSubmit} variant="contained">
+                  {submitButtonText}
+                </StyledSubmitButton>
+              </StyledSubmitButtonContainer>
+            </StyledDialogActionsContainer>
+          ) : (
+            <>
+              <StyledCancelButton variant="outlined" onClick={handleClose}>
+                {cancelButtonText}
+              </StyledCancelButton>
+              <StyledSubmitButton onClick={onSubmit} variant="contained">
+                {submitButtonText}
+              </StyledSubmitButton>
+            </>
+          )}
         </DialogActions>
       </StyledDialog>
     </React.Fragment>
