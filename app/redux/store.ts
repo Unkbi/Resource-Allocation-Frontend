@@ -8,6 +8,7 @@ import resourceAllocationReducer from './reducers/resourceAllocationReducer';
 import toastSlice from './reducers/toastReducer';
 import dialogReducer from './reducers/dialogReducer';
 import dataGridReducer from './reducers/dataGridReducer';
+import settingsReducer from './reducers/settingsReducer';
 
 export const makeStore = () => {
   return configureStore({
@@ -21,6 +22,7 @@ export const makeStore = () => {
       toast: toastSlice,
       globalDialog: dialogReducer,
       dataGrid: dataGridReducer,
+      settings: settingsReducer,
     },
   });
 };

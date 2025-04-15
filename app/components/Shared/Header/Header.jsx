@@ -172,6 +172,7 @@ const Header = ({ sidebarExpanded }) => {
         title: title,
         submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
         cancelButtonText: 'Cancel',
+        secondryText: 'Save As',
         formType: formType,
         initialData: initialData,
       })

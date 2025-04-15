@@ -298,11 +298,8 @@ const CustomFooter = styled('div')({
 });
 
 const DeleteButton = styled(IconButton)({
-  color: '#d32f2f',
+  color: '#000000',
   padding: '4px',
-  '&:hover': {
-    backgroundColor: 'rgba(211, 47, 47, 0.04)',
-  },
 });
 
 const StyledTableHeader = styled(Typography)({

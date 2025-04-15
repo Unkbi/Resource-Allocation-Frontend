@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { TextField, Typography, Popover, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
   AddButton,
@@ -21,15 +20,7 @@ import {
   StyledDataGrid,
   StyledTableHeader,
 } from './styled';
-
-// Types
-export interface AllocationRange {
-  id: number;
-  from: string;
-  to: string;
-  treatment: string;
-  color: string;
-}
+import type { AllocationRange } from '@/app/redux/reducers/settingsReducer';
 
 // Color pairs from the image (pastel and corresponding darker colors)
 interface ColorPair {
@@ -57,6 +48,15 @@ interface AllocationThemeProps {
   onDataChanged: () => void;
 }
 
+// Interface for validation errors
+interface ValidationErrors {
+  [key: number]: {
+    from?: boolean;
+    to?: boolean;
+    message?: string;
+  };
+}
+
 export default function AllocationTheme({
   allocationRanges,
   onAllocationRangesChange,
@@ -66,27 +66,108 @@ export default function AllocationTheme({
   const [activeColorRow, setActiveColorRow] = React.useState<number | null>(
     null
   );
+  const [validationErrors, setValidationErrors] =
+    React.useState<ValidationErrors>({});
 
   // Get currently used colors
   const usedColors = React.useMemo(() => {
     return allocationRanges.map(row => row.color);
   }, [allocationRanges]);
 
+  // Validate ranges for overlaps, subsets, and supersets
+  const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
+    const errors: ValidationErrors = {};
+
+    // Convert string values to numbers for comparison
+    const numericRanges = ranges.map(range => ({
+      id: range.id,
+      from: Number.parseFloat(range.from),
+      to: Number.parseFloat(range.to),
+    }));
+
+    // Check each range against all others
+    numericRanges.forEach((range, index) => {
+      // Skip invalid numbers
+      if (isNaN(range.from) || isNaN(range.to)) {
+        errors[range.id] = {
+          from: isNaN(range.from),
+          to: isNaN(range.to),
+          message: 'Invalid number format',
+        };
+        return;
+      }
+
+      // Check if from is greater than to
+      if (range.from > range.to) {
+        errors[range.id] = {
+          from: true,
+          to: true,
+          message: 'FROM value cannot be greater than TO value',
+        };
+        return;
+      }
+
+      // Check for overlaps with other ranges
+      for (let i = 0; i < numericRanges.length; i++) {
+        if (i === index) continue; // Skip comparing with self
+
+        const otherRange = numericRanges[i];
+
+        // Check for overlap
+        const hasOverlap = !(
+          range.to < otherRange.from || range.from > otherRange.to
+        );
+
+        // Check for subset (this range is inside another range)
+        const isSubset =
+          range.from >= otherRange.from && range.to <= otherRange.to;
+
+        // Check for superset (another range is inside this range)
+        const isSuperset =
+          range.from <= otherRange.from && range.to >= otherRange.to;
+
+        if (hasOverlap || isSubset || isSuperset) {
+          errors[range.id] = {
+            from: true,
+            to: true,
+            message: hasOverlap
+              ? 'Range overlaps with another range'
+              : isSubset
+                ? 'Range is a subset of another range'
+                : 'Range is a superset of another range',
+          };
+          break;
+        }
+      }
+    });
+
+    return errors;
+  };
+
   // Update the handleRangeChange function in the RangeCell component
   const RangeCell = (params: GridRenderCellParams) => {
     const { id, field, value } = params;
     const row = params.row;
+    const rowId = id as number;
+    const error = validationErrors[rowId];
 
     const handleRangeChange = (
       id: number | string,
       field: 'from' | 'to',
       value: string
     ) => {
-      onAllocationRangesChange(
-        allocationRanges.map(row =>
-          row.id === id ? { ...row, [field]: value } : row
-        )
+      const updatedRanges = allocationRanges.map(row =>
+        row.id === id ? { ...row, [field]: value } : row
       );
+
+      onAllocationRangesChange(updatedRanges);
+
+      // Validate after a short delay to allow user to finish typing
+      setTimeout(() => {
+        const newErrors = validateRanges(updatedRanges);
+        setValidationErrors(newErrors);
+      }, 300);
+
       onDataChanged();
     };
 
@@ -97,6 +178,7 @@ export default function AllocationTheme({
           size="small"
           value={row.from}
           onChange={e => handleRangeChange(id, 'from', e.target.value)}
+          error={error?.from}
           sx={{
             width: '48px',
             height: '27px',
@@ -104,6 +186,11 @@ export default function AllocationTheme({
               height: '32px',
               display: 'flex',
               alignItems: 'center',
+              borderColor: error?.from ? 'red' : undefined,
+            },
+            '& .Mui-error .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'red !important',
+              borderWidth: '2px',
             },
           }}
           inputProps={{
@@ -123,6 +210,7 @@ export default function AllocationTheme({
           size="small"
           value={row.to}
           onChange={e => handleRangeChange(id, 'to', e.target.value)}
+          error={error?.to}
           sx={{
             width: '48px',
             height: '27px',
@@ -130,6 +218,11 @@ export default function AllocationTheme({
               height: '32px',
               display: 'flex',
               alignItems: 'center',
+              borderColor: error?.to ? 'red' : undefined,
+            },
+            '& .Mui-error .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'red !important',
+              borderWidth: '2px',
             },
           }}
           inputProps={{
@@ -144,6 +237,26 @@ export default function AllocationTheme({
             },
           }}
         />
+        {error?.message && (
+          <Tooltip title={error.message}>
+            <Typography
+              variant="caption"
+              color="error"
+              sx={{
+                position: 'absolute',
+                bottom: '-18px',
+                left: '0',
+                fontSize: '10px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%',
+              }}
+            >
+              {error.message}
+            </Typography>
+          </Tooltip>
+        )}
       </RangeInputGroup>
     );
   };
@@ -151,7 +264,6 @@ export default function AllocationTheme({
   // Custom Color Cell Renderer
   const ColorCell = (params: GridRenderCellParams) => {
     const { id, value } = params;
-
     const handleColorPickerClick = (
       event: React.MouseEvent<HTMLDivElement>
     ) => {
@@ -160,19 +272,17 @@ export default function AllocationTheme({
     };
 
     const handleColorSelect = (pastelColor: string) => {
-      // Find the corresponding dark color
       const colorPair = colorPairs.find(pair => pair.pastel === pastelColor);
-
       if (colorPair) {
-        // Update the row with the selected pastel color
         onAllocationRangesChange(
           allocationRanges.map(row =>
-            row.id === activeColorRow ? { ...row, color: pastelColor } : row
+            row.id === activeColorRow
+              ? { ...row, color: pastelColor, darkColor: colorPair.dark }
+              : row
           )
         );
         onDataChanged();
       }
-
       handleClose();
     };
 
@@ -204,7 +314,6 @@ export default function AllocationTheme({
         >
           <ColorPickerRow>
             {colorPairs.map(pair => {
-              // Check if this color is already used by another row
               const isUsed =
                 usedColors.includes(pair.pastel) &&
                 allocationRanges.find(row => row.id === activeColorRow)
@@ -236,15 +345,21 @@ export default function AllocationTheme({
     const { id } = params;
 
     const handleDelete = () => {
-      onAllocationRangesChange(allocationRanges.filter(row => row.id !== id));
+      const updatedRanges = allocationRanges.filter(row => row.id !== id);
+      onAllocationRangesChange(updatedRanges);
+
+      // Re-validate after deletion
+      const newErrors = validateRanges(updatedRanges);
+      setValidationErrors(newErrors);
+
       onDataChanged();
     };
 
     return (
       <Tooltip title="Delete">
-        <DeleteButton onClick={handleDelete} size="small">
-          <DeleteIcon />
-        </DeleteButton>
+        <Box sx={{ paddingTop: '7px' }} onClick={handleDelete}>
+          <img src="/images/icons/delete.svg" style={{ height: '24px' }} />
+        </Box>
       </Tooltip>
     );
   };
@@ -255,20 +370,31 @@ export default function AllocationTheme({
 
     // Find a color that's not already used
     const unusedColors = colorPairs
-      .map(pair => pair.pastel)
-      .filter(color => !usedColors.includes(color));
+      .filter(pair => !usedColors.includes(pair.pastel))
+      .map(pair => pair);
 
-    // Use the first unused color, or white if all are used
-    const nextColor = unusedColors.length > 0 ? unusedColors[0] : '#FFFFFF';
+    // Use the first unused color pair, or white if all are used
+    const nextColorPair =
+      unusedColors.length > 0
+        ? unusedColors[0]
+        : { pastel: '#FFFFFF', dark: '#FFFFFF' };
 
     const newRow: AllocationRange = {
       id,
-      from: '0.0',
-      to: '0.0',
+      from: '',
+      to: '',
       treatment: '',
-      color: nextColor,
+      color: nextColorPair.pastel,
+      darkColor: nextColorPair.dark,
     };
-    onAllocationRangesChange([...allocationRanges, newRow]);
+
+    const updatedRanges = [...allocationRanges, newRow];
+    onAllocationRangesChange(updatedRanges);
+
+    // Validate after adding
+    const newErrors = validateRanges(updatedRanges);
+    setValidationErrors(newErrors);
+
     onDataChanged();
   };
 
@@ -305,6 +431,7 @@ export default function AllocationTheme({
       editable: false,
       align: 'right',
       headerAlign: 'right',
+      sortable: false,
     },
     {
       field: 'range',
@@ -316,10 +443,11 @@ export default function AllocationTheme({
     },
     {
       field: 'treatment',
-      headerName: 'Treat as',
+      headerName: 'Label',
       flex: 1,
       width: 286,
       editable: true,
+      sortable: false,
       preProcessEditCellProps: params => {
         const { id, value } = params.props;
         handleTreatmentChange(id as number, value as string);
@@ -354,6 +482,7 @@ export default function AllocationTheme({
         <Box sx={{ height: 'auto', width: '100%' }}>
           <StyledDataGrid
             rows={allocationRanges}
+            disableColumnMenu
             columns={columns}
             initialState={{
               pagination: {

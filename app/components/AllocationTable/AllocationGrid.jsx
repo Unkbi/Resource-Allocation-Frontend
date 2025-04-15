@@ -71,7 +71,7 @@ export default function AllocationGrid({
   const { rowState } = useSelector(state => state.dataGrid);
   const { expandRowId, cellSelectionData, view, savedViews, currentView } =
     useSelector(state => state.allocationView);
-
+  const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
   const [rowModesModel, setRowModesModel] = useState({});
@@ -681,6 +681,7 @@ export default function AllocationGrid({
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
         cellSelection
+        allocationTheme={allocationTheme}
         isCellEditable={params => !params.row.hasButton}
         onCellKeyDown={handleCellKeyDown}
         rowModesModel={rowModesModel}
@@ -708,7 +709,9 @@ export default function AllocationGrid({
         )}
         defaultGroupingExpansionDepth={1}
         disableAutosize
-        getCellClassName={params => getCellClassName(params, updatedRows)}
+        getCellClassName={params =>
+          getCellClassName(params, updatedRows, allocationTheme)
+        }
         getRowClassName={params => getRowClassName(params)}
         cellSelectionModel={cellSelectionModel}
         onCellSelectionModelChange={handleCellSelectionModelChange}

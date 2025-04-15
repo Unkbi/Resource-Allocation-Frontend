@@ -4,9 +4,6 @@ import type React from 'react';
 
 import { useState, useEffect } from 'react';
 import { Box, Typography, Divider, List } from '@mui/material';
-import AllocationTheme, {
-  type AllocationRange,
-} from '@/app/components/Settings/AllocationTheme';
 import {
   BodyContainer,
   BottomActions,
@@ -22,6 +19,15 @@ import {
   SettingsSidebar,
   StyledListItem,
 } from '@/app/components/Settings/styled';
+import AllocationTheme from '@/app/components/Settings/AllocationTheme';
+import {
+  type AllocationRange,
+  updateAllocationTheme,
+} from '@/app/redux/reducers/settingsReducer';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/app/redux/store';
+import { useDispatch } from 'react-redux';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 interface MenuItem {
   id: string;
@@ -37,56 +43,95 @@ interface MenuCategory {
   items: MenuItem[];
 }
 
-// Initial allocation ranges data
-const initialAllocationRanges: AllocationRange[] = [
-  {
-    id: 1,
-    from: '0.0',
-    to: '0.0',
-    treatment: 'Treat as No Allocation',
-    color: '#FFFFFF',
-  },
-  {
-    id: 2,
-    from: '0.1',
-    to: '0.4',
-    treatment: 'Treat as Partially Allocated',
-    color: '#DEEBF7',
-  },
-  {
-    id: 3,
-    from: '0.5',
-    to: '0.8',
-    treatment: 'Treat as Nearly Allocated',
-    color: '#FFF2CC',
-  },
-  {
-    id: 4,
-    from: '0.9',
-    to: '1.0',
-    treatment: 'Treat as Fully Allocated',
-    color: '#C6F5E2',
-  },
-  {
-    id: 5,
-    from: '1.1',
-    to: '1.5',
-    treatment: 'Treat as Over Allocated',
-    color: '#F8D7D7',
-  },
-];
+// Interface for validation errors
+interface ValidationErrors {
+  [key: number]: {
+    from?: boolean;
+    to?: boolean;
+    message?: string;
+  };
+}
+
+// Function to validate ranges
+const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
+  const errors: ValidationErrors = {};
+
+  // Convert string values to numbers for comparison
+  const numericRanges = ranges.map(range => ({
+    id: range.id,
+    from: Number.parseFloat(range.from),
+    to: Number.parseFloat(range.to),
+  }));
+
+  // Check each range against all others
+  numericRanges.forEach((range, index) => {
+    // Skip invalid numbers
+    if (isNaN(range.from) || isNaN(range.to)) {
+      errors[range.id] = {
+        from: isNaN(range.from),
+        to: isNaN(range.to),
+        message: 'Invalid number format',
+      };
+      return;
+    }
+
+    // Check if from is greater than to
+    if (range.from > range.to) {
+      errors[range.id] = {
+        from: true,
+        to: true,
+        message: 'FROM value cannot be greater than TO value',
+      };
+      return;
+    }
+
+    // Check for overlaps with other ranges
+    for (let i = 0; i < numericRanges.length; i++) {
+      if (i === index) continue; // Skip comparing with self
+
+      const otherRange = numericRanges[i];
+
+      // Check for overlap
+      const hasOverlap = !(
+        range.to < otherRange.from || range.from > otherRange.to
+      );
+
+      // Check for subset (this range is inside another range)
+      const isSubset =
+        range.from >= otherRange.from && range.to <= otherRange.to;
+
+      // Check for superset (another range is inside this range)
+      const isSuperset =
+        range.from <= otherRange.from && range.to >= otherRange.to;
+
+      if (hasOverlap || isSubset || isSuperset) {
+        errors[range.id] = {
+          from: true,
+          to: true,
+          message: hasOverlap
+            ? 'Range overlaps with another range'
+            : isSubset
+              ? 'Range is a subset of another range'
+              : 'Range is a superset of another range',
+        };
+        break;
+      }
+    }
+  });
+
+  return errors;
+};
 
 const SettingsPanel = () => {
-  // State for allocation ranges
-  const [allocationRanges, setAllocationRanges] = useState<AllocationRange[]>(
-    initialAllocationRanges
-  );
+  const { allocationTheme } = useSelector((state: RootState) => state.settings);
+  const dispatch = useDispatch();
+  const [allocationRanges, setAllocationRanges] =
+    useState<AllocationRange[]>(allocationTheme);
   // State to track if there are unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   // Keep a backup of the original data for cancel functionality
-  const [originalAllocationRanges, setOriginalAllocationRanges] = useState<
-    AllocationRange[]
-  >(initialAllocationRanges);
+  const [originalAllocationRanges, setOriginalAllocationRanges] =
+    useState<AllocationRange[]>(allocationTheme);
 
   // Create menu items with dynamic content based on state
   const createMenuItems = () => {
@@ -99,7 +144,7 @@ const SettingsPanel = () => {
             title: 'User Profile',
             headerText: 'User Profile',
             icon: '',
-            content: <div>User Profile Content</div>,
+            content: '',
             description: 'Manage your user profile',
           },
           {
@@ -107,7 +152,7 @@ const SettingsPanel = () => {
             title: 'Notification',
             headerText: 'Notification',
             icon: '',
-            content: <div>Notification Content</div>,
+            content: '',
             description: 'Configure notification settings',
           },
         ],
@@ -120,7 +165,7 @@ const SettingsPanel = () => {
             title: 'User Management',
             headerText: 'User Management',
             icon: '',
-            content: <div>User Management Content</div>,
+            content: '',
             description: 'Manage users and permissions',
           },
           {
@@ -142,13 +187,7 @@ const SettingsPanel = () => {
             title: 'Theme',
             headerText: 'Theme',
             icon: '',
-            content: (
-              <AllocationTheme
-                allocationRanges={allocationRanges}
-                onAllocationRangesChange={setAllocationRanges}
-                onDataChanged={() => setHasUnsavedChanges(true)}
-              />
-            ),
+            content: '',
             description: 'It is a color theme for organization view',
           },
           {
@@ -156,7 +195,7 @@ const SettingsPanel = () => {
             title: 'Holiday Calendar',
             headerText: 'Holiday Calendar',
             icon: '',
-            content: <div>Holiday Calendar Content</div>,
+            content: '',
             description: 'Configure holiday calendar',
           },
           {
@@ -164,7 +203,7 @@ const SettingsPanel = () => {
             title: 'Global Default View',
             headerText: 'Global Default View',
             icon: '',
-            content: <div>Global Default View Content</div>,
+            content: '',
             description: 'Configure global default view',
           },
         ],
@@ -203,11 +242,27 @@ const SettingsPanel = () => {
   }, [allocationRanges, activeItem.id]);
 
   const handleSaveChanges = () => {
-    console.log(`Saving changes for ${activeItem.title}`);
     if (activeItem.id === 'allocation-setting' || activeItem.id === 'theme') {
+      // Validate ranges before saving
+      const errors = validateRanges(allocationRanges);
+      const hasErrors = Object.keys(errors).length > 0;
+
+      if (hasErrors) {
+        Object.entries(errors).forEach(([rangeId, error]) => {
+          dispatch(
+            showToast({
+              message: `${error.message}`,
+              type: 'error',
+            })
+          );
+        });
+        return;
+      }
+
       console.log('Saving allocation ranges:', allocationRanges);
       setOriginalAllocationRanges([...allocationRanges]);
       setHasUnsavedChanges(false);
+      dispatch(updateAllocationTheme([...allocationRanges]));
     }
 
     // Add other settings save logic here based on activeItem.id
@@ -231,7 +286,7 @@ const SettingsPanel = () => {
           <SettingsSidebar>
             {MenuItems.map(category => (
               <Box key={category.name}>
-                <CategoryLabel>{category.name}</CategoryLabel>
+                <CategoryLabel color="red">{category.name}</CategoryLabel>
                 <List disablePadding>
                   {category.items.map(item => (
                     <StyledListItem
