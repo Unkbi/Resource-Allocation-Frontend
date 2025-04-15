@@ -69,9 +69,15 @@ export default function AllocationGrid({
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const { rowState } = useSelector(state => state.dataGrid);
-  const { expandRowId, cellSelectionData, view, savedViews, currentView } =
-    useSelector(state => state.allocationView);
-  const allocationTheme = useSelector(state => state.settings.allocationTheme);
+  const {
+    expandRowId,
+    cellSelectionData,
+    view,
+    savedViews,
+    currentView,
+    columns: _columns,
+  } = useSelector(state => state.allocationView);
+
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
   const [rowModesModel, setRowModesModel] = useState({});
@@ -257,19 +263,6 @@ export default function AllocationGrid({
       });
     }
   }, [startDate, endDate]);
-
-  useEffect(() => {
-    if (currentView?.ColumnsVisible) {
-      const newColumnVisibilityModel = {
-        ..._initialState?.columns?.columnVisibilityModel,
-        ...currentView?.ColumnsVisible.reduce((acc, column) => {
-          acc[column] = true;
-          return acc;
-        }, {}),
-      };
-      setColumnVisibilityModel(newColumnVisibilityModel);
-    }
-  }, [currentView?.ColumnsVisible]);
 
   useEffect(() => {
     if (currentView?.Filters) {
@@ -667,11 +660,47 @@ export default function AllocationGrid({
   };
 
   const handleColumnVisibilityModelChange = newModel => {
-    // setColumnVisibilityModel(newModel);
+    // Do not allow the visibility to change for the necessary columns
+    const columnsToKeepVisible = {
+      teams: {
+        __row_group_by_columns_group_teams__: true,
+        __row_group_by_columns_group_resource__: true,
+        project: true,
+      },
+      project: {
+        resource: true,
+        __row_group_by_columns_group__: true,
+      },
+    };
+    let updatedModel = {
+      ...newModel,
+      ...columnsToKeepVisible[groupBy],
+    };
+
+    // To Handle Show/Hide All.
+    if (groupBy === 'teams') {
+      updatedModel = {
+        ..._columns['team'].reduce((acc, column) => {
+          acc[column] = true;
+          return acc;
+        }, {}),
+        ...updatedModel,
+      };
+    } else if (groupBy === 'project') {
+      updatedModel = {
+        ..._columns['project'].reduce((acc, column) => {
+          acc[column] = true;
+          return acc;
+        }, {}),
+        ...updatedModel,
+      };
+    }
+
+    setColumnVisibilityModel(updatedModel);
     dispatch(
       updateCurrentView({
-        ColumnsVisible: Object.keys(newModel).filter(
-          columnName => newModel[columnName]
+        ColumnsVisible: Object.keys(updatedModel).filter(
+          columnName => updatedModel[columnName]
         ),
       })
     );
