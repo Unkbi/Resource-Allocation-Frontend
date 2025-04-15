@@ -16,8 +16,6 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     return { value: resource.FullName, label: resource.FullName }
   })
 
-  console.log("values : ", values)
-
   useEffect(() => {
     if (initialData) {
       const rowData = {
