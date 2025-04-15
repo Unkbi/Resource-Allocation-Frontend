@@ -16,6 +16,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     return { value: resource.FullName, label: resource.FullName }
   })
 
+  console.log("values : ", values)
+
   useEffect(() => {
     if (initialData) {
       const rowData = {
@@ -80,7 +82,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <CustomSelect
           name="Owner"
           options={resourceTypeOptions}
-          value={values.Owner || []}
+          value={values.Owner || ''}
           onChange={handleChange}
           onBlur={handleBlur}
           width={"100%"}
@@ -95,7 +97,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <CustomSelect
           name="ProjectManager"
           options={resourceTypeOptions}
-          value={values.ProjectManager || []}
+          value={values.ProjectManager || ''}
           onChange={handleChange}
           onBlur={handleBlur}
           width={"100%"}
@@ -110,7 +112,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Location"
-          value={values.Location}
+          value={values.Location || ''}
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Location && Boolean(errors.Location)}
@@ -134,7 +136,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           <CustomSelect
             name="Type"
             options={projectTypeOptions}
-            value={values.Type}
+            value={values.Type || ''}
             onChange={handleChange}
             onBlur={handleBlur}
             width={"160px"}
@@ -149,7 +151,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           <CustomSelect
             name="AllowOvertime"
             options={allowOverTimeOptions}
-            value={values.AllowOvertime}
+            value={values.AllowOvertime || ''}
             onChange={handleChange}
             onBlur={handleBlur}
             width={"160px"}
@@ -187,7 +189,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <CustomSelect
           name="Status"
           options={statusOptions}
-          value={values.Status}
+          value={values.Status || ''}
           onChange={handleChange}
           width={"100%"}
           onBlur={handleBlur}
