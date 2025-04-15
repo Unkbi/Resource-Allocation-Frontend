@@ -94,7 +94,7 @@ export default function CustomDateRangePicker({ value, placeholder, formikProps,
         <Box sx={{display:"flex",flexDirection:"row", gap: "122px"}}>
           <StyledLabel>Date Range</StyledLabel>
           </Box>
-          <Box sx={{ width: '330px' }}>
+          <Box sx={{ width: '340px' }}>
           <DateRangePicker 
            calendars={1}
            displayWeekNumber
