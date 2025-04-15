@@ -5,7 +5,7 @@ export interface AllocationRange {
   id: number;
   from: string;
   to: string;
-  treatment: string;
+  label: string;
   color: string;
   darkColor: string;
 }
@@ -20,7 +20,7 @@ const initialState: ThemeState = {
       id: 1,
       from: '0.0',
       to: '0.0',
-      treatment: 'No Allocation',
+      label: 'No Allocation',
       color: '#FFFFFF',
       darkColor: '#FFFFFF', 
     },
@@ -28,7 +28,7 @@ const initialState: ThemeState = {
       id: 2,
       from: '0.1',
       to: '0.4',
-      treatment: 'Partially Allocated',
+      label: 'Partially Allocated',
       color: '#DEEBF7',
       darkColor: '#7B9CB9', 
     },
@@ -36,7 +36,7 @@ const initialState: ThemeState = {
       id: 3,
       from: '0.5',
       to: '0.8',
-      treatment: 'Nearly Allocated',
+      label: 'Nearly Allocated',
       color: '#FFF2CC',
       darkColor: '#F0D776', 
     },
@@ -44,7 +44,7 @@ const initialState: ThemeState = {
       id: 4,
       from: '0.9',
       to: '1.0',
-      treatment: 'Fully  Allocated',
+      label: 'Fully  Allocated',
       color: '#C6F5E2',
       darkColor: '#3CB371', 
     },
@@ -52,10 +52,11 @@ const initialState: ThemeState = {
       id: 5,
       from: '1.1',
       to: '1.5',
-      treatment: 'Over  Allocated',
+      label: 'Over  Allocated',
       color: '#F8D7D7',
       darkColor: '#D66E6E', 
     },
+    
   ],
 };
 

@@ -80,6 +80,7 @@ export default function AllocationGrid({
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
+  const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const [rowModesModel, setRowModesModel] = useState({});
   const [cellSelectionModel, setCellSelectionModel] = useState({});
   const [filterModel, setFilterModel] = useState({

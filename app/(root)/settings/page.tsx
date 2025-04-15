@@ -258,8 +258,6 @@ const SettingsPanel = () => {
         });
         return;
       }
-
-      console.log('Saving allocation ranges:', allocationRanges);
       setOriginalAllocationRanges([...allocationRanges]);
       setHasUnsavedChanges(false);
       dispatch(updateAllocationTheme([...allocationRanges]));
@@ -269,8 +267,6 @@ const SettingsPanel = () => {
   };
 
   const handleCancel = () => {
-    console.log('Cancelled changes');
-
     // Restore original data
     if (activeItem.id === 'allocation-setting' || activeItem.id === 'theme') {
       setAllocationRanges([...originalAllocationRanges]);

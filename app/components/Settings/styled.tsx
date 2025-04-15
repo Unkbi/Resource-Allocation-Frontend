@@ -119,6 +119,11 @@ const SaveButton = styled(Button)({
     '&:hover': {
       backgroundColor: '#1C2D5F',
     },
+    '&.Mui-disabled': {
+      backgroundColor: '#D3D3D3',
+      color: '#A9A9A9',
+      pointerEvents: 'none',
+    },
   },
 });
 
@@ -261,11 +266,13 @@ const AddButton = styled(Button)({
   color: '#0D1F52',
   fontSize: '12px',
   fontWeight: 600,
-  marginLeft: '8px',
+  marginLeft: '40px',
 });
 
 const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
   borderRadius: '0px',
+  borderRight: 'none',
+  borderLeft: 'none',
   '& .MuiDataGrid-columnHeaders': {
     '& .MuiDataGrid-columnHeader': {
       borderRight: '1px solid #DDE1E4',
@@ -275,7 +282,6 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
     },
   },
   '& .MuiDataGrid-cell': {
-    borderBottom: '1px solid #DDE1E4',
     borderRight: '1px solid #DDE1E4',
   },
   '& .MuiDataGrid-columnSeparator--resizable': {
@@ -290,11 +296,12 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
 }));
 
 const CustomFooter = styled('div')({
+  borderTop: '1px solid #DDE1E4',
+  borderRight: '1px solid #DDE1E4',
   width: '100%',
   padding: '10px 0',
   display: 'flex',
   alignItems: 'center',
-  marginLeft: '32px',
 });
 
 const DeleteButton = styled(IconButton)({

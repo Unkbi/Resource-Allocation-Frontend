@@ -13,12 +13,12 @@ export const StyledDataGrid = styled(DataGridPremium)(({
   if (Array.isArray(allocationTheme) && allocationTheme.length > 0) {
     allocationTheme.forEach(range => {
       // Primary styles for teams
-      allocationRangeStyles[`& .allocation-range-${range.id}`] = {
+      allocationRangeStyles[`& .allocation-theme-${range.id}`] = {
         backgroundColor: range.darkColor,
       };
 
       // Secondary styles for resources
-      allocationRangeStyles[`& .allocation-range-${range.id}-secondGroup`] = {
+      allocationRangeStyles[`& .allocation-theme-${range.id}-secondGroup`] = {
         backgroundColor: `${range.color}`,
         borderBottom: `2px solid ${range.darkColor}`,
       };
@@ -26,6 +26,8 @@ export const StyledDataGrid = styled(DataGridPremium)(({
   }
 
   return {
+    ...allocationRangeStyles,
+
     [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
       {
         fontSize: '14px',
@@ -318,7 +320,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       borderBottom: '2px solid #FFCD9C',
     },
     '& .firstGroupsRow': {
-      backgroundColor: '#E9EFF8 !important',
+      backgroundColor: '#F0F7FF !important',
       fontWeight: groupBy === 'project' ? 'bold' : '',
       color: groupBy === 'project' ? '#313F68' : '',
     },

@@ -2,7 +2,12 @@
 
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import {
+  GridRowModes,
+  type GridColDef,
+  type GridRenderCellParams,
+  type GridRowModesModel,
+} from '@mui/x-data-grid';
 import { TextField, Typography, Popover, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -63,6 +68,9 @@ export default function AllocationTheme({
   onDataChanged,
 }: AllocationThemeProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
+    {}
+  );
   const [activeColorRow, setActiveColorRow] = React.useState<number | null>(
     null
   );
@@ -161,13 +169,8 @@ export default function AllocationTheme({
       );
 
       onAllocationRangesChange(updatedRanges);
-
-      // Validate after a short delay to allow user to finish typing
-      setTimeout(() => {
-        const newErrors = validateRanges(updatedRanges);
-        setValidationErrors(newErrors);
-      }, 300);
-
+      const newErrors = validateRanges(updatedRanges);
+      setValidationErrors(newErrors);
       onDataChanged();
     };
 
@@ -381,9 +384,9 @@ export default function AllocationTheme({
 
     const newRow: AllocationRange = {
       id,
-      from: '',
-      to: '',
-      treatment: '',
+      from: '0.0',
+      to: '0.0',
+      label: '',
       color: nextColorPair.pastel,
       darkColor: nextColorPair.dark,
     };
@@ -394,15 +397,20 @@ export default function AllocationTheme({
     // Validate after adding
     const newErrors = validateRanges(updatedRanges);
     setValidationErrors(newErrors);
-
+    setTimeout(() => {
+      setRowModesModel(oldModel => ({
+        ...oldModel,
+        [id]: { mode: GridRowModes.Edit, fieldToFocus: 'label' },
+      }));
+    }, 100);
     onDataChanged();
   };
 
-  // Handle treatment field changes
-  const handleTreatmentChange = (id: number, value: string) => {
+  // Handle label field changes
+  const handleLabelChange = (id: number, value: string) => {
     onAllocationRangesChange(
       allocationRanges.map(row =>
-        row.id === id ? { ...row, treatment: value } : row
+        row.id === id ? { ...row, label: value } : row
       )
     );
     onDataChanged();
@@ -442,7 +450,7 @@ export default function AllocationTheme({
       sortable: false,
     },
     {
-      field: 'treatment',
+      field: 'label',
       headerName: 'Label',
       flex: 1,
       width: 286,
@@ -450,7 +458,7 @@ export default function AllocationTheme({
       sortable: false,
       preProcessEditCellProps: params => {
         const { id, value } = params.props;
-        handleTreatmentChange(id as number, value as string);
+        handleLabelChange(id as number, value as string);
         return { ...params.props };
       },
     },
@@ -475,6 +483,9 @@ export default function AllocationTheme({
     },
   ];
 
+  const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
+    setRowModesModel(newRowModesModel);
+  };
   return (
     <MainContent>
       <ContentPaper elevation={0}>
@@ -484,6 +495,9 @@ export default function AllocationTheme({
             rows={allocationRanges}
             disableColumnMenu
             columns={columns}
+            editMode="row"
+            rowModesModel={rowModesModel}
+            onRowModesModelChange={handleRowModesModelChange}
             initialState={{
               pagination: {
                 paginationModel: {

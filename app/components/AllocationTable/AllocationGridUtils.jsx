@@ -374,14 +374,9 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
   if (params?.field === 'totalEffort') {
     return 'total-effort-cell';
   }
-  // if (params.rowNode?.groupingField === 'project') {
-  //   return 'project-view-projectName';
-  // }
+
   if (params && params.field && typeof params.field === 'string') {
     if (
-      params &&
-      params.field &&
-      typeof params.field === 'string' &&
       params.field.startsWith('W') &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
@@ -400,7 +395,6 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
         projectRows.map(item => item.resourceId)
       );
       const totalRows = uniqueProjectRows.size;
-
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
@@ -410,35 +404,38 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
         return sum + numericValue;
       }, 0);
 
-      let percentage;
+      let allocationValue;
       if (params.rowNode?.groupingField === 'resource') {
-        percentage = (aggregatedValue / 1) * 100;
+        allocationValue = Math.round(aggregatedValue * 100) / 100;
       } else {
-        percentage = (aggregatedValue / totalRows) * 100;
+        allocationValue = Math.round((aggregatedValue / totalRows) * 100) / 100;
       }
-      if (params.rowNode?.groupingField === 'teams') {
-        if (percentage === 0) {
-          return 'firstGroupsRow';
-        } else if (percentage <= 50) {
-          return 'poor-allocation';
-        } else if (percentage > 50 && percentage <= 80) {
-          return 'average-allocation';
-        } else if (percentage > 80 && percentage <= 110) {
-          return 'fully-occupied';
-        } else if (percentage > 110) {
-          return 'over-occupied';
+      const sortedTheme = [...allocationTheme].sort(
+        (a, b) => parseFloat(a.from) - parseFloat(b.from)
+      );
+
+      // Find the matching range in the theme
+      let matchingRange = sortedTheme.find(range => {
+        const fromValue = parseFloat(range.from);
+        const toValue = parseFloat(range.to);
+        return allocationValue >= fromValue && allocationValue <= toValue;
+      });
+
+      // If no matching range found and value exceeds max range, use the last theme
+      if (!matchingRange && sortedTheme.length > 0) {
+        const maxRangeValue = parseFloat(
+          sortedTheme[sortedTheme.length - 1].to
+        );
+        if (allocationValue > maxRangeValue) {
+          matchingRange = sortedTheme[sortedTheme.length - 1];
         }
-      } else {
-        if (percentage === 0) {
-          return 'firstGroupsRow';
-        } else if (percentage <= 50) {
-          return 'poor-allocation-secondGroup';
-        } else if (percentage > 50 && percentage <= 80) {
-          return 'average-allocation-secondGroup';
-        } else if (percentage > 80 && percentage <= 110) {
-          return 'fully-occupied-secondGroup';
-        } else if (percentage > 110) {
-          return 'over-occupied-secondGroup';
+      }
+
+      if (matchingRange) {
+        if (params.rowNode?.groupingField === 'teams') {
+          return `allocation-theme-${matchingRange.id}`;
+        } else {
+          return `allocation-theme-${matchingRange.id}-secondGroup`;
         }
       }
     }
