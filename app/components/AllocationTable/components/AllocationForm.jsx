@@ -47,6 +47,7 @@ import { current } from '@reduxjs/toolkit';
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
+import { getWeek } from 'date-fns';
 
 const initialValuesMap = {
   add_project: {
@@ -158,7 +159,10 @@ const AllocationForm = () => {
   };
 
   const handleScrollAndFocus = (resources, period, projects) => {
-    const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
+    const selectedWeeks = period?.flatMap(monday => {
+      const baseWeek = getWeek(monday, { weekStartsOn: 1 });
+      return `W${baseWeek + 1}`;
+    });
     const weeksObject = {};
 
     selectedWeeks.forEach(week => {

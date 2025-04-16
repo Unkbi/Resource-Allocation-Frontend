@@ -157,19 +157,36 @@ export default function AllocationGrid({
     ...aggregationModel(startDate, endDate),
   });
 
-  const normalizeRow = row => {
-    return Object.keys(row).reduce((normalized, key) => {
-      if (key.startsWith('W')) {
-        const weekValue = row[key];
-        normalized[key] =
-          typeof weekValue === 'object' && weekValue !== null
-            ? weekValue
-            : { allocationId: null, value: weekValue };
+  const normalizeRow = (row) => {
+    const allWeeks = generateAllWeeks();
+    const normalized = { ...row };
+
+    allWeeks.forEach((weekKey) => {
+      const period = getMondayOfWeek(weekKey, new Date());
+      const value = row[weekKey];
+
+      if (value && typeof value === 'object' && 'value' in value) {
+        normalized[weekKey] = {
+          allocationId: value.allocationId || null,
+          value: value.value,
+          period: period,
+        };
+      } else if (value !== undefined) {
+        normalized[weekKey] = {
+          allocationId: null,
+          value,
+          period,
+        };
       } else {
-        normalized[key] = row[key];
+        normalized[weekKey] = {
+          allocationId: null,
+          value: null,
+          period,
+        };
       }
-      return normalized;
-    }, {});
+    });
+
+    return normalized;
   };
 
   useEffect(() => {
