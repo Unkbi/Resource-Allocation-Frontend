@@ -642,35 +642,33 @@ const AllocationForm = () => {
               ...actionGroups.DELETE.map(payload =>
                 dispatch(removeResourceAllocation(payload))
               ),
-            ]);
-
-            const newResources = targetResourceIds.map(id =>
-              getTeamByResourceId(id)
-            );
-            const teams = [...new Set(newResources.map(res => res?.team))];
-
-            dispatch(
-              fetchAllProjectAllocations(formattedProjects, startDate, endDate)
-            );
-            dispatch(closeDialog());
-            // if (view === 'Teams') {
-            //   await dispatch(fetchResourcesAgainstTeams(teams, allocations, values.StartDate, values.EndDate));
-            //   handleOnAdd(newResources);
-            //   handleScrollAndFocus(newResources, allMondays, formattedProjects);
-            // } else if (view === 'Project') {
-            //   await dispatch(fetchAllProjectAllocations(formattedProjects, values.StartDate, values.EndDate));
-            //   handleScrollAndFocus(newResources, allMondays, formattedProjects);
-            // }
-
-            dispatch(
-              showToast({
-                open: true,
-                message: `${sourceResourceName} is successfully cloned. `,
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
+            ]).then(async ()=>{
+              const newResources = targetResourceIds.map(id =>
+                getTeamByResourceId(id)
+              );
+              const teams = [...new Set(newResources.map(res => res?.team))];
+              dispatch(closeDialog());
+              if (view === 'Teams') {
+                await dispatch(fetchResourcesAgainstTeams(teams, allocations, startDate, endDate)).then(() => {;
+                handleOnAdd(newResources);
+                handleScrollAndFocus(newResources, allMondays, formattedProjects);
+                })
+              } else if (view === 'Project') {
+                await dispatch(fetchAllProjectAllocations(formattedProjects, startDate, endDate)).then(() => {;
+                handleScrollAndFocus(newResources, allMondays, formattedProjects);
+                })
+              }
+  
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `${sourceResourceName} is successfully cloned. `,
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            });            
           } catch (err) {
             dispatch(closeDialog());
             dispatch(
