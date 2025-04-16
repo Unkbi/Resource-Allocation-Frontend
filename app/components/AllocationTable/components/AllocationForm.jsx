@@ -159,10 +159,7 @@ const AllocationForm = () => {
   };
 
   const handleScrollAndFocus = (resources, period, projects) => {
-    const selectedWeeks = period?.flatMap(monday => {
-      const baseWeek = getWeek(monday, { weekStartsOn: 1 });
-      return `W${baseWeek + 1}`;
-    });
+    const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
     const weeksObject = {};
 
     selectedWeeks.forEach(week => {
@@ -364,7 +361,7 @@ const AllocationForm = () => {
                   filteredProjects
                 );
               });
-            } else if (view === 'Projects') {
+            } else if (view === 'Project') {
               return dispatch(
                 fetchAllProjectAllocations(filteredProjects, startDate, endDate)
               ).then(() => {

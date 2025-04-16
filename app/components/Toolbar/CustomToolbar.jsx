@@ -18,7 +18,10 @@ import {
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
 import CustomExport from './CustomExport';
-import { generateFirstAndLastMonthYear, getStartAndEndDateForView } from '@/app/utils/common';
+import {
+  generateFirstAndLastMonthYear,
+  getStartAndEndDateForView,
+} from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { DATE_FORMAT } from '@/app/constants/constants';
@@ -196,8 +199,14 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const view = useSelector(state => state.allocationView.view);
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
-  const { calendarDate: projectsCalendar } = useSelector(state => state.projects);
-  const { startDate, endDate } = getStartAndEndDateForView(view, projectsCalendar, teamsCalendar);
+  const { calendarDate: projectsCalendar } = useSelector(
+    state => state.projects
+  );
+  const { startDate, endDate } = getStartAndEndDateForView(
+    view,
+    projectsCalendar,
+    teamsCalendar
+  );
 
   const viewOptions = [
     'Teams',
@@ -206,7 +215,11 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   ];
   const [active, setActive] = useState(false);
 
-  const first = generateFirstAndLastMonthYear(parseISO(startDate), 'MMM yy', true);
+  const first = generateFirstAndLastMonthYear(
+    parseISO(startDate),
+    'MMM yy',
+    true
+  );
   const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM yy', true);
 
   const handleViewChange = useCallback(
@@ -219,16 +232,30 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     setActive(prev => !prev);
   };
 
-  const changeCalendarDate = (type) => {
+  const changeCalendarDate = type => {
     const isTeams = view === 'Teams';
     const isNext = type === 'next';
 
-    const action = isTeams ? updateStartAndEndDate : updateProjectStartAndEndDate;
+    const action = isTeams
+      ? updateStartAndEndDate
+      : updateProjectStartAndEndDate;
 
-    const startKey = generateFirstAndLastMonthYear(parseISO(startDate), DATE_FORMAT, false, !isNext, true);
-    const endKey = generateFirstAndLastMonthYear(parseISO(endDate), DATE_FORMAT, false, !isNext, true);
+    const startKey = generateFirstAndLastMonthYear(
+      parseISO(startDate),
+      DATE_FORMAT,
+      false,
+      !isNext,
+      true
+    );
+    const endKey = generateFirstAndLastMonthYear(
+      parseISO(endDate),
+      DATE_FORMAT,
+      false,
+      !isNext,
+      true
+    );
 
-    dispatch(action({startDate: startKey, endDate: endKey}));
+    dispatch(action({ startDate: startKey, endDate: endKey }));
   };
 
   return (
@@ -289,8 +316,6 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
         </Box> */}
       </ToolBox1>
 
-
-     
       <ToolBox2 flex={1} className="filterTopRow">
         <Box className="filterColBlock">
           <GridToolbarContainer ref={setFilterButtonEl}>
@@ -311,13 +336,20 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
                 tooltip: { title: 'Filters' },
                 button: {
                   variant: 'outlined',
-                  sx: { color: '#555', borderColor: '#ddd',
-                    ".MuiButton-startIcon": { marginRight: '5px' },
-                    "& .MuiBadge-root span": { top: '-12px', right: '3px'},
-                    "& .MuiBadge-root svg": { display: "none" },
+                  sx: {
+                    color: '#555',
+                    borderColor: '#ddd',
+                    '.MuiButton-startIcon': { marginRight: '5px' },
+                    '& .MuiBadge-root span': { top: '-12px', right: '3px' },
+                    '& .MuiBadge-root svg': { display: 'none' },
                   },
-                  component: (props) => (
-                    <Button {...props} startIcon={<img src="/images/icons/filter.svg" alt="filter" />}>
+                  component: props => (
+                    <Button
+                      {...props}
+                      startIcon={
+                        <img src="/images/icons/filter.svg" alt="filter" />
+                      }
+                    >
                       {props.children}
                     </Button>
                   ),
@@ -327,9 +359,8 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           </GridToolbarContainer>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          
           {/* <Box className="projectIcon">
-            {view === 'Projects' ? (
+            {view === 'Project' ? (
               <>
                 <TooltipButton
                   msg="My Project"
@@ -393,12 +424,20 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
           </Box> */}
           <Divider orientation="vertical" flexItem />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton onClick={() => changeCalendarDate('prev')} size="medium" className="nextPrevIcon">
+            <IconButton
+              onClick={() => changeCalendarDate('prev')}
+              size="medium"
+              className="nextPrevIcon"
+            >
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
             <Button className="selectedDate">{`${first} - ${last}`}</Button>
 
-            <IconButton onClick={() => changeCalendarDate('next')} size="medium" className="nextPrevIcon">
+            <IconButton
+              onClick={() => changeCalendarDate('next')}
+              size="medium"
+              className="nextPrevIcon"
+            >
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
           </Box>
