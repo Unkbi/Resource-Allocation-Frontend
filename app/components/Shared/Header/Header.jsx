@@ -172,6 +172,7 @@ const Header = ({ sidebarExpanded }) => {
         title: title,
         submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
         cancelButtonText: 'Cancel',
+        secondryText: 'Save As',
         formType: formType,
         initialData: initialData,
       })
@@ -185,11 +186,11 @@ const Header = ({ sidebarExpanded }) => {
       case '/project':
         return 'Projects';
       case '/people':
-        return 'People';
+        return 'Resource';
       case '/report':
         return 'Reports';
       case '/settings':
-        return;
+        return 'Settings';
       case '/notifications':
         return;
       case '/help':

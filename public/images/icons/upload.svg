@@ -1,0 +1,32 @@
+<svg width="34" height="32" viewBox="0 0 34 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 108">
+<g id="Group 93">
+<g id="Group 92">
+<g id="Rectangle Copy 10">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M0 28C0 30.2091 1.79086 32 4 32H30C32.2091 32 34 30.2091 34 28V4C34 1.79086 32.2091 0 30 0H4C1.79086 0 0 1.79086 0 4V28Z" fill="url(#paint0_linear_375_1213)"/>
+<path d="M0.5 28C0.5 29.933 2.067 31.5 4 31.5H30C31.933 31.5 33.5 29.933 33.5 28V4C33.5 2.067 31.933 0.5 30 0.5H4C2.067 0.5 0.5 2.067 0.5 4V28Z" stroke="#1C2D5F" stroke-opacity="0.1"/>
+</g>
+<g id="Group 107">
+<g id="Group 93_2">
+<g id="Group 92_2">
+<g id="download">
+<mask id="mask0_375_1213" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="5" y="4" width="24" height="24">
+<rect id="Bounding box" width="24" height="24" transform="matrix(1 0 0 -1 5 28)" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_375_1213)">
+<path id="download_2" d="M16.9 9.95791L11.9735 14.7413L13.1672 15.9166L16.0594 13.1087V21.8262H17.7406V13.1087L20.6328 15.9166L21.8265 14.7413L16.9 9.95791ZM10.5106 6.1543C10.0566 6.1543 9.66284 6.31616 9.32924 6.63988C8.99582 6.96377 8.8291 7.34609 8.8291 7.78686V11.1007H10.5106V7.78686H23.2894V11.1007H24.9709V7.78686C24.9709 7.34609 24.8042 6.96377 24.4707 6.63988C24.1371 6.31616 23.7433 6.1543 23.2894 6.1543H10.5106Z" fill="#344665"/>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_375_1213" x1="17" y1="32" x2="17" y2="0" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FAFAFA"/>
+<stop offset="1" stop-color="white"/>
+</linearGradient>
+</defs>
+</svg>
