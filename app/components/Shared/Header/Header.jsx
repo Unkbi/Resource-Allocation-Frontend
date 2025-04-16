@@ -186,7 +186,7 @@ const Header = ({ sidebarExpanded }) => {
       case '/project':
         return 'Projects';
       case '/people':
-        return 'People';
+        return 'Resource';
       case '/report':
         return 'Reports';
       case '/settings':
