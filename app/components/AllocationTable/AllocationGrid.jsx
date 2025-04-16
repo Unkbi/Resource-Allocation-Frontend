@@ -444,14 +444,6 @@ export default function AllocationGrid({
       currentView?.WeekMinus &&
       currentView?.WeekPlus
     ) {
-      console.log(
-        "generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) : ",
-        generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
-      );
-      console.log(
-        "generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) : ",
-        generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-      );
       dispatch(
         action({
           startDate: generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus),
