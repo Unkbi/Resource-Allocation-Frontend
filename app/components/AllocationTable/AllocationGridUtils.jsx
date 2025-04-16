@@ -51,7 +51,7 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-const CellWithMenu = ({ params, handleAddClick, handleCloneClick }) => {
+const CellWithMenu = ({ params, handleAddClick, handleCloneClick, handleTranferClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -70,7 +70,7 @@ const CellWithMenu = ({ params, handleAddClick, handleCloneClick }) => {
       icon: <ContentCopyIcon fontSize="small" />,
       func: () => handleCloneClick(params),
     },
-    { label: 'Transfer', icon: <SwapHorizIcon fontSize="small" /> },
+    { label: 'Transfer', icon: <SwapHorizIcon fontSize="small" />, func: () => handleTranferClick(params) },
     { label: 'History', icon: <HistoryIcon fontSize="small" /> },
     { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
   ];
@@ -209,6 +209,21 @@ export const getFinalColumns = (
     );
   };
 
+  const handleTranferClick = params => {
+    dispatch(
+      openDialog({
+        title: 'Transfer Resource',
+        submitButtonText: 'Transfer',
+        cancelButtonText: 'Cancel',
+        formType: 'transfer_resource',
+        initialData: {
+          Resource: params.row.resource,
+          Project: params.row.project,
+        },
+      })
+    );
+  };
+
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -228,6 +243,7 @@ export const getFinalColumns = (
               params={params}
               handleAddClick={handleAddClick}
               // handleCloneClick={handleCloneClick}
+              // handleTranferClick={handleTranferClick}
               columnType="resource"
             />
           ) : null;
@@ -279,6 +295,7 @@ export const getFinalColumns = (
                 params={params}
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
+                handleTranferClick={handleTranferClick}
                 icon={<Typography fontSize="12px">{params.value}</Typography>}
               />
             );
@@ -366,6 +383,7 @@ export const getFinalColumns = (
               params={params}
               handleAddClick={handleAddClick}
               handleCloneClick={handleCloneClick}
+              handleTranferClick={handleTranferClick}
               columnType="resource"
             />
           ) : null;
