@@ -155,10 +155,6 @@ export const getAllColumnsWithWeek = (
   startDate,
   endDate
 ) => {
-  console.log(
-    'generateWeeklyColumns(startDate, endDate, dispatch) : ',
-    generateWeeklyColumns(startDate, endDate, dispatch)
-  );
   return [
     ...existingColumns,
     ...generateWeeklyColumns(startDate, endDate, dispatch),
