@@ -133,22 +133,28 @@ export const AddRowButton = ({
 }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [selectedResources, setSelectedResources] = useState([]);
-  const { teamsResources } = useSelector((state) => state.teams);
-  const { resources } = useSelector((state) => state.resources);
-  const { allocations } = useSelector((state) => state.projects);
-  const { view } = useSelector((state) => state.allocationView);
-  
+  const { teamsResources } = useSelector(state => state.teams);
+  const { resources } = useSelector(state => state.resources);
+  const { allocations } = useSelector(state => state.projects);
+  const { view } = useSelector(state => state.allocationView);
+
   // Resources already allocated to the current project
-  const resourcesForCurrentProject = allocations.filter((row) => row.project === project).map((row) => row.resourceId);
+  const resourcesForCurrentProject = allocations
+    .filter(row => row.project === project)
+    .map(row => row.resourceId);
   // Merging current selected resources with the already allocated resources
-  const mergedResources = [...new Set([...selectedResources, ...resourcesForCurrentProject])];
+  const mergedResources = [
+    ...new Set([...selectedResources, ...resourcesForCurrentProject]),
+  ];
   const defaultProps = {
     options:
       buttonName === 'Add Project'
         ? resourceProjects
-        : view === 'Projects' 
-          ? resources.result.filter((resource) => !mergedResources.includes(resource.Id)) || []
-          : teamsResources?.[teamsId]?.length 
+        : view === 'Project'
+          ? resources.result.filter(
+              resource => !mergedResources.includes(resource.Id)
+            ) || []
+          : teamsResources?.[teamsId]?.length
             ? teamsResources?.[teamsId]
             : resources?.result || [],
     getOptionLabel: option =>
@@ -167,7 +173,10 @@ export const AddRowButton = ({
     }, 0);
   };
   const handleKeyDown = event => {
-    if (isSearchMode && ['ArrowUp', 'ArrowDown','e','E'].includes(event.key)) {
+    if (
+      isSearchMode &&
+      ['ArrowUp', 'ArrowDown', 'e', 'E'].includes(event.key)
+    ) {
       event.stopPropagation();
     }
   };
@@ -175,7 +184,7 @@ export const AddRowButton = ({
   const handleResourceSelect = (event, newValue) => {
     if (newValue) {
       // Add the new resource to the selected list
-      setSelectedResources((prev) => [...prev, newValue.Id]);
+      setSelectedResources(prev => [...prev, newValue.Id]);
       handleAddRow(event, newValue, row);
       setIsSearchMode(false);
     }
@@ -224,7 +233,7 @@ export const AddRowButton = ({
             );
           }}
           renderInput={params => (
-          <StyledInput {...params} inputRef={inputRef}/>
+            <StyledInput {...params} inputRef={inputRef} />
           )}
         />
       ) : (
@@ -258,9 +267,9 @@ export const AddRowIcon = ({
     options:
       buttonName === 'Add Project'
         ? resourceProjects
-        : teamsResources?.[teamsId]?.length ?
-          teamsResources?.[teamsId] :
-          resources?.result || [],
+        : teamsResources?.[teamsId]?.length
+          ? teamsResources?.[teamsId]
+          : resources?.result || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
@@ -283,20 +292,23 @@ export const AddRowIcon = ({
     }
   };
   return (
-    <MainBox sx={{
-      position: 'absolute',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      width: 210,
-      margin: '-36px -30px',
-    }} onKeyDown={handleKeyDown}>
+    <MainBox
+      sx={{
+        position: 'absolute',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        width: 210,
+        margin: '-36px -30px',
+      }}
+      onKeyDown={handleKeyDown}
+    >
       {isSearchMode && resources?.result.length > 0 ? (
         <Autocomplete
           {...defaultProps}
           id="open-on-focus"
           sx={{
-            marginTop: -2
+            marginTop: -2,
           }}
           onChange={(event, newValue) => {
             if (newValue) {
@@ -345,14 +357,16 @@ export const AddRowIcon = ({
           )}
         />
       ) : (
-        <AddIcon onClick={handleButtonClick} sx={{
-          backgroundColor: '#1C2D5F',
-          color: '#fff',
-          fontSize: 20,
-          marginRight: 1,
-          borderRadius: '2px',
-          cursor: 'pointer',
-        }}
+        <AddIcon
+          onClick={handleButtonClick}
+          sx={{
+            backgroundColor: '#1C2D5F',
+            color: '#fff',
+            fontSize: 20,
+            marginRight: 1,
+            borderRadius: '2px',
+            cursor: 'pointer',
+          }}
         />
       )}
     </MainBox>

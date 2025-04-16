@@ -47,6 +47,7 @@ import { current } from '@reduxjs/toolkit';
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
+import { getWeek } from 'date-fns';
 
 const initialValuesMap = {
   add_project: {
@@ -360,7 +361,7 @@ const AllocationForm = () => {
                   filteredProjects
                 );
               });
-            } else if (view === 'Projects') {
+            } else if (view === 'Project') {
               return dispatch(
                 fetchAllProjectAllocations(filteredProjects, startDate, endDate)
               ).then(() => {
