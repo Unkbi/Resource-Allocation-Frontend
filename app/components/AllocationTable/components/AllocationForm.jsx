@@ -650,11 +650,7 @@ const AllocationForm = () => {
             const teams = [...new Set(newResources.map(res => res?.team))];
 
             dispatch(
-              fetchAllProjectAllocations(
-                formattedProjects,
-                values.StartDate,
-                values.EndDate
-              )
+              fetchAllProjectAllocations(formattedProjects, startDate, endDate)
             );
             dispatch(closeDialog());
             // if (view === 'Teams') {

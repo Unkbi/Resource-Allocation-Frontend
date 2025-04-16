@@ -278,7 +278,7 @@ export const getFinalColumns = (
               <CellWithMenu
                 params={params}
                 handleAddClick={handleAddClick}
-                // handleCloneClick={handleCloneClick}
+                handleCloneClick={handleCloneClick}
                 icon={<Typography fontSize="12px">{params.value}</Typography>}
               />
             );
