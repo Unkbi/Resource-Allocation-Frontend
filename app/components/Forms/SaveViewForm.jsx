@@ -26,6 +26,13 @@ import {
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
+import {
+  getResourceFromEmail,
+  getUpdatedFiltersOnMyProjectsAllProjects,
+  getUpdatedFiltersOnMyTeamsAllTeams,
+  isMyProjectsValid,
+  isMyTeamsValid,
+} from '@/app/utils/common';
 
 const getColumnLabel = column => {
   const columnLabels = {
@@ -79,6 +86,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   const { values, handleChange, handleBlur, setFieldValue, errors, touched } =
     formikProps;
   const { columns, currentView } = useSelector(state => state.allocationView);
+  const { user } = useSelector(state => state.user);
+  const { resources } = useSelector(state => state.resources);
 
   const columnOptions =
     values?.groupBy === 'Teams'
@@ -190,6 +199,88 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     };
     setFormValue(initialData);
   }, []);
+
+  useEffect(() => {
+    if (values?.showBy) {
+      const allocationManagerName = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      )?.FullName;
+
+      if (values.showBy === 'MyTeams') {
+        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+          allocationManagerName,
+          values.filters,
+          true
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+      if (values.showBy === 'allTeams') {
+        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+          allocationManagerName,
+          values.filters,
+          false
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+
+      const projectManager = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      );
+
+      const projectManagerName = projectManager
+        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        : '';
+
+      if (values.showBy === 'myProjects') {
+        const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+          projectManagerName,
+          values.filters,
+          true
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+      if (values.showBy === 'allProjects') {
+        const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+          projectManagerName,
+          values.filters,
+          false
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+    }
+  }, [values.showBy]);
+
+  useEffect(() => {
+    if (values?.showBy === 'MyTeams') {
+      const allocationManagerName = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      )?.FullName;
+
+      if (!isMyTeamsValid(allocationManagerName, values.filters)) {
+        setFieldValue('showBy', 'allTeams');
+      }
+    } else if (values?.showBy === 'myProjects') {
+      const projectManager = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      );
+
+      const projectManagerName = projectManager
+        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        : '';
+
+      if (!isMyProjectsValid(projectManagerName, values.filters)) {
+        setFieldValue('showBy', 'allProjects');
+      }
+    }
+  }, [values.filters]);
 
   const StyledContainer = styled(Box)(({ theme }) => ({
     marginBottom: 3,
@@ -338,7 +429,17 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                   />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  {filter.operator !== 'isEmpty' &&
+                  {filter.operator === 'isAnyOf' ? ( // UI Not right has to be fixed.
+                    <StyledInput
+                      disabled={true}
+                      as={TextField}
+                      name={`filters[${index}].value`}
+                      value={filter.value}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    />
+                  ) : (
+                    filter.operator !== 'isEmpty' &&
                     filter.operator !== 'isNotEmpty' && (
                       <StyledInput
                         as={TextField}
@@ -351,7 +452,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                           filter.operator === 'isNotEmpty'
                         }
                       />
-                    )}
+                    )
+                  )}
                 </Box>
               </Box>
             ))}

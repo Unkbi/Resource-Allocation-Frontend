@@ -121,7 +121,6 @@ const viewSlice = createSlice({
       state.currentView = action.payload;
     },
     updateCurrentView: (state, action) => {
-      console.log('Updating Current View : ', action.payload);
       state.currentView = {
         ...state.currentView,
         ...action.payload,

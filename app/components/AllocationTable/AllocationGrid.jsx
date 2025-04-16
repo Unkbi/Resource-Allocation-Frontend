@@ -11,8 +11,14 @@ import {
   calculateTotalEffort,
   generateAllWeeks,
   generateDateWeekMath,
+  getResourceFromEmail,
+  getAllocationManagerFromPath,
   getMondayOfWeek,
+  getUpdatedFiltersOnMyProjectsAllProjects,
+  getUpdatedFiltersOnMyTeamsAllTeams,
   getWeekNumber,
+  isMyProjectsValid,
+  isMyTeamsValid,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -91,6 +97,9 @@ export default function AllocationGrid({
     } ?? {}
   );
   const { isOpen } = useSelector(state => state.globalDialog);
+  const { user } = useSelector(state => state.user);
+  const { resources } = useSelector(state => state.resources);
+  const { projects } = useSelector(state => state.projects);
 
   const handleKeyUp = e => {
     if (
@@ -178,6 +187,10 @@ export default function AllocationGrid({
       ...normalizeRow(row),
       totalEffort: calculateTotalEffort(normalizeRow(row)),
       hasAllocation: calculateTotalEffort(normalizeRow(row)) > 0,
+      teamAllocationManager: getAllocationManagerFromPath(
+        row?.teamAllocationManager,
+        resources?.result || []
+      )?.FullName,
     }));
     setUpdatedRows(updatedRows);
     let new_row_state = getInitialRowsState(updatedRows, groupBy, teams);
@@ -276,7 +289,117 @@ export default function AllocationGrid({
           }) ?? [],
       });
     }
+
+    //Check if myTeam is selected, if yes, then check if filters match with myTeam
+    // If not, then update myTeam to allTeams
+    if (currentView?.Filters !== null && currentView?.MyTeam) {
+      const allocationManagerName = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      )?.FullName;
+
+      if (isMyTeamsValid(allocationManagerName, currentView?.Filters)) {
+        return;
+      }
+      dispatch(
+        updateCurrentView({
+          MyTeam: false,
+        })
+      );
+    }
+
+    // Check if myProjects is selected, if yes, then check if filters match with myProjects
+    // If not, then update myProjects to allProjects
+    if (currentView?.Filters !== null && currentView?.MyProjects) {
+      const projectManager = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      );
+
+      const projectManagerName = projectManager
+        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        : '';
+
+      if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
+        return;
+      }
+
+      dispatch(
+        updateCurrentView({
+          MyProjects: false,
+        })
+      );
+    }
   }, [currentView?.Filters]);
+
+  useEffect(() => {
+    const allocationManagerName = getResourceFromEmail(
+      user?.Email,
+      resources?.result || []
+    )?.FullName;
+
+    if (currentView?.MyTeam) {
+      const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+        allocationManagerName,
+        currentView?.Filters || [],
+        true
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    } else {
+      const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+        allocationManagerName,
+        currentView?.Filters || [],
+        false
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    }
+  }, [currentView?.MyTeam]);
+
+  useEffect(() => {
+    const projectManager = getResourceFromEmail(
+      user?.Email,
+      resources?.result || []
+    );
+
+    const projectManagerName = projectManager
+      ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+      : '';
+    if (currentView?.MyProjects) {
+      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+        projectManagerName,
+        currentView?.Filters || [],
+        true
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    } else {
+      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+        projectManagerName,
+        currentView?.Filters || [],
+        false
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    }
+  }, [currentView?.MyProjects]);
 
   useEffect(() => {
     const isTeams = view === 'Teams';
