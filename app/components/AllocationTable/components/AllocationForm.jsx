@@ -82,7 +82,7 @@ const initialValuesMap = {
   },
   save_view: {
     groupBy: 'project',
-    showBy: 'allProjects',
+    showBy: 'AllProject',
     dateRangeType: 'fixed',
     startDate: '',
     endDate: '',
@@ -92,7 +92,7 @@ const initialValuesMap = {
   },
   new_view: {
     groupBy: 'project',
-    showBy: 'allProjects',
+    showBy: 'AllProject',
     dateRangeType: 'fixed',
     startDate: '',
     endDate: '',
@@ -466,7 +466,7 @@ const AllocationForm = () => {
               WeekMinus: values.dynamicDateRangeSubtract,
               GroupBy: values.groupBy,
               Columns: values.showColumns,
-              ShowBy: null, // Issues with Backend, need to add [myTeams, allTeams]
+              ShowBy: values.showBy,
               Name: values.name,
               Description: values.description,
               Filters: values.filters,
@@ -512,7 +512,7 @@ const AllocationForm = () => {
               WeekMinus: values.dynamicDateRangeSubtract,
               GroupBy: values.groupBy,
               Columns: values.showColumns,
-              ShowBy: null, // Issues with Backend, need to add [myTeams, allTeams]
+              ShowBy: values.showBy,
               Filters: values.filters,
             };
 

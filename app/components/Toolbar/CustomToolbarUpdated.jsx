@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
 import {
   Box,
   Button,
@@ -10,6 +10,7 @@ import {
   styled,
   Menu,
   Typography,
+  Popover,
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,7 +27,9 @@ import CustomExport from './CustomExport';
 import {
   generateDateWeekMath,
   generateFirstAndLastMonthYear,
+  getProjectsIamProjectManager,
   getStartAndEndDateForView,
+  getTeamsIamAllocationManager,
   isObjectEqual,
 } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
@@ -48,6 +51,11 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import TooltipButton from '../Button/TooltipButton';
+import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
+import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
+import MyProjectIcon from '../TableIcons/MyProjectIcon';
+import AllProjectIcon from '../TableIcons/AllProjectIcon';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
   setCurrentView,
@@ -468,15 +476,18 @@ const PreferencesIcon = () => (
   <img src="/images/icons/preferences.svg" alt="preferences" />
 );
 
-const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
+const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const { view, savedViews, currentView } = useSelector(
     state => state.allocationView
   );
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
-  const { calendarDate: projectsCalendar } = useSelector(
+  const { projects, calendarDate: projectsCalendar } = useSelector(
     state => state.projects
   );
+  const { user } = useSelector(state => state.user);
+  const { resources } = useSelector(state => state.resources);
+  const { teams } = useSelector(state => state.teams);
   const { startDate, endDate } = getStartAndEndDateForView(
     view,
     projectsCalendar,
@@ -485,8 +496,11 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteView, setDeleteView] = useState(null);
 
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [selectedView, setSelectedView] = React.useState('0');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [popOverAnchorEl, setPopOverAnchorEl] = useState(null);
+  const [selectedView, setSelectedView] = useState('0');
+  const myTeamsButtonRef = useRef(null);
+  const myProjectsButtonRef = useRef(null);
 
   const handleViewClick = event => {
     setAnchorEl(event.currentTarget);
@@ -494,6 +508,10 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handlePopoverClose = () => {
+    setPopOverAnchorEl(null);
   };
 
   const handleMenuItemClick = viewId => {
@@ -649,7 +667,45 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
     return <ViewOptionStartIcon />;
   };
 
+  const handleToggle = isMine => {
+    if (isMine) {
+      const teamsIAmAllocationManager = getTeamsIamAllocationManager(
+        user?.Email,
+        resources?.result || [],
+        teams?.result || []
+      );
+
+      if (view === 'Teams' && teamsIAmAllocationManager.length === 0) {
+        setPopOverAnchorEl(myTeamsButtonRef.current);
+        setTimeout(() => setPopOverAnchorEl(null), 2000);
+        return;
+      }
+
+      // Check if the user is a project manager in any of the projects
+      const fullName = user
+        ? `${user.FirstName} ${user.LastName}`.trim().toLowerCase()
+        : '';
+      const projectsIAmProjectManager = getProjectsIamProjectManager(
+        fullName,
+        projects?.result || []
+      );
+
+      if (view === 'Projects' && projectsIAmProjectManager.length === 0) {
+        setPopOverAnchorEl(myProjectsButtonRef.current);
+        setTimeout(() => setPopOverAnchorEl(null), 2000);
+        return;
+      }
+    }
+
+    if (view === 'Teams') {
+      dispatch(updateCurrentView({ MyTeam: isMine }));
+    } else if (view === 'Project') {
+      dispatch(updateCurrentView({ MyProjects: isMine }));
+    }
+  };
+
   const open = Boolean(anchorEl);
+  const openPopover = Boolean(popOverAnchorEl);
 
   const currentViewName =
     savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
@@ -706,6 +762,104 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
       </ToolBox1>
       <ToolBox2 flex={1} className="filterTopRow">
         <Box className="filterColBlock">
+          <Box className="projectIcon">
+            {view === 'Project' ? (
+              <>
+                <TooltipButton
+                  msg="My Project"
+                  placement="bottom"
+                  onClick={() => handleToggle(true)}
+                >
+                  <span ref={myProjectsButtonRef}>
+                    <MyProjectIcon
+                      color={currentView?.MyProjects ? '#344665' : '#99A2B2'}
+                    />
+                  </span>
+                </TooltipButton>
+
+                <TooltipButton
+                  msg="All Projects"
+                  placement="bottom"
+                  onClick={() => handleToggle(false)}
+                >
+                  <span ref={myProjectsButtonRef}>
+                    <AllProjectIcon
+                      color={currentView?.MyProjects ? '#99A2B2' : '#344665'}
+                    />
+                  </span>
+                </TooltipButton>
+
+                <Popover
+                  open={openPopover}
+                  anchorEl={popOverAnchorEl}
+                  onClose={handlePopoverClose}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                  disableAutoFocus
+                  disableEnforceFocus
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        padding: '8px 16px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 1,
+                      },
+                    },
+                  }}
+                >
+                  <Typography variant="body2">No projects found.</Typography>
+                </Popover>
+              </>
+            ) : view === 'Teams' ? (
+              <>
+                <TooltipButton
+                  msg="My Teams"
+                  placement="bottom"
+                  onClick={() => handleToggle(true)}
+                >
+                  <span ref={myTeamsButtonRef}>
+                    <MyTeamsIcon
+                      sx={{ width: 18, height: 18 }}
+                      color={currentView?.MyTeam ? '#344665' : '#99A2B2'}
+                    />
+                  </span>
+                </TooltipButton>
+
+                <TooltipButton
+                  msg="All Teams"
+                  placement="bottom"
+                  onClick={() => handleToggle(false)}
+                >
+                  <span ref={myTeamsButtonRef}>
+                    <AllTeamsIcon
+                      color={currentView?.MyTeam ? '#99A2B2' : '#344665'}
+                    />
+                  </span>
+                </TooltipButton>
+
+                <Popover
+                  open={openPopover}
+                  anchorEl={popOverAnchorEl}
+                  onClose={handleClose}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+                  disableAutoFocus
+                  disableEnforceFocus
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        padding: '8px 16px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 1,
+                      },
+                    },
+                  }}
+                >
+                  <Typography variant="body2">No teams found.</Typography>
+                </Popover>
+              </>
+            ) : null}
+          </Box>
           <GridToolbarContainer ref={setFilterButtonEl} sx={{ padding: 0 }}>
             <GridToolbarFilterButton
               slotProps={{
@@ -809,7 +963,7 @@ const CustomToolbar = React.memo(({ setFilterButtonEl }) => {
             </ViewButton>
 
             <StyledMenu
-              id="view-menu"
+              id="group-menu"
               anchorEl={anchorEl}
               open={open}
               onClose={handleClose}
