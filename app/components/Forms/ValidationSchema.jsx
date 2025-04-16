@@ -112,7 +112,6 @@ export const saveViewValidationSchema = Yup.object({
     Yup.object({
       field: Yup.string().required('Column is required'),
       operator: Yup.string().required('Operator is required'),
-      value: Yup.string(),
     })
   ),
   calendarBy: Yup.string().required('Calendar By is required'),

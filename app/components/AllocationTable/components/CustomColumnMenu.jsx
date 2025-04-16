@@ -1,5 +1,8 @@
 import { ListItemIcon, ListItemText, MenuItem, styled } from '@mui/material';
-import { GridColumnMenu, GRID_COLUMN_MENU_SLOTS } from '@mui/x-data-grid-premium';
+import {
+  GridColumnMenu,
+  GRID_COLUMN_MENU_SLOTS,
+} from '@mui/x-data-grid-premium';
 //import SettingsApplicationsIcon from '@mui/icons-material/SettingsApplications';
 import GroupIcon from '@mui/icons-material/Groups';
 import PersonIcon from '@mui/icons-material/Person';
@@ -23,7 +26,7 @@ const StyledPopper = styled(GridColumnMenu)(({ theme }) => ({
 const CustomUserMenuItems = ({ apiRef }) => {
   const [teamsExpanded, setTeamsExpanded] = useState(true);
   const [resourcesExpanded, setResourcesExpanded] = useState(false);
-  const view = useSelector((state) => state.allocationView.view);
+  const view = useSelector(state => state.allocationView.view);
 
   /* freeze click not in use
   const handleFreezClick = () => {
@@ -43,7 +46,7 @@ const CustomUserMenuItems = ({ apiRef }) => {
   */
 
   // get group row IDs by depth: teams/projects = 0, resources = 1
-  const getGroupRowIdsByDepth = (targetDepth) => {
+  const getGroupRowIdsByDepth = targetDepth => {
     const tree = apiRef.current.state.rows.tree;
     const groupIds = [];
 
@@ -58,8 +61,9 @@ const CustomUserMenuItems = ({ apiRef }) => {
   };
 
   // check if all rows with given IDs are expanded
-  const areAllExpanded = (ids) =>
-    ids.length > 0 && ids.every(id => apiRef.current.getRowNode(id)?.childrenExpanded !== false);
+  const areAllExpanded = ids =>
+    ids.length > 0 &&
+    ids.every(id => apiRef.current.getRowNode(id)?.childrenExpanded !== false);
 
   // collapse or uncollapse rows
   const toggleGroupRows = (ids, shouldExpand) => {
@@ -73,7 +77,7 @@ const CustomUserMenuItems = ({ apiRef }) => {
       });
     });
   };
-  
+
   // update state on menu open
   useEffect(() => {
     const teamIds = getGroupRowIdsByDepth(0);
@@ -111,19 +115,29 @@ const CustomUserMenuItems = ({ apiRef }) => {
   return (
     <>
       <MenuItem onClick={handleToggleTeams}>
-        <ListItemIcon><GroupIcon fontSize="small" /></ListItemIcon>
+        <ListItemIcon>
+          <GroupIcon fontSize="small" />
+        </ListItemIcon>
         <ListItemText>
           {teamsExpanded
-            ? view === 'Projects' ? 'Collapse All Projects' : 'Collapse All Teams'
-            : view === 'Projects' ? 'Expand All Projects' : 'Expand All Teams'}
+            ? view === 'Project'
+              ? 'Collapse All Projects'
+              : 'Collapse All Teams'
+            : view === 'Project'
+              ? 'Expand All Projects'
+              : 'Expand All Teams'}
         </ListItemText>
       </MenuItem>
 
-      {view !== 'Projects' && (
+      {view !== 'Project' && (
         <MenuItem onClick={handleToggleResources}>
-          <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
+          <ListItemIcon>
+            <PersonIcon fontSize="small" />
+          </ListItemIcon>
           <ListItemText>
-            {resourcesExpanded ? 'Collapse All Resources' : 'Expand All Resources'}
+            {resourcesExpanded
+              ? 'Collapse All Resources'
+              : 'Expand All Resources'}
           </ListItemText>
         </MenuItem>
       )}
@@ -131,7 +145,7 @@ const CustomUserMenuItems = ({ apiRef }) => {
   );
 };
 
-export const CustomColumnMenu = (props) => {
+export const CustomColumnMenu = props => {
   const { apiRef, ...otherProps } = props;
 
   return (

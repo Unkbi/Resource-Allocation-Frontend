@@ -22,11 +22,24 @@ import { StyledInput } from '../Input/StyledInput';
 import MultiSelectWithChips from '../Select/MultiSelectWithChipSmaller';
 import { getTodaysDateDDMMMYYYY } from '@/app/utils/dateUtils';
 import { addWeeks, format, startOfWeek, subWeeks } from 'date-fns';
+import {
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+} from '@/app/constants/constants';
+import {
+  getResourceFromEmail,
+  getUpdatedFiltersOnMyProjectsAllProjects,
+  getUpdatedFiltersOnMyTeamsAllTeams,
+  isMyProjectsValid,
+  isMyTeamsValid,
+} from '@/app/utils/common';
 
 const getColumnLabel = column => {
   const columnLabels = {
     __row_group_by_columns_group_teams__: 'Teams Name',
     __row_group_by_columns_group_resource__: 'Resource',
+    __row_group_by_columns_group__: 'Project Name',
+    totalEffort: 'Total Effort',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',
@@ -73,6 +86,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   const { values, handleChange, handleBlur, setFieldValue, errors, touched } =
     formikProps;
   const { columns, currentView } = useSelector(state => state.allocationView);
+  const { user } = useSelector(state => state.user);
+  const { resources } = useSelector(state => state.resources);
 
   const columnOptions =
     values?.groupBy === 'Teams'
@@ -161,20 +176,14 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         currentView?.GroupBy === 'Teams'
           ? currentView?.MyTeam
             ? 'MyTeams'
-            : 'allTeams'
+            : 'AllTeams'
           : currentView?.MyProjects
-            ? 'myProjects'
-            : 'allProjects',
-      dateRangeType:
-        currentView?.isDynamicRange || currentView?.isDefaultRange
-          ? 'dynamic'
-          : 'fixed',
-      dynamicDateRangeAdd: currentView?.isDefaultRange
-        ? 19
-        : currentView?.WeekPlus || 0,
-      dynamicDateRangeSubtract: currentView?.isDefaultRange
-        ? 1
-        : currentView?.WeekMinus || 0,
+            ? 'MyProject'
+            : 'AllProject',
+      dateRangeType: currentView?.isDynamicRange ? 'dynamic' : 'fixed',
+      dynamicDateRangeAdd: currentView?.WeekPlus || DEFAULT_PROJECT_WEEK_PLUS,
+      dynamicDateRangeSubtract:
+        currentView?.WeekMinus || DEFAULT_PROJECT_WEEK_MINUS,
       startDate: '',
       endDate: '',
       showColumns: currentView?.ColumnsVisible || [],
@@ -190,6 +199,88 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     };
     setFormValue(initialData);
   }, []);
+
+  useEffect(() => {
+    if (values?.showBy) {
+      const allocationManagerName = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      )?.FullName;
+
+      if (values.showBy === 'MyTeams') {
+        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+          allocationManagerName,
+          values.filters,
+          true
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+      if (values.showBy === 'AllTeams') {
+        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+          allocationManagerName,
+          values.filters,
+          false
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+
+      const projectManager = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      );
+
+      const projectManagerName = projectManager
+        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        : '';
+
+      if (values.showBy === 'MyProject') {
+        const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+          projectManagerName,
+          values.filters,
+          true
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+      if (values.showBy === 'AllProject') {
+        const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+          projectManagerName,
+          values.filters,
+          false
+        );
+        setFieldValue('filters', updatedFilters);
+        return;
+      }
+    }
+  }, [values.showBy]);
+
+  useEffect(() => {
+    if (values?.showBy === 'MyTeams') {
+      const allocationManagerName = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      )?.FullName;
+
+      if (!isMyTeamsValid(allocationManagerName, values.filters)) {
+        setFieldValue('showBy', 'AllTeams');
+      }
+    } else if (values?.showBy === 'MyProject') {
+      const projectManager = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      );
+
+      const projectManagerName = projectManager
+        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        : '';
+
+      if (!isMyProjectsValid(projectManagerName, values.filters)) {
+        setFieldValue('showBy', 'AllProject');
+      }
+    }
+  }, [values.filters]);
 
   const StyledContainer = styled(Box)(({ theme }) => ({
     marginBottom: 3,
@@ -246,7 +337,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
               label={<StyledOptionsLabel>My Teams</StyledOptionsLabel>}
             />
             <FormControlLabel
-              value="allTeams"
+              value="AllTeams"
               control={<Radio size="small" />}
               label={<StyledOptionsLabel>All Teams</StyledOptionsLabel>}
             />
@@ -254,19 +345,19 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         ) : (
           <RadioGroup
             name="showBy"
-            value={values?.showBy || 'myProjects'}
+            value={values?.showBy || 'MyProject'}
             onChange={handleChange}
             onBlur={handleBlur}
             row
             sx={{ gap: 2 }}
           >
             <FormControlLabel
-              value="myProjects"
+              value="MyProject"
               control={<Radio size="small" />}
               label={<StyledOptionsLabel>My Projects</StyledOptionsLabel>}
             />
             <FormControlLabel
-              value="allProjects"
+              value="AllProject"
               control={<Radio size="small" />}
               label={<StyledOptionsLabel>All Projects</StyledOptionsLabel>}
             />
@@ -338,7 +429,17 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                   />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  {filter.operator !== 'isEmpty' &&
+                  {filter.operator === 'isAnyOf' ? ( // UI Not right has to be fixed.
+                    <StyledInput
+                      disabled={true}
+                      as={TextField}
+                      name={`filters[${index}].value`}
+                      value={filter.value}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    />
+                  ) : (
+                    filter.operator !== 'isEmpty' &&
                     filter.operator !== 'isNotEmpty' && (
                       <StyledInput
                         as={TextField}
@@ -351,7 +452,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                           filter.operator === 'isNotEmpty'
                         }
                       />
-                    )}
+                    )
+                  )}
                 </Box>
               </Box>
             ))}

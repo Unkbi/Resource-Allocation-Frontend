@@ -11,8 +11,14 @@ import {
   calculateTotalEffort,
   generateAllWeeks,
   generateDateWeekMath,
+  getResourceFromEmail,
+  getAllocationManagerFromPath,
   getMondayOfWeek,
+  getUpdatedFiltersOnMyProjectsAllProjects,
+  getUpdatedFiltersOnMyTeamsAllTeams,
   getWeekNumber,
+  isMyProjectsValid,
+  isMyTeamsValid,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -69,11 +75,18 @@ export default function AllocationGrid({
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
   const { rowState } = useSelector(state => state.dataGrid);
-  const { expandRowId, cellSelectionData, view, savedViews, currentView } =
-    useSelector(state => state.allocationView);
+  const {
+    expandRowId,
+    cellSelectionData,
+    view,
+    savedViews,
+    currentView,
+    columns: _columns,
+  } = useSelector(state => state.allocationView);
 
   const dispatch = useDispatch();
   const { teams, teamAllocations } = useSelector(state => state.teams);
+  const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const [rowModesModel, setRowModesModel] = useState({});
   const [cellSelectionModel, setCellSelectionModel] = useState({});
   const [filterModel, setFilterModel] = useState({
@@ -85,6 +98,9 @@ export default function AllocationGrid({
     } ?? {}
   );
   const { isOpen } = useSelector(state => state.globalDialog);
+  const { user } = useSelector(state => state.user);
+  const { resources } = useSelector(state => state.resources);
+  const { projects } = useSelector(state => state.projects);
 
   const handleKeyUp = e => {
     if (
@@ -151,19 +167,36 @@ export default function AllocationGrid({
     ...aggregationModel(startDate, endDate),
   });
 
-  const normalizeRow = row => {
-    return Object.keys(row).reduce((normalized, key) => {
-      if (key.startsWith('W')) {
-        const weekValue = row[key];
-        normalized[key] =
-          typeof weekValue === 'object' && weekValue !== null
-            ? weekValue
-            : { allocationId: null, value: weekValue };
+  const normalizeRow = (row) => {
+    const allWeeks = generateAllWeeks();
+    const normalized = { ...row };
+
+    allWeeks.forEach((weekKey) => {
+      const period = getMondayOfWeek(weekKey, new Date());
+      const value = row[weekKey];
+
+      if (value && typeof value === 'object' && 'value' in value) {
+        normalized[weekKey] = {
+          allocationId: value.allocationId || null,
+          value: value.value,
+          period: period,
+        };
+      } else if (value !== undefined) {
+        normalized[weekKey] = {
+          allocationId: null,
+          value,
+          period,
+        };
       } else {
-        normalized[key] = row[key];
+        normalized[weekKey] = {
+          allocationId: null,
+          value: null,
+          period,
+        };
       }
-      return normalized;
-    }, {});
+    });
+
+    return normalized;
   };
 
   useEffect(() => {
@@ -172,6 +205,10 @@ export default function AllocationGrid({
       ...normalizeRow(row),
       totalEffort: calculateTotalEffort(normalizeRow(row)),
       hasAllocation: calculateTotalEffort(normalizeRow(row)) > 0,
+      teamAllocationManager: getAllocationManagerFromPath(
+        row?.teamAllocationManager,
+        resources?.result || []
+      )?.FullName,
     }));
     setUpdatedRows(updatedRows);
     let new_row_state = getInitialRowsState(updatedRows, groupBy, teams);
@@ -259,19 +296,6 @@ export default function AllocationGrid({
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (currentView?.ColumnsVisible) {
-      const newColumnVisibilityModel = {
-        ..._initialState?.columns?.columnVisibilityModel,
-        ...currentView?.ColumnsVisible.reduce((acc, column) => {
-          acc[column] = true;
-          return acc;
-        }, {}),
-      };
-      setColumnVisibilityModel(newColumnVisibilityModel);
-    }
-  }, [currentView?.ColumnsVisible]);
-
-  useEffect(() => {
     if (currentView?.Filters) {
       setFilterModel({
         items:
@@ -283,7 +307,117 @@ export default function AllocationGrid({
           }) ?? [],
       });
     }
+
+    //Check if myTeam is selected, if yes, then check if filters match with myTeam
+    // If not, then update myTeam to allTeams
+    if (currentView?.Filters !== null && currentView?.MyTeam) {
+      const allocationManagerName = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      )?.FullName;
+
+      if (isMyTeamsValid(allocationManagerName, currentView?.Filters)) {
+        return;
+      }
+      dispatch(
+        updateCurrentView({
+          MyTeam: false,
+        })
+      );
+    }
+
+    // Check if myProjects is selected, if yes, then check if filters match with myProjects
+    // If not, then update myProjects to allProjects
+    if (currentView?.Filters !== null && currentView?.MyProjects) {
+      const projectManager = getResourceFromEmail(
+        user?.Email,
+        resources?.result || []
+      );
+
+      const projectManagerName = projectManager
+        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        : '';
+
+      if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
+        return;
+      }
+
+      dispatch(
+        updateCurrentView({
+          MyProjects: false,
+        })
+      );
+    }
   }, [currentView?.Filters]);
+
+  useEffect(() => {
+    const allocationManagerName = getResourceFromEmail(
+      user?.Email,
+      resources?.result || []
+    )?.FullName;
+
+    if (currentView?.MyTeam) {
+      const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+        allocationManagerName,
+        currentView?.Filters || [],
+        true
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    } else {
+      const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+        allocationManagerName,
+        currentView?.Filters || [],
+        false
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    }
+  }, [currentView?.MyTeam]);
+
+  useEffect(() => {
+    const projectManager = getResourceFromEmail(
+      user?.Email,
+      resources?.result || []
+    );
+
+    const projectManagerName = projectManager
+      ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+      : '';
+    if (currentView?.MyProjects) {
+      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+        projectManagerName,
+        currentView?.Filters || [],
+        true
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    } else {
+      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+        projectManagerName,
+        currentView?.Filters || [],
+        false
+      );
+
+      dispatch(
+        updateCurrentView({
+          Filters: updatedFilters,
+        })
+      );
+    }
+  }, [currentView?.MyProjects]);
 
   useEffect(() => {
     const isTeams = view === 'Teams';
@@ -305,17 +439,7 @@ export default function AllocationGrid({
     //     })
     //   );
     // }
-    if (currentView?.isDefaultRange) {
-      dispatch(
-        action({
-          startDate: generateDateWeekMath(
-            'WEEK_MINUS',
-            DEFAULT_PROJECT_WEEK_MINUS
-          ),
-          endDate: generateDateWeekMath('WEEK_PLUS', DEFAULT_PROJECT_WEEK_PLUS),
-        })
-      );
-    } else if (
+    if (
       currentView?.isDynamicRange &&
       currentView?.WeekMinus &&
       currentView?.WeekPlus
@@ -334,7 +458,6 @@ export default function AllocationGrid({
     currentView?.isDynamicRange,
     currentView?.WeekPlus,
     currentView?.WeekMinus,
-    currentView?.isDefaultRange,
   ]);
 
   const handleAddProject = (e, project, curRow) => {
@@ -378,6 +501,7 @@ export default function AllocationGrid({
         }
 
         const key = allocation.Allocation;
+
         allocationMap.set(key, weekObj);
       });
 
@@ -418,8 +542,8 @@ export default function AllocationGrid({
     handleAddProject,
     setSelectedResourceId,
     dispatch,
-    startDate,
-    endDate
+    generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
+    generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
   );
 
   const showField = [
@@ -660,8 +784,8 @@ export default function AllocationGrid({
       return 'child-of-zero-allocation-resource';
     }
     return '';
-  }
-  
+  };
+
   const handleFilterModelChange = newModel => {
     // setFilterModel(newModel);
 
@@ -678,11 +802,47 @@ export default function AllocationGrid({
   };
 
   const handleColumnVisibilityModelChange = newModel => {
-    // setColumnVisibilityModel(newModel);
+    // Do not allow the visibility to change for the necessary columns
+    const columnsToKeepVisible = {
+      teams: {
+        __row_group_by_columns_group_teams__: true,
+        __row_group_by_columns_group_resource__: true,
+        project: true,
+      },
+      project: {
+        resource: true,
+        __row_group_by_columns_group__: true,
+      },
+    };
+    let updatedModel = {
+      ...newModel,
+      ...columnsToKeepVisible[groupBy],
+    };
+
+    // To Handle Show/Hide All.
+    if (groupBy === 'teams') {
+      updatedModel = {
+        ..._columns['team'].reduce((acc, column) => {
+          acc[column] = true;
+          return acc;
+        }, {}),
+        ...updatedModel,
+      };
+    } else if (groupBy === 'project') {
+      updatedModel = {
+        ..._columns['project'].reduce((acc, column) => {
+          acc[column] = true;
+          return acc;
+        }, {}),
+        ...updatedModel,
+      };
+    }
+
+    setColumnVisibilityModel(updatedModel);
     dispatch(
       updateCurrentView({
-        ColumnsVisible: Object.keys(newModel).filter(
-          columnName => newModel[columnName]
+        ColumnsVisible: Object.keys(updatedModel).filter(
+          columnName => updatedModel[columnName]
         ),
       })
     );
@@ -692,6 +852,7 @@ export default function AllocationGrid({
     <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
       <StyledDataGrid
         cellSelection
+        allocationTheme={allocationTheme}
         isCellEditable={params => !params.row.hasButton}
         onCellKeyDown={handleCellKeyDown}
         rowModesModel={rowModesModel}
@@ -719,7 +880,9 @@ export default function AllocationGrid({
         )}
         defaultGroupingExpansionDepth={1}
         disableAutosize
-        getCellClassName={params => getCellClassName(params, updatedRows)}
+        getCellClassName={params =>
+          getCellClassName(params, updatedRows, allocationTheme)
+        }
         getRowClassName={params => getRowClassName(params)}
         cellSelectionModel={cellSelectionModel}
         onCellSelectionModelChange={handleCellSelectionModelChange}

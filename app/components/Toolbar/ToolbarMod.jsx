@@ -43,7 +43,7 @@ const ToolBox1 = styled(Box)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     '& button': {
-    //   padding: '3px 5px',
+      //   padding: '3px 5px',
       borderLeft: '1px solid #D6DCE1',
       height: '100%',
       borderRadius: '0',
@@ -90,7 +90,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       border: '1px solid #D6DCE1',
       borderRadius: '4px',
       height: '32px',
-      width :'24px',
+      width: '24px',
       padding: '5px 12px',
       fontSize: '13px',
       color: '#212121',
@@ -124,40 +124,13 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
         borderRadius: '4px',
       },
     },
-  }, '&.saveView' :{
+  },
+  '&.saveView': {
     backgroundColor: 'rgba(242, 245, 250, 0.3)',
     // border: '1px solid #D6DCE1',
     borderRadius: '4px',
     height: '32px',
-    width : '94px',
-    display: 'flex',
-    alignItems: 'center',
-    '& button': {
-      color: '#757575',
-      fontFamily: "'Manrope', serif",
-      fontWeight: '500',
-      fontSize: '13px',
-      lineHeight: '16px',
-      textAlign: 'center',
-      textTransform: 'none',
-      height: '100%',
-      '&.selected': {
-        color: '#212121',
-        fontWeight: '600',
-        backgroundColor: '#fff',
-        borderLeft: '1px solid #D6DCE1',
-        borderRight: '1px solid #D6DCE1',
-        borderRadius: '4px',
-      },
-    },
-    
-  }, 
-  '& defaultView-btn ' :{
-    backgroundColor: 'rgba(242, 245, 250, 0.3)',
-    // border: '1px solid #D6DCE1',
-    borderRadius: '4px',
-    height: '32px',
-    width:'132px',
+    width: '94px',
     display: 'flex',
     alignItems: 'center',
     '& button': {
@@ -179,9 +152,36 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       },
     },
   },
-//   '& .test-class' :{
-// display : 'flex',
-//   },
+  '& defaultView-btn ': {
+    backgroundColor: 'rgba(242, 245, 250, 0.3)',
+    // border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    height: '32px',
+    width: '132px',
+    display: 'flex',
+    alignItems: 'center',
+    '& button': {
+      color: '#757575',
+      fontFamily: "'Manrope', serif",
+      fontWeight: '500',
+      fontSize: '13px',
+      lineHeight: '16px',
+      textAlign: 'center',
+      textTransform: 'none',
+      height: '100%',
+      '&.selected': {
+        color: '#212121',
+        fontWeight: '600',
+        backgroundColor: '#fff',
+        borderLeft: '1px solid #D6DCE1',
+        borderRight: '1px solid #D6DCE1',
+        borderRadius: '4px',
+      },
+    },
+  },
+  //   '& .test-class' :{
+  // display : 'flex',
+  //   },
   '& .projectIcon': {
     backgroundColor: 'rgba(242, 245, 250, 0.3)',
     border: '1px solid #D6DCE1',
@@ -236,8 +236,8 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     borderRadius: '4px',
     height: '32px',
   },
-  '& .startIcon' :{
-    margin : '0px',
+  '& .startIcon': {
+    margin: '0px',
   },
 }));
 
@@ -253,23 +253,26 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   '&.Mui-selected': {
     backgroundColor: 'rgb(52 70 101 / 2%) !important',
     fontWeight: '600',
-  },'&.viewOptionsMenu':{
-    display: "flex",
-    width: "116px",
-    height: "32px",
-    padding: "4px 10px",
-    justifyContent:" center",
-    alignItems:" center",
-    gap: "6px",
-    flexShrink: "0",
-},
+  },
+  '&.viewOptionsMenu': {
+    display: 'flex',
+    width: '116px',
+    height: '32px',
+    padding: '4px 10px',
+    justifyContent: ' center',
+    alignItems: ' center',
+    gap: '6px',
+    flexShrink: '0',
+  },
 }));
 
 const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const view = useSelector(state => state.allocationView.view);
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
-  const { calendarDate: projectsCalendar } = useSelector(state => state.projects);
+  const { calendarDate: projectsCalendar } = useSelector(
+    state => state.projects
+  );
   let startDate, endDate;
   if (view === 'Teams') {
     startDate = teamsCalendar.startDate;
@@ -281,7 +284,7 @@ const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
 
   const viewOptions = [
     'Teams',
-    'Projects',
+    'Project',
     // 'Organizations'
   ];
   const [active, setActive] = useState(false);
@@ -298,16 +301,27 @@ const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
     setActive(prev => !prev);
   };
 
-  const changeCalendarDate = (type) => {
+  const changeCalendarDate = type => {
     const isTeams = view === 'Teams';
     const isNext = type === 'next';
 
-    const action = isTeams ? updateStartAndEndDate : updateProjectStartAndEndDate;
+    const action = isTeams
+      ? updateStartAndEndDate
+      : updateProjectStartAndEndDate;
 
-    const startKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', isNext, !isNext);
-    const endKey = generateFirstAndLastMonthYear(isNext ? endDate : startDate, 'yyyy-MM-dd', !isNext);
+    const startKey = generateFirstAndLastMonthYear(
+      isNext ? endDate : startDate,
+      'yyyy-MM-dd',
+      isNext,
+      !isNext
+    );
+    const endKey = generateFirstAndLastMonthYear(
+      isNext ? endDate : startDate,
+      'yyyy-MM-dd',
+      !isNext
+    );
 
-    dispatch(action({startDate: startKey, endDate: endKey}));
+    dispatch(action({ startDate: startKey, endDate: endKey }));
   };
 
   return (
@@ -318,240 +332,270 @@ const ToolbarMod = React.memo(({ setFilterButtonEl }) => {
       position={'relative'}
       zIndex={1}
     >
-      <ToolBox1  >
-        <Button className='viewOptionsMenu' sx={{ textTransform: 'none',fontWeight:'100' }}>
-        <FormControl
-          size="small"
-          sx={{ minWidth: 100, border: 'none', boxShadow: 'none' }}
-          
+      <ToolBox1>
+        <Button
+          className="viewOptionsMenu"
+          sx={{ textTransform: 'none', fontWeight: '100' }}
         >
-            <Box className= "test-class" 
-            sx={{
-                borderRadius: "var(--borderRadius, 4px)",
-                border: "1px solid rgba(28, 45, 95, 0.10)",
-                background: "rgba(28, 45, 95, 0.02)",
-                display :"flex",
-                gap : 1,
-                padding :"2px",
-                height : '32px' ,
-                
-              '& .MuiOutlinedInput-notchedOutline': {
-                border: 'none',
-              },
-            }}> 
-            {/* <Box className = "img-class"> */}
-         <img src="/images/icons/TeamsIcon.svg" alt="columns" />
-         {/* </Box> */}
-          <Select
-            value={view || 'Teams'}
-            onChange={handleViewChange}
-            className="projectDropdown"
-            // sx={{
-            //     bordeeRadius: "var(--borderRadius, 4px)",
-            //     border: "1px solid rgba(28, 45, 95, 0.10)",
-            //     background: "rgba(28, 45, 95, 0.02)",
-            //   '& .MuiOutlinedInput-notchedOutline': {
-            //     border: 'none',
-            //   },
-            // }}
-            defaultValue="Teams"
-            IconComponent={KeyboardArrowDown}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  backgroundColor: '#FFFFFF',
-                  boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
-                  padding: '0',
-                },
-              },
-            }}
+          <FormControl
+            size="small"
+            sx={{ minWidth: 100, border: 'none', boxShadow: 'none' }}
           >
-            {viewOptions.map((option, index) => (
-              <StyledMenuItem key={index} value={option}>
-                {option}
-              </StyledMenuItem>
-            ))}
-          </Select>
-          </Box>
-        </FormControl>
+            <Box
+              className="test-class"
+              sx={{
+                borderRadius: 'var(--borderRadius, 4px)',
+                border: '1px solid rgba(28, 45, 95, 0.10)',
+                background: 'rgba(28, 45, 95, 0.02)',
+                display: 'flex',
+                gap: 1,
+                padding: '2px',
+                height: '32px',
+
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+              }}
+            >
+              {/* <Box className = "img-class"> */}
+              <img src="/images/icons/TeamsIcon.svg" alt="columns" />
+              {/* </Box> */}
+              <Select
+                value={view || 'Teams'}
+                onChange={handleViewChange}
+                className="projectDropdown"
+                // sx={{
+                //     bordeeRadius: "var(--borderRadius, 4px)",
+                //     border: "1px solid rgba(28, 45, 95, 0.10)",
+                //     background: "rgba(28, 45, 95, 0.02)",
+                //   '& .MuiOutlinedInput-notchedOutline': {
+                //     border: 'none',
+                //   },
+                // }}
+                defaultValue="Teams"
+                IconComponent={KeyboardArrowDown}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
+                      padding: '0',
+                    },
+                  },
+                }}
+              >
+                {viewOptions.map((option, index) => (
+                  <StyledMenuItem key={index} value={option}>
+                    {option}
+                  </StyledMenuItem>
+                ))}
+              </Select>
+            </Box>
+          </FormControl>
         </Button>
       </ToolBox1>
 
-     
-          
-
-     <Box className = "toolbox2-parent"  sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center'}}>
-
-      <ToolBox2  className="filterTopRow" sx={{gap: 2}}>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2}}>
-          <Box className="projectIcon">
-            {view === 'Projects' ? (
-              <>
-                <TooltipButton
-                  msg="My Project"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <MyProjectIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-                <TooltipButton
-                  msg="All Projects"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <AllProjectIcon color={!active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-              </>
-            ) : view === 'Teams' ? (    
-              <>
-                <TooltipButton
-                  msg="My Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <MyTeamsIcon
-                    color={active ? '#344665' : '#99A2B2'}
-                    fontSize={'18'}
-                  />
-                </TooltipButton>
-                <TooltipButton
-                  msg="All Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <AllTeamsIcon color={!active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-              </>
-            ) : (
-              <>
-                <TooltipButton
-                  msg="My Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-                <TooltipButton
-                  msg="All Teams"
-                  placement="bottom"
-                  onClick={handleClick}
-                >
-                  <AllTeamsIcon color={active ? '#344665' : '#99A2B2'} />
-                </TooltipButton>
-              </>
-            )}
-          </Box>
-         
-          
-         
-         
-        </Box>
-
-  <Box className="filterColBlock">
-        <GridToolbarFilterButton ref={setFilterButtonEl}
-                      slotProps={{
-                        tooltip: { title: 'Filter' },
-                        button: {
-                          variant: 'outlined',
-                          sx: {
-                            color: '#555',
-                            borderColor: '#ddd',
-                            padding: 0,  // Remove padding to make button width fit the icon size
-                            minWidth: 'auto',  // Set min-width to auto so it adjusts to the icon
-                            width: '33px',  // Make the button width auto-adjust to content
-                            height: '32px',  // Ensure the height is consistent with your icons
-                            display: 'flex',  // Flexbox ensures the icon and button align correctly
-                            justifyContent: 'center',  // Center the icon in the button
-                            alignItems: 'center',  // Vertically center the icon
-                          },
-                          
-                          startIcon: (
-                            // <Box className = "startIcon" sx={{}}>
-                            <img src="/images/icons/FilterNewIcon.svg" alt="filter" height={32} width={34} />
-                            // </Box>
-                          ),
-                        },
-                      }}
+      <Box
+        className="toolbox2-parent"
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          width: '100%',
+          alignItems: 'center',
+        }}
+      >
+        <ToolBox2 className="filterTopRow" sx={{ gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box className="projectIcon">
+              {view === 'Project' ? (
+                <>
+                  <TooltipButton
+                    msg="My Project"
+                    placement="bottom"
+                    onClick={handleClick}
+                  >
+                    <MyProjectIcon color={active ? '#344665' : '#99A2B2'} />
+                  </TooltipButton>
+                  <TooltipButton
+                    msg="All Projects"
+                    placement="bottom"
+                    onClick={handleClick}
+                  >
+                    <AllProjectIcon color={!active ? '#344665' : '#99A2B2'} />
+                  </TooltipButton>
+                </>
+              ) : view === 'Teams' ? (
+                <>
+                  <TooltipButton
+                    msg="My Teams"
+                    placement="bottom"
+                    onClick={handleClick}
+                  >
+                    <MyTeamsIcon
+                      color={active ? '#344665' : '#99A2B2'}
+                      fontSize={'18'}
                     />
-                    
-        <GridToolbarColumnsButton
-                                  slotProps={{
-                                    tooltip: { title: 'Columns' },
+                  </TooltipButton>
+                  <TooltipButton
+                    msg="All Teams"
+                    placement="bottom"
+                    onClick={handleClick}
+                  >
+                    <AllTeamsIcon color={!active ? '#344665' : '#99A2B2'} />
+                  </TooltipButton>
+                </>
+              ) : (
+                <>
+                  <TooltipButton
+                    msg="My Teams"
+                    placement="bottom"
+                    onClick={handleClick}
+                  >
+                    <MyTeamsIcon color={active ? '#344665' : '#99A2B2'} />
+                  </TooltipButton>
+                  <TooltipButton
+                    msg="All Teams"
+                    placement="bottom"
+                    onClick={handleClick}
+                  >
+                    <AllTeamsIcon color={active ? '#344665' : '#99A2B2'} />
+                  </TooltipButton>
+                </>
+              )}
+            </Box>
+          </Box>
 
-                                    button: {
-                                      variant: 'outlined',
-                                      sx: {
-                                        width: '55px',  // Set width to 55px
-                                        height: '32px', // Set height to 32px
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                      },
-                                      startIcon: (
-                                        // <img src="/images/icons/columnDown.svg" alt="columns" />
-                                        <Box className = "Column-Toolbar" sx={{display:'flex',marginLeft:"12px",justifyContent:'space-evenly'}}>
-                                        <img src="/images/icons/columns.svg" alt="columns" />
-                                        <img src="/images/icons/downIcon.svg" alt="columns" />
+          <Box className="filterColBlock">
+            <GridToolbarFilterButton
+              ref={setFilterButtonEl}
+              slotProps={{
+                tooltip: { title: 'Filter' },
+                button: {
+                  variant: 'outlined',
+                  sx: {
+                    color: '#555',
+                    borderColor: '#ddd',
+                    padding: 0, // Remove padding to make button width fit the icon size
+                    minWidth: 'auto', // Set min-width to auto so it adjusts to the icon
+                    width: '33px', // Make the button width auto-adjust to content
+                    height: '32px', // Ensure the height is consistent with your icons
+                    display: 'flex', // Flexbox ensures the icon and button align correctly
+                    justifyContent: 'center', // Center the icon in the button
+                    alignItems: 'center', // Vertically center the icon
+                  },
 
-                                        </Box>
-                                      ),
-                                    },
-                                  }}
-                                  
-                                />
-                                
-                                </Box>
-                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <IconButton onClick={() => changeCalendarDate('prev')} size="medium" className="nextPrevIcon">
-                                      <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
-                                    </IconButton>
-                                 <Button className="selectedDate">{`${first} - ${last}`}</Button>
-            <IconButton onClick={() => changeCalendarDate('next')} size="medium" className="nextPrevIcon">
+                  startIcon: (
+                    // <Box className = "startIcon" sx={{}}>
+                    <img
+                      src="/images/icons/FilterNewIcon.svg"
+                      alt="filter"
+                      height={32}
+                      width={34}
+                    />
+                    // </Box>
+                  ),
+                },
+              }}
+            />
+
+            <GridToolbarColumnsButton
+              slotProps={{
+                tooltip: { title: 'Columns' },
+
+                button: {
+                  variant: 'outlined',
+                  sx: {
+                    width: '55px', // Set width to 55px
+                    height: '32px', // Set height to 32px
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                  startIcon: (
+                    // <img src="/images/icons/columnDown.svg" alt="columns" />
+                    <Box
+                      className="Column-Toolbar"
+                      sx={{
+                        display: 'flex',
+                        marginLeft: '12px',
+                        justifyContent: 'space-evenly',
+                      }}
+                    >
+                      <img src="/images/icons/columns.svg" alt="columns" />
+                      <img src="/images/icons/downIcon.svg" alt="columns" />
+                    </Box>
+                  ),
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton
+              onClick={() => changeCalendarDate('prev')}
+              size="medium"
+              className="nextPrevIcon"
+            >
+              <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
+            </IconButton>
+            <Button className="selectedDate">{`${first} - ${last}`}</Button>
+            <IconButton
+              onClick={() => changeCalendarDate('next')}
+              size="medium"
+              className="nextPrevIcon"
+            >
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
 
-          <Box className="dayWeekBlock">
-              <Button className="selected">Week
-              <img src ={'/images/icons/downIcon.svg'} alt='down-arrow'/>
+            <Box className="dayWeekBlock">
+              <Button className="selected">
+                Week
+                <img src={'/images/icons/downIcon.svg'} alt="down-arrow" />
               </Button>
-              
-              </Box>
+            </Box>
 
-
-              {/* <Box className="dayWeekBlock"> */}
-              {/* <Button className="selected">Week</Button> */}
-              {/* <img src ={'/images/icons/_Button_.svg'} alt='down-arrow'/> */}
-              {/* </Box> */}
+            {/* <Box className="dayWeekBlock"> */}
+            {/* <Button className="selected">Week</Button> */}
+            {/* <img src ={'/images/icons/_Button_.svg'} alt='down-arrow'/> */}
+            {/* </Box> */}
           </Box>
-          
 
           <Box className="defaultView-btn">
-              <Button className="selected"><img src={'/images/icons/Frame8.svg'} alt="default view"  height={28} width={120}/></Button>
-              
-             
+            <Button className="selected">
+              <img
+                src={'/images/icons/Frame8.svg'}
+                alt="default view"
+                height={28}
+                width={120}
+              />
+            </Button>
           </Box>
 
-          <Box className="saveView" sx={{marginLeft:'0px',paddingLeft:"0px",}}>
-              <Button className="selected"><img src={'/images/icons/Frame9.svg'} alt="save-view-Button" height={28} width={120} /></Button>
-             
+          <Box
+            className="saveView"
+            sx={{ marginLeft: '0px', paddingLeft: '0px' }}
+          >
+            <Button className="selected">
+              <img
+                src={'/images/icons/Frame9.svg'}
+                alt="save-view-Button"
+                height={28}
+                width={120}
+              />
+            </Button>
           </Box>
-                    
-      </ToolBox2>
+        </ToolBox2>
 
-      <Box className="viewFilterBlock" sx={{padding:"0px"}}>
-         
-            <IconButton size="medium" className="exportIcon">
-                          <img src={'/images/icons/Historyicon.svg'} alt="left-arrow"  />
-                        </IconButton>
-          
-     {/* <CustomExport /> */}
-     <IconButton size="medium" className="exportIcon">
-                          <img src={'/images/icons/exporticonnew.svg'} alt="left-arrow" />
-                        </IconButton>
-                       
-          </Box>
-          </Box>  
+        <Box className="viewFilterBlock" sx={{ padding: '0px' }}>
+          <IconButton size="medium" className="exportIcon">
+            <img src={'/images/icons/Historyicon.svg'} alt="left-arrow" />
+          </IconButton>
+
+          {/* <CustomExport /> */}
+          <IconButton size="medium" className="exportIcon">
+            <img src={'/images/icons/exporticonnew.svg'} alt="left-arrow" />
+          </IconButton>
+        </Box>
+      </Box>
     </Box>
   );
 });

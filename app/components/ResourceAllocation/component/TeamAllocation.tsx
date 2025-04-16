@@ -11,6 +11,8 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { Tooltip } from '@mui/material';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
+import { ApiResponse, Resource } from '@/app/types';
+import { getAllocationManagerFromPath } from '@/app/utils/common';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -19,6 +21,9 @@ export default function TeamAllocation() {
   const { teams, resources, loading, dataProcessing, calendarDate } =
     useSelector((state: RootState) => state.teams);
   const { startDate, endDate } = calendarDate || {};
+  const _resources = useSelector(
+    (state: RootState) => state.resources.resources
+  ) as ApiResponse<Resource[]> | null;
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -159,7 +164,14 @@ export default function TeamAllocation() {
       sortable: false,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team ? <span>{team?.AllocationManager ?? 'N/A'}</span> : null;
+        return team && _resources && 'result' in _resources ? (
+          <span>
+            {getAllocationManagerFromPath(
+              team?.AllocationManager,
+              _resources?.result || []
+            )?.FullName ?? 'N/A'}
+          </span>
+        ) : null;
       },
     },
     {
@@ -213,6 +225,8 @@ export default function TeamAllocation() {
               teamStatus: false,
               __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
               __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
+              project: true,
+              resourceType: true,
               teams: false, // This column has to always be false, as we are using grouping.
               resource: false, // This column has to always be false, as we are using grouping.
             },

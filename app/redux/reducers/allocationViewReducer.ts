@@ -1,4 +1,8 @@
 import {
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+} from '@/app/constants/constants';
+import {
   addAllocationView,
   deleteAllocationView,
   getAllSavedViews,
@@ -19,7 +23,11 @@ const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
   'resourceType',
 ];
 
-const DEFAULT_VISIBLE_PROJECTS_COLUMNS = ['resource', 'totalEffort'];
+const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
+  '__row_group_by_columns_group__',
+  'resource',
+  'totalEffort',
+];
 
 const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Id: '0',
@@ -32,13 +40,12 @@ const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   MyTeam: false,
   MyProjects: false,
   ColumnsVisible: DEFAULT_VISIBLE_TEAMS_COLUMNS,
-  isDefaultRange: true,
-  isDynamicRange: false,
+  isDynamicRange: true,
   isFixedRange: false,
   StartDate: null,
   EndDate: null,
-  WeekPlus: null,
-  WeekMinus: null,
+  WeekPlus: DEFAULT_PROJECT_WEEK_PLUS,
+  WeekMinus: DEFAULT_PROJECT_WEEK_MINUS,
   Filters: [],
 };
 
@@ -58,7 +65,10 @@ const initialState: AllocationGridViewState = {
       'teamAllocationManager',
     ],
     project: [
-      '__row_group_by_columns_group__project__',
+      '__row_group_by_columns_group__',
+      'resource',
+      'totalEffort',
+      'project',
       'projectSponsor',
       'projectManager',
       'projectStatus',
@@ -111,7 +121,6 @@ const viewSlice = createSlice({
       state.currentView = action.payload;
     },
     updateCurrentView: (state, action) => {
-      console.log('Updating Current View : ', action.payload);
       state.currentView = {
         ...state.currentView,
         ...action.payload,
@@ -155,14 +164,13 @@ const viewSlice = createSlice({
               isDefault: view.isDefault,
               isProjectDefault: false,
               GroupBy: view.GroupBy,
-              MyTeam: view.ShowBy === 'MyTeam',
-              MyProjects: view.ShowBy === 'MyProjects',
+              MyTeam: view.ShowBy === 'MyTeams',
+              MyProjects: view.ShowBy === 'MyProject',
               ColumnsVisible: view.Columns,
               StartDate: view.StartDate,
               EndDate: view.EndDate,
               isFixedRange: view.isFixedRange,
               isDynamicRange: view.isDynamicRange,
-              isDefaultRange: !view.isFixedRange && !view.isDynamicRange,
               WeekPlus: view.WeekPlus,
               WeekMinus: view.WeekMinus,
               Filters: view.Filters,
@@ -191,14 +199,13 @@ const viewSlice = createSlice({
           isDefault: newView.isDefault,
           isProjectDefault: false,
           GroupBy: newView.GroupBy,
-          MyTeam: newView.ShowBy === 'MyTeam',
-          MyProjects: newView.ShowBy === 'MyProjects',
+          MyTeam: newView.ShowBy === 'MyTeams',
+          MyProjects: newView.ShowBy === 'MyProject',
           ColumnsVisible: newView.Columns,
           StartDate: newView.StartDate,
           EndDate: newView.EndDate,
           isFixedRange: newView.isFixedRange,
           isDynamicRange: newView.isDynamicRange,
-          isDefaultRange: !newView.isFixedRange && !newView.isDynamicRange,
           WeekPlus: newView.WeekPlus,
           WeekMinus: newView.WeekMinus,
           Filters: newView.Filters,
@@ -230,15 +237,13 @@ const viewSlice = createSlice({
           isDefault: updatedView?.isDefault,
           isProjectDefault: false,
           GroupBy: updatedView?.GroupBy,
-          MyTeam: updatedView?.ShowBy === 'MyTeam',
-          MyProjects: updatedView?.ShowBy === 'MyProjects',
+          MyTeam: updatedView?.ShowBy === 'MyTeams',
+          MyProjects: updatedView?.ShowBy === 'MyProject',
           ColumnsVisible: updatedView?.Columns,
           StartDate: updatedView?.StartDate,
           EndDate: updatedView?.EndDate,
           isFixedRange: updatedView?.isFixedRange,
           isDynamicRange: updatedView?.isDynamicRange,
-          isDefaultRange:
-            !updatedView?.isFixedRange && !updatedView?.isDynamicRange,
           WeekPlus: updatedView?.WeekPlus,
           WeekMinus: updatedView?.WeekMinus,
           Filters: updatedView?.Filters,
