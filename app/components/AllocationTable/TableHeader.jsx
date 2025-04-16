@@ -9,7 +9,14 @@ import {
   TOTAL_FUTURE_WEEKS,
 } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
-import { addWeeks, differenceInWeeks, format, parseISO } from 'date-fns';
+import {
+  addWeeks,
+  differenceInCalendarWeeks,
+  differenceInWeeks,
+  format,
+  isSameWeek,
+  parseISO,
+} from 'date-fns';
 
 const WEEK_CONFIG = {
   TOTAL_WEEKS: TOTAL_FUTURE_WEEKS + 1,
@@ -44,11 +51,11 @@ const createValueHandlers = dispatch => ({
     return isNaN(parsed) ? null : parsed;
   },
 
-  valueFormatter: (value) => {
+  valueFormatter: value => {
     if (!value) {
       return value;
     }
-    if(typeof value === 'number') {
+    if (typeof value === 'number') {
       return value.toFixed(1);
     }
     return value;
@@ -93,13 +100,17 @@ export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
   const currentDate = new Date();
-  const isoString = format(currentDate, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-  const currentWeekIndex = differenceInWeeks( isoString ,isoStart  );
- 
-  return Array.from({ length: WEEK_CONFIG.TOTAL_WEEKS }, (_, i) => {
+
+  const totalWeeks = differenceInCalendarWeeks(isoEnd, isoStart) + 1; // inclusive
+
+  return Array.from({ length: totalWeeks }, (_, i) => {
     const weekDate = addWeeks(isoStart, i);
+    const isCurrentWeek = isSameWeek(weekDate, currentDate, {
+      weekStartsOn: 1,
+    });
+
     return {
-      ...createBaseColumnConfig(weekDate, i === currentWeekIndex),
+      ...createBaseColumnConfig(weekDate, isCurrentWeek),
       ...(dispatch ? createValueHandlers(dispatch) : {}),
     };
   });
@@ -138,13 +149,24 @@ export const generateColumnGroupingModel = (startDate, allColumns) => {
   return groups;
 };
 
-export const getAllColumnsWithWeek = (existingColumns = [], dispatch, startDate, endDate) => [
-  ...existingColumns,
-  ...generateWeeklyColumns(startDate, endDate, dispatch),
-];
+export const getAllColumnsWithWeek = (
+  existingColumns = [],
+  dispatch,
+  startDate,
+  endDate
+) => {
+  console.log(
+    'generateWeeklyColumns(startDate, endDate, dispatch) : ',
+    generateWeeklyColumns(startDate, endDate, dispatch)
+  );
+  return [
+    ...existingColumns,
+    ...generateWeeklyColumns(startDate, endDate, dispatch),
+  ];
+};
 
 export const aggregationModel = (startDate, endDate) => {
   return generateWeeklyColumns(startDate, endDate)
-  .filter(column => column.field.startsWith('W'))
-  .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});;
+    .filter(column => column.field.startsWith('W'))
+    .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
 };

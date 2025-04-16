@@ -16,6 +16,7 @@ import {
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
+import { parseISO } from 'date-fns';
 
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
@@ -254,7 +255,9 @@ export const generateTMinusOneStartEndDate = isStartDate => {
 };
 
 export const generateDateWeekMath = (operation, weeks) => {
+  if (weeks === undefined || weeks === null) return null;
   let today = new Date();
+  today = parseISO(today.toISOString());
 
   let weeksMonday;
   switch (operation) {

@@ -426,6 +426,14 @@ export default function AllocationGrid({
       currentView?.WeekMinus &&
       currentView?.WeekPlus
     ) {
+      console.log(
+        "generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) : ",
+        generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+      );
+      console.log(
+        "generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) : ",
+        generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+      );
       dispatch(
         action({
           startDate: generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus),
@@ -483,6 +491,7 @@ export default function AllocationGrid({
         }
 
         const key = allocation.Allocation;
+
         allocationMap.set(key, weekObj);
       });
 
@@ -523,8 +532,8 @@ export default function AllocationGrid({
     handleAddProject,
     setSelectedResourceId,
     dispatch,
-    startDate,
-    endDate
+    generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
+    generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
   );
 
   const showField = [
