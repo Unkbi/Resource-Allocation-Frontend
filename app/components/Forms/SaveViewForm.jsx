@@ -176,10 +176,10 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         currentView?.GroupBy === 'Teams'
           ? currentView?.MyTeam
             ? 'MyTeams'
-            : 'allTeams'
+            : 'AllTeams'
           : currentView?.MyProjects
-            ? 'myProjects'
-            : 'allProjects',
+            ? 'MyProject'
+            : 'AllProject',
       dateRangeType: currentView?.isDynamicRange ? 'dynamic' : 'fixed',
       dynamicDateRangeAdd: currentView?.WeekPlus || DEFAULT_PROJECT_WEEK_PLUS,
       dynamicDateRangeSubtract:
@@ -216,7 +216,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         setFieldValue('filters', updatedFilters);
         return;
       }
-      if (values.showBy === 'allTeams') {
+      if (values.showBy === 'AllTeams') {
         const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
           allocationManagerName,
           values.filters,
@@ -235,7 +235,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
         : '';
 
-      if (values.showBy === 'myProjects') {
+      if (values.showBy === 'MyProject') {
         const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
           projectManagerName,
           values.filters,
@@ -244,7 +244,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         setFieldValue('filters', updatedFilters);
         return;
       }
-      if (values.showBy === 'allProjects') {
+      if (values.showBy === 'AllProject') {
         const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
           projectManagerName,
           values.filters,
@@ -264,9 +264,9 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       )?.FullName;
 
       if (!isMyTeamsValid(allocationManagerName, values.filters)) {
-        setFieldValue('showBy', 'allTeams');
+        setFieldValue('showBy', 'AllTeams');
       }
-    } else if (values?.showBy === 'myProjects') {
+    } else if (values?.showBy === 'MyProject') {
       const projectManager = getResourceFromEmail(
         user?.Email,
         resources?.result || []
@@ -277,7 +277,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         : '';
 
       if (!isMyProjectsValid(projectManagerName, values.filters)) {
-        setFieldValue('showBy', 'allProjects');
+        setFieldValue('showBy', 'AllProject');
       }
     }
   }, [values.filters]);
@@ -337,7 +337,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
               label={<StyledOptionsLabel>My Teams</StyledOptionsLabel>}
             />
             <FormControlLabel
-              value="allTeams"
+              value="AllTeams"
               control={<Radio size="small" />}
               label={<StyledOptionsLabel>All Teams</StyledOptionsLabel>}
             />
@@ -345,19 +345,19 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         ) : (
           <RadioGroup
             name="showBy"
-            value={values?.showBy || 'myProjects'}
+            value={values?.showBy || 'MyProject'}
             onChange={handleChange}
             onBlur={handleBlur}
             row
             sx={{ gap: 2 }}
           >
             <FormControlLabel
-              value="myProjects"
+              value="MyProject"
               control={<Radio size="small" />}
               label={<StyledOptionsLabel>My Projects</StyledOptionsLabel>}
             />
             <FormControlLabel
-              value="allProjects"
+              value="AllProject"
               control={<Radio size="small" />}
               label={<StyledOptionsLabel>All Projects</StyledOptionsLabel>}
             />

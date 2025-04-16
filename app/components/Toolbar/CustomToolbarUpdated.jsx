@@ -820,7 +820,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <span ref={myTeamsButtonRef}>
                     <MyTeamsIcon
                       sx={{ width: 18, height: 18 }}
-                      // color={showOnlyMyTeams ? '#344665' : '#99A2B2'}
                       color={currentView?.MyTeam ? '#344665' : '#99A2B2'}
                     />
                   </span>
@@ -833,7 +832,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 >
                   <span ref={myTeamsButtonRef}>
                     <AllTeamsIcon
-                      // color={!showOnlyMyTeams ? '#344665' : '#99A2B2'}
                       color={currentView?.MyTeam ? '#99A2B2' : '#344665'}
                     />
                   </span>
