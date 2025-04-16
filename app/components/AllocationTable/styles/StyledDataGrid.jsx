@@ -2,314 +2,350 @@ import { getInitialsColor } from '@/app/utils/common';
 import { styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
-export const StyledDataGrid = styled(DataGridPremium)(({ theme,loading,groupBy}) => ({
-  [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
-    {
-      // width: '240px !important',
-      fontSize: '14px',
-    },
-  [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
-    {
-      // width: '240px !important',
-      fontWeight:"bold",
-    },
-  [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
-    {
-      outline: 'none',
-    },
-  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
-    // width: '240px',
-    backgroundColor: !loading && '#F1F6FF',
-    },
-  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"]`]: {
-    backgroundColor: !loading && '#F7FBFF',
-    },
-  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"].secondGroupsRow`]: {
-    backgroundColor: !loading && '#F0F7FF',
-    },
-  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"]`]: {
-    backgroundColor: !loading && '#F7FBFF',
-    },
-  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"].secondGroupsRow`]: {
-    backgroundColor: !loading && '#F0F7FF',
-    },
-  [`& .${gridClasses.cell}[data-field="project"].secondGroupsRow`]: {
-    backgroundColor: !loading && '#F0F7FF',
-    },
-  [`& .${gridClasses.cell}[data-field="project"]`]: {
-    backgroundColor: !loading && '#F7FBFF',
-    },
-  [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
-    backgroundColor: !loading && '#F7FBFF',
-    },
-  [`& .${gridClasses.cell}[data-field="resourceType"].secondGroupsRow`]: {
-    backgroundColor: !loading && '#F0F7FF',
-    },
-  [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
-    backgroundColor: !loading && '#F7FBFF',
-    },
-  [`& .${gridClasses.cell}[data-field="teamStatus"].secondGroupsRow`]: {
-    backgroundColor: !loading && '#F0F7FF',
-    },
-  [`& .${gridClasses.cell}[data-field="teamAllocationManager"]`]: {
-    backgroundColor: !loading && '#F7FBFF',
-    },
-  [`& .${gridClasses.cell}[data-field="teamAllocationManager"].secondGroupsRow`]: {
-    backgroundColor: !loading && '#F0F7FF',
-    },
-    
-  //  '& .MuiDataGrid-row:hover': {
-  //   backgroundColor: 'inherit !important',
-  //   },
-  [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
-    {
-      '&:before': {
-        content: '""',
-        position: 'absolute',
-        top: '5px',
-        left: '0px',
-        width: '5px',
-        height: '40px',
-        // backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
-      },
-    },
-  '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
-    boxShadow: 'none !important',
-  },
-  '& .common-NonEditableCells' :{
-  backgroundColor : '#F1F6FF',
-  },
-  '& .MuiDataGrid-row--editing .MuiDataGrid-cell.common-NonEditableCells': {
-  backgroundColor: '#F1F6FF !important',
-},
-  '& .project-view-projectName' :{
-    backgroundColor : '#E9EFF8',
-  },
- 
-  [`& .${gridClasses.columnHeader}`]: {
-    '&.prime-header': {},
-    '&.secondary-header': {},
-    '&.weekly-header': {},
-  },
-  [`& .${gridClasses.cell}`]: {
-    '&.prime-cell': {},
-    '&.secondary-cell': {},
-    '&.weeklyCell': {},
-  },
-  [`.${gridClasses.cell}`]: {
-    "& input[type='number']": {
-      appearance: 'textfield',
-      margin: 0,
-    },
-    "& input[type='number']::-webkit-outer-spin-button, & input[type='number']::-webkit-inner-spin-button":
+export const StyledDataGrid = styled(DataGridPremium)(({
+  theme,
+  loading,
+  groupBy,
+  allocationTheme = [],
+}) => {
+  const allocationRangeStyles = {};
+
+  if (Array.isArray(allocationTheme) && allocationTheme.length > 0) {
+    allocationTheme.forEach(range => {
+      // Primary styles for teams
+      allocationRangeStyles[`& .allocation-theme-${range.id}`] = {
+        backgroundColor: range.darkColor,
+      };
+
+      // Secondary styles for resources
+      allocationRangeStyles[`& .allocation-theme-${range.id}-secondGroup`] = {
+        backgroundColor: `${range.color}`,
+        borderBottom: `2px solid ${range.darkColor}`,
+      };
+    });
+  }
+
+  return {
+    ...allocationRangeStyles,
+
+    [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
       {
-        display: 'none',
-      },
-  },
-  '& .MuiDataGrid-cell': {
-    borderRight: '1px solid #DDE1E4',
-    fontSize: '14px',
-    padding: '0 16px',
-    color: '#313F68',
-    fontFamily: theme.typography.fontFamily,
-    fontWeight: '500',
-    textAlign :'left',
-  },
-  '& .MuiDataGrid-columnHeader': {
-    borderRight: '1px solid #DDE1E4',
-    backgroundColor: '#F1F6FF',
-    padding: '0 16px 10px',
-    color: '#313F68',
-    fontFamily: theme.typography.fontFamily,
-    fontWeight: '500',
-    '& .MuiDataGrid-columnHeaderTitleContainer': {
-      // alignItems: 'flex-start',
-      '& .MuiDataGrid-columnHeaderTitle': {
         fontSize: '14px',
-        fontWeight:"bold",
       },
-    },
-  },
-  '& .MuiDataGrid-row': {
-    '&:hover': {
-      backgroundColor: '#FBFCFE',
-      '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
-        backgroundColor: (!loading)&& (groupBy==='project' ? '#F1F6FF !important' : '#F7FBFF !important'),
+    [`& .${gridClasses.columnHeader}[data-fields="|-__row_group_by_columns_group__-|"]`]:
+      {
+        fontWeight: 'bold',
       },
+    [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
+      {
+        outline: 'none',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
+      backgroundColor: !loading && '#F1F6FF',
     },
-  },
-  '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.firstGroupsRow': {
-    backgroundColor: '#e9eff8 !important',
-  },
-    '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.secondGroupsRow': {
-    backgroundColor: '#f0f7ff !important',
-  },
-  border: 'none',
-  '& .MuiDataGrid-groupingCriteriaCell span[style*="white-space: pre"]': {
-    display: 'none',
-  },
-  '& .MuiDataGrid-groupingCriteriaCell': {
-    padding: '0',
-  },
-  '& .MuiDataGrid-cellContent': {
-    paddingLeft: '8px',
-  },
-  '& .MuiDataGrid-groupingCriteriaCellToggle': {
-    marginLeft: '-10px',
-    marginRight: '4px',
-  },
-  '& .MuiDataGrid-columnHeader[data-field="project"] .MuiDataGrid-groupingCriteriaCellToggle': {
-  marginLeft: '20px !important',
-  marginRight: '20px !important',
-  },
-  '& .MuiDataGrid-aggregationColumnHeaderLabel': {
-    display: 'none',
-  },
-  '& .errorCell': {
-    '& input': {
-      border: '1px solid red !important',
-      backgroundColor: 'rgb(126,10,15, 0.1) !important',
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"]`]:
+      {
+        backgroundColor: !loading && '#F7FBFF',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"]`]:
+      {
+        backgroundColor: !loading && '#F7FBFF',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
+    [`& .${gridClasses.cell}[data-field="project"].secondGroupsRow`]: {
+      backgroundColor: !loading && '#F0F7FF',
     },
-  },
-  '& .MuiDataGrid-filler--pinnedLeft': {
-    width: '240px',
-  },
-  '& .Mui-error': {
-    '& input': {
-      border: '1px solid red !important',
-      backgroundColor: 'rgb(126,10,15, 0.1)',
-      color: theme.palette.error.main,
-      ...theme.applyStyles('dark', {
-        backgroundColor: 'rgb(126,10,15, 0)',
-      }),
+    [`& .${gridClasses.cell}[data-field="project"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
     },
-  },
-  '.MuiSvgIcon-colorAction': {
-    display: 'none',
-  },
-  '& .weeklyCell': {
-    textAlign: 'center',
-    fontFamily: theme.typography.fontFamily,
-    fontWeight: '500',
-    fontSize: '14px',
-    color: '#212121',
-    padding: '3px',
-    lineHeight: '45px',
-    '&.MuiDataGrid-cell--editing:focus-within': {
-      outline: 'none',
+    [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
     },
-    '&.MuiDataGrid-cell.MuiDataGrid-cell--editing': {
-      padding: '0',
+    [`& .${gridClasses.cell}[data-field="resourceType"].secondGroupsRow`]: {
+      backgroundColor: !loading && '#F0F7FF',
     },
-    '& .MuiDataGrid-editInputCell': {},
-    '& input': {
+    [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="teamStatus"].secondGroupsRow`]: {
+      backgroundColor: !loading && '#F0F7FF',
+    },
+    [`& .${gridClasses.cell}[data-field="teamAllocationManager"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="teamAllocationManager"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
+
+    //  '& .MuiDataGrid-row:hover': {
+    //   backgroundColor: 'inherit !important',
+    //   },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow`]:
+      {
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          top: '5px',
+          left: '0px',
+          width: '5px',
+          height: '40px',
+          // backgroundColor: getInitialsColor('A', 'B', 'C', 'D') || '#FFBFB0',
+        },
+      },
+    '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
+      boxShadow: 'none !important',
+    },
+    '& .common-NonEditableCells': {
+      backgroundColor: '#F1F6FF',
+    },
+    '& .MuiDataGrid-row--editing .MuiDataGrid-cell.common-NonEditableCells': {
+      backgroundColor: '#F1F6FF !important',
+    },
+    '& .project-view-projectName': {
+      backgroundColor: '#E9EFF8',
+    },
+
+    [`& .${gridClasses.columnHeader}`]: {
+      '&.prime-header': {},
+      '&.secondary-header': {},
+      '&.weekly-header': {},
+    },
+    [`& .${gridClasses.cell}`]: {
+      '&.prime-cell': {},
+      '&.secondary-cell': {},
+      '&.weeklyCell': {},
+    },
+    [`.${gridClasses.cell}`]: {
+      "& input[type='number']": {
+        appearance: 'textfield',
+        margin: 0,
+      },
+      "& input[type='number']::-webkit-outer-spin-button, & input[type='number']::-webkit-inner-spin-button":
+        {
+          display: 'none',
+        },
+    },
+    '& .MuiDataGrid-cell': {
+      borderRight: '1px solid #DDE1E4',
+      fontSize: '14px',
+      padding: '0 16px',
+      color: '#313F68',
       fontFamily: theme.typography.fontFamily,
       fontWeight: '500',
+      textAlign: 'left',
+    },
+    '& .MuiDataGrid-columnHeader': {
+      borderRight: '1px solid #DDE1E4',
+      backgroundColor: '#F1F6FF',
+      padding: '0 16px 10px',
       color: '#313F68',
-      fontSize: '14px',
-      padding: '3px',
-      textAlign: 'center',
-      border: '1px solid transparent',
-      boxSizing: 'border-box',
-      '&:focus': {
-        backgroundColor: 'rgba(157, 201, 255, 0.3)',
-        border: '1px solid #298AFF',
+      fontFamily: theme.typography.fontFamily,
+      fontWeight: '500',
+      '& .MuiDataGrid-columnHeaderTitleContainer': {
+        // alignItems: 'flex-start',
+        '& .MuiDataGrid-columnHeaderTitle': {
+          fontSize: '14px',
+          fontWeight: 'bold',
+        },
       },
     },
-  },
-  '& .weekly-header': {
-    padding: '3px',
-    backgroundColor: 'rgba(20, 43, 81, 0.72)',
-    '& .MuiDataGrid-columnHeaderTitleContainer': {
-      justifyContent: 'center',
-      alignItems: 'center',
-      '& .MuiDataGrid-columnHeaderTitle': {
-        fontFamily: theme.typography.fontFamily,
-        fontWeight:"bold",
-        fontSize: '12px',
-        color: '#fff',
+    '& .MuiDataGrid-row': {
+      '&:hover': {
+        backgroundColor: '#FBFCFE',
+        '& .MuiDataGrid-cell--pinnedLeft, & .MuiDataGrid-cell--pinnedRight': {
+          backgroundColor:
+            !loading &&
+            (groupBy === 'project'
+              ? '#F1F6FF !important'
+              : '#F7FBFF !important'),
+        },
       },
     },
-  },
-  '& .grouping-header': {
-    padding: '3px',
-    '& .MuiDataGrid-columnHeaderTitleContainer': {
-      alignItems: 'center',
-      borderBottom: 'none',
-      '& .MuiDataGrid-columnHeaderTitle': {
-        fontWeight: 'bold',
-        fontSize: '12px',
+    '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.firstGroupsRow':
+      {
+        backgroundColor: '#e9eff8 !important',
       },
-    },
-  },
-  '& .current-week-header': {
-    backgroundColor: 'rgb(43 102 199 / 72%)',
-  },
-  '& .MuiDataGrid-columnSeparator--resizable': {
-    opacity: '0',
-  },
-  '& .MuiDataGrid-columnSeparator--sideRight': {
-    opacity: 0,
-  },
-  '& .MuiDataGrid-cellEmpty': {
-    display: 'none',
-  },
-  '& .poor-allocation': {
-    backgroundColor: '#F6C8C8',
-    // border: '#CE8585',
-  },
-  '& .average-allocation': {
-    backgroundColor: '#FFF1D3',
-    // border: '#BDAE88',
-  },
-  '& .fully-occupied': {
-    backgroundColor: '#C4E5C4',
-    // border: '#7AB17A',
-  },
-  '& .over-occupied': {
-    backgroundColor: '#FFCD9C',
-  },
- '& .poor-allocation-secondGroup': {
-  backgroundColor: 'rgba(246, 200, 200, 0.40)', 
-  borderBottom: '2px solid #DE8787',
-  },
-  '& .average-allocation-secondGroup': {
-    backgroundColor: 'rgba(255, 241, 211, 0.40)', 
-    borderBottom: '2px solid #EED297', 
-  },
-  '& .fully-occupied-secondGroup': {
-    backgroundColor: 'rgba(196, 229, 196, 0.40)', 
-    borderBottom: '2px solid #92C892', 
-  },
-  '& .over-occupied-secondGroup': {
-    backgroundColor: 'rgba(255, 205, 156,  0.4)',
-    borderBottom: '2px solid #FFCD9C', 
-  },
-  '& .firstGroupsRow': {
-    backgroundColor: '#F0F7FF !important' ,
-    fontWeight:groupBy==='project' ? 'bold' :"",
-    color:groupBy==='project' ?'#313F68' : '' ,
-  },
-  '& .secondGroupsRow': {
-    backgroundColor: '#F0F7FF',
-  },
-  '& .MuiDataGrid-row--editing': {
-    boxShadow: 'none',
-  },
-  '& .total-effort-cell' : {
-     backgroundColor: '#E9EFF8',
-     textAlign :'center',
-     fontWeight: 'bold',
-},'& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
-  backgroundColor: '#E9EFF8 !important',
-},
-  '& .empty-group-header': {
-    '& .MuiDataGrid-columnHeaderTitleContainer': {
+    '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.secondGroupsRow':
+      {
+        backgroundColor: '#f0f7ff !important',
+      },
+    border: 'none',
+    '& .MuiDataGrid-groupingCriteriaCell span[style*="white-space: pre"]': {
       display: 'none',
     },
-  },
-}));
- 
+    '& .MuiDataGrid-groupingCriteriaCell': {
+      padding: '0',
+    },
+    '& .MuiDataGrid-cellContent': {
+      paddingLeft: '8px',
+    },
+    '& .MuiDataGrid-groupingCriteriaCellToggle': {
+      marginLeft: '-10px',
+      marginRight: '4px',
+    },
+    '& .MuiDataGrid-columnHeader[data-field="project"] .MuiDataGrid-groupingCriteriaCellToggle':
+      {
+        marginLeft: '20px !important',
+        marginRight: '20px !important',
+      },
+    '& .MuiDataGrid-aggregationColumnHeaderLabel': {
+      display: 'none',
+    },
+    '& .errorCell': {
+      '& input': {
+        border: '1px solid red !important',
+        backgroundColor: 'rgb(126,10,15, 0.1) !important',
+      },
+    },
+    '& .MuiDataGrid-filler--pinnedLeft': {
+      width: '240px',
+    },
+    '& .Mui-error': {
+      '& input': {
+        border: '1px solid red !important',
+        backgroundColor: 'rgb(126,10,15, 0.1)',
+        color: theme.palette.error.main,
+        ...theme.applyStyles('dark', {
+          backgroundColor: 'rgb(126,10,15, 0)',
+        }),
+      },
+    },
+    '.MuiSvgIcon-colorAction': {
+      display: 'none',
+    },
+    '& .weeklyCell': {
+      textAlign: 'center',
+      fontFamily: theme.typography.fontFamily,
+      fontWeight: '500',
+      fontSize: '14px',
+      color: '#212121',
+      padding: '3px',
+      lineHeight: '45px',
+      '&.MuiDataGrid-cell--editing:focus-within': {
+        outline: 'none',
+      },
+      '&.MuiDataGrid-cell.MuiDataGrid-cell--editing': {
+        padding: '0',
+      },
+      '& .MuiDataGrid-editInputCell': {},
+      '& input': {
+        fontFamily: theme.typography.fontFamily,
+        fontWeight: '500',
+        color: '#313F68',
+        fontSize: '14px',
+        padding: '3px',
+        textAlign: 'center',
+        border: '1px solid transparent',
+        boxSizing: 'border-box',
+        '&:focus': {
+          backgroundColor: 'rgba(157, 201, 255, 0.3)',
+          border: '1px solid #298AFF',
+        },
+      },
+    },
+    '& .weekly-header': {
+      padding: '3px',
+      backgroundColor: 'rgba(20, 43, 81, 0.72)',
+      '& .MuiDataGrid-columnHeaderTitleContainer': {
+        justifyContent: 'center',
+        alignItems: 'center',
+        '& .MuiDataGrid-columnHeaderTitle': {
+          fontFamily: theme.typography.fontFamily,
+          fontWeight: 'bold',
+          fontSize: '12px',
+          color: '#fff',
+        },
+      },
+    },
+    '& .grouping-header': {
+      padding: '3px',
+      '& .MuiDataGrid-columnHeaderTitleContainer': {
+        alignItems: 'center',
+        borderBottom: 'none',
+        '& .MuiDataGrid-columnHeaderTitle': {
+          fontWeight: 'bold',
+          fontSize: '12px',
+        },
+      },
+    },
+    '& .current-week-header': {
+      backgroundColor: 'rgb(43 102 199 / 72%)',
+    },
+    '& .MuiDataGrid-columnSeparator--resizable': {
+      opacity: '0',
+    },
+    '& .MuiDataGrid-columnSeparator--sideRight': {
+      opacity: 0,
+    },
+    '& .MuiDataGrid-cellEmpty': {
+      display: 'none',
+    },
+    '& .poor-allocation': {
+      backgroundColor: '#F6C8C8',
+      // border: '#CE8585',
+    },
+    '& .average-allocation': {
+      backgroundColor: '#FFF1D3',
+      // border: '#BDAE88',
+    },
+    '& .fully-occupied': {
+      backgroundColor: '#C4E5C4',
+      // border: '#7AB17A',
+    },
+    '& .over-occupied': {
+      backgroundColor: '#FFCD9C',
+    },
+    '& .poor-allocation-secondGroup': {
+      backgroundColor: 'rgba(246, 200, 200, 0.40)',
+      borderBottom: '2px solid #DE8787',
+    },
+    '& .average-allocation-secondGroup': {
+      backgroundColor: 'rgba(255, 241, 211, 0.40)',
+      borderBottom: '2px solid #EED297',
+    },
+    '& .fully-occupied-secondGroup': {
+      backgroundColor: 'rgba(196, 229, 196, 0.40)',
+      borderBottom: '2px solid #92C892',
+    },
+    '& .over-occupied-secondGroup': {
+      backgroundColor: 'rgba(255, 205, 156,  0.4)',
+      borderBottom: '2px solid #FFCD9C',
+    },
+    '& .firstGroupsRow': {
+      backgroundColor: '#E9EFF8 !important',
+      fontWeight: groupBy === 'project' ? 'bold' : '',
+      color: groupBy === 'project' ? '#313F68' : '',
+    },
+    '& .secondGroupsRow': {
+      backgroundColor: '#F0F7FF',
+    },
+    '& .MuiDataGrid-row--editing': {
+      boxShadow: 'none',
+    },
+    '& .total-effort-cell': {
+      backgroundColor: '#E9EFF8',
+      textAlign: 'center',
+      fontWeight: 'bold',
+    },
+    '& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
+      backgroundColor: '#E9EFF8 !important',
+    },
+    '& .empty-group-header': {
+      '& .MuiDataGrid-columnHeaderTitleContainer': {
+        display: 'none',
+      },
+    },
+  };
+});
+
 export const ColumnManagementStyles = {
   '& .MuiDataGrid-columnsManagementHeader': {
     padding: '0',
