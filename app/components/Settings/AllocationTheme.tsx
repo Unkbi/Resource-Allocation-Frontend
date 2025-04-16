@@ -2,15 +2,9 @@
 
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import {
-  GridRowModes,
-  type GridColDef,
-  type GridRenderCellParams,
-  type GridRowModesModel,
-} from '@mui/x-data-grid';
+import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { TextField, Typography, Popover, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
 import {
   AddButton,
   ColorIndicator,
@@ -19,7 +13,6 @@ import {
   ColorSwatch,
   ContentPaper,
   CustomFooter,
-  DeleteButton,
   MainContent,
   RangeInputGroup,
   StyledDataGrid,
@@ -68,9 +61,6 @@ export default function AllocationTheme({
   onDataChanged,
 }: AllocationThemeProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
-  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
-    {}
-  );
   const [activeColorRow, setActiveColorRow] = React.useState<number | null>(
     null
   );
@@ -393,16 +383,9 @@ export default function AllocationTheme({
 
     const updatedRanges = [...allocationRanges, newRow];
     onAllocationRangesChange(updatedRanges);
-
     // Validate after adding
     const newErrors = validateRanges(updatedRanges);
     setValidationErrors(newErrors);
-    setTimeout(() => {
-      setRowModesModel(oldModel => ({
-        ...oldModel,
-        [id]: { mode: GridRowModes.Edit, fieldToFocus: 'label' },
-      }));
-    }, 100);
     onDataChanged();
   };
 
@@ -483,9 +466,6 @@ export default function AllocationTheme({
     },
   ];
 
-  const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
-    setRowModesModel(newRowModesModel);
-  };
   return (
     <MainContent>
       <ContentPaper elevation={0}>
@@ -496,8 +476,6 @@ export default function AllocationTheme({
             disableColumnMenu
             columns={columns}
             editMode="row"
-            rowModesModel={rowModesModel}
-            onRowModesModelChange={handleRowModesModelChange}
             initialState={{
               pagination: {
                 paginationModel: {
