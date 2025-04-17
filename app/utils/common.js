@@ -14,6 +14,8 @@ import {
 } from 'date-fns';
 import {
   DATE_FORMAT,
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
@@ -497,4 +499,20 @@ export const isMyProjectsValid = (projectManagerName, filters) => {
         filter.value === projectManagerName
     ) || false
   );
+};
+
+export const getOnlyFilterSettings = view => {
+  return {
+    GroupBy: view.GroupBy ?? '',
+    MyTeam: view.MyTeam ?? false,
+    MyProjects: view.MyProjects ?? false,
+    ColumnsVisible: view.ColumnsVisible ?? [],
+    StartDate: view.StartDate ?? '',
+    EndDate: view.EndDate ?? '',
+    isFixedRange: view.isFixedRange ?? false,
+    isDynamicRange: view.isDynamicRange ?? false,
+    WeekPlus: view.WeekPlus ?? DEFAULT_PROJECT_WEEK_PLUS,
+    WeekMinus: view.WeekMinus ?? DEFAULT_PROJECT_WEEK_MINUS,
+    Filters: view.Filters ?? [],
+  };
 };

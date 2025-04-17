@@ -27,6 +27,7 @@ import CustomExport from './CustomExport';
 import {
   generateDateWeekMath,
   generateFirstAndLastMonthYear,
+  getOnlyFilterSettings,
   getProjectsIamProjectManager,
   getStartAndEndDateForView,
   getTeamsIamAllocationManager,
@@ -63,6 +64,12 @@ import {
 } from '@/app/redux/reducers/allocationViewReducer';
 import { set } from 'date-fns';
 import DeleteDialog from '../Dialog/DeleteDialog';
+import { compressToEncodedURIComponent } from 'lz-string';
+import CustomInput from '../Input/Input';
+import { showToastAction } from '@/app/redux/actions/toastAction';
+import { StyledInput } from '../Input/StyledInput';
+import CopyLinkInput from '../Input/InputWithButton';
+import ShareLinkDialog from '../Dialog/ShareLinkDialog';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -366,6 +373,21 @@ const StyledViewMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
+const StyledShareButton = styled(Button)(({ theme }) => ({
+  color: '#344665 !important',
+  padding: '6px 12px',
+  textTransform: 'none',
+  height: '32px',
+  fontWeight: 500,
+  borderRadius: 'var(--borderRadius, 4px)',
+  border: '1px solid rgba(28, 45, 95, 0.10)',
+  background: 'rgba(28, 45, 95, 0.02)',
+  fontSize: '14px',
+  '&:hover': {
+    backgroundColor: '#f9fcff',
+  },
+}));
+
 // View options data
 const saveViewOptions = [
   {
@@ -494,6 +516,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     teamsCalendar
   );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareLink, setShareLink] = useState('');
   const [deleteView, setDeleteView] = useState(null);
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -652,6 +676,31 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
+  };
+
+  const handleCancelShare = () => {
+    setShareDialogOpen(false);
+  };
+
+  const handleShareDeepLink = () => {
+    const settingsStr = compressToEncodedURIComponent(
+      JSON.stringify(getOnlyFilterSettings(currentView))
+    );
+
+    const link = `${window.location.origin}/allocation?settings=${settingsStr}`;
+    setShareLink(link);
+    setShareDialogOpen(true);
+  };
+
+  const copyLinkToClipboard = () => {
+    navigator.clipboard
+      .writeText(shareLink)
+      .then(() => {
+        dispatch(showToastAction(true, 'Link copied to clipboard!', 'success'));
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+      });
   };
 
   const getIcon = viewId => {
@@ -1050,6 +1099,13 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             Save View
           </Button>
         </Box>
+      </ToolBox2>
+      <ToolBox2>
+        <Box>
+          <StyledShareButton onClick={handleShareDeepLink} variant="outlined">
+            Share
+          </StyledShareButton>
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <CustomExport />
         </Box>
@@ -1062,6 +1118,18 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       >
         {`This will permanently delete the view : ${deleteView?.Name}`}
       </DeleteDialog>
+      <ShareLinkDialog
+        open={shareDialogOpen}
+        title="Share this Allocation View"
+        onClose={handleCancelShare}
+      >
+        <CopyLinkInput
+          value={shareLink}
+          onButtonClick={copyLinkToClipboard}
+          buttonText="Copy link"
+          label=""
+        />
+      </ShareLinkDialog>
     </Box>
   );
 });

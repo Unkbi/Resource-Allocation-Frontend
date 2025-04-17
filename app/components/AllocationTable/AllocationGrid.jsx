@@ -167,11 +167,11 @@ export default function AllocationGrid({
     ...aggregationModel(startDate, endDate),
   });
 
-  const normalizeRow = (row) => {
+  const normalizeRow = row => {
     const allWeeks = generateAllWeeks();
     const normalized = { ...row };
 
-    allWeeks.forEach((weekKey) => {
+    allWeeks.forEach(weekKey => {
       const period = getMondayOfWeek(weekKey, new Date());
       const value = row[weekKey];
 
@@ -294,6 +294,22 @@ export default function AllocationGrid({
       });
     }
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (currentView?.ColumnsVisible && groupBy) {
+      const updatedModel = {
+        ...columnVisibilityModel,
+        ..._columns[groupBy === 'teams' ? 'team' : groupBy].reduce(
+          (acc, column) => {
+            acc[column] = currentView.ColumnsVisible.includes(column);
+            return acc;
+          },
+          {}
+        ),
+      };
+      setColumnVisibilityModel(updatedModel);
+    }
+  }, [currentView.ColumnsVisible]);
 
   useEffect(() => {
     if (currentView?.Filters) {

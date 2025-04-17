@@ -12,6 +12,9 @@ import {
   fetchUsersSavedViews,
 } from '@/app/redux/actions/allocationViewAction';
 import { getUserIdFromEmail } from '@/app/utils/common';
+import { useSearchParams } from 'next/navigation';
+import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
+import { decompressFromEncodedURIComponent } from 'lz-string';
 
 export default function Allocation() {
   const dispatch = useDispatch();
@@ -20,6 +23,8 @@ export default function Allocation() {
   );
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
+  const searchParams = useSearchParams();
+  const settingsParam = searchParams.get('settings');
 
   useEffect(() => {
     dispatch(fetchAllResources());
@@ -32,6 +37,20 @@ export default function Allocation() {
       dispatch(fetchUsersSavedViews(userId));
     }
   }, [resources, user]);
+
+  useEffect(() => {
+    if (settingsParam) {
+      try {
+        const parsedSettings = JSON.parse(
+          decompressFromEncodedURIComponent(settingsParam)
+        );
+
+        dispatch(updateCurrentView(parsedSettings));
+      } catch (e) {
+        console.error('Failed to parse settings:', e);
+      }
+    }
+  }, [settingsParam]);
 
   const getContentByRole = view => {
     if (currentView?.GroupBy) {
