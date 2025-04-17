@@ -1,8 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getAllResources } from '@/app/services/resourceServices';
+import { getAllResources,deleteResource } from '@/app/services/resourceServices';
 
 const initialState = {
-  resources: null,
+  resources: [],
   loading: false,
   error: null,
 };
@@ -22,6 +22,23 @@ const resourcesSlice = createSlice({
         state.resources = action.payload;
       })
       .addCase(getAllResources.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+       // Delete resource
+       .addCase(deleteResource.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteResource.fulfilled, (state, action) => {
+        state.loading = false;
+        const deletedId = action.payload 
+        if (Array.isArray(state.resources)) {
+          state.resources = state.resources.filter(res => res.Id !== deletedId);
+        }
+      })
+      .addCase(deleteResource.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
