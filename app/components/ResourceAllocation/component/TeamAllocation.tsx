@@ -8,10 +8,8 @@ import {
 } from '@/app/redux/actions/fetchTeamsAction';
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { Tooltip } from '@mui/material';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import { ApiResponse, Resource } from '@/app/types';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 
@@ -24,7 +22,7 @@ export default function TeamAllocation() {
   const { startDate, endDate } = calendarDate || {};
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as ApiResponse<Resource[]> | null;
+  );
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
