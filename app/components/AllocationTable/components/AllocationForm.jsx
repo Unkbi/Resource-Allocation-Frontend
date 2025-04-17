@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Formik, ErrorMessage } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 import CustomDialog from '../../Dialog/CustomDialog';
@@ -9,6 +9,7 @@ import AddResourceForm from '../../Forms/AddResourceForm';
 import AddAllocationForm from '../../Forms/AddAllocationForm';
 import AssignAllocationForm from '../../Forms/AssignAllocationForm';
 import SaveViewForm from '../../Forms/SaveViewForm';
+import CloneResourceForm from '../../Forms/CloneResourceForm';
 import {
   addAllocationValidationSchema,
   addProjectValidationSchema,
@@ -16,6 +17,7 @@ import {
   assignAllocationValidationSchema,
   nameViewValidationSchema,
   saveViewValidationSchema,
+  cloneResourceValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -30,6 +32,7 @@ import {
 import {
   setResourceAllocation,
   updateResourceAllocation,
+  removeResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
 import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
 import {
@@ -47,6 +50,8 @@ import { current } from '@reduxjs/toolkit';
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
+import { getWeek } from 'date-fns';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const initialValuesMap = {
   add_project: {
@@ -81,7 +86,7 @@ const initialValuesMap = {
   },
   save_view: {
     groupBy: 'project',
-    showBy: 'allProjects',
+    showBy: 'AllProject',
     dateRangeType: 'fixed',
     startDate: '',
     endDate: '',
@@ -91,7 +96,7 @@ const initialValuesMap = {
   },
   new_view: {
     groupBy: 'project',
-    showBy: 'allProjects',
+    showBy: 'AllProject',
     dateRangeType: 'fixed',
     startDate: '',
     endDate: '',
@@ -111,6 +116,12 @@ const initialValuesMap = {
     name: '',
     description: '',
     isDefault: false,
+  },
+  clone_resource: {
+    Project: [],
+    Resource: [],
+    StartDate: '',
+    EndDate: '',
   },
 };
 
@@ -152,6 +163,8 @@ const AllocationForm = () => {
         return saveViewValidationSchema;
       case 'name_view':
         return nameViewValidationSchema;
+      case 'clone_resource':
+        return cloneResourceValidationSchema;
       default:
         return null;
     }
@@ -360,7 +373,7 @@ const AllocationForm = () => {
                   filteredProjects
                 );
               });
-            } else if (view === 'Projects') {
+            } else if (view === 'Project') {
               return dispatch(
                 fetchAllProjectAllocations(filteredProjects, startDate, endDate)
               ).then(() => {
@@ -465,7 +478,7 @@ const AllocationForm = () => {
               WeekMinus: values.dynamicDateRangeSubtract,
               GroupBy: values.groupBy,
               Columns: values.showColumns,
-              ShowBy: null, // Issues with Backend, need to add [myTeams, allTeams]
+              ShowBy: values.showBy,
               Name: values.name,
               Description: values.description,
               Filters: values.filters,
@@ -511,7 +524,7 @@ const AllocationForm = () => {
               WeekMinus: values.dynamicDateRangeSubtract,
               GroupBy: values.groupBy,
               Columns: values.showColumns,
-              ShowBy: null, // Issues with Backend, need to add [myTeams, allTeams]
+              ShowBy: values.showBy,
               Filters: values.filters,
             };
 
@@ -522,6 +535,167 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Error saving view:', e);
         }
+        break;
+
+      case 'clone_resource':
+        try {
+          const sourceResourceName = initialData?.Resource;
+          const sourceResourceId = resources?.result?.find(
+            res => res.FullName === sourceResourceName
+          )?.Id;
+
+          if (!sourceResourceId) {
+            console.error(
+              ' Could not find resource ID for:',
+              sourceResourceName
+            );
+            break;
+          }
+
+          const targetResourceIds = Array.isArray(values.Resource)
+            ? values.Resource
+            : [values.Resource];
+          const projectIds = values.Project || [];
+          const allMondays = generateAllMondays(
+            values.StartDate,
+            values.EndDate
+          );
+
+          const formattedProjects = projectIds.map(id => ({ Id: id }));
+
+          const actionGroups = {
+            PUT: [],
+            POST: [],
+            DELETE: [],
+          };
+
+          for (const monday of allMondays) {
+            for (const projectId of projectIds) {
+              const sourceAlloc = getAllocationPresent(
+                projectId,
+                sourceResourceId,
+                monday
+              );
+
+              for (const targetResourceId of targetResourceIds) {
+                const targetAlloc = getAllocationPresent(
+                  projectId,
+                  targetResourceId,
+                  monday
+                );
+
+                const sameValue =
+                  sourceAlloc?.value !== null &&
+                  targetAlloc?.value !== null &&
+                  Number(sourceAlloc.value) === Number(targetAlloc.value);
+
+                if (sameValue) continue;
+
+                if (sourceAlloc?.value != null && targetAlloc?.allocationId) {
+                  actionGroups.PUT.push({
+                    resourceId: targetResourceId,
+                    allocationId: targetAlloc.allocationId,
+                    putData: {
+                      'ResourceAllocation.Core/Allocation': {
+                        AllocationEntered: sourceAlloc.value,
+                      },
+                    },
+                  });
+                } else if (
+                  sourceAlloc?.value != null &&
+                  !targetAlloc?.allocationId
+                ) {
+                  actionGroups.POST.push({
+                    resourceId: targetResourceId,
+                    postData: {
+                      'ResourceAllocation.Core/Allocation': {
+                        Resource: targetResourceId,
+                        Project: projectId,
+                        ProjectName: initialData.Project,
+                        AllocationEntered: sourceAlloc.value,
+                        Period: monday,
+                      },
+                    },
+                  });
+                } else if (
+                  sourceAlloc?.value == null &&
+                  targetAlloc?.allocationId
+                ) {
+                  actionGroups.DELETE.push({
+                    resourceId: targetResourceId,
+                    allocationId: targetAlloc.allocationId,
+                  });
+                }
+              }
+            }
+          }
+
+          try {
+            // Run in parallel per group type
+            await Promise.all([
+              ...actionGroups.PUT.map(payload =>
+                dispatch(updateResourceAllocation(payload))
+              ),
+              ...actionGroups.POST.map(payload =>
+                dispatch(setResourceAllocation(payload))
+              ),
+              ...actionGroups.DELETE.map(payload =>
+                dispatch(removeResourceAllocation(payload))
+              ),
+            ]).then(async ()=>{
+              const newResources = targetResourceIds.map(id =>
+                getTeamByResourceId(id)
+              );
+              const teams = [...new Set(newResources.map(res => res?.team))];
+              dispatch(closeDialog());
+              if (view === 'Teams') {
+                await dispatch(fetchResourcesAgainstTeams(teams, allocations, startDate, endDate)).then(() => {;
+                handleOnAdd(newResources);
+                handleScrollAndFocus(newResources, allMondays, formattedProjects);
+                })
+              } else if (view === 'Project') {
+                await dispatch(fetchAllProjectAllocations(formattedProjects, startDate, endDate)).then(() => {;
+                handleScrollAndFocus(newResources, allMondays, formattedProjects);
+                })
+              }
+  
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `${sourceResourceName} is successfully cloned. `,
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            });            
+          } catch (err) {
+            dispatch(closeDialog());
+            dispatch(
+              showToast({
+                open: true,
+                message: `Resource is failed clone `,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            console.error('Cloning failed:', err);
+          }
+        } catch (err) {
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message: `Resource is failed clone `,
+              type: 'warning',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          console.error('Cloning failed:', err);
+        }
+
         break;
 
       default:
@@ -564,6 +738,13 @@ const AllocationForm = () => {
         return (
           <NameViewForm formikProps={formikProps} setFormValue={setFormValue} />
         );
+      case 'clone_resource':
+        return (
+          <CloneResourceForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       default:
         return <div>No form selected</div>;
     }
@@ -587,6 +768,7 @@ const AllocationForm = () => {
   );
 
   const onCancel = () => {
+    setFormValue(initialValuesMap[formType]);
     dispatch(
       setCellSelectionData({
         restoreFocus: true,

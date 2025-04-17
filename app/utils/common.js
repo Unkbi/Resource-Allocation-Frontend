@@ -10,6 +10,7 @@ import {
   subDays,
   subWeeks,
   weeksToDays,
+  parseISO,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -90,7 +91,7 @@ export const getMondayOfWeek = (weekNumber, date) => {
 
 export function generateAllMondays(startDate, endDate) {
   const mondays = [];
-  const currentDate = new Date(startDate);
+  const currentDate = parseISO(startDate);
 
   // Set to the previous Monday (or stay if already Monday)
   currentDate.setDate(currentDate.getDate() - ((currentDate.getDay() + 6) % 7));
@@ -101,7 +102,7 @@ export function generateAllMondays(startDate, endDate) {
     return mondays;
   }
 
-  const endDateObj = new Date(endDate);
+  const endDateObj = parseISO(endDate);
 
   // Generate all Mondays in the range
   while (currentDate <= endDateObj) {
@@ -254,7 +255,9 @@ export const generateTMinusOneStartEndDate = isStartDate => {
 };
 
 export const generateDateWeekMath = (operation, weeks) => {
+  if (weeks === undefined || weeks === null) return null;
   let today = new Date();
+  today = parseISO(today.toISOString());
 
   let weeksMonday;
   switch (operation) {
@@ -347,4 +350,151 @@ export const isObjectEqual = (a, b) => {
   }
 
   return false;
+};
+
+export const getTeamsIamAllocationManager = (userEmail, resources, teams) => {
+  const userResourcePath =
+    Array.isArray(resources) && userEmail
+      ? (resources.find(r => r.Email?.toLowerCase() === userEmail.toLowerCase())
+          ?.__path__ ?? null)
+      : null;
+
+  if (userResourcePath) {
+    const managedTeam = teams.filter(
+      team =>
+        team.AllocationManager && team.AllocationManager === userResourcePath
+    );
+    return managedTeam;
+  }
+  return [];
+};
+
+export const getResourceFromEmail = (userEmail, resources) => {
+  const userResourcePath =
+    Array.isArray(resources) && userEmail
+      ? (resources.find(r => r.Email?.toLowerCase() === userEmail.toLowerCase())
+          ?.__path__ ?? null)
+      : null;
+
+  if (userResourcePath) {
+    const resourceData = resources.find(
+      resource => resource.__path__ === userResourcePath
+    );
+    return resourceData;
+  }
+  return null;
+};
+
+export const getAllocationManagerFromPath = (
+  allocationManager_Path,
+  resources
+) => {
+  return resources.find(
+    resource => resource.__path__ === allocationManager_Path
+  );
+};
+
+export const getProjectsIamProjectManager = (fullName, projects) => {
+  return projects.filter(
+    project => project.ProjectManager?.toLowerCase() === fullName
+  );
+};
+
+export const getUpdatedFiltersOnMyTeamsAllTeams = (
+  allocationManagerFullName,
+  filters,
+  myTeam = false
+) => {
+  const updatedFilters = filters || [];
+  if (myTeam) {
+    if (
+      updatedFilters.find(
+        filter =>
+          filter.field === 'teamAllocationManager' &&
+          filter.operator === 'equals' &&
+          filter.value === allocationManagerFullName
+      )
+    ) {
+      return updatedFilters;
+    }
+
+    return [
+      ...updatedFilters,
+      {
+        field: 'teamAllocationManager',
+        operator: 'equals',
+        value: allocationManagerFullName,
+      },
+    ];
+  } else {
+    return updatedFilters.filter(
+      filter =>
+        !(
+          filter.field === 'teamAllocationManager' &&
+          filter.operator === 'equals' &&
+          filter.value === allocationManagerFullName
+        )
+    );
+  }
+};
+
+export const getUpdatedFiltersOnMyProjectsAllProjects = (
+  projectManagerName,
+  filters,
+  myProjects = false
+) => {
+  let updatedFilters = filters || [];
+
+  if (myProjects) {
+    if (
+      updatedFilters.find(
+        filter =>
+          filter.field === 'projectManager' &&
+          filter.operator === 'equals' &&
+          filter.value === projectManagerName
+      )
+    ) {
+      return updatedFilters;
+    }
+
+    return [
+      ...updatedFilters,
+      {
+        field: 'projectManager',
+        operator: 'equals',
+        value: projectManagerName,
+      },
+    ];
+  } else {
+    return updatedFilters.filter(
+      filter =>
+        !(
+          filter.field === 'projectManager' &&
+          filter.operator === 'equals' &&
+          filter.value === projectManagerName
+        )
+    );
+  }
+};
+
+export const isMyTeamsValid = (allocationManagerName, filters) => {
+  return (
+    filters?.some(
+      filter =>
+        filter.field === 'teamAllocationManager' &&
+        filter.operator === 'equals' &&
+        filter.value === allocationManagerName
+    ) || false
+  );
+};
+
+export const isMyProjectsValid = (projectManagerName, filters) => {
+  return (
+    filters?.some(
+      filter =>
+        filter.field === 'projectManager' &&
+        filter.operator === 'equals' &&
+        filter.value === projectManagerName
+    ) || false
+  );
 };

@@ -143,13 +143,13 @@ const menuItems = [
     {icon: "/images/icons/DashboardRounded.svg",text :"Dashboard" , url: "/", disabled: false },
     {icon: "/images/icons/WatchLaterRoundedd.svg",text :"Allocation", url: "/allocation", disabled: false },
     {icon: "/images/icons/FolderFileOpen.svg",text :"Projects", url: "/project", disabled: false },
-    {icon: "/images/icons/SupervisedUserCircleRounded.svg",text :"People", url: "/people", disabled: true },
+    {icon: "/images/icons/SupervisedUserCircleRounded.svg",text :"People", url: "/people", disabled: false },
     {icon: "/images/icons/PollRounded.svg", url: "/report",text :"Reports", disabled: true },
   ];
 
   const extraMenuItems = [
     { icon: "/images/icons/Notifications.svg",text :"Notification", url: "/notifications", disabled: true },
-    { icon: "/images/icons/SettingsIcon.svg",text :"Settings", url: "/settings", disabled: true },
+    { icon: "/images/icons/SettingsIcon.svg",text :"Settings", url: "/settings", disabled: false },
     { icon: "/images/icons/Vectorr.svg",text :"User Profile", url: "/profile", disabled: true },  
     { icon: "/images/icons/helpIcon.svg",text :"Help Center", url: "/help", disabled: true },
   ];

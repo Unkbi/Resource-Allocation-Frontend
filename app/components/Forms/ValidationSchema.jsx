@@ -112,7 +112,6 @@ export const saveViewValidationSchema = Yup.object({
     Yup.object({
       field: Yup.string().required('Column is required'),
       operator: Yup.string().required('Operator is required'),
-      value: Yup.string(),
     })
   ),
   calendarBy: Yup.string().required('Calendar By is required'),
@@ -121,3 +120,18 @@ export const saveViewValidationSchema = Yup.object({
 export const nameViewValidationSchema = Yup.object({
   name: Yup.string().required('Name is required'),
 });
+
+export const cloneResourceValidationSchema = Yup.object({
+  Resource: Yup.array()
+  .of(Yup.string())
+  .min(1, 'You must select at least one Resource').required("Resource is required"),
+  Project: Yup.array()
+  .of(Yup.string())
+  .min(1, 'You must select at least one Project')
+  .required('Project is required'),
+  StartDate: Yup.date().required("Start date is required"),
+  EndDate: Yup.date()
+    .required("End date is required")
+    .min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
+  // Hours: Yup.number().required("Hours are required").positive("Hours must be positive"),
+})

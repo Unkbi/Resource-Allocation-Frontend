@@ -11,7 +11,9 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { Tooltip } from '@mui/material';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import EllipsisNameCell from './EllipsisNameCell'; 
+import { ApiResponse, Resource } from '@/app/types';
+import { getAllocationManagerFromPath } from '@/app/utils/common';
+import EllipsisNameCell from './EllipsisNameCell';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -20,6 +22,9 @@ export default function TeamAllocation() {
   const { teams, resources, loading, dataProcessing, calendarDate } =
     useSelector((state: RootState) => state.teams);
   const { startDate, endDate } = calendarDate || {};
+  const _resources = useSelector(
+    (state: RootState) => state.resources.resources
+  ) as ApiResponse<Resource[]> | null;
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -74,7 +79,7 @@ export default function TeamAllocation() {
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        let resource_count: any[] = []; 
+        let resource_count: any[] = [];
         if (isGridTreeNode && rowNode.children) {
           resource_count = [
             ...new Set(rowNode?.children?.map(child => api.getRow(child))),
@@ -83,7 +88,7 @@ export default function TeamAllocation() {
         return (
           <EllipsisNameCell
             value={value as string}
-            resourceCount={resource_count.length} 
+            resourceCount={resource_count.length}
             onAddClick={() => handleAddClick(params)}
             showAddIcon
           />
@@ -99,7 +104,7 @@ export default function TeamAllocation() {
       sortable: false,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team ?  <EllipsisNameCell value={team?.Status ?? 'N/A'}/> : null;
+        return team ? <EllipsisNameCell value={team?.Status ?? 'N/A'} /> : null;
       },
     },
     {
@@ -111,7 +116,16 @@ export default function TeamAllocation() {
       sortable: false,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team ?  <EllipsisNameCell value={team?.AllocationManager ?? 'N/A'}/> : null;
+        return team && _resources && 'result' in _resources ? (
+          <EllipsisNameCell
+            value={
+              getAllocationManagerFromPath(
+                team?.AllocationManager,
+                _resources?.result || []
+              )?.FullName ?? 'N/A'
+            }
+          />
+        ) : null;
       },
     },
     {
@@ -133,16 +147,16 @@ export default function TeamAllocation() {
               rowNode.children.map(child => api.getRow(child)?.resourceType)
             ),
           ].filter(Boolean);
-      
+
           displayValue = uniqueResourceTypes.length
             ? uniqueResourceTypes.length > 1
               ? `${uniqueResourceTypes[0]} +${uniqueResourceTypes.length - 1}`
               : uniqueResourceTypes[0]
             : '';
         }
-      
+
         return <EllipsisNameCell value={displayValue} />;
-      }
+      },
     },
   ];
 
