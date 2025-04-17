@@ -51,7 +51,7 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-const CellWithMenu = ({ params, handleAddClick }) => {
+const CellWithMenu = ({ params, handleAddClick, handleCloneClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -65,7 +65,11 @@ const CellWithMenu = ({ params, handleAddClick }) => {
   };
 
   const menuItems = [
-    { label: 'Clone', icon: <ContentCopyIcon fontSize="small" /> },
+    {
+      label: 'Clone',
+      icon: <ContentCopyIcon fontSize="small" />,
+      func: () => handleCloneClick(params),
+    },
     { label: 'Transfer', icon: <SwapHorizIcon fontSize="small" /> },
     { label: 'History', icon: <HistoryIcon fontSize="small" /> },
     { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
@@ -100,7 +104,7 @@ const CellWithMenu = ({ params, handleAddClick }) => {
           <StyledMenuItem
             key={item.label}
             onClick={() => {
-              handleMenuClose();
+              item.func && item.func(params);
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
@@ -189,6 +193,22 @@ export const getFinalColumns = (
       })
     );
   };
+
+  const handleCloneClick = params => {
+    dispatch(
+      openDialog({
+        title: 'Clone Resource',
+        submitButtonText: 'Clone',
+        cancelButtonText: 'Cancel',
+        formType: 'clone_resource',
+        initialData: {
+          Resource: params.row.resource,
+          Project: params.row.project,
+        },
+      })
+    );
+  };
+
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -207,6 +227,7 @@ export const getFinalColumns = (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
+              // handleCloneClick={handleCloneClick}
               columnType="resource"
             />
           ) : null;
@@ -257,6 +278,7 @@ export const getFinalColumns = (
               <CellWithMenu
                 params={params}
                 handleAddClick={handleAddClick}
+                handleCloneClick={handleCloneClick}
                 icon={<Typography fontSize="12px">{params.value}</Typography>}
               />
             );
@@ -343,6 +365,7 @@ export const getFinalColumns = (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
+              handleCloneClick={handleCloneClick}
               columnType="resource"
             />
           ) : null;
