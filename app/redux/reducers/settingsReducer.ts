@@ -51,7 +51,7 @@ const initialState: ThemeState = {
     {
       id: 5,
       from: '1.1',
-      to: '1.5',
+      to: '2.0',
       label: 'Over  Allocated',
       color: '#F8D7D7',
       darkColor: '#D66E6E', 

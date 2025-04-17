@@ -8,6 +8,7 @@ import {
   styled,
   Typography,
   Theme,
+  TextField,
 } from '@mui/material';
 import { DataGridPremium } from '@mui/x-data-grid-premium';
 
@@ -269,6 +270,34 @@ const AddButton = styled(Button)({
   marginLeft: '40px',
 });
 
+export const StyledRangeField = styled(TextField)<{ error?: boolean }>(
+  ({ error }) => ({
+    width: '48px',
+    height: '27px',
+
+    '& .MuiInputBase-root': {
+      height: '32px',
+      display: 'flex',
+      alignItems: 'center',
+      borderColor: error ? 'red' : 'inherit',
+    },
+
+    '& .Mui-error .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'red !important',
+      borderWidth: '2px',
+    },
+
+    '& input': {
+      color: '#000',
+      textAlign: 'center',
+      fontFamily: 'Open Sans',
+      fontSize: '13px',
+      fontStyle: 'normal',
+      fontWeight: 600,
+      lineHeight: '30px',
+    },
+  })
+);
 const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
   borderRadius: '0px',
   borderRight: 'none',

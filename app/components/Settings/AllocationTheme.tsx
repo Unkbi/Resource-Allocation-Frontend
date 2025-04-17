@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import type {
+  GridColDef,
+  GridRenderCellParams,
+  GridValidRowModel,
+} from '@mui/x-data-grid';
 import { TextField, Typography, Popover, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
@@ -16,28 +20,29 @@ import {
   MainContent,
   RangeInputGroup,
   StyledDataGrid,
+  StyledRangeField,
   StyledTableHeader,
 } from './styled';
 import type { AllocationRange } from '@/app/redux/reducers/settingsReducer';
+import { validateRanges } from '@/app/(root)/settings/page';
 
-// Color pairs from the image (pastel and corresponding darker colors)
 interface ColorPair {
-  pastel: string; // Cell color (lighter)
-  dark: string; // Line/Total color (darker)
+  pastel: string;
+  dark: string;
 }
 
 const colorPairs: ColorPair[] = [
-  { pastel: '#D9E1F2', dark: '#8497B0' }, // Light blue-gray / Dark blue-gray
-  { pastel: '#DEEBF7', dark: '#7B9CB9' }, // Light blue / Dark blue
-  { pastel: '#C5F2F7', dark: '#45C4D7' }, // Light teal / Dark teal
-  { pastel: '#C6F5E2', dark: '#3CB371' }, // Light mint / Dark green
-  { pastel: '#E2F1C5', dark: '#9BC13A' }, // Light lime / Dark lime
-  { pastel: '#FFF2CC', dark: '#F0D776' }, // Light yellow / Dark yellow
-  { pastel: '#FCE8D2', dark: '#C08457' }, // Light peach / Dark brown
-  { pastel: '#F8D7D7', dark: '#D66E6E' }, // Light pink-red / Dark red
-  { pastel: '#F5D9F0', dark: '#E56EBF' }, // Light pink / Dark pink
-  { pastel: '#E1D5F5', dark: '#8470DE' }, // Light purple / Dark purple
-  { pastel: '#FFFFFF', dark: '#FFFFFF' }, // White / White (transparent)
+  { pastel: '#D9E1F2', dark: '#8497B0' },
+  { pastel: '#DEEBF7', dark: '#7B9CB9' },
+  { pastel: '#C5F2F7', dark: '#45C4D7' },
+  { pastel: '#C6F5E2', dark: '#3CB371' },
+  { pastel: '#E2F1C5', dark: '#9BC13A' },
+  { pastel: '#FFF2CC', dark: '#F0D776' },
+  { pastel: '#FCE8D2', dark: '#C08457' },
+  { pastel: '#F8D7D7', dark: '#D66E6E' },
+  { pastel: '#F5D9F0', dark: '#E56EBF' },
+  { pastel: '#E1D5F5', dark: '#8470DE' },
+  { pastel: '#FFFFFF', dark: '#FFFFFF' },
 ];
 
 interface AllocationThemeProps {
@@ -72,76 +77,6 @@ export default function AllocationTheme({
     return allocationRanges.map(row => row.color);
   }, [allocationRanges]);
 
-  // Validate ranges for overlaps, subsets, and supersets
-  const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
-    const errors: ValidationErrors = {};
-
-    // Convert string values to numbers for comparison
-    const numericRanges = ranges.map(range => ({
-      id: range.id,
-      from: Number.parseFloat(range.from),
-      to: Number.parseFloat(range.to),
-    }));
-
-    // Check each range against all others
-    numericRanges.forEach((range, index) => {
-      // Skip invalid numbers
-      if (isNaN(range.from) || isNaN(range.to)) {
-        errors[range.id] = {
-          from: isNaN(range.from),
-          to: isNaN(range.to),
-          message: 'Invalid number format',
-        };
-        return;
-      }
-
-      // Check if from is greater than to
-      if (range.from > range.to) {
-        errors[range.id] = {
-          from: true,
-          to: true,
-          message: 'FROM value cannot be greater than TO value',
-        };
-        return;
-      }
-
-      // Check for overlaps with other ranges
-      for (let i = 0; i < numericRanges.length; i++) {
-        if (i === index) continue; // Skip comparing with self
-
-        const otherRange = numericRanges[i];
-
-        // Check for overlap
-        const hasOverlap = !(
-          range.to < otherRange.from || range.from > otherRange.to
-        );
-
-        // Check for subset (this range is inside another range)
-        const isSubset =
-          range.from >= otherRange.from && range.to <= otherRange.to;
-
-        // Check for superset (another range is inside this range)
-        const isSuperset =
-          range.from <= otherRange.from && range.to >= otherRange.to;
-
-        if (hasOverlap || isSubset || isSuperset) {
-          errors[range.id] = {
-            from: true,
-            to: true,
-            message: hasOverlap
-              ? 'Range overlaps with another range'
-              : isSubset
-                ? 'Range is a subset of another range'
-                : 'Range is a superset of another range',
-          };
-          break;
-        }
-      }
-    });
-
-    return errors;
-  };
-
   // Update the handleRangeChange function in the RangeCell component
   const RangeCell = (params: GridRenderCellParams) => {
     const { id, field, value } = params;
@@ -154,9 +89,61 @@ export default function AllocationTheme({
       field: 'from' | 'to',
       value: string
     ) => {
-      const updatedRanges = allocationRanges.map(row =>
+      let updatedRanges = allocationRanges.map(row =>
         row.id === id ? { ...row, [field]: value } : row
       );
+
+      if (field === 'to') {
+        const currentRow = updatedRanges.find(row => row.id === id);
+        if (currentRow && currentRow.to !== '2.0') {
+          let currentTo = parseFloat(value);
+          if (!isNaN(currentTo)) {
+            // Update subsequent rows in sequence
+            const currentIndex = updatedRanges.findIndex(row => row.id === id);
+            let nextIndex = currentIndex + 1;
+
+            while (nextIndex < updatedRanges.length) {
+              const newFromValue = (currentTo + 0.1).toFixed(1);
+
+              updatedRanges = updatedRanges.map((row, index) =>
+                index === nextIndex
+                  ? {
+                      ...row,
+                      from: newFromValue,
+                      to: row.to === '2.0' ? row.to : '', // Clear subsequent to values
+                    }
+                  : row
+              );
+
+              currentTo = parseFloat(newFromValue);
+              nextIndex++;
+            }
+          }
+        }
+      }
+
+      // Update base row based on max to value from all rows
+      const baseRow = updatedRanges.find(row => row.to === '2.0');
+      if (baseRow) {
+        const nonBaseRows = updatedRanges.filter(row => row.to !== '2.0');
+        const toValues = nonBaseRows
+          .map(row => parseFloat(row.to))
+          .filter(v => !isNaN(v));
+
+        if (toValues.length > 0) {
+          const maxTo = Math.max(...toValues);
+          const newBaseFrom = (maxTo + 0.1).toFixed(1);
+
+          updatedRanges = updatedRanges.map(row =>
+            row.to === '2.0' ? { ...row, from: newBaseFrom } : row
+          );
+        } else {
+          // Reset base row if no valid ranges
+          updatedRanges = updatedRanges.map(row =>
+            row.to === '2.0' ? { ...row, from: '0.0' } : row
+          );
+        }
+      }
 
       onAllocationRangesChange(updatedRanges);
       const newErrors = validateRanges(updatedRanges);
@@ -167,89 +154,33 @@ export default function AllocationTheme({
     return (
       <RangeInputGroup>
         <Typography variant="body2">FROM</Typography>
-        <TextField
+        <StyledRangeField
+          onKeyDown={e => {
+            e.stopPropagation();
+          }}
           size="small"
           value={row.from}
+          disabled={
+            (row.from === '0.0' && row.to === '0.0') ||
+            row.to === '2.0' ||
+            (row.from !== '' && row.to !== '2.0')
+          }
           onChange={e => handleRangeChange(id, 'from', e.target.value)}
           error={error?.from}
-          sx={{
-            width: '48px',
-            height: '27px',
-            '& .MuiInputBase-root': {
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              borderColor: error?.from ? 'red' : undefined,
-            },
-            '& .Mui-error .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'red !important',
-              borderWidth: '2px',
-            },
-          }}
-          inputProps={{
-            style: {
-              color: '#000',
-              textAlign: 'center',
-              fontFamily: 'Open Sans',
-              fontSize: '13px',
-              fontStyle: 'normal',
-              fontWeight: '600',
-              lineHeight: '30px',
-            },
-          }}
         />
         <Typography variant="body2">TO</Typography>
-        <TextField
+        <StyledRangeField
+          onKeyDown={e => {
+            e.stopPropagation();
+          }}
           size="small"
           value={row.to}
+          disabled={
+            (row.from === '0.0' && row.to === '0.0') || row.to === '2.0'
+          }
           onChange={e => handleRangeChange(id, 'to', e.target.value)}
           error={error?.to}
-          sx={{
-            width: '48px',
-            height: '27px',
-            '& .MuiInputBase-root': {
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              borderColor: error?.to ? 'red' : undefined,
-            },
-            '& .Mui-error .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'red !important',
-              borderWidth: '2px',
-            },
-          }}
-          inputProps={{
-            style: {
-              color: '#000',
-              textAlign: 'center',
-              fontFamily: 'Open Sans',
-              fontSize: '13px',
-              fontStyle: 'normal',
-              fontWeight: '600',
-              lineHeight: '30px',
-            },
-          }}
         />
-        {error?.message && (
-          <Tooltip title={error.message}>
-            <Typography
-              variant="caption"
-              color="error"
-              sx={{
-                position: 'absolute',
-                bottom: '-18px',
-                left: '0',
-                fontSize: '10px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
-              }}
-            >
-              {error.message}
-            </Typography>
-          </Tooltip>
-        )}
       </RangeInputGroup>
     );
   };
@@ -359,31 +290,71 @@ export default function AllocationTheme({
 
   // Add new allocation range
   const handleAddAllocationRange = () => {
-    const id = Math.max(0, ...allocationRanges.map(row => row.id)) + 1;
+    const baseRow = allocationRanges.find(row => row.to === '2.0');
+    const hasBaseRow = !!baseRow;
 
-    // Find a color that's not already used
+    // Find unused color
     const unusedColors = colorPairs
       .filter(pair => !usedColors.includes(pair.pastel))
       .map(pair => pair);
-
-    // Use the first unused color pair, or white if all are used
     const nextColorPair =
       unusedColors.length > 0
         ? unusedColors[0]
         : { pastel: '#FFFFFF', dark: '#FFFFFF' };
 
-    const newRow: AllocationRange = {
-      id,
-      from: '0.0',
-      to: '0.0',
-      label: '',
-      color: nextColorPair.pastel,
-      darkColor: nextColorPair.dark,
-    };
+    // Set initial values for the new row
+    let newFrom = '';
+    let newTo = '';
+    if (hasBaseRow) {
+      const previousRow = allocationRanges[allocationRanges.length - 2];
+      newFrom = previousRow?.to
+        ? `${(parseFloat(previousRow.to) + 0.1).toFixed(1)}`
+        : baseRow.from;
+      // newTo = baseRow.from;
+    } else {
+      newFrom = '0.0';
+      newTo = '2.0';
+    }
 
-    const updatedRanges = [...allocationRanges, newRow];
+    // If baseRow exists, insert before it and shift IDs
+    let updatedRanges: AllocationRange[];
+    if (hasBaseRow) {
+      const baseRowIndex = allocationRanges.findIndex(row => row === baseRow);
+
+      const newRow: AllocationRange = {
+        ...baseRow,
+        id: baseRow.id, // New row takes base row's current ID
+        from: newFrom,
+        to: newTo,
+        label: '',
+        color: nextColorPair.pastel,
+        darkColor: nextColorPair.dark,
+      };
+
+      // Shift IDs of base row and all following rows
+      updatedRanges = allocationRanges.map((row, index) => {
+        if (index >= baseRowIndex) {
+          return { ...row, id: row.id + 1 };
+        }
+        return row;
+      });
+
+      updatedRanges.splice(baseRowIndex, 0, newRow); // insert new row
+    } else {
+      // No base row, just append at the end
+      const maxId = Math.max(0, ...allocationRanges.map(row => row.id));
+      const newRow: AllocationRange = {
+        id: maxId + 1,
+        from: newFrom,
+        to: newTo,
+        label: '',
+        color: nextColorPair.pastel,
+        darkColor: nextColorPair.dark,
+      };
+      updatedRanges = [...allocationRanges, newRow];
+    }
+
     onAllocationRangesChange(updatedRanges);
-    // Validate after adding
     const newErrors = validateRanges(updatedRanges);
     setValidationErrors(newErrors);
     onDataChanged();
@@ -466,6 +437,17 @@ export default function AllocationTheme({
     },
   ];
 
+  const handleProcessRowUpdate = (
+    newRow: GridValidRowModel
+  ): GridValidRowModel => {
+    const updated = allocationRanges.map(row =>
+      row.id === newRow.id ? { ...row, label: newRow.label as string } : row
+    );
+    onAllocationRangesChange(updated);
+    onDataChanged();
+    return newRow;
+  };
+
   return (
     <MainContent>
       <ContentPaper elevation={0}>
@@ -476,6 +458,7 @@ export default function AllocationTheme({
             disableColumnMenu
             columns={columns}
             editMode="row"
+            processRowUpdate={handleProcessRowUpdate}
             initialState={{
               pagination: {
                 paginationModel: {

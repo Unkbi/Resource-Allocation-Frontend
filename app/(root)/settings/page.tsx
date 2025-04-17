@@ -53,7 +53,7 @@ interface ValidationErrors {
 }
 
 // Function to validate ranges
-const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
+export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
   const errors: ValidationErrors = {};
 
   // Convert string values to numbers for comparison
