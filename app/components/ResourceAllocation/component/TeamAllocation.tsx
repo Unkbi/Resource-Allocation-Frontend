@@ -13,6 +13,7 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import { ApiResponse, Resource } from '@/app/types';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
+import EllipsisNameCell from './EllipsisNameCell';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -78,68 +79,19 @@ export default function TeamAllocation() {
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        let resource_count = [];
+        let resource_count: any[] = [];
         if (isGridTreeNode && rowNode.children) {
           resource_count = [
             ...new Set(rowNode?.children?.map(child => api.getRow(child))),
           ];
         }
         return (
-          <Tooltip
-            title={value as string}
-            placement="right"
-            arrow
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: 'offset',
-                    options: { offset: [0, 10] },
-                  },
-                ],
-              },
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                width: '100%',
-                minWidth: 0,
-              }}
-            >
-              <span
-                style={{
-                  flex: '1 1 auto',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {value as string}
-              </span>
-              <span
-                style={{
-                  flex: '0 0 auto',
-                  display: 'flex',
-                  width: '24px',
-                  height: '24px',
-                  padding: '4px 3px',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  color: '#F1F1F1',
-                  marginTop: '13px',
-                  marginLeft: '8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  background: ' #7881A5',
-                }}
-              >
-                {resource_count.length}
-              </span>
-            </div>
-          </Tooltip>
+          <EllipsisNameCell
+            value={value as string}
+            resourceCount={resource_count.length}
+            onAddClick={() => handleAddClick(params)}
+            showAddIcon
+          />
         );
       },
     },
@@ -152,7 +104,7 @@ export default function TeamAllocation() {
       sortable: false,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team ? <span>{team?.Status ?? 'N/A'}</span> : null;
+        return team ? <EllipsisNameCell value={team?.Status ?? 'N/A'} /> : null;
       },
     },
     {
@@ -165,12 +117,14 @@ export default function TeamAllocation() {
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
         return team && _resources && 'result' in _resources ? (
-          <span>
-            {getAllocationManagerFromPath(
-              team?.AllocationManager,
-              _resources?.result || []
-            )?.FullName ?? 'N/A'}
-          </span>
+          <EllipsisNameCell
+            value={
+              getAllocationManagerFromPath(
+                team?.AllocationManager,
+                _resources?.result || []
+              )?.FullName ?? 'N/A'
+            }
+          />
         ) : null;
       },
     },
@@ -183,27 +137,25 @@ export default function TeamAllocation() {
       cellClassName: 'secondary-cell',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const { rowNode, api, value = '' } = params;
+        const { rowNode, api, value } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+        let displayValue = (value ?? '') as string;
 
-        if (value) {
-          return value;
-        } else {
-          if (isGridTreeNode && rowNode.children) {
-            const uniqueResourceTypes = [
-              ...new Set(
-                rowNode?.children?.map(
-                  child => params.api.getRow(child)?.resourceType
-                )
-              ),
-            ].filter(Boolean);
-            return uniqueResourceTypes.length
-              ? uniqueResourceTypes.length > 1
-                ? `${uniqueResourceTypes[0]} +${uniqueResourceTypes.length - 1}`
-                : uniqueResourceTypes[0]
-              : '';
-          }
+        if (!displayValue && isGridTreeNode && rowNode.children) {
+          const uniqueResourceTypes = [
+            ...new Set(
+              rowNode.children.map(child => api.getRow(child)?.resourceType)
+            ),
+          ].filter(Boolean);
+
+          displayValue = uniqueResourceTypes.length
+            ? uniqueResourceTypes.length > 1
+              ? `${uniqueResourceTypes[0]} +${uniqueResourceTypes.length - 1}`
+              : uniqueResourceTypes[0]
+            : '';
         }
+
+        return <EllipsisNameCell value={displayValue} />;
       },
     },
   ];

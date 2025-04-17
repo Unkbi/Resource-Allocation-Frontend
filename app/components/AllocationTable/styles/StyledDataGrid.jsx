@@ -320,7 +320,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       borderBottom: '2px solid #FFCD9C',
     },
     '& .firstGroupsRow': {
-      backgroundColor: '#E9EFF8 !important',
+      backgroundColor: 'rgb(233, 239, 248) !important',
       fontWeight: groupBy === 'project' ? 'bold' : '',
       color: groupBy === 'project' ? '#313F68' : '',
     },

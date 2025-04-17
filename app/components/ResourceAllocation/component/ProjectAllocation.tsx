@@ -10,6 +10,7 @@ import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
+import EllipsisNameCell from './EllipsisNameCell'; 
 
 export default function ProjectAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -74,27 +75,12 @@ export default function ProjectAllocation() {
         if (isGridTreeNode && rowNode.children) {
           const resource_count = rowNode?.children?.length || null;
           return (
-            <Tooltip
-              title={value as string}
-              placement="right"
-              arrow
-              slotProps={{
-                popper: {
-                  modifiers: [
-                    {
-                      name: 'offset',
-                      options: { offset: [0, 10] },
-                    },
-                  ],
-                },
-              }}
-            >
-              <CustomAddIcon
-                value={value as string}
-                count={resource_count}
-                onClick={() => handleAddClick(params)}
-              />
-            </Tooltip>
+            <EllipsisNameCell
+            value={value as string}
+            resourceCount={resource_count}
+            onAddClick={() => handleAddClick(params)}
+            showAddIcon ={true}
+          />
           );
         }
       },
@@ -111,7 +97,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectSponsor ?? 'N/A'}</span>
+          <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -127,7 +113,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectManager ?? 'N/A'}</span>
+          <EllipsisNameCell value = {firstChild.projectManager ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -142,7 +128,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectStatus ?? 'N/A'}</span>
+          <EllipsisNameCell value ={firstChild.projectStatus ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -158,7 +144,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectLocation ?? 'N/A'}</span>
+          <EllipsisNameCell value ={firstChild.projectLocation ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -174,7 +160,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectType ?? 'N/A'}</span>
+          <EllipsisNameCell value ={firstChild.projectType ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -190,7 +176,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}</span>
+          <EllipsisNameCell value = {firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}/>
         ) : null;
       },
     },
@@ -206,7 +192,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectCost ?? 'N/A'}</span>
+          <EllipsisNameCell value={firstChild.projectCost ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -222,7 +208,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectCurrency ?? 'N/A'}</span>
+          <EllipsisNameCell value = {firstChild.projectCurrency ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -238,7 +224,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectStartDate ?? 'N/A'}</span>
+          <EllipsisNameCell value={firstChild.projectStartDate ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -254,7 +240,7 @@ export default function ProjectAllocation() {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <span>{firstChild.projectEndDate ?? 'N/A'}</span>
+          <EllipsisNameCell value={firstChild.projectEndDate ?? 'N/A'}/>
         ) : null;
       },
     },
@@ -275,7 +261,7 @@ export default function ProjectAllocation() {
           !isNaN(value) && value !== null
             ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
             : null;
-        return <span style={{ fontWeight: 'bold' }}>{formattedValue}</span>;
+        return <EllipsisNameCell value={formattedValue} />
       },
     },
   ];

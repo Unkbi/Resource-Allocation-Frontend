@@ -2,7 +2,7 @@ import {
   aggregationModel,
   getAllColumnsWithWeek,
 } from '@/app/components/AllocationTable/TableHeader';
-import CustomAvatar from '../Avatar/CustomAvatar';
+
 import { calculateTotalEffort } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
 import { useSelector } from 'react-redux';
@@ -23,6 +23,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
 import { Typography } from '@mui/material';
+import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -133,13 +134,18 @@ const CellWithMenu = ({ params, handleAddClick, handleCloneClick }) => {
 
   return (
     <CustomAddIcon
-      value={<CustomAvatar value={params.value} showFullName={true} />}
+      value={
+        <EllipsisNameCell
+          value={params.value}
+          showAddIcon={false}
+          showAvatar={true}
+        />
+      }
       onClick={() => handleAddClick(params)}
       menu={menu}
     />
   );
 };
-
 export const getInitialState = (
   groupBy,
   updatedRows,
@@ -223,7 +229,9 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          return params.value ? (
+          const value = params.value;
+          const resourceCount = params.row?.resource_count?.length || 0;
+          return value ? (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
@@ -279,8 +287,13 @@ export const getFinalColumns = (
                 params={params}
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
-                icon={<Typography fontSize="12px">{params.value}</Typography>}
-              />
+              >
+                <EllipsisNameCell
+                  value={params.value}
+                  showAddIcon
+                  onAddClick={() => handleAddClick(params)}
+                />
+              </CellWithMenu>
             );
           }
 
@@ -300,32 +313,22 @@ export const getFinalColumns = (
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  width: '100%',
                   minWidth: 0,
+                  width: '100%',
+                  gap: 8,
                 }}
               >
                 {!isGroupExpanded && (
-                  <span
-                    style={{
-                      flex: '1 1 auto',
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={firstProject}
-                  >
-                    {firstProject}
-                  </span>
+                  <EllipsisNameCell value={firstProject} showAddIcon={false} />
                 )}
                 {!isGroupExpanded && (
                   <span
                     style={{
-                      flex: '0 0 auto',
+                      flexShrink: 0,
                       backgroundColor: '#E9EFF8',
                       color: '#000',
                       paddingRight: 4,
                       paddingLeft: 4,
-                      marginLeft: 8,
                       fontSize: 12,
                       borderRadius: 4,
                       lineHeight: 1.6,
@@ -338,11 +341,11 @@ export const getFinalColumns = (
             );
           }
 
-          return projects_set.length
-            ? `${projects_set[0]}${
-                projects_set.length > 1 ? ` +${projects_set.length - 1}` : ''
-              }`
-            : '';
+          return projects_set.length ? (
+            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
+          ) : (
+            ''
+          );
         },
       },
       ...(allColumns?.slice(1) || []),
