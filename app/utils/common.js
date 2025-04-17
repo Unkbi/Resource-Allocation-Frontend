@@ -10,14 +10,13 @@ import {
   subDays,
   subWeeks,
   weeksToDays,
-  parseISO
+  parseISO,
 } from 'date-fns';
 import {
   DATE_FORMAT,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
-import { parseISO } from 'date-fns';
 
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
