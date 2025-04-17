@@ -1,6 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
-import { Box } from '@mui/material';
-import { Tooltip } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 
 interface CustomAddIconProps {
   value?: string | React.ReactNode | null;
@@ -17,48 +17,50 @@ export const CustomAddIcon = ({
   menu = null,
   columnType = 'teams',
 }: CustomAddIconProps) => {
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const textRef = useRef<HTMLDivElement>(null);
   const isResourceColumn = columnType === 'resource';
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (textRef.current) {
+        setIsOverflowing(textRef.current.scrollWidth > textRef.current.clientWidth);
+      }
+    };
+
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+
+    return () => {
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [value]);
+
   return (
-    <Tooltip
-      title={typeof value === 'string' ? value : ''}
-      arrow
-      placement="right"
-      slotProps={{
-        popper: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, 10],
-              },
-            },
-          ],
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        minWidth: 0,
+        position: 'relative',
+        overflow: 'visible',
+        '&:hover .icon-overlay': {
+          opacity: 1,
+          visibility: 'visible',
+        },
+        '&:hover .count': {
+          opacity: 0,
+          visibility: 'hidden',
+        },
+        '&:hover .text': {
+          paddingRight: menu ? '40px' : count !== null ? '35px' : '0px',
         },
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
-          minWidth: 0,
-          position: 'relative',
-          overflow: 'visible',
-
-          '&:hover .icon-overlay': {
-            opacity: 1,
-            visibility: 'visible',
-          },
-          '&:hover .count': {
-            opacity: 0,
-            visibility: 'hidden',
-          },
-          '&:hover .text': {
-            paddingRight: menu ? '40px' : count !== null ? '35px' : '0px',
-          },
-        }}
-      >
+       <Tooltip title={isOverflowing && typeof value === 'string' ? value : ''} arrow placement="right">
         <Box
+          ref={textRef}
           className="text"
           sx={{
             flex: '1 1 auto',
@@ -72,68 +74,67 @@ export const CustomAddIcon = ({
         >
           {value}
         </Box>
+      </Tooltip>
+      <Box
+        className="icon-overlay"
+        sx={{
+          position: 'absolute',
+          right: 4,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0,
+          mr: menu ? '-17px' : 0,
+          opacity: 0,
+          visibility: 'hidden',
+          transition: 'opacity 0.2s, visibility 0.2s',
+          zIndex: 2,
+          overflow: 'visible',
+        }}
+      >
+        <AddIcon
+          onClick={onClick}
+          sx={{
+            width: 22,
+            height: 22,
+            fontSize: 20,
+            backgroundColor: '#1C2D5F',
+            color: '#fff',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: '#1C2D5F',
+            },
+          }}
+        />
+        {menu}
+      </Box>
+      {count !== null && (
         <Box
-          className="icon-overlay"
+          className="count"
           sx={{
             position: 'absolute',
             right: 4,
             top: '50%',
             transform: 'translateY(-50%)',
             display: 'flex',
+            justifyContent: 'center',
             alignItems: 'center',
-            gap: 0,
-            mr: menu ? '-17px' : 0,
-            opacity: 0,
-            visibility: 'hidden',
-            transition: 'opacity 0.2s, visibility 0.2s',
-            zIndex: 2,
-            overflow: 'visible',
+            width: '22px',
+            height: '22px',
+            fontSize: '12px',
+            fontWeight: '700',
+            borderRadius: '4px',
+            background: '#7881A5',
+            color: '#F1F1F1',
+            transition: 'opacity 0.2s',
+            zIndex: 1,
           }}
         >
-          <AddIcon
-            onClick={onClick}
-            sx={{
-              width: 22,
-              height: 22,
-              fontSize: 20,
-              backgroundColor: '#1C2D5F',
-              color: '#fff',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              '&:hover': {
-                backgroundColor: '#1C2D5F',
-              },
-            }}
-          />
-          {menu}
+          {count}
         </Box>
-
-        {count !== null && (
-          <Box
-            className="count"
-            sx={{
-              position: 'absolute',
-              right: 4,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: '22px',
-              height: '22px',
-              fontSize: '12px',
-              fontWeight: '700',
-              borderRadius: '4px',
-              background: '#7881A5',
-              color: '#F1F1F1',
-              transition: 'opacity 0.2s',
-              zIndex: 1,
-            }}
-          >
-            {count}
-          </Box>
-        )}
-      </Box>
-    </Tooltip>
+      )}
+    </Box>
   );
 };
