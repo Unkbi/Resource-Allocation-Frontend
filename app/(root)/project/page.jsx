@@ -11,6 +11,8 @@ import { closeDialog, openDialog } from "@/app/redux/reducers/dialogReducer";
 import CustomAvatar from "@/app/components/Avatar/CustomAvatar";
 import DeleteDialog from "@/app/components/Dialog/DeleteDialog";
 import { deleteProject, getAllProjects} from '@/app/services/projectServices';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const demoProjects = {
     "result": [
@@ -459,6 +461,19 @@ const StatusPill = styled('div')(({ theme, status }) => {
   };
 });
 
+const menuItemStyle = {
+  '&:hover': {
+    backgroundColor: '#142B51B2',
+    color: 'white',
+  },
+  color: '#424242',
+  fontFamily: '"Open Sans", sans-serif',
+  fontSize: '12px',
+  fontStyle: 'normal',
+  fontWeight: 600,
+  lineHeight: '18px',
+};
+
 
 export default function Project() {
     const dispatch = useDispatch()
@@ -638,16 +653,29 @@ export default function Project() {
                 open={Boolean(anchorEl) && selectedRow === params.row.id}
                 onClose={handleMenuClose}
                 anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "right",
+                  vertical: "top",
+                  horizontal: "left",
                 }}
                 transformOrigin={{
                   vertical: "top",
                   horizontal: "right",
                 }}
+                sx={{
+                  width: 350,
+                  height: 175,
+                  flexShrink: 0,
+                  paddingTop: '2px',
+                  paddingBottom: '4px',
+                }}
               >
-                <MenuItem onClick={() =>{ handleOpenDialog("Edit Project", "edit_project",params.row), handleMenuClose()}}>Edit Project</MenuItem>
-                <MenuItem onClick={() => { setProjectToDelete(params.row); setDeleteDialogOpen(true); handleMenuClose() }}>Delete Project</MenuItem>
+                <MenuItem onClick={() =>{ handleOpenDialog("Edit Project", "edit_project",params.row), handleMenuClose()}} sx={menuItemStyle}>
+                  <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                  Edit Project
+                  </MenuItem>
+                <MenuItem onClick={() => { setProjectToDelete(params.row); setDeleteDialogOpen(true); handleMenuClose() }} sx={menuItemStyle}>
+                <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                 Delete Project
+                 </MenuItem>
               </Menu>
             </>
           ),

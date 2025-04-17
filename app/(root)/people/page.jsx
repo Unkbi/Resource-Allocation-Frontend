@@ -11,6 +11,9 @@ import CustomAvatar from "@/app/components/Avatar/CustomAvatar";
 import DeleteDialog from "@/app/components/Dialog/DeleteDialog";
 import { fetchAllResources } from "@/app/redux/actions/fetchResourcesAction";
 import { getAllTeams } from "@/app/services/teamServices";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { deleteResource } from "@/app/services/resourceServices";
 
 const demoResources = {
     "result" :[
@@ -106,6 +109,18 @@ const StatusPill = styled('div')(({ theme, status }) => {
   };
 });
 
+const menuItemStyle = {
+  '&:hover': {
+    backgroundColor: '#142B51B2',
+    color: 'white',
+  },
+  color: '#424242',
+  fontFamily: '"Open Sans", sans-serif',
+  fontSize: '12px',
+  fontStyle: 'normal',
+  fontWeight: 600,
+  lineHeight: '18px',
+};
 
 export default function Resources() {
     const dispatch = useDispatch();
@@ -113,7 +128,8 @@ export default function Resources() {
     const [anchorEl, setAnchorEl] = useState(null)
     const [selectedRow, setSelectedRow] = useState(null)
     const [rows, setRows] = useState(resources?.result || null)
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);   
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false); 
+    const [deleteTarget, setDeleteTarget] = useState({ id: "", name: "" });
     useEffect(() => {
       if(!updating){
         dispatch(fetchAllResources());
@@ -144,8 +160,19 @@ export default function Resources() {
     }
 
     const handleConfirmDelete = () => {
-    setDeleteDialogOpen(false)
-     };
+      if (!deleteTarget.id) return;
+      dispatch(deleteResource(deleteTarget.id))
+        .then(() => {
+          dispatch(fetchAllResources());
+        })
+        .catch((error) => {
+          console.error("Error deleting resource:", error);
+        });
+      setDeleteDialogOpen(false);
+      setDeleteTarget({ id: "", name: "" });
+    };
+  
+  
   
     const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
@@ -265,43 +292,56 @@ export default function Resources() {
           return status &&
           (
             <>
-         <StatusPill status={status}>{status}</StatusPill>
-         <IconButton size="small" onClick={(e) => handleMenuClick(e, params.row.id)}>
-          <MoreVertIcon fontSize="small" />
-         </IconButton>
-         <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl) && selectedRow === params.row.id}
-          onClose={handleMenuClose}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-          transformOrigin={{
-            vertical: "top",
-            horizontal: "right",
-          }}
-        >
-          <MenuItem
-            onClick={() => {
-              handleMenuClose();
-            }}
-          >
-            Edit Resource
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setDeleteDialogOpen(true);
-              handleMenuClose();
-            }}
-          >
-            Delete Resource
-          </MenuItem>
-        </Menu>
-      </>
-    );
-  },
-        },
+                <StatusPill status={status}>{status}</StatusPill>
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleMenuClick(e, params.row.id)}
+                >
+                <MoreVertIcon fontSize="small" />
+                </IconButton>
+        
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                  sx={{
+                    width: 350,
+                    height: 175,
+                    flexShrink: 0,
+                    paddingTop: '2px',
+                    paddingBottom: '4px',
+                  }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      handleOpenDialog('Edit Resource', 'editResource', params.row);
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+        
+                  <MenuItem
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setDeleteTarget({ id: params.row.Id, name: params.row.FullName });
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </>
+            );
+          },
+        }
+        
     ]
 
     const handleMenuClick = (event, id) => {
@@ -320,13 +360,16 @@ export default function Resources() {
             marginLeft:'10px',
             backgroundColor: '#fff',
             boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+            minHeight: '600px'
             }}>
             <ResourceTable loading={loading }columns={columns} rows={modifyData(rows)}  />
             <DeleteDialog
               open={deleteDialogOpen}
               onConfirm={handleConfirmDelete}
               onCancel={handleCancelDelete}
-              title="Are you sure you want to delete this Resource?"
+              title={  <>
+                Are you sure you want to delete <em>{deleteTarget.name}</em>?
+              </>}
               >
               This will permanently delete the Resource.
               </DeleteDialog>
