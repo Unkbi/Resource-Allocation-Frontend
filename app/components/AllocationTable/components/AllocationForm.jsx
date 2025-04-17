@@ -843,7 +843,7 @@ const AllocationForm = () => {
                 getTeamByResourceId(id)
               );
               const teams = [...new Set(newResources.map(res => res?.team))];
-              
+              dispatch(closeDialog());
               if (view === 'Teams') {
                 await dispatch(fetchResourcesAgainstTeams(teams, allocations, startDate, endDate)).then(() => {;
                 handleOnAdd(newResources);
@@ -854,7 +854,7 @@ const AllocationForm = () => {
                 handleScrollAndFocus(newResources, allMondays, formattedProjects);
                 })
               }
-              dispatch(closeDialog());
+
               dispatch(
                 showToast({
                   open: true,
