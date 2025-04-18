@@ -157,7 +157,7 @@ const TransferResourceForm = ({ formikProps, setFormValue }) => {
       </Box>
 
       <StyledFormInfoText>
-        Allocation values will be transfered to same as [{initialData?.Resource}]'s in [{projectNames.join(", ")}].
+        Allocation values will be transfered to [{initialData?.Resource}]'s in [{projectNames.join(", ")}].
       </StyledFormInfoText>
     </Box>
   );
