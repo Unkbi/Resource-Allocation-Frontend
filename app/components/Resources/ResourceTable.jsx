@@ -67,7 +67,7 @@ const ResourceTable = ({columns, rows, loading, pageSizeOptions = [5, 10, 25, 50
               toolbarColumns:"",
             }}
             sx={{
-                height: '95vh',
+                height: '120vh',
                 '& .MuiDataGrid-columnHeader': {
                     padding: '0 16px',
                     borderRight: 'none',
