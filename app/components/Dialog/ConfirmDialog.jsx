@@ -1,8 +1,8 @@
 import React from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from "@mui/material";
 
-// global delete dialog with placeholders, pass title as prop and content as children prop
-const DeleteDialog = ({ open, onCancel, onConfirm, title, children }) => {
+// global confirm dialog with placeholders, pass title as prop and content as children prop
+const ConfirmDialog = ({ open, onCancel, onConfirm, title, children }) => {
   return (
     <Dialog open={open} onCancel={onCancel}>
       <Box sx={{ textAlign: "center", fontFamily: theme => theme.typography.fontFamily }}>
@@ -60,4 +60,4 @@ const DeleteDialog = ({ open, onCancel, onConfirm, title, children }) => {
   );
 };
 
-export default DeleteDialog;
+export default ConfirmDialog;

@@ -63,7 +63,7 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { set } from 'date-fns';
-import DeleteDialog from '../Dialog/DeleteDialog';
+import ConfirmDialog from '../Dialog/ConfirmDialog';
 import { compressToEncodedURIComponent } from 'lz-string';
 import CustomInput from '../Input/Input';
 import { showToastAction } from '@/app/redux/actions/toastAction';
@@ -1110,14 +1110,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           <CustomExport />
         </Box>
       </ToolBox2>
-      <DeleteDialog
+      <ConfirmDialog
         open={deleteDialogOpen}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         title="Are you sure you want to delete this View?"
       >
         {`This will permanently delete the view : ${deleteView?.Name}`}
-      </DeleteDialog>
+      </ConfirmDialog>
       <ShareLinkDialog
         open={shareDialogOpen}
         title="Share this Allocation View"
