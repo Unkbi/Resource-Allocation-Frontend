@@ -133,5 +133,18 @@ export const cloneResourceValidationSchema = Yup.object({
   EndDate: Yup.date()
     .required("End date is required")
     .min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
-  // Hours: Yup.number().required("Hours are required").positive("Hours must be positive"),
+})
+
+export const transferResourceValidationSchema = Yup.object({
+  Resource: Yup.array()
+  .of(Yup.string())
+  .min(1, 'You must select at least one Resource').required("Resource is required"),
+  Project: Yup.array()
+  .of(Yup.string())
+  .min(1, 'You must select at least one Project')
+  .required('Project is required'),
+  StartDate: Yup.date().required("Start date is required"),
+  EndDate: Yup.date()
+    .required("End date is required")
+    .min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
 })
