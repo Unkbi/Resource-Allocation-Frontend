@@ -139,7 +139,7 @@ const AllocationForm = () => {
   );
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
-
+  const {savedViews} = useSelector (state=>state.allocationView);
   const { startDate, endDate } = calendarDate || {};
   const { allocations } = useSelector(state => state.dataGrid);
   const { rowState } = useSelector(state => state.dataGrid);
@@ -162,7 +162,7 @@ const AllocationForm = () => {
       case 'save_view':
         return saveViewValidationSchema;
       case 'name_view':
-        return nameViewValidationSchema;
+        return nameViewValidationSchema(savedViews);
       case 'clone_resource':
         return cloneResourceValidationSchema;
       default:

@@ -117,9 +117,30 @@ export const saveViewValidationSchema = Yup.object({
   calendarBy: Yup.string().required('Calendar By is required'),
 });
 
-export const nameViewValidationSchema = Yup.object({
-  name: Yup.string().required('Name is required'),
-});
+export const nameViewValidationSchema = (savedViews = []) =>
+  Yup.object({
+    name: Yup.string()
+      .required('Name is required')
+      .test(
+        'unique-name',
+        'This name already exists in saved views.',
+        function (value) {
+          if (!value) return true;
+
+          const currentId = this.parent?.id;
+          const trimmedValue = value.toLowerCase().trim();
+
+          return !savedViews.some(view => {
+            const viewName = view?.Name?.toLowerCase()?.trim();
+            return viewName === trimmedValue && view?.Id !== currentId;
+          });
+        }
+      ),
+    description: Yup.string(),
+    isDefault: Yup.boolean(),
+  });
+
+
 
 export const cloneResourceValidationSchema = Yup.object({
   Resource: Yup.array()
