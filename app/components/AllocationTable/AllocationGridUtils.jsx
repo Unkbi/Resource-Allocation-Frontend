@@ -5,7 +5,7 @@ import {
 
 import { calculateTotalEffort } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from './CustomAddIcon';
 import { useState } from 'react';
@@ -24,6 +24,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
 import { Typography } from '@mui/material';
 import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
+import ConfirmDialog from '../Dialog/ConfirmDialog';
+import { removeResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
+import { setRowState } from '@/app/redux/reducers/dataGridReducer';
+import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -55,6 +60,62 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
 const CellWithMenu = ({ params, handleAddClick, handleCloneClick }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const dispatch = useDispatch();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteParams, setDeleteParams] = useState(null);
+  const allTeams = useSelector(state => state.teams.teams?.result || []);
+  const allResources = useSelector(state => state.resources.resources?.result || []);
+  const rowState = useSelector(state => state.dataGrid.rowState);
+  const { view } = useSelector(state => state.allocationView);
+
+  const handleDeleteClick = params => {
+    setDeleteParams(params);
+    setShowDeleteDialog(true);
+    setAnchorEl(null);
+  };
+  
+  const handleConfirmDelete = async () => {
+    const row = deleteParams.row;
+    const resourceId = row?.resourceId;
+
+    const allocationIds = Object.values(row)
+      .filter(cell => cell?.allocationId)
+      .map(cell => cell.allocationId);
+  
+    const deletePayloads = allocationIds.map(allocationId => ({
+      resourceId,
+      allocationId,
+    }));
+
+    await Promise.all(
+      deletePayloads.map(payload => dispatch(removeResourceAllocation(payload)))
+    );
+  
+    const updatedRows = rowState.filter(r => r.id !== row.id);
+    dispatch(setRowState(updatedRows));
+
+    const fullResource = allResources.find(r => r.Id === resourceId);
+    const team = allTeams.find(team => team.Name === row.teams);
+    
+    if (fullResource && team) {
+      const rowId = `auto-generated-row-teams/${team.Name}-resource/${fullResource.FullName}`;
+      dispatch(setExpandRowId([rowId]));
+    }
+
+    const itemName = view === 'Project' ? deleteParams?.row?.resource : deleteParams?.row?.project;
+
+    dispatch(showToast({
+      open: true,
+      message: `${itemName} has been successfully deleted.`,
+      type: "success",
+      position: "bottom-right",
+      autoHideTimer: 4000,
+    }));
+
+    setShowDeleteDialog(false);
+    setDeleteParams(null);
+    setAnchorEl(null);
+  };
 
   const handleMenuOpen = event => {
     event.stopPropagation();
@@ -73,7 +134,11 @@ const CellWithMenu = ({ params, handleAddClick, handleCloneClick }) => {
     },
     { label: 'Transfer', icon: <SwapHorizIcon fontSize="small" /> },
     { label: 'History', icon: <HistoryIcon fontSize="small" /> },
-    { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
+    {
+      label: 'Delete',
+      icon: <DeleteIcon fontSize="small" />,
+      func: () => handleDeleteClick(params),
+    },
   ];
 
   const menu = (
@@ -133,19 +198,30 @@ const CellWithMenu = ({ params, handleAddClick, handleCloneClick }) => {
   );
 
   return (
-    <CustomAddIcon
-      value={
-        <EllipsisNameCell
-          value={params.value}
-          showAddIcon={false}
-          showAvatar={true}
-        />
-      }
-      onClick={() => handleAddClick(params)}
-      menu={menu}
-    />
+    <>
+      <CustomAddIcon
+        value={
+          <EllipsisNameCell
+            value={params.value}
+            showAddIcon={false}
+            showAvatar={true}
+          />
+        }
+        onClick={() => handleAddClick(params)}
+        menu={menu}
+      />
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onCancel={() => setShowDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
+        title="Alert"
+      >
+        Are you sure you want to delete: {view === 'Project' ? deleteParams?.row?.resource : deleteParams?.row?.project}?
+      </ConfirmDialog>
+    </>
   );
 };
+
 export const getInitialState = (
   groupBy,
   updatedRows,
