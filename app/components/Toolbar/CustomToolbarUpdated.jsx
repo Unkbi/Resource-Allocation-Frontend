@@ -598,14 +598,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   : DEFAULT_PROJECT_WEEK_PLUS + 4,
               WeekMinus:
                 currentView.WeekMinus != null
-                  ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
-                  : DEFAULT_PROJECT_WEEK_MINUS + TOTAL_FUTURE_WEEKS_ARROW,
+                  ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
+                  : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW,
             }
           : {
               WeekMinus:
                 currentView.WeekMinus != null
-                  ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
-                  : DEFAULT_PROJECT_WEEK_PLUS - TOTAL_FUTURE_WEEKS_ARROW,
+                  ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
+                  : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW,
               WeekPlus:
                 currentView.WeekPlus != null
                   ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
