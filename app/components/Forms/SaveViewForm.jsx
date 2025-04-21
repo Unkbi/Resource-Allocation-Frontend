@@ -159,15 +159,38 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   };
 
   const handleAddWeek = () => {
-    setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
+    const totalWeeks = values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
+    if (totalWeeks > 52) {
+      setFieldValue('dynamicRangeError', 'Date range cannot exceed 1 year (52 weeks).');
+      setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
+      setFieldValue('dynamicDateRangeSubtract', values.dynamicDateRangeSubtract - 1);
+    } else {
+      setFieldValue('dynamicRangeError', '');
+      setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
+    }
   };
 
   const handleSubtractWeek = () => {
-    setFieldValue(
-      'dynamicDateRangeSubtract',
-      values.dynamicDateRangeSubtract + 1
-    );
+    const totalWeeks = values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
+    if (totalWeeks > 52) {
+      setFieldValue('dynamicRangeError', 'Date range cannot exceed 1 year (52 weeks).');
+      setFieldValue('dynamicDateRangeSubtract', values.dynamicDateRangeSubtract + 1);
+      setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd - 1);
+    } else {
+      setFieldValue('dynamicDateRangeSubtract', values.dynamicDateRangeSubtract + 1);
+      setFieldValue('dynamicRangeError', '');
+    } 
   };
+
+  useEffect(() => {
+    if (values.dynamicRangeError) {
+      const timer = setTimeout(() => {
+        setFieldValue('dynamicRangeError', '');
+      }, 2000);
+  
+      return () => clearTimeout(timer);
+    }
+  }, [values.dynamicRangeError]);
 
   useEffect(() => {
     const initialData = {
@@ -610,6 +633,19 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                   )}
                 </Typography>
               </Box>
+              {values.dynamicRangeError && (
+                <Typography
+                  sx={{
+                    mt: 1,
+                    fontSize: '12px',
+                    color: 'red',
+                    fontFamily: 'Open Sans',
+                    fontWeight: 500,
+                    textAlign: 'left',
+                  }}
+                >
+                  {values.dynamicRangeError}
+                </Typography>)}
             </Box>
           )}
         </Box>
