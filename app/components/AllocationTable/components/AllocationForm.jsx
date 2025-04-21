@@ -250,7 +250,7 @@ const AllocationForm = () => {
       return;
     }
 
-    const allMondays = generateAllMondays(values.StartDate, values.EndDate);
+    const allMondays = generateAllMondays((values.StartDate|| values.startDate), (values.EndDate|| values.endDate));
     let postData = {};
     switch (formType) {
       case 'add_project':
