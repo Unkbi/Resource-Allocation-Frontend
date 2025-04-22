@@ -592,18 +592,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     setActive(prev => !prev);
   };
 
-  // const calculateWeekRanges = (selectedStart, selectedEnd, currentDate) => {
-  //   const current = dayjs(currentDate);
-  //   const start = dayjs(selectedStart);
-  //   const end = dayjs(selectedEnd);
-  //   const weekMinus = Math.ceil(current.diff(start, 'day') / 7);
-  //   const weekPlus = Math.ceil(end.diff(current, 'day') / 7);
-
-  //   return {
-  //     weekMinus: weekMinus > 0 ? weekMinus : 0,
-  //     weekPlus: weekPlus > 0 ? weekPlus : 0,
-  //   };
-  // };
   const calculateWeekRanges = (selectedStart, selectedEnd, currentDate) => {
     const current =
       currentDate instanceof Date ? currentDate : parseISO(currentDate);
