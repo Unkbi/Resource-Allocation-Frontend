@@ -632,7 +632,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     } else {
       dispatch(
         openDialog({
-          title: 'Save View',
+          title: currentView?.Name
+            ? `Save View - ${currentView?.Name}`
+            : 'Save View',
           submitButtonText: 'Save',
           secondaryButtonText: 'Save As',
           cancelButtonText: 'Cancel',
@@ -647,7 +649,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     e.stopPropagation();
     dispatch(
       openDialog({
-        title: `${savedViewData?.Name || 'Edit View'}`,
+        title: 'Edit View',
         submitButtonText: 'Apply',
         cancelButtonText: 'Cancel',
         formType: 'name_view',
