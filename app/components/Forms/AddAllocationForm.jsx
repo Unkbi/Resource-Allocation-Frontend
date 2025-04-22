@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText, Autocomplete } from "@mui/material"
+import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText, Autocomplete, Divider } from "@mui/material"
 import CustomSelect from "../Select/CustomSelect"
 import StyledLabel from "../Label/StyledLabel"
 import { StyledCommentInput, StyledFormHelperText, StyledInput } from "../Input/StyledInput"
@@ -10,6 +10,8 @@ import { useSelector } from "react-redux"
 import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker"
 import { useDispatch } from "react-redux"
 import { showToast } from "@/app/redux/reducers/toastReducer"
+import { getProjectRangeWarnings } from "./ValidationSchema"
+import { Divide } from "lucide-react"
 
 const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const { values, handleChange, handleBlur, setFieldValue} = formikProps
@@ -24,6 +26,9 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const [closeResourceMenu, setCloseResourceMenu] = useState(false);
   const [closeProjectMenu, setCloseProjectMenu] = useState(false);
   const dispatch = useDispatch()
+
+  const warnings = getProjectRangeWarnings(values, projects);
+  
 
   const commonAutocompleteStyles = {
     "& .MuiInputBase-root": { fontSize: "12px" },
@@ -158,33 +163,6 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
     });
   };
 
-  useEffect(() => {
-    if (!values.StartDate || !values.EndDate || !Array.isArray(values.Project)) return;
-
-    const selectedProjects = projects?.result?.filter(project =>
-      values.Project.includes(project.Id)
-    );
-
-    const outOfRangeProjects = selectedProjects.filter(project => {
-      const projectStart = new Date(project.StartDate);
-      const projectEnd = new Date(project.EndDate);
-      const allocationStart = new Date(values.StartDate);
-      const allocationEnd = new Date(values.EndDate);
-
-      return allocationStart < projectStart || allocationEnd > projectEnd;
-    });
-
-    if (outOfRangeProjects.length > 0) {
-      dispatch(showToast({
-        open: true,
-        message: "Warning: You are allocating outside the project range",
-        type: "warning",
-        position: "bottom-right",
-        autoHideTimer: 4000,
-      }));
-    }
-  }, [values.StartDate, values.EndDate, values.Project, projects]);
-
 
   return (
   <Box>
@@ -276,6 +254,14 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               customStyles={true}
             />
           </Box>
+          {warnings.map((msg, i) => (
+              <div key={i}>
+              <Typography variant="caption" sx={{ color: 'orange', fontSize:"12px"}}>
+               {msg}
+              </Typography>
+          {i < warnings.length - 1 && <Divider sx={{ borderColor: 'orange' }} />}
+              </div>
+            ))}
         </Box>
         <Box
           sx={{
