@@ -1,10 +1,11 @@
-import { call, put, all, takeLatest } from 'redux-saga/effects';
+import { call, put, takeLatest, cancel, fork } from 'redux-saga/effects';
 import {
   setDataProcessing,
   updateAllocations,
 } from '../reducers/projectsReducer';
 import { formatAllocations } from '@/app/utils/allocationUtils';
 import { fetchAllAllocations } from '@/app/services/allocationServices';
+import { sagaTaskRefs } from './sagaTasks';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const { projects, startDate, endDate } = action.payload;
@@ -26,12 +27,30 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       yield put(updateAllocations(allAllocations));
     }
   } catch (error) {
-    console.error('Saga error:', error);
+    console.error(
+      'Saga error, Failed to fetch team project/allocations : ',
+      error
+    );
   } finally {
     yield put(setDataProcessing(false));
   }
 }
 
-export function* watchAllAllocations() {
-  yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga);
+export function* projectsSaga() {
+  yield takeLatest('FETCH_ALL_ALLOCATIONS', function* (action) {
+    // Cancel teams task if active
+    if (sagaTaskRefs.ongoingTeamsTask) {
+      yield cancel(sagaTaskRefs.ongoingTeamsTask);
+    }
+
+    if (sagaTaskRefs.ongoingProjectTask) {
+      yield cancel(sagaTaskRefs.ongoingProjectTask);
+    }
+
+    //@ts-ignore
+    sagaTaskRefs.ongoingProjectTask = yield fork(
+      fetchAllAllocationsSaga,
+      action
+    );
+  });
 }

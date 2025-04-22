@@ -1,9 +1,11 @@
 import { all } from 'redux-saga/effects';
-import { watchAllAllocations } from './allocationSaga';
+import { projectsSaga } from './projectsSaga';
+import teamSaga from './teamsSaga';
 
 export default function* rootSaga() {
   yield all([
-    watchAllAllocations(),
+    projectsSaga(),
+    teamSaga(),
     // ...add more watchers here
   ]);
 }
