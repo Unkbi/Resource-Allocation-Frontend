@@ -647,7 +647,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     e.stopPropagation();
     dispatch(
       openDialog({
-        title: 'Edit View',
+        title: `${savedViewData?.Name || 'Edit View'}`,
         submitButtonText: 'Apply',
         cancelButtonText: 'Cancel',
         formType: 'name_view',

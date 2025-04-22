@@ -264,7 +264,6 @@ const AllocationForm = () => {
       return;
     }
 
-    const allMondays = generateAllMondays((values.StartDate|| values.startDate), (values.EndDate|| values.endDate));
     let postData = {};
     switch (formType) {
       case 'add_project':
@@ -309,6 +308,7 @@ const AllocationForm = () => {
 
       case 'add_allocation':
         try {
+          const allMondays = generateAllMondays((values.StartDate|| values.startDate), (values.EndDate|| values.endDate));
           const filteredProjects =
             projects?.result?.filter(project =>
               values.Project.includes(project.Id)
