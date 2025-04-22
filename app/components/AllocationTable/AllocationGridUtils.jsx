@@ -131,14 +131,15 @@ const CellWithMenu = ({ params, handleAddClick, handleCloneClick, handleTranferC
       </StyledMenu>
     </>
   );
-
+  const columnType = params.colDef.field;
+  const showAvatar = columnType !== 'project'; 
   return (
     <CustomAddIcon
       value={
         <EllipsisNameCell
           value={params.value}
           showAddIcon={false}
-          showAvatar={true}
+          showAvatar={showAvatar}
         />
       }
       onClick={() => handleAddClick(params)}
@@ -304,6 +305,7 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                columnType="project"
               >
                 <EllipsisNameCell
                   value={params.value}
