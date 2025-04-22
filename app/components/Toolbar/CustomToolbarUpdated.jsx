@@ -42,7 +42,7 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
-import { differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays, parseISO, startOfWeek } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -594,16 +594,22 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const calculateWeekRanges = (selectedStart, selectedEnd, currentDate) => {
     const current =
-      currentDate instanceof Date ? currentDate : parseISO(currentDate);
-    const start = parseISO(selectedStart);
-    const end = parseISO(selectedEnd);
-
-    const weekMinus = Math.ceil(differenceInDays(current, start) / 7);
-    const weekPlus = Math.ceil(differenceInDays(end, current) / 7);
+      currentDate instanceof Date ? currentDate : new Date(currentDate);
+    const start = new Date(selectedStart);
+    const end = new Date(selectedEnd);
+    const startOfCurrentWeek = startOfWeek(current, { weekStartsOn: 1 });
+    const startOfStartWeek = startOfWeek(start, { weekStartsOn: 1 });
+    const startOfEndWeek = startOfWeek(end, { weekStartsOn: 1 });
+    const weekMinus = Math.floor(
+      differenceInDays(startOfCurrentWeek, startOfStartWeek) / 7
+    );
+    const weekPlus = Math.floor(
+      differenceInDays(startOfEndWeek, startOfCurrentWeek) / 7
+    );
 
     return {
-      weekMinus: weekMinus > 0 ? weekMinus : 0,
-      weekPlus: weekPlus > 0 ? weekPlus : 0,
+      weekMinus: Math.ceil(weekMinus),
+      weekPlus: Math.ceil(weekPlus),
     };
   };
 
