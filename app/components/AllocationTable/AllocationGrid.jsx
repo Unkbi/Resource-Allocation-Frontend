@@ -72,6 +72,8 @@ export default function AllocationGrid({
   startDate,
   endDate,
   toolbarComponent,
+  NoRowsOverlay,
+  mode,
 }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
@@ -887,7 +889,7 @@ export default function AllocationGrid({
         onRowClick={groupBy === 'teams' ? onRowClick : () => null}
         apiRef={apiRef}
         groupBy={groupBy}
-        loading={loading || !rowState.length}
+        loading={mode === "split" ? loading : loading || !rowState.length}
         disableRowSelectionOnClick
         initialState={initialState}
         rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
@@ -915,6 +917,7 @@ export default function AllocationGrid({
         }}
         slots={{
           // toolbar: ToolbarMod,
+          noRowsOverlay: NoRowsOverlay,
           toolbar: toolbarComponent,
           // columnMenu: CustomColumnMenu
           columnMenu: props => {

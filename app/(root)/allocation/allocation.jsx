@@ -60,8 +60,7 @@ export default function Allocation() {
         case 'Project':
           return <ProjectAllocation />;
         case 'Teams':
-          // return <TeamAllocation />;
-          return <SplitView />
+          return <TeamAllocation />;
         default:
           return null;
       }

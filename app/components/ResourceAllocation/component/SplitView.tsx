@@ -1,6 +1,6 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchAllTeams,
@@ -12,9 +12,12 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import SplitTeamToolbar from '../../Toolbar/SplitTeamToolbar';
+import NoRowsOverlay from './NoRowsOverlay';
 
 export default function SplitView() {
-  const [selectedTeam, setSelectedTeam] = useState<Array<{label: string, value: string}>>([]);
+  const [selectedTeam, setSelectedTeam] = useState<
+    Array<{ label: string; value: string }>
+  >([]);
   const [allocationThreshold, setAllocationThreshold] = useState(0);
   const dispatch = useDispatch<AppDispatch>();
   const { teams, resources, loading, dataProcessing, calendarDate } =
@@ -53,19 +56,6 @@ export default function SplitView() {
     }
   }, [teams, calendarDate]);
 
-  const getTeam = (params: GridCellParams) => {
-    if (
-      params.rowNode.type === 'group' &&
-      params.rowNode.groupingField === 'teams'
-    ) {
-      // Find the team by name in the teams array
-      const teamName = params.rowNode.groupingKey;
-      const team = teams?.result?.find(t => t.Name === teamName);
-      return team;
-    }
-    return null;
-  };
-
   const teamsColumnConfig = [
     {
       field: 'teams',
@@ -95,19 +85,75 @@ export default function SplitView() {
     },
   ];
 
-  const filteredResources = resources?.filter(resource => {
-    const matchesTeam = selectedTeam.length
-    ? resource.teams && selectedTeam.some(team => team.label === resource.teams)
-    : true;
-    
-    return matchesTeam;
-  });
+  const computeAverageAllocations = (data: any[]) => {
+    const grouped: Record<string, any[]> = {};
+
+    // Group by resource
+    data.forEach(row => {
+      const resource = row.resource;
+      if (!grouped[resource]) grouped[resource] = [];
+      grouped[resource].push(row);
+    });
+
+    const result: any[] = [];
+
+    Object.entries(grouped).forEach(([resource, rows]) => {
+      const weeks: Record<string, number[]> = {};
+
+      // Step 2: Accumulate allocations per week across projects
+      rows.forEach(row => {
+        Object.keys(row).forEach(key => {
+          if (key.startsWith('W') && typeof row[key] === 'object') {
+            const value = parseFloat(row[key]?.value ?? 0);
+            if (!weeks[key]) weeks[key] = [];
+            weeks[key].push(value);
+          }
+        });
+      });
+
+      // Step 3: Compute average and attach to each row
+      const avgPerWeek: Record<string, number> = {};
+      Object.entries(weeks).forEach(([week, values]) => {
+        avgPerWeek[week] = values.reduce((a, b) => a + b, 0) / values.length;
+      });
+
+      rows.forEach(row => {
+        const cloned = { ...row };
+        cloned._avgWeeklyAllocation = avgPerWeek;
+        result.push(cloned);
+      });
+    });
+
+    return result;
+  };
+
+  const enrichedResources = computeAverageAllocations(resources ?? []);
+
+  const filteredResources = useMemo(() => {
+    return enrichedResources.filter(row => {
+      const teamMatch = selectedTeam.length
+        ? row.teams && selectedTeam.some(team => team.label === row.teams)
+        : true;
+
+      const avgWeekly = row._avgWeeklyAllocation ?? {};
+      if (allocationThreshold === 0) {
+        return teamMatch;
+      }
+      //checks if all weeks satisfy the condition
+      const hasBelowThreshold = Object.values(avgWeekly).every(
+        avg => (avg as number) < allocationThreshold
+      );
+
+      return teamMatch && hasBelowThreshold;
+    });
+  }, [enrichedResources, selectedTeam, allocationThreshold]);
 
   return (
     <>
       <AllocationGrid
         loading={loading || dataProcessing}
         groupBy="teams"
+        mode = "split"
         startDate={startDate}
         endDate={endDate}
         columns={teamsColumnConfig}
@@ -117,9 +163,10 @@ export default function SplitView() {
         toolbarComponent={(props: any) => (
           <SplitTeamToolbar
             {...props}
-            selectedTeam = {selectedTeam}
+            selectedTeam={selectedTeam}
             setSelectedTeam={setSelectedTeam}
             setAllocationThreshold={setAllocationThreshold}
+            allocationThreshold={allocationThreshold}
           />
         )}
         initialState={{
@@ -133,21 +180,9 @@ export default function SplitView() {
             },
           },
         }}
+        NoRowsOverlay = {NoRowsOverlay}
         data={filteredResources || []}
-
       />
-      {!resources && !loading && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '90vh',
-          }}
-        >
-          <div>No Data</div>
-        </div>
-      )}
     </>
   );
 }

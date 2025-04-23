@@ -13,6 +13,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import NoRowsOverlay from './NoRowsOverlay';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -164,6 +165,7 @@ export default function TeamAllocation() {
       <AllocationGrid
         loading={loading || dataProcessing}
         groupBy="teams"
+        mode="team"
         startDate={startDate}
         endDate={endDate}
         columns={teamsColumnConfig}
@@ -185,6 +187,7 @@ export default function TeamAllocation() {
             },
           },
         }}
+        NoRowsOverlay = {NoRowsOverlay}
         data={resources}
       />
       {!resources && !loading && (

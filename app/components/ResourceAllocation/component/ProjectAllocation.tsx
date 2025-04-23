@@ -12,6 +12,7 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell'; 
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import NoRowsOverlay from './NoRowsOverlay';
 
 export default function ProjectAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -273,6 +274,7 @@ export default function ProjectAllocation() {
         groupBy="project"
         columns={projectColumnConfig}
         startDate={startDate}
+        mode="project"
         endDate={endDate}
         selectedTeam={selectedTeam}
         toolbarComponent={CustomToolbar}
@@ -298,6 +300,7 @@ export default function ProjectAllocation() {
             },
           },
         }}
+        NoRowsOverlay = {NoRowsOverlay}
         data={allocations}
         loading={loading || dataProcessing}
       />

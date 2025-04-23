@@ -333,7 +333,13 @@ const StyledSlider = styled(Slider)(({ theme }) => ({
 }));
 
 const SplitTeamToolbar = memo(
-  ({ setFilterButtonEl, setAllocationThreshold, setSelectedTeam, selectedTeam }) => {
+  ({
+    setFilterButtonEl,
+    setAllocationThreshold,
+    setSelectedTeam,
+    selectedTeam,
+    allocationThreshold,
+  }) => {
     const dispatch = useDispatch();
     const { view, savedViews, currentView } = useSelector(
       state => state.allocationView
@@ -361,16 +367,13 @@ const SplitTeamToolbar = memo(
     const myTeamsButtonRef = useRef(null);
     const myProjectsButtonRef = useRef(null);
     const { initialData } = useSelector(state => state.globalDialog.formState);
-    const [allocationRange, setAllocationRange] = useState([0]);
-
+    
     const handleClose = () => {
       setAnchorEl(null);
     };
 
     const handleAllocationRangeChange = (event, newValue) => {
-      setAllocationRange([newValue]);
       setAllocationThreshold(newValue);
-      // logic to filter data based on allocation range
     };
 
     const [active, setActive] = useState(false);
@@ -544,7 +547,7 @@ const SplitTeamToolbar = memo(
                   Select Availablity:
                 </Typography>
                 <StyledSlider
-                  value={allocationRange[0]}
+                  value={allocationThreshold}
                   onChange={handleAllocationRangeChange}
                   valueLabelDisplay="auto"
                   size="small"
