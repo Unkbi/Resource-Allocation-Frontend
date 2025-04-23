@@ -9,9 +9,13 @@ import toastSlice from './reducers/toastReducer';
 import dialogReducer from './reducers/dialogReducer';
 import dataGridReducer from './reducers/dataGridReducer';
 import settingsReducer from './reducers/settingsReducer';
+import createSagaMiddleware from 'redux-saga';
+import rootSaga from './sagas';
+
+const sagaMiddleware = createSagaMiddleware();
 
 export const makeStore = () => {
-  return configureStore({
+  const store = configureStore({
     reducer: {
       user: userReducer,
       allocationView: allocationViewReducer,
@@ -24,7 +28,15 @@ export const makeStore = () => {
       dataGrid: dataGridReducer,
       settings: settingsReducer,
     },
+    middleware: getDefaultMiddleware =>
+      getDefaultMiddleware({
+        thunk: true,
+        serializableCheck: false,
+      }).concat(sagaMiddleware),
   });
+
+  sagaMiddleware.run(rootSaga);
+  return store;
 };
 
 export type RootState = ReturnType<ReturnType<typeof makeStore>['getState']>;
