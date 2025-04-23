@@ -77,8 +77,11 @@ export default function TeamAllocation() {
     teams,
     calendarDate,
     currentView?.isDynamicRange,
+    currentView?.isFixedRange,
     currentView?.WeekPlus,
     currentView?.WeekMinus,
+    currentView?.StartDate,
+    currentView?.EndDate,
   ]);
 
   const getTeam = (params: GridCellParams) => {
