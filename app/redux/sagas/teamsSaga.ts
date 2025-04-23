@@ -214,8 +214,8 @@ function* fetchResourcesAgainstTeamsSaga(
 
     const allocationsPostData = {
       'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
-        StartDate,
-        EndDate,
+        StartDate: format(getMonday(StartDate), DATE_FORMAT),
+        EndDate: format(getMonday(EndDate), DATE_FORMAT),
       },
     };
     const allAllocationsResult = yield call(
