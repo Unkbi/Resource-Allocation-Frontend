@@ -33,6 +33,7 @@ import {
   isMyProjectsValid,
   isMyTeamsValid,
 } from '@/app/utils/common';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 
 const getColumnLabel = column => {
   const columnLabels = {
@@ -159,11 +160,18 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   };
 
   const handleAddWeek = () => {
-    const totalWeeks = values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
+    const totalWeeks =
+      values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
     if (totalWeeks > 52) {
-      setFieldValue('dynamicRangeError', 'Date range cannot exceed 1 year (52 weeks).');
+      setFieldValue(
+        'dynamicRangeError',
+        'Date range cannot exceed 1 year (52 weeks).'
+      );
       setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
-      setFieldValue('dynamicDateRangeSubtract', values.dynamicDateRangeSubtract - 1);
+      setFieldValue(
+        'dynamicDateRangeSubtract',
+        values.dynamicDateRangeSubtract - 1
+      );
     } else {
       setFieldValue('dynamicRangeError', '');
       setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
@@ -171,15 +179,25 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   };
 
   const handleSubtractWeek = () => {
-    const totalWeeks = values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
+    const totalWeeks =
+      values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
     if (totalWeeks > 52) {
-      setFieldValue('dynamicRangeError', 'Date range cannot exceed 1 year (52 weeks).');
-      setFieldValue('dynamicDateRangeSubtract', values.dynamicDateRangeSubtract + 1);
+      setFieldValue(
+        'dynamicRangeError',
+        'Date range cannot exceed 1 year (52 weeks).'
+      );
+      setFieldValue(
+        'dynamicDateRangeSubtract',
+        values.dynamicDateRangeSubtract + 1
+      );
       setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd - 1);
     } else {
-      setFieldValue('dynamicDateRangeSubtract', values.dynamicDateRangeSubtract + 1);
+      setFieldValue(
+        'dynamicDateRangeSubtract',
+        values.dynamicDateRangeSubtract + 1
+      );
       setFieldValue('dynamicRangeError', '');
-    } 
+    }
   };
 
   useEffect(() => {
@@ -187,7 +205,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       const timer = setTimeout(() => {
         setFieldValue('dynamicRangeError', '');
       }, 2000);
-  
+
       return () => clearTimeout(timer);
     }
   }, [values.dynamicRangeError]);
@@ -207,8 +225,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       dynamicDateRangeAdd: currentView?.WeekPlus || DEFAULT_PROJECT_WEEK_PLUS,
       dynamicDateRangeSubtract:
         currentView?.WeekMinus || DEFAULT_PROJECT_WEEK_MINUS,
-      startDate: '',
-      endDate: '',
+      startDate: currentView.StartDate !== '' ? currentView.StartDate : null,
+      endDate: currentView.EndDate !== '' ? currentView.EndDate : null,
       showColumns: currentView?.ColumnsVisible || [],
       filters:
         currentView?.Filters?.map(filter => {
@@ -645,7 +663,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                   }}
                 >
                   {values.dynamicRangeError}
-                </Typography>)}
+                </Typography>
+              )}
             </Box>
           )}
         </Box>
@@ -668,26 +687,26 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           {values.dateRangeType === 'fixed' && (
             <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
               <Box sx={{ flex: 1 }}>
-                <CustomDatePicker
-                  name="startDate"
-                  handleChange={handleChange}
-                  value={values.startDate || ''}
-                  placeholder="Start Date"
+                <CustomDateRangePicker
+                  name="DateRange"
+                  value={{
+                    startDate: formikProps.values.startDate,
+                    endDate: formikProps.values.endDate,
+                  }}
+                  placeholder="Select Date"
+                  endDateLabel="End Date"
+                  startDateLabel="Start Date"
                   formikProps={formikProps}
-                  error={touched.startDate && Boolean(errors.startDate)}
+                  error={
+                    formikProps.touched.startDate &&
+                    Boolean(formikProps.errors.startDate)
+                  }
+                  helperText={
+                    formikProps.touched.startDate &&
+                    formikProps.errors.startDate
+                  }
+                  customStyles={true}
                 />
-                {showError('startDate')}
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <CustomDatePicker
-                  name="endDate"
-                  handleChange={handleChange}
-                  value={values.endDate || ''}
-                  placeholder="End Date"
-                  formikProps={formikProps}
-                  error={touched.endDate && Boolean(errors.endDate)}
-                />
-                {showError('endDate')}
               </Box>
             </Box>
           )}
