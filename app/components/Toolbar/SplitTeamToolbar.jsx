@@ -1,0 +1,635 @@
+import React, { useCallback, useEffect, useRef, useState, memo } from 'react';
+import {
+  Box,
+  Button,
+  IconButton,
+  Select,
+  MenuItem,
+  Autocomplete,
+  TextField,
+  FormControl,
+  Divider,
+  styled,
+  Menu,
+  Typography,
+  Popover,
+  Slider,
+} from '@mui/material';
+import { KeyboardArrowDown } from '@mui/icons-material';
+import CustomSelect from '../Select/CustomSelect';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  deleteUsersSavedViewAction,
+  performChangeView,
+} from '@/app/redux/actions/allocationViewAction';
+import {
+  GridToolbarColumnsButton,
+  GridToolbarContainer,
+  GridToolbarFilterButton,
+} from '@mui/x-data-grid';
+import CustomExport from './CustomExport';
+import {
+  generateDateWeekMath,
+  generateFirstAndLastMonthYear,
+  getOnlyFilterSettings,
+  getProjectsIamProjectManager,
+  getStartAndEndDateForView,
+  getTeamsIamAllocationManager,
+  isObjectEqual,
+} from '@/app/utils/common';
+import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
+import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
+import {
+  DATE_FORMAT,
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+  TOTAL_FUTURE_WEEKS_ARROW,
+} from '@/app/constants/constants';
+import { parseISO } from 'date-fns';
+import FolderIcon from '@mui/icons-material/Folder';
+import PeopleIcon from '@mui/icons-material/People';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CheckIcon from '@mui/icons-material/Check';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import TooltipButton from '../Button/TooltipButton';
+import MyTeamsIcon from '../TableIcons/MyTeamsIcon';
+import AllTeamsIcon from '../TableIcons/AllTeamsIcon';
+import MyProjectIcon from '../TableIcons/MyProjectIcon';
+import AllProjectIcon from '../TableIcons/AllProjectIcon';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import {
+  setCurrentView,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
+import { set } from 'date-fns';
+import DeleteDialog from '../Dialog/DeleteDialog';
+import { compressToEncodedURIComponent } from 'lz-string';
+import CustomInput from '../Input/Input';
+import { showToastAction } from '@/app/redux/actions/toastAction';
+import { StyledInput } from '../Input/StyledInput';
+import CopyLinkInput from '../Input/InputWithButton';
+import ShareLinkDialog from '../Dialog/ShareLinkDialog';
+
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  minWidth: 140,
+  margin: 0,
+}));
+
+const StyledFormControlForWeek = styled(FormControl)(({ theme }) => ({
+  minWidth: 80,
+  margin: 0,
+}));
+
+const ToolBox2 = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '7px 14px 5px 14px',
+  width: '100%',
+  marginBottom: '10px',
+  gap: '16px',
+  '& > div:last-child': {
+    marginLeft: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  '& .filterColBlock': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    '& button': {
+      backgroundColor: 'rgba(242, 245, 250, 0.3)',
+      border: '1px solid #D6DCE1',
+      borderRadius: '4px',
+      height: '32px',
+      padding: '5px 12px',
+      fontSize: '14px',
+      color: '#212121',
+      fontFamily: theme.typography.fontFamily,
+      fontWeight: '600',
+      textTransform: 'none',
+    },
+  },
+  '& .dayWeekBlock': {
+    backgroundColor: 'rgba(242, 245, 250, 0.3)',
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    '& button': {
+      color: '#757575',
+      fontFamily: theme.typography.fontFamily,
+      fontWeight: '500',
+      fontSize: '14px',
+      lineHeight: '16px',
+      textAlign: 'center',
+      textTransform: 'none',
+      height: '100%',
+      '&.selected': {
+        color: '#212121',
+        fontWeight: '600',
+        backgroundColor: '#fff',
+        borderLeft: '1px solid #D6DCE1',
+        borderRight: '1px solid #D6DCE1',
+        borderRadius: '4px',
+      },
+    },
+  },
+  '& .projectIcon': {
+    backgroundColor: 'rgba(242, 245, 250, 0.3)',
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    overflow: 'hidden',
+    '& button': {
+      color: '#757575',
+      fontFamily: theme.typography.fontFamily,
+      fontWeight: '500',
+      fontSize: '14px',
+      lineHeight: '16px',
+      textAlign: 'center',
+      textTransform: 'none',
+      borderLeft: '1px solid #D6DCE1',
+      width: '36px',
+      minWidth: '36px',
+      height: '100%',
+      borderRadius: '0',
+      '& .MuiSvgIcon-fontSize18': {
+        fontSize: '18px',
+      },
+      '& svg': {
+        fontSize: '24px',
+      },
+      '&.selected': {
+        color: '#212121',
+        fontWeight: '600',
+        backgroundColor: '#fff',
+        borderRadius: '0',
+      },
+    },
+  },
+  '& .selectedDate': {
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    height: '32px',
+    color: '#212121',
+    fontFamily: theme.typography.fontFamily,
+    fontWeight: '600',
+    fontSize: '12px',
+    lineHeight: '14px',
+    textAlign: 'center',
+    textTransform: 'none',
+  },
+  '& .nextPrevIcon': {
+    backgroundColor: 'rgba(242, 245, 250, 0.3)',
+    border: '1px solid #D6DCE1',
+    borderRadius: '4px',
+    height: '32px',
+  },
+}));
+
+const StyledSelect = styled(Select)(({ theme }) => ({
+  backgroundColor: 'rgba(28, 45, 95, 0.02)',
+  border: '1px solid #dde1e4',
+  borderRadius: '4px',
+  height: '32px',
+  '& .MuiSelect-select': {
+    marginLeft: '12px',
+    padding: '6px 12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+}));
+
+const StyledSelectForWeek = styled(Select)(({ theme }) => ({
+  backgroundColor: 'rgba(28, 45, 95, 0.02)',
+  border: '1px solid #dde1e4',
+  borderRadius: '4px',
+  height: '32px',
+  fontSize: '14px',
+  '& .MuiSelect-select': {
+    padding: '8px 12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+}));
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  padding: '10px 12px',
+  color: '#212121',
+  fontWeight: 400,
+  fontSize: '14px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  '&:hover': {
+    backgroundColor: 'rgba(52, 70, 101, 0.04)',
+  },
+  '&.Mui-selected': {
+    backgroundColor: 'rgba(52, 70, 101, 0.08)',
+    fontWeight: 600,
+  },
+  '&.Mui-selected:hover': {
+    backgroundColor: 'rgba(52, 70, 101, 0.12)',
+  },
+}));
+
+const MenuItemContent = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+});
+
+const ViewButton = styled(Button)(({ theme }) => ({
+  backgroundColor: '#ffffff !important',
+  color: '#344665 !important',
+  border: 'none !important',
+  borderRadius: '4px',
+  padding: '6px 12px',
+  textTransform: 'none',
+  fontWeight: 500,
+  fontSize: '14px',
+  '&:hover': {
+    backgroundColor: '#f9fcff',
+  },
+  '& .MuiButton-endIcon': {
+    marginLeft: 8,
+  },
+}));
+
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    borderRadius: '4px',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
+    width: 220,
+  },
+}));
+
+const StyledDivider = styled(Divider)(({ theme }) => ({
+  height: '32px',
+  margin: '0 16px',
+  color: '#BABABA',
+}));
+
+const StyledSlider = styled(Slider)(({ theme }) => ({
+  width: '200px',
+  marginBottom: '0px',
+  '& .MuiSlider-rail': {
+    backgroundColor: '#DDE1E4',
+  },
+  '& .MuiSlider-track': {
+    backgroundColor: '#1C2D5F',
+  },
+  '& .MuiSlider-thumb': {
+    width: 12,
+    height: 12,
+    backgroundColor: '#ffffff',
+    border: '2px solid #1C2D5F',
+    '&:hover, &.Mui-active': {
+      boxShadow: '0 0 0 8px rgba(28, 45, 95, 0.16)',
+    },
+  },
+  // Add these styles for smaller marks
+  '& .MuiSlider-markLabel': {
+    fontSize: '10px',
+    color: '#666',
+    transform: 'translate(-50%)', // Adjust vertical position
+  },
+  // Style for the value label
+  '& .MuiSlider-valueLabel': {
+    fontSize: '10px',
+    padding: '2px 4px',
+  },
+}));
+
+const SplitTeamToolbar = memo(
+  ({ setFilterButtonEl, setAllocationThreshold, setSelectedTeam, selectedTeam }) => {
+    const dispatch = useDispatch();
+    const { view, savedViews, currentView } = useSelector(
+      state => state.allocationView
+    );
+    const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
+    const { projects, calendarDate: projectsCalendar } = useSelector(
+      state => state.projects
+    );
+    const { user } = useSelector(state => state.user);
+    const { resources } = useSelector(state => state.resources);
+    const { teams } = useSelector(state => state.teams);
+    const { startDate, endDate } = getStartAndEndDateForView(
+      view,
+      projectsCalendar,
+      teamsCalendar
+    );
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [shareDialogOpen, setShareDialogOpen] = useState(false);
+    const [shareLink, setShareLink] = useState('');
+    const [deleteView, setDeleteView] = useState(null);
+
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [popOverAnchorEl, setPopOverAnchorEl] = useState(null);
+    const [selectedView, setSelectedView] = useState('0');
+    const myTeamsButtonRef = useRef(null);
+    const myProjectsButtonRef = useRef(null);
+    const { initialData } = useSelector(state => state.globalDialog.formState);
+    const [allocationRange, setAllocationRange] = useState([0]);
+
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
+    const handleAllocationRangeChange = (event, newValue) => {
+      setAllocationRange([newValue]);
+      setAllocationThreshold(newValue);
+      // logic to filter data based on allocation range
+    };
+
+    const [active, setActive] = useState(false);
+
+    const first = generateFirstAndLastMonthYear(
+      parseISO(startDate),
+      'MMM yy',
+      true
+    );
+    const last = generateFirstAndLastMonthYear(
+      parseISO(endDate),
+      'MMM yy',
+      true
+    );
+
+    const changeCalendarDate = type => {
+      // const isTeams = view === 'Teams';
+      const isNext = type === 'next';
+
+      // Handle the saveView changes
+      dispatch(
+        updateCurrentView({
+          isDynamicRange: true,
+          ...(isNext
+            ? {
+                WeekPlus:
+                  currentView.WeekPlus != null
+                    ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_PLUS + 4,
+                WeekMinus:
+                  currentView.WeekMinus != null
+                    ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW,
+              }
+            : {
+                WeekMinus:
+                  currentView.WeekMinus != null
+                    ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW,
+                WeekPlus:
+                  currentView.WeekPlus != null
+                    ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_MINUS - 4,
+              }),
+        })
+      );
+    };
+
+    const open = Boolean(anchorEl);
+    const openPopover = Boolean(popOverAnchorEl);
+
+    const currentViewName =
+      savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
+
+    useEffect(() => {
+      if (currentView?.Name) {
+        setSelectedView(currentView?.Id);
+      }
+    }, [currentView?.Name]);
+
+    const commonAutocompleteStyles = {
+      minWidth: '300px',
+      width: '100%',
+      '& .MuiInputBase-root': {
+        fontSize: '12px',
+        minHeight: '32px',
+        height: 'auto',
+        padding: '2px 9px',
+        margin: '1%',
+      },
+      '& .MuiAutocomplete-tag': {
+        fontSize: '10px',
+        padding: '2px 5px',
+        height: '20px',
+        margin: '2px',
+        '& .MuiSvgIcon-root': {
+          // Add this section for the close icon
+          width: '14px',
+          height: '14px',
+          margin: '0px 2px',
+        },
+      },
+      '& input': { fontSize: '12px' },
+      '& .MuiAutocomplete-popper': { fontSize: '12px' },
+      '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
+    };
+
+    const commonSlotProps = {
+      popper: {
+        modifiers: [
+          {
+            name: 'preventOverflow',
+            options: {
+              boundary: 'window',
+            },
+          },
+        ],
+      },
+      paper: {
+        sx: {
+          fontSize: '12px',
+        },
+      },
+    };
+
+    const TeamOptions =
+      teams?.result?.map(team => ({
+        label: team.Name,
+        value: team.Id,
+      })) || [];
+
+    const handleTeamChange = (event, newValue) => {
+      if (newValue) {
+        const selectedOptions = newValue.map(item => ({
+          label: item.label,
+          value: item.value,
+        }));
+        setSelectedTeam(selectedOptions);
+      }
+    };
+
+    return (
+      <Box
+        display={'flex'}
+        height={'80px'}
+        boxShadow={'0 1px 0 0 #DDE1E4'}
+        position={'relative'}
+        zIndex={1}
+      >
+        <ToolBox2>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box>
+              <Autocomplete
+                sx={commonAutocompleteStyles}
+                multiple
+                size="medium"
+                options={TeamOptions}
+                getOptionLabel={option => option?.label || ''}
+                value={selectedTeam}
+                filterSelectedOptions
+                limitTags={3}
+                onChange={handleTeamChange}
+                slotProps={commonSlotProps}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    placeholder="Select Teams"
+                    variant="outlined"
+                  />
+                )}
+              />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  padding: '0 16px',
+                  minWidth: '300px',
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '12px',
+                    color: '#1C2D5F',
+                    minWidth: '60px',
+                  }}
+                >
+                  Select Availablity:
+                </Typography>
+                <StyledSlider
+                  value={allocationRange[0]}
+                  onChange={handleAllocationRangeChange}
+                  valueLabelDisplay="auto"
+                  size="small"
+                  step={0.1}
+                  min={0.0}
+                  max={1.0}
+                  marks={[
+                    { value: 0, label: '0' },
+                    { value: 0.2, label: '0.2' },
+                    { value: 0.4, label: '0.4' },
+                    { value: 0.6, label: '0.6' },
+                    { value: 0.8, label: '0.8' },
+                    { value: 1, label: '1.0' },
+                  ]}
+                  valueLabelFormat={value => `${value}`}
+                />
+              </Box>
+            </Box>
+            <StyledDivider orientation="vertical" />
+
+            <GridToolbarContainer ref={setFilterButtonEl} sx={{ padding: 0 }}>
+              <GridToolbarFilterButton
+                slotProps={{
+                  tooltip: { title: 'Filters' },
+                  button: {
+                    variant: 'outlined',
+                    sx: {
+                      color: '#555',
+                      borderColor: '#ddd',
+                      height: '32px',
+                      '.MuiButton-startIcon': { marginRight: '0px' },
+                      '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
+                      '& .MuiBadge-root svg': { display: 'none' },
+                    },
+                    component: props => (
+                      <Button
+                        sx={{
+                          margin: '0',
+                          padding: '0 6px',
+                          minHeight: '32px',
+                        }}
+                        {...props}
+                        startIcon={
+                          <img src="/images/icons/filter.svg" alt="filter" />
+                        }
+                      >
+                        {props.children}
+                      </Button>
+                    ),
+                  },
+                }}
+              />
+            </GridToolbarContainer>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              marginLeft: 'auto',
+            }}
+          >
+            <IconButton
+              onClick={() => changeCalendarDate('prev')}
+              size="medium"
+              className="nextPrevIcon"
+            >
+              <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
+            </IconButton>
+            <Button className="selectedDate">{`${first} - ${last}`}</Button>
+
+            <IconButton
+              onClick={() => changeCalendarDate('next')}
+              size="medium"
+              className="nextPrevIcon"
+            >
+              <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
+            </IconButton>
+          </Box>
+        </ToolBox2>
+      </Box>
+    );
+  }
+);
+
+SplitTeamToolbar.displayName = 'SplitTeamToolbar';
+
+export default SplitTeamToolbar;

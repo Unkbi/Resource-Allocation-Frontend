@@ -16,6 +16,7 @@ import { getUserIdFromEmail } from '@/app/utils/common';
 import { useSearchParams } from 'next/navigation';
 import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
 import { decompressFromEncodedURIComponent } from 'lz-string';
+import SplitView from '@/app/components/ResourceAllocation/component/SplitView';
 
 export default function Allocation() {
   const dispatch = useDispatch();
@@ -59,7 +60,8 @@ export default function Allocation() {
         case 'Project':
           return <ProjectAllocation />;
         case 'Teams':
-          return <TeamAllocation />;
+          // return <TeamAllocation />;
+          return <SplitView />
         default:
           return null;
       }

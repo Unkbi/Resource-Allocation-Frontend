@@ -11,10 +11,11 @@ import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell'; 
+import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 
 export default function ProjectAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
-
+  const [allocationThreshold, setAllocationThreshold] = useState(0);
   const { projects, allocations, loading, dataProcessing, calendarDate } =
     useSelector((state: RootState) => state.projects);
   const { startDate, endDate } = calendarDate || {};
@@ -274,6 +275,8 @@ export default function ProjectAllocation() {
         startDate={startDate}
         endDate={endDate}
         selectedTeam={selectedTeam}
+        toolbarComponent={CustomToolbar}
+        setAllocationThreshold={setAllocationThreshold}
         setSelectedTeam={setSelectedTeam}
         initialState={{
           columns: {

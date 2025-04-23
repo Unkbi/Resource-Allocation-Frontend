@@ -10,12 +10,11 @@ import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import { getAllocationManagerFromPath } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import SplitTeamToolbar from '../../Toolbar/SplitTeamToolbar';
 
-export default function TeamAllocation() {
-  const [selectedTeam, setSelectedTeam] = useState('');
+export default function SplitView() {
+  const [selectedTeam, setSelectedTeam] = useState<Array<{label: string, value: string}>>([]);
   const [allocationThreshold, setAllocationThreshold] = useState(0);
   const dispatch = useDispatch<AppDispatch>();
   const { teams, resources, loading, dataProcessing, calendarDate } =
@@ -94,70 +93,15 @@ export default function TeamAllocation() {
         );
       },
     },
-    {
-      field: 'teamStatus',
-      headerName: 'Status',
-      width: 90,
-      type: 'string',
-      isEditable: false,
-      sortable: false,
-      renderCell: (params: GridCellParams) => {
-        const team = getTeam(params);
-        return team ? <EllipsisNameCell value={team?.Status ?? 'N/A'} /> : null;
-      },
-    },
-    {
-      field: 'teamAllocationManager',
-      headerName: 'Allocation Manager',
-      width: 180,
-      type: 'string',
-      isEditable: false,
-      sortable: false,
-      renderCell: (params: GridCellParams) => {
-        const team = getTeam(params);
-        return team && _resources && 'result' in _resources ? (
-          <EllipsisNameCell
-            value={
-              getAllocationManagerFromPath(
-                team?.AllocationManager,
-                _resources?.result || []
-              )?.FullName ?? 'N/A'
-            }
-          />
-        ) : null;
-      },
-    },
-    {
-      field: 'resourceType',
-      headerName: 'Resource Type',
-      width: 135,
-      sortable: false,
-      headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
-      primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const { rowNode, api, value } = params;
-        const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        let displayValue = (value ?? '') as string;
-
-        if (!displayValue && isGridTreeNode && rowNode.children) {
-          const uniqueResourceTypes = [
-            ...new Set(
-              rowNode.children.map(child => api.getRow(child)?.resourceType)
-            ),
-          ].filter(Boolean);
-
-          displayValue = uniqueResourceTypes.length
-            ? uniqueResourceTypes.length > 1
-              ? `${uniqueResourceTypes[0]} +${uniqueResourceTypes.length - 1}`
-              : uniqueResourceTypes[0]
-            : '';
-        }
-
-        return <EllipsisNameCell value={displayValue} />;
-      },
-    },
   ];
+
+  const filteredResources = resources?.filter(resource => {
+    const matchesTeam = selectedTeam.length
+    ? resource.teams && selectedTeam.some(team => team.label === resource.teams)
+    : true;
+    
+    return matchesTeam;
+  });
 
   return (
     <>
@@ -168,24 +112,29 @@ export default function TeamAllocation() {
         endDate={endDate}
         columns={teamsColumnConfig}
         selectedTeam={selectedTeam}
-        toolbarComponent={CustomToolbar}
-        setAllocationThreshold={setAllocationThreshold}
         setSelectedTeam={setSelectedTeam}
+        setAllocationThreshold={setAllocationThreshold}
+        toolbarComponent={(props: any) => (
+          <SplitTeamToolbar
+            {...props}
+            selectedTeam = {selectedTeam}
+            setSelectedTeam={setSelectedTeam}
+            setAllocationThreshold={setAllocationThreshold}
+          />
+        )}
         initialState={{
           columns: {
             columnVisibilityModel: {
-              teamAllocationManager: false,
-              teamStatus: false,
               __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
               __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
               project: true,
-              resourceType: true,
               teams: false, // This column has to always be false, as we are using grouping.
               resource: false, // This column has to always be false, as we are using grouping.
             },
           },
         }}
-        data={resources}
+        data={filteredResources || []}
+
       />
       {!resources && !loading && (
         <div

@@ -56,6 +56,7 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
 import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
+import SplitTeamToolbar from '../Toolbar/SplitTeamToolbar';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 
@@ -66,9 +67,11 @@ export default function AllocationGrid({
   loading,
   selectedTeam,
   setSelectedTeam,
+  setAllocationThreshold,
   initialState: _initialState,
   startDate,
   endDate,
+  toolbarComponent,
 }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
@@ -912,7 +915,7 @@ export default function AllocationGrid({
         }}
         slots={{
           // toolbar: ToolbarMod,
-          toolbar: CustomToolbar,
+          toolbar: toolbarComponent,
           // columnMenu: CustomColumnMenu
           columnMenu: props => {
             return <CustomColumnMenu {...props} apiRef={apiRef} />;
