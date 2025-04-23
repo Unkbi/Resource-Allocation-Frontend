@@ -263,8 +263,28 @@ function* fetchResourcesAgainstTeamsSaga(
         setAllocations({
           team_id: team.Id,
           value: {
-            resourcesResult,
-            allocationsResult: { result: teamAllocations },
+            resourcesResult: {
+              status: 'fulfilled',
+              result: {
+                payload: {
+                  result: resourcesResult.result,
+                  status: 'ok',
+                },
+                type: 'team/allocations/fulfilled',
+              },
+              team: team,
+            },
+            allocationsResult: {
+              status: 'fulfilled',
+              result: {
+                payload: {
+                  result: teamAllocations,
+                  status: 'ok',
+                },
+                type: '/team/resources/fulfilled',
+              },
+              team: team,
+            },
             team,
           },
         })
