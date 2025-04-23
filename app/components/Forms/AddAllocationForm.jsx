@@ -259,7 +259,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               <Typography variant="caption" sx={{ color: 'orange', fontSize:"12px"}}>
                {msg}
               </Typography>
-          {i < warnings.length - 1 && <Divider sx={{ borderColor: 'orange' }} />}
+          {i < warnings.length - 1 && <br/>}
               </div>
             ))}
         </Box>
