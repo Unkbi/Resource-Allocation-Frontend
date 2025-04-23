@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText, Autocomplete, Divider } from "@mui/material"
+import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText, Autocomplete } from "@mui/material"
 import CustomSelect from "../Select/CustomSelect"
 import StyledLabel from "../Label/StyledLabel"
 import { StyledCommentInput, StyledFormHelperText, StyledInput } from "../Input/StyledInput"
@@ -11,7 +11,6 @@ import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker"
 import { useDispatch } from "react-redux"
 import { showToast } from "@/app/redux/reducers/toastReducer"
 import { getProjectRangeWarnings } from "./ValidationSchema"
-import { Divide } from "lucide-react"
 
 const AddAllocationForm = ({ formikProps , setFormValue}) => {
   const { values, handleChange, handleBlur, setFieldValue} = formikProps
@@ -256,7 +255,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           </Box>
           {warnings.map((msg, i) => (
               <div key={i}>
-              <Typography variant="caption" sx={{ color: 'orange', fontSize:"12px"}}>
+              <Typography variant="caption" color={'warning'}sx={{ fontSize:"12px"}}>
                {msg}
               </Typography>
           {i < warnings.length - 1 && <br/>}
