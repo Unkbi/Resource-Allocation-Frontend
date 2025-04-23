@@ -184,9 +184,7 @@ const AllocationForm = () => {
   };
 
   const handleScrollAndFocus = (resources, period, projects) => {
-    const selectedWeeks = period?.flatMap(monday =>
-      getWeekNumber(parseISO(monday))
-    );
+    const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
     const weeksObject = {};
 
     selectedWeeks.forEach(week => {
