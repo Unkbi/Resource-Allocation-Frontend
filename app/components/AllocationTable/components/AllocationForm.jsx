@@ -52,7 +52,7 @@ import { current } from '@reduxjs/toolkit';
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { getWeek } from 'date-fns';
+import { getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import DeleteDialog from '../../Dialog/DeleteDialog';
 
@@ -184,7 +184,9 @@ const AllocationForm = () => {
   };
 
   const handleScrollAndFocus = (resources, period, projects) => {
-    const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
+    const selectedWeeks = period?.flatMap(monday =>
+      getWeekNumber(parseISO(monday))
+    );
     const weeksObject = {};
 
     selectedWeeks.forEach(week => {
