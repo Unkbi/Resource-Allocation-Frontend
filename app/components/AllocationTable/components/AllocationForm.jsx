@@ -721,6 +721,7 @@ const AllocationForm = () => {
         return;
     }
     setSubmitting(false);
+    setFormValue({})
   };
 
   const performTransfer = async () => {
