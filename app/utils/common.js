@@ -100,7 +100,7 @@ export function generateAllMondays(startDate, endDate) {
 
   // If no endDate, return just this Monday
   if (!endDate) {
-    mondays.push(formatDates(currentDate));
+    mondays.push(parseISO(formatDates(currentDate)));
     return mondays;
   }
 
@@ -108,7 +108,7 @@ export function generateAllMondays(startDate, endDate) {
 
   // Generate all Mondays in the range
   while (currentDate <= endDateObj) {
-    mondays.push(formatDates(currentDate));
+    mondays.push(parseISO(formatDates(currentDate)));
     currentDate.setDate(currentDate.getDate() + 7);
   }
 

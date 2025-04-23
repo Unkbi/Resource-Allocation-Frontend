@@ -11,6 +11,7 @@ import {
   Menu,
   Typography,
   Popover,
+  TextField,
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -41,7 +42,7 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
-import { parseISO } from 'date-fns';
+import { differenceInDays, parseISO, startOfWeek } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -70,6 +71,14 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import { StyledInput } from '../Input/StyledInput';
 import CopyLinkInput from '../Input/InputWithButton';
 import ShareLinkDialog from '../Dialog/ShareLinkDialog';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import {
+  DateRangePicker,
+  StaticDateRangePicker,
+} from '@mui/x-date-pickers-pro';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -500,6 +509,7 @@ const PreferencesIcon = () => (
 
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
+  const [value, setValue] = React.useState([null, null]);
   const { view, savedViews, currentView } = useSelector(
     state => state.allocationView
   );
@@ -519,7 +529,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [deleteView, setDeleteView] = useState(null);
-
+  const [isRangePickerOpen, setIsRangePickerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [popOverAnchorEl, setPopOverAnchorEl] = useState(null);
   const [selectedView, setSelectedView] = useState('0');
@@ -578,41 +588,105 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     setActive(prev => !prev);
   };
 
-  const changeCalendarDate = type => {
+  const calculateWeekRanges = (selectedStart, selectedEnd, currentDate) => {
+    const current =
+      currentDate instanceof Date ? currentDate : new Date(currentDate);
+    const start = new Date(selectedStart);
+    const end = new Date(selectedEnd);
+    const startOfCurrentWeek = startOfWeek(current, { weekStartsOn: 1 });
+    const startOfStartWeek = startOfWeek(start, { weekStartsOn: 1 });
+    const startOfEndWeek = startOfWeek(end, { weekStartsOn: 1 });
+    const weekMinus = Math.floor(
+      differenceInDays(startOfCurrentWeek, startOfStartWeek) / 7
+    );
+    const weekPlus = Math.floor(
+      differenceInDays(startOfEndWeek, startOfCurrentWeek) / 7
+    );
+
+    return {
+      weekMinus: Math.ceil(weekMinus),
+      weekPlus: Math.ceil(weekPlus),
+    };
+  };
+
+  const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
     // const isTeams = view === 'Teams';
     const isNext = type === 'next';
-
     // const action = isTeams
     //   ? updateStartAndEndDate
     //   : updateProjectStartAndEndDate;
 
     // Handle the saveView changes
-    dispatch(
-      updateCurrentView({
-        isDynamicRange: true,
-        ...(isNext
-          ? {
-              WeekPlus:
-                currentView.WeekPlus != null
-                  ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
-                  : DEFAULT_PROJECT_WEEK_PLUS + 4,
-              WeekMinus:
-                currentView.WeekMinus != null
-                  ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
-                  : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW,
-            }
-          : {
-              WeekMinus:
-                currentView.WeekMinus != null
-                  ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
-                  : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW,
-              WeekPlus:
-                currentView.WeekPlus != null
-                  ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
-                  : DEFAULT_PROJECT_WEEK_MINUS - 4,
-            }),
-      })
-    );
+
+    if (type === 'isFixedRange') {
+      const currentDate = new Date();
+      const { weekMinus, weekPlus } = calculateWeekRanges(
+        StartDate,
+        EndDate,
+        currentDate
+      );
+      dispatch(
+        updateCurrentView({
+          isDynamicRange: false,
+          isFixedRange: true,
+          StartDate: StartDate,
+          EndDate: EndDate,
+          WeekPlus: weekPlus,
+          WeekMinus: weekMinus,
+        })
+      );
+    } else {
+      dispatch(
+        updateCurrentView({
+          ...(!currentView.isFixedRange && { isDynamicRange: true }),
+          ...(isNext
+            ? {
+                StartDate: generateDateWeekMath(
+                  'WEEK_MINUS',
+                  currentView.WeekMinus != null
+                    ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW
+                ),
+                EndDate: generateDateWeekMath(
+                  'WEEK_PLUS',
+                  currentView.WeekPlus != null
+                    ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_PLUS + 4
+                ),
+                WeekPlus:
+                  currentView.WeekPlus != null
+                    ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_PLUS + 4,
+                WeekMinus:
+                  currentView.WeekMinus != null
+                    ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW,
+              }
+            : {
+                StartDate: generateDateWeekMath(
+                  'WEEK_MINUS',
+                  currentView.WeekMinus != null
+                    ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW
+                ),
+                EndDate: generateDateWeekMath(
+                  'WEEK_PLUS',
+                  currentView.WeekPlus != null
+                    ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_MINUS - 4
+                ),
+                WeekMinus:
+                  currentView.WeekMinus != null
+                    ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW,
+                WeekPlus:
+                  currentView.WeekPlus != null
+                    ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
+                    : DEFAULT_PROJECT_WEEK_MINUS - 4,
+              }),
+        })
+      );
+    }
 
     // dispatch(action({ startDate: startKey, endDate: endKey }));
   };
@@ -632,7 +706,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     } else {
       dispatch(
         openDialog({
-          title: 'Save View',
+          title: currentView?.Name
+            ? `Save View - ${currentView?.Name}`
+            : 'Save View',
           submitButtonText: 'Save',
           secondaryButtonText: 'Save As',
           cancelButtonText: 'Cancel',
@@ -758,6 +834,26 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const currentViewName =
     savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
+
+  const handleDateField = (StartDate, EndDate) => {
+    changeCalendarDate('isFixedRange', StartDate, EndDate);
+    const isTeams = view === 'Teams';
+    const action = isTeams
+      ? updateStartAndEndDate
+      : updateProjectStartAndEndDate;
+    if (
+      currentView?.isFixedRange &&
+      currentView?.StartDate &&
+      currentView?.EndDate
+    ) {
+      dispatch(
+        action({
+          startDate: StartDate,
+          endDate: EndDate,
+        })
+      );
+    }
+  };
 
   useEffect(() => {
     if (currentView?.Name) {
@@ -965,8 +1061,25 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             >
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            <Button className="selectedDate">{`${first} - ${last}`}</Button>
+            {/* <Button
+              className="selectedDate"
+              onClick={() => setIsRangePickerOpen(true)}
+            >{`${first} - ${last}`}</Button> */}
 
+            <CustomDateRangePicker
+              open={isRangePickerOpen}
+              placeholder={`${first} - ${last}`}
+              isButton={true}
+              value={{
+                StartDate: startDate,
+                EndDate: endDate,
+              }}
+              onOpen={() => setIsRangePickerOpen(true)}
+              onClose={() => setIsRangePickerOpen(false)}
+              showLabel={false}
+              format="MMM YY"
+              handleDateField={handleDateField}
+            />
             <IconButton
               onClick={() => changeCalendarDate('next')}
               size="medium"

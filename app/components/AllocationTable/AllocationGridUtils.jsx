@@ -52,7 +52,12 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-const CellWithMenu = ({ params, handleAddClick, handleCloneClick, handleTranferClick }) => {
+const CellWithMenu = ({
+  params,
+  handleAddClick,
+  handleCloneClick,
+  handleTranferClick,
+}) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -71,7 +76,11 @@ const CellWithMenu = ({ params, handleAddClick, handleCloneClick, handleTranferC
       icon: <ContentCopyIcon fontSize="small" />,
       func: () => handleCloneClick(params),
     },
-    { label: 'Transfer', icon: <SwapHorizIcon fontSize="small" />, func: () => handleTranferClick(params) },
+    {
+      label: 'Transfer',
+      icon: <SwapHorizIcon fontSize="small" />,
+      func: () => handleTranferClick(params),
+    },
     { label: 'History', icon: <HistoryIcon fontSize="small" /> },
     { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
   ];
@@ -131,14 +140,15 @@ const CellWithMenu = ({ params, handleAddClick, handleCloneClick, handleTranferC
       </StyledMenu>
     </>
   );
-
+  const columnType = params.colDef.field;
+  const showAvatar = columnType !== 'project';
   return (
     <CustomAddIcon
       value={
         <EllipsisNameCell
           value={params.value}
           showAddIcon={false}
-          showAvatar={true}
+          showAvatar={showAvatar}
         />
       }
       onClick={() => handleAddClick(params)}
@@ -252,7 +262,6 @@ export const getFinalColumns = (
               handleAddClick={handleAddClick}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
-              columnType="resource"
             />
           ) : null;
         },
@@ -387,7 +396,6 @@ export const getFinalColumns = (
               handleAddClick={handleAddClick}
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
-              columnType="resource"
             />
           ) : null;
         },

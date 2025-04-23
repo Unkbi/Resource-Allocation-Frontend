@@ -129,3 +129,11 @@ export const deleteAllocationView = createAsyncThunk(
     }
   }
 );
+
+export const fetchAllAllocations = async postData => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/GetAllAllocationsForPeriod`,
+    postData
+  );
+  return response.data;
+};

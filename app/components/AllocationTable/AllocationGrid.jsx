@@ -447,19 +447,18 @@ export default function AllocationGrid({
       : updateProjectStartAndEndDate;
 
     // Fixed Range
-    // if (
-    //   currentView?.isFixedRange &&
-    //   currentView?.StartDate &&
-    //   currentView?.EndDate
-    // ) {
-    //   console.log('dispatching action : for dateRange isFixedRange');
-    //   dispatch(
-    //     action({
-    //       startDate: currentView?.StartDate,
-    //       endDate: currentView?.EndDate,
-    //     })
-    //   );
-    // }
+    if (
+      currentView?.isFixedRange &&
+      currentView?.StartDate &&
+      currentView?.EndDate
+    ) {
+      dispatch(
+        action({
+          startDate: currentView?.StartDate,
+          endDate: currentView?.EndDate,
+        })
+      );
+    }
     if (
       currentView?.isDynamicRange &&
       currentView?.WeekMinus &&
@@ -563,8 +562,12 @@ export default function AllocationGrid({
     handleAddProject,
     setSelectedResourceId,
     dispatch,
-    generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
-    generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
+    currentView?.isFixedRange
+      ? currentView.startDate || startDate
+      : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
+    currentView?.isFixedRange
+      ? currentView.endDate || endDate
+      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
   );
 
   const showField = [
