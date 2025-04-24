@@ -120,6 +120,13 @@ export default function CustomDateRangePicker({
       }
     }
   };
+  // Helper function to calculate max date (51 weeks after start date)
+  const getWeeksAfter = startDate => {
+    if (!startDate) return undefined;
+    const weekStartMonday = dayjs(startDate).startOf('week');
+    const fiftyOneWeeksLater = weekStartMonday.add(51, 'weeks');
+    return fiftyOneWeeksLater.add(7, 'days');
+  };
 
   return (
     <FormControl sx={isButton && { width: '56%' }} error={error}>
@@ -140,6 +147,7 @@ export default function CustomDateRangePicker({
             onChange={newValue => handleDateChange(newValue)}
             localeText={{ start: '', end: '' }}
             format={format}
+            maxDate={getWeeksAfter(selectedDate[0], 51)}
             slots={{
               field: SingleInputDateRangeField,
             }}

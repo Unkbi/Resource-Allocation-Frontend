@@ -729,17 +729,18 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                     startDate: formikProps.values.startDate,
                     endDate: formikProps.values.endDate,
                   }}
-                  placeholder="Select Date"
-                  endDateLabel="End Date"
-                  startDateLabel="Start Date"
+                  placeholder="Select Date Range"
                   formikProps={formikProps}
                   error={
-                    formikProps.touched.startDate &&
-                    Boolean(formikProps.errors.startDate)
+                    (formikProps.touched.startDate ||
+                      formikProps.touched.endDate) &&
+                    (Boolean(formikProps.errors.startDate) ||
+                      Boolean(formikProps.errors.endDate))
                   }
                   helperText={
-                    formikProps.touched.startDate &&
-                    formikProps.errors.startDate
+                    (formikProps.touched.startDate &&
+                      formikProps.errors.startDate) ||
+                    (formikProps.touched.endDate && formikProps.errors.endDate)
                   }
                   customStyles={true}
                   handleDateField={handleDateField}
