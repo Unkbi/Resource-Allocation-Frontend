@@ -58,6 +58,7 @@ import {
 import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 export default function AllocationGrid({
   groupBy,
@@ -641,9 +642,35 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = (newRow, oldRow) => {
+
     Object.keys(newRow).forEach(key => {
       if (key.startsWith('W')) {
         let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+
+        const period = oldRow[key]?.period;
+        const value = formattedCellValue;
+        const resourceId = oldRow.resourceId;
+
+        // Calculate total allocation for the week across all rows for that resource
+        let totalForWeek = 0;
+        rowState.forEach(row => {
+          if (row.resourceId === resourceId) {
+            const val = row[key]?.value || 0;
+            totalForWeek += parseFloat(val);
+          }
+        });
+
+        // Add new value (replace current row’s old value with new one)
+        const currentRowOldValue = oldRow[key]?.value || 0;
+        totalForWeek = totalForWeek - currentRowOldValue + value;
+
+        if (totalForWeek > 1.5 && totalForWeek <= 2) {
+          dispatch(showToastAction(true, `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,'warning',5000));
+        } else if (totalForWeek > 2) {
+          dispatch(showToastAction(true,`Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,'error',5000));
+          return oldRow; // Prevents update
+        }
+
         if (
           (newRow[key] === null || newRow[key] === undefined) &&
           (formattedCellValue === 0 || isNaN(formattedCellValue)) &&

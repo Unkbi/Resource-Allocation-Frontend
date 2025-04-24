@@ -516,3 +516,14 @@ export const getOnlyFilterSettings = view => {
     Filters: view.Filters ?? [],
   };
 };
+
+export const getTotalWeeklyAllocation = (resourceId, weekKey) => {
+  let total = 0;
+  const allRows = rowState;
+  allRows.forEach(row => {
+    if (row.resourceId === resourceId && row[weekKey]?.value) {
+      total += parseFloat(row[weekKey]?.value || 0);
+    }
+  });
+  return total;
+};

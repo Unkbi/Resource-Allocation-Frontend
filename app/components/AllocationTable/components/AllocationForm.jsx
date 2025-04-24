@@ -30,6 +30,7 @@ import {
   generateAllMondays,
   getUserIdFromEmail,
   getWeekNumber,
+  getTotalWeeklyAllocation,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -55,6 +56,7 @@ import { openDialog } from '@/app/redux/actions/dialogAction';
 import { getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import DeleteDialog from '../../Dialog/DeleteDialog';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const initialValuesMap = {
   add_project: {
@@ -324,6 +326,34 @@ const AllocationForm = () => {
                   resource,
                   monday
                 );
+
+                const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
+                const existingTotal = getTotalWeeklyAllocation(resource, weekKey);
+                const finalTotal = existingTotal - (allocation?.value || 0) + values.AllocationEntered;
+
+                if (finalTotal > 2.0) {
+                  dispatch(
+                    showToastAction(
+                      true,
+                      `Total allocation for week ${weekKey} exceeds 2.0 (${finalTotal.toFixed(2)}). Update skipped.`,
+                      'error',
+                      4000
+                    )
+                  );
+                  return null;
+                }
+
+                if (finalTotal > 1.5) {
+                  dispatch(
+                    showToastAction(
+                      true,
+                      `Total allocation for week ${weekKey} exceeds 1.5 (${finalTotal.toFixed(2)}).`,
+                      'warning',
+                      4000
+                    )
+                  );
+                }
+
 
                 if (
                   allocation &&

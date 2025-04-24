@@ -1,11 +1,12 @@
 import { hideToast, showToast } from '../reducers/toastReducer';
 
-export const showToastAction = (open, message, type, position) => dispatch => {
+export const showToastAction = (open, message, type, autoHideTimer, position) => dispatch => {
   dispatch(
     showToast({
       open,
       message,
       type,
+      autoHideTimer,
       position,
     })
   );
