@@ -687,7 +687,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                   )}
                 </Typography>
               </Box>
-              {values.dynamicRangeError && (
+              {(errors.dynamicDateRangeAdd ||
+                errors.dynamicDateRangeSubtract) && (
                 <Typography
                   sx={{
                     mt: 1,
@@ -698,7 +699,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                     textAlign: 'left',
                   }}
                 >
-                  {values.dynamicRangeError}
+                  {errors.dynamicDateRangeAdd ||
+                    errors.dynamicDateRangeSubtract}
                 </Typography>
               )}
             </Box>
