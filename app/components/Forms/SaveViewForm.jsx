@@ -23,6 +23,7 @@ import MultiSelectWithChips from '../Select/MultiSelectWithChipSmaller';
 import { getTodaysDateDDMMMYYYY } from '@/app/utils/dateUtils';
 import { addWeeks, format, startOfWeek, subWeeks } from 'date-fns';
 import {
+  DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
@@ -210,7 +211,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         'SUBTRACT',
         values?.dynamicDateRangeSubtract
       );
-      setFieldValue('startDate', currentStartDate);
+      setFieldValue('startDate', format(currentStartDate, DATE_FORMAT));
     }
     if (
       values?.dynamicDateRangeAdd !== null &&
@@ -221,7 +222,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         'ADD',
         values?.dynamicDateRangeAdd
       );
-      setFieldValue('endDate', currentEndDate);
+      setFieldValue('endDate', format(currentEndDate, DATE_FORMAT));
     }
   }, [values.dynamicDateRangeAdd, values.dynamicDateRangeSubtract]);
 
