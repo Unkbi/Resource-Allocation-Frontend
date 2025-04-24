@@ -52,7 +52,7 @@ const StyledsingleInputDateRangeField = isButton => ({
   height: isButton ? '32px' : '36px',
   width: '100%',
   '& .MuiInputBase-root': {
-    padding: '0px',
+    ...(isButton && { padding: '0px' }),
     height: isButton ? '32px' : '36px',
     fontSize: isButton ? '14px' : '12px',
     fontWeight: isButton ? 600 : 500,

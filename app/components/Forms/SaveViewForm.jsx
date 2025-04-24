@@ -200,6 +200,30 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       setFieldValue('dynamicRangeError', '');
     }
   };
+  useEffect(() => {
+    if (
+      values?.dynamicDateRangeSubtract !== null &&
+      values?.dynamicDateRangeSubtract !== undefined
+    ) {
+      const currentStartDate = getDateFromWeekMath(
+        new Date(),
+        'SUBTRACT',
+        values?.dynamicDateRangeSubtract
+      );
+      setFieldValue('startDate', currentStartDate);
+    }
+    if (
+      values?.dynamicDateRangeAdd !== null &&
+      values?.dynamicDateRangeAdd !== undefined
+    ) {
+      const currentEndDate = getDateFromWeekMath(
+        new Date(),
+        'ADD',
+        values?.dynamicDateRangeAdd
+      );
+      setFieldValue('endDate', currentEndDate);
+    }
+  }, [values.dynamicDateRangeAdd, values.dynamicDateRangeSubtract]);
 
   useEffect(() => {
     if (values.dynamicRangeError) {
