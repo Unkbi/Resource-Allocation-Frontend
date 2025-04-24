@@ -11,6 +11,9 @@ import {
   subWeeks,
   weeksToDays,
   parseISO,
+  differenceInDays,
+  isSameWeek,
+  differenceInCalendarWeeks,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -122,6 +125,42 @@ function formatDates(date) {
   return `${year}-${month}-${day}`;
 }
 
+export const calculateWeekRanges = (
+  selectedStart,
+  selectedEnd,
+  currentDate
+) => {
+  const current =
+    currentDate instanceof Date ? currentDate : new Date(currentDate);
+  const start = new Date(selectedStart);
+  const end = new Date(selectedEnd);
+  const startOfCurrentWeek = startOfWeek(current, { weekStartsOn: 1 });
+  const startOfStartWeek = startOfWeek(start, { weekStartsOn: 1 });
+  const startOfEndWeek = startOfWeek(end, { weekStartsOn: 1 });
+  const weekMinus = Math.floor(
+    differenceInDays(startOfCurrentWeek, startOfStartWeek) / 7
+  );
+  const weekPlus = Math.floor(
+    differenceInDays(startOfEndWeek, startOfCurrentWeek) / 7
+  );
+
+  return {
+    weekMinus: Math.ceil(weekMinus),
+    weekPlus: Math.ceil(weekPlus),
+  };
+};
+
+export const getTotalWeeks = (startDate, endDate) => {
+  if (!startDate || !endDate) return 0; // Handle null/undefined
+
+  const isoStart =
+    typeof startDate === 'string' ? parseISO(startDate) : startDate;
+  const isoEnd = typeof endDate === 'string' ? parseISO(endDate) : endDate;
+
+  return isSameWeek(isoEnd, isoStart, { weekStartsOn: 1 })
+    ? 1
+    : differenceInCalendarWeeks(isoEnd, isoStart, { weekStartsOn: 1 }) + 1;
+};
 /**
  * Checks whether the given string is a valid UUID.
  * @param {string} uuid - UUID string to test.

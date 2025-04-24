@@ -26,12 +26,14 @@ import {
 } from '@mui/x-data-grid';
 import CustomExport from './CustomExport';
 import {
+  calculateWeekRanges,
   generateDateWeekMath,
   generateFirstAndLastMonthYear,
   getOnlyFilterSettings,
   getProjectsIamProjectManager,
   getStartAndEndDateForView,
   getTeamsIamAllocationManager,
+  getTotalWeeks,
   isObjectEqual,
 } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
@@ -42,7 +44,13 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
-import { differenceInDays, parseISO, startOfWeek } from 'date-fns';
+import {
+  differenceInCalendarWeeks,
+  differenceInDays,
+  isSameWeek,
+  parseISO,
+  startOfWeek,
+} from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -588,27 +596,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     setActive(prev => !prev);
   };
 
-  const calculateWeekRanges = (selectedStart, selectedEnd, currentDate) => {
-    const current =
-      currentDate instanceof Date ? currentDate : new Date(currentDate);
-    const start = new Date(selectedStart);
-    const end = new Date(selectedEnd);
-    const startOfCurrentWeek = startOfWeek(current, { weekStartsOn: 1 });
-    const startOfStartWeek = startOfWeek(start, { weekStartsOn: 1 });
-    const startOfEndWeek = startOfWeek(end, { weekStartsOn: 1 });
-    const weekMinus = Math.floor(
-      differenceInDays(startOfCurrentWeek, startOfStartWeek) / 7
-    );
-    const weekPlus = Math.floor(
-      differenceInDays(startOfEndWeek, startOfCurrentWeek) / 7
-    );
-
-    return {
-      weekMinus: Math.ceil(weekMinus),
-      weekPlus: Math.ceil(weekPlus),
-    };
-  };
-
   const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
     // const isTeams = view === 'Teams';
     const isNext = type === 'next';
@@ -636,53 +623,50 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         })
       );
     } else {
+      const totalWeeks = getTotalWeeks(
+        currentView?.StartDate,
+        currentView?.EndDate
+      );
+
+      const toShift = currentView.isFixedRange
+        ? totalWeeks
+        : TOTAL_FUTURE_WEEKS_ARROW;
+
+      const toNextWeekPlus =
+        currentView.WeekPlus != null
+          ? currentView.WeekPlus + toShift
+          : DEFAULT_PROJECT_WEEK_PLUS + 4;
+
+      const toNextWeekMinus =
+        currentView.WeekMinus != null
+          ? currentView.WeekMinus - toShift
+          : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW;
+
+      const toPrevWeekPlus =
+        currentView.WeekPlus != null
+          ? currentView.WeekPlus - toShift
+          : DEFAULT_PROJECT_WEEK_MINUS - 4;
+
+      const toPrevWeekMinus =
+        currentView.WeekMinus != null
+          ? currentView.WeekMinus + toShift
+          : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW;
+
       dispatch(
         updateCurrentView({
           ...(!currentView.isFixedRange && { isDynamicRange: true }),
           ...(isNext
             ? {
-                StartDate: generateDateWeekMath(
-                  'WEEK_MINUS',
-                  currentView.WeekMinus != null
-                    ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW
-                ),
-                EndDate: generateDateWeekMath(
-                  'WEEK_PLUS',
-                  currentView.WeekPlus != null
-                    ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_PLUS + 4
-                ),
-                WeekPlus:
-                  currentView.WeekPlus != null
-                    ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_PLUS + 4,
-                WeekMinus:
-                  currentView.WeekMinus != null
-                    ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW,
+                StartDate: generateDateWeekMath('WEEK_MINUS', toNextWeekMinus),
+                EndDate: generateDateWeekMath('WEEK_PLUS', toNextWeekPlus),
+                WeekPlus: toNextWeekPlus,
+                WeekMinus: toNextWeekMinus,
               }
             : {
-                StartDate: generateDateWeekMath(
-                  'WEEK_MINUS',
-                  currentView.WeekMinus != null
-                    ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW
-                ),
-                EndDate: generateDateWeekMath(
-                  'WEEK_PLUS',
-                  currentView.WeekPlus != null
-                    ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_MINUS - 4
-                ),
-                WeekMinus:
-                  currentView.WeekMinus != null
-                    ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW,
-                WeekPlus:
-                  currentView.WeekPlus != null
-                    ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_MINUS - 4,
+                StartDate: generateDateWeekMath('WEEK_MINUS', toPrevWeekMinus),
+                EndDate: generateDateWeekMath('WEEK_PLUS', toPrevWeekPlus),
+                WeekMinus: toPrevWeekMinus,
+                WeekPlus: toPrevWeekPlus,
               }),
         })
       );
@@ -1061,11 +1045,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             >
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            {/* <Button
-              className="selectedDate"
-              onClick={() => setIsRangePickerOpen(true)}
-            >{`${first} - ${last}`}</Button> */}
-
             <CustomDateRangePicker
               open={isRangePickerOpen}
               placeholder={`${first} - ${last}`}

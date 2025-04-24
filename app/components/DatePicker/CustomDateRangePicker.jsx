@@ -115,6 +115,7 @@ export default function CustomDateRangePicker({
           setFieldValue('EndDate', formattedEnd);
           setFieldValue('startDate', formattedStart);
           setFieldValue('endDate', formattedEnd);
+          handleDateField(formattedStart, formattedEnd);
         }
       }
     }

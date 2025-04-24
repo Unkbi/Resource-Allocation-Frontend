@@ -27,6 +27,7 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
 import {
+  calculateWeekRanges,
   getResourceFromEmail,
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
@@ -332,6 +333,16 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     fontSize: '14px',
   }));
 
+  const handleDateField = (StartDate, EndDate) => {
+    const currentDate = new Date();
+    const { weekMinus, weekPlus } = calculateWeekRanges(
+      StartDate,
+      EndDate,
+      currentDate
+    );
+    setFieldValue('dynamicDateRangeAdd', weekPlus);
+    setFieldValue('dynamicDateRangeSubtract', weekMinus);
+  };
   return (
     <Box>
       {/* Group By */}
@@ -706,6 +717,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                     formikProps.errors.startDate
                   }
                   customStyles={true}
+                  handleDateField={handleDateField}
                 />
               </Box>
             </Box>

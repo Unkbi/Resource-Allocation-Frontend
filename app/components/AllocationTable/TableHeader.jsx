@@ -101,7 +101,9 @@ export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
   const isoEnd = parseISO(endDate);
   const currentDate = new Date();
 
-  const totalWeeks = differenceInCalendarWeeks(isoEnd, isoStart) + 1; // inclusive
+  const totalWeeks = isSameWeek(isoEnd, isoStart, { weekStartsOn: 1 })
+    ? 1
+    : differenceInCalendarWeeks(isoEnd, isoStart) + 1;
 
   return Array.from({ length: totalWeeks }, (_, i) => {
     const weekDate = addWeeks(isoStart, i);
