@@ -14,6 +14,7 @@ import {
   differenceInDays,
   isSameWeek,
   differenceInCalendarWeeks,
+  endOfWeek,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -151,15 +152,16 @@ export const calculateWeekRanges = (
 };
 
 export const getTotalWeeks = (startDate, endDate) => {
-  if (!startDate || !endDate) return 0; // Handle null/undefined
+  if (!startDate || !endDate) return 0;
 
   const isoStart =
     typeof startDate === 'string' ? parseISO(startDate) : startDate;
   const isoEnd = typeof endDate === 'string' ? parseISO(endDate) : endDate;
-
-  return isSameWeek(isoEnd, isoStart, { weekStartsOn: 1 })
+  const weekStart = startOfWeek(isoStart, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(isoEnd, { weekStartsOn: 1 });
+  return isSameWeek(weekEnd, weekStart, { weekStartsOn: 1 })
     ? 1
-    : differenceInCalendarWeeks(isoEnd, isoStart, { weekStartsOn: 1 }) + 1;
+    : differenceInCalendarWeeks(weekEnd, weekStart, { weekStartsOn: 1 }) + 1;
 };
 /**
  * Checks whether the given string is a valid UUID.

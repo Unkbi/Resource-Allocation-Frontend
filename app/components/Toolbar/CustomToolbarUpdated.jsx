@@ -44,13 +44,7 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
-import {
-  differenceInCalendarWeeks,
-  differenceInDays,
-  isSameWeek,
-  parseISO,
-  startOfWeek,
-} from 'date-fns';
+import { parseISO } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';

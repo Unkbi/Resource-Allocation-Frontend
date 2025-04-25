@@ -13,9 +13,11 @@ import {
   addWeeks,
   differenceInCalendarWeeks,
   differenceInWeeks,
+  endOfWeek,
   format,
   isSameWeek,
   parseISO,
+  startOfWeek,
 } from 'date-fns';
 
 const WEEK_CONFIG = {
@@ -101,18 +103,26 @@ export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
   const isoEnd = parseISO(endDate);
   const currentDate = new Date();
 
-  const totalWeeks = isSameWeek(isoEnd, isoStart, { weekStartsOn: 1 })
+  // calculate start date to the Monday
+  const adjustedStart = startOfWeek(isoStart, { weekStartsOn: 1 });
+  // calculate end date to the following Sunday
+  const adjustedEnd = endOfWeek(isoEnd, { weekStartsOn: 1 });
+
+  // Calculate total weeks between start and end dates
+  const totalWeeks = isSameWeek(adjustedEnd, adjustedStart, { weekStartsOn: 1 })
     ? 1
-    : differenceInCalendarWeeks(isoEnd, isoStart) + 1;
+    : differenceInCalendarWeeks(adjustedEnd, adjustedStart, {
+        weekStartsOn: 1,
+      }) + 1;
 
   return Array.from({ length: totalWeeks }, (_, i) => {
-    const weekDate = addWeeks(isoStart, i);
-    const isCurrentWeek = isSameWeek(weekDate, currentDate, {
+    const weekStartDate = addWeeks(adjustedStart, i);
+    const isCurrentWeek = isSameWeek(weekStartDate, currentDate, {
       weekStartsOn: 1,
     });
 
     return {
-      ...createBaseColumnConfig(weekDate, isCurrentWeek),
+      ...createBaseColumnConfig(weekStartDate, isCurrentWeek),
       ...(dispatch ? createValueHandlers(dispatch) : {}),
     };
   });
