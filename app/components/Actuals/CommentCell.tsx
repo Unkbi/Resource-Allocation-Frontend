@@ -16,7 +16,10 @@ export default function CommentCell(props: GridRenderEditCellParams) {
       onChange={handleChange}
       variant="standard"
       fullWidth
-      InputProps={{ disableUnderline: true, sx: { pl: 1, pr: 1 } }}
+      InputProps={{
+        disableUnderline: true,
+        sx: { pl: 1, pr: 1, height: '100%' },
+      }}
     />
   );
 }
