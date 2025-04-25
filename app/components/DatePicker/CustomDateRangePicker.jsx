@@ -111,10 +111,13 @@ export default function CustomDateRangePicker({
         } else if (start && end) {
           const formattedStart = dayjs(start).format('YYYY-MM-DD');
           const formattedEnd = dayjs(end).format('YYYY-MM-DD');
-          setFieldValue('StartDate', formattedStart);
-          setFieldValue('EndDate', formattedEnd);
-          setFieldValue('startDate', formattedStart);
-          setFieldValue('endDate', formattedEnd);
+          if (value?.startDate && value?.endDate) {
+            setFieldValue('startDate', formattedStart);
+            setFieldValue('endDate', formattedEnd);
+          } else {
+            setFieldValue('StartDate', formattedStart);
+            setFieldValue('EndDate', formattedEnd);
+          }
         }
       }
     }

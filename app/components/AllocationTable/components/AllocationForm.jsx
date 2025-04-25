@@ -262,13 +262,16 @@ const AllocationForm = () => {
       setSubmitting(false);
       return;
     }
-
+    let filteredValues = { ...values };
+    if (formType === 'add_project' || formType === 'edit_project') {
+      delete filteredValues.submitType;
+    }
     let postData = {};
     switch (formType) {
       case 'add_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...filteredValues,
             Description: 'string',
           },
         };
@@ -294,7 +297,7 @@ const AllocationForm = () => {
       case 'edit_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...filteredValues,
             Description: 'string',
           },
         };
