@@ -723,39 +723,38 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
             }
             label={<StyledOptionsLabel>Fixed Range</StyledOptionsLabel>}
           />
-
-          {values.dateRangeType === 'fixed' && (
-            <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <CustomDateRangePicker
-                  name="DateRange"
-                  value={{
-                    startDate: formikProps.values.startDate,
-                    endDate: formikProps.values.endDate,
-                  }}
-                  placeholder="Select Date Range"
-                  formikProps={formikProps}
-                  error={
-                    (formikProps.touched.startDate ||
-                      formikProps.touched.endDate) &&
-                    (Boolean(formikProps.errors.startDate) ||
-                      Boolean(formikProps.errors.endDate))
-                  }
-                  helperText={
-                    (formikProps.touched.startDate &&
-                      formikProps.errors.startDate) ||
-                    (formikProps.touched.endDate && formikProps.errors.endDate)
-                  }
-                  customStyles={true}
-                  handleDateField={handleDateField}
-                />
-              </Box>
-            </Box>
-          )}
         </Box>
-        {showError('dateRangeType')}
       </StyledContainer>
-
+      {values.dateRangeType === 'fixed' && (
+        <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <CustomDateRangePicker
+              name="DateRange"
+              value={{
+                startDate: formikProps.values.startDate,
+                endDate: formikProps.values.endDate,
+              }}
+              placeholder="Select Date Range"
+              formikProps={formikProps}
+              error={
+                (formikProps.touched.dynamicDateRangeAdd ||
+                  formikProps.touched.dynamicDateRangeSubtract) &&
+                (Boolean(formikProps.errors.dynamicDateRangeAdd) ||
+                  Boolean(formikProps.errors.dynamicDateRangeSubtract))
+              }
+              helperText={
+                (formikProps.touched.dynamicDateRangeAdd &&
+                  formikProps.errors.dynamicDateRangeAdd) ||
+                (formikProps.touched.dynamicDateRangeSubtract &&
+                  formikProps.errors.dynamicDateRangeSubtract)
+              }
+              customStyles={true}
+              handleDateField={handleDateField}
+            />
+          </Box>
+        </Box>
+      )}
+      {showError('dateRangeType')}
       <Box sx={{ borderTop: '1px solid #E5E7EB', my: 2 }} />
 
       {/* Show Columns */}
