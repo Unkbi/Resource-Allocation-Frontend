@@ -40,8 +40,6 @@ export default function ActualTable() {
  const [rows, setRows] = useState(initialRows);
  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
  const allocationTheme = useSelector((state: RootState) => state.settings.allocationTheme)
- 
- console.log(allocationTheme , "get color")
 
 const totalPlanned = useMemo(() => {
      return roundToOneDecimal(calculateTotal([...rows], 'planned'));
@@ -204,8 +202,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
     { label: 'Other Work', icon: <Box component="img" src="/images/icons/otherWork.svg" alt="Other Work" sx={{ width: 20, height: 20 }} />  },
     { label: 'Personal Time', icon: <Box component="img" src="/images/icons/Personal.svg" alt="Other Work" sx={{ width: 20, height: 20 }} />  },
   ];
-
-console.log("renddr")
+  
   return (
     <>
     <Box borderRadius={2} overflow="hidden" border="1px solid #e0e0e0" boxShadow={1}>
