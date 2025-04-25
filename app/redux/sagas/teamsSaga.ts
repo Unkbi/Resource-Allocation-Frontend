@@ -9,6 +9,7 @@ import { setAllocations } from '../reducers/dataGridReducer';
 import { Allocation, AllocationGridCell, Resource } from '@/app/types';
 import {
   getMonday,
+  getMondayOfISO,
   getMondaysInRange,
   getWeekNumber,
   removeDuplicateResources,
@@ -214,8 +215,8 @@ function* fetchResourcesAgainstTeamsSaga(
 
     const allocationsPostData = {
       'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
-        StartDate: format(getMonday(StartDate), DATE_FORMAT),
-        EndDate: format(getMonday(EndDate), DATE_FORMAT),
+        StartDate: getMondayOfISO(StartDate),
+        EndDate: getMondayOfISO(EndDate),
       },
     };
     const allAllocationsResult = yield call(

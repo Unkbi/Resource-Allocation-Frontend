@@ -6,9 +6,7 @@ import {
 import { formatAllocations } from '@/app/utils/allocationUtils';
 import { fetchAllAllocations } from '@/app/services/allocationServices';
 import { sagaTaskRefs } from './sagaTasks';
-import { getMonday } from '@/app/utils/common';
-import { format } from 'date-fns';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import {getMondayOfISO } from '@/app/utils/common';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const { projects, startDate, endDate } = action.payload;
@@ -18,8 +16,8 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 
     const postData = {
       'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
-         StartDate: format(getMonday(startDate), DATE_FORMAT),
-         EndDate: format(getMonday(endDate), DATE_FORMAT),
+         StartDate: getMondayOfISO(startDate),
+         EndDate: getMondayOfISO(endDate),
       },
     };
 
