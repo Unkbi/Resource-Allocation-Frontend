@@ -167,11 +167,11 @@ export default function AllocationGrid({
     ...aggregationModel(startDate, endDate),
   });
 
-  const normalizeRow = (row) => {
+  const normalizeRow = row => {
     const allWeeks = generateAllWeeks();
     const normalized = { ...row };
 
-    allWeeks.forEach((weekKey) => {
+    allWeeks.forEach(weekKey => {
       const period = getMondayOfWeek(weekKey, new Date());
       const value = row[weekKey];
 
@@ -294,6 +294,22 @@ export default function AllocationGrid({
       });
     }
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (currentView?.ColumnsVisible && groupBy) {
+      const updatedModel = {
+        ...columnVisibilityModel,
+        ..._columns[groupBy === 'teams' ? 'team' : groupBy].reduce(
+          (acc, column) => {
+            acc[column] = currentView.ColumnsVisible.includes(column);
+            return acc;
+          },
+          {}
+        ),
+      };
+      setColumnVisibilityModel(updatedModel);
+    }
+  }, [currentView.ColumnsVisible]);
 
   useEffect(() => {
     if (currentView?.Filters) {
@@ -426,19 +442,18 @@ export default function AllocationGrid({
       : updateProjectStartAndEndDate;
 
     // Fixed Range
-    // if (
-    //   currentView?.isFixedRange &&
-    //   currentView?.StartDate &&
-    //   currentView?.EndDate
-    // ) {
-    //   console.log('dispatching action : for dateRange isFixedRange');
-    //   dispatch(
-    //     action({
-    //       startDate: currentView?.StartDate,
-    //       endDate: currentView?.EndDate,
-    //     })
-    //   );
-    // }
+    if (
+      currentView?.isFixedRange &&
+      currentView?.StartDate &&
+      currentView?.EndDate
+    ) {
+      dispatch(
+        action({
+          startDate: currentView?.StartDate,
+          endDate: currentView?.EndDate,
+        })
+      );
+    }
     if (
       currentView?.isDynamicRange &&
       currentView?.WeekMinus &&
@@ -542,8 +557,12 @@ export default function AllocationGrid({
     handleAddProject,
     setSelectedResourceId,
     dispatch,
-    generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
-    generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
+    currentView?.isFixedRange
+      ? currentView.startDate || startDate
+      : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
+    currentView?.isFixedRange
+      ? currentView.endDate || endDate
+      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
   );
 
   const showField = [

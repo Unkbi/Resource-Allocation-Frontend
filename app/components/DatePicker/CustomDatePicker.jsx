@@ -33,7 +33,7 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
     fontWeight: 500,
     border: error && theme.palette.error.main,
     '&:hover': {
-      border: error && theme.palette.error.main 
+      border: error && theme.palette.error.main
     },
     '&.Mui-focused': {
       border: error && theme.palette.error.main
@@ -55,7 +55,7 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
 }));
 
 export default function CustomDatePicker({ name, value, placeholder, formikProps, error, helperText, customStyles}) {
-  const { setFieldValue } = formikProps
+  const { setFieldValue, values } = formikProps
   const [open, setOpen] = React.useState(false)
 
   const handleDateChange = (newValue) => {
@@ -67,6 +67,24 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
   const handleInputClick = () => {
     setOpen(true)
   }
+  // Calculate maxDate and minDate for visual restriction
+  let minDate = undefined;
+  let maxDate = undefined;
+
+  if (name === 'startDate' && values.endDate) {
+    maxDate = dayjs(values.endDate).isValid()
+      ? dayjs(values.endDate).isAfter(dayjs())
+        ? dayjs(values.endDate).subtract(0, 'day')
+        : dayjs(values.endDate)
+      : undefined;
+    minDate = dayjs(values.endDate).subtract(1, 'year');
+  }
+
+  if (name === 'endDate' && values.startDate) {
+    minDate = dayjs(values.startDate);
+    maxDate = dayjs(values.startDate).add(1, 'year');
+  }
+
   return (
     <FormControl
       style={{
@@ -82,6 +100,8 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
+          minDate={minDate}
+          maxDate={maxDate}
           slots={{
             layout: StyledPickersLayout,
             textField: CustomTextField,
@@ -102,20 +122,21 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
                 sx: {
                   position: "absolute",
                   top: "-130px",
-                  left: name === "EndDate"? "-120px" : ""
+                  left: name === "EndDate" ? "-120px" : ""
                 }
               } : {})
             },
             textField: {
               placeholder: placeholder,
               error: error,
+              helperText: error ? helperText : '',
               onClick: handleInputClick,
               InputProps: {
                 readOnly: true,
-                value: value || "" 
+                value: value || ""
               },
             },
-          
+
           }}
         />
       </LocalizationProvider>
@@ -125,7 +146,7 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
             fontSize: '0.75rem',
             marginLeft: '0px',
           }}>{helperText}
-        </FormHelperText>
+          </FormHelperText>
       )}
     </FormControl>
   );

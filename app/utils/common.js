@@ -14,6 +14,8 @@ import {
 } from 'date-fns';
 import {
   DATE_FORMAT,
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
@@ -98,7 +100,7 @@ export function generateAllMondays(startDate, endDate) {
 
   // If no endDate, return just this Monday
   if (!endDate) {
-    mondays.push(formatDates(currentDate));
+    mondays.push(parseISO(formatDates(currentDate)));
     return mondays;
   }
 
@@ -106,7 +108,7 @@ export function generateAllMondays(startDate, endDate) {
 
   // Generate all Mondays in the range
   while (currentDate <= endDateObj) {
-    mondays.push(formatDates(currentDate));
+    mondays.push(parseISO(formatDates(currentDate)));
     currentDate.setDate(currentDate.getDate() + 7);
   }
 
@@ -497,4 +499,20 @@ export const isMyProjectsValid = (projectManagerName, filters) => {
         filter.value === projectManagerName
     ) || false
   );
+};
+
+export const getOnlyFilterSettings = view => {
+  return {
+    GroupBy: view.GroupBy ?? '',
+    MyTeam: view.MyTeam ?? false,
+    MyProjects: view.MyProjects ?? false,
+    ColumnsVisible: view.ColumnsVisible ?? [],
+    StartDate: view.StartDate ?? '',
+    EndDate: view.EndDate ?? '',
+    isFixedRange: view.isFixedRange ?? false,
+    isDynamicRange: view.isDynamicRange ?? false,
+    WeekPlus: view.WeekPlus ?? DEFAULT_PROJECT_WEEK_PLUS,
+    WeekMinus: view.WeekMinus ?? DEFAULT_PROJECT_WEEK_MINUS,
+    Filters: view.Filters ?? [],
+  };
 };

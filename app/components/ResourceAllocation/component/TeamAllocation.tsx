@@ -8,11 +8,12 @@ import {
 } from '@/app/redux/actions/fetchTeamsAction';
 import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { Tooltip } from '@mui/material';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import { ApiResponse, Resource } from '@/app/types';
-import { getAllocationManagerFromPath } from '@/app/utils/common';
+import {
+  generateDateWeekMath,
+  getAllocationManagerFromPath,
+} from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 
 export default function TeamAllocation() {
@@ -24,7 +25,10 @@ export default function TeamAllocation() {
   const { startDate, endDate } = calendarDate || {};
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as ApiResponse<Resource[]> | null;
+  );
+  const { currentView } = useSelector(
+    (state: RootState) => state.allocationView
+  );
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -49,11 +53,36 @@ export default function TeamAllocation() {
   useEffect(() => {
     if (teams?.result?.length && startDate && endDate) {
       dispatch(resetResources());
-      dispatch(
-        fetchResourcesAgainstTeams(teams.result, null, startDate, endDate)
-      );
+      // dispatch(
+      //   fetchResourcesAgainstTeams(teams.result, null, startDate, endDate)
+      // );
+      dispatch({
+        type: 'FETCH_RESOURCES_AGAINST_TEAMS',
+        payload: {
+          teams: teams?.result,
+          StartDate: currentView?.isDynamicRange
+            ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+            : currentView?.isFixedRange
+              ? currentView?.StartDate
+              : startDate,
+          EndDate: currentView?.isDynamicRange
+            ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+            : currentView?.isFixedRange
+              ? currentView?.EndDate
+              : endDate,
+        },
+      });
     }
-  }, [teams, calendarDate]);
+  }, [
+    teams,
+    calendarDate,
+    currentView?.isDynamicRange,
+    currentView?.isFixedRange,
+    currentView?.WeekPlus,
+    currentView?.WeekMinus,
+    currentView?.StartDate,
+    currentView?.EndDate,
+  ]);
 
   const getTeam = (params: GridCellParams) => {
     if (
