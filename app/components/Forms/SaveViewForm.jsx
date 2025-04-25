@@ -203,6 +203,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   };
   useEffect(() => {
     if (
+      values.dateRangeType === 'dynamic' &&
       values?.dynamicDateRangeSubtract !== null &&
       values?.dynamicDateRangeSubtract !== undefined
     ) {
@@ -214,6 +215,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       setFieldValue('startDate', format(currentStartDate, DATE_FORMAT));
     }
     if (
+      values.dateRangeType === 'dynamic' &&
       values?.dynamicDateRangeAdd !== null &&
       values?.dynamicDateRangeAdd !== undefined
     ) {

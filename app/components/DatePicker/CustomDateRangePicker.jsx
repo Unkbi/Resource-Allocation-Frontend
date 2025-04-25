@@ -114,6 +114,7 @@ export default function CustomDateRangePicker({
           if (value?.startDate && value?.endDate) {
             setFieldValue('startDate', formattedStart);
             setFieldValue('endDate', formattedEnd);
+            handleDateField(formattedStart, formattedEnd);
           } else {
             setFieldValue('StartDate', formattedStart);
             setFieldValue('EndDate', formattedEnd);

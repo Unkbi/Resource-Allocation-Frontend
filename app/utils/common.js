@@ -131,13 +131,12 @@ export const calculateWeekRanges = (
   selectedEnd,
   currentDate
 ) => {
-  const current =
-    currentDate instanceof Date ? currentDate : new Date(currentDate);
-  const start = new Date(selectedStart);
-  const end = new Date(selectedEnd);
-  const startOfCurrentWeek = startOfWeek(current, { weekStartsOn: 1 });
-  const startOfStartWeek = startOfWeek(start, { weekStartsOn: 1 });
-  const startOfEndWeek = startOfWeek(end, { weekStartsOn: 1 });
+  const current = parseISO(new Date().toISOString());
+  const start = parseISO(selectedStart);
+  const end = parseISO(selectedEnd);
+  const startOfCurrentWeek = startOfISOWeek(current, { weekStartsOn: 1 });
+  const startOfStartWeek = startOfISOWeek(start, { weekStartsOn: 1 });
+  const startOfEndWeek = startOfISOWeek(end, { weekStartsOn: 1 });
   const weekMinus = Math.floor(
     differenceInDays(startOfCurrentWeek, startOfStartWeek) / 7
   );
@@ -282,6 +281,11 @@ export const getInitials = fullName => {
 
 export const getMonday = date => {
   return startOfWeek(date, { weekStartsOn: 1 });
+};
+
+export const getMondayOfISO = date => {
+  const isoDate = parseISO(date);
+  return format(startOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
 };
 
 export const generateTMinusOneStartEndDate = isStartDate => {
