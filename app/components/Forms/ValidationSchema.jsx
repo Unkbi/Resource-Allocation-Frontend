@@ -53,9 +53,26 @@ export const addProjectValidationSchema = (projects = []) => {
 };
 
 export const addResourceValidationSchema = Yup.object({
-  Resource: Yup.string().required('Resource is required'),
-  Type: Yup.string().required('Type is required'),
-  Skills: Yup.string().required('Skills are required'),
+  FirstName: Yup.string().required('First Name is required'),
+  LastName: Yup.string().required('Last Name is required'),
+  Email: Yup.string().email('Invalid email').required('Email is required'),
+  PhoneNumber: Yup.string().required('Phone number is required'),
+  Department: Yup.string().required('Department is required'),
+  Role: Yup.string().required('Role is required'),
+  HRLevel: Yup.string().required('HR Level is required'),
+  Type: Yup.string().required('Resource type is required'),
+  Manager: Yup.string().required('Manager is required'),
+  ContractorHourlyRate: Yup.number()
+    .nullable()
+    .typeError('Must be a number'),
+  AverageWeeklyHours: Yup.number()
+    .nullable()
+    .typeError('Must be a number'),
+  EndDate: Yup.string().when('Status', {
+    is: 'Inactive',
+    then: schema => schema.required('End Date is required'),
+    otherwise: schema => schema.notRequired(),
+  }),
 });
 
 export const addAllocationValidationSchema = Yup.object({

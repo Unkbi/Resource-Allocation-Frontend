@@ -317,7 +317,7 @@ export default function Resources() {
                   <MenuItem
                     onClick={() => {
                       handleMenuClose();
-                      handleOpenDialog('Edit Resource', 'editResource', params.row);
+                      handleOpenDialog('Edit Resource', 'edit_resource', params.row);
                     }}
                     sx={menuItemStyle}
                   >

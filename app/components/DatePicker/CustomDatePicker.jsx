@@ -4,12 +4,13 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TextField ,FormHelperText} from '@mui/material';
-import { styled } from '@mui/system';
+import { styled, Box } from '@mui/system';
 import { PickersLayout } from '@mui/x-date-pickers';
 import {FormControl} from '@mui/material';
 import 'dayjs/locale/en-gb';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { DEFAULT_LOCALE } from '@/app/constants/constants';
+import StyledLabel from '../Label/StyledLabel';
 
 dayjs.extend(updateLocale);
 dayjs.updateLocale(DEFAULT_LOCALE, { weekStart: 1 });
@@ -54,7 +55,7 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
   },
 }));
 
-export default function CustomDatePicker({ name, value, placeholder, formikProps, error, helperText, customStyles}) {
+export default function CustomDatePicker({ name, value, placeholder, formikProps, error, helperText, customStyles, title, isRequired=false}) {
   const { setFieldValue, values } = formikProps
   const [open, setOpen] = React.useState(false)
 
@@ -71,7 +72,7 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
   let minDate = undefined;
   let maxDate = undefined;
 
-  if (name === 'startDate' && values.endDate) {
+  if (name === 'StartDate' && values.endDate) {
     maxDate = dayjs(values.endDate).isValid()
       ? dayjs(values.endDate).isAfter(dayjs())
         ? dayjs(values.endDate).subtract(0, 'day')
@@ -80,7 +81,7 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
     minDate = dayjs(values.endDate).subtract(1, 'year');
   }
 
-  if (name === 'endDate' && values.startDate) {
+  if (name === 'EndDate' && values.startDate) {
     minDate = dayjs(values.startDate);
     maxDate = dayjs(values.startDate).add(1, 'year');
   }
@@ -93,8 +94,14 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
       error={error}
     >
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: '122px' }}>
+        <StyledLabel>
+          {title} {(isRequired && formikProps.values.Status === 'Inactive') && <span style={{ color: 'red' }}>*</span>}
+        </StyledLabel>        
+    </Box>
         <DatePicker
           displayWeekNumber
+          format="MM/DD/YYYY"
           value={value ? dayjs(value) : null}
           onChange={handleDateChange}
           open={open}
@@ -127,13 +134,12 @@ export default function CustomDatePicker({ name, value, placeholder, formikProps
               } : {})
             },
             textField: {
+              onBlur: () => formikProps.setFieldTouched(name, true),
               placeholder: placeholder,
               error: error,
-              helperText: error ? helperText : '',
               onClick: handleInputClick,
               InputProps: {
                 readOnly: true,
-                value: value || ""
               },
             },
 

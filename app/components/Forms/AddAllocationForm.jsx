@@ -239,7 +239,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
    </Box>
 
    <Box>
-       <Box sx={{ pb: 2, pt: 2 ,}}>
+       <Box sx={{ pb: 2, pt: 0 ,}}>
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
             <CustomDateRangePicker
               name = "StartDate"
@@ -251,6 +251,7 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               error={formikProps.touched.StartDate && Boolean(formikProps.errors.StartDate)}
               helperText={formikProps.touched.StartDate && formikProps.errors.StartDate}
               customStyles={true}
+              title="Date Range"
             />
           </Box>
           {warnings.map((msg, i) => (

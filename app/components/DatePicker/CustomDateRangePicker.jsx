@@ -83,7 +83,9 @@ export default function CustomDateRangePicker({
   format = 'MM/DD/YYYY',
   isButton = false,
   handleDateField = () => {},
-}) {
+  popperProps = {},
+  title,
+  isProjectForm }) {
   const { setFieldValue } = formikProps;
   const selectedDate = [
     value?.StartDate || value?.startDate
@@ -132,17 +134,17 @@ export default function CustomDateRangePicker({
   };
 
   return (
-    <FormControl sx={isButton && { width: '56%' }} error={error}>
+    <FormControl sx={isButton && { width: '56%' }} error={error} fullWidth>
       <LocalizationProvider
         dateAdapter={AdapterDayjs}
         adapterLocale={DEFAULT_LOCALE}
       >
         {showLabel && (
           <Box sx={{ display: 'flex', flexDirection: 'row', gap: '122px' }}>
-            <StyledLabel>Date Range</StyledLabel>
+            <StyledLabel>{title}</StyledLabel>
           </Box>
         )}
-        <Box sx={{ width: isButton ? '134px' : '340px' }}>
+        <Box sx={{ width: isButton ? '134px' : '100%' }}>
           <DateRangePicker
             calendars={1}
             displayWeekNumber
@@ -155,6 +157,17 @@ export default function CustomDateRangePicker({
               field: SingleInputDateRangeField,
             }}
             slotProps={{
+              popper: {
+                placement: isProjectForm ? 'top-start' : 'bottom-start',
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: isProjectForm ? [0, 100] : [0, 0],
+                    },
+                  },
+                ],
+              },
               fieldSeparator: { sx: { display: 'none' } },
               textField: {
                 variant: 'outlined',
@@ -182,7 +195,7 @@ export default function CustomDateRangePicker({
                   ? {
                       sx: {
                         position: 'absolute',
-                        top: '-130px',
+                        top: '0px',
                       },
                     }
                   : {}),

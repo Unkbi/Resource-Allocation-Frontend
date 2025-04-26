@@ -178,6 +178,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           error={formikProps.touched.StartDate && Boolean(formikProps.errors.StartDate)}
           helperText={formikProps.touched.StartDate && formikProps.errors.StartDate}
           customStyles={true}
+          isProjectForm={true}
+          title="Date Range"
         />
       </Box>
       <Box sx={{ pb: 2 }}>
