@@ -517,7 +517,7 @@ export const getOnlyFilterSettings = view => {
   };
 };
 
-export const getTotalWeeklyAllocation = (resourceId, weekKey) => {
+export const getTotalWeeklyAllocation = (rowState, resourceId, weekKey) => {
   let total = 0;
   const allRows = rowState;
   allRows.forEach(row => {

@@ -328,7 +328,7 @@ const AllocationForm = () => {
                 );
 
                 const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
-                const existingTotal = getTotalWeeklyAllocation(resource, weekKey);
+                const existingTotal = getTotalWeeklyAllocation(rowState, resource, weekKey);
                 const finalTotal = existingTotal - (allocation?.value || 0) + values.AllocationEntered;
 
                 if (finalTotal > 2.0) {
