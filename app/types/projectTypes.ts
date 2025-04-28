@@ -20,7 +20,7 @@ export interface Project {
 }
 
 export interface ProjectState {
-  projects: ApiResponse<Project[]> | {} | null; //Change this
+  projects: ApiResponse<Project[]> | null; //Change this
   allocations: AllocationGridCell[];
   loading: boolean;
   dataProcessing: false;
