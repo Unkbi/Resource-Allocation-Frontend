@@ -544,7 +544,7 @@ const SplitTeamToolbar = memo(
                     minWidth: '60px',
                   }}
                 >
-                  Select Availablity:
+                  Select Allocation :
                 </Typography>
                 <StyledSlider
                   value={allocationThreshold}
