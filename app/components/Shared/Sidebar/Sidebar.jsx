@@ -145,6 +145,7 @@ const menuItems = [
     {icon: "/images/icons/FolderFileOpen.svg",text :"Projects", url: "/project", disabled: false },
     {icon: "/images/icons/SupervisedUserCircleRounded.svg",text :"People", url: "/people", disabled: false },
     {icon: "/images/icons/PollRounded.svg", url: "/report",text :"Reports", disabled: true },
+    {icon: "/images/icons/actual_icon.svg", url: "/actual",text :"Actuals", disabled: false },
   ];
 
   const extraMenuItems = [

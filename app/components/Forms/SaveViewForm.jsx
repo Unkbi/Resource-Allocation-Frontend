@@ -23,10 +23,12 @@ import MultiSelectWithChips from '../Select/MultiSelectWithChipSmaller';
 import { getTodaysDateDDMMMYYYY } from '@/app/utils/dateUtils';
 import { addWeeks, format, startOfWeek, subWeeks } from 'date-fns';
 import {
+  DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
 import {
+  calculateWeekRanges,
   getResourceFromEmail,
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
@@ -199,6 +201,32 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       setFieldValue('dynamicRangeError', '');
     }
   };
+  useEffect(() => {
+    if (
+      values.dateRangeType === 'dynamic' &&
+      values?.dynamicDateRangeSubtract !== null &&
+      values?.dynamicDateRangeSubtract !== undefined
+    ) {
+      const currentStartDate = getDateFromWeekMath(
+        new Date(),
+        'SUBTRACT',
+        values?.dynamicDateRangeSubtract
+      );
+      setFieldValue('startDate', format(currentStartDate, DATE_FORMAT));
+    }
+    if (
+      values.dateRangeType === 'dynamic' &&
+      values?.dynamicDateRangeAdd !== null &&
+      values?.dynamicDateRangeAdd !== undefined
+    ) {
+      const currentEndDate = getDateFromWeekMath(
+        new Date(),
+        'ADD',
+        values?.dynamicDateRangeAdd
+      );
+      setFieldValue('endDate', format(currentEndDate, DATE_FORMAT));
+    }
+  }, [values.dynamicDateRangeAdd, values.dynamicDateRangeSubtract]);
 
   useEffect(() => {
     if (values.dynamicRangeError) {
@@ -332,6 +360,16 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     fontSize: '14px',
   }));
 
+  const handleDateField = (StartDate, EndDate) => {
+    const currentDate = new Date();
+    const { weekMinus, weekPlus } = calculateWeekRanges(
+      StartDate,
+      EndDate,
+      currentDate
+    );
+    setFieldValue('dynamicDateRangeAdd', weekPlus);
+    setFieldValue('dynamicDateRangeSubtract', weekMinus);
+  };
   return (
     <Box>
       {/* Group By */}
@@ -651,7 +689,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                   )}
                 </Typography>
               </Box>
-              {values.dynamicRangeError && (
+              {(errors.dynamicDateRangeAdd ||
+                errors.dynamicDateRangeSubtract) && (
                 <Typography
                   sx={{
                     mt: 1,
@@ -662,7 +701,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                     textAlign: 'left',
                   }}
                 >
-                  {values.dynamicRangeError}
+                  {errors.dynamicDateRangeAdd ||
+                    errors.dynamicDateRangeSubtract}
                 </Typography>
               )}
             </Box>
@@ -683,37 +723,38 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
             }
             label={<StyledOptionsLabel>Fixed Range</StyledOptionsLabel>}
           />
-
-          {values.dateRangeType === 'fixed' && (
-            <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <CustomDateRangePicker
-                  name="DateRange"
-                  value={{
-                    startDate: formikProps.values.startDate,
-                    endDate: formikProps.values.endDate,
-                  }}
-                  placeholder="Select Date"
-                  endDateLabel="End Date"
-                  startDateLabel="Start Date"
-                  formikProps={formikProps}
-                  error={
-                    formikProps.touched.startDate &&
-                    Boolean(formikProps.errors.startDate)
-                  }
-                  helperText={
-                    formikProps.touched.startDate &&
-                    formikProps.errors.startDate
-                  }
-                  customStyles={true}
-                />
-              </Box>
-            </Box>
-          )}
         </Box>
-        {showError('dateRangeType')}
       </StyledContainer>
-
+      {values.dateRangeType === 'fixed' && (
+        <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <CustomDateRangePicker
+              name="DateRange"
+              value={{
+                startDate: formikProps.values.startDate,
+                endDate: formikProps.values.endDate,
+              }}
+              placeholder="Select Date Range"
+              formikProps={formikProps}
+              error={
+                (formikProps.touched.dynamicDateRangeAdd ||
+                  formikProps.touched.dynamicDateRangeSubtract) &&
+                (Boolean(formikProps.errors.dynamicDateRangeAdd) ||
+                  Boolean(formikProps.errors.dynamicDateRangeSubtract))
+              }
+              helperText={
+                (formikProps.touched.dynamicDateRangeAdd &&
+                  formikProps.errors.dynamicDateRangeAdd) ||
+                (formikProps.touched.dynamicDateRangeSubtract &&
+                  formikProps.errors.dynamicDateRangeSubtract)
+              }
+              customStyles={true}
+              handleDateField={handleDateField}
+            />
+          </Box>
+        </Box>
+      )}
+      {showError('dateRangeType')}
       <Box sx={{ borderTop: '1px solid #E5E7EB', my: 2 }} />
 
       {/* Show Columns */}
