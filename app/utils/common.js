@@ -373,8 +373,6 @@ export const getStartAndEndDateForView = (
 };
 
 export const getUserIdFromEmail = (users, email) => {
-  // Returning a hardcoded value for testing
-  return '1513e847-8abe-42b6-8743-497d9b8e0e17';
   const userObj = users.find(user => user.Email === email);
   return userObj ? userObj.Id : null;
 };
