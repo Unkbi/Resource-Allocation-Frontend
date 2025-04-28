@@ -463,20 +463,20 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
         allocationValue = Math.round((aggregatedValue / totalRows) * 100) / 100;
       }
       const sortedTheme = [...allocationTheme].sort(
-        (a, b) => parseFloat(a.from) - parseFloat(b.from)
+        (a, b) => parseFloat(a.From) - parseFloat(b.From)
       );
 
       // Find the matching range in the theme
       let matchingRange = sortedTheme.find(range => {
-        const fromValue = parseFloat(range.from);
-        const toValue = parseFloat(range.to);
+        const fromValue = parseFloat(range.From);
+        const toValue = parseFloat(range.To);
         return allocationValue >= fromValue && allocationValue <= toValue;
       });
 
       // If no matching range found and value exceeds max range, use the last theme
       if (!matchingRange && sortedTheme.length > 0) {
         const maxRangeValue = parseFloat(
-          sortedTheme[sortedTheme.length - 1].to
+          sortedTheme[sortedTheme.length - 1].To
         );
         if (allocationValue > maxRangeValue) {
           matchingRange = sortedTheme[sortedTheme.length - 1];

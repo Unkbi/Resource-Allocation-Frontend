@@ -20,6 +20,9 @@ export * from './teamTypes';
 // User-related Types
 export * from './userTypes';
 
+// Setting-related Types
+export * from './settingTypes';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;
