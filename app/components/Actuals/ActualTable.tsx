@@ -16,6 +16,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/app/redux/store';
+import ProjectMenu from './ProjectMenu';
 
 const initialRows: GridRowsProp = [
   { id: 1, project: 'Payroll System Infrastructure', planned: 0.3, actuals: 0.7 },
@@ -40,6 +41,7 @@ export default function ActualTable() {
  const [rows, setRows] = useState(initialRows);
  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
  const allocationTheme = useSelector((state: RootState) => state.settings.allocationTheme)
+ const [showProjectMenu, setShowProjectMenu] = useState(false);
 
 const totalPlanned = useMemo(() => {
      return roundToOneDecimal(calculateTotal([...rows], 'planned'));
@@ -92,6 +94,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
       cellClassName: 'col-cell-planned',
       renderCell: (params) => {
         const value = Number(params.value);
+        const isAboveLimit = value > 1.5;
         if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
           const matched = allocationTheme.find(
             (range) => value >= parseFloat(range.from) && value <= parseFloat(range.to)
@@ -101,8 +104,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
               sx={{
                 width: '100%',
                 height: '100%',
-                backgroundColor: matched?.color || 'transparent',
-                color: matched?.darkColor || 'inherit',
+                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.color || 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -118,7 +120,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
               left: 0,
               height: '4px',
               width: '100%',
-              backgroundColor: matched?.darkColor || 'rgba(0,0,0,0.2)',
+              backgroundColor: isAboveLimit? '#963d3d':matched?.darkColor || 'rgba(0,0,0,0.2)',
             }}
           />
             </Box>
@@ -139,6 +141,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
       cellClassName: 'col-cell-actuals',
       renderCell: (params) => {
         const value = Number(params.value);
+        const isAboveLimit = value > 1.5;
         if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
           const matched = allocationTheme.find(
             (range) => value >= parseFloat(range.from) && value <= parseFloat(range.to)
@@ -148,8 +151,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
               sx={{
                 width: '100%',
                 height: '100%',
-                backgroundColor: matched?.color || 'transparent',
-                color: matched?.darkColor || 'inherit',
+                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.color || 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -166,7 +168,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
               left: 0,
               height: '4px',
               width: '100%',
-              backgroundColor: matched?.darkColor || 'rgba(0,0,0,0.2)',
+              backgroundColor: isAboveLimit ? '#963d3d':matched?.darkColor || 'rgba(0,0,0,0.2)',
             }}
           />
             </Box>
@@ -196,6 +198,24 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const handleMenuClick = (label: string) => {
+    switch (label) {
+      case 'Project':
+        setShowProjectMenu(true); 
+        setAnchorEl(null); 
+      break;
+      case 'Other Work':
+       alert('Navigate to other work page');  
+       break;
+      case 'Personal Time':
+        alert('Navigate to personal time page'); 
+        break;
+      default:
+        console.log(`Clicked on ${label}`);
+    }
+  };
+  
 
   const menuItems = [
     { label: 'Project', icon: <FolderIcon fontSize="small" sx={{ color: '#1C2D5F' }} /> },
@@ -274,7 +294,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
    {menuItems.map((item) => (
     <MenuItem
       key={item.label}
-      onClick={handleClose}
+      onClick={() => handleMenuClick(item.label)} 
       sx={{
         '&:hover': {
           backgroundColor: 'rgba(20, 43, 81, 0.7)',
@@ -305,6 +325,13 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
    ))}
     </Menu>
       </Box>
+      {showProjectMenu &&
+       <ProjectMenu 
+       onClose={() => setShowProjectMenu(false)} 
+       anchorEl={anchorEl}
+       setRows={setRows}
+       existingRows={rows}/>}
+
     </>
   );
 }
