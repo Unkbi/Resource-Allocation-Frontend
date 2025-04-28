@@ -5,7 +5,8 @@ const initialState = {
   message: '',
   type: 'success',
   position: { vertical: 'bottom', horizontal: 'left' },
-  autoHideTimer: 4000
+  autoHideTimer: 4000,
+  toasts:[]
 };
 
 const toastSlice = createSlice({
@@ -13,15 +14,27 @@ const toastSlice = createSlice({
   initialState,
   reducers: {
     showToast: (state, action) => {
+      const id = Date.now() + Math.random();
+      const toast = {
+        id,
+        open: action.payload.open,
+        message: action.payload.message,
+        type: action.payload.type,
+        autoHideTimer: action.payload.autoHideTimer|| 4000,
+        position: action.payload.position
+      };
+      state.toasts.push(toast);
       state.open = true;
       state.message = action.payload.message;
       state.type = action.payload.type;
       state.autoHideTimer = action.payload.autoHideTimer
       state.position = action.payload.position 
     },
-    hideToast: state => {
-      state.open = false;
+    hideToast: (state,action) => {
+      const toastId = action.payload;
+      state.toasts = state.toasts.filter(toast => toast.id !== toastId?.id);
       state.message = '';
+
     },
   },
 });

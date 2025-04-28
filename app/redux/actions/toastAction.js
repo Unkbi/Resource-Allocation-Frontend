@@ -12,6 +12,6 @@ export const showToastAction = (open, message, type, autoHideTimer, position) =>
   );
 };
 
-export const hideToastAction = () => dispatch => {
-  dispatch(hideToast());
+export const hideToastAction = (id) => dispatch => {
+  dispatch(hideToast({id}));
 };

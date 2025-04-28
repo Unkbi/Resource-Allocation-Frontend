@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState }  from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { hideToastAction } from '@/app/redux/actions/toastAction';
@@ -11,7 +11,6 @@ const StyledSnackbar = styled(Snackbar, {
 })(({ theme, sidebarExpanded }) => ({
   '&.MuiSnackbar-root': {
     width: '320px',
-    height: "48px",
     left: sidebarExpanded ? '280px' : '78px',
   },
 }));
@@ -20,9 +19,12 @@ export const CustomSnackbar = ({ sidebarExpanded }) => {
   const dispatch = useDispatch();
   const { open, message, type, position, autoHideTimer } = useSelector(state => state.toast);
   const { vertical = 'bottom', horizontal = 'left' } = position || {};
+  const { toasts } = useSelector(state => state.toast);
+  const snackbarRefs = useRef({});
+  const [positions, setPositions] = useState({});
 
-  const handleClose = () => {
-    dispatch(hideToastAction());
+  const handleClose = (id) => {
+    dispatch(hideToastAction(id));
   };
 
   const getBackground = (type) => {
@@ -30,7 +32,7 @@ export const CustomSnackbar = ({ sidebarExpanded }) => {
       case 'error':
         return '#D32F2F';
       case 'warning':
-        return '#EF6C00';
+        return '#FE9F51';
       case 'info':
         return '#0288D1'; 
       case 'success':
@@ -40,22 +42,47 @@ export const CustomSnackbar = ({ sidebarExpanded }) => {
     }
   };
 
+  useEffect(() => {
+    let topOffset = 16;
+    const newPositions = {};
+
+    toasts.forEach((toast, index) => {
+      const ref = snackbarRefs.current[toast.id];
+      const height = ref?.clientHeight || 48;
+      newPositions[toast.id] = topOffset;
+      topOffset += height + 8;
+    });
+
+    setPositions(newPositions);
+  }, [toasts]);
+
 
   return (
+    <>
+    {toasts.map((toast, index) => (
     <StyledSnackbar
+      key={toast.id}
       anchorOrigin={{ vertical, horizontal }}
-      open={open}
-      autoHideDuration={autoHideTimer}
-      onClose={handleClose}
+      open={toast.open}
+      autoHideDuration={toast.autoHideTimer}
+      onClose={() => handleClose(toast.id)}
       sidebarExpanded={sidebarExpanded}
+      ref={(el) => {
+        if (el) snackbarRefs.current[toast.id] = el;
+      }}
+      sx={{
+        zIndex: 1400,
+        position: 'fixed',
+        bottom: `${positions[toast.id] || 16}px !important` ,
+      }}
     >
       <Alert
-        onClose={handleClose}
-        severity={type}
+        onClose={() => handleClose(toast.id)}
+        severity={toast.type}
         sx={{
           width: '320px',
           maxWidth: '500px',
-          backgroundColor: getBackground(type),
+          backgroundColor: getBackground(toast.type),
           color: '#FFFFFF',
             '& .MuiAlert-icon': {
               color: '#FFFFFF',
@@ -70,9 +97,12 @@ export const CustomSnackbar = ({ sidebarExpanded }) => {
               color: '#FFFFFF',
             },
         }}
+        
       >
-        {message}
+        {toast.message}
       </Alert>
     </StyledSnackbar>
+    ))}
+    </>
   );
 };

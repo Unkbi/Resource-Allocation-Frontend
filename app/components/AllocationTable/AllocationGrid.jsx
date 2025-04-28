@@ -642,9 +642,15 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = (newRow, oldRow) => {
+        // Find the changed week
+        const changedWeek = Object.keys(newRow).find(key => 
+          key.startsWith('W') && newRow[key] !== oldRow[key]?.value
+        );
 
-    Object.keys(newRow).forEach(key => {
-      if (key.startsWith('W')) {
+        if (!changedWeek) {
+          return { ...oldRow };
+        }
+        const key = changedWeek;
         let formattedCellValue = Math.round(newRow[key] * 10) / 10;
 
         const period = oldRow[key]?.period;
@@ -665,10 +671,10 @@ export default function AllocationGrid({
         totalForWeek = totalForWeek - currentRowOldValue + value;
 
         if (totalForWeek > 1.5 && totalForWeek <= 2) {
-          dispatch(showToastAction(true, `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,'warning',5000));
+          dispatch(showToastAction(true, `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,'warning',4000));
         } else if (totalForWeek > 2) {
-          dispatch(showToastAction(true,`Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,'error',5000));
-          return oldRow; // Prevents update
+          dispatch(showToastAction(true,`Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,'error',4000));
+          return oldRow;
         }
 
         if (
@@ -733,9 +739,7 @@ export default function AllocationGrid({
               ? formattedCellValue
               : null,
           period: oldRow[key]?.period,
-        };
-      }
-    });
+        };      
 
     return { ...newRow, totalEffort: calculateTotalEffort(newRow) };
   };
