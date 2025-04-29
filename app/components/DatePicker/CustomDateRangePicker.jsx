@@ -52,7 +52,7 @@ const StyledsingleInputDateRangeField = isButton => ({
   height: isButton ? '32px' : '36px',
   width: '100%',
   '& .MuiInputBase-root': {
-    padding: '0px',
+    ...(isButton && { padding: '0px' }),
     height: isButton ? '32px' : '36px',
     fontSize: isButton ? '14px' : '12px',
     fontWeight: isButton ? 600 : 500,
@@ -111,13 +111,24 @@ export default function CustomDateRangePicker({
         } else if (start && end) {
           const formattedStart = dayjs(start).format('YYYY-MM-DD');
           const formattedEnd = dayjs(end).format('YYYY-MM-DD');
-          setFieldValue('StartDate', formattedStart);
-          setFieldValue('EndDate', formattedEnd);
-          setFieldValue('startDate', formattedStart);
-          setFieldValue('endDate', formattedEnd);
+          if (value?.startDate && value?.endDate) {
+            setFieldValue('startDate', formattedStart);
+            setFieldValue('endDate', formattedEnd);
+            handleDateField(formattedStart, formattedEnd);
+          } else {
+            setFieldValue('StartDate', formattedStart);
+            setFieldValue('EndDate', formattedEnd);
+          }
         }
       }
     }
+  };
+  // Helper function to calculate max date (51 weeks after start date)
+  const getWeeksAfter = startDate => {
+    if (!startDate) return undefined;
+    const weekStartMonday = dayjs(startDate).startOf('week');
+    const fiftyOneWeeksLater = weekStartMonday.add(51, 'weeks');
+    return fiftyOneWeeksLater.add(7, 'days');
   };
 
   return (
@@ -139,6 +150,7 @@ export default function CustomDateRangePicker({
             onChange={newValue => handleDateChange(newValue)}
             localeText={{ start: '', end: '' }}
             format={format}
+            maxDate={getWeeksAfter(selectedDate[0], 51)}
             slots={{
               field: SingleInputDateRangeField,
             }}
