@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { closeDialog, openDialog } from "@/app/redux/reducers/dialogReducer";
 import CustomAvatar from "@/app/components/Avatar/CustomAvatar";
-import DeleteDialog from "@/app/components/Dialog/DeleteDialog";
+import ConfirmDialog from "@/app/components/Dialog/ConfirmDialog";
 import { deleteProject, getAllProjects} from '@/app/services/projectServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -695,14 +695,14 @@ export default function Project() {
     return (
         <Box>
             <ProjectTable loading={loading }columns={columns} rows={modifyData(rows)} />
-            <DeleteDialog
+            <ConfirmDialog
               open={deleteDialogOpen}
               onConfirm={handleConfirmDelete}
               onCancel={handleCancelDelete}
               title="Are you sure you want to delete this project?"
               >
               This will permanently delete the project.
-              </DeleteDialog>
+              </ConfirmDialog>
         </Box>
     )
 }
