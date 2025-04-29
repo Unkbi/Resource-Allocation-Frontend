@@ -54,7 +54,7 @@ import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
 import { getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
-import DeleteDialog from '../../Dialog/DeleteDialog';
+import ConfirmDialog from '../../Dialog/ConfirmDialog';
 
 const initialValuesMap = {
   add_project: {
@@ -1039,7 +1039,7 @@ const AllocationForm = () => {
               </Typography>
             )}
           </Box>
-          <DeleteDialog
+          <ConfirmDialog
             open={showTransferConfirm}
             title="Alert"
             onCancel={() => {
@@ -1066,7 +1066,7 @@ const AllocationForm = () => {
               return project?.Name || 'Unknown Project';
             }).join(', ')}
             .
-          </DeleteDialog>
+          </ConfirmDialog>
         </CustomDialog>
       )}
     </Formik>
