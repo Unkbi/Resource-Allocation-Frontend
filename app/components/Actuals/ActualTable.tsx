@@ -97,14 +97,14 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
         const isAboveLimit = value > 1.5;
         if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
           const matched = allocationTheme.find(
-            (range) => value >= parseFloat(range.from) && value <= parseFloat(range.to)
+            (range) => value >= parseFloat(range.From) && value <= parseFloat(range.To)
           );
           return (
             <Box
               sx={{
                 width: '100%',
                 height: '100%',
-                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.color || 'transparent',
+                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.Color || 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -120,7 +120,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
               left: 0,
               height: '4px',
               width: '100%',
-              backgroundColor: isAboveLimit? '#963d3d':matched?.darkColor || 'rgba(0,0,0,0.2)',
+              backgroundColor: isAboveLimit? '#963d3d':matched?.DarkColor || 'rgba(0,0,0,0.2)',
             }}
           />
             </Box>
@@ -144,14 +144,14 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
         const isAboveLimit = value > 1.5;
         if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
           const matched = allocationTheme.find(
-            (range) => value >= parseFloat(range.from) && value <= parseFloat(range.to)
+            (range) => value >= parseFloat(range.From) && value <= parseFloat(range.To)
           );
           return (
             <Box
               sx={{
                 width: '100%',
                 height: '100%',
-                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.color || 'transparent',
+                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.Color || 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -168,7 +168,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
               left: 0,
               height: '4px',
               width: '100%',
-              backgroundColor: isAboveLimit ? '#963d3d':matched?.darkColor || 'rgba(0,0,0,0.2)',
+              backgroundColor: isAboveLimit ? '#963d3d':matched?.DarkColor || 'rgba(0,0,0,0.2)',
             }}
           />
             </Box>
