@@ -223,7 +223,7 @@ export default function LoginPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Welcome This is a test
+                            Welcome
                         </Typography>
                         <Typography className='subHeadingText'>
                             Please enter your details
