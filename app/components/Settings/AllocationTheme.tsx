@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import type {
+  GridColDef,
+  GridRenderCellParams,
+  GridValidRowModel,
+} from '@mui/x-data-grid';
 import { TextField, Typography, Popover, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
@@ -16,28 +20,31 @@ import {
   MainContent,
   RangeInputGroup,
   StyledDataGrid,
+  StyledRangeField,
   StyledTableHeader,
 } from './styled';
-import type { AllocationRange } from '@/app/redux/reducers/settingsReducer';
+import { validateRanges } from '@/app/(root)/settings/page';
+import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
+import { AppDispatch } from '@/app/redux/store';
+import { useDispatch } from 'react-redux';
+import { AllocationRange } from '@/app/types';
 
-// Color pairs from the image (pastel and corresponding darker colors)
 interface ColorPair {
-  pastel: string; // Cell color (lighter)
-  dark: string; // Line/Total color (darker)
+  pastel: string;
+  dark: string;
 }
 
 const colorPairs: ColorPair[] = [
-  { pastel: '#D9E1F2', dark: '#8497B0' }, // Light blue-gray / Dark blue-gray
-  { pastel: '#DEEBF7', dark: '#7B9CB9' }, // Light blue / Dark blue
-  { pastel: '#C5F2F7', dark: '#45C4D7' }, // Light teal / Dark teal
-  { pastel: '#C6F5E2', dark: '#3CB371' }, // Light mint / Dark green
-  { pastel: '#E2F1C5', dark: '#9BC13A' }, // Light lime / Dark lime
-  { pastel: '#FFF2CC', dark: '#F0D776' }, // Light yellow / Dark yellow
-  { pastel: '#FCE8D2', dark: '#C08457' }, // Light peach / Dark brown
-  { pastel: '#F8D7D7', dark: '#D66E6E' }, // Light pink-red / Dark red
-  { pastel: '#F5D9F0', dark: '#E56EBF' }, // Light pink / Dark pink
-  { pastel: '#E1D5F5', dark: '#8470DE' }, // Light purple / Dark purple
-  { pastel: '#FFFFFF', dark: '#FFFFFF' }, // White / White (transparent)
+  { pastel: '#FADCB9', dark: '#F5B544' },
+  { pastel: '#D9F1B7', dark: '#93CB41' },
+  { pastel: '#B2D0FF', dark: '#2772F0' },
+  { pastel: '#FBB7AE', dark: '#C55858' },
+  { pastel: '#45C0CD', dark: '#45COCD' },
+  { pastel: '#FFE685', dark: '#FFE685' },
+  { pastel: '#FFA8DE', dark: '#FFA8DE' },
+  // { pastel: '#847ODE', dark: '#8470DE' },
+  { pastel: '#959AA3', dark: '#959AA3' },
+  { pastel: '#FFFFFF', dark: '#FFFFFF' },
 ];
 
 interface AllocationThemeProps {
@@ -49,8 +56,8 @@ interface AllocationThemeProps {
 // Interface for validation errors
 interface ValidationErrors {
   [key: number]: {
-    from?: boolean;
-    to?: boolean;
+    From?: boolean;
+    To?: boolean;
     message?: string;
   };
 }
@@ -61,87 +68,21 @@ export default function AllocationTheme({
   onDataChanged,
 }: AllocationThemeProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
-  const [activeColorRow, setActiveColorRow] = React.useState<number | null>(
+  const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
   );
+  const dispatch: AppDispatch = useDispatch();
   const [validationErrors, setValidationErrors] =
     React.useState<ValidationErrors>({});
 
   // Get currently used colors
   const usedColors = React.useMemo(() => {
-    return allocationRanges.map(row => row.color);
+    return allocationRanges.map(row => row?.Color);
   }, [allocationRanges]);
 
-  // Validate ranges for overlaps, subsets, and supersets
-  const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
-    const errors: ValidationErrors = {};
-
-    // Convert string values to numbers for comparison
-    const numericRanges = ranges.map(range => ({
-      id: range.id,
-      from: Number.parseFloat(range.from),
-      to: Number.parseFloat(range.to),
-    }));
-
-    // Check each range against all others
-    numericRanges.forEach((range, index) => {
-      // Skip invalid numbers
-      if (isNaN(range.from) || isNaN(range.to)) {
-        errors[range.id] = {
-          from: isNaN(range.from),
-          to: isNaN(range.to),
-          message: 'Invalid number format',
-        };
-        return;
-      }
-
-      // Check if from is greater than to
-      if (range.from > range.to) {
-        errors[range.id] = {
-          from: true,
-          to: true,
-          message: 'FROM value cannot be greater than TO value',
-        };
-        return;
-      }
-
-      // Check for overlaps with other ranges
-      for (let i = 0; i < numericRanges.length; i++) {
-        if (i === index) continue; // Skip comparing with self
-
-        const otherRange = numericRanges[i];
-
-        // Check for overlap
-        const hasOverlap = !(
-          range.to < otherRange.from || range.from > otherRange.to
-        );
-
-        // Check for subset (this range is inside another range)
-        const isSubset =
-          range.from >= otherRange.from && range.to <= otherRange.to;
-
-        // Check for superset (another range is inside this range)
-        const isSuperset =
-          range.from <= otherRange.from && range.to >= otherRange.to;
-
-        if (hasOverlap || isSubset || isSuperset) {
-          errors[range.id] = {
-            from: true,
-            to: true,
-            message: hasOverlap
-              ? 'Range overlaps with another range'
-              : isSubset
-                ? 'Range is a subset of another range'
-                : 'Range is a superset of another range',
-          };
-          break;
-        }
-      }
-    });
-
-    return errors;
-  };
-
+  React.useEffect(() => {
+    dispatch(fetchAllocationTheme());
+  }, []);
   // Update the handleRangeChange function in the RangeCell component
   const RangeCell = (params: GridRenderCellParams) => {
     const { id, field, value } = params;
@@ -150,13 +91,65 @@ export default function AllocationTheme({
     const error = validationErrors[rowId];
 
     const handleRangeChange = (
-      id: number | string,
-      field: 'from' | 'to',
+      Id: number | string,
+      field: 'From' | 'To',
       value: string
     ) => {
-      const updatedRanges = allocationRanges.map(row =>
+      let updatedRanges = allocationRanges.map(row =>
         row.id === id ? { ...row, [field]: value } : row
       );
+
+      if (field === 'To') {
+        const currentRow = updatedRanges.find(row => row.id === id);
+        if (currentRow && currentRow.To !== '2.0') {
+          let currentTo = parseFloat(value);
+          if (!isNaN(currentTo)) {
+            // Update subsequent rows in sequence
+            const currentIndex = updatedRanges.findIndex(row => row.id === id);
+            let nextIndex = currentIndex + 1;
+
+            while (nextIndex < updatedRanges.length) {
+              const newFromValue = (currentTo + 0.1).toFixed(1);
+
+              updatedRanges = updatedRanges.map((row, index) =>
+                index === nextIndex
+                  ? {
+                      ...row,
+                      From: newFromValue,
+                      To: row.To === '2.0' ? row.To : '', // Clear subsequent to values
+                    }
+                  : row
+              );
+
+              currentTo = parseFloat(newFromValue);
+              nextIndex++;
+            }
+          }
+        }
+      }
+
+      // Update base row based on max to value from all rows
+      const baseRow = updatedRanges.find(row => row.To === '2.0');
+      if (baseRow) {
+        const nonBaseRows = updatedRanges.filter(row => row.To !== '2.0');
+        const toValues = nonBaseRows
+          .map(row => parseFloat(row.To))
+          .filter(v => !isNaN(v));
+
+        if (toValues.length > 0) {
+          const maxTo = Math.max(...toValues);
+          const newBaseFrom = (maxTo + 0.1).toFixed(1);
+
+          updatedRanges = updatedRanges.map(row =>
+            row.To === '2.0' ? { ...row, From: newBaseFrom } : row
+          );
+        } else {
+          // Reset base row if no valid ranges
+          updatedRanges = updatedRanges.map(row =>
+            row.To === '2.0' ? { ...row, From: '0.0' } : row
+          );
+        }
+      }
 
       onAllocationRangesChange(updatedRanges);
       const newErrors = validateRanges(updatedRanges);
@@ -167,89 +160,33 @@ export default function AllocationTheme({
     return (
       <RangeInputGroup>
         <Typography variant="body2">FROM</Typography>
-        <TextField
+        <StyledRangeField
+          onKeyDown={e => {
+            e.stopPropagation();
+          }}
           size="small"
-          value={row.from}
-          onChange={e => handleRangeChange(id, 'from', e.target.value)}
-          error={error?.from}
-          sx={{
-            width: '48px',
-            height: '27px',
-            '& .MuiInputBase-root': {
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              borderColor: error?.from ? 'red' : undefined,
-            },
-            '& .Mui-error .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'red !important',
-              borderWidth: '2px',
-            },
-          }}
-          inputProps={{
-            style: {
-              color: '#000',
-              textAlign: 'center',
-              fontFamily: 'Open Sans',
-              fontSize: '13px',
-              fontStyle: 'normal',
-              fontWeight: '600',
-              lineHeight: '30px',
-            },
-          }}
+          value={row.From}
+          disabled={
+            (row.From === '0.0' && row.To === '0.0') ||
+            row.To === '2.0' ||
+            (row.From !== '' && row.To !== '2.0')
+          }
+          onChange={e => handleRangeChange(id, 'From', e.target.value)}
+          error={error?.From}
         />
         <Typography variant="body2">TO</Typography>
-        <TextField
+        <StyledRangeField
+          onKeyDown={e => {
+            e.stopPropagation();
+          }}
           size="small"
-          value={row.to}
-          onChange={e => handleRangeChange(id, 'to', e.target.value)}
-          error={error?.to}
-          sx={{
-            width: '48px',
-            height: '27px',
-            '& .MuiInputBase-root': {
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              borderColor: error?.to ? 'red' : undefined,
-            },
-            '& .Mui-error .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'red !important',
-              borderWidth: '2px',
-            },
-          }}
-          inputProps={{
-            style: {
-              color: '#000',
-              textAlign: 'center',
-              fontFamily: 'Open Sans',
-              fontSize: '13px',
-              fontStyle: 'normal',
-              fontWeight: '600',
-              lineHeight: '30px',
-            },
-          }}
+          value={row.To}
+          disabled={
+            (row.From === '0.0' && row.To === '0.0') || row.To === '2.0'
+          }
+          onChange={e => handleRangeChange(id, 'To', e.target.value)}
+          error={error?.To}
         />
-        {error?.message && (
-          <Tooltip title={error.message}>
-            <Typography
-              variant="caption"
-              color="error"
-              sx={{
-                position: 'absolute',
-                bottom: '-18px',
-                left: '0',
-                fontSize: '10px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
-              }}
-            >
-              {error.message}
-            </Typography>
-          </Tooltip>
-        )}
       </RangeInputGroup>
     );
   };
@@ -261,7 +198,7 @@ export default function AllocationTheme({
       event: React.MouseEvent<HTMLDivElement>
     ) => {
       setAnchorEl(event.currentTarget);
-      setActiveColorRow(id as number);
+      setActiveColorRow(id as string);
     };
 
     const handleColorSelect = (pastelColor: string) => {
@@ -270,7 +207,7 @@ export default function AllocationTheme({
         onAllocationRangesChange(
           allocationRanges.map(row =>
             row.id === activeColorRow
-              ? { ...row, color: pastelColor, darkColor: colorPair.dark }
+              ? { ...row, Color: pastelColor, DarkColor: colorPair.dark }
               : row
           )
         );
@@ -310,7 +247,7 @@ export default function AllocationTheme({
               const isUsed =
                 usedColors.includes(pair.pastel) &&
                 allocationRanges.find(row => row.id === activeColorRow)
-                  ?.color !== pair.pastel;
+                  ?.Color !== pair.pastel;
 
               return (
                 <Tooltip
@@ -359,31 +296,69 @@ export default function AllocationTheme({
 
   // Add new allocation range
   const handleAddAllocationRange = () => {
-    const id = Math.max(0, ...allocationRanges.map(row => row.id)) + 1;
+    const baseRow = allocationRanges.find(row => row.To === '2.0');
+    const hasBaseRow = !!baseRow;
 
-    // Find a color that's not already used
+    // Find unused color
     const unusedColors = colorPairs
       .filter(pair => !usedColors.includes(pair.pastel))
       .map(pair => pair);
-
-    // Use the first unused color pair, or white if all are used
     const nextColorPair =
       unusedColors.length > 0
         ? unusedColors[0]
         : { pastel: '#FFFFFF', dark: '#FFFFFF' };
 
-    const newRow: AllocationRange = {
-      id,
-      from: '0.0',
-      to: '0.0',
-      label: '',
-      color: nextColorPair.pastel,
-      darkColor: nextColorPair.dark,
+    // Get the next available ID
+    const getNextId = () => {
+      const numericIds = allocationRanges.map(row => parseInt(row.id, 10));
+      return Math.max(0, ...numericIds) + 1;
     };
 
-    const updatedRanges = [...allocationRanges, newRow];
+    // Set initial values for the new row
+    let newFrom = '';
+    let newTo = '';
+    if (hasBaseRow) {
+      const previousRow = allocationRanges[allocationRanges.length - 2];
+      newFrom = previousRow?.To
+        ? `${(parseFloat(previousRow.To) + 0.1).toFixed(1)}`
+        : baseRow.From;
+      // newTo = baseRow.From;
+    } else {
+      newFrom = '0.0';
+      newTo = '2.0';
+    }
+
+    // Create new row with proper ID
+    const newRow: AllocationRange = {
+      id: getNextId().toString(),
+      __Id__: '',
+      From: newFrom,
+      To: newTo,
+      Label: '',
+      Color: nextColorPair.pastel,
+      DarkColor: nextColorPair.dark,
+    };
+
+    // Insert the new row
+    let updatedRanges: AllocationRange[];
+    if (hasBaseRow) {
+      const baseRowIndex = allocationRanges.findIndex(row => row === baseRow);
+      updatedRanges = [
+        ...allocationRanges.slice(0, baseRowIndex),
+        newRow,
+        ...allocationRanges.slice(baseRowIndex),
+      ];
+    } else {
+      updatedRanges = [...allocationRanges, newRow];
+    }
+
+    // Re-number all rows sequentially
+    updatedRanges = updatedRanges.map((row, index) => ({
+      ...row,
+      id: (index + 1).toString(),
+    }));
+
     onAllocationRangesChange(updatedRanges);
-    // Validate after adding
     const newErrors = validateRanges(updatedRanges);
     setValidationErrors(newErrors);
     onDataChanged();
@@ -393,7 +368,7 @@ export default function AllocationTheme({
   const handleLabelChange = (id: number, value: string) => {
     onAllocationRangesChange(
       allocationRanges.map(row =>
-        row.id === id ? { ...row, label: value } : row
+        Number(row.id) === id ? { ...row, Label: value } : row
       )
     );
     onDataChanged();
@@ -433,7 +408,7 @@ export default function AllocationTheme({
       sortable: false,
     },
     {
-      field: 'label',
+      field: 'Label',
       headerName: 'Label',
       flex: 1,
       width: 286,
@@ -446,7 +421,7 @@ export default function AllocationTheme({
       },
     },
     {
-      field: 'color',
+      field: 'Color',
       headerName: '',
       width: 40,
       editable: false,
@@ -466,6 +441,17 @@ export default function AllocationTheme({
     },
   ];
 
+  const handleProcessRowUpdate = (
+    newRow: GridValidRowModel
+  ): GridValidRowModel => {
+    const updated = allocationRanges.map(row =>
+      row.id === newRow.id ? { ...row, Label: newRow.Label as string } : row
+    );
+    onAllocationRangesChange(updated);
+    onDataChanged();
+    return newRow;
+  };
+
   return (
     <MainContent>
       <ContentPaper elevation={0}>
@@ -476,6 +462,7 @@ export default function AllocationTheme({
             disableColumnMenu
             columns={columns}
             editMode="row"
+            processRowUpdate={handleProcessRowUpdate}
             initialState={{
               pagination: {
                 paginationModel: {
