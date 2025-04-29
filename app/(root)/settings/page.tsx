@@ -141,8 +141,6 @@ const SettingsPanel = () => {
   }, []);
 
   useEffect(() => {
-    console.log(allocationTheme, 'allocationTheme');
-
     setAllocationRanges(allocationTheme);
   }, [allocationTheme]);
   // Create menu items with dynamic content based on state

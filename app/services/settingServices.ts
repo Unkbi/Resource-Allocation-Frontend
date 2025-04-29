@@ -67,20 +67,4 @@ export const updateAllocationThemes = createAsyncThunk(
   }
 );
 
-export const deleteAllocationTheme = createAsyncThunk(
-  '/AllocationRangeSetting/delete',
-  async (ID: string, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.delete(
-        `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting/${ID}`
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        (error as AxiosError).response?.data || 'Failed to delete project'
-      );
-    }
-  }
-);
-
 

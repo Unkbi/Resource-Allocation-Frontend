@@ -1,5 +1,5 @@
 // settingsReducer.ts
-import { addAllocationTheme, deleteAllocationTheme, getAllocationTheme, updateAllocationThemes } from '@/app/services/settingServices';
+import { addAllocationTheme, getAllocationTheme, updateAllocationThemes } from '@/app/services/settingServices';
 import { AllocationRange, ParentEntry } from '@/app/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
@@ -20,44 +20,7 @@ const initialState: ThemeState = {
       Label: 'No Allocation',
       Color: '#847ODE',
       DarkColor: '#8470DE',
-    },
-    // {
-    //   id:" 2",
-    //   __Id__: "",
-    //   From: '0.1',
-    //   To: '0.4',
-    //   Label: 'Partially Allocated',
-    //   Color: '#DEEBF7',
-    //   DarkColor: '#7B9CB9', 
-    // },
-    // {
-    //   id:" 3",
-    //   __Id__: "",
-    //   From: '0.5',
-    //   To: '0.8',
-    //   Label: 'Nearly Allocated',
-    //   Color: '#FFF2CC',
-    //   DarkColor: '#F0D776', 
-    // },
-    // {
-    //   id: "4",
-    //   __Id__: "",
-    //   From: '0.9',
-    //   To: '1.0',
-    //   Label: 'Fully  Allocated',
-    //   Color: '#C6F5E2',
-    //   DarkColor: '#3CB371', 
-    // },
-    // {
-    //   id:" 5",
-    //   __Id__: "",
-    //   From: '1.1',
-    //   To: '2.0',
-    //   Label: 'Over  Allocated',
-    //   Color: '#F8D7D7',
-    //   DarkColor: '#D66E6E', 
-    // },
-    
+    }, 
   ],
   loading: false,
   error: null,
@@ -170,24 +133,6 @@ const settings = createSlice({
         state.updating = false;
         state.error = action.payload as string;
       })
-
-      // Handle deleteAllocationTheme
-      .addCase(deleteAllocationTheme.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteAllocationTheme.fulfilled, (state, action) => {
-        state.loading = false;
-        if (state.allocationTheme) {
-          state.allocationTheme = state.allocationTheme.filter(
-            (range) => range.id !== action.meta.arg
-          );
-        }
-      })
-      .addCase(deleteAllocationTheme.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
   },
 });
 
