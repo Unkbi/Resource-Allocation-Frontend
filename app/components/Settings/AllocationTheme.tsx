@@ -365,10 +365,10 @@ export default function AllocationTheme({
   };
 
   // Handle label field changes
-  const handleLabelChange = (id: number, value: string) => {
+  const handleLabelChange = (id: string, value: string) => {
     onAllocationRangesChange(
       allocationRanges.map(row =>
-        Number(row.id) === id ? { ...row, Label: value } : row
+        row.id === id ? { ...row, Label: value } : row
       )
     );
     onDataChanged();
@@ -415,8 +415,8 @@ export default function AllocationTheme({
       editable: true,
       sortable: false,
       preProcessEditCellProps: params => {
-        const { id, value } = params.props;
-        handleLabelChange(id as number, value as string);
+        const { value } = params.props;
+        handleLabelChange(params.id as string, value as string);
         return { ...params.props };
       },
     },
