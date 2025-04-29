@@ -20,14 +20,17 @@ import {
   StyledListItem,
 } from '@/app/components/Settings/styled';
 import AllocationTheme from '@/app/components/Settings/AllocationTheme';
-import {
-  type AllocationRange,
-  updateAllocationTheme,
-} from '@/app/redux/reducers/settingsReducer';
 import { useSelector } from 'react-redux';
-import type { RootState } from '@/app/redux/store';
+import type { AppDispatch, RootState } from '@/app/redux/store';
 import { useDispatch } from 'react-redux';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { AllocationRange } from '@/app/types';
+import { updateAllocationTheme } from '@/app/redux/reducers/settingsReducer';
+import {
+  addAllocationThemeAction,
+  fetchAllocationTheme,
+  updateAllocationThemeAction,
+} from '@/app/redux/actions/settingsAction';
 
 interface MenuItem {
   id: string;
@@ -46,40 +49,40 @@ interface MenuCategory {
 // Interface for validation errors
 interface ValidationErrors {
   [key: number]: {
-    from?: boolean;
-    to?: boolean;
+    From?: boolean;
+    To?: boolean;
     message?: string;
   };
 }
 
 // Function to validate ranges
-const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
+export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
   const errors: ValidationErrors = {};
 
   // Convert string values to numbers for comparison
   const numericRanges = ranges.map(range => ({
-    id: range.id,
-    from: Number.parseFloat(range.from),
-    to: Number.parseFloat(range.to),
+    Id: Number(range.id),
+    From: Number.parseFloat(range.From),
+    To: Number.parseFloat(range.To),
   }));
 
   // Check each range against all others
   numericRanges.forEach((range, index) => {
     // Skip invalid numbers
-    if (isNaN(range.from) || isNaN(range.to)) {
-      errors[range.id] = {
-        from: isNaN(range.from),
-        to: isNaN(range.to),
+    if (isNaN(range.From) || isNaN(range.To)) {
+      errors[range.Id] = {
+        From: isNaN(range.From),
+        To: isNaN(range.To),
         message: 'Invalid number format',
       };
       return;
     }
 
     // Check if from is greater than to
-    if (range.from > range.to) {
-      errors[range.id] = {
-        from: true,
-        to: true,
+    if (range.From > range.To) {
+      errors[range.Id] = {
+        From: true,
+        To: true,
         message: 'FROM value cannot be greater than TO value',
       };
       return;
@@ -93,21 +96,21 @@ const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
 
       // Check for overlap
       const hasOverlap = !(
-        range.to < otherRange.from || range.from > otherRange.to
+        range.To < otherRange.From || range.From > otherRange.To
       );
 
       // Check for subset (this range is inside another range)
       const isSubset =
-        range.from >= otherRange.from && range.to <= otherRange.to;
+        range.From >= otherRange.From && range.To <= otherRange.To;
 
       // Check for superset (another range is inside this range)
       const isSuperset =
-        range.from <= otherRange.from && range.to >= otherRange.to;
+        range.From <= otherRange.From && range.To >= otherRange.To;
 
       if (hasOverlap || isSubset || isSuperset) {
-        errors[range.id] = {
-          from: true,
-          to: true,
+        errors[range.Id] = {
+          From: true,
+          To: true,
           message: hasOverlap
             ? 'Range overlaps with another range'
             : isSubset
@@ -124,7 +127,7 @@ const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
 
 const SettingsPanel = () => {
   const { allocationTheme } = useSelector((state: RootState) => state.settings);
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const [allocationRanges, setAllocationRanges] =
     useState<AllocationRange[]>(allocationTheme);
   // State to track if there are unsaved changes
@@ -133,6 +136,13 @@ const SettingsPanel = () => {
   const [originalAllocationRanges, setOriginalAllocationRanges] =
     useState<AllocationRange[]>(allocationTheme);
 
+  useEffect(() => {
+    dispatch(fetchAllocationTheme());
+  }, []);
+
+  useEffect(() => {
+    setAllocationRanges(allocationTheme);
+  }, [allocationTheme]);
   // Create menu items with dynamic content based on state
   const createMenuItems = () => {
     return [
@@ -261,9 +271,27 @@ const SettingsPanel = () => {
       setOriginalAllocationRanges([...allocationRanges]);
       setHasUnsavedChanges(false);
       dispatch(updateAllocationTheme([...allocationRanges]));
+      const transformedAllocationRanges = allocationRanges.map(range => {
+        const { __Id__, id, ...rest } = range;
+        return {
+          Id: id,
+          ...rest,
+        };
+      });
+      const itemsWithId = allocationRanges.filter(d => d.__Id__);
+      if (itemsWithId.length > 0) {
+        const payload = {
+          postData: transformedAllocationRanges,
+          __Id__: allocationRanges[0]?.__Id__,
+        };
+        dispatch(updateAllocationThemeAction(payload));
+      } else {
+        const newItems = allocationRanges.filter(d => !d.__Id__);
+        if (newItems.length > 0) {
+          dispatch(addAllocationThemeAction(transformedAllocationRanges));
+        }
+      }
     }
-
-    // Add other settings save logic here based on activeItem.id
   };
 
   const handleCancel = () => {

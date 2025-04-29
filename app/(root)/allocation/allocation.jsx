@@ -16,6 +16,7 @@ import { getUserIdFromEmail } from '@/app/utils/common';
 import { useSearchParams } from 'next/navigation';
 import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
 import { decompressFromEncodedURIComponent } from 'lz-string';
+import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 
 export default function Allocation() {
   const dispatch = useDispatch();
@@ -30,6 +31,7 @@ export default function Allocation() {
   useEffect(() => {
     dispatch(fetchAllResources());
     dispatch(fetchAllProjects());
+    dispatch(fetchAllocationTheme());
   }, []);
 
   useEffect(() => {

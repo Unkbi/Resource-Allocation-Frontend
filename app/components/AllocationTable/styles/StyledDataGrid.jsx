@@ -14,13 +14,13 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     allocationTheme.forEach(range => {
       // Primary styles for teams
       allocationRangeStyles[`& .allocation-theme-${range.id}`] = {
-        backgroundColor: range.darkColor,
+        backgroundColor: range.Color,
       };
 
       // Secondary styles for resources
       allocationRangeStyles[`& .allocation-theme-${range.id}-secondGroup`] = {
-        backgroundColor: `${range.color}`,
-        borderBottom: `2px solid ${range.darkColor}`,
+        backgroundColor: ` ${range.Color}66`,
+        borderBottom: `2px solid ${range.DarkColor}`,
       };
     });
   }
