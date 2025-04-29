@@ -189,15 +189,39 @@ export default function Resources() {
       );
      };
     const columns = [
-        {
-          field: "FullName",
-          headerName: "Resource",
-          flex: 1,
-          minWidth: 200,
-          filterable : 'true',
-          renderCell: (params) => {
-            return <CustomAvatar value={params.value} showFullName={true} />;
-          },
+      {
+        field: "FullName",
+        headerName: "Resource",
+        flex: 1,
+        minWidth: 200,
+        filterable: true,
+        renderCell: (params) => {
+          const handleNameClick = () => {
+            handleOpenDialog('Edit Resource', 'edit_resource', params.row)
+          };
+    
+          return (
+            <Box sx={{ display: 'flex' }}>
+              <CustomAvatar value={params.value} showFullName={false} />
+              <Box
+                onClick={handleNameClick}
+                sx={{
+                  display: 'inline-block',
+                  maxWidth: '100%',
+                  color: '#152E75',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
+                }}
+              >
+                {params.value}
+              </Box>
+            </Box>
+          );
+        },
         },
         {
           field: "team",

@@ -32,7 +32,7 @@ const CustomAvatar = ({ value, showFullName = false }) => {
     return colors[hash % colors.length];
   };
   return (
-    <Box sx={{ display: "flex", alignItems: "center", minWidth: 0, width: '100%' }}>
+    <Box sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
       <Avatar
         sx={{
           width: 20,
