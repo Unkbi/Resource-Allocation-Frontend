@@ -23,16 +23,19 @@ import MultiSelectWithChips from '../Select/MultiSelectWithChipSmaller';
 import { getTodaysDateDDMMMYYYY } from '@/app/utils/dateUtils';
 import { addWeeks, format, startOfWeek, subWeeks } from 'date-fns';
 import {
+  DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
 import {
+  calculateWeekRanges,
   getResourceFromEmail,
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
   isMyProjectsValid,
   isMyTeamsValid,
 } from '@/app/utils/common';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 
 const getColumnLabel = column => {
   const columnLabels = {
@@ -159,15 +162,81 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   };
 
   const handleAddWeek = () => {
-    setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
+    const totalWeeks =
+      values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
+    if (totalWeeks > 52) {
+      setFieldValue(
+        'dynamicRangeError',
+        'Date range cannot exceed 1 year (52 weeks).'
+      );
+      setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
+      setFieldValue(
+        'dynamicDateRangeSubtract',
+        values.dynamicDateRangeSubtract - 1
+      );
+    } else {
+      setFieldValue('dynamicRangeError', '');
+      setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd + 1);
+    }
   };
 
   const handleSubtractWeek = () => {
-    setFieldValue(
-      'dynamicDateRangeSubtract',
-      values.dynamicDateRangeSubtract + 1
-    );
+    const totalWeeks =
+      values.dynamicDateRangeSubtract + values.dynamicDateRangeAdd + 1;
+    if (totalWeeks > 52) {
+      setFieldValue(
+        'dynamicRangeError',
+        'Date range cannot exceed 1 year (52 weeks).'
+      );
+      setFieldValue(
+        'dynamicDateRangeSubtract',
+        values.dynamicDateRangeSubtract + 1
+      );
+      setFieldValue('dynamicDateRangeAdd', values.dynamicDateRangeAdd - 1);
+    } else {
+      setFieldValue(
+        'dynamicDateRangeSubtract',
+        values.dynamicDateRangeSubtract + 1
+      );
+      setFieldValue('dynamicRangeError', '');
+    }
   };
+  useEffect(() => {
+    if (
+      values.dateRangeType === 'dynamic' &&
+      values?.dynamicDateRangeSubtract !== null &&
+      values?.dynamicDateRangeSubtract !== undefined
+    ) {
+      const currentStartDate = getDateFromWeekMath(
+        new Date(),
+        'SUBTRACT',
+        values?.dynamicDateRangeSubtract
+      );
+      setFieldValue('startDate', format(currentStartDate, DATE_FORMAT));
+    }
+    if (
+      values.dateRangeType === 'dynamic' &&
+      values?.dynamicDateRangeAdd !== null &&
+      values?.dynamicDateRangeAdd !== undefined
+    ) {
+      const currentEndDate = getDateFromWeekMath(
+        new Date(),
+        'ADD',
+        values?.dynamicDateRangeAdd
+      );
+      setFieldValue('endDate', format(currentEndDate, DATE_FORMAT));
+    }
+  }, [values.dynamicDateRangeAdd, values.dynamicDateRangeSubtract]);
+
+  useEffect(() => {
+    if (values.dynamicRangeError) {
+      const timer = setTimeout(() => {
+        setFieldValue('dynamicRangeError', '');
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [values.dynamicRangeError]);
 
   useEffect(() => {
     const initialData = {
@@ -184,8 +253,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       dynamicDateRangeAdd: currentView?.WeekPlus || DEFAULT_PROJECT_WEEK_PLUS,
       dynamicDateRangeSubtract:
         currentView?.WeekMinus || DEFAULT_PROJECT_WEEK_MINUS,
-      startDate: '',
-      endDate: '',
+      startDate: currentView.StartDate !== '' ? currentView.StartDate : null,
+      endDate: currentView.EndDate !== '' ? currentView.EndDate : null,
       showColumns: currentView?.ColumnsVisible || [],
       filters:
         currentView?.Filters?.map(filter => {
@@ -291,6 +360,16 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     fontSize: '14px',
   }));
 
+  const handleDateField = (StartDate, EndDate) => {
+    const currentDate = new Date();
+    const { weekMinus, weekPlus } = calculateWeekRanges(
+      StartDate,
+      EndDate,
+      currentDate
+    );
+    setFieldValue('dynamicDateRangeAdd', weekPlus);
+    setFieldValue('dynamicDateRangeSubtract', weekMinus);
+  };
   return (
     <Box>
       {/* Group By */}
@@ -610,6 +689,22 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                   )}
                 </Typography>
               </Box>
+              {(errors.dynamicDateRangeAdd ||
+                errors.dynamicDateRangeSubtract) && (
+                <Typography
+                  sx={{
+                    mt: 1,
+                    fontSize: '12px',
+                    color: 'red',
+                    fontFamily: 'Open Sans',
+                    fontWeight: 500,
+                    textAlign: 'left',
+                  }}
+                >
+                  {errors.dynamicDateRangeAdd ||
+                    errors.dynamicDateRangeSubtract}
+                </Typography>
+              )}
             </Box>
           )}
         </Box>
@@ -628,37 +723,38 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
             }
             label={<StyledOptionsLabel>Fixed Range</StyledOptionsLabel>}
           />
-
-          {values.dateRangeType === 'fixed' && (
-            <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <CustomDatePicker
-                  name="startDate"
-                  handleChange={handleChange}
-                  value={values.startDate || ''}
-                  placeholder="Start Date"
-                  formikProps={formikProps}
-                  error={touched.startDate && Boolean(errors.startDate)}
-                />
-                {showError('startDate')}
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <CustomDatePicker
-                  name="endDate"
-                  handleChange={handleChange}
-                  value={values.endDate || ''}
-                  placeholder="End Date"
-                  formikProps={formikProps}
-                  error={touched.endDate && Boolean(errors.endDate)}
-                />
-                {showError('endDate')}
-              </Box>
-            </Box>
-          )}
         </Box>
-        {showError('dateRangeType')}
       </StyledContainer>
-
+      {values.dateRangeType === 'fixed' && (
+        <Box sx={{ mt: 1, display: 'flex', gap: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <CustomDateRangePicker
+              name="DateRange"
+              value={{
+                startDate: formikProps.values.startDate,
+                endDate: formikProps.values.endDate,
+              }}
+              placeholder="Select Date Range"
+              formikProps={formikProps}
+              error={
+                (formikProps.touched.dynamicDateRangeAdd ||
+                  formikProps.touched.dynamicDateRangeSubtract) &&
+                (Boolean(formikProps.errors.dynamicDateRangeAdd) ||
+                  Boolean(formikProps.errors.dynamicDateRangeSubtract))
+              }
+              helperText={
+                (formikProps.touched.dynamicDateRangeAdd &&
+                  formikProps.errors.dynamicDateRangeAdd) ||
+                (formikProps.touched.dynamicDateRangeSubtract &&
+                  formikProps.errors.dynamicDateRangeSubtract)
+              }
+              customStyles={true}
+              handleDateField={handleDateField}
+            />
+          </Box>
+        </Box>
+      )}
+      {showError('dateRangeType')}
       <Box sx={{ borderTop: '1px solid #E5E7EB', my: 2 }} />
 
       {/* Show Columns */}

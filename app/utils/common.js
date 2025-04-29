@@ -11,6 +11,10 @@ import {
   subWeeks,
   weeksToDays,
   parseISO,
+  differenceInDays,
+  isSameWeek,
+  differenceInCalendarWeeks,
+  endOfWeek,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -100,7 +104,7 @@ export function generateAllMondays(startDate, endDate) {
 
   // If no endDate, return just this Monday
   if (!endDate) {
-    mondays.push(formatDates(currentDate));
+    mondays.push(parseISO(formatDates(currentDate)));
     return mondays;
   }
 
@@ -108,7 +112,7 @@ export function generateAllMondays(startDate, endDate) {
 
   // Generate all Mondays in the range
   while (currentDate <= endDateObj) {
-    mondays.push(formatDates(currentDate));
+    mondays.push(parseISO(formatDates(currentDate)));
     currentDate.setDate(currentDate.getDate() + 7);
   }
 
@@ -122,6 +126,42 @@ function formatDates(date) {
   return `${year}-${month}-${day}`;
 }
 
+export const calculateWeekRanges = (
+  selectedStart,
+  selectedEnd,
+  currentDate
+) => {
+  const current = parseISO(new Date().toISOString());
+  const start = parseISO(selectedStart);
+  const end = parseISO(selectedEnd);
+  const startOfCurrentWeek = startOfISOWeek(current, { weekStartsOn: 1 });
+  const startOfStartWeek = startOfISOWeek(start, { weekStartsOn: 1 });
+  const startOfEndWeek = startOfISOWeek(end, { weekStartsOn: 1 });
+  const weekMinus = Math.floor(
+    differenceInDays(startOfCurrentWeek, startOfStartWeek) / 7
+  );
+  const weekPlus = Math.floor(
+    differenceInDays(startOfEndWeek, startOfCurrentWeek) / 7
+  );
+
+  return {
+    weekMinus: Math.ceil(weekMinus),
+    weekPlus: Math.ceil(weekPlus),
+  };
+};
+
+export const getTotalWeeks = (startDate, endDate) => {
+  if (!startDate || !endDate) return 0;
+
+  const isoStart =
+    typeof startDate === 'string' ? parseISO(startDate) : startDate;
+  const isoEnd = typeof endDate === 'string' ? parseISO(endDate) : endDate;
+  const weekStart = startOfWeek(isoStart, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(isoEnd, { weekStartsOn: 1 });
+  return isSameWeek(weekEnd, weekStart, { weekStartsOn: 1 })
+    ? 1
+    : differenceInCalendarWeeks(weekEnd, weekStart, { weekStartsOn: 1 }) + 1;
+};
 /**
  * Checks whether the given string is a valid UUID.
  * @param {string} uuid - UUID string to test.
@@ -241,6 +281,11 @@ export const getInitials = fullName => {
 
 export const getMonday = date => {
   return startOfWeek(date, { weekStartsOn: 1 });
+};
+
+export const getMondayOfISO = date => {
+  const isoDate = parseISO(date);
+  return format(startOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
 };
 
 export const generateTMinusOneStartEndDate = isStartDate => {

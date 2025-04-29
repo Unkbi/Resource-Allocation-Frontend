@@ -68,12 +68,50 @@ export const addAllocationValidationSchema = Yup.object({
     .min(1, 'You must select at least one Project')
     .required('Project is required'),
   StartDate: Yup.date().required('Start date is required'),
-  // EndDate: Yup.date().required("End date is required").min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
+  EndDate: Yup.date()
+    .required('End date is required')
+    .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
   AllocationEntered: Yup.number()
     .required('Allocation is required')
     .min(0, 'Allocation must be a positive number')
     .max(2, 'Allocation cannot exceed 2.0'),
 });
+const stripTime = date =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+export function getProjectRangeWarnings(values, projects) {
+  const warnings = [];
+  const { Project: selectedIds, StartDate, EndDate } = values;
+
+  if (
+    Array.isArray(projects.result) &&
+    selectedIds?.length &&
+    StartDate &&
+    EndDate
+  ) {
+    const allocationStart = stripTime(new Date(StartDate));
+    const allocationEnd = stripTime(new Date(EndDate));
+
+    const selectedProjects = projects.result.filter(p =>
+      selectedIds.includes(p.Id)
+    );
+
+    selectedProjects.forEach(({ Name, StartDate: pSD, EndDate: pED }) => {
+      if (!pSD || !pED) return;
+
+      const projectStart = stripTime(new Date(pSD));
+      const projectEnd = stripTime(new Date(pED));
+
+      if (allocationStart < projectStart || allocationEnd > projectEnd) {
+        const fmtStart = projectStart.toLocaleDateString();
+        const fmtEnd = projectEnd.toLocaleDateString();
+        warnings.push(`“${Name}” should be between ${fmtStart} and ${fmtEnd}.`);
+      }
+    });
+  }
+
+  return warnings;
+}
 
 export const assignAllocationValidationSchema = Yup.object({
   Resource: Yup.string().required('Resource is required'),
@@ -91,6 +129,22 @@ export const saveViewValidationSchema = Yup.object({
   groupBy: Yup.string().required('Group By is required'),
   showBy: Yup.string().required('Show By is required'),
   dateRangeType: Yup.string().required('Date Range Type is required'),
+  dynamicDateRangeAdd: Yup.number().test(
+    'max-weeks',
+    'Date range cannot exceed 1 year (51 weeks)',
+    function (value) {
+      const subtract = this.parent.dynamicDateRangeSubtract;
+      return value + subtract < 52;
+    }
+  ),
+  dynamicDateRangeSubtract: Yup.number().test(
+    'max-weeks',
+    'Date range cannot exceed 1 year (51 weeks)',
+    function (value) {
+      const add = this.parent.dynamicDateRangeAdd;
+      return value + add < 52;
+    }
+  ),
   startDate: Yup.date().when('dateRangeType', {
     is: 'fixed',
     then: schema => schema.required('Start Date is required'),
@@ -117,21 +171,55 @@ export const saveViewValidationSchema = Yup.object({
   calendarBy: Yup.string().required('Calendar By is required'),
 });
 
-export const nameViewValidationSchema = Yup.object({
-  name: Yup.string().required('Name is required'),
-});
+export const nameViewValidationSchema = (savedViews = []) =>
+  Yup.object({
+    name: Yup.string()
+      .required('Name is required')
+      .test(
+        'unique-name',
+        'This name already exists in saved views.',
+        function (value) {
+          if (!value) return true;
+
+          const currentId = this.parent?.id;
+          const trimmedValue = value.toLowerCase().trim();
+
+          return !savedViews.some(view => {
+            const viewName = view?.Name?.toLowerCase()?.trim();
+            return viewName === trimmedValue && view?.Id !== currentId;
+          });
+        }
+      ),
+    description: Yup.string(),
+    isDefault: Yup.boolean(),
+  });
 
 export const cloneResourceValidationSchema = Yup.object({
   Resource: Yup.array()
-  .of(Yup.string())
-  .min(1, 'You must select at least one Resource').required("Resource is required"),
+    .of(Yup.string())
+    .min(1, 'You must select at least one Resource')
+    .required('Resource is required'),
   Project: Yup.array()
-  .of(Yup.string())
-  .min(1, 'You must select at least one Project')
-  .required('Project is required'),
-  StartDate: Yup.date().required("Start date is required"),
+    .of(Yup.string())
+    .min(1, 'You must select at least one Project')
+    .required('Project is required'),
+  StartDate: Yup.date().required('Start date is required'),
   EndDate: Yup.date()
-    .required("End date is required")
-    .min(Yup.ref("StartDate"), "End date must be after or equal to start date"),
-  // Hours: Yup.number().required("Hours are required").positive("Hours must be positive"),
-})
+    .required('End date is required')
+    .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
+});
+
+export const transferResourceValidationSchema = Yup.object({
+  Resource: Yup.array()
+    .of(Yup.string())
+    .min(1, 'You must select at least one Resource')
+    .required('Resource is required'),
+  Project: Yup.array()
+    .of(Yup.string())
+    .min(1, 'You must select at least one Project')
+    .required('Project is required'),
+  StartDate: Yup.date().required('Start date is required'),
+  EndDate: Yup.date()
+    .required('End date is required')
+    .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
+});

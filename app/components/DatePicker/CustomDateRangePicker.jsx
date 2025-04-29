@@ -2,18 +2,21 @@ import * as React from 'react';
 import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { TextField ,FormHelperText, Box} from '@mui/material';
+import { TextField, FormHelperText, Box } from '@mui/material';
 import { styled } from '@mui/system';
-import {FormControl} from '@mui/material';
+import { FormControl } from '@mui/material';
 import 'dayjs/locale/en-gb';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import { DEFAULT_LOCALE } from '@/app/constants/constants';
-import { DateRangePicker,SingleInputDateRangeField, } from '@mui/x-date-pickers-pro';
+import {
+  DateRangePicker,
+  SingleInputDateRangeField,
+} from '@mui/x-date-pickers-pro';
 import StyledLabel from '../Label/StyledLabel';
- 
+
 dayjs.extend(updateLocale);
 dayjs.updateLocale(DEFAULT_LOCALE, { weekStart: 1 });
- 
+
 const CustomTextField = styled(TextField)(({ theme, error }) => ({
   height: '36px',
   width: '160px',
@@ -24,34 +27,15 @@ const CustomTextField = styled(TextField)(({ theme, error }) => ({
     fontWeight: 500,
     border: error && theme.palette.error.main,
     '&:hover': {
-      border: error && theme.palette.error.main
+      border: error && theme.palette.error.main,
     },
     '&.Mui-focused': {
-      border: error && theme.palette.error.main
+      border: error && theme.palette.error.main,
     },
     '&::placeholder': {
       color: '#757575',
       opacity: 1,
     },
-    "& input": {
-      cursor: "pointer",
-    },
-  },
-  '& .MuiIconButton-root': {
-    backgroundColor: 'transparent !important',
-    '&:hover': {
-      backgroundColor: 'transparent !important',
-    },
-  },
-}));
-
-const StyledsingleInputDateRangeField = {
-  height: '36px',
-  width: '100%',
-  '& .MuiInputBase-root': {
-    height: '36px',
-    fontSize: '12px',
-    fontWeight: 500,
     '& input': {
       cursor: 'pointer',
     },
@@ -62,86 +46,159 @@ const StyledsingleInputDateRangeField = {
       backgroundColor: 'transparent !important',
     },
   },
-};
+}));
 
-export default function CustomDateRangePicker({ value, placeholder, formikProps, error, helperText, customStyles, startDateLabel="", endDateLabel=""}) {
-  const { setFieldValue } = formikProps
+const StyledsingleInputDateRangeField = isButton => ({
+  height: isButton ? '32px' : '36px',
+  width: '100%',
+  '& .MuiInputBase-root': {
+    ...(isButton && { padding: '0px' }),
+    height: isButton ? '32px' : '36px',
+    fontSize: isButton ? '14px' : '12px',
+    fontWeight: isButton ? 600 : 500,
+    cursor: 'pointer',
+    '& input': {
+      cursor: 'pointer',
+      pointerEvents: isButton && 'none',
+    },
+  },
+  '& .MuiIconButton-root': {
+    backgroundColor: 'transparent !important',
+    '&:hover': {
+      backgroundColor: 'transparent !important',
+    },
+  },
+});
+
+export default function CustomDateRangePicker({
+  value,
+  placeholder,
+  formikProps = {},
+  error,
+  helperText,
+  customStyles,
+  startDateLabel = '',
+  endDateLabel = '',
+  showLabel = true,
+  format = 'MM/DD/YYYY',
+  isButton = false,
+  handleDateField = () => {},
+}) {
+  const { setFieldValue } = formikProps;
   const selectedDate = [
-    value.StartDate ? dayjs(value.StartDate) : null,
-    value.EndDate ? dayjs(value.EndDate) : null
+    value?.StartDate || value?.startDate
+      ? dayjs(value?.StartDate || value?.startDate)
+      : null,
+    value?.EndDate || value?.endDate
+      ? dayjs(value?.EndDate || value?.endDate)
+      : null,
   ];
 
-  const handleDateChange = (newValue) => {
+  const handleDateChange = newValue => {
     if (newValue && Array.isArray(newValue)) {
       const [start, end] = newValue;
-      if (start && !end) {
-        const formattedDate = dayjs(start).format("YYYY-MM-DD");
-        setFieldValue("StartDate", formattedDate);
-        setFieldValue("EndDate", formattedDate);
-        } 
-        else if (start && end) {
-        const formattedStart = dayjs(start).format("YYYY-MM-DD");
-        const formattedEnd = dayjs(end).format("YYYY-MM-DD");
-        setFieldValue("StartDate", formattedStart);
-        setFieldValue("EndDate", formattedEnd);
+      if (isButton) {
+        if (start && end) {
+          const formattedStart = dayjs(start).format('YYYY-MM-DD');
+          const formattedEnd = dayjs(end).format('YYYY-MM-DD');
+          handleDateField(formattedStart, formattedEnd);
+        }
+      } else {
+        if (start && !end) {
+          const formattedDate = dayjs(start).format('YYYY-MM-DD');
+          setFieldValue('StartDate', formattedDate);
+          setFieldValue('EndDate', formattedDate);
+        } else if (start && end) {
+          const formattedStart = dayjs(start).format('YYYY-MM-DD');
+          const formattedEnd = dayjs(end).format('YYYY-MM-DD');
+          if (value?.startDate && value?.endDate) {
+            setFieldValue('startDate', formattedStart);
+            setFieldValue('endDate', formattedEnd);
+            handleDateField(formattedStart, formattedEnd);
+          } else {
+            setFieldValue('StartDate', formattedStart);
+            setFieldValue('EndDate', formattedEnd);
+          }
+        }
       }
     }
   };
+  // Helper function to calculate max date (51 weeks after start date)
+  const getWeeksAfter = startDate => {
+    if (!startDate) return undefined;
+    const weekStartMonday = dayjs(startDate).startOf('week');
+    const fiftyOneWeeksLater = weekStartMonday.add(51, 'weeks');
+    return fiftyOneWeeksLater.add(7, 'days');
+  };
 
   return (
-    <FormControl error={error}>
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
-        <Box sx={{display:"flex",flexDirection:"row", gap: "122px"}}>
-          <StyledLabel>Date Range</StyledLabel>
+    <FormControl sx={isButton && { width: '56%' }} error={error}>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale={DEFAULT_LOCALE}
+      >
+        {showLabel && (
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: '122px' }}>
+            <StyledLabel>Date Range</StyledLabel>
           </Box>
-          <Box sx={{ width: '340px' }}>
-          <DateRangePicker 
-           calendars={1}
-           displayWeekNumber
-           value= {selectedDate}
-           onChange={(newValue) => handleDateChange(newValue)}
-           localeText={{ start: '', end: '' }} 
-           format='MM/DD/YYYY'
-           slots={{
-            field: SingleInputDateRangeField,
-          }}
-          slotProps={{
-            fieldSeparator: { sx: { display:"none" } } ,
-            textField: {
-              variant: 'outlined',
-              error: error,
-              placeholder: placeholder,
-              sx : StyledsingleInputDateRangeField,
-              InputProps: {
-                endAdornment: (
-                  <img
-                    src="/images/icons/calendar.svg"
-                    alt="Calendar"
-                    style={{ width: '13px', height: '14.4px', cursor:"pointer" }}
-                  />
-                ),
+        )}
+        <Box sx={{ width: isButton ? '134px' : '340px' }}>
+          <DateRangePicker
+            calendars={1}
+            displayWeekNumber
+            value={selectedDate}
+            onChange={newValue => handleDateChange(newValue)}
+            localeText={{ start: '', end: '' }}
+            format={format}
+            maxDate={getWeeksAfter(selectedDate[0], 51)}
+            slots={{
+              field: SingleInputDateRangeField,
+            }}
+            slotProps={{
+              fieldSeparator: { sx: { display: 'none' } },
+              textField: {
+                variant: 'outlined',
+                error: error,
+                placeholder: placeholder,
+                sx: StyledsingleInputDateRangeField(isButton),
+                InputProps: {
+                  ...(!isButton && {
+                    endAdornment: (
+                      <img
+                        src="/images/icons/calendar.svg"
+                        alt="Calendar"
+                        style={{
+                          width: '13px',
+                          height: '14.4px',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ),
+                  }),
+                },
               },
-            },
-            desktopPaper: {
-              ...(customStyles
-                ? {
-                    sx: {
-                      position: 'absolute',
-                      top: '-130px',
-                    },
-                  }
-                : {}),
-            },
-          }}
-       />
-      </Box>
+              desktopPaper: {
+                ...(customStyles
+                  ? {
+                      sx: {
+                        position: 'absolute',
+                        top: '-130px',
+                      },
+                    }
+                  : {}),
+              },
+            }}
+          />
+        </Box>
       </LocalizationProvider>
       {error && (
         <FormHelperText
           style={{
             fontSize: '0.75rem',
             marginLeft: '0px',
-          }}>{helperText}
+          }}
+        >
+          {helperText}
         </FormHelperText>
       )}
     </FormControl>
