@@ -309,8 +309,10 @@ export const getFinalColumns = (
           cancelButtonText: 'Cancel',
           formType: 'add_allocation',
           initialData: {
-            Resource: params.value,
-            Project: params.row.project,
+            Resource: params.row.resource || params.value,
+            ResourceId: params.row.resourceId,
+            Project: params.row.project || params.value,
+            Team: params.row.teams,
           },
         })
       );
