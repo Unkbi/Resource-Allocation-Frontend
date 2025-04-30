@@ -79,6 +79,16 @@ export const getTeamAllocations = createAsyncThunk(
   }
 );
 
+export const fetchTeamAllocationsForSaga = async (
+  postData: GetTeamAllocationsForPeriodPayload
+) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/GetTeamAllocationsForPeriod`,
+    postData
+  );
+  return response.data;
+};
+
 /*
  * Not being used currently in application
  * Uncomment the following code if you want to handle postTeamResource API call

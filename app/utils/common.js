@@ -11,6 +11,10 @@ import {
   subWeeks,
   weeksToDays,
   parseISO,
+  differenceInDays,
+  isSameWeek,
+  differenceInCalendarWeeks,
+  endOfWeek,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -122,6 +126,42 @@ function formatDates(date) {
   return `${year}-${month}-${day}`;
 }
 
+export const calculateWeekRanges = (
+  selectedStart,
+  selectedEnd,
+  currentDate
+) => {
+  const current = parseISO(new Date().toISOString());
+  const start = parseISO(selectedStart);
+  const end = parseISO(selectedEnd);
+  const startOfCurrentWeek = startOfISOWeek(current, { weekStartsOn: 1 });
+  const startOfStartWeek = startOfISOWeek(start, { weekStartsOn: 1 });
+  const startOfEndWeek = startOfISOWeek(end, { weekStartsOn: 1 });
+  const weekMinus = Math.floor(
+    differenceInDays(startOfCurrentWeek, startOfStartWeek) / 7
+  );
+  const weekPlus = Math.floor(
+    differenceInDays(startOfEndWeek, startOfCurrentWeek) / 7
+  );
+
+  return {
+    weekMinus: Math.ceil(weekMinus),
+    weekPlus: Math.ceil(weekPlus),
+  };
+};
+
+export const getTotalWeeks = (startDate, endDate) => {
+  if (!startDate || !endDate) return 0;
+
+  const isoStart =
+    typeof startDate === 'string' ? parseISO(startDate) : startDate;
+  const isoEnd = typeof endDate === 'string' ? parseISO(endDate) : endDate;
+  const weekStart = startOfWeek(isoStart, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(isoEnd, { weekStartsOn: 1 });
+  return isSameWeek(weekEnd, weekStart, { weekStartsOn: 1 })
+    ? 1
+    : differenceInCalendarWeeks(weekEnd, weekStart, { weekStartsOn: 1 }) + 1;
+};
 /**
  * Checks whether the given string is a valid UUID.
  * @param {string} uuid - UUID string to test.
@@ -243,8 +283,13 @@ export const getMonday = date => {
   return startOfWeek(date, { weekStartsOn: 1 });
 };
 
+export const getMondayOfISO = date => {
+  const isoDate = parseISO(date);
+  return format(startOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
+};
+
 export const generateTMinusOneStartEndDate = isStartDate => {
-  let today = new Date();
+  let today = parseISO(new Date().toISOString());
   const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
   if (isStartDate) {
     return format(lastWeeksMonday, DATE_FORMAT);
@@ -328,8 +373,6 @@ export const getStartAndEndDateForView = (
 };
 
 export const getUserIdFromEmail = (users, email) => {
-  // Returning a hardcoded value for testing
-  return '1513e847-8abe-42b6-8743-497d9b8e0e17';
   const userObj = users.find(user => user.Email === email);
   return userObj ? userObj.Id : null;
 };

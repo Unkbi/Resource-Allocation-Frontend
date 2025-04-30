@@ -41,6 +41,8 @@ import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction
 import {
   setCellSelectionData,
   setExpandRowId,
+  setSplitView,
+  setSplitViewCurrentProject,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
@@ -53,10 +55,11 @@ import { current } from '@reduxjs/toolkit';
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { getWeek, parseISO } from 'date-fns';
+import { format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
-import DeleteDialog from '../../Dialog/DeleteDialog';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import ConfirmDialog from '../../Dialog/ConfirmDialog';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 const initialValuesMap = {
   add_project: {
@@ -159,6 +162,10 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
+  const { calendarDate: _calendarDate } = useSelector(
+    state => state.allAllocations
+  );
+  const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
 
   const getValidationSchema = formType => {
     switch (formType) {
@@ -264,19 +271,29 @@ const AllocationForm = () => {
       setSubmitting(false);
       return;
     }
-
+    let filteredValues = { ...values };
+    if (formType === 'add_project' || formType === 'edit_project') {
+      delete filteredValues.submitType;
+    }
     let postData = {};
     switch (formType) {
       case 'add_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...filteredValues,
             Description: 'string',
           },
         };
         try {
           dispatch(addProject(postData))
-            .then(() => {
+            .then(response => {
+              if (submitType === 'secondary') {
+                dispatch(setSplitView(true));
+                dispatch(setSplitViewCurrentProject(response.payload.result));
+                router.replace('/allocation');
+                return;
+              }
+
               // After successfully adding the project, route to Projects page
               if (pathname !== '/project') {
                 router.replace('/project');
@@ -296,7 +313,7 @@ const AllocationForm = () => {
       case 'edit_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...filteredValues,
             Description: 'string',
           },
         };
@@ -373,7 +390,7 @@ const AllocationForm = () => {
                         Resource: resource,
                         Project: project.Id,
                         ProjectName: project.Name,
-                        Period: monday,
+                        Period: format(monday, DATE_FORMAT),
                         AllocationEntered: values.AllocationEntered,
                         Notes: values.Comment || '',
                       },
@@ -407,38 +424,29 @@ const AllocationForm = () => {
             let new_resources = values.Resource.map(resource =>
               getTeamByResourceId(resource)
             );
-            const teams = [
+            const updated_teams = [
               ...new Set(new_resources.map(resource => resource?.team)),
             ];
             dispatch(closeDialog());
-
-            if (view === 'Teams') {
-              return dispatch(
-                fetchResourcesAgainstTeams(
-                  teams,
-                  allocations,
-                  startDate,
-                  endDate
-                )
-              ).then(() => {
-                handleOnAdd(new_resources);
-                handleScrollAndFocus(
-                  new_resources,
-                  allMondays,
-                  filteredProjects
-                );
+            new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_TEAM_ALLOCATIONS',
+                payload: {
+                  teamIds: updated_teams.map(team => team?.Id),
+                  teams: teams?.result,
+                  projects: projects?.result,
+                  resources: resources?.result,
+                  teamsResources: teamsResources,
+                  startDate: _startDate,
+                  endDate: _endDate,
+                  resolve,
+                  reject,
+                },
               });
-            } else if (view === 'Project') {
-              return dispatch(
-                fetchAllProjectAllocations(filteredProjects, startDate, endDate)
-              ).then(() => {
-                handleScrollAndFocus(
-                  new_resources,
-                  allMondays,
-                  filteredProjects
-                );
-              });
-            }
+            }).then(() => {
+              handleOnAdd(new_resources);
+              handleScrollAndFocus(new_resources, allMondays, filteredProjects);
+            });
           });
         } catch (e) {
           console.error('Error creating allocations:', e);
@@ -668,7 +676,7 @@ const AllocationForm = () => {
                         Project: projectId,
                         ProjectName: initialData.Project,
                         AllocationEntered: sourceAlloc.value,
-                        Period: monday,
+                        Period: format(monday, DATE_FORMAT),
                       },
                     },
                   });
@@ -858,7 +866,7 @@ const AllocationForm = () => {
                     Project: projectId,
                     ProjectName: initialData.Project,
                     AllocationEntered: sourceAlloc.value,
-                    Period: monday,
+                    Period: format(monday, DATE_FORMAT),
                   },
                 },
               });
@@ -1075,7 +1083,7 @@ const AllocationForm = () => {
               </Typography>
             )}
           </Box>
-          <DeleteDialog
+          <ConfirmDialog
             open={showTransferConfirm}
             title="Alert"
             onCancel={() => {
@@ -1102,7 +1110,7 @@ const AllocationForm = () => {
               return project?.Name || 'Unknown Project';
             }).join(', ')}
             .
-          </DeleteDialog>
+          </ConfirmDialog>
         </CustomDialog>
       )}
     </Formik>

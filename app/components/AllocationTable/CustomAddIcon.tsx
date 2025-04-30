@@ -24,7 +24,9 @@ export const CustomAddIcon = ({
   useEffect(() => {
     const checkOverflow = () => {
       if (textRef.current) {
-        setIsOverflowing(textRef.current.scrollWidth > textRef.current.clientWidth);
+        setIsOverflowing(
+          textRef.current.scrollWidth > textRef.current.clientWidth
+        );
       }
     };
 
@@ -58,7 +60,11 @@ export const CustomAddIcon = ({
         },
       }}
     >
-       <Tooltip title={isOverflowing && typeof value === 'string' ? value : ''} arrow placement="right">
+      <Tooltip
+        title={isOverflowing && typeof value === 'string' ? value : ''}
+        arrow
+        placement="right"
+      >
         <Box
           ref={textRef}
           className="text"
