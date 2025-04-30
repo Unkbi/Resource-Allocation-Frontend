@@ -288,7 +288,6 @@ export const getFinalColumns = (
   );
 
   const handleAddClick = params => {
-    debugger;
     if (mode === 'split' && splitViewCurrentProject) {
       dispatch(
         openDialog({

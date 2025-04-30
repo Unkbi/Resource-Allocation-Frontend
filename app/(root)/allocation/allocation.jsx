@@ -56,7 +56,6 @@ export default function Allocation() {
   }, [settingsParam]);
 
   const getContentByRole = view => {
-    // return <ProjectAllocation />;
     if (currentView?.GroupBy) {
       switch (currentView.GroupBy) {
         case 'Project':

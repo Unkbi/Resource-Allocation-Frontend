@@ -22,15 +22,10 @@ export default function BottomTeamsView() {
   >([]);
   const [allocationThreshold, setAllocationThreshold] = useState(0);
   const dispatch = useDispatch<AppDispatch>();
-  // const { teams, resources, loading, dataProcessing, calendarDate } =
-  //   useSelector((state: RootState) => state.teams);
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
   const { startDate, endDate } = calendarDate || {};
-  // const _resources = useSelector(
-  //   (state: RootState) => state.resources.resources
-  // );
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -45,21 +40,6 @@ export default function BottomTeamsView() {
       })
     );
   };
-
-  // useEffect(() => {
-  //   if (!teams?.result?.length) {
-  //     dispatch(fetchAllTeams());
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   if (teams?.result?.length && startDate && endDate) {
-  //     dispatch(resetResources());
-  //     dispatch(
-  //       fetchResourcesAgainstTeams(teams.result, null, startDate, endDate)
-  //     );
-  //   }
-  // }, [teams, calendarDate]);
 
   const teamsColumnConfig = [
     {
