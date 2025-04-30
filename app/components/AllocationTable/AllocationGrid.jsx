@@ -59,6 +59,7 @@ import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
 import SplitTeamToolbar from '../Toolbar/SplitTeamToolbar';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 export default function AllocationGrid({
   groupBy,
@@ -661,9 +662,41 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = (newRow, oldRow) => {
-    Object.keys(newRow).forEach(key => {
-      if (key.startsWith('W')) {
+        // Find the changed week
+        const changedWeek = Object.keys(newRow).find(key => 
+          key.startsWith('W') && newRow[key] !== oldRow[key]?.value
+        );
+
+        if (!changedWeek) {
+          return { ...oldRow };
+        }
+        const key = changedWeek;
         let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+
+        const period = oldRow[key]?.period;
+        const value = formattedCellValue;
+        const resourceId = oldRow.resourceId;
+
+        // Calculate total allocation for the week across all rows for that resource
+        let totalForWeek = 0;
+        rowState.forEach(row => {
+          if (row.resourceId === resourceId) {
+            const val = row[key]?.value || 0;
+            totalForWeek += parseFloat(val);
+          }
+        });
+
+        // Add new value (replace current row’s old value with new one)
+        const currentRowOldValue = oldRow[key]?.value || 0;
+        totalForWeek = totalForWeek - currentRowOldValue + value;
+
+        if (totalForWeek > 1.5 && totalForWeek <= 2) {
+          dispatch(showToastAction(true, `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,'warning',4000));
+        } else if (totalForWeek > 2) {
+          dispatch(showToastAction(true,`Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,'error',4000));
+          return oldRow;
+        }
+
         if (
           (newRow[key] === null || newRow[key] === undefined) &&
           (formattedCellValue === 0 || isNaN(formattedCellValue)) &&
@@ -718,7 +751,7 @@ export default function AllocationGrid({
             });
           }
         }
-
+        newRow = {...newRow,...oldRow};
         newRow[key] = {
           allocationId: oldRow[key]?.allocationId || null,
           value:
@@ -726,9 +759,7 @@ export default function AllocationGrid({
               ? formattedCellValue
               : null,
           period: oldRow[key]?.period,
-        };
-      }
-    });
+        };         
 
     return { ...newRow, totalEffort: calculateTotalEffort(newRow) };
   };
