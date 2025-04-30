@@ -731,7 +731,7 @@ export default function AllocationGrid({
             });
           }
         }
-
+        newRow = {...newRow,...oldRow};
         newRow[key] = {
           allocationId: oldRow[key]?.allocationId || null,
           value:
@@ -739,7 +739,7 @@ export default function AllocationGrid({
               ? formattedCellValue
               : null,
           period: oldRow[key]?.period,
-        };      
+        };         
 
     return { ...newRow, totalEffort: calculateTotalEffort(newRow) };
   };
