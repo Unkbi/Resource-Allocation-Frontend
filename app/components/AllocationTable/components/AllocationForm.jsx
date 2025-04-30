@@ -30,6 +30,7 @@ import {
   generateAllMondays,
   getUserIdFromEmail,
   getWeekNumber,
+  getTotalWeeklyAllocation,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -55,6 +56,7 @@ import { openDialog } from '@/app/redux/actions/dialogAction';
 import { getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const initialValuesMap = {
   add_project: {
@@ -319,6 +321,9 @@ const AllocationForm = () => {
               values.Project.includes(project.Id)
             ) || [];
 
+          const warningMessages = [];
+          const errorMessages = [];
+
           const allocationPromises = allMondays.flatMap(monday => {
             return values.Resource.flatMap(resource => {
               return filteredProjects.map(project => {
@@ -327,6 +332,30 @@ const AllocationForm = () => {
                   resource,
                   monday
                 );
+
+                const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
+                const existingTotal = getTotalWeeklyAllocation(
+                  rowState,
+                  resource,
+                  weekKey
+                );
+                const finalTotal =
+                  existingTotal -
+                  (allocation?.value || 0) +
+                  values.AllocationEntered;
+
+                if (finalTotal > 2.0) {
+                  errorMessages.push(
+                    `Total allocation for week ${weekKey} exceeds 2.0 (${finalTotal.toFixed(2)}). Update skipped.`
+                  );
+                  return null;
+                }
+
+                if (finalTotal > 1.5 && finalTotal <= 2.0) {
+                  warningMessages.push(
+                    `Total allocation for week ${weekKey} exceeds 1.5 (${finalTotal.toFixed(2)}).`
+                  );
+                }
 
                 if (
                   allocation &&
@@ -364,10 +393,40 @@ const AllocationForm = () => {
               });
             });
           });
+
           if (!allocationPromises?.length) {
             return;
           }
           await Promise.all(allocationPromises).then(async () => {
+            if (errorMessages.length > 1) {
+              dispatch(
+                showToastAction(
+                  true,
+                  'Total allocation for the multiple selected weeks exceeds 2.0. Please check and try again.',
+                  'error',
+                  4000
+                )
+              );
+            } else {
+              errorMessages.forEach(msg => {
+                dispatch(showToastAction(true, msg, 'error', 4000));
+              });
+            }
+            if (warningMessages.length > 0) {
+              dispatch(
+                showToastAction(
+                  true,
+                  'Warning: Total allocation for the multiple selected weeks exceeds 1.5',
+                  'warning',
+                  4000
+                )
+              );
+            } else {
+              warningMessages.forEach(msg => {
+                dispatch(showToastAction(true, msg, 'warning', 4000));
+              });
+            }
+
             let new_resources = values.Resource.map(resource =>
               getTeamByResourceId(resource)
             );
