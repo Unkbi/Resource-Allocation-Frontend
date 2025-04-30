@@ -15,6 +15,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { setSplitView, setSplitViewCurrentProject } from "@/app/redux/reducers/allocationViewReducer";
 import { useRouter } from "next/navigation";
+import { fetchAllResources } from "@/app/redux/actions/fetchResourcesAction";
 
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
@@ -104,6 +105,7 @@ const AddAllocationIcon = () => (
 export default function Project() {
     const dispatch = useDispatch()
     const { projects, updating , loading} = useSelector(state => state.projects)
+    const { resources } = useSelector((state) => state.resources)
     const [anchorEl, setAnchorEl] = useState(null)
     const [selectedRow, setSelectedRow] = useState(null)
     const [rows, setRows] = useState(projects?.result || null)
@@ -121,6 +123,12 @@ export default function Project() {
     useEffect(() => {
       setRows(projects?.result)
     }, [projects])
+
+    useEffect(() => {
+      if (!resources?.result?.length) {
+        dispatch(fetchAllResources());
+      }
+    },[])
     
     const modifyData = (data) => {
       if(data) {

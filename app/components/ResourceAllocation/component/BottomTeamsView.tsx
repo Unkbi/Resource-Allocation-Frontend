@@ -16,7 +16,15 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 
-export default function BottomTeamsView() {
+interface BottomTeamsViewProps {
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export default function BottomTeamsView({
+  startDate,
+  endDate,
+}: BottomTeamsViewProps) {
   const [selectedTeam, setSelectedTeam] = useState<
     Array<{ label: string; value: string }>
   >([]);
@@ -25,7 +33,7 @@ export default function BottomTeamsView() {
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const { startDate, endDate } = calendarDate || {};
+  // const { startDate, endDate } = calendarDate || {};
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(

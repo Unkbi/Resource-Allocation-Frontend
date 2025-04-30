@@ -35,6 +35,7 @@ import {
   getProjectsIamProjectManager,
   getStartAndEndDateForView,
   getTeamsIamAllocationManager,
+  getTotalWeeks,
   isObjectEqual,
 } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
@@ -387,37 +388,83 @@ const SplitTeamToolbar = memo(
       true
     );
 
-    const changeCalendarDate = type => {
-      // const isTeams = view === 'Teams';
+    const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
       const isNext = type === 'next';
 
       // Handle the saveView changes
-      dispatch(
-        updateCurrentView({
-          isDynamicRange: true,
-          ...(isNext
-            ? {
-                WeekPlus:
-                  currentView.WeekPlus != null
-                    ? currentView.WeekPlus + TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_PLUS + 4,
-                WeekMinus:
-                  currentView.WeekMinus != null
-                    ? currentView.WeekMinus - TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW,
-              }
-            : {
-                WeekMinus:
-                  currentView.WeekMinus != null
-                    ? currentView.WeekMinus + TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW,
-                WeekPlus:
-                  currentView.WeekPlus != null
-                    ? currentView.WeekPlus - TOTAL_FUTURE_WEEKS_ARROW
-                    : DEFAULT_PROJECT_WEEK_MINUS - 4,
-              }),
-        })
-      );
+
+      if (type === 'isFixedRange') {
+        const currentDate = new Date();
+        const { weekMinus, weekPlus } = calculateWeekRanges(
+          StartDate,
+          EndDate,
+          currentDate
+        );
+        dispatch(
+          updateCurrentView({
+            isDynamicRange: false,
+            isFixedRange: true,
+            StartDate: StartDate,
+            EndDate: EndDate,
+            WeekPlus: weekPlus,
+            WeekMinus: weekMinus,
+          })
+        );
+      } else {
+        const totalWeeks = getTotalWeeks(
+          currentView?.StartDate,
+          currentView?.EndDate
+        );
+
+        const toShift = currentView.isFixedRange
+          ? totalWeeks
+          : TOTAL_FUTURE_WEEKS_ARROW;
+
+        const toNextWeekPlus =
+          currentView.WeekPlus != null
+            ? currentView.WeekPlus + toShift
+            : DEFAULT_PROJECT_WEEK_PLUS + 4;
+
+        const toNextWeekMinus =
+          currentView.WeekMinus != null
+            ? currentView.WeekMinus - toShift
+            : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW;
+
+        const toPrevWeekPlus =
+          currentView.WeekPlus != null
+            ? currentView.WeekPlus - toShift
+            : DEFAULT_PROJECT_WEEK_MINUS - 4;
+
+        const toPrevWeekMinus =
+          currentView.WeekMinus != null
+            ? currentView.WeekMinus + toShift
+            : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW;
+
+        dispatch(
+          updateCurrentView({
+            ...(!currentView.isFixedRange && { isDynamicRange: true }),
+            ...(isNext
+              ? {
+                  StartDate: generateDateWeekMath(
+                    'WEEK_MINUS',
+                    toNextWeekMinus
+                  ),
+                  EndDate: generateDateWeekMath('WEEK_PLUS', toNextWeekPlus),
+                  WeekPlus: toNextWeekPlus,
+                  WeekMinus: toNextWeekMinus,
+                }
+              : {
+                  StartDate: generateDateWeekMath(
+                    'WEEK_MINUS',
+                    toPrevWeekMinus
+                  ),
+                  EndDate: generateDateWeekMath('WEEK_PLUS', toPrevWeekPlus),
+                  WeekMinus: toPrevWeekMinus,
+                  WeekPlus: toPrevWeekPlus,
+                }),
+          })
+        );
+      }
     };
 
     const open = Boolean(anchorEl);

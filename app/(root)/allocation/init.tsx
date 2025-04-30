@@ -12,13 +12,29 @@ import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { resetAllocations } from '@/app/redux/reducers/allAllocationsReducer';
 import { ApiResponse, Resource, Team } from '@/app/types';
+import { generateDateWeekMath } from '@/app/utils/common';
 
-const TopContent = () => <TopProjectsView />;
+interface TopContentProps {
+  startDate: string | null;
+  endDate: string | null;
+}
 
-const BottomContent = () => <BottomTeamsView />;
+interface BottomContentProps {
+  startDate: string | null;
+  endDate: string | null;
+}
+const TopContent = ({ startDate, endDate }: TopContentProps) => (
+  <TopProjectsView startDate={startDate} endDate={endDate} />
+);
+
+const BottomContent = ({ startDate, endDate }: BottomContentProps) => (
+  <BottomTeamsView startDate={startDate} endDate={endDate} />
+);
 
 export default function AllocationInit() {
-  const { splitView } = useSelector((state: RootState) => state.allocationView);
+  const { splitView, currentView } = useSelector(
+    (state: RootState) => state.allocationView
+  );
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
   // @ts-ignore
@@ -31,6 +47,18 @@ export default function AllocationInit() {
   );
   const { startDate, endDate } = calendarDate || {};
   const dispatch: AppDispatch = useDispatch();
+
+  const currentViewStartDate = currentView?.isDynamicRange
+    ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+    : currentView?.isFixedRange
+      ? currentView?.StartDate
+      : startDate;
+
+  const currentViewEndDate = currentView?.isDynamicRange
+    ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+    : currentView?.isFixedRange
+      ? currentView?.EndDate
+      : endDate;
 
   useEffect(() => {
     if (!teams?.result?.length) {
@@ -57,21 +85,42 @@ export default function AllocationInit() {
           teams: teams?.result,
           projects: projects?.result,
           resources: resources?.result,
-          startDate,
-          endDate,
+          startDate: currentViewStartDate,
+          endDate: currentViewEndDate,
         },
       });
     }
-  }, [teams, projects, resources]);
+  }, [
+    teams,
+    projects,
+    resources,
+    currentView?.isDynamicRange,
+    currentView?.isFixedRange,
+    currentView?.WeekPlus,
+    currentView?.WeekMinus,
+    currentView?.StartDate,
+    currentView?.EndDate,
+  ]);
+
   return splitView ? (
     <HorizontalSplitView
-      top={<TopContent />}
-      bottom={<BottomContent />}
-      initialTopHeight={150}
+      top={
+        <TopContent
+          startDate={currentViewStartDate}
+          endDate={currentViewEndDate}
+        />
+      }
+      bottom={
+        <BottomContent
+          startDate={currentViewStartDate}
+          endDate={currentViewEndDate}
+        />
+      }
+      initialTopHeight={300}
       syncHorizontalScroll={true}
-      {...(dataProcessing ? { topCSSHeight: 'var(--height)' } : {})}
+      // {...(dataProcessing ? { topCSSHeight: 'var(--height)' } : {})}
     />
   ) : (
-    <Allocation />
+    <Allocation startDate={currentViewStartDate} endDate={currentViewEndDate} />
   );
 }

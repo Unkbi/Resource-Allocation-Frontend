@@ -15,7 +15,15 @@ import AllocationGrid from '../../AllocationTable/AllocationGrid';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 
-export default function TopProjectsView() {
+interface TopProjectsViewProps {
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export default function TopProjectsView({
+  startDate,
+  endDate,
+}: TopProjectsViewProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const { splitViewCurrentProject } = useSelector(
     (state: RootState) => state.allocationView
@@ -23,7 +31,7 @@ export default function TopProjectsView() {
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const { startDate, endDate } = calendarDate || {};
+  // const { startDate, endDate } = calendarDate || {};
 
   const generateEmptyAllocation = (
     template: AllocationGridCell,

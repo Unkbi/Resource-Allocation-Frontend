@@ -12,7 +12,14 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 
-export default function TeamAllocation() {
+interface TeamAllocationProps {
+  startDate: string;
+  endDate: string;
+}
+export default function TeamAllocation({
+  startDate,
+  endDate,
+}: TeamAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
@@ -25,7 +32,7 @@ export default function TeamAllocation() {
   const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const { startDate, endDate } = calendarDate || {};
+  // const { startDate, endDate } = calendarDate || {};
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(

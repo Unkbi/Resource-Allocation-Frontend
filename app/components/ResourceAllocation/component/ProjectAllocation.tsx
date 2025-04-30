@@ -12,13 +12,21 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 
-export default function ProjectAllocation() {
+interface ProjectAllocationProps {
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export default function ProjectAllocation({
+  startDate,
+  endDate,
+}: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const { projects } = useSelector((state: RootState) => state.projects);
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const { startDate, endDate } = calendarDate || {};
+  // const { startDate, endDate } = calendarDate || {};
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
