@@ -12,6 +12,7 @@ interface HorizontalSplitViewProps {
   syncHorizontalScroll?: boolean;
   classNameTop?: string;
   classNameBottom?: string;
+  topCSSHeight?: string | null;
 }
 
 const Container = styled('div')({
@@ -22,7 +23,7 @@ const Container = styled('div')({
   overflow: 'hidden',
 });
 
-const TopPanel = styled('div')<{ height: number }>(({ height }) => ({
+const TopPanel = styled('div')<{ height: string | number }>(({ height }) => ({
   height,
   overflow: 'auto',
   flexShrink: 0,
@@ -66,6 +67,7 @@ const HorizontalSplitView: React.FC<HorizontalSplitViewProps> = ({
   syncHorizontalScroll = false,
   classNameTop = '',
   classNameBottom = '',
+  topCSSHeight = null,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -117,9 +119,6 @@ const HorizontalSplitView: React.FC<HorizontalSplitViewProps> = ({
   // 💡 General scroll sync logic
   useEffect(() => {
     if (!syncHorizontalScroll) return;
-
-    // const topScroll = getScrollTarget(topRef.current);
-    // const bottomScroll = getScrollTarget(bottomRef.current);
     if (!topScroll || !bottomScroll) return;
 
     const handleTopScroll = () => {
@@ -151,7 +150,11 @@ const HorizontalSplitView: React.FC<HorizontalSplitViewProps> = ({
 
   return (
     <Container ref={containerRef}>
-      <TopPanel ref={topRef} height={topHeight} className={classNameTop}>
+      <TopPanel
+        ref={topRef}
+        height={topCSSHeight ?? topHeight}
+        className={classNameTop}
+      >
         {top}
       </TopPanel>
       <Resizer onMouseDown={handleMouseDown} />

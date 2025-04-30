@@ -1,36 +1,31 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  fetchAllTeams,
-  fetchResourcesAgainstTeams,
-} from '@/app/redux/actions/fetchTeamsAction';
-import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import {
-  generateDateWeekMath,
-  getAllocationManagerFromPath,
-} from '@/app/utils/common';
+import { getAllocationManagerFromPath } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
+import { Box } from '@mui/material';
+import { AllAllocations } from '@/app/types';
 
 export default function TeamAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
-  const [allocationThreshold, setAllocationThreshold] = useState(0);
   const dispatch = useDispatch<AppDispatch>();
-  const { teams, resources, loading, dataProcessing, calendarDate } =
-    useSelector((state: RootState) => state.teams);
-  const { startDate, endDate } = calendarDate || {};
+  const { teams } = useSelector((state: RootState) => state.teams);
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
+  const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
+    (state: RootState) => state.allAllocations
+  );
+  const { startDate, endDate } = calendarDate || {};
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -45,46 +40,6 @@ export default function TeamAllocation() {
       })
     );
   };
-
-  useEffect(() => {
-    if (!teams?.result?.length) {
-      dispatch(fetchAllTeams());
-    }
-  }, []);
-
-  useEffect(() => {
-    if (teams?.result?.length && startDate && endDate) {
-      dispatch(resetResources());
-      // dispatch(
-      //   fetchResourcesAgainstTeams(teams.result, null, startDate, endDate)
-      // );
-      dispatch({
-        type: 'FETCH_RESOURCES_AGAINST_TEAMS',
-        payload: {
-          teams: teams?.result,
-          StartDate: currentView?.isDynamicRange
-            ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
-            : currentView?.isFixedRange
-              ? currentView?.StartDate
-              : startDate,
-          EndDate: currentView?.isDynamicRange
-            ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-            : currentView?.isFixedRange
-              ? currentView?.EndDate
-              : endDate,
-        },
-      });
-    }
-  }, [
-    teams,
-    calendarDate,
-    currentView?.isDynamicRange,
-    currentView?.isFixedRange,
-    currentView?.WeekPlus,
-    currentView?.WeekMinus,
-    currentView?.StartDate,
-    currentView?.EndDate,
-  ]);
 
   const getTeam = (params: GridCellParams) => {
     if (
@@ -191,48 +146,53 @@ export default function TeamAllocation() {
     },
   ];
 
+  const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
+    return allocations.filter(allocation => allocation.teams);
+  };
+
   return (
     <>
-      <AllocationGrid
-        loading={loading || dataProcessing}
-        groupBy="teams"
-        mode="team"
-        startDate={startDate}
-        endDate={endDate}
-        columns={teamsColumnConfig}
-        selectedTeam={selectedTeam}
-        toolbarComponent={CustomToolbar}
-        setAllocationThreshold={setAllocationThreshold}
-        setSelectedTeam={setSelectedTeam}
-        initialState={{
-          columns: {
-            columnVisibilityModel: {
-              teamAllocationManager: false,
-              teamStatus: false,
-              __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
-              __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
-              project: true,
-              resourceType: true,
-              teams: false, // This column has to always be false, as we are using grouping.
-              resource: false, // This column has to always be false, as we are using grouping.
+      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+        <AllocationGrid
+          loading={loading || dataProcessing}
+          groupBy="teams"
+          mode="team"
+          startDate={startDate}
+          endDate={endDate}
+          columns={teamsColumnConfig}
+          selectedTeam={selectedTeam}
+          toolbarComponent={CustomToolbar}
+          setSelectedTeam={setSelectedTeam}
+          initialState={{
+            columns: {
+              columnVisibilityModel: {
+                teamAllocationManager: false,
+                teamStatus: false,
+                __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
+                __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
+                project: true,
+                resourceType: true,
+                teams: false, // This column has to always be false, as we are using grouping.
+                resource: false, // This column has to always be false, as we are using grouping.
+              },
             },
-          },
-        }}
-        NoRowsOverlay = {NoRowsOverlay}
-        data={resources}
-      />
-      {!resources && !loading && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '90vh',
           }}
-        >
-          <div>No Data</div>
-        </div>
-      )}
+          NoRowsOverlay={NoRowsOverlay}
+          data={removeResourcesWithNoTeams(allAllocations || []) ?? []}
+        />
+        {!allAllocations && !loading && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '90vh',
+            }}
+          >
+            <div>No Data</div>
+          </div>
+        )}
+      </Box>
     </>
   );
 }

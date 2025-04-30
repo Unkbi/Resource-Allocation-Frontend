@@ -61,7 +61,6 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
 }));
 
 const StyledSubmitButton = styled(Button)(({ theme }) => ({
-  width: '86px',
   height: '36px',
   borderRadius: '4px',
   fontFamily: theme.typography.fontFamily,
@@ -112,6 +111,7 @@ const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel }) => {
     title,
     submitButtonText,
     secondaryButtonText,
+    primarySecondButtonText,
     cancelButtonText,
   } = dialogState;
 
@@ -129,7 +129,24 @@ const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel }) => {
         </StyledIconButton>
         <DialogContent>{children}</DialogContent>
         <DialogActions>
-          {secondaryButtonText ? (
+          {primarySecondButtonText ? (
+            <StyledDialogActionsContainer>
+              <StyledCancelButton variant="outlined" onClick={handleClose}>
+                {cancelButtonText}
+              </StyledCancelButton>
+              <StyledSubmitButtonContainer>
+                <StyledSubmitButton onClick={onSubmit} variant="contained">
+                  {submitButtonText}
+                </StyledSubmitButton>
+                <StyledSubmitButton
+                  variant="contained"
+                  onClick={onSecondarySubmit}
+                >
+                  {primarySecondButtonText}
+                </StyledSubmitButton>
+              </StyledSubmitButtonContainer>
+            </StyledDialogActionsContainer>
+          ) : secondaryButtonText ? (
             <StyledDialogActionsContainer>
               <StyledCancelButton variant="outlined" onClick={handleClose}>
                 {cancelButtonText}

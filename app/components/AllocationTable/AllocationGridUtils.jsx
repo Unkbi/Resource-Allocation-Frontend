@@ -69,7 +69,9 @@ const CellWithMenu = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteParams, setDeleteParams] = useState(null);
   const allTeams = useSelector(state => state.teams.teams?.result || []);
-  const allResources = useSelector(state => state.resources.resources?.result || []);
+  const allResources = useSelector(
+    state => state.resources.resources?.result || []
+  );
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
 
@@ -78,7 +80,7 @@ const CellWithMenu = ({
     setShowDeleteDialog(true);
     setAnchorEl(null);
   };
-  
+
   const handleConfirmDelete = async () => {
     const row = deleteParams.row;
     const resourceId = row?.resourceId;
@@ -86,7 +88,7 @@ const CellWithMenu = ({
     const allocationIds = Object.values(row)
       .filter(cell => cell?.allocationId)
       .map(cell => cell.allocationId);
-  
+
     const deletePayloads = allocationIds.map(allocationId => ({
       resourceId,
       allocationId,
@@ -95,27 +97,32 @@ const CellWithMenu = ({
     await Promise.all(
       deletePayloads.map(payload => dispatch(removeResourceAllocation(payload)))
     );
-  
+
     const updatedRows = rowState.filter(r => r.id !== row.id);
     dispatch(setRowState(updatedRows));
 
     const fullResource = allResources.find(r => r.Id === resourceId);
     const team = allTeams.find(team => team.Name === row.teams);
-    
+
     if (fullResource && team) {
       const rowId = `auto-generated-row-teams/${team.Name}-resource/${fullResource.FullName}`;
       dispatch(setExpandRowId([rowId]));
     }
 
-    const itemName = view === 'Project' ? deleteParams?.row?.resource : deleteParams?.row?.project;
+    const itemName =
+      view === 'Project'
+        ? deleteParams?.row?.resource
+        : deleteParams?.row?.project;
 
-    dispatch(showToast({
-      open: true,
-      message: `${itemName} has been successfully deleted.`,
-      type: "success",
-      position: "bottom-right",
-      autoHideTimer: 4000,
-    }));
+    dispatch(
+      showToast({
+        open: true,
+        message: `${itemName} has been successfully deleted.`,
+        type: 'success',
+        position: 'bottom-right',
+        autoHideTimer: 4000,
+      })
+    );
 
     setShowDeleteDialog(false);
     setDeleteParams(null);
@@ -226,7 +233,11 @@ const CellWithMenu = ({
         onConfirm={handleConfirmDelete}
         title="Alert"
       >
-        Are you sure you want to delete: {view === 'Project' ? deleteParams?.row?.resource : deleteParams?.row?.project}?
+        Are you sure you want to delete:{' '}
+        {view === 'Project'
+          ? deleteParams?.row?.resource
+          : deleteParams?.row?.project}
+        ?
       </ConfirmDialog>
     </>
   );
@@ -256,6 +267,7 @@ export const getInitialState = (
 export const getFinalColumns = (
   columns,
   groupBy,
+  mode,
   setSelectedTeam,
   handleAddProject,
   setSelectedResourceId,
@@ -265,25 +277,45 @@ export const getFinalColumns = (
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
+  const { splitViewCurrentProject } = useSelector(
+    state => state.allocationView
+  );
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
     endDate
   );
+
   const handleAddClick = params => {
-    dispatch(
-      openDialog({
-        title: 'Update Allocation',
-        submitButtonText: 'Update',
-        cancelButtonText: 'Cancel',
-        formType: 'add_allocation',
-        initialData: {
-          Resource: params.value,
-          Project: params.row.project,
-        },
-      })
-    );
+    debugger;
+    if (mode === 'split' && splitViewCurrentProject) {
+      dispatch(
+        openDialog({
+          title: 'Add Allocation',
+          submitButtonText: 'Update',
+          cancelButtonText: 'Cancel',
+          formType: 'add_allocation',
+          initialData: {
+            Resource: params.value,
+            Project: splitViewCurrentProject.Name,
+          },
+        })
+      );
+    } else {
+      dispatch(
+        openDialog({
+          title: 'Update Allocation',
+          submitButtonText: 'Update',
+          cancelButtonText: 'Cancel',
+          formType: 'add_allocation',
+          initialData: {
+            Resource: params.value,
+            Project: params.row.project,
+          },
+        })
+      );
+    }
   };
 
   const handleCloneClick = params => {

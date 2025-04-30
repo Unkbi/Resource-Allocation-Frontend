@@ -90,12 +90,13 @@ export default function BottomTeamsView() {
     },
   ];
 
-  const computeAverageAllocations = (data: any[]) => {
+  const computeAverageAllocations = (data: AllAllocations[]) => {
     const grouped: Record<string, any[]> = {};
 
     // Group by resource
     data.forEach(row => {
       const resource = row.resource;
+      if (!resource) return; // Skip if resource is not defined
       if (!grouped[resource]) grouped[resource] = [];
       grouped[resource].push(row);
     });
@@ -103,28 +104,26 @@ export default function BottomTeamsView() {
     const result: any[] = [];
 
     Object.entries(grouped).forEach(([resource, rows]) => {
-      const weeks: Record<string, number[]> = {};
+      let totalAllocation = 0;
+      const seenWeeks = new Set<string>();
 
-      // Step 2: Accumulate allocations per week across projects
       rows.forEach(row => {
         Object.keys(row).forEach(key => {
           if (key.startsWith('W') && typeof row[key] === 'object') {
             const value = parseFloat(row[key]?.value ?? 0);
-            if (!weeks[key]) weeks[key] = [];
-            weeks[key].push(value);
+            totalAllocation += value;
+            if (!seenWeeks.has(key)) {
+              seenWeeks.add(key);
+            }
           }
         });
       });
 
-      // Step 3: Compute average and attach to each row
-      const avgPerWeek: Record<string, number> = {};
-      Object.entries(weeks).forEach(([week, values]) => {
-        avgPerWeek[week] = values.reduce((a, b) => a + b, 0) / values.length;
-      });
-
+      const avgAllocation =
+        seenWeeks.size > 0 ? totalAllocation / seenWeeks.size : 0;
       rows.forEach(row => {
         const cloned = { ...row };
-        cloned._avgWeeklyAllocation = avgPerWeek;
+        cloned._avgPeriodAllocation = avgAllocation; // New field
         result.push(cloned);
       });
     });
@@ -146,16 +145,12 @@ export default function BottomTeamsView() {
         ? row.teams && selectedTeam.some(team => team.label === row.teams)
         : true;
 
-      const avgWeekly = row._avgWeeklyAllocation ?? {};
+      const avgWeekly = row._avgPeriodAllocation ?? 0;
       if (allocationThreshold === 0) {
         return teamMatch;
       }
-      //checks if all weeks satisfy the condition
-      const hasBelowThreshold = Object.values(avgWeekly).every(
-        avg => (avg as number) < allocationThreshold
-      );
 
-      return teamMatch && hasBelowThreshold;
+      return teamMatch && avgWeekly <= allocationThreshold;
     });
   }, [enrichedResources, selectedTeam, allocationThreshold]);
 

@@ -2,23 +2,22 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
 import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
-import { Tooltip } from '@mui/material';
+import { Box } from '@mui/material';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import EllipsisNameCell from './EllipsisNameCell'; 
+import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 
 export default function ProjectAllocation() {
   const [selectedTeam, setSelectedTeam] = useState('');
-  const [allocationThreshold, setAllocationThreshold] = useState(0);
-  const { projects, allocations, loading, dataProcessing, calendarDate } =
-    useSelector((state: RootState) => state.projects);
+  const { projects } = useSelector((state: RootState) => state.projects);
+  const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
+    (state: RootState) => state.allAllocations
+  );
   const { startDate, endDate } = calendarDate || {};
   const dispatch: AppDispatch = useDispatch();
 
@@ -32,7 +31,7 @@ export default function ProjectAllocation() {
     ) {
       dispatch(resetAllocations());
       dispatch({
-        type: 'FETCH_ALL_ALLOCATIONS',
+        type: 'FETCH_PROJECTS_ALLOCATIONS',
         payload: { projects: projects?.result, startDate, endDate },
       });
     }
@@ -275,40 +274,41 @@ export default function ProjectAllocation() {
 
   return (
     <>
-      <AllocationGrid
-        groupBy="project"
-        columns={projectColumnConfig}
-        startDate={startDate}
-        mode="project"
-        endDate={endDate}
-        selectedTeam={selectedTeam}
-        toolbarComponent={CustomToolbar}
-        setAllocationThreshold={setAllocationThreshold}
-        setSelectedTeam={setSelectedTeam}
-        initialState={{
-          columns: {
-            columnVisibilityModel: {
-              project: false,
-              projectCost: false,
-              projectCurrency: false,
-              projectEndDate: false,
-              projectLocation: false,
-              projectManager: false,
-              projectOvertimeAllowed: false,
-              projectSponsor: false,
-              projectStartDate: false,
-              projectStatus: false,
-              projectType: false,
-              totalEffort: true,
-              resource: true, // Always be true
-              __row_group_by_columns_group__: true, // Always be true
+      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+        <AllocationGrid
+          groupBy="project"
+          columns={projectColumnConfig}
+          startDate={startDate}
+          mode="project"
+          endDate={endDate}
+          selectedTeam={selectedTeam}
+          toolbarComponent={CustomToolbar}
+          setSelectedTeam={setSelectedTeam}
+          initialState={{
+            columns: {
+              columnVisibilityModel: {
+                project: false,
+                projectCost: false,
+                projectCurrency: false,
+                projectEndDate: false,
+                projectLocation: false,
+                projectManager: false,
+                projectOvertimeAllowed: false,
+                projectSponsor: false,
+                projectStartDate: false,
+                projectStatus: false,
+                projectType: false,
+                totalEffort: true,
+                resource: true, // Always be true
+                __row_group_by_columns_group__: true, // Always be true
+              },
             },
-          },
-        }}
-        NoRowsOverlay = {NoRowsOverlay}
-        data={allocations}
-        loading={loading || dataProcessing}
-      />
+          }}
+          NoRowsOverlay={NoRowsOverlay}
+          data={allAllocations}
+          loading={loading || dataProcessing}
+        />
+      </Box>
     </>
   );
 }

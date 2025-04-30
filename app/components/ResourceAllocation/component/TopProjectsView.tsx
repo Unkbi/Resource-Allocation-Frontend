@@ -1,46 +1,29 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
+import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
-import { AppDispatch, RootState } from '@/app/redux/store';
+import { RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import {
+  AllAllocations,
   AllocationGridCell,
   AllocationGridCellData,
   ProjectsTableRow,
 } from '@/app/types';
 import AllocationGrid from '../../AllocationTable/AllocationGrid';
 import { Box } from '@mui/material';
+import NoRowsOverlay from './NoRowsOverlay';
 
 export default function TopProjectsView() {
   const [selectedTeam, setSelectedTeam] = useState('');
-
-  const { projects, allocations, loading, dataProcessing, calendarDate } =
-    useSelector((state: RootState) => state.projects);
   const { splitViewCurrentProject } = useSelector(
     (state: RootState) => state.allocationView
   );
+  const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
+    (state: RootState) => state.allAllocations
+  );
   const { startDate, endDate } = calendarDate || {};
-  const dispatch: AppDispatch = useDispatch();
-
-  console.log('splitViewCurrentProject : ', splitViewCurrentProject);
-  useEffect(() => {
-    if (
-      projects &&
-      'result' in projects &&
-      projects?.result?.length &&
-      startDate &&
-      endDate
-    ) {
-      dispatch(resetAllocations());
-      dispatch({
-        type: 'FETCH_ALL_ALLOCATIONS',
-        payload: { projects: projects?.result, startDate, endDate },
-      });
-    }
-  }, [projects, calendarDate]);
 
   const generateEmptyAllocation = (
     template: AllocationGridCell,
@@ -83,7 +66,7 @@ export default function TopProjectsView() {
   };
 
   const filterAllocationsForSelectedProject = (
-    allocations: AllocationGridCell[]
+    allocations: AllAllocations[]
   ) => {
     if (allocations && allocations.length > 0 && splitViewCurrentProject) {
       const selectedProjectAllocations = allocations.filter(
@@ -96,35 +79,6 @@ export default function TopProjectsView() {
     }
     return allocations;
   };
-  console.log(
-    'filterAllocationsForSelectedProject(allocations) : ',
-    filterAllocationsForSelectedProject(allocations)
-  );
-
-  // const handleAddClick = (params: GridCellParams) => {
-  //   dispatch(
-  //     openDialog({
-  //       title: 'Update Allocation',
-  //       submitButtonText: 'Update',
-  //       cancelButtonText: 'Cancel',
-  //       formType: 'add_allocation',
-  //       initialData: {
-  //         Project: params.value,
-  //       },
-  //     })
-  //   );
-  // };
-
-  // const getFirstChild = (params: GridCellParams) => {
-  //   const { rowNode, api } = params;
-  //   const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-  //   if (isGridTreeNode && rowNode.children && rowNode.children.length > 0) {
-  //     const firstChildId = rowNode.children[0];
-  //     const firstChildRow = api.getRow(firstChildId);
-  //     return firstChildRow;
-  //   }
-  //   return null;
-  // };
 
   const projectColumnConfig = [
     {
@@ -154,7 +108,7 @@ export default function TopProjectsView() {
       },
     },
     {
-      field: 'team',
+      field: 'teams',
       headerName: 'Team',
       width: 148,
       type: 'string',
@@ -172,13 +126,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectManager',
@@ -189,12 +136,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectManager ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectStatus',
@@ -204,12 +145,6 @@ export default function TopProjectsView() {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectStatus ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectLocation',
@@ -220,12 +155,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectLocation ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectType',
@@ -236,12 +165,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectType ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectOvertimeAllowed',
@@ -252,14 +175,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell
-      //       value={firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}
-      //     />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectCost',
@@ -270,12 +185,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectCost ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectCurrency',
@@ -286,12 +195,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectCurrency ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectStartDate',
@@ -302,12 +205,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectStartDate ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'projectEndDate',
@@ -318,12 +215,6 @@ export default function TopProjectsView() {
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      // renderCell: (params: GridCellParams) => {
-      //   const firstChild = getFirstChild(params);
-      //   return firstChild ? (
-      //     <EllipsisNameCell value={firstChild.projectEndDate ?? 'N/A'} />
-      //   ) : null;
-      // },
     },
     {
       field: 'totalEffort',
@@ -347,11 +238,6 @@ export default function TopProjectsView() {
     },
   ];
 
-  console.log(
-    'filterAllocationsForSelectedProject(allocations): ',
-    filterAllocationsForSelectedProject(allocations)
-  );
-
   return (
     <>
       <Box sx={{ height: 'var(--height)', width: '100%' }}>
@@ -362,6 +248,7 @@ export default function TopProjectsView() {
           endDate={endDate}
           selectedTeam={selectedTeam}
           setSelectedTeam={setSelectedTeam}
+          mode={'split'}
           initialState={{
             columns: {
               columnVisibilityModel: {
@@ -386,13 +273,15 @@ export default function TopProjectsView() {
               left: [
                 '__row_group_by_columns_group__',
                 'resource',
-                'team',
+                'teams',
                 'totalEffort',
               ],
             },
           }}
-          data={filterAllocationsForSelectedProject(allocations) || []}
+          data={filterAllocationsForSelectedProject(allAllocations || []) || []}
           loading={loading || dataProcessing}
+          NoRowsOverlay={NoRowsOverlay}
+          toolbarComponent={''}
         />
       </Box>
     </>

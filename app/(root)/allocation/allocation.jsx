@@ -17,7 +17,6 @@ import { useSearchParams } from 'next/navigation';
 import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
-import SplitView from '@/app/components/ResourceAllocation/component/SplitView';
 
 export default function Allocation() {
   const dispatch = useDispatch();
@@ -57,6 +56,7 @@ export default function Allocation() {
   }, [settingsParam]);
 
   const getContentByRole = view => {
+    // return <ProjectAllocation />;
     if (currentView?.GroupBy) {
       switch (currentView.GroupBy) {
         case 'Project':

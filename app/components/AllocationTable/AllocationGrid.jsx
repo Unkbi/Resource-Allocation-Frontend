@@ -67,7 +67,6 @@ export default function AllocationGrid({
   loading,
   selectedTeam,
   setSelectedTeam,
-  setAllocationThreshold,
   initialState: _initialState,
   startDate,
   endDate,
@@ -224,13 +223,26 @@ export default function AllocationGrid({
     try {
       if (groupBy === 'teams' && expandRowId?.length && rowState?.length) {
         expandRowId.forEach(rowId => {
-          apiRef.current.setRowChildrenExpansion(rowId, true);
+          const row = apiRef.current.getRow(rowId);
+          if (row) {
+            setTimeout(() => {
+              apiRef.current.setRowChildrenExpansion(rowId, true);
+            }, 50);
+          } else {
+            // Row not ready yet, retry after small delay
+            setTimeout(() => {
+              const delayedRow = apiRef.current.getRow(rowId);
+              if (delayedRow) {
+                apiRef.current.setRowChildrenExpansion(rowId, true);
+              }
+            }, 50);
+          }
         });
       }
     } catch (error) {
       console.warn('Error in setting row expansion', error);
     }
-  }, [expandRowId, rowState?.length]);
+  }, [expandRowId, rowState?.length, groupBy, apiRef, data]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -258,7 +270,7 @@ export default function AllocationGrid({
           ? Object.keys(cellSelectionModel)
           : Object.keys(cellSelectionData);
 
-      const [field] =
+      const field =
         Object.keys(cellSelectionModel).length > 0
           ? Object.keys(cellSelectionModel[rowId])
           : Object.keys(cellSelectionData[rowId]);
@@ -266,7 +278,9 @@ export default function AllocationGrid({
       const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
       const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
       const rowIndex = visibleRowIds.indexOf(rowId);
-      const colIndex = visibleColumns.findIndex(col => col.field === field);
+      const colIndex = visibleColumns.findIndex(col =>
+        field.includes(col.field)
+      );
 
       if (rowIndex === -1 || colIndex === -1) {
         return;
@@ -274,10 +288,10 @@ export default function AllocationGrid({
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
       setCellSelectionModel(cellSelectionData);
     };
-    const timeoutId = setTimeout(handleScrollAndFocus, 100);
+    const timeoutId = setTimeout(handleScrollAndFocus, 1000);
     setExpandRowId(null);
     return () => clearTimeout(timeoutId);
-  }, [rowState, apiRef, cellSelectionData, view]);
+  }, [rowState, apiRef, cellSelectionData, view, data]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -558,6 +572,7 @@ export default function AllocationGrid({
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
+    mode,
     setSelectedTeam,
     handleAddProject,
     setSelectedResourceId,
@@ -872,116 +887,115 @@ export default function AllocationGrid({
     );
   };
 
-  return (
-    <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
-      <StyledDataGrid
-        cellSelection
-        allocationTheme={allocationTheme}
-        isCellEditable={params => !params.row.hasButton}
-        onCellKeyDown={handleCellKeyDown}
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={handleRowModesModelChange}
-        processRowUpdate={handleCellUpdate}
-        onProcessRowUpdateError={err => {
-          console.error('Row update failed:', err);
-        }}
-        rows={rowState}
-        aggregationModel={aggregation}
-        columns={finalColumns}
-        rowSelection={true}
-        onRowClick={groupBy === 'teams' ? onRowClick : () => null}
-        apiRef={apiRef}
-        groupBy={groupBy}
-        loading={mode === "split" ? loading : loading || !rowState.length}
-        disableRowSelectionOnClick
-        initialState={initialState}
-        rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
-        columnHeaderHeight={30}
-        columnGroupHeaderHeight={22}
-        columnGroupingModel={generateColumnGroupingModel(
-          startDate,
-          finalColumns
-        )}
-        defaultGroupingExpansionDepth={1}
-        disableAutosize
-        getCellClassName={params =>
-          getCellClassName(params, updatedRows, allocationTheme)
-        }
-        getRowClassName={params => getRowClassName(params)}
-        cellSelectionModel={cellSelectionModel}
-        onCellSelectionModelChange={handleCellSelectionModelChange}
-        filterModel={filterModel}
-        onFilterModelChange={handleFilterModelChange}
-        columnVisibilityModel={columnVisibilityModel}
-        onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
-        localeText={{
+  const toolBarBasedProperties = toolbarComponent
+    ? {
+        filterModel: filterModel,
+        onFilterModelChange: handleFilterModelChange,
+        columnVisibilityModel: columnVisibilityModel,
+        onColumnVisibilityModelChange: handleColumnVisibilityModelChange,
+        localeText: {
           toolbarFilters: '',
           toolbarColumns: '',
-        }}
-        slots={{
-          // toolbar: ToolbarMod,
-          noRowsOverlay: NoRowsOverlay,
-          toolbar: toolbarComponent,
-          // columnMenu: CustomColumnMenu
-          columnMenu: props => {
-            return <CustomColumnMenu {...props} apiRef={apiRef} />;
-          },
-        }}
-        slotProps={{
-          loadingOverlay: {
-            variant: 'skeleton',
-            noRowsVariant: 'skeleton',
-          },
-          panel: {
-            anchorEl: filterButtonEl,
-            className: 'parent-grid-panel',
-          },
-          columnsManagement: {
-            getTogglableColumns,
-          },
-          toolbar: {
-            setFilterButtonEl,
-          },
-          columnsPanel: {
-            className: 'styleColumnMenu',
-            sx: ColumnManagementStyles,
-          },
-          filterPanel: {
-            columnsSort: 'asc',
-            className: 'filterPopup',
-            filterFormProps: {
-              filterColumns,
-              columnInputProps: {
+        },
+      }
+    : {};
+
+  return (
+    <StyledDataGrid
+      cellSelection
+      allocationTheme={allocationTheme}
+      isCellEditable={params => !params.row.hasButton}
+      onCellKeyDown={handleCellKeyDown}
+      rowModesModel={rowModesModel}
+      onRowModesModelChange={handleRowModesModelChange}
+      processRowUpdate={handleCellUpdate}
+      onProcessRowUpdateError={err => {
+        console.error('Row update failed:', err);
+      }}
+      rows={mode === 'split' ? data : rowState}
+      aggregationModel={aggregation}
+      columns={finalColumns}
+      rowSelection={true}
+      onRowClick={groupBy === 'teams' ? onRowClick : () => null}
+      apiRef={apiRef}
+      groupBy={groupBy}
+      loading={mode === 'split' ? loading : loading || !rowState.length}
+      disableRowSelectionOnClick
+      initialState={initialState}
+      rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
+      columnHeaderHeight={30}
+      columnGroupHeaderHeight={22}
+      columnGroupingModel={generateColumnGroupingModel(startDate, finalColumns)}
+      defaultGroupingExpansionDepth={1}
+      disableAutosize
+      getCellClassName={params =>
+        getCellClassName(params, updatedRows, allocationTheme)
+      }
+      getRowClassName={params => getRowClassName(params)}
+      cellSelectionModel={cellSelectionModel}
+      onCellSelectionModelChange={handleCellSelectionModelChange}
+      {...toolBarBasedProperties}
+      slots={{
+        noRowsOverlay: NoRowsOverlay,
+        toolbar: toolbarComponent,
+        columnMenu: props => {
+          return <CustomColumnMenu {...props} apiRef={apiRef} />;
+        },
+      }}
+      slotProps={{
+        loadingOverlay: {
+          variant: 'skeleton',
+          noRowsVariant: 'skeleton',
+        },
+        panel: {
+          anchorEl: filterButtonEl,
+          className: 'parent-grid-panel',
+        },
+        columnsManagement: {
+          getTogglableColumns,
+        },
+        toolbar: {
+          setFilterButtonEl,
+        },
+        columnsPanel: {
+          className: 'styleColumnMenu',
+          sx: ColumnManagementStyles,
+        },
+        filterPanel: {
+          columnsSort: 'asc',
+          className: 'filterPopup',
+          filterFormProps: {
+            filterColumns,
+            columnInputProps: {
+              size: 'small',
+              sx: { mt: 'auto' },
+            },
+            operatorInputProps: {
+              size: 'small',
+              sx: { mt: 'auto' },
+            },
+            valueInputProps: {
+              InputComponentProps: {
                 size: 'small',
-                sx: { mt: 'auto' },
-              },
-              operatorInputProps: {
-                size: 'small',
-                sx: { mt: 'auto' },
-              },
-              valueInputProps: {
-                InputComponentProps: {
-                  size: 'small',
-                },
-              },
-              deleteIconProps: {
-                sx: {
-                  '& .MuiSvgIcon-root': { color: '#d32f2f' },
-                },
               },
             },
-            sx: FilterPanelStyles,
+            deleteIconProps: {
+              sx: {
+                '& .MuiSvgIcon-root': { color: '#d32f2f' },
+              },
+            },
           },
-        }}
-        getAggregationPosition={groupNode =>
-          groupNode.depth === -1 ? null : 'inline'
-        }
-        hideFooter
-        editMode="row"
-        aggregationRowsCount={params => {
-          return params.rowNode.children?.length || 1;
-        }}
-      />
-    </Box>
+          sx: FilterPanelStyles,
+        },
+      }}
+      getAggregationPosition={groupNode =>
+        groupNode.depth === -1 ? null : 'inline'
+      }
+      hideFooter
+      editMode="row"
+      aggregationRowsCount={params => {
+        return params.rowNode.children?.length || 1;
+      }}
+    />
   );
 }

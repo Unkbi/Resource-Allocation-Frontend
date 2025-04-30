@@ -67,7 +67,6 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { set } from 'date-fns';
-import DeleteDialog from '../Dialog/DeleteDialog';
 import { compressToEncodedURIComponent } from 'lz-string';
 import CustomInput from '../Input/Input';
 import { showToastAction } from '@/app/redux/actions/toastAction';
@@ -356,7 +355,6 @@ const SplitTeamToolbar = memo(
       projectsCalendar,
       teamsCalendar
     );
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [shareLink, setShareLink] = useState('');
     const [deleteView, setDeleteView] = useState(null);
@@ -367,7 +365,7 @@ const SplitTeamToolbar = memo(
     const myTeamsButtonRef = useRef(null);
     const myProjectsButtonRef = useRef(null);
     const { initialData } = useSelector(state => state.globalDialog.formState);
-    
+
     const handleClose = () => {
       setAnchorEl(null);
     };

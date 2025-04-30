@@ -51,6 +51,8 @@ const COMPANY_DEFAULT_VIEW: AllocationGridView = {
 
 const initialState: AllocationGridViewState = {
   view: 'Teams',
+  splitView: false,
+  splitViewCurrentProject: null,
   loading: false,
   error: null,
   expandRowId: [],
@@ -99,6 +101,12 @@ const viewSlice = createSlice({
             ? DEFAULT_VISIBLE_TEAMS_COLUMNS
             : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
       };
+    },
+    setSplitView: (state, action) => {
+      state.splitView = action.payload;
+    },
+    setSplitViewCurrentProject: (state, action) => {
+      state.splitViewCurrentProject = action.payload;
     },
     setExpandRowId: (state, action) => {
       state.expandRowId = action.payload;
@@ -299,6 +307,8 @@ const viewSlice = createSlice({
 
 export const {
   changeView,
+  setSplitView,
+  setSplitViewCurrentProject,
   setExpandRowId,
   setCellSelectionData,
   setInitialCurrentView,
