@@ -32,7 +32,6 @@ export default function TeamAllocation({
   const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  // const { startDate, endDate } = calendarDate || {};
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
