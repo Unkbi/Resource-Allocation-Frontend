@@ -19,7 +19,7 @@ export default function ActualsPage() {
 
   
   return (
-    <Box px={{ xs: 2, sm: 4 }} py={4} height="90vw" > 
+    <Box px={{ xs: 2, sm: 4 }} py={4} height="66vw" > 
       <Typography variant="body1" mb={4}>
         It’s time to wrap up this week! Did you stick to your planned allocation?
       </Typography>

@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -25,6 +25,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import Skeleton from '@mui/material/Skeleton';
 
 const MainAppBar = styled(AppBar, {
   shouldForwardProp: prop => prop !== 'sidebarExpanded',
@@ -84,11 +85,26 @@ const Header = ({ sidebarExpanded }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
+  const { user } = useSelector(state => state.user);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
+  const [displayName, setDisplayName] = useState('');
+  const [loadingName, setLoadingName] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+    if (user?.FirstName || user?.LastName) {
+    setDisplayName(`${user?.FirstName ?? ''} ${user?.LastName ?? ''}`.trim());
+    } else {
+    setDisplayName('User');
+    }
+    setLoadingName(false);
+   }, 3000);
+   return () => clearTimeout(timer);
+   }, [user]);
 
   useEffect(() => {
     if (projects === null) {
@@ -195,6 +211,8 @@ const Header = ({ sidebarExpanded }) => {
         return;
       case '/help':
         return;
+      case '/actual':
+        return "Actuals" ;
       default:
         return 'Executive Dashboard';
     }
@@ -202,7 +220,17 @@ const Header = ({ sidebarExpanded }) => {
   return (
     <MainAppBar sidebarExpanded={sidebarExpanded}>
       <Toolbar className="toobarRow">
-        <Typography variant="h6">{getTitleFromPathname(pathname)}</Typography>
+        <Typography variant="h6"> 
+        {pathname === '/actual' ? (
+        <>  
+        {loadingName ? (
+        <Skeleton width={100} height={20} />
+         ) : (
+        `${displayName} : Actuals`
+        )}
+       </>
+        ) : (getTitleFromPathname(pathname))}
+        </Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
           <Box className="searchBar">
             <TextField

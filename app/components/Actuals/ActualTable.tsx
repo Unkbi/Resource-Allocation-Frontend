@@ -25,9 +25,9 @@ const initialRows: GridRowsProp = [
   { id: 4, project: 'Employee Benefits System', planned: 0.1, actuals: 0.1 },
   { id: 5, project: 'Schwab to Dayforce Integration', planned: 0.1, actuals: 0.1 },
   { id: 55, project: 'test project check ', planned: 0.22, actuals: 0.1 },
-  { id: 56, project: 'test project check ', planned: 0, actuals: 0.1 },
-  { id: 57, project: 'test project check ', planned: 0, actuals: 0.1 },
-  { id: 58, project: 'test project check ', planned: 0.1, actuals: 0.1 },
+  { id: 56, project: 'test project added ', planned: 0, actuals: 0.1 },
+  { id: 57, project: 'test project ', planned: 0, actuals: 0.1 },
+  { id: 58, project: 'gemini project ', planned: 0.1, actuals: 0.1 },
 ];
 
 const calculateTotal = (data: GridValidRowModel[], columnName: string) => {
@@ -39,7 +39,9 @@ const roundToOneDecimal = (num: number) => {
 
 export default function ActualTable() {
  const [rows, setRows] = useState(initialRows);
- const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+ const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(null);
+ const [projectMenuAnchor, setProjectMenuAnchor] = useState<null | HTMLElement>(null);
+ const [openMenu, setOpenMenu] = useState<string | null>(null);
  const allocationTheme = useSelector((state: RootState) => state.settings.allocationTheme)
  const [showProjectMenu, setShowProjectMenu] = useState(false);
 
@@ -93,6 +95,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
       headerClassName: 'header-planned',
       cellClassName: 'col-cell-planned',
       renderCell: (params) => {
+        if (params.row.type === 'divider') return null;
         const value = Number(params.value);
         const isAboveLimit = value > 1.5;
         if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
@@ -140,6 +143,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
       headerClassName: 'header-actuals',
       cellClassName: 'col-cell-actuals',
       renderCell: (params) => {
+        if (params.row.type === 'divider') return null
         const value = Number(params.value);
         const isAboveLimit = value > 1.5;
         if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
@@ -189,22 +193,25 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
     },
   ];
 
-  const menuOpen = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+    setMainMenuAnchor(event.currentTarget);
   };
 
   const handleClose = () => {
-    setAnchorEl(null);
+    setMainMenuAnchor(null);
+    setOpenMenu(null);
   };
 
   const handleMenuClick = (label: string) => {
+    setMainMenuAnchor(null);
+    setOpenMenu(label);
     switch (label) {
       case 'Project':
+        setMainMenuAnchor(null); 
+        setProjectMenuAnchor(mainMenuAnchor); 
         setShowProjectMenu(true); 
-        setAnchorEl(null); 
-      break;
+       break;
       case 'Other Work':
        alert('Navigate to other work page');  
        break;
@@ -261,6 +268,8 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
           processRowUpdate={handleProcessRowUpdate}
           getRowClassName={(params) => {
             if (params.id === 'total') return 'second-total-row';
+            if (params.id === 'divider') return 'divider-row';
+            if (params.row.id === rows[rows.length - 1].id) return 'last-row';
             return 'first-header-row';
           }}
           sx={actualsTableStyles}
@@ -270,12 +279,12 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
     </Box>
      
       <Box px={2} py={1} sx={{paddingBottom :"0",paddingLeft:'0'}}>
-        <Button variant="text" size="small" sx={{color:'#0D1F52',textTransform :'none',fontWeight:600}}  onClick={handleClick}>
+        <Button variant="text" size="small" sx={{color:'#0D1F52',textTransform :'none',fontWeight:600, cursor: 'pointer',}}  onClick={handleClick}>
           + Add Unplanned Actuals
         </Button>
         <Menu
-        anchorEl={anchorEl}
-        open={menuOpen}
+        anchorEl={mainMenuAnchor}
+        open={Boolean(mainMenuAnchor) && !showProjectMenu}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}
@@ -327,8 +336,11 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
       </Box>
       {showProjectMenu &&
        <ProjectMenu 
-       onClose={() => setShowProjectMenu(false)} 
-       anchorEl={anchorEl}
+       onClose={() => {
+        setShowProjectMenu(false);
+        setMainMenuAnchor(null);
+      }} 
+       anchorEl={projectMenuAnchor}
        setRows={setRows}
        existingRows={rows}/>}
 
