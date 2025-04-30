@@ -137,3 +137,37 @@ export const fetchAllAllocations = async postData => {
   );
   return response.data;
 };
+
+export const putResourceBulkAllocations = createAsyncThunk(
+  '/allocations/bulkput',
+  async (payload, { rejectWithValue }) => {
+    try {     
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/RangeAllocationUpsert`,
+        payload.body
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to set bulk resource allocation'
+      );
+    }
+  }
+);
+
+export const deleteResourceBulkAllocations = createAsyncThunk(
+  '/allocations/bulkdelete',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/RangeAllocationDelete`,
+        payload.body
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to delete bulk resource allocation'
+      );
+    }
+  }
+);

@@ -9,7 +9,7 @@ import { useSelector, useDispatch } from "react-redux";
 import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker";
 import { showToast } from "@/app/redux/reducers/toastReducer";
 
-const CloneResourceForm = ({ formikProps, setFormValue }) => {
+const CloneResourceForm = ({ formikProps, setFormValue }) => { 
   const { values, handleChange, handleBlur, setFieldValue } = formikProps;
   const { projects } = useSelector((state) => state.projects);
   const { resources } = useSelector((state) => state.resources);
@@ -56,7 +56,7 @@ const CloneResourceForm = ({ formikProps, setFormValue }) => {
       ? resourceTypeOptions.filter((opt) => values.Resource.includes(opt.value))
       : [];
 
-  const selectedProjects = Array.isArray(values?.Project)
+      const selectedProjects = Array.isArray(values?.Project)
   ? projects?.result?.filter((proj) => values?.Project?.includes(proj.Id))
   : [initialData?.Project];
   const projectNames = selectedProjects?.map((proj) => proj.Name) || [];
@@ -71,6 +71,7 @@ const CloneResourceForm = ({ formikProps, setFormValue }) => {
       const rowData = {
         Resource: [],
         Project: filteredProjectIds,
+        allocations: initialData?.allocations || [],
         StartDate: initialData.StartDate || "",
         EndDate: initialData.EndDate || "",
       };
@@ -85,6 +86,15 @@ const CloneResourceForm = ({ formikProps, setFormValue }) => {
   }
 };
 
+const formatProjectNames = (names, limit = 2) => {
+  if (!names || names.length === 0) return '';
+  if (names.length <= limit) return names.join(', ');
+  
+  const visibleNames = names.slice(0, limit);
+  const remaining = names.length - limit;
+  return `${visibleNames.join(', ')} +${remaining} more`;
+};
+
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
@@ -93,8 +103,16 @@ const CloneResourceForm = ({ formikProps, setFormValue }) => {
           as={TextField}
           name="project"
           fullWidth
-          value={projectNames.join(", ")} 
+          value={formatProjectNames(projectNames)} 
           disabled
+          sx={{
+            "& .MuiInputBase-input": {
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              overflow: "hidden"
+            }
+          }}
+          title={projectNames.join(", ")} // Show full list on hover
         />
       </Box>
 

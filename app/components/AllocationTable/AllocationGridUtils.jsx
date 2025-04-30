@@ -135,7 +135,7 @@ const CellWithMenu = ({
     {
       label: 'Clone',
       icon: <ContentCopyIcon fontSize="small" />,
-      func: () => handleCloneClick(params),
+      func: () => handleCloneClick(params,rowState),
     },
     {
       label: 'Transfer',
@@ -286,17 +286,30 @@ export const getFinalColumns = (
     );
   };
 
-  const handleCloneClick = params => {
+  const handleCloneClick = (params,rowState) => {
+    const allAllocationsOfResource = rowState.filter(
+      row => row.resource === params.value
+    );
+  
+    const projectsOfResource = Array.from(new Set(
+      allAllocationsOfResource.map(r => r.project)
+    ));
     dispatch(
       openDialog({
         title: 'Clone Resource',
         submitButtonText: 'Clone',
         cancelButtonText: 'Cancel',
         formType: 'clone_resource',
-        initialData: {
-          Resource: params.row.resource,
-          Project: params.row.project,
-        },
+        initialData: params.rowNode.groupingField !== 'resource'
+          ? {
+              Resource: params.row.resource,
+              Project: params.row.project,
+            }
+          : {
+              Resource: params.value,
+              Project: projectsOfResource,
+              allocations: allAllocationsOfResource,
+            },
       })
     );
   };
@@ -329,15 +342,15 @@ export const getFinalColumns = (
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
-        renderCell: params => {
+        renderCell: params => {          
           const value = params.value;
           const resourceCount = params.row?.resource_count?.length || 0;
           return value ? (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
-              // handleCloneClick={handleCloneClick}
-              // handleTranferClick={handleTranferClick}
+              handleCloneClick={handleCloneClick}
+              handleTranferClick={handleTranferClick}
             />
           ) : null;
         },
