@@ -19,7 +19,7 @@ export default function ActualsPage() {
 
   
   return (
-    <Box px={{ xs: 2, sm: 4 }} py={4} height="66vw" > 
+    <Box px={{ xs: 2, sm: 4 }} py={4} height="auto" > 
       <Typography variant="body1" mb={4}>
         It’s time to wrap up this week! Did you stick to your planned allocation?
       </Typography>
@@ -28,47 +28,35 @@ export default function ActualsPage() {
         <IconButton>
           <ArrowBackIosNewIcon />
         </IconButton>
-        <Box mx={2} width="100%" maxWidth={580} position="relative">
+        <Box mx={2} width="100%" maxWidth={580}>
           <ActualTable/>
-          
-          <Box
-            position="absolute"
-            bottom={-50} 
-            right={0}
-            zIndex={10}
-          >
-            <Button
-              variant="contained"
-              sx={{ 
-                bgcolor: '#1C2D5F', 
-                px: 2 ,
-                width: '192px',
-                height: '38px',
-                flexShrink: '0',
-                borderRadius :'5px',
-                alignItems:'center',
-                justifyContent:'center'
-                
-            }}
-              onClick={handleNext}
-            >
-            <Typography
-            sx={{
-                color: '#FFF',
-                textAlign: 'center',
-                fontFamily: 'Open Sans',
-                fontSize: 14,
-                fontStyle: 'normal',
-                fontWeight: 600,
-                lineHeight: 'normal',
-                textTransform :'none',
-                }} 
-            >
-            {step < 4 ? "Next" : "Confirm"}
-            </Typography>
-            </Button>
-          </Box>
+         <Box mt={2} display="flex" justifyContent="flex-end">
+         <Button
+          variant="contained"
+          sx={{
+          bgcolor: '#1C2D5F',
+          px: 2,
+          width: '192px',
+          height: '38px',
+          borderRadius: '5px',
+        }}
+         onClick={handleNext}
+         >
+       <Typography
+        sx={{
+          color: '#FFF',
+          textAlign: 'center',
+          fontFamily: 'Open Sans',
+          fontSize: 14,
+          fontWeight: 600,
+          textTransform: 'none',
+        }}
+        >
+        {step < 4 ? 'Next' : 'Confirm'}
+      </Typography>
+        </Button>
         </Box>
+       </Box>
         <IconButton>
           <ArrowForwardIosIcon />
         </IconButton>
