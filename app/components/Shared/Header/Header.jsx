@@ -10,6 +10,7 @@ import {
   styled,
   Box,
   colors,
+  Button,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
@@ -25,6 +26,10 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import {
+  setSplitView,
+  setSplitViewCurrentProject,
+} from '@/app/redux/reducers/allocationViewReducer';
 
 const MainAppBar = styled(AppBar, {
   shouldForwardProp: prop => prop !== 'sidebarExpanded',
@@ -80,10 +85,24 @@ const MainAppBar = styled(AppBar, {
   },
 }));
 
+const StyledButton = styled(Button)(({ theme }) => ({
+  display: 'flex',
+  width: '96px',
+  height: '32px',
+  padding: '10px',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: '8px',
+  flexShrink: '0',
+  fontWeight: '700',
+  fontSize: '12px',
+}));
+
 const Header = ({ sidebarExpanded }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
+  const { splitView } = useSelector(state => state.allocationView);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
@@ -119,6 +138,10 @@ const Header = ({ sidebarExpanded }) => {
     }
   }
 
+  function handleSplitViewDone() {
+    dispatch(setSplitView(false));
+    dispatch(setSplitViewCurrentProject(null));
+  }
   // return focus to the button when we transitioned from !open -> open
   const prevOpenAdd = React.useRef(openAddMenu);
 
@@ -141,6 +164,7 @@ const Header = ({ sidebarExpanded }) => {
       alt: 'Project Icon',
       title: 'Add Project',
       type: 'add_project',
+      primarySecondButtonText: 'Add & Allocate Resources',
       initialData: {
         Status: 'Active',
       },
@@ -165,14 +189,19 @@ const Header = ({ sidebarExpanded }) => {
     },
   ];
 
-  const handleOpenDialog = (title, formType, initialData = null) => {
+  const handleOpenDialog = (
+    title,
+    formType,
+    primarySecondButtonText,
+    initialData = null
+  ) => {
     setOpenAddMenu(false);
     dispatch(
       openDialog({
         title: title,
         submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
         cancelButtonText: 'Cancel',
-        secondryText: 'Save As',
+        primarySecondButtonText: primarySecondButtonText ?? '',
         formType: formType,
         initialData: initialData,
       })
@@ -204,21 +233,27 @@ const Header = ({ sidebarExpanded }) => {
       <Toolbar className="toobarRow">
         <Typography variant="h6">{getTitleFromPathname(pathname)}</Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
-          <Box className="searchBar">
-            <TextField
-              placeholder="Search..."
-              size="small"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="end">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                disableUnderline: true,
-              }}
-              variant="standard"
-            />
-          </Box>
+          {splitView ? (
+            <StyledButton variant="contained" onClick={handleSplitViewDone}>
+              Close
+            </StyledButton>
+          ) : (
+            <Box className="searchBar">
+              <TextField
+                placeholder="Search..."
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="end">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  disableUnderline: true,
+                }}
+                variant="standard"
+              />
+            </Box>
+          )}
 
           <IconButton
             className="settingIcon"
@@ -293,6 +328,7 @@ const Header = ({ sidebarExpanded }) => {
                         handleOpenDialog(
                           item.title,
                           item.type,
+                          item?.primarySecondButtonText ?? '',
                           item.initialData
                         )
                       }

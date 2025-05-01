@@ -41,6 +41,8 @@ import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction
 import {
   setCellSelectionData,
   setExpandRowId,
+  setSplitView,
+  setSplitViewCurrentProject,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
 import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
@@ -53,9 +55,11 @@ import { current } from '@reduxjs/toolkit';
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { getWeek, parseISO } from 'date-fns';
+import { format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
+import { DATE_FORMAT } from '@/app/constants/constants';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const initialValuesMap = {
@@ -159,6 +163,10 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
+  const { calendarDate: _calendarDate } = useSelector(
+    state => state.allAllocations
+  );
+  const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
 
   const getValidationSchema = formType => {
     switch (formType) {
@@ -279,7 +287,14 @@ const AllocationForm = () => {
         };
         try {
           dispatch(addProject(postData))
-            .then(() => {
+            .then(response => {
+              if (submitType === 'secondary') {
+                dispatch(setSplitView(true));
+                dispatch(setSplitViewCurrentProject(response.payload.result));
+                router.replace('/allocation');
+                return;
+              }
+
               // After successfully adding the project, route to Projects page
               if (pathname !== '/project') {
                 router.replace('/project');
@@ -334,15 +349,8 @@ const AllocationForm = () => {
                 );
 
                 const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
-                const existingTotal = getTotalWeeklyAllocation(
-                  rowState,
-                  resource,
-                  weekKey
-                );
-                const finalTotal =
-                  existingTotal -
-                  (allocation?.value || 0) +
-                  values.AllocationEntered;
+                const existingTotal = getTotalWeeklyAllocation(rowState, resource, weekKey);
+                const finalTotal = existingTotal - (allocation?.value || 0) + values.AllocationEntered;
 
                 if (finalTotal > 2.0) {
                   errorMessages.push(
@@ -356,6 +364,7 @@ const AllocationForm = () => {
                     `Total allocation for week ${weekKey} exceeds 1.5 (${finalTotal.toFixed(2)}).`
                   );
                 }
+
 
                 if (
                   allocation &&
@@ -382,7 +391,7 @@ const AllocationForm = () => {
                         Resource: resource,
                         Project: project.Id,
                         ProjectName: project.Name,
-                        Period: monday,
+                        Period: format(monday, DATE_FORMAT),
                         AllocationEntered: values.AllocationEntered,
                         Notes: values.Comment || '',
                       },
@@ -399,29 +408,15 @@ const AllocationForm = () => {
           }
           await Promise.all(allocationPromises).then(async () => {
             if (errorMessages.length > 1) {
-              dispatch(
-                showToastAction(
-                  true,
-                  'Total allocation for the multiple selected weeks exceeds 2.0. Please check and try again.',
-                  'error',
-                  4000
-                )
-              );
-            } else {
+              dispatch(showToastAction(true, "Total allocation for the multiple selected weeks exceeds 2.0. Please check and try again.", 'error', 4000));
+            }else{
               errorMessages.forEach(msg => {
                 dispatch(showToastAction(true, msg, 'error', 4000));
               });
             }
             if (warningMessages.length > 0) {
-              dispatch(
-                showToastAction(
-                  true,
-                  'Warning: Total allocation for the multiple selected weeks exceeds 1.5',
-                  'warning',
-                  4000
-                )
-              );
-            } else {
+              dispatch(showToastAction(true, "Warning: Total allocation for the multiple selected weeks exceeds 1.5", 'warning', 4000));
+            } else{
               warningMessages.forEach(msg => {
                 dispatch(showToastAction(true, msg, 'warning', 4000));
               });
@@ -430,38 +425,29 @@ const AllocationForm = () => {
             let new_resources = values.Resource.map(resource =>
               getTeamByResourceId(resource)
             );
-            const teams = [
+            const updated_teams = [
               ...new Set(new_resources.map(resource => resource?.team)),
             ];
             dispatch(closeDialog());
-
-            if (view === 'Teams') {
-              return dispatch(
-                fetchResourcesAgainstTeams(
-                  teams,
-                  allocations,
-                  startDate,
-                  endDate
-                )
-              ).then(() => {
-                handleOnAdd(new_resources);
-                handleScrollAndFocus(
-                  new_resources,
-                  allMondays,
-                  filteredProjects
-                );
+            new Promise((resolve, reject) => {
+              dispatch({
+                type: 'UPDATE_TEAM_ALLOCATIONS',
+                payload: {
+                  teamIds: updated_teams.map(team => team?.Id),
+                  teams: teams?.result,
+                  projects: projects?.result,
+                  resources: resources?.result,
+                  teamsResources: teamsResources,
+                  startDate: _startDate,
+                  endDate: _endDate,
+                  resolve,
+                  reject,
+                },
               });
-            } else if (view === 'Project') {
-              return dispatch(
-                fetchAllProjectAllocations(filteredProjects, startDate, endDate)
-              ).then(() => {
-                handleScrollAndFocus(
-                  new_resources,
-                  allMondays,
-                  filteredProjects
-                );
-              });
-            }
+            }).then(() => {
+              handleOnAdd(new_resources);
+              handleScrollAndFocus(new_resources, allMondays, filteredProjects);
+            });
           });
         } catch (e) {
           console.error('Error creating allocations:', e);
@@ -691,7 +677,7 @@ const AllocationForm = () => {
                         Project: projectId,
                         ProjectName: initialData.Project,
                         AllocationEntered: sourceAlloc.value,
-                        Period: monday,
+                        Period: format(monday, DATE_FORMAT),
                       },
                     },
                   });
@@ -881,7 +867,7 @@ const AllocationForm = () => {
                     Project: projectId,
                     ProjectName: initialData.Project,
                     AllocationEntered: sourceAlloc.value,
-                    Period: monday,
+                    Period: format(monday, DATE_FORMAT),
                   },
                 },
               });

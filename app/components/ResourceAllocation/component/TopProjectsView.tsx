@@ -1,73 +1,91 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
-import { Box } from '@mui/material';
-import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
-import { AppDispatch, RootState } from '@/app/redux/store';
+import { RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import {
+  AllAllocations,
+  AllocationGridCell,
+  AllocationGridCellData,
+  ProjectsTableRow,
+} from '@/app/types';
+import AllocationGrid from '../../AllocationTable/AllocationGrid';
+import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 
-interface ProjectAllocationProps {
+interface TopProjectsViewProps {
   startDate: string | null;
   endDate: string | null;
 }
 
-export default function ProjectAllocation({
+export default function TopProjectsView({
   startDate,
   endDate,
-}: ProjectAllocationProps) {
+}: TopProjectsViewProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
-  const { projects } = useSelector((state: RootState) => state.projects);
+  const { splitViewCurrentProject } = useSelector(
+    (state: RootState) => state.allocationView
+  );
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
   // const { startDate, endDate } = calendarDate || {};
-  const dispatch: AppDispatch = useDispatch();
 
-  useEffect(() => {
-    if (
-      projects &&
-      'result' in projects &&
-      projects?.result?.length &&
-      startDate &&
-      endDate
-    ) {
-      dispatch(resetAllocations());
-      dispatch({
-        type: 'FETCH_PROJECTS_ALLOCATIONS',
-        payload: { projects: projects?.result, startDate, endDate },
-      });
-    }
-  }, [projects, calendarDate]);
+  const generateEmptyAllocation = (
+    template: AllocationGridCell,
+    project: ProjectsTableRow
+  ) => {
+    const empty: AllocationGridCell = {
+      id: project.Id,
+      resourceId: null,
+      project: project.Name,
+      projectId: project.Id,
+      projectSponsor: project.Owner.name,
+      projectManager: project.ProjectManager,
+      projectStatus: project.Status,
+      projectLocation: project.Location,
+      projectType: project.Type,
+      projectOvertimeAllowed: project.AllowOvertime,
+      projectCost: project.Cost,
+      projectCurrency: project.CostCurrency,
+      projectStartDate: project.StartDate,
+      projectEndDate: project.EndDate,
+      resource: null,
+      totalEffort: null,
+      role: null,
+      teams: null,
+      resourceType: null,
+    };
 
-  const handleAddClick = (params: GridCellParams) => {
-    dispatch(
-      openDialog({
-        title: 'Update Allocation',
-        submitButtonText: 'Update',
-        cancelButtonText: 'Cancel',
-        formType: 'add_allocation',
-        initialData: {
-          Project: params.value,
-        },
-      })
-    );
+    // Extract Wxx weeks and set them to empty values with preserved "period"
+    Object.entries(template).forEach(([key, value]) => {
+      if (/^W\d+$/.test(key)) {
+        empty[key] = {
+          allocationId: null,
+          value: null,
+          period: (value as AllocationGridCellData)?.period ?? null,
+        };
+      }
+    });
+
+    return empty;
   };
 
-  const getFirstChild = (params: GridCellParams) => {
-    const { rowNode, api } = params;
-    const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-    if (isGridTreeNode && rowNode.children && rowNode.children.length > 0) {
-      const firstChildId = rowNode.children[0];
-      const firstChildRow = api.getRow(firstChildId);
-      return firstChildRow;
+  const filterAllocationsForSelectedProject = (
+    allocations: AllAllocations[]
+  ) => {
+    if (allocations && allocations.length > 0 && splitViewCurrentProject) {
+      const selectedProjectAllocations = allocations.filter(
+        allocation => allocation.projectId === splitViewCurrentProject.Id
+      );
+      if (selectedProjectAllocations.length > 0) {
+        return selectedProjectAllocations;
+      }
+      return [generateEmptyAllocation(allocations[0], splitViewCurrentProject)];
     }
-    return null;
+    return allocations;
   };
 
   const projectColumnConfig = [
@@ -79,7 +97,7 @@ export default function ProjectAllocation({
       // cellClassName: getCellClassName,
       cellClassName: () => 'project-view-projectName',
       primaryColumn: true,
-      filterable: true,
+      filterable: false,
       isEditable: false,
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
@@ -90,12 +108,22 @@ export default function ProjectAllocation({
             <EllipsisNameCell
               value={value as string}
               resourceCount={resource_count}
-              onAddClick={() => handleAddClick(params)}
+              // onAddClick={() => handleAddClick(params)}
               showAddIcon={true}
             />
           );
         }
       },
+    },
+    {
+      field: 'teams',
+      headerName: 'Team',
+      width: 148,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      primaryColumn: true,
     },
     {
       field: 'projectSponsor',
@@ -106,12 +134,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectManager',
@@ -122,12 +144,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectManager ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectStatus',
@@ -137,12 +153,6 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStatus ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectLocation',
@@ -153,12 +163,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectLocation ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectType',
@@ -169,12 +173,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectType ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectOvertimeAllowed',
@@ -185,14 +183,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell
-            value={firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}
-          />
-        ) : null;
-      },
     },
     {
       field: 'projectCost',
@@ -203,12 +193,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCost ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectCurrency',
@@ -219,12 +203,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCurrency ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectStartDate',
@@ -235,12 +213,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'projectEndDate',
@@ -251,12 +223,6 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate ?? 'N/A'} />
-        ) : null;
-      },
     },
     {
       field: 'totalEffort',
@@ -282,20 +248,20 @@ export default function ProjectAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box sx={{ height: 'var(--height)', width: '100%' }}>
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
           startDate={startDate}
-          mode="project"
           endDate={endDate}
           selectedTeam={selectedTeam}
-          toolbarComponent={CustomToolbar}
           setSelectedTeam={setSelectedTeam}
+          mode={'split'}
           initialState={{
             columns: {
               columnVisibilityModel: {
-                project: false,
+                project: true,
+                team: true,
                 projectCost: false,
                 projectCurrency: false,
                 projectEndDate: false,
@@ -311,10 +277,19 @@ export default function ProjectAllocation({
                 __row_group_by_columns_group__: true, // Always be true
               },
             },
+            pinnedColumns: {
+              left: [
+                '__row_group_by_columns_group__',
+                'resource',
+                'teams',
+                'totalEffort',
+              ],
+            },
           }}
-          NoRowsOverlay={NoRowsOverlay}
-          data={allAllocations}
+          data={filterAllocationsForSelectedProject(allAllocations || []) || []}
           loading={loading || dataProcessing}
+          NoRowsOverlay={NoRowsOverlay}
+          toolbarComponent={''}
         />
       </Box>
     </>
