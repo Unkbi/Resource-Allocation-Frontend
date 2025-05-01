@@ -760,7 +760,6 @@ export default function AllocationGrid({
               : null,
           period: oldRow[key]?.period,
         };         
-
     return { ...newRow, totalEffort: calculateTotalEffort(newRow) };
   };
 
