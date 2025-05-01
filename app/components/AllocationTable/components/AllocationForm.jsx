@@ -637,24 +637,12 @@ const AllocationForm = () => {
                           });
                         }
                       } else {
-                        // Only delete if source has no allocation for this week/project
-                        const matchingSourceRow = originalAllocations.find(
-                          src => src.projectId === row.projectId
-                        );
-
-                        const sourcePeriodValue =
-                          matchingSourceRow?.[key]?.value != null
-                            ? parseFloat(matchingSourceRow[key].value)
-                            : null;
-
-                        const sameValue =
-                          sourcePeriodValue != null &&
-                          parseFloat(row[key]?.value) === sourcePeriodValue;
+                        const isInCloneSet = projectIds.includes(row.projectId);
 
                         if (
-                          !sameValue &&
-                          sourcePeriodValue == null &&
-                          row[key]?.allocationId
+                          isInCloneSet &&
+                          row[key]?.allocationId &&
+                          !sourceAllocMap[`${row.projectId}|${row[key].period}`]
                         ) {
                           deleteIds.push(row[key].allocationId);
                         }
@@ -696,20 +684,29 @@ const AllocationForm = () => {
             ) {
               dispatch(
                 showToast({
-                    open: true,
-                    message: `No allocations fall within the selected date range.`,
-                    type: 'warning',
-                    position: 'bottom-left',
-                    autoHideTimer: 4000,
-                  })
+                  open: true,
+                  message: `No allocations fall within the selected date range.`,
+                  type: 'warning',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
               );
               return;
             }
+            const clonePromises = [];
+            if (clonePayloadList.length > 0) {
+              clonePromises.push(
+                dispatch(updateResourceBulkAllocation(clonePayloadList))
+              );
+            }
+            if (deletePayloadList.length > 0) {
+              clonePromises.push(
+                dispatch(removeResourceBulkAllocation(deletePayloadList))
+              );
+            }
+
             try {
-              await Promise.all([
-                dispatch(updateResourceBulkAllocation(clonePayloadList)),
-                dispatch(removeResourceBulkAllocation(deletePayloadList)),
-              ]).then(async () => {
+              await Promise.all(clonePromises).then(async () => {
                 const newResources = targetResourceIds.map(id =>
                   getTeamByResourceId(id)
                 );
@@ -720,7 +717,7 @@ const AllocationForm = () => {
                     teams,
                     allocations,
                     startDate,
-                    endDate,
+                    endDate
                   )
                 ).then(() => {
                   handleOnAdd(newResources);
