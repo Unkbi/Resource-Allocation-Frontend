@@ -1,5 +1,5 @@
 import {Box,Button,Chip,IconButton,Popper,TextField,Typography,} from '@mui/material';
-import { useState } from 'react';
+import { useState,useMemo } from 'react';
 import { useSelector } from "react-redux";
 import { RootState } from '@/app/redux/store';
 import { GridValidRowModel } from '@mui/x-data-grid-premium';
@@ -75,14 +75,23 @@ const textFieldStyles = {
 const ProjectMenu = ({anchorEl,onClose,setRows,existingRows,}: ProjectMenuProps) => {
   const open = Boolean(anchorEl);
   const { projects } = useSelector((state: RootState) => state.projects);
-  const projectList: Project[] = Array.isArray(projects?.result) ? projects.result : [];
   const [searchValue, setSearchValue] = useState('');
   const [selectedProjects, setSelectedProjects] = useState<Project[]>([]);
 
-  const filteredProjects = projectList.filter(project =>
-    project.Name.toLowerCase().includes(searchValue.toLowerCase()) &&
-    !selectedProjects.some(p => p.Id === project.Id)
-  );
+  const existingProjectIds = existingRows
+  .filter((row) => row.id !== 'divider') 
+  .map((row) => row.project);
+
+  const filteredProjects = useMemo(() => {
+    const projectList = Array.isArray(projects?.result) ? projects.result : [];
+    return projectList.filter(project => 
+      project.Name.toLowerCase().includes(searchValue.toLowerCase()) && 
+      !selectedProjects.some(p => p.Id === project.Id) &&
+      !existingProjectIds.includes(project.Name)
+    );
+  }, [projects, searchValue, selectedProjects,existingProjectIds]);  
+  
+  
 
   const handleToggle = (project: Project) => {
     const exists = selectedProjects.find(p => p.Id === project.Id);
@@ -104,7 +113,7 @@ const ProjectMenu = ({anchorEl,onClose,setRows,existingRows,}: ProjectMenuProps)
       id: `${Date.now()}_${index}`,
       project: project.Name,
       planned: 0,
-      actuals: 0.1,
+      actuals: 0,
       comments: '',
     }));
   

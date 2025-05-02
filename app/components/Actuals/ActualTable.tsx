@@ -9,25 +9,22 @@ import {
 } from '@mui/x-data-grid-premium';
 import { useState } from 'react';
 import CommentCell from  './CommentCell'
-import { useMemo } from 'react';
+import { useMemo,useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
 import { GridCellParams } from '@mui/x-data-grid-premium'; 
 import FolderIcon from '@mui/icons-material/Folder';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/app/redux/store';
 import type { RootState } from '@/app/redux/store';
 import ProjectMenu from './ProjectMenu';
+import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
+import { showToastAction } from '@/app/redux/actions/toastAction';
 
 const initialRows: GridRowsProp = [
-  { id: 1, project: 'Payroll System Infrastructure', planned: 0.3, actuals: 0.7 },
+  { id: 1, project: 'Payroll System Infrastructure', planned: 0.7, actuals: 0.7 },
   { id: 2, project: 'Payroll Integration Automation', planned: 0.2, actuals: 0.2 },
   { id: 3, project: 'RTB', planned: 0.2, actuals: 0 },
   { id: 4, project: 'Employee Benefits System', planned: 0.1, actuals: 0.1 },
-  { id: 5, project: 'Schwab to Dayforce Integration', planned: 0.1, actuals: 0.1 },
-  { id: 55, project: 'test project check ', planned: 0.22, actuals: 0.1 },
-  { id: 56, project: 'test project added ', planned: 0, actuals: 0.1 },
-  { id: 57, project: 'test project ', planned: 0, actuals: 0.1 },
-  { id: 58, project: 'gemini project ', planned: 0.1, actuals: 0.1 },
 ];
 
 const calculateTotal = (data: GridValidRowModel[], columnName: string) => {
@@ -44,6 +41,7 @@ export default function ActualTable() {
  const [openMenu, setOpenMenu] = useState<string | null>(null);
  const allocationTheme = useSelector((state: RootState) => state.settings.allocationTheme)
  const [showProjectMenu, setShowProjectMenu] = useState(false);
+ const dispatch: AppDispatch = useDispatch();
 
 const totalPlanned = useMemo(() => {
      return roundToOneDecimal(calculateTotal([...rows], 'planned'));
@@ -53,18 +51,66 @@ const totalPlanned = useMemo(() => {
     return roundToOneDecimal(calculateTotal([...rows], 'actuals'));
   }, [rows]);
 
-
+  useEffect(()=>{
+  dispatch(fetchAllocationTheme())
+  },[]);
+  
 const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowModel) => {
     if (newRow.id === 'total' || newRow.id === 'second-total') {
         return oldRow;
       }
+  
+    const actualsChanged = newRow.actuals !== oldRow.actuals;
+    let newActual = parseFloat(newRow.actuals) || 0;
+    if (actualsChanged) {
+      newActual = Math.round(newActual * 10) / 10;
+      const updatedTotal = rows.reduce((sum, row) => {
+        if (row.id === newRow.id) {
+          return sum + newActual;
+        }
+        if (row.id !== 'total' && row.id !== 'second-total') {
+          return sum + (parseFloat(row.actuals) || 0);
+        }
+        return sum;
+      }, 0);
+  
+      if (updatedTotal > 2.0) {
+        dispatch(
+          showToastAction(
+            true,
+            `Total of Actuals cannot exceed 2.0 (Current sum: ${updatedTotal.toFixed(1)})`,
+            'error',
+          )
+        );
+        return oldRow;
+      } else if (updatedTotal >= 1.5) {
+        dispatch(
+          showToastAction(
+            true,
+            `Warning: Total actuals is approaching the maximum of 2.0. Current sum: ${updatedTotal.toFixed(1)}`,
+            'warning',
+          )
+        );
+      }
+    }
+  
     setRows((prev) => {
       const existingRow = prev.find((r) => r.id === newRow.id);
       if (JSON.stringify(existingRow) === JSON.stringify(newRow)) return prev; 
-      return prev.map((row) => (row.id === newRow.id ? newRow : row));
-     });
-     return newRow;
-     };
+      return prev.map((row) =>
+        row.id === newRow.id
+          ? {
+              ...row,
+              ...newRow,
+              actuals: actualsChanged ? newActual : row.actuals,
+            }
+          : row
+      );
+    });
+  
+    return { ...newRow, actuals: actualsChanged ? newActual : newRow.actuals };
+  };
+  
      
   const handleCellKeyDown = (params: GridCellParams, event: React.KeyboardEvent) => {
     if (['e', 'E', '+', '-'].includes(event.key)) {
@@ -75,6 +121,46 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
     }
   };
 
+  const renderAllocationCell = (params: any, allocationTheme: any[]) => {
+    if (params.row.type === 'divider') return null;
+    const value = parseFloat(params.value);
+    if (isNaN(value)) return ''; 
+    if (params.row.id === 'total' && allocationTheme.length) {
+      const matched = allocationTheme.find(
+        (range) => value >= parseFloat(range.From) && value <= parseFloat(range.To)
+      );
+
+      return (
+        <Box
+          sx={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: matched?.Color || 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 600,
+            p: 0,
+            m: 0,
+            position: 'relative',
+          }}
+        >
+          {roundToOneDecimal(value)}
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              height: '4px',
+              width: '100%',
+              backgroundColor: matched?.DarkColor || 'rgba(0,0,0,0.2)',
+            }}
+          />
+        </Box>
+      );
+    }
+    return roundToOneDecimal(value);
+  };
       
   const columns: GridColDef[] = [
     {
@@ -94,105 +180,31 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
       headerAlign: 'center',
       headerClassName: 'header-planned',
       cellClassName: 'col-cell-planned',
-      renderCell: (params) => {
-        if (params.row.type === 'divider') return null;
-        const value = Number(params.value);
-        const isAboveLimit = value > 1.5;
-        if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
-          const matched = allocationTheme.find(
-            (range) => value >= parseFloat(range.From) && value <= parseFloat(range.To)
-          );
-          return (
-            <Box
-              sx={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.Color || 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 600,
-                
-              }}
-            >
-              {roundToOneDecimal(value)} 
-              <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              height: '4px',
-              width: '100%',
-              backgroundColor: isAboveLimit? '#963d3d':matched?.DarkColor || 'rgba(0,0,0,0.2)',
-            }}
-          />
-            </Box>
-          );
-        }
-        return roundToOneDecimal(value); 
-      },
+      renderCell: (params) => renderAllocationCell(params, allocationTheme),
     },
     {
       field: 'actuals',
       headerName: 'Actuals',
       type: 'number',
       editable: true,
-      width: 66,
+      width: 68,
       align: 'center',
       headerAlign: 'center',
       headerClassName: 'header-actuals',
       cellClassName: 'col-cell-actuals',
-      renderCell: (params) => {
-        if (params.row.type === 'divider') return null
-        const value = Number(params.value);
-        const isAboveLimit = value > 1.5;
-        if (params.id === 'total' && !isNaN(value) && allocationTheme.length) {
-          const matched = allocationTheme.find(
-            (range) => value >= parseFloat(range.From) && value <= parseFloat(range.To)
-          );
-          return (
-            <Box
-              sx={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: isAboveLimit ? '#de6d6d' : matched?.Color || 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 600,
-                p: 0,
-          m: 0,
-              }}
-            >
-              {roundToOneDecimal(value)} 
-              <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              height: '4px',
-              width: '100%',
-              backgroundColor: isAboveLimit ? '#963d3d':matched?.DarkColor || 'rgba(0,0,0,0.2)',
-            }}
-          />
-            </Box>
-          );
-        }
-        return roundToOneDecimal(value); 
-      },
+      renderCell: (params) => renderAllocationCell(params, allocationTheme),
     },
     {
       field: 'comments',
       headerName: 'Comments',
       editable: true,
       flex: 1,
-      minWidth: 180,
+      minWidth: 178,
       headerClassName: 'header-comments',
       cellClassName: 'col-cell-comments',
       renderEditCell: (params) => <CommentCell {...params} />,
     },
   ];
-
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setMainMenuAnchor(event.currentTarget);
@@ -232,7 +244,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
   
   return (
     <>
-    <Box borderRadius={2} overflow="hidden" border="1px solid #e0e0e0" boxShadow={1}>
+    <Box borderRadius={1} overflow="hidden" border="1px solid #e0e0e0" >
       <Box
         display="flex"
         justifyContent="space-between"
@@ -247,7 +259,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
         <Typography fontWeight={600}>Apr 08 - Apr 14</Typography>
       </Box>
 
-      <Box sx={{ height: 580 ,overflow:'auto',}}>
+      <Box sx={{ height: 350 }}>
         <DataGridPremium
           rows={[
             {
@@ -262,6 +274,9 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
           columns={columns}
           disableColumnMenu
           disableColumnSorting
+          isRowSelectable={(params) =>
+            params.row.type !== 'divider' && params.row.id !== 'second-total-row'
+          }          
           hideFooter
           disableRowSelectionOnClick
           onCellKeyDown={handleCellKeyDown}
@@ -294,7 +309,6 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
                 borderRadius: '4px',
                 boxShadow: '0px 4px 4px -1px rgba(0, 0, 0, 0.10), 0px 4px 4px -2px rgba(0, 0, 0, 0.10)',
                 minWidth: 212,
-                height: 131,
                 backgroundColor: '#FFF',
                 flexShrink: 0,
             },
@@ -329,7 +343,7 @@ const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowMo
         )}
       </ListItemIcon>
       <ListItemText primary={item.label} className="menu-text" />
-      <KeyboardArrowRightIcon fontSize="small" className="menu-icon" />
+      <img src="images/icons/small-arrowForward.svg" className="menu-icon" />
     </MenuItem>
    ))}
     </Menu>

@@ -66,9 +66,13 @@ export const actualsTableStyles  ={
          backgroundColor: '#C4CAD4',
          height: '2px',
          minHeight: '2px',
-        maxHeight: '2px',
+         maxHeight: '2px',
         },
       },
+       '& .MuiDataGrid-virtualScrollerContent': {
+         flexBasis: '0 !important',
+         flexGrow: 1,
+        },
       '& .last-row': {
     marginBottom: '0', 
     paddingBottom: '0', 
