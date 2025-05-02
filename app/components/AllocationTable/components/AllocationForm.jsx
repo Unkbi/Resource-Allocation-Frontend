@@ -132,6 +132,7 @@ const initialValuesMap = {
   transfer_resource: {
     Project: [],
     Resource: [],
+    allocations: [],
     StartDate: '',
     EndDate: '',
   },
@@ -187,33 +188,33 @@ const AllocationForm = () => {
   };
 
   const handleScrollAndFocus = (resources, period, projects) => {
-    const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
-    const weeksObject = {};
-
-    selectedWeeks.forEach(week => {
-      weeksObject[`${week}`] = true;
-    });
-
-    const cellData = {};
-
-    resources?.forEach(resource => {
-      projects?.forEach(project => {
-        const [{ Id }] = Array.isArray(project) ? project : [project];
-        const key =
-          view === 'Teams'
-            ? `${resource.Id}-${resource.teamId}-${Id}`
-            : `${resource.Id}-${Id}`;
-
-        cellData[key] = weeksObject;
+      const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
+      const weeksObject = {};
+  
+      selectedWeeks.forEach(week => {
+        weeksObject[`${week}`] = true;
       });
-    });
-    dispatch(
-      setCellSelectionData({
-        ...cellData,
-        restoreFocus: true,
-      })
-    );
-  };
+  
+      const cellData = {};
+  
+      resources?.forEach(resource => {
+        projects?.forEach(project => {
+          const [{ Id }] = Array.isArray(project) ? project : [project];
+          const key =
+            view === 'Teams'
+              ? `${resource.Id}-${resource.teamId}-${Id}`
+              : `${resource.Id}-${Id}`;
+  
+          cellData[key] = weeksObject;
+        });
+      });
+        dispatch(
+          setCellSelectionData({
+            ...cellData,
+            restoreFocus: true,
+          })
+        );
+    };
 
   const handleOnAdd = resources => {
     const rowIds = resources?.map(
@@ -957,143 +958,319 @@ const AllocationForm = () => {
         return;
       }
 
-      const targetResourceIds = Array.isArray(values.Resource)
-        ? values.Resource
-        : [values.Resource];
-      const projectIds = values.Project || [];
-      const allMondays = generateAllMondays(values.StartDate, values.EndDate);
+      if (initialData?.allocations?.length > 0) {
+        const targetResourceIds = Array.isArray(values.Resource)
+          ? values.Resource
+          : [values.Resource];
+        const originalAllocations = initialData?.allocations || [];
+        const projectIds = values.Project || [];
+        const allMondays = generateAllMondays(values.StartDate, values.EndDate);
+        const mondaySet = new Set(allMondays.map(date => new Date(date).toDateString()));
+        const formattedProjects = projectIds.map(id => ({ Id: id }));
 
-      const formattedProjects = projectIds.map(id => ({ Id: id }));
+        const clonePayloadList = [];
+        const deletePayloadList = [];
 
-      const actionGroups = {
-        PUT: [],
-        POST: [],
-        DELETE: [],
-      };
+        const sourceAllocMap = {}; // key = projectId|period
+        originalAllocations
+          .filter(row => projectIds.includes(row.projectId))
+          .forEach(row => {
+            Object.keys(row).forEach(key => {
+              if (key.startsWith('W') && row[key]?.value && row[key]?.period) {
+                const periodDate = row[key].period;
+                if (mondaySet.has(new Date(periodDate).toDateString())) {
+                  const uniqueKey = `${row.projectId}|${row[key].period}`;
+                  sourceAllocMap[uniqueKey] = {
+                    value: row[key].value,
+                    period: row[key].period,
+                    projectId: row.projectId,
+                    project: row.project,
+                    notes: row[key]?.notes || '',
+                    allocationId: row[key]?.allocationId || null,
+                  };
+                }
+              }
+            });
+          });
 
-      for (const monday of allMondays) {
-        for (const projectId of projectIds) {
-          const sourceAlloc = getAllocationPresent(
-            projectId,
-            sourceResourceId,
-            monday
+        // Copy to each target
+        targetResourceIds.forEach(targetResourceId => {
+          const putPostPayload = { Resource: targetResourceId, AllocsList: [] };
+
+          const targetAllocRows = rowState.filter(
+            row => row.resourceId === targetResourceId
           );
+          const processedKeys = new Set();
 
-          for (const targetResourceId of targetResourceIds) {
-            const targetAlloc = getAllocationPresent(
-              projectId,
-              targetResourceId,
-              monday
-            );
+          targetAllocRows.forEach(row => {
+            Object.keys(row).forEach(key => {
+              if (key.startsWith('W') && row[key]?.period) {
+                const periodDate = row[key].period;
+                if (mondaySet.has(new Date(periodDate).toDateString())) {
+                  const uniqueKey = `${row.projectId}|${row[key].period}`;
+                  const source = sourceAllocMap[uniqueKey];
+                  processedKeys.add(uniqueKey);
 
-            const sameValue =
-              sourceAlloc?.value !== null &&
-              targetAlloc?.value !== null &&
-              Number(sourceAlloc.value) === Number(targetAlloc.value);
+                  if (source) {
+                    const existingVal = parseFloat(row[key]?.value ?? 0);
+                    const newVal = parseFloat(source.value);
+                    if (existingVal !== newVal) {
+                      // PUT existing
+                      putPostPayload.AllocsList.push({
+                        Id: row[key]?.allocationId,
+                        Resource: targetResourceId,
+                        Project: row.projectId,
+                        ProjectName: row.project,
+                        Period: row[key].period,
+                        AllocationEntered: source.value,
+                        Notes: source.notes,
+                      });
+                    }
+                  }
+                }
+              }
+            });
+          });
 
-            if (sameValue) continue;
-
-            if (sourceAlloc?.value != null && targetAlloc?.allocationId) {
-              actionGroups.PUT.push({
-                resourceId: targetResourceId,
-                allocationId: targetAlloc.allocationId,
-                putData: {
-                  'ResourceAllocation.Core/Allocation': {
-                    AllocationEntered: sourceAlloc.value,
-                  },
-                },
-              });
-            } else if (
-              sourceAlloc?.value != null &&
-              !targetAlloc?.allocationId
-            ) {
-              actionGroups.POST.push({
-                resourceId: targetResourceId,
-                postData: {
-                  'ResourceAllocation.Core/Allocation': {
-                    Resource: targetResourceId,
-                    Project: projectId,
-                    ProjectName: initialData.Project,
-                    AllocationEntered: sourceAlloc.value,
-                    Period: monday,
-                  },
-                },
-              });
-            } else if (
-              sourceAlloc?.value == null &&
-              targetAlloc?.allocationId
-            ) {
-              actionGroups.DELETE.push({
-                resourceId: targetResourceId,
-                allocationId: targetAlloc.allocationId,
+          // POST new allocations (not in processed)
+          Object.entries(sourceAllocMap).forEach(([key, source]) => {
+            if (!processedKeys.has(key)) {
+              putPostPayload.AllocsList.push({
+                Resource: targetResourceId,
+                Project: source.projectId,
+                ProjectName: source.project,
+                Period: source.period,
+                AllocationEntered: source.value,
+                Notes: source.notes,
               });
             }
-          }
+          });
 
-          if (sourceAlloc?.allocationId) {
-            actionGroups.DELETE.push({
-              resourceId: sourceResourceId,
-              allocationId: sourceAlloc.allocationId,
-            });
+          if (putPostPayload.AllocsList.length > 0) {
+            clonePayloadList.push(putPostPayload);
           }
+        });
+
+        // Delete source allocations that were transferred
+        const sourceDeleteIds = Object.values(sourceAllocMap)
+          .map(s => s.allocationId)
+          .filter(id => !!id);
+
+        if (sourceDeleteIds.length > 0) {
+          deletePayloadList.push({
+            Resource: sourceResourceId,
+            AllocsList: sourceDeleteIds,
+          });
         }
-      }
 
-      try {
-        // Run in parallel per group type
-        await Promise.all([
-          ...actionGroups.PUT.map(payload =>
-            dispatch(updateResourceAllocation(payload))
-          ),
-          ...actionGroups.POST.map(payload =>
-            dispatch(setResourceAllocation(payload))
-          ),
-          ...actionGroups.DELETE.map(payload =>
-            dispatch(removeResourceAllocation(payload))
-          ),
-        ]).then(async () => {
-          const newResources = targetResourceIds.map(id =>
-            getTeamByResourceId(id)
+        if (clonePayloadList.length === 0 && deletePayloadList.length === 0) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `No allocations fall within the selected date range.`,
+              type: 'warning',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
           );
-          const teams = [...new Set(newResources.map(res => res?.team))];
+          return;
+        }
+        const transferPromises = [];
+
+        if (clonePayloadList.length > 0) {
+          transferPromises.push(
+            ...clonePayloadList.map(payload => 
+              dispatch(updateResourceBulkAllocation([payload]))
+            )
+          );
+        }
+
+        if (deletePayloadList.length > 0) {
+          transferPromises.push(
+            dispatch(removeResourceBulkAllocation(deletePayloadList))
+          );
+        }
+
+        await Promise.all(transferPromises).then(async () => {
           dispatch(closeDialog());
-          if (view === 'Teams') {
-            await dispatch(
-              fetchResourcesAgainstTeams(teams, allocations, startDate, endDate)
-            ).then(() => {
-              handleOnAdd(newResources);
-              handleScrollAndFocus(newResources, allMondays, formattedProjects);
-            });
-          } else if (view === 'Project') {
-            await dispatch(
-              fetchAllProjectAllocations(formattedProjects, startDate, endDate)
-            ).then(() => {
-              handleScrollAndFocus(newResources, allMondays, formattedProjects);
-            });
-          }
+          const allResourceIds = [...targetResourceIds, sourceResourceId];
+          const newResources = allResourceIds.map(id => getTeamByResourceId(id));
+          const teams = [...new Set(newResources.map(res => res?.team))];
+          const focusResources = targetResourceIds.map(id => getTeamByResourceId(id));
+
+          await dispatch(
+            fetchResourcesAgainstTeams(teams, allocations, startDate, endDate)
+          ).then(() => {
+            handleOnAdd(newResources);
+            handleScrollAndFocus(focusResources, allMondays, formattedProjects);
+          });
 
           dispatch(
             showToast({
               open: true,
-              message: `${sourceResourceName} is successfully transfered. `,
+              message: `${sourceResourceName} is successfully transferred.`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
             })
           );
         });
-      } catch (err) {
-        // dispatch(closeDialog());
-        dispatch(
-          showToast({
-            open: true,
-            message: `Resource is failed transfer `,
-            type: 'error',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-        console.error('transfer failed:', err);
+      } else {
+        const targetResourceIds = Array.isArray(values.Resource)
+          ? values.Resource
+          : [values.Resource];
+        const projectIds = values.Project || [];
+        const allMondays = generateAllMondays(values.StartDate, values.EndDate);
+
+        const formattedProjects = projectIds.map(id => ({ Id: id }));
+
+        const actionGroups = {
+          PUT: [],
+          POST: [],
+          DELETE: [],
+        };
+
+        for (const monday of allMondays) {
+          for (const projectId of projectIds) {
+            const sourceAlloc = getAllocationPresent(
+              projectId,
+              sourceResourceId,
+              monday
+            );
+
+            for (const targetResourceId of targetResourceIds) {
+              const targetAlloc = getAllocationPresent(
+                projectId,
+                targetResourceId,
+                monday
+              );
+
+              const sameValue =
+                sourceAlloc?.value !== null &&
+                targetAlloc?.value !== null &&
+                Number(sourceAlloc.value) === Number(targetAlloc.value);
+
+              if (sameValue) continue;
+
+              if (sourceAlloc?.value != null && targetAlloc?.allocationId) {
+                actionGroups.PUT.push({
+                  resourceId: targetResourceId,
+                  allocationId: targetAlloc.allocationId,
+                  putData: {
+                    'ResourceAllocation.Core/Allocation': {
+                      AllocationEntered: sourceAlloc.value,
+                    },
+                  },
+                });
+              } else if (
+                sourceAlloc?.value != null &&
+                !targetAlloc?.allocationId
+              ) {
+                actionGroups.POST.push({
+                  resourceId: targetResourceId,
+                  postData: {
+                    'ResourceAllocation.Core/Allocation': {
+                      Resource: targetResourceId,
+                      Project: projectId,
+                      ProjectName: initialData.Project,
+                      AllocationEntered: sourceAlloc.value,
+                      Period: monday,
+                    },
+                  },
+                });
+              } else if (
+                sourceAlloc?.value == null &&
+                targetAlloc?.allocationId
+              ) {
+                actionGroups.DELETE.push({
+                  resourceId: targetResourceId,
+                  allocationId: targetAlloc.allocationId,
+                });
+              }
+            }
+
+            if (sourceAlloc?.allocationId) {
+              actionGroups.DELETE.push({
+                resourceId: sourceResourceId,
+                allocationId: sourceAlloc.allocationId,
+              });
+            }
+          }
+        }
+
+        try {
+          // Run in parallel per group type
+          await Promise.all([
+            ...actionGroups.PUT.map(payload =>
+              dispatch(updateResourceAllocation(payload))
+            ),
+            ...actionGroups.POST.map(payload =>
+              dispatch(setResourceAllocation(payload))
+            ),
+            ...actionGroups.DELETE.map(payload =>
+              dispatch(removeResourceAllocation(payload))
+            ),
+          ]).then(async () => {
+            const newResources = targetResourceIds.map(id =>
+              getTeamByResourceId(id)
+            );
+            const teams = [...new Set(newResources.map(res => res?.team))];
+            dispatch(closeDialog());
+            if (view === 'Teams') {
+              await dispatch(
+                fetchResourcesAgainstTeams(
+                  teams,
+                  allocations,
+                  startDate,
+                  endDate
+                )
+              ).then(() => {
+                handleOnAdd(newResources);
+                handleScrollAndFocus(
+                  newResources,
+                  allMondays,
+                  formattedProjects
+                );
+              });
+            } else if (view === 'Project') {
+              await dispatch(
+                fetchAllProjectAllocations(
+                  formattedProjects,
+                  startDate,
+                  endDate
+                )
+              ).then(() => {
+                handleScrollAndFocus(
+                  newResources,
+                  allMondays,
+                  formattedProjects
+                );
+              });
+            }
+
+            dispatch(
+              showToast({
+                open: true,
+                message: `${sourceResourceName} is successfully transfered. `,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          });
+        } catch (err) {
+          // dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message: `Resource is failed transfer `,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          console.error('transfer failed:', err);
+        }
       }
     } catch (err) {
       // dispatch(closeDialog());

@@ -71,6 +71,7 @@ const TransferResourceForm = ({ formikProps, setFormValue }) => {
       const rowData = {
         Resource: [],
         Project: filteredProjectIds,
+        allocations: initialData?.allocations || [],
         StartDate: initialData.StartDate || "",
         EndDate: initialData.EndDate || "",
       };
@@ -85,6 +86,15 @@ const TransferResourceForm = ({ formikProps, setFormValue }) => {
   }
 };
 
+const formatProjectNames = (names, limit = 1) => {
+  if (!names || names.length === 0) return '';
+  if (names.length <= limit) return names.join(', ');
+  
+  const visibleNames = names.slice(0, limit);
+  const remaining = names.length - limit;
+  return `${visibleNames.join(', ')} +${remaining} more`;
+};
+
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
@@ -93,8 +103,16 @@ const TransferResourceForm = ({ formikProps, setFormValue }) => {
           as={TextField}
           name="project"
           fullWidth
-          value={projectNames.join(", ")} 
+          value={formatProjectNames(projectNames)} 
           disabled
+          sx={{
+            "& .MuiInputBase-input": {
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              overflow: "hidden"
+            }
+          }}
+          title={projectNames.join(", ")} // Show full list on hover
         />
       </Box>
 
@@ -155,9 +173,8 @@ const TransferResourceForm = ({ formikProps, setFormValue }) => {
           />
         </Box>
       </Box>
-
       <StyledFormInfoText>
-        Allocation values will be transfered to [{initialData?.Resource}]'s in [{projectNames.join(", ")}].
+        Allocation values will be transfered to [{initialData?.Resource}]'s in [{formatProjectNames(projectNames)}].
       </StyledFormInfoText>
     </Box>
   );

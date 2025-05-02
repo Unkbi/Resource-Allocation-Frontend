@@ -135,12 +135,12 @@ const CellWithMenu = ({
     {
       label: 'Clone',
       icon: <ContentCopyIcon fontSize="small" />,
-      func: () => handleCloneClick(params,rowState),
+      func: () => handleCloneClick(params,rowState,handleMenuClose)
     },
     {
       label: 'Transfer',
       icon: <SwapHorizIcon fontSize="small" />,
-      func: () => handleTranferClick(params),
+      func: () => handleTranferClick(params, rowState,handleMenuClose),
     },
     { label: 'History', icon: <HistoryIcon fontSize="small" /> },
     {
@@ -286,7 +286,7 @@ export const getFinalColumns = (
     );
   };
 
-  const handleCloneClick = (params,rowState) => {
+  const handleCloneClick = (params,rowState,handleMenuClose) => {
     const allAllocationsOfResource = rowState.filter(
       row => row.resource === params.value
     );
@@ -294,6 +294,7 @@ export const getFinalColumns = (
     const projectsOfResource = Array.from(new Set(
       allAllocationsOfResource.map(r => r.project)
     ));
+    handleMenuClose();
     dispatch(
       openDialog({
         title: 'Clone Resource',
@@ -314,17 +315,31 @@ export const getFinalColumns = (
     );
   };
 
-  const handleTranferClick = params => {
+  const handleTranferClick = (params,rowState,handleMenuClose) => {
+    const allAllocationsOfResource = rowState.filter(
+      row => row.resource === params.value
+    );
+  
+    const projectsOfResource = Array.from(new Set(
+      allAllocationsOfResource.map(r => r.project)
+    ));
+    handleMenuClose();
     dispatch(
       openDialog({
         title: 'Transfer Resource',
         submitButtonText: 'Transfer',
         cancelButtonText: 'Cancel',
         formType: 'transfer_resource',
-        initialData: {
-          Resource: params.row.resource,
-          Project: params.row.project,
-        },
+        initialData: params.rowNode.groupingField !== 'resource'
+        ? {
+            Resource: params.row.resource,
+            Project: params.row.project,
+          }
+        : {
+            Resource: params.value,
+            Project: projectsOfResource,
+            allocations: allAllocationsOfResource,
+          },
       })
     );
   };

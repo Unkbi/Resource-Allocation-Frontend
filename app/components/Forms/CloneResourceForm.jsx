@@ -86,7 +86,7 @@ const CloneResourceForm = ({ formikProps, setFormValue }) => {
   }
 };
 
-const formatProjectNames = (names, limit = 2) => {
+const formatProjectNames = (names, limit = 1) => {
   if (!names || names.length === 0) return '';
   if (names.length <= limit) return names.join(', ');
   
@@ -175,7 +175,7 @@ const formatProjectNames = (names, limit = 2) => {
       </Box>
 
       <StyledFormInfoText>
-        Allocation values will be same as [{initialData?.Resource}]'s in [{projectNames.join(", ")}].
+        Allocation values will be same as [{initialData?.Resource}]'s in [{formatProjectNames(projectNames)}].
       </StyledFormInfoText>
     </Box>
   );
