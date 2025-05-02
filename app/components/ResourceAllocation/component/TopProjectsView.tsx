@@ -262,7 +262,12 @@ export default function TopProjectsView({
 
   return (
     <>
-      <Box sx={{ height: 'var(--height)', width: '100%' }}>
+      <Box
+        sx={{
+          height: loading || dataProcessing ? '100vh' : 'var(--height)',
+          width: '100%',
+        }}
+      >
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}

@@ -145,7 +145,12 @@ export default function BottomTeamsView({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box
+        sx={{
+          height: loading || dataProcessing ? '100vh' : 'var(--height)',
+          width: '100%',
+        }}
+      >
         <AllocationGrid
           loading={loading || dataProcessing}
           groupBy="teams"

@@ -18,7 +18,7 @@ interface HorizontalSplitViewProps {
 const Container = styled('div')({
   display: 'flex',
   flexDirection: 'column',
-  height: '100vh',
+  height: 'calc(100vh - 54px)',
   width: '100%',
   overflow: 'hidden',
 });
