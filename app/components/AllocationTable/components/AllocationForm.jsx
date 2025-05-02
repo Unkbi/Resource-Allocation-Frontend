@@ -572,6 +572,7 @@ const AllocationForm = () => {
               values.StartDate,
               values.EndDate
             );
+            const mondaySet = new Set(allMondays.map(date => new Date(date).toDateString()));
             const formattedProjects = projectIds.map(id => ({ Id: id }));
             const clonePayloadList = [];
             const deletePayloadList = [];
@@ -596,7 +597,7 @@ const AllocationForm = () => {
                     row[key]?.period
                   ) {
                     const periodDate = row[key].period;
-                    if (periodDate >= startDate && periodDate <= endDate) {
+                    if (mondaySet.has(new Date(periodDate).toDateString())) {
                       const uniqueKey = `${row.projectId}|${row[key].period}`;
                       sourceAllocMap[uniqueKey] = {
                         value: row[key].value,
@@ -616,7 +617,7 @@ const AllocationForm = () => {
                 Object.keys(row).forEach(key => {
                   if (key.startsWith('W') && row[key]?.period) {
                     const periodDate = row[key].period;
-                    if (periodDate >= startDate && periodDate <= endDate) {
+                    if (mondaySet.has(new Date(periodDate).toDateString())) {
                       const uniqueKey = `${row.projectId}|${row[key].period}`;
                       const source = sourceAllocMap[uniqueKey];
                       processedKeys.add(uniqueKey);
