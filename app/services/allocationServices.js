@@ -66,9 +66,9 @@ export const getUsersSavedViews = createAsyncThunk(
   '/views/getUsersSavedViews',
   async (payload, { rejectWithValue }) => {
     try {
+      const userid = payload["ResourceAllocation.Core/UserAllocationView"].UserId;
       const response = await axiosInstance.get(
-        `${API_PROJECT_PORTFOLIO}/UserAllocationView`,
-        payload
+        `${API_PROJECT_PORTFOLIO}/UserAllocationView?UserId="${userid}"`,
       );
       return response.data;
     } catch (error) {

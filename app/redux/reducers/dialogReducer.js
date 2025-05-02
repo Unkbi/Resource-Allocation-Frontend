@@ -5,6 +5,7 @@ const initialState = {
   title: '',
   submitButtonText: '',
   secondaryButtonText: '',
+  primarySecondButtonText: '',
   cancelButtonText: '',
   formState: {
     formType: '',
@@ -21,6 +22,7 @@ const dialogSlice = createSlice({
         title,
         submitButtonText,
         secondaryButtonText,
+        primarySecondButtonText,
         cancelButtonText,
         formType,
         initialData,
@@ -29,6 +31,7 @@ const dialogSlice = createSlice({
       state.title = title || '';
       state.submitButtonText = submitButtonText || 'Submit';
       state.secondaryButtonText = secondaryButtonText || '';
+      state.primarySecondButtonText = primarySecondButtonText || '';
       state.cancelButtonText = cancelButtonText || 'Cancel';
       state.formState.formType = formType || '';
       state.formState.initialData = initialData || {};
@@ -38,6 +41,7 @@ const dialogSlice = createSlice({
       state.title = '';
       state.submitButtonText = '';
       state.secondaryButtonText = '';
+      state.primarySecondButtonText = '';
       state.cancelButtonText = '';
       state.formState.formType = '';
       state.formState.initialData = {};
@@ -47,6 +51,7 @@ const dialogSlice = createSlice({
         title,
         submitButtonText,
         secondaryButtonText,
+        primarySecondButtonText,
         cancelButtonText,
         formType,
         initialData,
@@ -56,6 +61,8 @@ const dialogSlice = createSlice({
       state.submitButtonText = submitButtonText ?? state.submitButtonText;
       state.secondaryButtonText =
         secondaryButtonText ?? state.secondaryButtonText;
+      state.primarySecondButtonText =
+        primarySecondButtonText ?? state.primarySecondButtonText;
       state.cancelButtonText = cancelButtonText ?? state.cancelButtonText;
       state.formState.formType = formType ?? state.formState.formType;
       state.formState.initialData = initialData ?? state.formState.initialData;

@@ -8,8 +8,9 @@ interface EllipsisNameCellProps {
   resourceCount?: any;
   onAddClick?: () => void;
   showAddIcon?: boolean;
-  AddIconComponent?: ReactNode; 
+  AddIconComponent?: ReactNode;
   showAvatar?: boolean;
+  showAddButton?: boolean;
 }
 
 const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
@@ -19,6 +20,7 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
   showAddIcon = false,
   AddIconComponent,
   showAvatar = false,
+  showAddButton = true,
 }) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLSpanElement>(null);
@@ -65,15 +67,15 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap:'4px',
+        gap: '4px',
         overflow: 'hidden',
         minWidth: 0,
         width: '100%',
       }}
     >
       {showAvatar && (
-         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <CustomAvatar value={value} showFullName={false}  />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <CustomAvatar value={value} showFullName={false} />
         </div>
       )}
 
@@ -89,7 +91,11 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
         (AddIconComponent ? (
           AddIconComponent
         ) : (
-          <CustomAddIcon count={resourceCount} onClick={onAddClick} />
+          <CustomAddIcon
+            count={resourceCount}
+            onClick={onAddClick}
+            showAddButton={showAddButton}
+          />
         ))}
     </div>
   );

@@ -289,7 +289,7 @@ export const getMondayOfISO = date => {
 };
 
 export const generateTMinusOneStartEndDate = isStartDate => {
-  let today = new Date();
+  let today = parseISO(new Date().toISOString());
   const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
   if (isStartDate) {
     return format(lastWeeksMonday, DATE_FORMAT);
@@ -373,8 +373,6 @@ export const getStartAndEndDateForView = (
 };
 
 export const getUserIdFromEmail = (users, email) => {
-  // Returning a hardcoded value for testing
-  return '1513e847-8abe-42b6-8743-497d9b8e0e17';
   const userObj = users.find(user => user.Email === email);
   return userObj ? userObj.Id : null;
 };
@@ -560,4 +558,15 @@ export const getOnlyFilterSettings = view => {
     WeekMinus: view.WeekMinus ?? DEFAULT_PROJECT_WEEK_MINUS,
     Filters: view.Filters ?? [],
   };
+};
+
+export const getTotalWeeklyAllocation = (rowState, resourceId, weekKey) => {
+  let total = 0;
+  const allRows = rowState;
+  allRows.forEach(row => {
+    if (row.resourceId === resourceId && row[weekKey]?.value) {
+      total += parseFloat(row[weekKey]?.value || 0);
+    }
+  });
+  return total;
 };
