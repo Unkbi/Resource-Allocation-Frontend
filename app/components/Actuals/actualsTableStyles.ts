@@ -56,5 +56,25 @@ export const actualsTableStyles  ={
         {
           display: 'none',
         },
-
+        '.divider-row': {
+          height: '2px !important',
+          minHeight: '2px !important',
+          maxHeight: '2px !important',
+       '& .MuiDataGrid-cell': {
+         padding: 0,
+         border: 'none',
+         backgroundColor: '#C4CAD4',
+         height: '2px',
+         minHeight: '2px',
+         maxHeight: '2px',
+        },
+      },
+       '& .MuiDataGrid-virtualScrollerContent': {
+         flexBasis: '0 !important',
+         flexGrow: 1,
+        },
+      '& .last-row': {
+    marginBottom: '0', 
+    paddingBottom: '0', 
+      },
      }
