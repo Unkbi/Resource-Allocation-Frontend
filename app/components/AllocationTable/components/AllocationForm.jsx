@@ -340,6 +340,10 @@ const AllocationForm = () => {
         break;
 
       case 'add_resource':  
+        if (!cleanedValues.StartDate) {
+          const today = new Date().toISOString().split('T')[0]; // default to today
+          cleanedValues.StartDate = today;
+        }
         postData = {
           'ResourceAllocation.Core/Resource': cleanedValues,
         };
