@@ -34,11 +34,12 @@ export default function TopProjectsView({
   // const { startDate, endDate } = calendarDate || {};
 
   const generateEmptyAllocation = (
+    id: string,
     template: AllocationGridCell,
     project: ProjectsTableRow
   ) => {
     const empty: AllocationGridCell = {
-      id: project.Id,
+      id: id,
       resourceId: null,
       project: project.Name,
       projectId: project.Id,
@@ -80,10 +81,21 @@ export default function TopProjectsView({
       const selectedProjectAllocations = allocations.filter(
         allocation => allocation.projectId === splitViewCurrentProject.Id
       );
-      if (selectedProjectAllocations.length > 0) {
-        return selectedProjectAllocations;
-      }
-      return [generateEmptyAllocation(allocations[0], splitViewCurrentProject)];
+
+      const filledAllocations = [
+        ...selectedProjectAllocations,
+        ...Array.from(
+          { length: 10 - selectedProjectAllocations.length },
+          (_, index) =>
+            generateEmptyAllocation(
+              `${splitViewCurrentProject.Id}_${index}`,
+              allocations[0],
+              splitViewCurrentProject
+            )
+        ),
+      ];
+
+      return filledAllocations;
     }
     return allocations;
   };
@@ -108,8 +120,6 @@ export default function TopProjectsView({
             <EllipsisNameCell
               value={value as string}
               resourceCount={resource_count}
-              // onAddClick={() => handleAddClick(params)}
-              showAddIcon={true}
             />
           );
         }

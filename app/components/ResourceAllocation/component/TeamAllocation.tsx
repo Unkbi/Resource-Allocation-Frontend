@@ -83,6 +83,7 @@ export default function TeamAllocation({
             resourceCount={resource_count.length}
             onAddClick={() => handleAddClick(params)}
             showAddIcon
+            showAddButton={false}
           />
         );
       },

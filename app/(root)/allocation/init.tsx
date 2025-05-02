@@ -42,7 +42,7 @@ export default function AllocationInit() {
     (state: RootState) => state.resources
   );
 
-  const { calendarDate, dataProcessing } = useSelector(
+  const { allAllocations, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
   const { startDate, endDate } = calendarDate || {};
@@ -76,7 +76,8 @@ export default function AllocationInit() {
     if (
       (teams?.result?.length ?? 0) > 0 &&
       (projects?.result?.length ?? 0) > 0 &&
-      (resources?.result?.length ?? 0) > 0
+      (resources?.result?.length ?? 0) > 0 &&
+      allAllocations?.length === 0
     ) {
       dispatch(resetAllocations());
       dispatch({
@@ -101,6 +102,26 @@ export default function AllocationInit() {
     currentView?.StartDate,
     currentView?.EndDate,
   ]);
+
+  useEffect(() => {
+    if (
+      (teams?.result?.length ?? 0) > 0 &&
+      (projects?.result?.length ?? 0) > 0 &&
+      (resources?.result?.length ?? 0) > 0
+    ) {
+      dispatch(resetAllocations());
+      dispatch({
+        type: 'FETCH_ALL_ALLOCATIONS',
+        payload: {
+          teams: teams?.result,
+          projects: projects?.result,
+          resources: resources?.result,
+          startDate: currentViewStartDate,
+          endDate: currentViewEndDate,
+        },
+      });
+    }
+  }, []);
 
   return splitView ? (
     <HorizontalSplitView

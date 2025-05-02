@@ -337,7 +337,6 @@ const AllocationForm = () => {
 
           const warningMessages = [];
           const errorMessages = [];
-
           const allocationPromises = allMondays.flatMap(monday => {
             return values.Resource.flatMap(resource => {
               return filteredProjects.map(project => {
@@ -449,20 +448,37 @@ const AllocationForm = () => {
             ];
             dispatch(closeDialog());
             new Promise((resolve, reject) => {
-              dispatch({
-                type: 'UPDATE_TEAM_ALLOCATIONS',
-                payload: {
-                  teamIds: updated_teams.map(team => team?.Id),
-                  teams: teams?.result,
-                  projects: projects?.result,
-                  resources: resources?.result,
-                  teamsResources: teamsResources,
-                  startDate: _startDate,
-                  endDate: _endDate,
-                  resolve,
-                  reject,
-                },
-              });
+              if (currentView?.GroupBy === 'Teams') {
+                dispatch({
+                  type: 'UPDATE_TEAM_ALLOCATIONS',
+                  payload: {
+                    teamIds: updated_teams.map(team => team?.Id),
+                    teams: teams?.result,
+                    projects: projects?.result,
+                    resources: resources?.result,
+                    teamsResources: teamsResources,
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    resolve,
+                    reject,
+                  },
+                });
+              } else if (currentView?.GroupBy === 'Project') {
+                dispatch({
+                  type: 'UPDATE_PROJECT_ALLOCATIONS',
+                  payload: {
+                    projectIds: filteredProjects.map(project => project?.Id),
+                    teams: teams?.result,
+                    projects: projects?.result,
+                    resources: resources?.result,
+                    teamsResources: teamsResources,
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    resolve,
+                    reject,
+                  },
+                });
+              }
             }).then(() => {
               handleOnAdd(new_resources);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);

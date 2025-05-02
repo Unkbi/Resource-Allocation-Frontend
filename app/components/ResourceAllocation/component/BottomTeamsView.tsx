@@ -72,6 +72,7 @@ export default function BottomTeamsView({
             resourceCount={resource_count.length}
             onAddClick={() => handleAddClick(params)}
             showAddIcon
+            showAddButton={false}
           />
         );
       },
@@ -154,6 +155,7 @@ export default function BottomTeamsView({
           columns={teamsColumnConfig}
           selectedTeam={selectedTeam}
           setSelectedTeam={setSelectedTeam}
+          columnsFilterable={false}
           toolbarComponent={(props: any) => (
             <SplitTeamToolbar
               {...props}

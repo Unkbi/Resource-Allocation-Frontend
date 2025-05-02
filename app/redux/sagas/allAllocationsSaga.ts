@@ -13,13 +13,12 @@ import {
   fetchResourcesAgainstTeamsForSaga,
   fetchTeamAllocationsForSaga,
 } from '@/app/services/teamServices';
-import { getProjectAllocations } from '@/app/services/projectServices';
+import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
 import { Allocation, Resource } from '@/app/types';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const { projects, teams, resources, startDate, endDate } = action.payload;
-
   try {
     yield put(setDataProcessing(true));
 
@@ -157,7 +156,17 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
 }
 
 function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
-  const { projectIds, startDate, endDate } = action.payload;
+  const {
+    projectIds,
+    teams,
+    projects,
+    resources,
+    teamsResources,
+    startDate,
+    endDate,
+    resolve,
+    reject,
+  } = action.payload;
 
   try {
     yield put(setDataProcessing(true));
@@ -172,16 +181,37 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
               EndDate: format(getMonday(endDate), DATE_FORMAT),
             },
           };
-
           // @ts-ignore
-          const result = yield call(getProjectAllocations, postData);
+          const result = yield call(fetchProjectAllocationsForSaga, postData);
           return { projectId, result };
         })
       )
     );
-    // yield put(updateAllocations(results));
+
+    const allProjectAllocations = results.reduce(
+      (
+        acc: Allocation[],
+        curr: { result: { result: Allocation[] }; projectId: string }
+      ) => [...acc, ...curr.result.result],
+      []
+    );
+
+    const projectsAllocations = formatAllAllocations(
+      allProjectAllocations,
+      teams,
+      projects,
+      resources,
+      teamsResources,
+      startDate,
+      endDate
+    );
+
+    yield put(updateAllAllocations(projectsAllocations));
+
+    if (resolve) resolve();
   } catch (error) {
     console.error('Saga error: Failed to update project allocations:', error);
+    if (reject) reject(error);
   } finally {
     yield put(setDataProcessing(false));
   }

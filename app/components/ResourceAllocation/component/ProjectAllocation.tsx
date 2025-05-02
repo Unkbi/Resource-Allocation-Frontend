@@ -1,8 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { resetAllocations } from '@/app/redux/reducers/projectsReducer';
 import { Box } from '@mui/material';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
@@ -22,28 +21,11 @@ export default function ProjectAllocation({
   endDate,
 }: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
-  const { projects } = useSelector((state: RootState) => state.projects);
-  const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
+  const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  // const { startDate, endDate } = calendarDate || {};
-  const dispatch: AppDispatch = useDispatch();
 
-  useEffect(() => {
-    if (
-      projects &&
-      'result' in projects &&
-      projects?.result?.length &&
-      startDate &&
-      endDate
-    ) {
-      dispatch(resetAllocations());
-      dispatch({
-        type: 'FETCH_PROJECTS_ALLOCATIONS',
-        payload: { projects: projects?.result, startDate, endDate },
-      });
-    }
-  }, [projects, calendarDate]);
+  const dispatch: AppDispatch = useDispatch();
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(

@@ -8,6 +8,7 @@ interface CustomAddIconProps {
   onClick?: () => void;
   menu?: React.ReactNode | null;
   columnType?: 'teams' | 'resource';
+  showAddButton?: boolean;
 }
 
 export const CustomAddIcon = ({
@@ -16,6 +17,7 @@ export const CustomAddIcon = ({
   onClick = () => {},
   menu = null,
   columnType = 'teams',
+  showAddButton = true,
 }: CustomAddIconProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -47,17 +49,21 @@ export const CustomAddIcon = ({
         minWidth: 0,
         position: 'relative',
         overflow: 'visible',
-        '&:hover .icon-overlay': {
-          opacity: 1,
-          visibility: 'visible',
-        },
-        '&:hover .count': {
-          opacity: 0,
-          visibility: 'hidden',
-        },
-        '&:hover .text': {
-          paddingRight: menu ? '40px' : count !== null ? '35px' : '0px',
-        },
+        ...(showAddButton
+          ? {
+              '&:hover .icon-overlay': {
+                opacity: 1,
+                visibility: 'visible',
+              },
+              '&:hover .count': {
+                opacity: 0,
+                visibility: 'hidden',
+              },
+              '&:hover .text': {
+                paddingRight: menu ? '40px' : count !== null ? '35px' : '0px',
+              },
+            }
+          : {}),
       }}
     >
       <Tooltip
@@ -81,41 +87,43 @@ export const CustomAddIcon = ({
           {value}
         </Box>
       </Tooltip>
-      <Box
-        className="icon-overlay"
-        sx={{
-          position: 'absolute',
-          right: 4,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0,
-          mr: menu ? '-17px' : 0,
-          opacity: 0,
-          visibility: 'hidden',
-          transition: 'opacity 0.2s, visibility 0.2s',
-          zIndex: 2,
-          overflow: 'visible',
-        }}
-      >
-        <AddIcon
-          onClick={onClick}
+      {showAddButton && (
+        <Box
+          className="icon-overlay"
           sx={{
-            width: 22,
-            height: 22,
-            fontSize: 20,
-            backgroundColor: '#1C2D5F',
-            color: '#fff',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            '&:hover': {
-              backgroundColor: '#1C2D5F',
-            },
+            position: 'absolute',
+            right: 4,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0,
+            mr: menu ? '-17px' : 0,
+            opacity: 0,
+            visibility: 'hidden',
+            transition: 'opacity 0.2s, visibility 0.2s',
+            zIndex: 2,
+            overflow: 'visible',
           }}
-        />
-        {menu}
-      </Box>
+        >
+          <AddIcon
+            onClick={onClick}
+            sx={{
+              width: 22,
+              height: 22,
+              fontSize: 20,
+              backgroundColor: '#1C2D5F',
+              color: '#fff',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: '#1C2D5F',
+              },
+            }}
+          />
+          {menu}
+        </Box>
+      )}
       {count !== null && (
         <Box
           className="count"
