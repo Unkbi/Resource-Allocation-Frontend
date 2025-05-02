@@ -233,7 +233,7 @@ const Header = ({ sidebarExpanded }) => {
       <Toolbar className="toobarRow">
         <Typography variant="h6">{getTitleFromPathname(pathname)}</Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
-          {splitView ? (
+          {pathname === '/allocation' && splitView ? (
             <StyledButton variant="contained" onClick={handleSplitViewDone}>
               Close
             </StyledButton>

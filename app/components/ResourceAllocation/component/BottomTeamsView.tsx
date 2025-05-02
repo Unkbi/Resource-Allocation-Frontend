@@ -72,6 +72,7 @@ export default function BottomTeamsView({
             resourceCount={resource_count.length}
             onAddClick={() => handleAddClick(params)}
             showAddIcon
+            showAddButton={false}
           />
         );
       },
@@ -144,7 +145,12 @@ export default function BottomTeamsView({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box
+        sx={{
+          height: loading || dataProcessing ? '100vh' : 'var(--height)',
+          width: '100%',
+        }}
+      >
         <AllocationGrid
           loading={loading || dataProcessing}
           groupBy="teams"
@@ -154,6 +160,7 @@ export default function BottomTeamsView({
           columns={teamsColumnConfig}
           selectedTeam={selectedTeam}
           setSelectedTeam={setSelectedTeam}
+          columnsFilterable={false}
           toolbarComponent={(props: any) => (
             <SplitTeamToolbar
               {...props}

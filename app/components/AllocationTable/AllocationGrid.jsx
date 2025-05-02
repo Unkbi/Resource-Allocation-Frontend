@@ -74,6 +74,7 @@ export default function AllocationGrid({
   toolbarComponent,
   NoRowsOverlay,
   mode,
+  columnsFilterable = true,
 }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
@@ -316,7 +317,7 @@ export default function AllocationGrid({
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (currentView?.ColumnsVisible && groupBy) {
+    if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
       const updatedModel = {
         ...columnVisibilityModel,
         ..._columns[groupBy === 'teams' ? 'team' : groupBy].reduce(
@@ -662,104 +663,118 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = (newRow, oldRow) => {
-        // Find the changed week
-        const changedWeek = Object.keys(newRow).find(key => 
-          key.startsWith('W') && newRow[key] !== oldRow[key]?.value
+    // Find the changed week
+    const changedWeek = Object.keys(newRow).find(
+      key => key.startsWith('W') && newRow[key] !== oldRow[key]?.value
+    );
+
+    if (!changedWeek) {
+      return { ...oldRow };
+    }
+    const key = changedWeek;
+    let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+
+    const period = oldRow[key]?.period;
+    const value = formattedCellValue;
+    const resourceId = oldRow.resourceId;
+
+    // Calculate total allocation for the week across all rows for that resource
+    let totalForWeek = 0;
+    rowState.forEach(row => {
+      if (row.resourceId === resourceId) {
+        const val = row[key]?.value || 0;
+        totalForWeek += parseFloat(val);
+      }
+    });
+
+    // Add new value (replace current row’s old value with new one)
+    const currentRowOldValue = oldRow[key]?.value || 0;
+    totalForWeek = totalForWeek - currentRowOldValue + value;
+
+    if (totalForWeek > 1.5 && totalForWeek <= 2) {
+      dispatch(
+        showToastAction(
+          true,
+          `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
+          'warning',
+          4000
+        )
+      );
+    } else if (totalForWeek > 2) {
+      dispatch(
+        showToastAction(
+          true,
+          `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
+          'error',
+          4000
+        )
+      );
+      return oldRow;
+    }
+
+    if (
+      (newRow[key] === null || newRow[key] === undefined) &&
+      (formattedCellValue === 0 || isNaN(formattedCellValue)) &&
+      oldRow[key]?.allocationId
+    ) {
+      const deletePayload = {
+        resourceId: oldRow.resourceId,
+        allocationId: oldRow[key]?.allocationId,
+        period: oldRow[key]?.period,
+      };
+      dispatch(removeResourceAllocation(deletePayload)).then(() => {
+        setUpdatedRows(prevRows =>
+          prevRows.map(row => (row.id === newRow.id ? newRow : row))
         );
+      });
+    }
 
-        if (!changedWeek) {
-          return { ...oldRow };
-        }
-        const key = changedWeek;
-        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
-
-        const period = oldRow[key]?.period;
-        const value = formattedCellValue;
-        const resourceId = oldRow.resourceId;
-
-        // Calculate total allocation for the week across all rows for that resource
-        let totalForWeek = 0;
-        rowState.forEach(row => {
-          if (row.resourceId === resourceId) {
-            const val = row[key]?.value || 0;
-            totalForWeek += parseFloat(val);
-          }
+    // API call to update the data, if any changes are made.
+    if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
+      if (oldRow[key]?.allocationId && newRow[key] !== null) {
+        const putPayload = {
+          resourceId: oldRow.resourceId,
+          allocationId: oldRow[key]?.allocationId,
+          putData: {
+            'ResourceAllocation.Core/Allocation': {
+              AllocationEntered: formattedCellValue,
+            },
+          },
+        };
+        dispatch(updateResourceAllocation(putPayload)).then(() => {
+          setUpdatedRows(prevRows =>
+            prevRows.map(row => (row.id === newRow.id ? newRow : row))
+          );
         });
-
-        // Add new value (replace current row’s old value with new one)
-        const currentRowOldValue = oldRow[key]?.value || 0;
-        totalForWeek = totalForWeek - currentRowOldValue + value;
-
-        if (totalForWeek > 1.5 && totalForWeek <= 2) {
-          dispatch(showToastAction(true, `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,'warning',4000));
-        } else if (totalForWeek > 2) {
-          dispatch(showToastAction(true,`Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,'error',4000));
-          return oldRow;
-        }
-
-        if (
-          (newRow[key] === null || newRow[key] === undefined) &&
-          (formattedCellValue === 0 || isNaN(formattedCellValue)) &&
-          oldRow[key]?.allocationId
-        ) {
-          const deletePayload = {
-            resourceId: oldRow.resourceId,
-            allocationId: oldRow[key]?.allocationId,
-            period: oldRow[key]?.period,
-          };
-          dispatch(removeResourceAllocation(deletePayload)).then(() => {
-            setUpdatedRows(prevRows =>
-              prevRows.map(row => (row.id === newRow.id ? newRow : row))
-            );
-          });
-        }
-
-        // API call to update the data, if any changes are made.
-        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
-          if (oldRow[key]?.allocationId && newRow[key] !== null) {
-            const putPayload = {
-              resourceId: oldRow.resourceId,
-              allocationId: oldRow[key]?.allocationId,
-              putData: {
-                'ResourceAllocation.Core/Allocation': {
-                  AllocationEntered: formattedCellValue,
-                },
-              },
-            };
-            dispatch(updateResourceAllocation(putPayload)).then(() => {
-              setUpdatedRows(prevRows =>
-                prevRows.map(row => (row.id === newRow.id ? newRow : row))
-              );
-            });
-          } else if (formattedCellValue) {
-            const postPayload = {
-              resourceId: oldRow.resourceId,
-              postData: {
-                'ResourceAllocation.Core/Allocation': {
-                  Resource: oldRow.resourceId,
-                  Project: oldRow.projectId,
-                  ProjectName: oldRow.project,
-                  Period: getMondayOfWeek(key, oldRow[key]?.period),
-                  AllocationEntered: formattedCellValue,
-                },
-              },
-            };
-            dispatch(setResourceAllocation(postPayload)).then(() => {
-              setUpdatedRows(prevRows =>
-                prevRows.map(row => (row.id === newRow.id ? newRow : row))
-              );
-            });
-          }
-        }
-        newRow = {...newRow,...oldRow};
-        newRow[key] = {
-          allocationId: oldRow[key]?.allocationId || null,
-          value:
-            formattedCellValue !== 0 && !isNaN(formattedCellValue)
-              ? formattedCellValue
-              : null,
-          period: oldRow[key]?.period,
-        };         
+      } else if (formattedCellValue) {
+        const postPayload = {
+          resourceId: oldRow.resourceId,
+          postData: {
+            'ResourceAllocation.Core/Allocation': {
+              Resource: oldRow.resourceId,
+              Project: oldRow.projectId,
+              ProjectName: oldRow.project,
+              Period: getMondayOfWeek(key, oldRow[key]?.period),
+              AllocationEntered: formattedCellValue,
+            },
+          },
+        };
+        dispatch(setResourceAllocation(postPayload)).then(() => {
+          setUpdatedRows(prevRows =>
+            prevRows.map(row => (row.id === newRow.id ? newRow : row))
+          );
+        });
+      }
+    }
+    newRow = { ...newRow, ...oldRow };
+    newRow[key] = {
+      allocationId: oldRow[key]?.allocationId || null,
+      value:
+        formattedCellValue !== 0 && !isNaN(formattedCellValue)
+          ? formattedCellValue
+          : null,
+      period: oldRow[key]?.period,
+    };
     return { ...newRow, totalEffort: calculateTotalEffort(newRow) };
   };
 
