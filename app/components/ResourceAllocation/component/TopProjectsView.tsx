@@ -251,7 +251,11 @@ export default function TopProjectsView({
           !isNaN(value) && value !== null
             ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
             : null;
-        return <EllipsisNameCell value={formattedValue} />;
+        return (
+          <EllipsisNameCell
+            value={formattedValue === '0.0' ? '' : formattedValue}
+          />
+        );
       },
     },
   ];
