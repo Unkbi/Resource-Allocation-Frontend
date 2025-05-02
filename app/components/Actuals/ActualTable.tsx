@@ -52,8 +52,10 @@ const totalPlanned = useMemo(() => {
   }, [rows]);
 
   useEffect(()=>{
-  dispatch(fetchAllocationTheme())
-  },[]);
+    if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === "" ) {
+      dispatch(fetchAllocationTheme())
+    }
+  },[allocationTheme]);
   
 const handleProcessRowUpdate = (newRow: GridValidRowModel,oldRow: GridValidRowModel) => {
     if (newRow.id === 'total' || newRow.id === 'second-total') {
