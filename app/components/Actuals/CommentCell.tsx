@@ -2,23 +2,30 @@
 
 import { TextField } from '@mui/material';
 import { GridRenderEditCellParams } from '@mui/x-data-grid-premium';
+import { useState, useEffect } from 'react';
 
 export default function CommentCell(props: GridRenderEditCellParams) {
   const { id, value, api, field } = props;
-
+  const [inputValue, setInputValue] = useState(value || '');
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    api.setEditCellValue({ id, field, value: event.target.value }, event);
+    const newVal = event.target.value;
+    setInputValue(newVal); 
+    api.setEditCellValue({ id, field, value: newVal }, event); 
   };
 
   return (
     <TextField
-      value={value || ''}
+      value={inputValue}
       onChange={handleChange}
       variant="standard"
       fullWidth
+      multiline
       InputProps={{
         disableUnderline: true,
-        sx: { pl: 1, pr: 1, height: '100%' },
+        sx: { pl: 1, pr: 1, height: '100%', fontSize: 14 },
       }}
     />
   );

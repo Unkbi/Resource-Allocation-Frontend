@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useState,useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -10,6 +10,7 @@ import {
   styled,
   Box,
   colors,
+  Button,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
@@ -25,6 +26,11 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import Skeleton from '@mui/material/Skeleton';
+import {
+  setSplitView,
+  setSplitViewCurrentProject,
+} from '@/app/redux/reducers/allocationViewReducer';
 
 const MainAppBar = styled(AppBar, {
   shouldForwardProp: prop => prop !== 'sidebarExpanded',
@@ -80,15 +86,44 @@ const MainAppBar = styled(AppBar, {
   },
 }));
 
+const StyledButton = styled(Button)(({ theme }) => ({
+  display: 'flex',
+  width: '96px',
+  height: '32px',
+  padding: '10px',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: '8px',
+  flexShrink: '0',
+  fontWeight: '700',
+  fontSize: '12px',
+}));
+
 const Header = ({ sidebarExpanded }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
+  const { user } = useSelector(state => state.user);
+  const { splitView } = useSelector(state => state.allocationView);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
+  const [displayName, setDisplayName] = useState('');
+  const [loadingName, setLoadingName] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+    if (user?.FirstName || user?.LastName) {
+    setDisplayName(`${user?.FirstName ?? ''} ${user?.LastName ?? ''}`.trim());
+    } else {
+    setDisplayName('User');
+    }
+    setLoadingName(false);
+   }, 3000);
+   return () => clearTimeout(timer);
+   }, [user]);
 
   useEffect(() => {
     if (projects === null) {
@@ -119,6 +154,10 @@ const Header = ({ sidebarExpanded }) => {
     }
   }
 
+  function handleSplitViewDone() {
+    dispatch(setSplitView(false));
+    dispatch(setSplitViewCurrentProject(null));
+  }
   // return focus to the button when we transitioned from !open -> open
   const prevOpenAdd = React.useRef(openAddMenu);
 
@@ -141,6 +180,7 @@ const Header = ({ sidebarExpanded }) => {
       alt: 'Project Icon',
       title: 'Add Project',
       type: 'add_project',
+      primarySecondButtonText: 'Add & Allocate Resources',
       initialData: {
         Status: 'Active',
       },
@@ -165,14 +205,19 @@ const Header = ({ sidebarExpanded }) => {
     },
   ];
 
-  const handleOpenDialog = (title, formType, initialData = null) => {
+  const handleOpenDialog = (
+    title,
+    formType,
+    primarySecondButtonText,
+    initialData = null
+  ) => {
     setOpenAddMenu(false);
     dispatch(
       openDialog({
         title: title,
         submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
         cancelButtonText: 'Cancel',
-        secondryText: 'Save As',
+        primarySecondButtonText: primarySecondButtonText ?? '',
         formType: formType,
         initialData: initialData,
       })
@@ -195,6 +240,8 @@ const Header = ({ sidebarExpanded }) => {
         return;
       case '/help':
         return;
+      case '/actual':
+        return "Actuals" ;
       default:
         return 'Executive Dashboard';
     }
@@ -202,23 +249,39 @@ const Header = ({ sidebarExpanded }) => {
   return (
     <MainAppBar sidebarExpanded={sidebarExpanded}>
       <Toolbar className="toobarRow">
-        <Typography variant="h6">{getTitleFromPathname(pathname)}</Typography>
+        <Typography variant="h6"> 
+        {pathname === '/actual' ? (
+        <>  
+        {loadingName ? (
+        <Skeleton width={100} height={20} />
+         ) : (
+        `${displayName} : Actuals`
+        )}
+       </>
+        ) : (getTitleFromPathname(pathname))}
+        </Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
-          <Box className="searchBar">
-            <TextField
-              placeholder="Search..."
-              size="small"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="end">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                disableUnderline: true,
-              }}
-              variant="standard"
-            />
-          </Box>
+          {pathname === '/allocation' && splitView ? (
+            <StyledButton variant="contained" onClick={handleSplitViewDone}>
+              Close
+            </StyledButton>
+          ) : (
+            <Box className="searchBar">
+              <TextField
+                placeholder="Search..."
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="end">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  disableUnderline: true,
+                }}
+                variant="standard"
+              />
+            </Box>
+          )}
 
           <IconButton
             className="settingIcon"
@@ -293,6 +356,7 @@ const Header = ({ sidebarExpanded }) => {
                         handleOpenDialog(
                           item.title,
                           item.type,
+                          item?.primarySecondButtonText ?? '',
                           item.initialData
                         )
                       }

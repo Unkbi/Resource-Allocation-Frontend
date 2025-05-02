@@ -1,24 +1,27 @@
 import React from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from "@mui/material";
 
-// global delete dialog with placeholders, pass title as prop and content as children prop
-const DeleteDialog = ({ open, onCancel, onConfirm, title, children }) => {
+// global confirm dialog with placeholders, pass title as prop and content as children prop
+const ConfirmDialog = ({ open, onCancel, onConfirm, title, children }) => {
   return (
     <Dialog open={open} onCancel={onCancel}>
-      <Box sx={{ textAlign: "center", fontFamily: theme => theme.typography.fontFamily }}>
-        <DialogTitle sx={{ fontWeight: "bold", fontSize: "1.25rem", pt: 4, pl: 3.5, pl: 3.5 }}>
-          {title || "Are you sure you want to delete?"}
-        </DialogTitle>
+      <Box sx={{ textAlign: "left", fontFamily: theme => theme.typography.fontFamily }}>
+        <Box
+          sx={{
+            backgroundColor: "#1C2D5F",
+            padding: "10px 0px 10px 24px",
+            color: "#ffffff",
+            borderTopLeftRadius: "4px",
+          }}
+        >
+          <Typography>
+            {title || "Insert dialog title here?"}
+          </Typography>
+        </Box>
         <DialogContent>
-          {children ? (
-            <Typography sx={{ color: "#666", fontSize: "1rem" }}>
-              {children}
-            </Typography>
-          ) : (
-            <Typography sx={{ color: "#666", fontSize: "1rem" }}>
-              This will be deleted from your sheet.
-            </Typography>
-          )}
+          <Typography sx={{ color: "#000", fontSize: "1rem", marginTop: "8px", textAlign: "center" }}>
+            {children || "Insert dialog content here."}
+          </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center", pb: 4 }}>
           <Button
@@ -60,4 +63,4 @@ const DeleteDialog = ({ open, onCancel, onConfirm, title, children }) => {
   );
 };
 
-export default DeleteDialog;
+export default ConfirmDialog;

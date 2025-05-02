@@ -6,7 +6,7 @@ import {
 import { formatAllocations } from '@/app/utils/allocationUtils';
 import { fetchAllAllocations } from '@/app/services/allocationServices';
 import { sagaTaskRefs } from './sagaTasks';
-import {getMondayOfISO } from '@/app/utils/common';
+import { getMondayOfISO } from '@/app/utils/common';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const { projects, startDate, endDate } = action.payload;
@@ -16,8 +16,8 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 
     const postData = {
       'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
-         StartDate: getMondayOfISO(startDate),
-         EndDate: getMondayOfISO(endDate),
+        StartDate: getMondayOfISO(startDate),
+        EndDate: getMondayOfISO(endDate),
       },
     };
 
@@ -38,7 +38,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 }
 
 export function* projectsSaga() {
-  yield takeLatest('FETCH_ALL_ALLOCATIONS', function* (action) {
+  yield takeLatest('FETCH_PROJECTS_ALLOCATIONS', function* (action) {
     // Cancel teams task if active
     if (sagaTaskRefs.ongoingTeamsTask) {
       yield cancel(sagaTaskRefs.ongoingTeamsTask);

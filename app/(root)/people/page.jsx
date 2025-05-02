@@ -8,7 +8,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert"
 import { useDispatch, useSelector } from "react-redux";
 import { closeDialog, openDialog } from "@/app/redux/reducers/dialogReducer";
 import CustomAvatar from "@/app/components/Avatar/CustomAvatar";
-import DeleteDialog from "@/app/components/Dialog/DeleteDialog";
+import ConfirmDialog from "@/app/components/Dialog/ConfirmDialog";
 import { fetchAllResources } from "@/app/redux/actions/fetchResourcesAction";
 import { getAllTeams } from "@/app/services/teamServices";
 import EditIcon from '@mui/icons-material/Edit';
@@ -387,7 +387,7 @@ export default function Resources() {
             minHeight: '600px'
             }}>
             <ResourceTable loading={loading }columns={columns} rows={modifyData(rows)}  />
-            <DeleteDialog
+            <ConfirmDialog
               open={deleteDialogOpen}
               onConfirm={handleConfirmDelete}
               onCancel={handleCancelDelete}
@@ -396,7 +396,7 @@ export default function Resources() {
               </>}
               >
               This will permanently delete the Resource.
-              </DeleteDialog>
+              </ConfirmDialog>
         </Box>
         </Stack>
     )

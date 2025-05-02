@@ -81,3 +81,13 @@ export const getProjectAllocations = createAsyncThunk(
     }
   }
 );
+
+export const fetchProjectAllocationsForSaga = async (
+  postData: GetProjectAllocationsForPeriodPayload
+) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/GetProjectAllocationsForPeriod`,
+    postData
+  );
+  return response.data;
+};
