@@ -570,3 +570,9 @@ export const getTotalWeeklyAllocation = (rowState, resourceId, weekKey) => {
   });
   return total;
 };
+
+export function formatStringToFloat(value, decimalPlaces = 1) {
+  const num = parseFloat(value);
+  if (isNaN(num)) return '0.0'; // fallback for invalid inputs
+  return num.toFixed(decimalPlaces);
+}

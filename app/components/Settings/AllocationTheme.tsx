@@ -29,6 +29,7 @@ import { AppDispatch } from '@/app/redux/store';
 import { useDispatch } from 'react-redux';
 import { AllocationRange } from '@/app/types';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import { formatStringToFloat } from '@/app/utils/common';
 
 interface ColorPair {
   pastel: string;
@@ -81,6 +82,38 @@ export default function AllocationTheme({
     return allocationRanges.map(row => row?.Color);
   }, [allocationRanges]);
 
+  const formatValues = (
+    e: React.FocusEvent<HTMLInputElement>,
+    row: AllocationRange
+  ) => {
+    if (parseFloat(row.From) > parseFloat(row.To)) {
+      e.target.focus();
+      dispatch(
+        showToastAction(
+          true,
+          `Allocation Range To : ${row.To} must be equal or greater than Allocation Range From : ${row.From}`,
+          'error',
+          4000
+        )
+      );
+    }
+    const updatedRanges = allocationRanges.map(r => {
+      if (r.id === row.id) {
+        return {
+          ...r,
+          From: formatStringToFloat(row.From),
+          To: formatStringToFloat(row.To),
+        };
+      }
+      return r;
+    });
+
+    onAllocationRangesChange(updatedRanges);
+    const newErrors = validateRanges(updatedRanges);
+    setValidationErrors(newErrors);
+    onDataChanged();
+  };
+
   React.useEffect(() => {
     dispatch(fetchAllocationTheme());
   }, []);
@@ -101,6 +134,11 @@ export default function AllocationTheme({
         return regex.test(value);
       }
 
+      function isInvalidInput(value: string) {
+        const regex = /[^0-9\.\s]/;
+        return regex.test(value);
+      }
+
       let updatedRanges = allocationRanges.map(row =>
         row.id === id ? { ...row, [field]: value } : row
       );
@@ -110,18 +148,8 @@ export default function AllocationTheme({
         if (currentRow && currentRow.To !== '2.0') {
           let currentTo = parseFloat(value);
           if (!isNaN(currentTo)) {
-            // Adding a check to not allow 0.0 and >= 2.0 to be entered
-            if (value === '0.0') {
-              // updatedRanges = allocationRanges;
-
-              dispatch(
-                showToastAction(true, `${value} not allowed`, 'error', 4000)
-              );
-              return;
-            }
-
             // Check if the value is a valid decimal number
-            if (isFloatLike(value) === false) {
+            if (isInvalidInput(value) || isFloatLike(value) === false) {
               dispatch(
                 showToastAction(
                   true,
@@ -183,6 +211,14 @@ export default function AllocationTheme({
               currentTo = parseFloat(newFromValue);
               nextIndex++;
             }
+          } else {
+            updatedRanges = updatedRanges.map(row =>
+              row.id === id ? { ...row, To: '' } : row
+            );
+            onAllocationRangesChange(updatedRanges);
+            const newErrors = validateRanges(updatedRanges);
+            setValidationErrors(newErrors);
+            onDataChanged();
           }
         }
       }
@@ -240,10 +276,9 @@ export default function AllocationTheme({
           }}
           size="small"
           value={row.To}
-          disabled={
-            (row.From === '0.0' && row.To === '0.0') || row.To === '2.0'
-          }
+          disabled={row.To === '2.0'}
           onChange={e => handleRangeChange(id, 'To', e.target.value)}
+          onBlur={e => formatValues(e, row)}
           error={error?.To}
         />
       </RangeInputGroup>
