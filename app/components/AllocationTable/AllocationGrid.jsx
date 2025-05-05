@@ -970,7 +970,11 @@ export default function AllocationGrid({
       rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
       columnHeaderHeight={30}
       columnGroupHeaderHeight={22}
-      columnGroupingModel={generateColumnGroupingModel(startDate, finalColumns)}
+      columnGroupingModel={generateColumnGroupingModel(
+        startDate,
+        endDate,
+        finalColumns
+      )}
       defaultGroupingExpansionDepth={1}
       disableAutosize
       getCellClassName={params =>
