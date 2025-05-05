@@ -60,6 +60,7 @@ import SplitTeamToolbar from '../Toolbar/SplitTeamToolbar';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import { normalizeRow } from './AllocationGridUtils';
 
 export default function AllocationGrid({
   groupBy,
@@ -173,53 +174,76 @@ export default function AllocationGrid({
     ...aggregationModel(startDate, endDate),
   });
 
-  const normalizeRow = row => {
-    const allWeeks = generateAllWeeks();
-    const normalized = { ...row };
-
-    allWeeks.forEach(weekKey => {
-      const period = getMondayOfWeek(weekKey, new Date());
-      const value = row[weekKey];
-
-      if (value && typeof value === 'object' && 'value' in value) {
-        normalized[weekKey] = {
-          allocationId: value.allocationId || null,
-          value: value.value,
-          period: period,
-        };
-      } else if (value !== undefined) {
-        normalized[weekKey] = {
-          allocationId: null,
-          value,
-          period,
-        };
-      } else {
-        normalized[weekKey] = {
-          allocationId: null,
-          value: null,
-          period,
-        };
-      }
-    });
-
-    return normalized;
-  };
-
+  const teamsResources = useSelector(state => state.teams.teamsResources);
+  
   useEffect(() => {
-    const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
-    const updatedRows = mapData.map(row => ({
-      ...normalizeRow(row),
-      totalEffort: calculateTotalEffort(normalizeRow(row)),
-      hasAllocation: calculateTotalEffort(normalizeRow(row)) > 0,
-      teamAllocationManager: getAllocationManagerFromPath(
+    console.log('teamsResources:', teamsResources);
+  
+    const dataMap = new Map();
+    const existingKeys = new Set();
+    const initialRows = data?.map(row => {
+      const normalized = normalizeRow(row);
+      const totalEffort = calculateTotalEffort(normalized);
+      const manager = getAllocationManagerFromPath(
         row?.teamAllocationManager,
         resources?.result || []
-      )?.FullName,
-    }));
+      )?.FullName;
+  
+      const key = `${row.teams}___${row.resourceId}`;
+      existingKeys.add(key);
+      dataMap.set(key, row);
+  
+      return {
+        ...normalized,
+        totalEffort,
+        hasAllocation: totalEffort > 0,
+        teamAllocationManager: manager,
+      };
+    }) || [];
+  
+    const extraRows = [];
+    if (view === 'Teams') {
+      teams?.result?.forEach(team => {
+        const teamResources = teamsResources?.[team.Id] || [];
+        teamResources.forEach(resource => {
+          const key = `${team.Name}___${resource.Id}`;
+          if (!existingKeys.has(key)) {
+            const blankRow = {
+              id: `team/${team.Name}-resource/${resource.FullName}`,
+              teams: team.Name,
+              teamId: team.Id,
+              resource: resource.FullName,
+              resourceId: resource.Id,
+              project: '',
+              projectId: '',
+            };
+    
+            const normalized = normalizeRow(blankRow);
+            const totalEffort = calculateTotalEffort(normalized);
+            const manager = getAllocationManagerFromPath(
+              blankRow?.teamAllocationManager,
+              resources?.result || []
+            )?.FullName;
+    
+            extraRows.push({
+              ...normalized,
+              totalEffort,
+              hasAllocation: false,
+              teamAllocationManager: manager,
+            });
+          }
+        });
+      });
+    }    
+  
+    const updatedRows = [...initialRows, ...extraRows];
+
     setUpdatedRows(updatedRows);
-    let new_row_state = getInitialRowsState(updatedRows, groupBy, teams);
-    dispatch(setRowState(new_row_state));
-  }, [data, groupBy, teams]);
+    const newRowState = getInitialRowsState(updatedRows, groupBy, teams);
+
+    dispatch(setRowState(newRowState));
+  }, [data, groupBy, teams, teamsResources, resources]);
+  
 
   useEffect(() => {
     try {
@@ -945,6 +969,10 @@ export default function AllocationGrid({
       }
     : {};
 
+    useEffect(() => {
+      setUpdatedRows(rowState); // ensure updatedRows is refreshed
+    }, [rowState]);
+    
   return (
     <StyledDataGrid
       cellSelection
