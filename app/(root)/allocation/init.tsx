@@ -81,7 +81,7 @@ export default function AllocationInit() {
     ) {
       dispatch(resetAllocations());
       dispatch({
-        type: 'FETCH_ALL_ALLOCATIONS',
+        type: 'FETCH_ALL_ALLOCATIONS_INIT',
         payload: {
           teams: teams?.result,
           projects: projects?.result,
@@ -91,17 +91,7 @@ export default function AllocationInit() {
         },
       });
     }
-  }, [
-    teams,
-    projects,
-    resources,
-    currentView?.isDynamicRange,
-    currentView?.isFixedRange,
-    currentView?.WeekPlus,
-    currentView?.WeekMinus,
-    currentView?.StartDate,
-    currentView?.EndDate,
-  ]);
+  }, [teams, projects, resources]);
 
   useEffect(() => {
     if (
@@ -121,7 +111,14 @@ export default function AllocationInit() {
         },
       });
     }
-  }, []);
+  }, [
+    currentView?.isDynamicRange,
+    currentView?.isFixedRange,
+    currentView?.WeekPlus,
+    currentView?.WeekMinus,
+    currentView?.StartDate,
+    currentView?.EndDate,
+  ]);
 
   return splitView ? (
     <HorizontalSplitView

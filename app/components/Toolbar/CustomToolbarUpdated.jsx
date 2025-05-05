@@ -623,7 +623,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       );
 
       const toShift = currentView.isFixedRange
-        ? totalWeeks
+        ? totalWeeks >= TOTAL_FUTURE_WEEKS_ARROW
+          ? TOTAL_FUTURE_WEEKS_ARROW
+          : totalWeeks
         : TOTAL_FUTURE_WEEKS_ARROW;
 
       const toNextWeekPlus =
