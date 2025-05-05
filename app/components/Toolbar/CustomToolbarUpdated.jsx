@@ -795,7 +795,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         projects?.result || []
       );
 
-      if (view === 'Projects' && projectsIAmProjectManager.length === 0) {
+      if (view === 'Project' && projectsIAmProjectManager.length === 0) {
         setPopOverAnchorEl(myProjectsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
@@ -879,7 +879,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             {viewOptions.map(option => (
               <StyledMenuItem value={option.name}>
                 {option.icon}
-                {option.name}
+                {option.name === 'Project' ? 'Projects' : option.name}
               </StyledMenuItem>
             ))}
           </StyledSelect>
