@@ -75,7 +75,7 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
     >
       {showAvatar && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <CustomAvatar value={value} showFullName={false} />
+          <CustomAvatar value={value || ''} showFullName={false} />
         </div>
       )}
 

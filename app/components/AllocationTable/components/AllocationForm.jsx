@@ -57,6 +57,8 @@ import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
 import { format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { addResource, updateResource } from '@/app/services/resourceServices';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
@@ -74,9 +76,22 @@ const initialValuesMap = {
     Type: '',
   },
   add_resource: {
-    Resource: '',
-    Type: '',
-    Skills: '',
+    FirstName: '',
+    LastName: '',
+    FullName: '',
+    Email: '',
+    PhoneNumber: '',
+    Department: '',
+    Role: '',
+    HRLevel: '',
+    Type: 'Contractor',
+    ContractorHourlyRate: null,
+    AverageWeeklyHours: null,
+    Manager: '',
+    StartDate: '',
+    EndDate: '',
+    WorkLocation: '',
+    Status: '',
   },
   add_allocation: {
     Resource: [],
@@ -264,23 +279,23 @@ const AllocationForm = () => {
     { setSubmitting, setErrors, validateForm }
   ) => {
     const errors = await validateForm(values);
-    const { submitType } = values;
-
     if (Object.keys(errors).length > 0) {
       setErrors(errors);
       setSubmitting(false);
       return;
     }
-    let filteredValues = { ...values };
-    if (formType === 'add_project' || formType === 'edit_project') {
-      delete filteredValues.submitType;
-    }
+
     let postData = {};
+    const {
+      submitType,
+      ...cleanedValues
+    } = values;
+
     switch (formType) {
       case 'add_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...filteredValues,
+            ...values,
             Description: 'string',
           },
         };
@@ -309,11 +324,11 @@ const AllocationForm = () => {
           console.log(e);
         }
         break;
-
+        
       case 'edit_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...filteredValues,
+            ...values,
             Description: 'string',
           },
         };
@@ -324,6 +339,44 @@ const AllocationForm = () => {
         }
         break;
 
+      case 'add_resource':  
+        if (!cleanedValues.StartDate) {
+          const today = new Date().toISOString().split('T')[0]; // default to today
+          cleanedValues.StartDate = today;
+        }
+        postData = {
+          'ResourceAllocation.Core/Resource': cleanedValues,
+        };
+
+        try {
+          await dispatch(addResource(postData));
+          await dispatch(fetchAllResources());
+          if (pathname !== '/people') {
+            router.replace('/people');
+          }
+        } catch (e) {
+          console.error('Failed to add resource:', e);
+        }
+        dispatch(closeDialog());  
+        break;
+
+      case 'edit_resource':
+        postData = {
+          'ResourceAllocation.Core/Resource': cleanedValues,
+        };
+      
+        try {
+          await dispatch(updateResource({
+            postData,
+            resourceId: initialData.Id,
+          }));
+          await dispatch(fetchAllResources());
+          dispatch(closeDialog());
+        } catch (e) {
+          console.error('Failed to update resource:', e);
+        }
+        break;        
+    
       case 'add_allocation':
         try {
           const allMondays = generateAllMondays(
@@ -1009,7 +1062,9 @@ const AllocationForm = () => {
           />
         );
       case 'add_resource':
-        return <AddResourceForm formikProps={formikProps} />;
+        return <AddResourceForm formikProps={formikProps} setFormValue={setFormValue} />;
+      case 'edit_resource':
+        return <AddResourceForm formikProps={formikProps} setFormValue={setFormValue} />;
       case 'add_allocation':
         return (
           <AddAllocationForm
