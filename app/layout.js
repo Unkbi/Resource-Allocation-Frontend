@@ -16,8 +16,8 @@ import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
 import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
 
 const MainContent = styled(Box, {
-  shouldForwardProp: (prop) => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
-})(({ theme, isLoggedIn ,sidebarExpanded }) => {
+  shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
+})(({ theme, isLoggedIn, sidebarExpanded }) => {
   return {
     background: '#fff',
     marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
@@ -30,7 +30,7 @@ function LayoutContent({ children }) {
   const isLoggedIn = getToken();
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
-  const [isUserLoginIn,setIsUserLoginIn]=useState(null);
+  const [isUserLoginIn, setIsUserLoginIn] = useState(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
@@ -38,54 +38,64 @@ function LayoutContent({ children }) {
   const { open } = useSelector(state => state.toast);
 
   useEffect(() => {
-    setIsClient(true); 
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
-   const getTitleByPath = (pathname) => {
-     switch(pathname) {
-       case '/allocation':
-         return 'Allocation';
-       case '/project':
-         return 'Projects';
-       case '/people':
-         return 'Resource';
-       case '/report':
-         return 'Reports';
-       default:
-         return 'Dashboard'; 
-     }
-   };
-   document.title = getTitleByPath(pathname);
- }, [pathname]);
-
+    const getTitleByPath = (pathname) => {
+      switch (pathname) {
+        case '/allocation':
+          return 'Allocation';
+        case '/project':
+          return 'Projects';
+        case '/people':
+          return 'Resources';
+        case '/report':
+          return 'Reports';
+        case '/actual':
+          return 'Actuals';
+        default:
+          return 'Dashboard';
+      }
+    };
+    document.title = getTitleByPath(pathname);
+  }, [pathname]);
 
   useEffect(() => {
-    if (!isClient) return; 
+    if (!isClient) return;
     if (isLoggedIn && isPublicRoute) {
       router.replace('/allocation');
     } else if (!isLoggedIn && !isPublicRoute) {
       router.replace('/login');
     }
-  }, [isLoggedIn, isPublicRoute, router,isClient]);
+  }, [isLoggedIn, isPublicRoute, router, isClient]);
 
   useEffect(() => {
     if (!isClient) return;
     if (isLoggedIn) {
-      setIsUserLoginIn(isLoggedIn)
+      setIsUserLoginIn(isLoggedIn);
       dispatch(getUserData());
     }
-  }, [dispatch,isLoggedIn,isClient]);
+  }, [dispatch, isLoggedIn, isClient]);
 
   return (
     <>
-      {!isPublicRoute && <Header isExpanded={sidebarExpanded} sidebarExpanded={sidebarExpanded} toggleSidebar={() => setSidebarExpanded((prev) => !prev)} />}
-      {!isPublicRoute &&  <SideBar  sidebarExpanded={sidebarExpanded} toggleSidebar={() => setSidebarExpanded((prev) => !prev)} />}
+      {!isPublicRoute && (
+        <Header
+          isExpanded={sidebarExpanded}
+          sidebarExpanded={sidebarExpanded}
+          toggleSidebar={() => setSidebarExpanded(prev => !prev)}
+        />
+      )}
+      {!isPublicRoute && (
+        <SideBar
+          sidebarExpanded={sidebarExpanded}
+          toggleSidebar={() => setSidebarExpanded(prev => !prev)}
+        />
+      )}
       <MainContent isLoggedIn={isUserLoginIn} sidebarExpanded={sidebarExpanded}>
         {children}
-         {open && <CustomSnackbar
-            sidebarExpanded={sidebarExpanded}
-          />}
+        {open && <CustomSnackbar sidebarExpanded={sidebarExpanded} />}
       </MainContent>
       <MuiXLicense />
     </>

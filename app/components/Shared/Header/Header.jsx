@@ -1,5 +1,5 @@
 'use client';
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -115,15 +115,17 @@ const Header = ({ sidebarExpanded }) => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-    if (user?.FirstName || user?.LastName) {
-    setDisplayName(`${user?.FirstName ?? ''} ${user?.LastName ?? ''}`.trim());
-    } else {
-    setDisplayName('User');
-    }
-    setLoadingName(false);
-   }, 3000);
-   return () => clearTimeout(timer);
-   }, [user]);
+      if (user?.FirstName || user?.LastName) {
+        setDisplayName(
+          `${user?.FirstName ?? ''} ${user?.LastName ?? ''}`.trim()
+        );
+      } else {
+        setDisplayName('User');
+      }
+      setLoadingName(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [user]);
 
   useEffect(() => {
     if (projects === null) {
@@ -231,7 +233,7 @@ const Header = ({ sidebarExpanded }) => {
       case '/project':
         return 'Projects';
       case '/people':
-        return 'Resource';
+        return 'Resources';
       case '/report':
         return 'Reports';
       case '/settings':
@@ -241,7 +243,7 @@ const Header = ({ sidebarExpanded }) => {
       case '/help':
         return;
       case '/actual':
-        return "Actuals" ;
+        return 'Actuals';
       default:
         return 'Executive Dashboard';
     }
@@ -249,16 +251,18 @@ const Header = ({ sidebarExpanded }) => {
   return (
     <MainAppBar sidebarExpanded={sidebarExpanded}>
       <Toolbar className="toobarRow">
-        <Typography variant="h6"> 
-        {pathname === '/actual' ? (
-        <>  
-        {loadingName ? (
-        <Skeleton width={100} height={20} />
-         ) : (
-        `${displayName} : Actuals`
-        )}
-       </>
-        ) : (getTitleFromPathname(pathname))}
+        <Typography variant="h6">
+          {pathname === '/actual' ? (
+            <>
+              {loadingName ? (
+                <Skeleton width={100} height={20} />
+              ) : (
+                `${displayName} : Actuals`
+              )}
+            </>
+          ) : (
+            getTitleFromPathname(pathname)
+          )}
         </Typography>
         <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
           {pathname === '/allocation' && splitView ? (
