@@ -23,6 +23,9 @@ export * from './userTypes';
 // Setting-related Types
 export * from './settingTypes';
 
+// Components related Types
+export * from './component';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;

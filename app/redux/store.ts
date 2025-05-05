@@ -9,6 +9,7 @@ import toastSlice from './reducers/toastReducer';
 import dialogReducer from './reducers/dialogReducer';
 import dataGridReducer from './reducers/dataGridReducer';
 import settingsReducer from './reducers/settingsReducer';
+import allAllocationReducer from './reducers/allAllocationsReducer';
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from './sagas';
 
@@ -27,6 +28,7 @@ export const makeStore = () => {
       globalDialog: dialogReducer,
       dataGrid: dataGridReducer,
       settings: settingsReducer,
+      allAllocations: allAllocationReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({

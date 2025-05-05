@@ -289,7 +289,7 @@ export const getMondayOfISO = date => {
 };
 
 export const generateTMinusOneStartEndDate = isStartDate => {
-  let today = new Date();
+  let today = parseISO(new Date().toISOString());
   const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
   if (isStartDate) {
     return format(lastWeeksMonday, DATE_FORMAT);
@@ -559,3 +559,20 @@ export const getOnlyFilterSettings = view => {
     Filters: view.Filters ?? [],
   };
 };
+
+export const getTotalWeeklyAllocation = (rowState, resourceId, weekKey) => {
+  let total = 0;
+  const allRows = rowState;
+  allRows.forEach(row => {
+    if (row.resourceId === resourceId && row[weekKey]?.value) {
+      total += parseFloat(row[weekKey]?.value || 0);
+    }
+  });
+  return total;
+};
+
+export function formatStringToFloat(value, decimalPlaces = 1) {
+  const num = parseFloat(value);
+  if (isNaN(num)) return '0.0'; // fallback for invalid inputs
+  return num.toFixed(decimalPlaces);
+}

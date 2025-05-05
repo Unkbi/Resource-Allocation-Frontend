@@ -51,6 +51,7 @@ const CustomSelect = ({
   helperText,
   multiple = false,
   forceClose = false, // close if more than one item selected
+  isResourceForm = false
 }) => {
   const [open, setOpen] = React.useState(false);
 
@@ -117,17 +118,39 @@ const CustomSelect = ({
         multiple={multiple}
         displayEmpty
         renderValue={renderValue}
-        MenuProps={{
-          PaperProps: {
-            style: {
-              maxHeight: 200,
-              maxWidth: 340,
-            },
-          },
-          MenuListProps: {
-            disablePadding: true,
-          },
-        }}
+        MenuProps={
+          isResourceForm
+            ? {
+                anchorOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left',
+                },
+                transformOrigin: {
+                  vertical: 'bottom',
+                  horizontal: 'left',
+                },
+                PaperProps: {
+                  style: {
+                    maxHeight: 200,
+                    maxWidth: 340,
+                  },
+                },
+                MenuListProps: {
+                  disablePadding: true,
+                },
+              }
+            : {
+                PaperProps: {
+                  style: {
+                    maxHeight: 200,
+                    maxWidth: 340,
+                  },
+                },
+                MenuListProps: {
+                  disablePadding: true,
+                },
+              }
+        }        
         IconComponent={() => (
           <img
             src="/images/icons/dropdown-icon.svg"

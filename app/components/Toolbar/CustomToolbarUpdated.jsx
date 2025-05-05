@@ -623,7 +623,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       );
 
       const toShift = currentView.isFixedRange
-        ? totalWeeks
+        ? totalWeeks >= TOTAL_FUTURE_WEEKS_ARROW
+          ? TOTAL_FUTURE_WEEKS_ARROW
+          : totalWeeks
         : TOTAL_FUTURE_WEEKS_ARROW;
 
       const toNextWeekPlus =
@@ -793,7 +795,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         projects?.result || []
       );
 
-      if (view === 'Projects' && projectsIAmProjectManager.length === 0) {
+      if (view === 'Project' && projectsIAmProjectManager.length === 0) {
         setPopOverAnchorEl(myProjectsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
@@ -877,7 +879,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             {viewOptions.map(option => (
               <StyledMenuItem value={option.name}>
                 {option.icon}
-                {option.name}
+                {option.name === 'Project' ? 'Projects' : option.name}
               </StyledMenuItem>
             ))}
           </StyledSelect>

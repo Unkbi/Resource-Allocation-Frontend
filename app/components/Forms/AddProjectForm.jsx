@@ -12,7 +12,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { initialData } = useSelector((state) => state.globalDialog.formState)
   const { resources } = useSelector((state) => state.resources)
 
-  const resourceTypeOptions = resources && resources.result.map((resource) => {
+  const resourceTypeOptions = resources && resources?.result?.map((resource) => {
     return { value: resource.FullName, label: resource.FullName }
   })
 
@@ -66,7 +66,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Name"
-          value={values.Name}
+          value={values.Name || ''}
           onChange={handleChange}
           onBlur={handleBlur}
           error={touched.Name && Boolean(errors.Name)}
@@ -178,6 +178,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           error={formikProps.touched.StartDate && Boolean(formikProps.errors.StartDate)}
           helperText={formikProps.touched.StartDate && formikProps.errors.StartDate}
           customStyles={true}
+          isProjectForm={true}
+          title="Date Range"
         />
       </Box>
       <Box sx={{ pb: 2 }}>

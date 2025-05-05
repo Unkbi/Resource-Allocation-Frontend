@@ -28,6 +28,8 @@ import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import { AppDispatch } from '@/app/redux/store';
 import { useDispatch } from 'react-redux';
 import { AllocationRange } from '@/app/types';
+import { showToastAction } from '@/app/redux/actions/toastAction';
+import { formatStringToFloat } from '@/app/utils/common';
 
 interface ColorPair {
   pastel: string;
@@ -80,6 +82,38 @@ export default function AllocationTheme({
     return allocationRanges.map(row => row?.Color);
   }, [allocationRanges]);
 
+  const formatValues = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+    row: AllocationRange
+  ) => {
+    if (parseFloat(row.From) > parseFloat(row.To)) {
+      e.target.focus();
+      dispatch(
+        showToastAction(
+          true,
+          `Allocation Range To : ${row.To} must be equal or greater than Allocation Range From : ${row.From}`,
+          'error',
+          4000
+        )
+      );
+    }
+    const updatedRanges = allocationRanges.map(r => {
+      if (r.id === row.id) {
+        return {
+          ...r,
+          From: formatStringToFloat(row.From),
+          To: formatStringToFloat(row.To),
+        };
+      }
+      return r;
+    });
+
+    onAllocationRangesChange(updatedRanges);
+    const newErrors = validateRanges(updatedRanges);
+    setValidationErrors(newErrors);
+    onDataChanged();
+  };
+
   React.useEffect(() => {
     dispatch(fetchAllocationTheme());
   }, []);
@@ -95,6 +129,16 @@ export default function AllocationTheme({
       field: 'From' | 'To',
       value: string
     ) => {
+      function isFloatLike(value: string) {
+        const regex = /^(\d+)?(\.)?(\d*)?$/;
+        return regex.test(value);
+      }
+
+      function isInvalidInput(value: string) {
+        const regex = /[^0-9\.\s]/;
+        return regex.test(value);
+      }
+
       let updatedRanges = allocationRanges.map(row =>
         row.id === id ? { ...row, [field]: value } : row
       );
@@ -104,6 +148,49 @@ export default function AllocationTheme({
         if (currentRow && currentRow.To !== '2.0') {
           let currentTo = parseFloat(value);
           if (!isNaN(currentTo)) {
+            // Check if the value is a valid decimal number
+            if (isInvalidInput(value) || isFloatLike(value) === false) {
+              dispatch(
+                showToastAction(
+                  true,
+                  `Invalid input. Please enter a valid number.`,
+                  'error',
+                  4000
+                )
+              );
+              return;
+            }
+
+            if (
+              value !== '0' &&
+              value !== '0.' &&
+              value !== '1' &&
+              value !== '1.' &&
+              currentTo < parseFloat(currentRow.From)
+            ) {
+              dispatch(
+                showToastAction(
+                  true,
+                  `Allocation Range To : ${value} must be equal or greater than Allocation Range From : ${currentRow.From}`,
+                  'error',
+                  4000
+                )
+              );
+              return;
+            }
+            if (parseFloat(value) >= 2.0) {
+              // updatedRanges = allocationRanges;
+
+              dispatch(
+                showToastAction(
+                  true,
+                  `Allocation range cannot exceed 2.0 `,
+                  'error',
+                  4000
+                )
+              );
+              return;
+            }
             // Update subsequent rows in sequence
             const currentIndex = updatedRanges.findIndex(row => row.id === id);
             let nextIndex = currentIndex + 1;
@@ -124,6 +211,14 @@ export default function AllocationTheme({
               currentTo = parseFloat(newFromValue);
               nextIndex++;
             }
+          } else {
+            updatedRanges = updatedRanges.map(row =>
+              row.id === id ? { ...row, To: '' } : row
+            );
+            onAllocationRangesChange(updatedRanges);
+            const newErrors = validateRanges(updatedRanges);
+            setValidationErrors(newErrors);
+            onDataChanged();
           }
         }
       }
@@ -181,10 +276,9 @@ export default function AllocationTheme({
           }}
           size="small"
           value={row.To}
-          disabled={
-            (row.From === '0.0' && row.To === '0.0') || row.To === '2.0'
-          }
+          disabled={row.To === '2.0'}
           onChange={e => handleRangeChange(id, 'To', e.target.value)}
+          onBlur={e => formatValues(e, row)}
           error={error?.To}
         />
       </RangeInputGroup>
@@ -270,12 +364,63 @@ export default function AllocationTheme({
     );
   };
 
+  const fixRanges = (
+    updatedRanges: AllocationRange[],
+    deletedRowId: string,
+    allocationRangeId: string
+  ) => {
+    // Init case, not more rows, add new row 0.0 to 2.0
+    const newRange = updatedRanges;
+    if (newRange?.length === 0) {
+      const newRow: AllocationRange = {
+        id: '1',
+        __Id__: allocationRangeId,
+        From: '0.0',
+        To: '2.0',
+        Label: '',
+        Color: '#FBB7AE',
+        DarkColor: '#C55858',
+      };
+      return [newRow];
+    }
+
+    // If the first row is deleted, set From to 0.0 on new first row
+    if (deletedRowId === '1') {
+      newRange[0] = {
+        ...newRange[0],
+        From: '0.0',
+      };
+    }
+
+    // Adjust the Ids to be sequential.
+    return newRange.map((row, index, range) => {
+      const newId = (index + 1).toString();
+      if (row.id !== '1' && index > 0) {
+        const previousRowTo = range[index - 1]?.To;
+        return {
+          ...row,
+          id: newId,
+          From: (parseFloat(previousRowTo) + 0.1).toString(),
+        };
+      }
+      return {
+        ...row,
+        id: newId,
+      };
+    });
+  };
+
   // Delete Cell Renderer
   const DeleteCell = (params: GridRenderCellParams) => {
     const { id } = params;
 
     const handleDelete = () => {
-      const updatedRanges = allocationRanges.filter(row => row.id !== id);
+      let updatedRanges = allocationRanges.filter(row => row.id !== id);
+      updatedRanges = fixRanges(
+        updatedRanges,
+        id as string,
+        allocationRanges[0].__Id__
+      );
       onAllocationRangesChange(updatedRanges);
 
       // Re-validate after deletion
@@ -286,11 +431,13 @@ export default function AllocationTheme({
     };
 
     return (
-      <Tooltip title="Delete">
-        <Box sx={{ paddingTop: '7px' }} onClick={handleDelete}>
-          <img src="/images/icons/delete.svg" style={{ height: '24px' }} />
-        </Box>
-      </Tooltip>
+      allocationRanges.find(row => row.id === id)?.To !== '2.0' && (
+        <Tooltip title="Delete">
+          <Box sx={{ paddingTop: '7px' }} onClick={handleDelete}>
+            <img src="/images/icons/delete.svg" style={{ height: '24px' }} />
+          </Box>
+        </Tooltip>
+      )
     );
   };
 
