@@ -83,7 +83,7 @@ export default function AllocationTheme({
   }, [allocationRanges]);
 
   const formatValues = (
-    e: React.FocusEvent<HTMLInputElement>,
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
     row: AllocationRange
   ) => {
     if (parseFloat(row.From) > parseFloat(row.To)) {
