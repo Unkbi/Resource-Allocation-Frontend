@@ -128,7 +128,7 @@ export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
   });
 };
 
-export const generateColumnGroupingModel = (startDate, allColumns) => {
+export const generateColumnGroupingModel = (startDate, endDate, allColumns) => {
   const nonWeeklyColumns = allColumns.filter(column => column.primaryColumn);
   const groups = [];
   let currentGroup = null;
@@ -141,8 +141,24 @@ export const generateColumnGroupingModel = (startDate, allColumns) => {
     });
   });
 
-  for (let i = 0; i < WEEK_CONFIG.TOTAL_WEEKS; i++) {
-    const weekDate = addWeeks(startDate, i);
+  // Caculate the weeks difference between start and end dates. For column header grouping ("Apr 2023", "May 2023", etc.)
+  const isoStart = parseISO(startDate);
+  const isoEnd = parseISO(endDate);
+
+  // calculate start date to the Monday
+  const adjustedStart = startOfWeek(isoStart, { weekStartsOn: 1 });
+  // calculate end date to the following Sunday
+  const adjustedEnd = endOfWeek(isoEnd, { weekStartsOn: 1 });
+
+  // Calculate total weeks between start and end dates
+  const totalWeeks = isSameWeek(adjustedEnd, adjustedStart, { weekStartsOn: 1 })
+    ? 1
+    : differenceInCalendarWeeks(adjustedEnd, adjustedStart, {
+        weekStartsOn: 1,
+      }) + 1;
+
+  for (let i = 0; i < totalWeeks; i++) {
+    const weekDate = addWeeks(isoStart, i);
     const monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
 
     if (!currentGroup || currentGroup.groupId !== monthYear) {
