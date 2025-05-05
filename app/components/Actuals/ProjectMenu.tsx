@@ -41,6 +41,7 @@ const scrollStyles = {
   overflowY: 'auto',
   mb: 1,
   pr: 1,
+  scrollbarWidth: 'thin',
   '&::-webkit-scrollbar': {
     width: '8px',
   },
@@ -188,12 +189,14 @@ const ProjectMenu = ({anchorEl,onClose,setRows,existingRows,}: ProjectMenuProps)
           placeholder={selectedProjects.length === 0 ? 'Search' : ''}
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
-          InputProps={{
-            disableUnderline: true,
-            endAdornment: (
-              <SearchIcon sx={{ color: '#344665', fontSize: 18, ml: 1 }} />
-            ),
-            sx: textFieldStyles,
+          slotProps={{
+            input: {
+              disableUnderline: true,
+              endAdornment: (
+                <SearchIcon sx={{ color: '#344665', fontSize: 18, ml: 1 }} />
+              ),
+              sx: textFieldStyles,
+            },
           }}
           sx={{
             flex: 1,

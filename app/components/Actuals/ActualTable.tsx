@@ -256,16 +256,44 @@ export default function ActualTable() {
         setShowProjectMenu(true);
         break;
       case 'Other Work':
-        alert('Navigate to other work page');
-        break;
+        const newOtherWorkRow = {
+          id: `${Date.now()}_other_work`,
+          project: 'Other Work',
+          planned: 0,
+          actuals: 0,
+          comments: '',
+        };
+        addNewRow(newOtherWorkRow);  
+       break;
       case 'Personal Time':
-        alert('Navigate to personal time page');
+        const newPersonalTimeRow = {
+          id: `${Date.now()}_personal_time`,
+          project: 'Personal Time',
+          planned: 0,
+          actuals: 0,
+          comments: '',
+        };
+        addNewRow(newPersonalTimeRow); 
         break;
       default:
         console.log(`Clicked on ${label}`);
     }
   };
 
+  const addNewRow = (newRow: GridValidRowModel) => {
+    setRows(prevRows => {
+      const updatedRows = [...prevRows];
+      const hasDivider = updatedRows.some(row => row.id === 'divider');
+      
+      if (!hasDivider) {
+        updatedRows.push({ id: 'divider', type: 'divider' });
+      }
+      
+      updatedRows.push(newRow);
+      return updatedRows;
+    });
+  };
+  
   const menuItems = [
     {
       label: 'Project',

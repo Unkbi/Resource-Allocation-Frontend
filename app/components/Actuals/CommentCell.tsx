@@ -23,9 +23,12 @@ export default function CommentCell(props: GridRenderEditCellParams) {
       variant="standard"
       fullWidth
       multiline
-      InputProps={{
-        disableUnderline: true,
-        sx: { pl: 1, pr: 1, height: '100%', fontSize: 14 },
+      placeholder="Enter Comments"
+      slotProps={{
+        input: {
+          disableUnderline: true,
+          sx: { pl: 1, pr: 1, height: '100%', fontSize: 14 },
+        },
       }}
     />
   );
