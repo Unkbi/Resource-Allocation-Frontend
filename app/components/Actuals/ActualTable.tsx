@@ -338,7 +338,8 @@ export default function ActualTable() {
               params.row.id !== 'second-total-row'
             }
             isCellEditable={params => {
-              if (params.id === 'total' ||params.row.id === 'divider') return false;
+              if (params.id === 'total' || params.row.id === 'divider')
+                return false;
               return true;
             }}
             hideFooter

@@ -24,7 +24,7 @@ export const actualsTableStyles = {
     lineHeight: 'normal',
   },
   '& .second-total-row  .MuiDataGrid-cell': {
-    fontWeight: '600',
+    fontWeight: '700',
     background: ' #E0E0E0',
     position: 'sticky',
     top: 40,
@@ -35,9 +35,11 @@ export const actualsTableStyles = {
   },
   '& .col-cell-project': {
     backgroundColor: '#F7FBFF',
+    color: '#313F68',
   },
   '& .col-cell-planned': {
     backgroundColor: '#FAFAFA',
+    color: '#323232',
   },
   '& .header-project': {
     height: '38px !important',
