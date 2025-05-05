@@ -1,4 +1,4 @@
-import { call, put, takeLatest, all } from 'redux-saga/effects';
+import { call, put, takeLatest, all, takeLeading } from 'redux-saga/effects';
 import { fetchAllAllocations } from '@/app/services/allocationServices';
 import { getMonday, getMondayOfISO } from '@/app/utils/common';
 import { format } from 'date-fns';
@@ -218,7 +218,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
 }
 
 export function* allAllocationsSaga() {
-  yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga);
+  yield takeLeading('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga);
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
 }
