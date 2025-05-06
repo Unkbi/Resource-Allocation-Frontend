@@ -78,4 +78,8 @@ export const actualsTableStyles = {
     marginBottom: '0',
     paddingBottom: '0',
   },
+  '.comment-error-cell .MuiDataGrid-cell:focus-within': {
+    outline: 'none !important',
+    boxShadow: 'none !important',
+  }
 };

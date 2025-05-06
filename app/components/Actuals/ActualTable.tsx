@@ -8,6 +8,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  IconButton,
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -27,6 +28,8 @@ import type { RootState } from '@/app/redux/store';
 import ProjectMenu from './ProjectMenu';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 const initialRows: GridRowsProp = [
   {
@@ -65,6 +68,10 @@ export default function ActualTable() {
   );
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   const totalPlanned = useMemo(() => {
     return roundToOneDecimal(calculateTotal([...rows], 'planned'));
@@ -73,6 +80,9 @@ export default function ActualTable() {
   const totalActuals = useMemo(() => {
     return roundToOneDecimal(calculateTotal([...rows], 'actuals'));
   }, [rows]);
+
+  const [hasOtherWork, setHasOtherWork] = useState(false);
+  const [hasPersonalTime, setHasPersonalTime] = useState(false);
 
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
@@ -201,6 +211,52 @@ export default function ActualTable() {
       minWidth: 200,
       headerClassName: 'header-project',
       cellClassName: 'col-cell-project',
+      renderCell: params => {
+        // Don't show menu for total, divider, and initial rows
+        if (
+          params.row.id === 'total' ||
+          params.row.type === 'divider' ||
+          typeof params.row.id === 'number'
+        ) {
+          return params.value;
+        }
+
+        return (
+          <p
+            style={{
+              overflow: 'inherit',
+              textOverflow: 'ellipsis',
+              position: 'relative',
+              paddingRight: '32px',
+              color: '#313F68',
+              opacity: 1,
+              fontWeight: 400,
+            }}
+          >
+            {params.value}
+            <IconButton
+              size="small"
+              onClick={e => handleActionMenuOpen(e, params.row.id)}
+              sx={{
+                padding: '0px',
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: '16px',
+                  color: '#344665',
+                },
+              }}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          </p>
+        );
+      },
     },
     {
       field: 'planned',
@@ -234,6 +290,12 @@ export default function ActualTable() {
       headerClassName: 'header-comments',
       cellClassName: 'col-cell-comments',
       renderEditCell: params => <CommentCell {...params} />,
+      preProcessEditCellProps: params => {
+        const hasError =
+          params.row.actuals > 0 &&
+          (!params.props.value || !params.props.value.trim());
+        return { ...params.props, error: hasError };
+      },
     },
   ];
 
@@ -256,24 +318,30 @@ export default function ActualTable() {
         setShowProjectMenu(true);
         break;
       case 'Other Work':
-        const newOtherWorkRow = {
-          id: `${Date.now()}_other_work`,
-          project: 'Other Work',
-          planned: 0,
-          actuals: 0,
-          comments: '',
-        };
-        addNewRow(newOtherWorkRow);  
-       break;
+        if (!hasOtherWork) {
+          const newOtherWorkRow = {
+            id: `${Date.now()}_other_work`,
+            project: 'Other Work',
+            planned: 0,
+            actuals: 0,
+            comments: '',
+          };
+          addNewRow(newOtherWorkRow);
+          setHasOtherWork(true);
+        }
+        break;
       case 'Personal Time':
-        const newPersonalTimeRow = {
-          id: `${Date.now()}_personal_time`,
-          project: 'Personal Time',
-          planned: 0,
-          actuals: 0,
-          comments: '',
-        };
-        addNewRow(newPersonalTimeRow); 
+        if (!hasPersonalTime) {
+          const newPersonalTimeRow = {
+            id: `${Date.now()}_personal_time`,
+            project: 'Personal Time',
+            planned: 0,
+            actuals: 0,
+            comments: '',
+          };
+          addNewRow(newPersonalTimeRow);
+          setHasPersonalTime(true);
+        }
         break;
       default:
         console.log(`Clicked on ${label}`);
@@ -284,20 +352,62 @@ export default function ActualTable() {
     setRows(prevRows => {
       const updatedRows = [...prevRows];
       const hasDivider = updatedRows.some(row => row.id === 'divider');
-      
+
       if (!hasDivider) {
         updatedRows.push({ id: 'divider', type: 'divider' });
       }
-      
+
       updatedRows.push(newRow);
       return updatedRows;
     });
   };
-  
+
+  const handleActionMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    id: string
+  ) => {
+    event.stopPropagation();
+    setActionMenuAnchor(event.currentTarget);
+    setSelectedRowId(id);
+  };
+
+  const handleActionMenuClose = () => {
+    setActionMenuAnchor(null);
+    setSelectedRowId(null);
+  };
+
+  const handleDeleteRow = () => {
+    if (selectedRowId) {
+      setRows(prevRows => {
+        const deletedRow = prevRows.find(row => row.id === selectedRowId);
+
+        // Reset flags based on the deleted row
+        if (deletedRow?.project === 'Other Work') {
+          setHasOtherWork(false);
+        } else if (deletedRow?.project === 'Personal Time') {
+          setHasPersonalTime(false);
+        }
+
+        const updatedRows = prevRows.filter(row => row.id !== selectedRowId);
+
+        // Check if we still have any unplanned rows
+        const dividerIndex = updatedRows.findIndex(row => row.id === 'divider');
+        const hasUnplannedRows =
+          dividerIndex > -1 && updatedRows.length > dividerIndex + 1;
+
+        return hasUnplannedRows
+          ? updatedRows
+          : updatedRows.filter(row => row.id !== 'divider');
+      });
+    }
+    handleActionMenuClose();
+  };
+
   const menuItems = [
     {
       label: 'Project',
       icon: <FolderIcon fontSize="small" sx={{ color: '#1C2D5F' }} />,
+      disabled: false,
     },
     {
       label: 'Other Work',
@@ -306,9 +416,10 @@ export default function ActualTable() {
           component="img"
           src="/images/icons/otherWork.svg"
           alt="Other Work"
-          sx={{ width: 20, height: 20 }}
+          sx={{ width: 20, height: 20, opacity: hasOtherWork ? 0.5 : 1 }}
         />
       ),
+      disabled: hasOtherWork,
     },
     {
       label: 'Personal Time',
@@ -317,9 +428,10 @@ export default function ActualTable() {
           component="img"
           src="/images/icons/Personal.svg"
           alt="Other Work"
-          sx={{ width: 20, height: 20 }}
+          sx={{ width: 20, height: 20, opacity: hasPersonalTime ? 0.5 : 1 }}
         />
       ),
+      disabled: hasPersonalTime,
     },
   ];
 
@@ -423,8 +535,12 @@ export default function ActualTable() {
           {menuItems.map(item => (
             <MenuItem
               key={item.label}
-              onClick={() => handleMenuClick(item.label)}
+              onClick={() => !item.disabled && handleMenuClick(item.label)}
               sx={{
+                '&.Mui-disabled': {
+                  opacity: 0.5,
+                  color: 'text.disabled',
+                },
                 '&:hover': {
                   backgroundColor: 'rgba(20, 43, 81, 0.7)',
                   '& .menu-icon': {
@@ -448,10 +564,19 @@ export default function ActualTable() {
                   item.icon
                 )}
               </ListItemIcon>
-              <ListItemText primary={item.label} className="menu-text" />
+              <ListItemText
+                primary={item.label}
+                className="menu-text"
+                sx={{
+                  opacity: item.disabled ? 0.5 : 1,
+                }}
+              />
               <img
                 src="images/icons/small-arrowForward.svg"
                 className="menu-icon"
+                style={{
+                  opacity: item.disabled ? 0.5 : 1,
+                }}
               />
             </MenuItem>
           ))}
@@ -468,6 +593,31 @@ export default function ActualTable() {
           existingRows={rows}
         />
       )}
+      <Menu
+        anchorEl={actionMenuAnchor}
+        open={Boolean(actionMenuAnchor)}
+        onClose={handleActionMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem
+          onClick={handleDeleteRow}
+          sx={{
+            color: 'error.main',
+          }}
+        >
+          <ListItemIcon>
+            <DeleteOutlineIcon fontSize="small" sx={{ color: 'error.main' }} />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
     </>
   );
 }
