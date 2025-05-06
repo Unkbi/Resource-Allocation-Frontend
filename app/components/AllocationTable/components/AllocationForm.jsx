@@ -286,22 +286,35 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const {
-      submitType,
-      ...cleanedValues
-    } = values;
+    const { submitType, ...cleanedValues } = values;
 
     switch (formType) {
       case 'add_project':
+        if (!cleanedValues.StartDate) {
+          const today = new Date().toISOString().split('T')[0]; // default to today
+          cleanedValues.StartDate = today;
+        }
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...cleanedValues,
             Description: 'string',
           },
         };
         try {
           dispatch(addProject(postData))
             .then(response => {
+              if (response.meta.requestStatus === 'rejected') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Failed to add project`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
                 dispatch(setSplitViewCurrentProject(response.payload.result));
@@ -315,6 +328,16 @@ const AllocationForm = () => {
               }
             })
             .catch(error => {
+              // Show Toast message for error
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Failed to add project`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
               console.error('Failed to add project:', error);
             });
           if (pathname !== '/project') {
@@ -324,11 +347,11 @@ const AllocationForm = () => {
           console.log(e);
         }
         break;
-        
+
       case 'edit_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...cleanedValues,
             Description: 'string',
           },
         };
@@ -339,7 +362,7 @@ const AllocationForm = () => {
         }
         break;
 
-      case 'add_resource':  
+      case 'add_resource':
         if (!cleanedValues.StartDate) {
           const today = new Date().toISOString().split('T')[0]; // default to today
           cleanedValues.StartDate = today;
@@ -357,26 +380,28 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add resource:', e);
         }
-        dispatch(closeDialog());  
+        dispatch(closeDialog());
         break;
 
       case 'edit_resource':
         postData = {
           'ResourceAllocation.Core/Resource': cleanedValues,
         };
-      
+
         try {
-          await dispatch(updateResource({
-            postData,
-            resourceId: initialData.Id,
-          }));
+          await dispatch(
+            updateResource({
+              postData,
+              resourceId: initialData.Id,
+            })
+          );
           await dispatch(fetchAllResources());
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
         }
-        break;        
-    
+        break;
+
       case 'add_allocation':
         try {
           const allMondays = generateAllMondays(
@@ -552,7 +577,7 @@ const AllocationForm = () => {
               cancelButtonText: 'Cancel',
               formType: 'name_view',
               initialData: {
-                ...values,
+                ...cleanedValues,
                 name: '',
                 description: '',
                 isDefault: false,
@@ -658,7 +683,7 @@ const AllocationForm = () => {
                 cancelButtonText: 'Cancel',
                 formType: 'name_view',
                 initialData: {
-                  ...values,
+                  ...cleanedValues,
                   name: '',
                   description: '',
                   isDefault: false,
@@ -1062,9 +1087,19 @@ const AllocationForm = () => {
           />
         );
       case 'add_resource':
-        return <AddResourceForm formikProps={formikProps} setFormValue={setFormValue} />;
+        return (
+          <AddResourceForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'edit_resource':
-        return <AddResourceForm formikProps={formikProps} setFormValue={setFormValue} />;
+        return (
+          <AddResourceForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'add_allocation':
         return (
           <AddAllocationForm
