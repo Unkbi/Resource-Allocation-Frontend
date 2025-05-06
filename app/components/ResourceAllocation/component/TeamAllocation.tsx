@@ -16,6 +16,13 @@ interface TeamAllocationProps {
   startDate: string;
   endDate: string;
 }
+interface Resource {
+  Id: string;
+  Email: string;
+  PhoneNumber: string;
+  Department: string;
+  [key: string]: any; 
+}
 export default function TeamAllocation({
   startDate,
   endDate,
@@ -24,8 +31,12 @@ export default function TeamAllocation({
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
   const _resources = useSelector(
-    (state: RootState) => state.resources.resources
-  );
+   (state: RootState) => state.resources.resources
+   ) as {
+   result?: Resource[];
+   loading?: boolean;
+   error?: string;
+  };
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -60,6 +71,20 @@ export default function TeamAllocation({
     return null;
   };
 
+  const getResource = (params: GridCellParams): Resource | null => {
+    if (
+      params.rowNode.type === 'group' &&
+      params.rowNode.groupingField === 'resource'
+    ) {
+      const resourceName = params.rowNode.groupingKey;
+      const resource = _resources?.result?.find(
+        r => r.FullName === resourceName
+      );
+      return resource || null;
+    }
+    return null;
+  };
+
   const teamsColumnConfig = [
     {
       field: 'teams',
@@ -89,9 +114,174 @@ export default function TeamAllocation({
       },
     },
     {
+      field: 'Email',
+      headerName: 'Email',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      headerClassName: 'prime-header',
+      cellClassName: 'secondary-cell',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.Email || ''} />;
+      },
+    },
+    {
+      field: 'PhoneNumber',
+      headerName: 'Phone Number',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.PhoneNumber || ''} />;
+      },
+    },
+    {
+      field: 'Department',
+      headerName: 'Organisation',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.Department || ''} />;
+      },
+    },
+    {
+      field: 'HRLevel',
+      headerName: 'HR Level',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.HRLevel || ''} />;
+      },
+    },
+    {
+      field: 'Role',
+      headerName: 'Role',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.Role || ''} />;
+      },
+    },
+    {
+      field: 'WorkLocation',
+      headerName: 'Work Location',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+      },
+    },
+    {
+      field: 'StartDate',
+      headerName: 'Resource Start Date',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.StartDate || ''} />;
+      },
+    },
+    {
+      field: 'EndDate',
+      headerName: 'Resource End Date',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.EndDate || ''} />;
+      },
+    },
+    {
+      field: 'LocationCategory',
+      headerName: 'Location Category',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.LocationCategory || ''} />;
+      },
+    },
+    {
+      field: 'AverageWeeklyHours',
+      headerName: 'Average Weekly Hours',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.AverageWeeklyHours || ''} />;
+      },
+    },
+    {
+      field: 'ContractorHourlyRate',
+      headerName: 'Contractor Hourly Rate',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return (
+          <EllipsisNameCell value={resource?.ContractorHourlyRate || ''} />
+        );
+      },
+    },
+    {
+      field: 'ContractorHourlyRateCurrency',
+      headerName: 'Contractor Hourly Rate Currency',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: 'false',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return (
+          <EllipsisNameCell
+            value={resource?.ContractorHourlyRateCurrency || ''}
+          />
+        );
+      },
+    },
+    {
+      field: 'resourceType',
+      headerName: 'Resource Type',
+      width: 135,
+      sortable: false,
+      headerClassName: 'secondary-header',
+      cellClassName: 'secondary-cell',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.Type || ''} />;
+      },
+    },
+    {
       field: 'teamStatus',
-      headerName: 'Status',
-      width: 90,
+      headerName: 'Teams Status',
+      width: 130,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -119,36 +309,6 @@ export default function TeamAllocation({
             }
           />
         ) : null;
-      },
-    },
-    {
-      field: 'resourceType',
-      headerName: 'Resource Type',
-      width: 135,
-      sortable: false,
-      headerClassName: 'secondary-header',
-      cellClassName: 'secondary-cell',
-      primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const { rowNode, api, value } = params;
-        const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        let displayValue = (value ?? '') as string;
-
-        if (!displayValue && isGridTreeNode && rowNode.children) {
-          const uniqueResourceTypes = [
-            ...new Set(
-              rowNode.children.map(child => api.getRow(child)?.resourceType)
-            ),
-          ].filter(Boolean);
-
-          displayValue = uniqueResourceTypes.length
-            ? uniqueResourceTypes.length > 1
-              ? `${uniqueResourceTypes[0]} +${uniqueResourceTypes.length - 1}`
-              : uniqueResourceTypes[0]
-            : '';
-        }
-
-        return <EllipsisNameCell value={displayValue} />;
       },
     },
   ];
@@ -181,6 +341,18 @@ export default function TeamAllocation({
                 resourceType: true,
                 teams: false, // This column has to always be false, as we are using grouping.
                 resource: false, // This column has to always be false, as we are using grouping.
+                Email: false,
+                PhoneNumber: false,
+                Department: false,
+                HRLevel: false,
+                Role: false,
+                WorkLocation: false,
+                StartDate: false,
+                EndDate: false,
+                LocationCategory: false,
+                AverageWeeklyHours: false,
+                ContractorHourlyRate: false,
+                ContractorHourlyRateCurrency:false,
               },
             },
           }}

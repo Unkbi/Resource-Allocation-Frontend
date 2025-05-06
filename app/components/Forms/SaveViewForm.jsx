@@ -59,6 +59,18 @@ const getColumnLabel = column => {
     projectCurrency: 'Currency',
     projectStartDate: 'Start Date',
     projectEndDate: 'End Date',
+    Email: 'Email',
+    PhoneNumber: 'Phone Number',
+    Department: 'Organisation',
+    HRLevel: 'HR Level',
+    Role: 'Role',
+    WorkLocation: 'Work Location',
+    StartDate: 'Resource Start Date',
+    EndDate: 'Resource End Date',
+    LocationCategory: 'Location Category',
+    AverageWeeklyHours: 'Average Weekly Hours',
+    ContractorHourlyRate: 'Contractor Hourly Rate',
+    ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
   };
 
   return columnLabels[column];
