@@ -181,7 +181,7 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
-  const { calendarDate: _calendarDate } = useSelector(
+  const { allAllocations, calendarDate: _calendarDate } = useSelector(
     state => state.allAllocations
   );
   const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
@@ -212,33 +212,33 @@ const AllocationForm = () => {
   };
 
   const handleScrollAndFocus = (resources, period, projects) => {
-      const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
-      const weeksObject = {};
-  
-      selectedWeeks.forEach(week => {
-        weeksObject[`${week}`] = true;
+    const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
+    const weeksObject = {};
+
+    selectedWeeks.forEach(week => {
+      weeksObject[`${week}`] = true;
+    });
+
+    const cellData = {};
+
+    resources?.forEach(resource => {
+      projects?.forEach(project => {
+        const [{ Id }] = Array.isArray(project) ? project : [project];
+        const key =
+          view === 'Teams'
+            ? `${resource.Id}-${resource.teamId}-${Id}`
+            : `${resource.Id}-${Id}`;
+
+        cellData[key] = weeksObject;
       });
-  
-      const cellData = {};
-  
-      resources?.forEach(resource => {
-        projects?.forEach(project => {
-          const [{ Id }] = Array.isArray(project) ? project : [project];
-          const key =
-            view === 'Teams'
-              ? `${resource.Id}-${resource.teamId}-${Id}`
-              : `${resource.Id}-${Id}`;
-  
-          cellData[key] = weeksObject;
-        });
-      });
-        dispatch(
-          setCellSelectionData({
-            ...cellData,
-            restoreFocus: true,
-          })
-        );
-    };
+    });
+    dispatch(
+      setCellSelectionData({
+        ...cellData,
+        restoreFocus: true,
+      })
+    );
+  };
 
   const handleOnAdd = resources => {
     const rowIds = resources?.map(
@@ -290,22 +290,35 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const {
-      submitType,
-      ...cleanedValues
-    } = values;
+    const { submitType, ...cleanedValues } = values;
 
     switch (formType) {
       case 'add_project':
+        if (!cleanedValues.StartDate) {
+          const today = new Date().toISOString().split('T')[0]; // default to today
+          cleanedValues.StartDate = today;
+        }
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...cleanedValues,
             Description: 'string',
           },
         };
         try {
           dispatch(addProject(postData))
             .then(response => {
+              if (response.meta.requestStatus === 'rejected') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Failed to add project`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
                 dispatch(setSplitViewCurrentProject(response.payload.result));
@@ -319,6 +332,16 @@ const AllocationForm = () => {
               }
             })
             .catch(error => {
+              // Show Toast message for error
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Failed to add project`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
               console.error('Failed to add project:', error);
             });
           if (pathname !== '/project') {
@@ -328,11 +351,11 @@ const AllocationForm = () => {
           console.log(e);
         }
         break;
-        
+
       case 'edit_project':
         postData = {
           'ResourceAllocation.Core/Project': {
-            ...values,
+            ...cleanedValues,
             Description: 'string',
           },
         };
@@ -343,7 +366,7 @@ const AllocationForm = () => {
         }
         break;
 
-      case 'add_resource':  
+      case 'add_resource':
         if (!cleanedValues.StartDate) {
           const today = new Date().toISOString().split('T')[0]; // default to today
           cleanedValues.StartDate = today;
@@ -361,26 +384,28 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add resource:', e);
         }
-        dispatch(closeDialog());  
+        dispatch(closeDialog());
         break;
 
       case 'edit_resource':
         postData = {
           'ResourceAllocation.Core/Resource': cleanedValues,
         };
-      
+
         try {
-          await dispatch(updateResource({
-            postData,
-            resourceId: initialData.Id,
-          }));
+          await dispatch(
+            updateResource({
+              postData,
+              resourceId: initialData.Id,
+            })
+          );
           await dispatch(fetchAllResources());
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
         }
-        break;        
-    
+        break;
+
       case 'add_allocation':
         try {
           const allMondays = generateAllMondays(
@@ -556,7 +581,7 @@ const AllocationForm = () => {
               cancelButtonText: 'Cancel',
               formType: 'name_view',
               initialData: {
-                ...values,
+                ...cleanedValues,
                 name: '',
                 description: '',
                 isDefault: false,
@@ -662,7 +687,7 @@ const AllocationForm = () => {
                 cancelButtonText: 'Cancel',
                 formType: 'name_view',
                 initialData: {
-                  ...values,
+                  ...cleanedValues,
                   name: '',
                   description: '',
                   isDefault: false,
@@ -696,197 +721,158 @@ const AllocationForm = () => {
       case 'clone_resource':
         try {
           if (initialData?.allocations?.length > 0) {
-            const sourceResourceName = initialData?.Resource;
-            const targetResourceIds = Array.isArray(values.Resource)
-              ? values.Resource
-              : [values.Resource];
-            const originalAllocations = initialData?.allocations || [];
-            const projectIds = values.Project || [];
-            const allMondays = generateAllMondays(
-              values.StartDate,
-              values.EndDate
-            );
-            const mondaySet = new Set(allMondays.map(date => new Date(date).toDateString()));
-            const formattedProjects = projectIds.map(id => ({ Id: id }));
-            const clonePayloadList = [];
-            const deletePayloadList = [];
+            try {
+              const sourceResourceName = initialData?.Resource;
+              const sourceResourceId = resources?.result?.find(
+                res => res.FullName === sourceResourceName
+              )?.Id;
 
-            targetResourceIds.forEach(targetResourceId => {
-              const putPostPayload = {
-                Resource: targetResourceId,
-                AllocsList: [],
-              };
-              const deleteIds = [];
+              if (!sourceResourceId) {
+                console.error('Could not find source resource ID');
+                return;
+              }
 
-              const targetAllocRows = rowState.filter(
-                row => row.resourceId === targetResourceId
+              const targetResourceIds = Array.isArray(values.Resource)
+                ? values.Resource
+                : [values.Resource];
+              const projectIds = values.Project || [];
+              const allMondays = generateAllMondays(
+                values.StartDate,
+                values.EndDate
               );
+              const formattedProjects = projectIds.map(id => ({ Id: id }));
 
-              const sourceAllocMap = {}; // key = projectId|period
-              originalAllocations.forEach(row => {
-                Object.keys(row).forEach(key => {
-                  if (
-                    key.startsWith('W') &&
-                    row[key]?.value &&
-                    row[key]?.period
-                  ) {
-                    const periodDate = row[key].period;
-                    if (mondaySet.has(new Date(periodDate).toDateString())) {
-                      const uniqueKey = `${row.projectId}|${row[key].period}`;
-                      sourceAllocMap[uniqueKey] = {
-                        value: row[key].value,
-                        period: row[key].period,
-                        projectId: row.projectId,
-                        project: row.project,
-                        notes: row[key]?.notes || '',
-                      };
-                    }
-                  }
-                });
-              });
-
-              const processedKeys = new Set();
-
-              targetAllocRows.forEach(row => {
-                Object.keys(row).forEach(key => {
-                  if (key.startsWith('W') && row[key]?.period) {
-                    const periodDate = row[key].period;
-                    if (mondaySet.has(new Date(periodDate).toDateString())) {
-                      const uniqueKey = `${row.projectId}|${row[key].period}`;
-                      const source = sourceAllocMap[uniqueKey];
-                      processedKeys.add(uniqueKey);
-
-                      if (source) {
-                        const existingVal = parseFloat(row[key]?.value ?? 0);
-                        const newVal = parseFloat(source.value);
-                        if (existingVal !== newVal) {
-                          // PUT existing
-                          putPostPayload.AllocsList.push({
-                            Id: row[key]?.allocationId,
-                            Resource: targetResourceId,
-                            Project: row.projectId,
-                            ProjectName: row.project,
-                            Period: row[key].period,
-                            AllocationEntered: source.value,
-                            Notes: source.notes,
-                          });
-                        }
-                      } else {
-                        const isInCloneSet = projectIds.includes(row.projectId);
-
-                        if (
-                          isInCloneSet &&
-                          row[key]?.allocationId &&
-                          !sourceAllocMap[`${row.projectId}|${row[key].period}`]
-                        ) {
-                          deleteIds.push(row[key].allocationId);
-                        }
-                      }
-                    }
-                  }
-                });
-              });
-
-              // POST new allocations (not in processed)
-              Object.entries(sourceAllocMap).forEach(([key, source]) => {
-                if (!processedKeys.has(key)) {
-                  putPostPayload.AllocsList.push({
-                    Resource: targetResourceId,
-                    Project: source.projectId,
-                    ProjectName: source.project,
-                    Period: source.period,
-                    AllocationEntered: source.value,
-                    Notes: source.notes,
+              // 🔒 BLOCK if ANY allocation exists in targetResource for ANY project during selected weeks
+              const conflictDetected = targetResourceIds.some(targetId =>
+                rowState.some(row => {
+                  if (row.resourceId !== targetId) return false;
+                  return Object.keys(row).some(key => {
+                    if (!key.startsWith('W') || !row[key]?.period) return false;
+                    const dateStr = new Date(row[key].period).toDateString();
+                    return (
+                      allMondays.some(
+                        monday => new Date(monday).toDateString() === dateStr
+                      ) && row[key]?.value != null
+                    );
                   });
-                }
-              });
-
-              if (putPostPayload.AllocsList.length > 0) {
-                clonePayloadList.push(putPostPayload);
-              }
-
-              if (deleteIds.length > 0) {
-                deletePayloadList.push({
-                  Resource: targetResourceId,
-                  AllocsList: deleteIds,
-                });
-              }
-            });
-
-            if (
-              clonePayloadList.length === 0 &&
-              deletePayloadList.length === 0
-            ) {
-              dispatch(
-                showToast({
-                  open: true,
-                  message: `No allocations fall within the selected date range.`,
-                  type: 'warning',
-                  position: 'bottom-left',
-                  autoHideTimer: 4000,
                 })
               );
-              return;
-            }
-            const clonePromises = [];
-            if (clonePayloadList.length > 0) {
-              clonePromises.push(
-                dispatch(updateResourceBulkAllocation(clonePayloadList))
-              );
-            }
-            if (deletePayloadList.length > 0) {
-              clonePromises.push(
-                dispatch(removeResourceBulkAllocation(deletePayloadList))
-              );
-            }
 
-            try {
-              await Promise.all(clonePromises).then(async () => {
-                const newResources = targetResourceIds.map(id =>
-                  getTeamByResourceId(id)
-                );
-                const updated_teams = [...new Set(newResources.map(res => res?.team))];
-                dispatch(closeDialog());
-                new Promise((resolve, reject) => {
-                  dispatch({
-                    type: 'UPDATE_TEAM_ALLOCATIONS',
-                    payload: {
-                      teamIds: updated_teams.map(team => team?.Id),
-                      teams: teams?.result,
-                      projects: projects?.result,
-                      resources: resources?.result,
-                      teamsResources: teamsResources,
-                      startDate: _startDate,
-                      endDate: _endDate,
-                      resolve,
-                      reject,
-                    },
-                  });
-                }).then(() => {
-                  handleOnAdd(newResources);
-                  handleScrollAndFocus(newResources, allMondays, formattedProjects);
+              if (conflictDetected) {
                 dispatch(
                   showToast({
                     open: true,
-                    message: `${sourceResourceName} is successfully cloned. `,
-                    type: 'success',
+                    message: `Bulk allocations can not be cloned over existing allocations`,
+                    type: 'error',
                     position: 'bottom-left',
                     autoHideTimer: 4000,
                   })
                 );
+                return;
+              }
+
+              const clonePayloadList = [];
+
+              targetResourceIds.forEach(targetId => {
+                const allocsToClone = [];
+
+                projectIds.forEach(projectId => {
+                  const projectName =
+                    projects?.result?.find(p => p.Id === projectId)?.Name || '';
+
+                  allMondays.forEach(monday => {
+                    const sourceAlloc = getAllocationPresent(
+                      projectId,
+                      sourceResourceId,
+                      monday
+                    );
+
+                    if (sourceAlloc?.value != null) {
+                      allocsToClone.push({
+                        Resource: targetId,
+                        Project: projectId,
+                        ProjectName: projectName,
+                        Period: format(monday, DATE_FORMAT),
+                        AllocationEntered: sourceAlloc.value,
+                        Notes: sourceAlloc?.notes || '',
+                      });
+                    }
+                  });
+                });
+
+                if (allocsToClone.length > 0) {
+                  clonePayloadList.push({
+                    Resource: targetId,
+                    AllocsList: allocsToClone,
+                  });
+                }
               });
+
+              if (clonePayloadList.length === 0) {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `No allocations found in source for the selected duration.`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
+
+              await dispatch(updateResourceBulkAllocation(clonePayloadList));
+
+              const newResources = targetResourceIds.map(id =>
+                getTeamByResourceId(id)
+              );
+              const updatedTeams = [
+                ...new Set(newResources.map(res => res?.team)),
+              ];
+
+              dispatch(closeDialog());
+
+              await new Promise((resolve, reject) => {
+                dispatch({
+                  type: 'UPDATE_TEAM_ALLOCATIONS',
+                  payload: {
+                    teamIds: updatedTeams.map(team => team?.Id),
+                    teams: teams?.result,
+                    projects: projects?.result,
+                    resources: resources?.result,
+                    teamsResources: teamsResources,
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    resolve,
+                    reject,
+                  },
+                });
               });
-            } catch (error) {
+
+              handleOnAdd(newResources);
+              handleScrollAndFocus(newResources, allMondays, formattedProjects);
+
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `${sourceResourceName} is successfully cloned.`,
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            } catch (err) {
               dispatch(closeDialog());
               dispatch(
                 showToast({
                   open: true,
-                  message: `Resource is failed clone `,
+                  message: `Resource cloning failed.`,
                   type: 'error',
                   position: 'bottom-left',
                   autoHideTimer: 4000,
                 })
               );
+              console.error('Cloning failed:', err);
             }
           } else {
             const sourceResourceName = initialData?.Resource;
@@ -896,7 +882,7 @@ const AllocationForm = () => {
 
             if (!sourceResourceId) {
               console.error(
-                ' Could not find resource ID for:',
+                'Could not find resource ID for:',
                 sourceResourceName
               );
               break;
@@ -910,14 +896,12 @@ const AllocationForm = () => {
               values.StartDate,
               values.EndDate
             );
-
             const formattedProjects = projectIds.map(id => ({ Id: id }));
 
-            const actionGroups = {
-              PUT: [],
-              POST: [],
-              DELETE: [],
-            };
+            const postPayloads = [];
+            let errorFound = false;
+            let overallocated = false;
+            let warningFound = false;
 
             for (const monday of allMondays) {
               for (const projectId of projectIds) {
@@ -927,6 +911,9 @@ const AllocationForm = () => {
                   monday
                 );
 
+                // Skip cloning if source has no allocation
+                if (sourceAlloc?.value == null) continue;
+
                 for (const targetResourceId of targetResourceIds) {
                   const targetAlloc = getAllocationPresent(
                     projectId,
@@ -934,70 +921,81 @@ const AllocationForm = () => {
                     monday
                   );
 
-                  const sameValue =
-                    sourceAlloc?.value !== null &&
-                    targetAlloc?.value !== null &&
-                    Number(sourceAlloc.value) === Number(targetAlloc.value);
+                  // ❌ Abort if target already has allocation for the same project-week
+                  if (targetAlloc?.value != null) {
+                    errorFound = true;
+                    continue;
+                  }
 
-                  if (sameValue) continue;
+                  const clonedValue = Number(sourceAlloc?.value || 0);
+                  const weekKey = getWeekNumber(new Date(monday));
 
-                  if (sourceAlloc?.value != null && targetAlloc?.allocationId) {
-                    actionGroups.PUT.push({
-                      resourceId: targetResourceId,
-                      allocationId: targetAlloc.allocationId,
-                      putData: {
-                        'ResourceAllocation.Core/Allocation': {
-                          AllocationEntered: sourceAlloc.value,
-                        },
-                      },
-                    });
-                  } else if (
-                    sourceAlloc?.value != null &&
-                    !targetAlloc?.allocationId
-                  ) {
-                    actionGroups.POST.push({
+                  // Get total allocation for the week across all projects
+                  const existingTotal = getTotalWeeklyAllocation(
+                    allAllocations, // Replaces rowState
+                    targetResourceId,
+                    weekKey
+                  );
+
+                  const adjustedTotal = existingTotal + clonedValue;
+
+                  if (adjustedTotal > 2.0) {
+                    errorFound = true;
+                    overallocated = true;
+                    continue;
+                  } else if (adjustedTotal > 1.5) {
+                    warningFound = true;
+                  }
+                  if (adjustedTotal <= 2.0) {
+                    postPayloads.push({
                       resourceId: targetResourceId,
                       postData: {
                         'ResourceAllocation.Core/Allocation': {
                           Resource: targetResourceId,
                           Project: projectId,
                           ProjectName: initialData.Project,
-                          AllocationEntered: sourceAlloc.value,
-                          Period: monday,
+                          AllocationEntered: clonedValue,
+                          Period: format(monday, DATE_FORMAT),
                         },
                       },
-                    });
-                  } else if (
-                    sourceAlloc?.value == null &&
-                    targetAlloc?.allocationId
-                  ) {
-                    actionGroups.DELETE.push({
-                      resourceId: targetResourceId,
-                      allocationId: targetAlloc.allocationId,
                     });
                   }
                 }
               }
             }
 
+            if (errorFound) {
+              dispatch(closeDialog());
+              dispatch(
+                showToast({
+                  open: true,
+                  message:
+                    overallocated && overallocated === true
+                      ? `One or more allocations exceed 2.0 FTE`
+                      : `Allocation already exist for one or more selected week.`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              break;
+            }
+
             try {
-              // Run in parallel per group type
-              await Promise.all([
-                ...actionGroups.PUT.map(payload =>
-                  dispatch(updateResourceAllocation(payload))
-                ),
-                ...actionGroups.POST.map(payload =>
+              await Promise.all(
+                postPayloads.map(payload =>
                   dispatch(setResourceAllocation(payload))
-                ),
-                ...actionGroups.DELETE.map(payload =>
-                  dispatch(removeResourceAllocation(payload))
-                ),
-              ]).then(async () => {
+                )
+              ).then(async () => {
                 const newResources = targetResourceIds.map(id =>
                   getTeamByResourceId(id)
                 );
-                const updated_teams = [...new Set(newResources.map(res => res?.team))];
+                const updated_teams = [
+                  ...new Set(newResources.map(res => res?.team)),
+                ];
+
                 dispatch(closeDialog());
+
                 new Promise((resolve, reject) => {
                   if (currentView?.GroupBy === 'Teams') {
                     dispatch({
@@ -1018,7 +1016,9 @@ const AllocationForm = () => {
                     dispatch({
                       type: 'UPDATE_PROJECT_ALLOCATIONS',
                       payload: {
-                        projectIds: formattedProjects.map(project => project?.Id),
+                        projectIds: formattedProjects.map(
+                          project => project?.Id
+                        ),
                         teams: teams?.result,
                         projects: projects?.result,
                         resources: resources?.result,
@@ -1032,16 +1032,32 @@ const AllocationForm = () => {
                   }
                 }).then(() => {
                   handleOnAdd(newResources);
-                  handleScrollAndFocus(newResources, allMondays, formattedProjects);
+                  handleScrollAndFocus(
+                    newResources,
+                    allMondays,
+                    formattedProjects
+                  );
                   dispatch(
                     showToast({
                       open: true,
-                      message: `${sourceResourceName} is successfully cloned. `,
+                      message: `${sourceResourceName} is successfully cloned.`,
                       type: 'success',
                       position: 'bottom-left',
                       autoHideTimer: 4000,
                     })
                   );
+
+                  if (warningFound) {
+                    dispatch(
+                      showToast({
+                        open: true,
+                        message: `Some weeks have allocation > 1.5 but ≤ 2.0 FTE.`,
+                        type: 'warning',
+                        position: 'bottom-left',
+                        autoHideTimer: 4000,
+                      })
+                    );
+                  }
                 });
               });
             } catch (err) {
@@ -1049,7 +1065,7 @@ const AllocationForm = () => {
               dispatch(
                 showToast({
                   open: true,
-                  message: `Resource is failed clone `,
+                  message: `Resource cloning failed.`,
                   type: 'error',
                   position: 'bottom-left',
                   autoHideTimer: 4000,
@@ -1058,13 +1074,193 @@ const AllocationForm = () => {
               console.error('Cloning failed:', err);
             }
           }
+          //   const sourceResourceName = initialData?.Resource;
+          //   const sourceResourceId = resources?.result?.find(
+          //     res => res.FullName === sourceResourceName
+          //   )?.Id;
+
+          //   if (!sourceResourceId) {
+          //     console.error(
+          //       'Could not find resource ID for:',
+          //       sourceResourceName
+          //     );
+          //     break;
+          //   }
+
+          //   const targetResourceIds = Array.isArray(values.Resource)
+          //     ? values.Resource
+          //     : [values.Resource];
+          //   const projectIds = values.Project || [];
+          //   const allMondays = generateAllMondays(
+          //     values.StartDate,
+          //     values.EndDate
+          //   );
+          //   const formattedProjects = projectIds.map(id => ({ Id: id }));
+
+          //   // ❌ Block if any allocation exists in target for any project-week
+          //   let conflictFound = false;
+
+          //   for (const monday of allMondays) {
+          //     for (const targetResourceId of targetResourceIds) {
+          //       const weekKey = getWeekNumber(monday);
+
+          //       const rowForTarget = rowState.find(
+          //         row => row.resourceId === targetResourceId
+          //       );
+
+          //       if (rowForTarget && rowForTarget[weekKey]?.value != null) {
+          //         conflictFound = true;
+          //         break;
+          //       }
+          //     }
+          //     if (conflictFound) break;
+          //   }
+
+          //   if (conflictFound) {
+          //     dispatch(
+          //       showToast({
+          //         open: true,
+          //         message: `Bulk allocations can not be cloned over existing allocations`,
+          //         type: 'error',
+          //         position: 'bottom-left',
+          //         autoHideTimer: 4000,
+          //       })
+          //     );
+          //     break;
+          //   }
+
+          //   // ✅ Proceed to clone if no conflicts
+          //   const postPayloads = [];
+
+          //   for (const monday of allMondays) {
+          //     for (const projectId of projectIds) {
+          //       const sourceAlloc = getAllocationPresent(
+          //         projectId,
+          //         sourceResourceId,
+          //         monday
+          //       );
+
+          //       for (const targetResourceId of targetResourceIds) {
+          //         const targetAlloc = getAllocationPresent(
+          //           projectId,
+          //           targetResourceId,
+          //           monday
+          //         );
+
+          //         //  Skip if source has no allocation
+          //         if (sourceAlloc?.value == null) {
+          //           //  Skip silently whether target has value or not
+          //           continue;
+          //         }
+
+          //         //  If target already has any value, skip cloning for that week
+          //         if (targetAlloc?.value != null) {
+          //           continue;
+          //         }
+
+          //         // Proceed only if target has no allocation
+          //         postPayloads.push({
+          //           resourceId: targetResourceId,
+          //           postData: {
+          //             'ResourceAllocation.Core/Allocation': {
+          //               Resource: targetResourceId,
+          //               Project: projectId,
+          //               ProjectName: initialData.Project,
+          //               AllocationEntered: sourceAlloc.value,
+          //               Period: format(monday, DATE_FORMAT),
+          //             },
+          //           },
+          //         });
+          //       }
+          //     }
+          //   }
+
+          //   try {
+          //     await Promise.all(
+          //       postPayloads.map(payload =>
+          //         dispatch(setResourceAllocation(payload))
+          //       )
+          //     ).then(async () => {
+          //       const newResources = targetResourceIds.map(id =>
+          //         getTeamByResourceId(id)
+          //       );
+          //       const updated_teams = [
+          //         ...new Set(newResources.map(res => res?.team)),
+          //       ];
+          //       dispatch(closeDialog());
+          //       new Promise((resolve, reject) => {
+          //         if (currentView?.GroupBy === 'Teams') {
+          //           dispatch({
+          //             type: 'UPDATE_TEAM_ALLOCATIONS',
+          //             payload: {
+          //               teamIds: updated_teams.map(team => team?.Id),
+          //               teams: teams?.result,
+          //               projects: projects?.result,
+          //               resources: resources?.result,
+          //               teamsResources: teamsResources,
+          //               startDate: _startDate,
+          //               endDate: _endDate,
+          //               resolve,
+          //               reject,
+          //             },
+          //           });
+          //         } else if (currentView?.GroupBy === 'Project') {
+          //           dispatch({
+          //             type: 'UPDATE_PROJECT_ALLOCATIONS',
+          //             payload: {
+          //               projectIds: formattedProjects.map(
+          //                 project => project?.Id
+          //               ),
+          //               teams: teams?.result,
+          //               projects: projects?.result,
+          //               resources: resources?.result,
+          //               teamsResources: teamsResources,
+          //               startDate: _startDate,
+          //               endDate: _endDate,
+          //               resolve,
+          //               reject,
+          //             },
+          //           });
+          //         }
+          //       }).then(() => {
+          //         handleOnAdd(newResources);
+          //         handleScrollAndFocus(
+          //           newResources,
+          //           allMondays,
+          //           formattedProjects
+          //         );
+          //         dispatch(
+          //           showToast({
+          //             open: true,
+          //             message: `${sourceResourceName} is successfully cloned.`,
+          //             type: 'success',
+          //             position: 'bottom-left',
+          //             autoHideTimer: 4000,
+          //           })
+          //         );
+          //       });
+          //     });
+          //   } catch (err) {
+          //     dispatch(closeDialog());
+          //     dispatch(
+          //       showToast({
+          //         open: true,
+          //         message: `Resource cloning failed.`,
+          //         type: 'error',
+          //         position: 'bottom-left',
+          //         autoHideTimer: 4000,
+          //       })
+          //     );
+          //     console.error('Cloning failed:', err);
+          //   }
+          // }
         } catch (err) {
           dispatch(closeDialog());
           dispatch(
             showToast({
               open: true,
               message: `Resource is failed clone `,
-              type: 'warning',
+              type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
             })
@@ -1107,7 +1303,9 @@ const AllocationForm = () => {
         const originalAllocations = initialData?.allocations || [];
         const projectIds = values.Project || [];
         const allMondays = generateAllMondays(values.StartDate, values.EndDate);
-        const mondaySet = new Set(allMondays.map(date => new Date(date).toDateString()));
+        const mondaySet = new Set(
+          allMondays.map(date => new Date(date).toDateString())
+        );
         const formattedProjects = projectIds.map(id => ({ Id: id }));
 
         const clonePayloadList = [];
@@ -1118,12 +1316,12 @@ const AllocationForm = () => {
           .filter(row => projectIds.includes(row.projectId))
           .forEach(row => {
             Object.keys(row).forEach(key => {
-              if (key.startsWith('W') && row[key]?.value && row[key]?.period) {
+              if (key.startsWith('W') && row[key]?.period) {
                 const periodDate = row[key].period;
                 if (mondaySet.has(new Date(periodDate).toDateString())) {
                   const uniqueKey = `${row.projectId}|${row[key].period}`;
                   sourceAllocMap[uniqueKey] = {
-                    value: row[key].value,
+                    value: row[key]?.value ?? null,
                     period: row[key].period,
                     projectId: row.projectId,
                     project: row.project,
@@ -1137,66 +1335,81 @@ const AllocationForm = () => {
 
         // Copy to each target
         targetResourceIds.forEach(targetResourceId => {
-          const putPostPayload = { Resource: targetResourceId, AllocsList: [] };
+          const postPayload = { Resource: targetResourceId, AllocsList: [] };
 
-          const targetAllocRows = rowState.filter(
-            row => row.resourceId === targetResourceId
-          );
-          const processedKeys = new Set();
-
-          targetAllocRows.forEach(row => {
-            Object.keys(row).forEach(key => {
-              if (key.startsWith('W') && row[key]?.period) {
-                const periodDate = row[key].period;
-                if (mondaySet.has(new Date(periodDate).toDateString())) {
-                  const uniqueKey = `${row.projectId}|${row[key].period}`;
-                  const source = sourceAllocMap[uniqueKey];
-                  processedKeys.add(uniqueKey);
-
-                  if (source) {
-                    const existingVal = parseFloat(row[key]?.value ?? 0);
-                    const newVal = parseFloat(source.value);
-                    if (existingVal !== newVal) {
-                      // PUT existing
-                      putPostPayload.AllocsList.push({
-                        Id: row[key]?.allocationId,
-                        Resource: targetResourceId,
-                        Project: row.projectId,
-                        ProjectName: row.project,
-                        Period: row[key].period,
-                        AllocationEntered: source.value,
-                        Notes: source.notes,
-                      });
-                    }
-                  }
-                }
-              }
+          for (const [key, source] of Object.entries(sourceAllocMap)) {
+            const week = source.period;
+            const targetHasAnyAlloc = rowState.some(row => {
+              return (
+                row.resourceId === targetResourceId &&
+                Object.keys(row).some(k => {
+                  return (
+                    k.startsWith('W') &&
+                    row[k]?.period &&
+                    new Date(row[k].period).toDateString() ===
+                      new Date(week).toDateString() &&
+                    row[k]?.value != null
+                  );
+                })
+              );
             });
-          });
 
-          // POST new allocations (not in processed)
-          Object.entries(sourceAllocMap).forEach(([key, source]) => {
-            if (!processedKeys.has(key)) {
-              putPostPayload.AllocsList.push({
-                Resource: targetResourceId,
-                Project: source.projectId,
-                ProjectName: source.project,
-                Period: source.period,
-                AllocationEntered: source.value,
-                Notes: source.notes,
-              });
+            // ❌ If target has any alloc for that week, and source has no alloc — skip silently
+            if (source.value == null) {
+              continue;
             }
-          });
 
-          if (putPostPayload.AllocsList.length > 0) {
-            clonePayloadList.push(putPostPayload);
+            // ❌ If target has any allocation in that week (even for other projects), skip
+            if (targetHasAnyAlloc) {
+              continue;
+            }
+
+            // ✅ Else, include in final transfer payload
+            postPayload.AllocsList.push({
+              Resource: targetResourceId,
+              Project: source.projectId,
+              ProjectName: source.project,
+              Period: source.period,
+              AllocationEntered: source.value,
+              Notes: source.notes,
+            });
+          }
+
+          if (postPayload.AllocsList.length > 0) {
+            clonePayloadList.push(postPayload);
           }
         });
+        const sourceDeleteIds = [];
 
-        // Delete source allocations that were transferred
-        const sourceDeleteIds = Object.values(sourceAllocMap)
-          .map(s => s.allocationId)
-          .filter(id => !!id);
+        Object.entries(sourceAllocMap).forEach(([key, source]) => {
+          const transferredToAll = targetResourceIds.every(targetResourceId => {
+            const targetAllocRow = rowState.find(
+              row =>
+                row.resourceId === targetResourceId &&
+                row.projectId === source.projectId
+            );
+            if (!targetAllocRow) return false;
+
+            const weekKey = getWeekNumber(new Date(source.period));
+            const cell = targetAllocRow[`W${weekKey}`];
+
+            // Check if that week was successfully added to final post payload
+            return clonePayloadList.some(
+              payload =>
+                payload.Resource === targetResourceId &&
+                payload.AllocsList.some(
+                  a =>
+                    a.Project === source.projectId &&
+                    new Date(a.Period).toDateString() ===
+                      new Date(source.period).toDateString()
+                )
+            );
+          });
+
+          if (transferredToAll && source.allocationId) {
+            sourceDeleteIds.push(source.allocationId);
+          }
+        });
 
         if (sourceDeleteIds.length > 0) {
           deletePayloadList.push({
@@ -1209,19 +1422,19 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: `No allocations fall within the selected date range.`,
-              type: 'warning',
+              message: `Bulk allocations can not be transferred over existing allocations`,
+              type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
             })
           );
           return;
         }
-        const transferPromises = [];
 
+        const transferPromises = [];
         if (clonePayloadList.length > 0) {
           transferPromises.push(
-            ...clonePayloadList.map(payload => 
+            ...clonePayloadList.map(payload =>
               dispatch(updateResourceBulkAllocation([payload]))
             )
           );
@@ -1236,38 +1449,44 @@ const AllocationForm = () => {
         await Promise.all(transferPromises).then(async () => {
           dispatch(closeDialog());
           const allResourceIds = [...targetResourceIds, sourceResourceId];
-          const newResources = allResourceIds.map(id => getTeamByResourceId(id));
-          const updated_teams = [...new Set(newResources.map(res => res?.team))];
-          const focusResources = targetResourceIds.map(id => getTeamByResourceId(id));
+          const newResources = allResourceIds.map(id =>
+            getTeamByResourceId(id)
+          );
+          const updated_teams = [
+            ...new Set(newResources.map(res => res?.team)),
+          ];
+          const focusResources = targetResourceIds.map(id =>
+            getTeamByResourceId(id)
+          );
 
           new Promise((resolve, reject) => {
-              dispatch({
-                type: 'UPDATE_TEAM_ALLOCATIONS',
-                payload: {
-                  teamIds: updated_teams.map(team => team?.Id),
-                  teams: teams?.result,
-                  projects: projects?.result,
-                  resources: resources?.result,
-                  teamsResources: teamsResources,
-                  startDate: _startDate,
-                  endDate: _endDate,
-                  resolve,
-                  reject,
-                },
-              });
-            }).then(() => {
-              handleOnAdd(newResources);
-              handleScrollAndFocus(focusResources, allMondays, formattedProjects);
-              dispatch(
-                showToast({
-                  open: true,
-                  message: `${sourceResourceName} is successfully transferred.`,
-                  type: 'success',
-                  position: 'bottom-left',
-                  autoHideTimer: 4000,
-                })
-              );
-            });         
+            dispatch({
+              type: 'UPDATE_TEAM_ALLOCATIONS',
+              payload: {
+                teamIds: updated_teams.map(team => team?.Id),
+                teams: teams?.result,
+                projects: projects?.result,
+                resources: resources?.result,
+                teamsResources: teamsResources,
+                startDate: _startDate,
+                endDate: _endDate,
+                resolve,
+                reject,
+              },
+            });
+          }).then(() => {
+            handleOnAdd(newResources);
+            handleScrollAndFocus(focusResources, allMondays, formattedProjects);
+            dispatch(
+              showToast({
+                open: true,
+                message: `${sourceResourceName} is successfully transferred.`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          });
         });
       } else {
         const targetResourceIds = Array.isArray(values.Resource)
@@ -1277,12 +1496,12 @@ const AllocationForm = () => {
         const allMondays = generateAllMondays(values.StartDate, values.EndDate);
 
         const formattedProjects = projectIds.map(id => ({ Id: id }));
-
-        const actionGroups = {
-          PUT: [],
-          POST: [],
-          DELETE: [],
-        };
+        const finalPostPayload = [];
+        const finalDeleteIds = [];
+        const sourceDeleteIds = [];
+        let errorFound = false;
+        let overallocated = false;
+        let warningFound = false;
 
         for (const monday of allMondays) {
           for (const projectId of projectIds) {
@@ -1292,12 +1511,21 @@ const AllocationForm = () => {
               monday
             );
 
+            // Skip if source has no allocation
+            if (sourceAlloc?.value == null) continue;
+
             for (const targetResourceId of targetResourceIds) {
               const targetAlloc = getAllocationPresent(
                 projectId,
                 targetResourceId,
                 monday
               );
+
+              // ❌ Abort if target already has allocation for the same project-week
+              if (targetAlloc?.value != null) {
+                errorFound = true;
+                continue;
+              }
 
               const sameValue =
                 sourceAlloc?.value !== null &&
@@ -1306,70 +1534,104 @@ const AllocationForm = () => {
 
               if (sameValue) continue;
 
-              if (sourceAlloc?.value != null && targetAlloc?.allocationId) {
-                actionGroups.PUT.push({
-                  resourceId: targetResourceId,
-                  allocationId: targetAlloc.allocationId,
-                  putData: {
-                    'ResourceAllocation.Core/Allocation': {
-                      AllocationEntered: sourceAlloc.value,
-                    },
-                  },
-                });
-              } else if (
-                sourceAlloc?.value != null &&
-                !targetAlloc?.allocationId
-              ) {
-                actionGroups.POST.push({
+              const clonedValue = Number(sourceAlloc?.value || 0);
+              const weekKey = getWeekNumber(new Date(monday));
+
+              // Get total allocation for the week across all projects
+              const existingTotal = getTotalWeeklyAllocation(
+                allAllocations,
+                targetResourceId,
+                weekKey
+              );
+
+              const adjustedTotal = existingTotal + clonedValue;
+
+              if (adjustedTotal > 2.0) {
+                errorFound = true;
+                overallocated = true;
+                continue;
+              } else if (adjustedTotal > 1.5) {
+                warningFound = true;
+              }
+
+              if (sourceAlloc?.value != null && adjustedTotal <= 2.0) {
+                finalPostPayload.push({
                   resourceId: targetResourceId,
                   postData: {
                     'ResourceAllocation.Core/Allocation': {
                       Resource: targetResourceId,
                       Project: projectId,
                       ProjectName: initialData.Project,
-                      AllocationEntered: sourceAlloc.value,
-                      Period: monday,
+                      AllocationEntered: clonedValue,
+                      Period: format(monday, DATE_FORMAT),
+                      Notes: sourceAlloc?.notes || '',
                     },
                   },
                 });
-              } else if (
-                sourceAlloc?.value == null &&
-                targetAlloc?.allocationId
-              ) {
-                actionGroups.DELETE.push({
-                  resourceId: targetResourceId,
-                  allocationId: targetAlloc.allocationId,
+
+                if (sourceAlloc?.allocationId) {
+                  sourceDeleteIds.push(sourceAlloc.allocationId);
+                }
+              }
+
+              if (sourceDeleteIds.length > 0) {
+                finalDeleteIds.push({
+                  Resource: sourceResourceId,
+                  AllocsList: sourceDeleteIds,
                 });
               }
-            }
-
-            if (sourceAlloc?.allocationId) {
-              actionGroups.DELETE.push({
-                resourceId: sourceResourceId,
-                allocationId: sourceAlloc.allocationId,
-              });
             }
           }
         }
 
-        try {
-          // Run in parallel per group type
-          await Promise.all([
-            ...actionGroups.PUT.map(payload =>
-              dispatch(updateResourceAllocation(payload))
-            ),
-            ...actionGroups.POST.map(payload =>
+        if (errorFound) {
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message:
+                overallocated && overallocated === true
+                  ? `One or more allocations exceed 2.0 FTE`
+                  : `Bulk allocations can not be transferred over existing allocations`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
+
+        const transferPromises = [];
+        if (finalPostPayload.length > 0) {
+          transferPromises.push(
+            ...finalPostPayload.map(payload =>
               dispatch(setResourceAllocation(payload))
-            ),
-            ...actionGroups.DELETE.map(payload =>
-              dispatch(removeResourceAllocation(payload))
-            ),
-          ]).then(async () => {
-            const newResources = targetResourceIds.map(id =>
+            )
+          );
+        }
+
+        if (finalDeleteIds.length > 0) {
+          transferPromises.push(
+            dispatch(removeResourceBulkAllocation(finalDeleteIds))
+          );
+        }
+
+        try {
+          await Promise.all([transferPromises]).then(async () => {
+            const allResourceIds = [
+              ...new Set([...targetResourceIds, sourceResourceId]),
+            ];
+            const newResources = allResourceIds.map(id =>
               getTeamByResourceId(id)
             );
-            const updated_teams = [...new Set(newResources.map(res => res?.team))];
+            const updated_teams = [
+              ...new Set(newResources.map(res => res?.team)),
+            ];
+            const focusResources = targetResourceIds.map(id =>
+              getTeamByResourceId(id)
+            );
             dispatch(closeDialog());
+
             new Promise((resolve, reject) => {
               if (currentView?.GroupBy === 'Teams') {
                 dispatch({
@@ -1405,24 +1667,35 @@ const AllocationForm = () => {
             }).then(() => {
               handleOnAdd(newResources);
               handleScrollAndFocus(newResources, allMondays, formattedProjects);
-            });
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `${sourceResourceName} is successfully transferred.`,
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
 
-            dispatch(
-              showToast({
-                open: true,
-                message: `${sourceResourceName} is successfully transfered. `,
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
+              if (warningFound) {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Some weeks have allocation which exceeds 1.5 FTE.`,
+                    type: 'warning',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+              }
+            });
           });
         } catch (err) {
-          // dispatch(closeDialog());
+          dispatch(closeDialog());
           dispatch(
             showToast({
               open: true,
-              message: `Resource is failed transfer `,
+              message: `Resource transfer failed.`,
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -1432,12 +1705,12 @@ const AllocationForm = () => {
         }
       }
     } catch (err) {
-      // dispatch(closeDialog());
+      dispatch(closeDialog());
       dispatch(
         showToast({
           open: true,
           message: `Resource is failed transfer `,
-          type: 'warning',
+          type: 'error',
           position: 'bottom-left',
           autoHideTimer: 4000,
         })
@@ -1458,9 +1731,19 @@ const AllocationForm = () => {
           />
         );
       case 'add_resource':
-        return <AddResourceForm formikProps={formikProps} setFormValue={setFormValue} />;
+        return (
+          <AddResourceForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'edit_resource':
-        return <AddResourceForm formikProps={formikProps} setFormValue={setFormValue} />;
+        return (
+          <AddResourceForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'add_allocation':
         return (
           <AddAllocationForm

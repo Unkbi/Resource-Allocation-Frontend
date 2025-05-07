@@ -112,8 +112,8 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
           const postData = {
             'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
               TeamId: teamId,
-              StartDate: format(getMonday(startDate), DATE_FORMAT),
-              EndDate: format(getMonday(endDate), DATE_FORMAT),
+              StartDate: getMondayOfISO(startDate),
+              EndDate: getMondayOfISO(endDate),
             },
           };
           // @ts-ignore
@@ -177,8 +177,8 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
           const postData = {
             'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
               Project: projectId,
-              StartDate: format(getMonday(startDate), DATE_FORMAT),
-              EndDate: format(getMonday(endDate), DATE_FORMAT),
+              StartDate: getMondayOfISO(startDate),
+              EndDate: getMondayOfISO(endDate),
             },
           };
           // @ts-ignore
