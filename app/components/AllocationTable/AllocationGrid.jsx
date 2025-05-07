@@ -666,7 +666,7 @@ export default function AllocationGrid({
   const handleCellUpdate = (newRow, oldRow) => {
     // Find the changed week
     const changedWeeks = Object.keys(newRow).filter(
-      key => key.startsWith('W') && newRow[key] !== oldRow[key]?.value
+      key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
     );
 
     if (!changedWeeks) {
@@ -824,7 +824,7 @@ export default function AllocationGrid({
     });
 
     Object.keys(oldRow)
-      .filter(key => key.startsWith('W'))
+      .filter(key => /^W\d+/.test(key))
       .forEach(key => {
         if (keys.includes(key)) {
           let formattedCellValue = Math.round(newRow[key] * 10) / 10;
@@ -896,11 +896,11 @@ export default function AllocationGrid({
       return true;
     };
 
-    // Get Only Valid Fields, i.e. Fields starting with 'W'
+    // Get Only Valid Fields, i.e. Fields starting with 'W\d'
     const getNewModelWithValidFields = row => {
       const newModelWithValidFields = {};
       Object.keys(row).forEach(key => {
-        if (key.startsWith('W')) {
+        if (/^W\d+/.test(key)) {
           newModelWithValidFields[key] = row[key];
         }
       });
