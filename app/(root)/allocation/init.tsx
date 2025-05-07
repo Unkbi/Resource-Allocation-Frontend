@@ -32,6 +32,7 @@ const BottomContent = ({ startDate, endDate }: BottomContentProps) => (
 );
 
 export default function AllocationInit() {
+  alert('Allocation Page!!');
   const { splitView, currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
