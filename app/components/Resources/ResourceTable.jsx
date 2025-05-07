@@ -6,7 +6,6 @@ import {
   } from '@mui/x-data-grid-premium';
 import ResourceToolbar from "../Toolbar/ResourceToolbar";
 import { useState } from "react";
-import CustomPagination from "../Pagination/CustomPagination";
 
 function CustomColumnMenu(props) {
     return (
@@ -20,13 +19,10 @@ function CustomColumnMenu(props) {
     );
   }
   
-const ResourceTable = ({columns, rows, loading, pageSizeOptions = [5, 10, 25, 50],}) => {
+const ResourceTable = ({columns, rows, loading}) => {
     const apiRef = useGridApiRef();
     const [filterButtonEl, setFilterButtonEl] = useState(null);
-    const [paginationModel, setPaginationModel] = useState({
-            page: 0,
-            pageSize: 10,
-          });
+
     return (
         <StyledDataGrid
             apiRef={apiRef}
@@ -35,11 +31,6 @@ const ResourceTable = ({columns, rows, loading, pageSizeOptions = [5, 10, 25, 50
             hideFooter={false}
             hideFooterSelectedRowCount={true}
             loading={loading}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[10, 25, 50, 100]}
-            pagination
-            hideFooterPagination={false} 
             sx={{
                 height: 'auto',
                 '& .MuiDataGrid-footer': {
@@ -47,27 +38,23 @@ const ResourceTable = ({columns, rows, loading, pageSizeOptions = [5, 10, 25, 50
                 },
             }}
             initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10, page: 0 }, 
-              },
-                columns: {
-                  columnVisibilityModel: {
-                    team: false, 
-                    organization: false, 
-                  },
+              columns: {
+                columnVisibilityModel: {
+                  team: false, 
+                  organization: false, 
                 },
-              }}
+              },
+            }}
             slots={{
                 toolbar: ResourceToolbar,
                 columnMenu: CustomColumnMenu,
-                pagination: CustomPagination,
             }}
             localeText={{
               toolbarFilters:"",
               toolbarColumns:"",
             }}
             sx={{
-                minHeight: '100vh',
+                height: '95vh',
                 '& .MuiDataGrid-columnHeader': {
                     padding: '0 16px',
                     borderRight: 'none',
@@ -77,7 +64,6 @@ const ResourceTable = ({columns, rows, loading, pageSizeOptions = [5, 10, 25, 50
               },
             }}
             slotProps={{
-                pagination: { apiRef }, 
                 loadingOverlay: {
                 variant: 'skeleton',
                 noRowsVariant: 'skeleton',

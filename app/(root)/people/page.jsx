@@ -379,25 +379,22 @@ export default function Resources() {
     }
 
     return (
-        <Stack spacing={2} sx={{ padding: 2 }}>
-        <Box sx={{
-            marginLeft:'10px',
-            backgroundColor: '#fff',
-            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-            minHeight: '600px'
-            }}>
-            <ResourceTable loading={loading }columns={columns} rows={modifyData(rows)}  />
-            <ConfirmDialog
-              open={deleteDialogOpen}
-              onConfirm={handleConfirmDelete}
-              onCancel={handleCancelDelete}
-              title={  <>
-                Are you sure you want to delete <em>{deleteTarget.name}</em>?
-              </>}
-              >
-              This will permanently delete the Resource.
-              </ConfirmDialog>
-        </Box>
-        </Stack>
+      <Box sx={{
+        backgroundColor: '#fff',
+        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+        height: '100%'
+      }}>
+        <ResourceTable loading={loading }columns={columns} rows={modifyData(rows)}  />
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          title={  <>
+            Are you sure you want to delete <em>{deleteTarget.name}</em>?
+          </>}
+          >
+          This will permanently delete the Resource.
+          </ConfirmDialog>
+      </Box>
     )
 }
