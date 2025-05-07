@@ -664,9 +664,10 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = (newRow, oldRow) => {
+    setCellSelectionModel({});
     // Find the changed week
     const changedWeeks = Object.keys(newRow).filter(
-      key => key.startsWith('W') && newRow[key] !== oldRow[key]?.value
+      key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
     );
 
     if (!changedWeeks) {
@@ -824,7 +825,7 @@ export default function AllocationGrid({
     });
 
     Object.keys(oldRow)
-      .filter(key => key.startsWith('W'))
+      .filter(key => /^W\d+/.test(key))
       .forEach(key => {
         if (keys.includes(key)) {
           let formattedCellValue = Math.round(newRow[key] * 10) / 10;
@@ -871,6 +872,17 @@ export default function AllocationGrid({
   };
 
   const handleCellSelectionModelChange = useCallback(newModel => {
+    // Cell Selection Model should have a value only for minimum of 2 cells
+    // If only one cell is selected, then clear the selection
+    if (
+      Object.keys(newModel).length === 0 ||
+      (Object.keys(newModel).length === 1 &&
+        Object.keys(newModel[Object.keys(newModel)[0]]).length <= 1)
+    ) {
+      setCellSelectionModel({});
+      return;
+    }
+
     // Filter out Rows outside the current group boundary
     const isRowWithinGroup = row => {
       const selectedCells = apiRef.current.getSelectedCellsAsArray();
@@ -897,11 +909,11 @@ export default function AllocationGrid({
       return true;
     };
 
-    // Get Only Valid Fields, i.e. Fields starting with 'W'
+    // Get Only Valid Fields, i.e. Fields starting with 'W\d'
     const getNewModelWithValidFields = row => {
       const newModelWithValidFields = {};
       Object.keys(row).forEach(key => {
-        if (key.startsWith('W')) {
+        if (/^W\d+/.test(key)) {
           newModelWithValidFields[key] = row[key];
         }
       });

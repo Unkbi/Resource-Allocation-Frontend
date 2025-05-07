@@ -566,7 +566,7 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
 
   if (params && params.field && typeof params.field === 'string') {
     if (
-      params.field.startsWith('W') &&
+      /^W\d+/.test(params.field) &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
         params.rowNode?.groupingField === 'resource')
