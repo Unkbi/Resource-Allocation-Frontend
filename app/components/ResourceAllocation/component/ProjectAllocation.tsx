@@ -65,16 +65,16 @@ export default function ProjectAllocation({
     return null;
   };
 
- const getResource = (params: GridCellParams): Resource | null => {
-   const { rowNode, api } = params;
-   const isGridTreeNode = 'children' in rowNode;
-   if (isGridTreeNode && rowNode.children) return null;
-   const resourceId = params.row.resourceId;
-   if (_resources.result && resourceId) {
-     return _resources.result.find(res => res.Id === resourceId) || null;
-   }
-   return null;
- };
+  const getResource = (params: GridCellParams): Resource | null => {
+    const { rowNode } = params;
+    const isGridTreeNode = 'children' in rowNode;
+    if (isGridTreeNode && rowNode.children) return null;
+    const resourceId = params.row.resourceId;
+    if (_resources.result && resourceId) {
+      return _resources.result.find(res => res.Id === resourceId) || null;
+    }
+    return null;
+  };
 
   const projectColumnConfig = [
     {
@@ -538,8 +538,8 @@ export default function ProjectAllocation({
                 StartDate: false,
                 EndDate: false,
                 AverageWeeklyHours: false,
-                ContractorHourlyRate:false,
-                ContractorHourlyRateCurrency:false,
+                ContractorHourlyRate: false,
+                ContractorHourlyRateCurrency: false,
               },
             },
           }}
@@ -550,4 +550,4 @@ export default function ProjectAllocation({
       </Box>
     </>
   );
-} 
+}
