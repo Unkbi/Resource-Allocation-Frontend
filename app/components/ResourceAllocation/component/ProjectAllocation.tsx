@@ -126,6 +126,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -141,6 +142,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -156,6 +158,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -171,6 +174,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -186,6 +190,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -201,6 +206,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -216,6 +222,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -231,6 +238,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -246,6 +254,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -261,6 +270,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -276,6 +286,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -291,6 +302,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -306,6 +318,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -321,6 +334,7 @@ export default function ProjectAllocation({
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
@@ -354,6 +368,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (

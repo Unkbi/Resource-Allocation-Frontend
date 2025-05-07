@@ -120,6 +120,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
       renderCell: (params: GridCellParams) => {
@@ -134,6 +135,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.PhoneNumber || ''} />;
@@ -146,6 +148,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Department || ''} />;
@@ -158,6 +161,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.HRLevel || ''} />;
@@ -170,6 +174,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Role || ''} />;
@@ -182,6 +187,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
@@ -194,6 +200,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.StartDate || ''} />;
@@ -206,6 +213,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.EndDate || ''} />;
@@ -218,6 +226,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.LocationCategory || ''} />;
@@ -230,6 +239,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.AverageWeeklyHours || ''} />;
@@ -242,6 +252,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return (
@@ -256,6 +267,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return (
@@ -270,9 +282,9 @@ export default function TeamAllocation({
       headerName: 'Resource Type',
       width: 135,
       sortable: false,
+      primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',
-      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Type || ''} />;
@@ -285,6 +297,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: false,
       sortable: false,
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
         return team ? <EllipsisNameCell value={team?.Status ?? 'N/A'} /> : null;
@@ -297,6 +310,7 @@ export default function TeamAllocation({
       type: 'string',
       isEditable: false,
       sortable: false,
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
         return team && _resources && 'result' in _resources ? (
