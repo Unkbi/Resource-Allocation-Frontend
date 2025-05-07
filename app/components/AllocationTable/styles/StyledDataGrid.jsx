@@ -177,6 +177,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       },
     '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
       boxShadow: 'none !important',
+      backgroundColor: 'rgba(157, 201, 255, 0.3) !important',
     },
     '& .common-NonEditableCells': {
       backgroundColor: '#F1F6FF',

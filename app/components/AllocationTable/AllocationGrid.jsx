@@ -664,6 +664,7 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = (newRow, oldRow) => {
+    setCellSelectionModel({});
     // Find the changed week
     const changedWeeks = Object.keys(newRow).filter(
       key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
@@ -870,6 +871,17 @@ export default function AllocationGrid({
   };
 
   const handleCellSelectionModelChange = useCallback(newModel => {
+    // Cell Selection Model should have a value only for minimum of 2 cells
+    // If only one cell is selected, then clear the selection
+    if (
+      Object.keys(newModel).length === 0 ||
+      (Object.keys(newModel).length === 1 &&
+        Object.keys(newModel[Object.keys(newModel)[0]]).length <= 1)
+    ) {
+      setCellSelectionModel({});
+      return;
+    }
+
     // Filter out Rows outside the current group boundary
     const isRowWithinGroup = row => {
       const selectedCells = apiRef.current.getSelectedCellsAsArray();
