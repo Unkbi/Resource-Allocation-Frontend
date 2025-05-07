@@ -191,6 +191,6 @@ export const getAllColumnsWithWeek = (
 
 export const aggregationModel = (startDate, endDate) => {
   return generateWeeklyColumns(startDate, endDate)
-    .filter(column => /^W\d+/.test( column.field))
+    .filter(column => /^W\d+/.test(column.field))
     .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
 };
