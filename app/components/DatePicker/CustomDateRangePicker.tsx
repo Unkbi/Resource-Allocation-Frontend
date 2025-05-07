@@ -216,7 +216,7 @@ export default function CustomDateRangePicker({
               desktopPaper: customStyles
                 ? {
                     sx: {
-                      position: 'absolute',
+                      position: isProjectForm ?'absolute':'relative',
                       top: '0px',
                     },
                   }

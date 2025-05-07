@@ -23,7 +23,7 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
   showAddButton = true,
 }) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
-  const textRef = useRef<HTMLSpanElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -48,18 +48,18 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
   const safeValue = value ?? 'N/A';
 
   const content = (
-    <span
+    <div
       ref={textRef}
       style={{
-        display: 'inline-block',
-        width: '150%',
+        flex: 1,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        minWidth: 0,
       }}
     >
       {safeValue}
-    </span>
+    </div>
   );
 
   return (
@@ -91,11 +91,13 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
         (AddIconComponent ? (
           AddIconComponent
         ) : (
+          <div style={{ flexShrink: 0, marginLeft: '2px' }}>
           <CustomAddIcon
             count={resourceCount}
             onClick={onAddClick}
             showAddButton={showAddButton}
           />
+          </div>
         ))}
     </div>
   );

@@ -15,6 +15,13 @@ interface ProjectAllocationProps {
   startDate: string | null;
   endDate: string | null;
 }
+interface Resource {
+  Id: string;
+  Email: string;
+  PhoneNumber: string;
+  Department: string;
+  [key: string]: any;
+}
 
 export default function ProjectAllocation({
   startDate,
@@ -24,7 +31,13 @@ export default function ProjectAllocation({
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-
+  const _resources = useSelector(
+    (state: RootState) => state.resources.resources
+  ) as {
+    result?: Resource[];
+    loading?: boolean;
+    error?: string;
+  };
   const dispatch: AppDispatch = useDispatch();
 
   const handleAddClick = (params: GridCellParams) => {
@@ -48,6 +61,17 @@ export default function ProjectAllocation({
       const firstChildId = rowNode.children[0];
       const firstChildRow = api.getRow(firstChildId);
       return firstChildRow;
+    }
+    return null;
+  };
+
+  const getResource = (params: GridCellParams): Resource | null => {
+    const { rowNode } = params;
+    const isGridTreeNode = 'children' in rowNode;
+    if (isGridTreeNode && rowNode.children) return null;
+    const resourceId = params.row.resourceId;
+    if (_resources.result && resourceId) {
+      return _resources.result.find(res => res.Id === resourceId) || null;
     }
     return null;
   };
@@ -96,6 +120,231 @@ export default function ProjectAllocation({
       },
     },
     {
+      field: 'Email',
+      headerName: 'Email',
+      width: 190,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const email = resource?.Email || '';
+        return <EllipsisNameCell value={email} />;
+      },
+    },
+    {
+      field: 'PhoneNumber',
+      headerName: 'Phone Number',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const PhoneNumber = resource?.PhoneNumber || '';
+        return <EllipsisNameCell value={PhoneNumber} />;
+      },
+    },
+    {
+      field: 'Department',
+      headerName: 'Organisation',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const Department = resource?.Department || '';
+        return <EllipsisNameCell value={Department} />;
+      },
+    },
+    {
+      field: 'WorkLocation',
+      headerName: 'Resource Work Location',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const WorkLocation = resource?.WorkLocation || '';
+        return <EllipsisNameCell value={WorkLocation} />;
+      },
+    },
+    {
+      field: 'LocationCategory',
+      headerName: 'Resource Location Category',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const LocationCategory = resource?.LocationCategory || '';
+        return <EllipsisNameCell value={LocationCategory} />;
+      },
+    },
+    {
+      field: 'Type',
+      headerName: 'Resource Type',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const Type = resource?.Type || '';
+        return <EllipsisNameCell value={Type} />;
+      },
+    },
+    {
+      field: 'Status',
+      headerName: 'Resource Status',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const Status = resource?.Status || '';
+        return <EllipsisNameCell value={Status} />;
+      },
+    },
+    {
+      field: 'HRLevel',
+      headerName: 'HRLevel',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const HRLevel = resource?.HRLevel || '';
+        return <EllipsisNameCell value={HRLevel} />;
+      },
+    },
+    {
+      field: 'Role',
+      headerName: 'Resource Role',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const Role = resource?.Role || '';
+        return <EllipsisNameCell value={Role} />;
+      },
+    },
+    {
+      field: 'StartDate',
+      headerName: 'Resource Start Date',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const StartDate = resource?.StartDate || '';
+        return <EllipsisNameCell value={StartDate} />;
+      },
+    },
+    {
+      field: 'EndDate',
+      headerName: 'Resource End Date',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const EndDate = resource?.EndDate || '';
+        return <EllipsisNameCell value={EndDate} />;
+      },
+    },
+    {
+      field: 'AverageWeeklyHours',
+      headerName: 'Average Weekly Hours',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const AverageWeeklyHours = resource?.AverageWeeklyHours || '';
+        return <EllipsisNameCell value={AverageWeeklyHours} />;
+      },
+    },
+    {
+      field: 'ContractorHourlyRate',
+      headerName: 'Contractor Hourly Rate',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const ContractorHourlyRate = resource?.ContractorHourlyRate || '';
+        return <EllipsisNameCell value={ContractorHourlyRate} />;
+      },
+    },
+    {
+      field: 'ContractorHourlyRateCurrency',
+      headerName: 'Contractor Hourly Rate Currency',
+      width: 170,
+      isEditable: 'false',
+      sortable: 'false',
+      type: 'string',
+      primaryColumn: true,
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const ContractorHourlyRateCurrency =
+          resource?.ContractorHourlyRateCurrency || '';
+        return <EllipsisNameCell value={ContractorHourlyRateCurrency} />;
+      },
+    },
+    {
       field: 'projectManager',
       headerName: 'Project Manager',
       width: 148,
@@ -113,12 +362,13 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectStatus',
-      headerName: 'Status',
-      width: 84,
+      headerName: 'Project Status',
+      width: 130,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -128,8 +378,8 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectLocation',
-      headerName: 'Location',
-      width: 92,
+      headerName: 'Project Location',
+      width: 150,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -145,7 +395,7 @@ export default function ProjectAllocation({
     {
       field: 'projectType',
       headerName: 'Project Type',
-      width: 116,
+      width: 130,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -178,8 +428,8 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectCost',
-      headerName: 'Cost',
-      width: 90,
+      headerName: 'Project Cost',
+      width: 150,
       type: 'string ',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -194,8 +444,8 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectCurrency',
-      headerName: 'Currency',
-      width: 100,
+      headerName: 'Project Currency',
+      width: 160,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -210,8 +460,8 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectStartDate',
-      headerName: 'Start Date',
-      width: 100,
+      headerName: 'Project Start Date',
+      width: 160,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -226,8 +476,8 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectEndDate',
-      headerName: 'End Date',
-      width: 100,
+      headerName: 'Project End Date',
+      width: 150,
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -291,6 +541,20 @@ export default function ProjectAllocation({
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
+                Email: false,
+                PhoneNumber: false,
+                Department: false,
+                WorkLocation: false,
+                LocationCategory: false,
+                Type: false,
+                Status: false,
+                HRLevel: false,
+                Role: false,
+                StartDate: false,
+                EndDate: false,
+                AverageWeeklyHours: false,
+                ContractorHourlyRate: false,
+                ContractorHourlyRateCurrency: false,
               },
             },
           }}

@@ -27,7 +27,7 @@ import {
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
   return Object.keys(row)
-    .filter(key => key.startsWith('W')) // Filter weekly columns
+    .filter(key => /^W\d+/.test(key)) // Filter weekly columns
     .reduce((sum, weekKey) => {
       const weekValue = row[weekKey];
       const numericValue =

@@ -79,7 +79,7 @@ const ResourceToolbar = ({ setFilterButtonEl }) => {
         indicatorColor="primary"
         aria-label="secondary tabs example"
       >
-        <Tab value="resource" label="Resource" />
+        <Tab value="resource" label="Resources" />
         <Tab value="teams" label="Teams" />
       </Tabs>
       <Box>
