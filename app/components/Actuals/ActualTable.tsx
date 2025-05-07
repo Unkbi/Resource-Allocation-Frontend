@@ -20,7 +20,7 @@ import { useState } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
-import { GridCellParams } from '@mui/x-data-grid-premium';
+import { GridCellParams, useGridApiRef } from '@mui/x-data-grid-premium';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/app/redux/store';
@@ -56,6 +56,7 @@ const roundToOneDecimal = (num: number) => {
 };
 
 export default function ActualTable() {
+  const apiRef = useGridApiRef();
   const [rows, setRows] = useState(initialRows);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -83,6 +84,9 @@ export default function ActualTable() {
 
   const [hasOtherWork, setHasOtherWork] = useState(false);
   const [hasPersonalTime, setHasPersonalTime] = useState(false);
+  const [rowValidationErrors, setRowValidationErrors] = useState<
+    Record<string, { actuals: boolean; comments: boolean }>
+  >({});
 
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
@@ -144,6 +148,25 @@ export default function ActualTable() {
             }
           : row
       );
+    });
+
+    setRowValidationErrors(prev => {
+      const updated = { ...prev };
+
+      const actualsInvalid = !newRow.actuals || newRow.actuals === 0;
+      const commentsInvalid = !newRow.comments || !newRow.comments.trim();
+
+      updated[newRow.id] = {
+        actuals: actualsInvalid,
+        comments: commentsInvalid,
+      };
+
+      // Remove from map if both are valid
+      if (!actualsInvalid && !commentsInvalid) {
+        delete updated[newRow.id];
+      }
+
+      return updated;
     });
 
     return { ...newRow, actuals: actualsChanged ? newActual : newRow.actuals };
@@ -278,7 +301,10 @@ export default function ActualTable() {
       align: 'center',
       headerAlign: 'center',
       headerClassName: 'header-actuals',
-      cellClassName: 'col-cell-actuals',
+      cellClassName: params =>
+        rowValidationErrors[params.id as string]?.actuals
+          ? 'error-cell'
+          : 'col-cell-actuals',
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -288,12 +314,19 @@ export default function ActualTable() {
       flex: 1,
       minWidth: 158,
       headerClassName: 'header-comments',
-      cellClassName: 'col-cell-comments',
-      renderEditCell: params => <CommentCell {...params} />,
+      cellClassName: params =>
+        rowValidationErrors[params.id as string]?.comments &&
+        (!params.row.comments || !params.row.comments.trim())
+          ? 'comment-error-cell'
+          : 'col-cell-comments',
+      renderEditCell: params => (
+        <CommentCell
+          {...params}
+          showInitialError={rowValidationErrors[params.id as string]?.comments}
+        />
+      ),
       preProcessEditCellProps: params => {
-        const hasError =
-          params.row.actuals > 0 &&
-          (!params.props.value || !params.props.value.trim());
+        const hasError = !params.props.value || !params.props.value.trim();
         return { ...params.props, error: hasError };
       },
     },
@@ -360,6 +393,24 @@ export default function ActualTable() {
       updatedRows.push(newRow);
       return updatedRows;
     });
+    // Set validation to true immediately
+    if (
+      (newRow.actuals === 0 || newRow.actuals === undefined) &&
+      (!newRow.comments || !newRow.comments.trim())
+    ) {
+      setRowValidationErrors(prev => ({
+        ...prev,
+        [newRow.id]: { actuals: true, comments: true },
+      }));
+    } else {
+      setRowValidationErrors(prev => ({
+        ...prev,
+        [newRow.id]: {
+          actuals: newRow.actuals === 0 || newRow.actuals === undefined,
+          comments: !newRow.comments || !newRow.comments.trim(),
+        },
+      }));
+    }
   };
 
   const handleActionMenuOpen = (
@@ -460,6 +511,7 @@ export default function ActualTable() {
 
         <Box sx={{ height: 350 }}>
           <DataGridPremium
+            apiRef={apiRef}
             rows={[
               {
                 id: 'total',
@@ -589,8 +641,12 @@ export default function ActualTable() {
             setMainMenuAnchor(null);
           }}
           anchorEl={projectMenuAnchor}
-          setRows={setRows}
           existingRows={rows}
+          onAddProjects={newRows => {
+            newRows.forEach(row => {
+              addNewRow(row);
+            });
+          }}
         />
       )}
       <Menu

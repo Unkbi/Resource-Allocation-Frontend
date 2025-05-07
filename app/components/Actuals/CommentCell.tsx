@@ -4,15 +4,19 @@ import { TextField } from '@mui/material';
 import { GridRenderEditCellParams } from '@mui/x-data-grid-premium';
 import { useState, useEffect } from 'react';
 
-export default function CommentCell(props: GridRenderEditCellParams) {
-  const { id, value, api, field } = props;
+interface CommentCellProps extends GridRenderEditCellParams {
+  showInitialError?: boolean;
+}
+
+export default function CommentCell(props: CommentCellProps) {
+  const { id, value, api, field, showInitialError = false } = props;
   const [inputValue, setInputValue] = useState(value || '');
-  const [showError, setShowError] = useState(false);
+  const [showError, setShowError] = useState(showInitialError);
 
   useEffect(() => {
     setInputValue(value || '');
-    setShowError(!value); // Show error if empty initially
-  }, [value]);
+    setShowError(!value && showInitialError);
+  }, [value, showInitialError]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = event.target.value;
@@ -32,7 +36,7 @@ export default function CommentCell(props: GridRenderEditCellParams) {
       error={showError}
       placeholder="Enter Comments"
       helperText={showError ? '*Required Field' : ' '}
-      className={showError ? 'comment-error-cell' : ''}
+      // className={showError ? 'comment-error-cell' : ''}
       sx={{
         zIndex: 1001,
         backgroundColor: '#fff',
@@ -42,9 +46,16 @@ export default function CommentCell(props: GridRenderEditCellParams) {
           padding: '0 8px',
           fontSize: 14,
           alignItems: 'center',
+          '&.Mui-focused': showError ? {} : {
+            outline: 'none',
+            boxShadow: 'none',
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': showError ? {} : {
+            border: 'none',
+          },
         },
         '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: showError ? '#d32f2f' : undefined,
+          borderColor: showError ? '#d32f2f' : 'transparent',
         },
         '& input::placeholder': {
           color: showError ? '#d32f2f' : '#aaa',
