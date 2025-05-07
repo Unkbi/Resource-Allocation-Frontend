@@ -39,14 +39,14 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 
 const getColumnLabel = column => {
   const columnLabels = {
-    __row_group_by_columns_group_teams__: 'Teams Name',
+    __row_group_by_columns_group_teams__: 'Team Name',
     __row_group_by_columns_group_resource__: 'Resource',
     __row_group_by_columns_group__: 'Project Name',
     totalEffort: 'Total Effort',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',
-    teamStatus: 'Status',
+    teamStatus: 'Team Status',
     teamAllocationManager: 'Allocation Manager',
     resourceType: 'Resource Type',
     projectSponsor: 'Project Sponsor',

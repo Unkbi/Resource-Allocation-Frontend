@@ -21,7 +21,7 @@ interface Resource {
   Email: string;
   PhoneNumber: string;
   Department: string;
-  [key: string]: any; 
+  [key: string]: any;
 }
 export default function TeamAllocation({
   startDate,
@@ -31,11 +31,11 @@ export default function TeamAllocation({
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
   const _resources = useSelector(
-   (state: RootState) => state.resources.resources
-   ) as {
-   result?: Resource[];
-   loading?: boolean;
-   error?: string;
+    (state: RootState) => state.resources.resources
+  ) as {
+    result?: Resource[];
+    loading?: boolean;
+    error?: string;
   };
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
@@ -88,7 +88,7 @@ export default function TeamAllocation({
   const teamsColumnConfig = [
     {
       field: 'teams',
-      headerName: 'Teams Name',
+      headerName: 'Team Name',
       width: 201,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
@@ -280,7 +280,7 @@ export default function TeamAllocation({
     },
     {
       field: 'teamStatus',
-      headerName: 'Teams Status',
+      headerName: 'Team Status',
       width: 130,
       type: 'string',
       isEditable: false,
@@ -352,7 +352,7 @@ export default function TeamAllocation({
                 LocationCategory: false,
                 AverageWeeklyHours: false,
                 ContractorHourlyRate: false,
-                ContractorHourlyRateCurrency:false,
+                ContractorHourlyRateCurrency: false,
               },
             },
           }}
