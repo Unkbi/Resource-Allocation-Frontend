@@ -98,7 +98,7 @@ export default function BottomTeamsView({
 
       rows.forEach(row => {
         Object.keys(row).forEach(key => {
-          if (key.startsWith('W') && typeof row[key] === 'object') {
+          if (/^W\d+/.test(key) && typeof row[key] === 'object') {
             const value = parseFloat(row[key]?.value ?? 0);
             totalAllocation += value;
             if (!seenWeeks.has(key)) {
