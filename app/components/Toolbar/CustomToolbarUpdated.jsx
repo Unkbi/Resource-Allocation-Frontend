@@ -852,7 +852,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <ToolBox1>
         <StyledFormControl size="small">
           <StyledSelect
-            value={currentView?.GroupBy || 'Teams'}
+            value={
+              currentView?.GroupBy === 'Project'
+                ? 'Projects'
+                : currentView?.GroupBy || 'Teams'
+            }
             onChange={handleViewChange}
             className="projectDropdown"
             IconComponent={KeyboardArrowDown}
