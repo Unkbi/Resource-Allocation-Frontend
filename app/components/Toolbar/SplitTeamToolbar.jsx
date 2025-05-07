@@ -531,12 +531,37 @@ const SplitTeamToolbar = memo(
       })) || [];
 
     const handleTeamChange = (event, newValue) => {
-      if (newValue) {
-        const selectedOptions = newValue.map(item => ({
-          label: item.label,
-          value: item.value,
-        }));
-        setSelectedTeam(selectedOptions);
+      if (!newValue) return;
+
+      if (newValue.length === 0 && selectedTeam.length > 0) {
+        setSelectedTeam([]);
+        return;
+      }
+    
+      if (newValue.length < selectedTeam.length) {
+        const removedTeam = selectedTeam.find(
+          team => !newValue.some(newItem => newItem.value === team.value)
+        );
+        if (removedTeam) {
+          const updated = selectedTeam.filter(team => team.value !== removedTeam.value);
+          setSelectedTeam(updated);
+        } else {
+          setSelectedTeam(newValue);
+        }
+        return;
+      }
+      const lastItem = newValue[newValue.length - 1];
+      const alreadySelected = selectedTeam.some(
+        team => team.value === lastItem.value
+      );
+    
+      if (alreadySelected) {
+        const updatedSelection = selectedTeam.filter(
+          team => team.value !== lastItem.value
+        );
+        setSelectedTeam(updatedSelection);
+      } else {
+        setSelectedTeam([...selectedTeam, lastItem]);
       }
     };
 
