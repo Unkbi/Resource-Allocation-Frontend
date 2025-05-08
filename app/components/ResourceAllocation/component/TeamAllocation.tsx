@@ -74,7 +74,7 @@ export default function TeamAllocation({
       })
     );
   };
- 
+
   const getTeam = (params: GridCellParams) => {
     if (
       params.rowNode.type === 'group' &&
@@ -86,8 +86,7 @@ export default function TeamAllocation({
       return team;
     }
     return null;
-  }
-
+  };
 
   const getResource = (params: GridCellParams): Resource | null => {
     if (
@@ -541,8 +540,8 @@ export default function TeamAllocation({
                 projectLocation: false,
                 ProjectManager: false,
                 Owner: false,
-                ProjectEndDate: false,
-                ProjectStartDate: false,
+                projectEndDate: false,
+                projectStartDate: false,
                 Status: false,
                 Type: false,
               },
