@@ -176,9 +176,7 @@ export default function AllocationGrid({
 
   const teamsResources = useSelector(state => state.teams.teamsResources);
   
-  useEffect(() => {
-    console.log('teamsResources:', teamsResources);
-  
+  useEffect(() => {  
     const dataMap = new Map();
     const existingKeys = new Set();
     const initialRows = data?.map(row => {
@@ -237,7 +235,6 @@ export default function AllocationGrid({
     }    
   
     const updatedRows = [...initialRows, ...extraRows];
-
     setUpdatedRows(updatedRows);
     const newRowState = getInitialRowsState(updatedRows, groupBy, teams);
 
@@ -985,7 +982,9 @@ export default function AllocationGrid({
       onProcessRowUpdateError={err => {
         console.error('Row update failed:', err);
       }}
-      rows={mode === 'split' ? data : rowState}
+      rows={
+        (groupBy === 'teams' && (mode !== 'top' || mode === 'split')) ? rowState : data
+      }
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}

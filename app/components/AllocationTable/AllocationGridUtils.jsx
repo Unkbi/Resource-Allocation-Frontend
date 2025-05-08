@@ -144,19 +144,14 @@ const CellWithMenu = ({
         }
       });
   
-      if (!allocationIds.length) {
-        console.log('No allocations found');
-      } else {
+      if (allocationIds.length > 0) {
         const payload = {
           "ResourceAllocation.Core/RangeAllocationDelete": {
             Resource: resourceId,
             AllocsList: allocationIds,
           },
         };
-  
-        console.log('Sending bulk delete payload:', payload);
         await dispatch(deleteRangeAllocation(payload));
-        console.log('Allocations to delete for resource:', resourceId);
   
         let updatedRowState = rowState.filter(
           r => !(r.resourceId === resourceId && r.projectId)
@@ -189,15 +184,6 @@ const CellWithMenu = ({
                 allResources
               )?.FullName || '',
             };
-            Object.keys(blankRow).forEach(key => {
-              if (key.startsWith('W')) {
-                blankRow[key] = {
-                  allocationId: null,
-                  value: 0, 
-                  period: blankRow[key]?.period || '',
-                };
-              }
-            });
             updatedRowState.push(blankRow);
           }
         }
@@ -230,23 +216,18 @@ const CellWithMenu = ({
             AllocsList: allocationIds,
           },
         };
-    
-        console.log("single project delete payload:", payload);
         await dispatch(deleteRangeAllocation(payload));
       }
     
-      // remove the deleted project row
       let updatedRowState = rowState.filter(
         r => !(r.resourceId === resourceId && r.projectId === row.projectId)
       );
     
-      // check if only row for resource
       const remainingRowsForResource = updatedRowState.filter(
         r => r.resourceId === resourceId
       );
     
       if (remainingRowsForResource.length === 0) {
-        // add back empty resource-only row
         const resource = allResources.find(r => r.Id === resourceId);
         const team = teams?.result?.find(t =>
           (teamsResources?.[t.Id] || []).some(r => r.Id === resourceId)
@@ -264,16 +245,6 @@ const CellWithMenu = ({
           };
 
           const normalized = normalizeRow(blankRow);
-
-          Object.keys(blankRow).forEach(key => {
-            if (key.startsWith('W')) {
-              blankRow[key] = {
-                allocationId: null,
-                value: 0,
-                period: blankRow[key]?.period || '',
-              };
-            }
-          });
 
           const totalEffort = calculateTotalEffort(normalized);
           const manager = getAllocationManagerFromPath(
