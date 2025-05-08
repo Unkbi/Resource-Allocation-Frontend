@@ -166,3 +166,39 @@ export interface AllAllocationsState {
     endDate: string | null;
   };
 }
+
+export interface ActualAllocationsForPeriodPayload {
+  'ResourceAllocation.Core/GetActualizedAllocationsByPeriod': {
+    Resource: string;
+    StartDate: string;
+    EndDate: string;
+  };
+}
+
+export interface ActualAllocations {
+  ActualsEntered: number | null;
+  AllocationEntered: number | null;
+  Duration: string | null;
+  Id: string | null;
+  Notes: string | null;
+  Period: string | null;
+  Project: string | null;
+  ProjectName: string | null;
+  Resource: string | null;
+}
+
+export interface ActualAllocationsForPeriodResponse {
+  Allocs: ActualAllocations[];
+  Status: string | null;
+}
+
+export interface ActualAllocationsState {
+  actualAllocations: ActualAllocations[] | null;
+  status: string | null;
+  dataProcessing: boolean | null;
+  loading: boolean | null;
+  calendarDate: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+}

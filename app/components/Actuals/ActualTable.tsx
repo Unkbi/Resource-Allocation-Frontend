@@ -30,6 +30,25 @@ import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { ActualAllocationTableRow } from '@/app/types';
+//@ts-ignore
+import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
+import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
+
+export function formatWeekRangeFromStrings(
+  startDate: string | null,
+  endDate: string | null
+): string {
+  if (!startDate || !endDate) return '';
+
+  try {
+    const start = format(parseISO(startDate), 'MMM dd');
+    const end = format(parseISO(endDate), 'MMM dd');
+    return `${start} - ${end}`;
+  } catch {
+    return '';
+  }
+}
 
 const initialRows: GridRowsProp = [
   {
@@ -55,9 +74,21 @@ const roundToOneDecimal = (num: number) => {
   return num.toFixed(1);
 };
 
-export default function ActualTable() {
+interface ActualTableProps {
+  data: ActualAllocationTableRow[];
+  dataProcessing: boolean;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export default function ActualTable({
+  data,
+  dataProcessing,
+  startDate,
+  endDate,
+}: ActualTableProps) {
   const apiRef = useGridApiRef();
-  const [rows, setRows] = useState(initialRows);
+  const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -94,6 +125,12 @@ export default function ActualTable() {
     }
   }, [allocationTheme]);
 
+  useEffect(() => {
+    if (data) {
+      setRows(data);
+    }
+  }, [data]);
+
   const handleProcessRowUpdate = (
     newRow: GridValidRowModel,
     oldRow: GridValidRowModel
@@ -111,7 +148,7 @@ export default function ActualTable() {
           return sum + newActual;
         }
         if (row.id !== 'total' && row.id !== 'second-total') {
-          return sum + (parseFloat(row.actuals) || 0);
+          return sum + (parseFloat(`${row.actuals}`) || 0);
         }
         return sum;
       }, 0);
@@ -390,7 +427,7 @@ export default function ActualTable() {
         updatedRows.push({ id: 'divider', type: 'divider' });
       }
 
-      updatedRows.push(newRow);
+      updatedRows.push(newRow as ActualAllocationTableRow);
       return updatedRows;
     });
     // Set validation to true immediately
@@ -485,7 +522,6 @@ export default function ActualTable() {
       disabled: hasPersonalTime,
     },
   ];
-
   return (
     <>
       <Box borderRadius={1} overflow="hidden" width={530}>
@@ -499,30 +535,37 @@ export default function ActualTable() {
           py={1}
         >
           <Typography fontWeight={600} fontSize=" 0.875rem">
-            Q2 2025
+            {`Q${getQuarter(parseISO(startDate || ''))} ${getYear(startDate || '')}`}
           </Typography>
           <Typography fontWeight={600} fontSize="0.875rem">
-            Week 12
+            {`Week ${getWeek(parseISO(startDate || ''), {
+              weekStartsOn: 1,
+            })}`}
           </Typography>
           <Typography fontWeight={600} fontSize="0.875rem">
-            Apr 08 - Apr 14
+            {formatWeekRangeFromStrings(startDate, endDate)}
           </Typography>
         </Box>
 
         <Box sx={{ height: 350 }}>
           <DataGridPremium
             apiRef={apiRef}
-            rows={[
-              {
-                id: 'total',
-                project: 'Total',
-                planned: totalPlanned,
-                actuals: totalActuals,
-                comments: '',
-              },
-              ...rows,
-            ]}
+            rows={
+              rows?.length > 0
+                ? [
+                    {
+                      id: 'total',
+                      project: 'Total',
+                      planned: totalPlanned,
+                      actuals: totalActuals,
+                      comments: '',
+                    },
+                    ...rows,
+                  ]
+                : []
+            }
             columns={columns}
+            loading={dataProcessing}
             disableColumnMenu
             disableColumnSorting
             isRowSelectable={params =>
@@ -541,12 +584,23 @@ export default function ActualTable() {
             getRowClassName={params => {
               if (params.id === 'total') return 'second-total-row';
               if (params.id === 'divider') return 'divider-row';
-              if (params.row.id === rows[rows.length - 1].id) return 'last-row';
+              if (params?.row?.id === rows[rows.length - 1]?.id)
+                return 'last-row';
               return 'first-header-row';
             }}
             sx={{
               fontSize: '0.875rem',
               ...actualsTableStyles,
+            }}
+            slots={{
+              //@ts-ignore
+              noRowsOverlay: NoActualsRowsOverlay,
+            }}
+            slotProps={{
+              loadingOverlay: {
+                variant: 'skeleton',
+                noRowsVariant: 'skeleton',
+              },
             }}
           />
         </Box>

@@ -15,6 +15,7 @@ import {
   isSameWeek,
   differenceInCalendarWeeks,
   endOfWeek,
+  endOfISOWeek,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -288,6 +289,11 @@ export const getMondayOfISO = date => {
   return format(startOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
 };
 
+export const getSundayOfISO = date => {
+  const isoDate = parseISO(date);
+  return format(endOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
+};
+
 export const generateTMinusOneStartEndDate = isStartDate => {
   let today = parseISO(new Date().toISOString());
   const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
@@ -301,21 +307,21 @@ export const generateTMinusOneStartEndDate = isStartDate => {
   }
 };
 
-export const generateDateWeekMath = (operation, weeks) => {
+export const generateDateWeekMath = (operation, weeks, date = new Date()) => {
   if (weeks === undefined || weeks === null) return null;
-  let today = new Date();
-  today = parseISO(today.toISOString());
+  // let today = new Date();
+  const isoDate = parseISO(date.toISOString());
 
   let weeksMonday;
   switch (operation) {
     case 'WEEK_MINUS':
-      weeksMonday = startOfWeek(subWeeks(today, weeks), { weekStartsOn: 1 });
+      weeksMonday = startOfWeek(subWeeks(isoDate, weeks), { weekStartsOn: 1 });
       break;
     case 'WEEK_PLUS':
-      weeksMonday = startOfWeek(addWeeks(today, weeks), { weekStartsOn: 1 });
+      weeksMonday = startOfWeek(addWeeks(isoDate, weeks), { weekStartsOn: 1 });
       break;
     default:
-      weeksMonday = startOfWeek(today, { weekStartsOn: 1 });
+      weeksMonday = startOfWeek(isoDate, { weekStartsOn: 1 });
   }
   return format(weeksMonday, DATE_FORMAT);
 };
@@ -575,4 +581,11 @@ export function formatStringToFloat(value, decimalPlaces = 1) {
   const num = parseFloat(value);
   if (isNaN(num)) return '0.0'; // fallback for invalid inputs
   return num.toFixed(decimalPlaces);
+}
+
+export function isCurrentWeek(date) {
+  const today = new Date();
+  const startOfCurrentWeek = startOfISOWeek(today, { weekStartsOn: 1 });
+  const startOfDateWeek = startOfISOWeek(date, { weekStartsOn: 1 });
+  return isSameWeek(startOfCurrentWeek, startOfDateWeek, { weekStartsOn: 1 });
 }
