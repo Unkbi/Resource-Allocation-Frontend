@@ -587,6 +587,22 @@ const SplitTeamToolbar = memo(
                 limitTags={3}
                 onChange={handleTeamChange}
                 slotProps={commonSlotProps}
+                renderOption={(props, option) => {
+                  const isSelected = selectedTeam.some(team => team.value === option.value);
+                  const { key, ...rest } = props;
+                  return (
+                    <li
+                    key={key}
+                    {...rest}
+                    style={{
+                      ...rest.style,
+                      backgroundColor: isSelected ? '#f0f0f0' : props.style?.backgroundColor,
+                    }}
+                  >
+                    {option.label}
+                  </li>
+                  );
+                }}
                 renderInput={params => (
                   <TextField
                     {...params}
