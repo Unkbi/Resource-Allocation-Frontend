@@ -196,6 +196,107 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
       },
 
+    [`& .${gridClasses.cell}[data-field="projectOvertimeAllowed"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectOvertimeAllowed"].secondGroupsRow`]:
+      {
+        backgroundColor:
+          !loading &&
+          (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+      },
+    [`& .${gridClasses.cell}[data-field="projectCost"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectCost"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="projectCurrency"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectCurrency"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="Description"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="Description"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="projectLocation"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectLocation"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="projectStartDate"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectStartDate"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="projectEndDate"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectEndDate"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="Owner"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="Owner"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="ProjectManager"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="ProjectManager"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="Status"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="Status"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="Type"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="Type"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
+    },
+
     //  '& .MuiDataGrid-row:hover': {
     //   backgroundColor: 'inherit !important',
     //   },

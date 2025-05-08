@@ -23,6 +23,23 @@ interface Resource {
   Department: string;
   [key: string]: any;
 }
+export interface Project {
+  result: any;
+  Name: string;
+  id: string;
+  projectOvertimeAllowed: string;
+  Cost: number | null;
+  CostCurrency: string;
+  Description: string;
+  EndDate: string;
+  Location: string;
+  Owner: string;
+  ProjectManager: string;
+  StartDate: string;
+  Status: string;
+  Type: string;
+}
+
 export default function TeamAllocation({
   startDate,
   endDate,
@@ -57,7 +74,7 @@ export default function TeamAllocation({
       })
     );
   };
-
+ 
   const getTeam = (params: GridCellParams) => {
     if (
       params.rowNode.type === 'group' &&
@@ -69,7 +86,8 @@ export default function TeamAllocation({
       return team;
     }
     return null;
-  };
+  }
+
 
   const getResource = (params: GridCellParams): Resource | null => {
     if (
@@ -188,10 +206,6 @@ export default function TeamAllocation({
       isEditable: 'false',
       sortable: 'false',
       primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
-      },
     },
     {
       field: 'StartDate',
@@ -304,6 +318,159 @@ export default function TeamAllocation({
       },
     },
     {
+      field: 'projectOvertimeAllowed',
+      headerName: 'Allow Overtime',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return (
+          <EllipsisNameCell
+            value={
+              allocation?.projectOvertimeAllowed === true
+                ? 'True'
+                : allocation?.projectOvertimeAllowed === false
+                  ? 'False'
+                  : ''
+            }
+          />
+        );
+      },
+    },
+    {
+      field: 'projectCost',
+      headerName: 'Project Cost',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectCost || ''} />;
+      },
+    },
+    {
+      field: 'projectCurrency',
+      headerName: 'Project Currency',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectCurrency || ''} />;
+      },
+    },
+    {
+      field: 'Description',
+      headerName: 'Project Description',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.Description || ''} />;
+      },
+    },
+    {
+      field: 'projectLocation',
+      headerName: 'Project Location',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectLocation || ''} />;
+      },
+    },
+    {
+      field: 'projectStartDate',
+      headerName: 'Project Start Date',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectStartDate || ''} />;
+      },
+    },
+    {
+      field: 'projectEndDate',
+      headerName: 'Project End Date',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectEndDate || ''} />;
+      },
+    },
+    {
+      field: 'Owner',
+      headerName: 'Project Sponsor',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectSponsor || ''} />;
+      },
+    },
+    {
+      field: 'ProjectManager',
+      headerName: 'Project Manager',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectManager || ''} />;
+      },
+    },
+    {
+      field: 'Status',
+      headerName: 'Project Status',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectStatus || ''} />;
+      },
+    },
+    {
+      field: 'Type',
+      headerName: 'Project Type',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectType || ''} />;
+      },
+    },
+    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 180,
@@ -367,6 +534,17 @@ export default function TeamAllocation({
                 AverageWeeklyHours: false,
                 ContractorHourlyRate: false,
                 ContractorHourlyRateCurrency: false,
+                projectOvertimeAllowed: false,
+                projectCost: false,
+                projectCurrency: false,
+                Description: false,
+                projectLocation: false,
+                ProjectManager: false,
+                Owner: false,
+                ProjectEndDate: false,
+                ProjectStartDate: false,
+                Status: false,
+                Type: false,
               },
             },
           }}
