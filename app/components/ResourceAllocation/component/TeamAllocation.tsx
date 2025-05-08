@@ -175,7 +175,7 @@ export default function TeamAllocation({
     {
       field: 'HRLevel',
       headerName: 'HR Level',
-      width: 180,
+      width: 100,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -249,7 +249,7 @@ export default function TeamAllocation({
     {
       field: 'AverageWeeklyHours',
       headerName: 'Average Weekly Hours',
-      width: 180,
+      width: 210,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -262,7 +262,7 @@ export default function TeamAllocation({
     {
       field: 'ContractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
-      width: 180,
+      width: 210,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -277,7 +277,7 @@ export default function TeamAllocation({
     {
       field: 'ContractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
-      width: 180,
+      width: 270,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -320,7 +320,7 @@ export default function TeamAllocation({
     {
       field: 'projectOvertimeAllowed',
       headerName: 'Allow Overtime',
-      width: 130,
+      width: 160,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -356,7 +356,7 @@ export default function TeamAllocation({
     {
       field: 'projectCurrency',
       headerName: 'Project Currency',
-      width: 130,
+      width: 160,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -369,7 +369,7 @@ export default function TeamAllocation({
     {
       field: 'Description',
       headerName: 'Project Description',
-      width: 130,
+      width: 180,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -382,7 +382,7 @@ export default function TeamAllocation({
     {
       field: 'projectLocation',
       headerName: 'Project Location',
-      width: 130,
+      width: 160,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -395,7 +395,7 @@ export default function TeamAllocation({
     {
       field: 'projectStartDate',
       headerName: 'Project Start Date',
-      width: 130,
+      width: 160,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -408,7 +408,7 @@ export default function TeamAllocation({
     {
       field: 'projectEndDate',
       headerName: 'Project End Date',
-      width: 130,
+      width: 160,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -421,7 +421,7 @@ export default function TeamAllocation({
     {
       field: 'Owner',
       headerName: 'Project Sponsor',
-      width: 130,
+      width: 160,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -434,7 +434,7 @@ export default function TeamAllocation({
     {
       field: 'ProjectManager',
       headerName: 'Project Manager',
-      width: 130,
+      width: 160,
       type: 'string',
       isEditable: false,
       sortable: false,
