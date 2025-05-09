@@ -314,7 +314,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       },
     '& .MuiDataGrid-cell.MuiDataGrid-cell--editing': {
       boxShadow: 'none !important',
-      backgroundColor: 'rgba(157, 201, 255, 0.3) !important',
+      backgroundColor: '#AAAFBC30 !important',
     },
     '& .common-NonEditableCells': {
       backgroundColor: '#F1F6FF',
@@ -459,8 +459,8 @@ export const StyledDataGrid = styled(DataGridPremium)(({
         border: '1px solid transparent',
         boxSizing: 'border-box',
         '&:focus': {
-          backgroundColor: 'rgba(157, 201, 255, 0.3)',
-          border: '1px solid #298AFF',
+          backgroundColor: '#FFFFFF50',
+          border: '1px solid #000000',
         },
       },
     },
