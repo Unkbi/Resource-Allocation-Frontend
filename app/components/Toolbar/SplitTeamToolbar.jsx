@@ -594,7 +594,7 @@ const SplitTeamToolbar = memo(
                 <StyledSlider
                   value={allocationThreshold}
                   onChange={handleAllocationRangeChange}
-                  valueLabelDisplay="off"
+                  valueLabelDisplay="on"
                   size="small"
                   step={0.1}
                   min={0.0}
@@ -608,7 +608,9 @@ const SplitTeamToolbar = memo(
                     { value: 1, label: '1.0' },
                     { value: 1.1, label: '1+' },
                   ]}
-                  valueLabelFormat={value => `${value}`}
+                  valueLabelFormat={value =>
+                    value === 1.1 ? '>1' : `${value}`
+                  }
                 />
               </Box>
             </Box>
