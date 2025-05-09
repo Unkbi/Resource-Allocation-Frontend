@@ -14,6 +14,17 @@ export const actualsTableStyles = {
   '.col-cell-actuals, .col-cell-planned': {
     padding: 0,
   },
+  '.error-cell': {
+    border: '1px solid red !important',
+    borderRadius: '4px',
+  },
+  '.comment-error-cell': {
+    border: '1px solid red',
+    borderRadius: '4px',
+    boxSizing: 'border-box',
+    display: 'flex',
+    alignItems: 'center',
+  },
   '& .MuiDataGrid-columnHeaderTitle': {
     color: '#1C2D5F',
     textAlign: 'center',
@@ -78,4 +89,8 @@ export const actualsTableStyles = {
     marginBottom: '0',
     paddingBottom: '0',
   },
+  '.comment-error-cell .MuiDataGrid-cell:focus-within': {
+    outline: 'none !important',
+    boxShadow: 'none !important',
+  }
 };

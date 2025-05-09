@@ -242,7 +242,7 @@ const Header = ({ sidebarExpanded }) => {
         return;
       case '/help':
         return;
-      case '/actual':
+      case '/actuals':
         return 'Actuals';
       default:
         return 'Executive Dashboard';
@@ -252,7 +252,7 @@ const Header = ({ sidebarExpanded }) => {
     <MainAppBar sidebarExpanded={sidebarExpanded}>
       <Toolbar className="toobarRow">
         <Typography variant="h6">
-          {pathname === '/actual' ? (
+          {pathname === '/actuals' ? (
             <>
               {loadingName ? (
                 <Skeleton width={100} height={20} />

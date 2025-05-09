@@ -10,6 +10,7 @@ import dialogReducer from './reducers/dialogReducer';
 import dataGridReducer from './reducers/dataGridReducer';
 import settingsReducer from './reducers/settingsReducer';
 import allAllocationReducer from './reducers/allAllocationsReducer';
+import actualAllocationReducer from './reducers/actualAllocationsReducer';
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from './sagas';
 
@@ -29,6 +30,7 @@ export const makeStore = () => {
       dataGrid: dataGridReducer,
       settings: settingsReducer,
       allAllocations: allAllocationReducer,
+      actualAllocations: actualAllocationReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({

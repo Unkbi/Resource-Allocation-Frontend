@@ -8,6 +8,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  IconButton,
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -19,7 +20,7 @@ import { useState } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
-import { GridCellParams } from '@mui/x-data-grid-premium';
+import { GridCellParams, GridApi } from '@mui/x-data-grid-premium';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/app/redux/store';
@@ -27,6 +28,27 @@ import type { RootState } from '@/app/redux/store';
 import ProjectMenu from './ProjectMenu';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { ActualAllocationTableRow } from '@/app/types';
+//@ts-ignore
+import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
+import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
+
+export function formatWeekRangeFromStrings(
+  startDate: string | null,
+  endDate: string | null
+): string {
+  if (!startDate || !endDate) return '';
+
+  try {
+    const start = format(parseISO(startDate), 'MMM dd');
+    const end = format(parseISO(endDate), 'MMM dd');
+    return `${start} - ${end}`;
+  } catch {
+    return '';
+  }
+}
 
 const initialRows: GridRowsProp = [
   {
@@ -52,8 +74,22 @@ const roundToOneDecimal = (num: number) => {
   return num.toFixed(1);
 };
 
-export default function ActualTable() {
-  const [rows, setRows] = useState(initialRows);
+interface ActualTableProps {
+  data: ActualAllocationTableRow[];
+  dataProcessing: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  apiRef: React.RefObject<GridApi>;
+}
+
+export default function ActualTable({
+  data,
+  dataProcessing,
+  startDate,
+  endDate,
+  apiRef,
+}: ActualTableProps) {
+  const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -65,6 +101,10 @@ export default function ActualTable() {
   );
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
   const totalPlanned = useMemo(() => {
     return roundToOneDecimal(calculateTotal([...rows], 'planned'));
@@ -74,11 +114,32 @@ export default function ActualTable() {
     return roundToOneDecimal(calculateTotal([...rows], 'actuals'));
   }, [rows]);
 
+  const [hasOtherWork, setHasOtherWork] = useState(false);
+  const [hasPersonalTime, setHasPersonalTime] = useState(false);
+  const [rowValidationErrors, setRowValidationErrors] = useState<
+    Record<string, { actuals: boolean; comments: boolean }>
+  >({});
+
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
       dispatch(fetchAllocationTheme());
     }
   }, [allocationTheme]);
+
+  useEffect(() => {
+    if (data) {
+      setRows(data);
+      if (data.length > 0 && data.find(row => row.project === 'Other Work')) {
+        setHasOtherWork(true);
+      }
+      if (
+        data.length > 0 &&
+        data.find(row => row.project === 'Personal Time')
+      ) {
+        setHasPersonalTime(true);
+      }
+    }
+  }, [data]);
 
   const handleProcessRowUpdate = (
     newRow: GridValidRowModel,
@@ -97,7 +158,7 @@ export default function ActualTable() {
           return sum + newActual;
         }
         if (row.id !== 'total' && row.id !== 'second-total') {
-          return sum + (parseFloat(row.actuals) || 0);
+          return sum + (parseFloat(`${row.actuals}`) || 0);
         }
         return sum;
       }, 0);
@@ -136,6 +197,25 @@ export default function ActualTable() {
       );
     });
 
+    setRowValidationErrors(prev => {
+      const updated = { ...prev };
+
+      const actualsInvalid = !newRow.actuals || newRow.actuals === 0;
+      const commentsInvalid = !newRow.comments || !newRow.comments.trim();
+
+      updated[newRow.id] = {
+        actuals: actualsInvalid,
+        comments: commentsInvalid,
+      };
+
+      // Remove from map if both are valid
+      if (!actualsInvalid && !commentsInvalid) {
+        delete updated[newRow.id];
+      }
+
+      return updated;
+    });
+
     return { ...newRow, actuals: actualsChanged ? newActual : newRow.actuals };
   };
 
@@ -143,7 +223,10 @@ export default function ActualTable() {
     params: GridCellParams,
     event: React.KeyboardEvent
   ) => {
-    if (['e', 'E', '+', '-'].includes(event.key)) {
+    if (
+      params?.field !== 'comments' &&
+      ['e', 'E', '+', '-'].includes(event.key)
+    ) {
       event.preventDefault();
     }
     if (event.key === 'Enter') {
@@ -201,6 +284,52 @@ export default function ActualTable() {
       minWidth: 200,
       headerClassName: 'header-project',
       cellClassName: 'col-cell-project',
+      renderCell: params => {
+        // Don't show menu for total, divider, and initial rows
+        if (
+          params.row.id === 'total' ||
+          params.row.type === 'divider' ||
+          typeof params.row.id === 'number'
+        ) {
+          return params.value;
+        }
+
+        return (
+          <p
+            style={{
+              overflow: 'inherit',
+              textOverflow: 'ellipsis',
+              position: 'relative',
+              paddingRight: '32px',
+              color: '#313F68',
+              opacity: 1,
+              fontWeight: 400,
+            }}
+          >
+            {params.value}
+            <IconButton
+              size="small"
+              onClick={e => handleActionMenuOpen(e, params.row.id)}
+              sx={{
+                padding: '0px',
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: '16px',
+                  color: '#344665',
+                },
+              }}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          </p>
+        );
+      },
     },
     {
       field: 'planned',
@@ -222,7 +351,10 @@ export default function ActualTable() {
       align: 'center',
       headerAlign: 'center',
       headerClassName: 'header-actuals',
-      cellClassName: 'col-cell-actuals',
+      cellClassName: params =>
+        rowValidationErrors[params.id as string]?.actuals
+          ? 'error-cell'
+          : 'col-cell-actuals',
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -232,8 +364,21 @@ export default function ActualTable() {
       flex: 1,
       minWidth: 158,
       headerClassName: 'header-comments',
-      cellClassName: 'col-cell-comments',
-      renderEditCell: params => <CommentCell {...params} />,
+      cellClassName: params =>
+        rowValidationErrors[params.id as string]?.comments &&
+        (!params.row.comments || !params.row.comments.trim())
+          ? 'comment-error-cell'
+          : 'col-cell-comments',
+      renderEditCell: params => (
+        <CommentCell
+          {...params}
+          showInitialError={rowValidationErrors[params.id as string]?.comments}
+        />
+      ),
+      preProcessEditCellProps: params => {
+        const hasError = !params.props.value || !params.props.value.trim();
+        return { ...params.props, error: hasError };
+      },
     },
   ];
 
@@ -256,20 +401,114 @@ export default function ActualTable() {
         setShowProjectMenu(true);
         break;
       case 'Other Work':
-        alert('Navigate to other work page');
+        if (!hasOtherWork) {
+          const newOtherWorkRow = {
+            id: `${Date.now()}_other_work`,
+            project: 'Other Work',
+            planned: 0,
+            actuals: 0,
+            comments: '',
+          };
+          addNewRow(newOtherWorkRow);
+          setHasOtherWork(true);
+        }
         break;
       case 'Personal Time':
-        alert('Navigate to personal time page');
+        if (!hasPersonalTime) {
+          const newPersonalTimeRow = {
+            id: `${Date.now()}_personal_time`,
+            project: 'Personal Time',
+            planned: 0,
+            actuals: 0,
+            comments: '',
+          };
+          addNewRow(newPersonalTimeRow);
+          setHasPersonalTime(true);
+        }
         break;
       default:
         console.log(`Clicked on ${label}`);
     }
   };
 
+  const addNewRow = (newRow: GridValidRowModel) => {
+    setRows(prevRows => {
+      const updatedRows = [...prevRows];
+      const hasDivider = updatedRows.some(row => row.id === 'divider');
+
+      if (!hasDivider) {
+        updatedRows.push({ id: 'divider', type: 'divider' });
+      }
+
+      updatedRows.push(newRow as ActualAllocationTableRow);
+      return updatedRows;
+    });
+    // Set validation to true immediately
+    if (
+      (newRow.actuals === 0 || newRow.actuals === undefined) &&
+      (!newRow.comments || !newRow.comments.trim())
+    ) {
+      setRowValidationErrors(prev => ({
+        ...prev,
+        [newRow.id]: { actuals: true, comments: true },
+      }));
+    } else {
+      setRowValidationErrors(prev => ({
+        ...prev,
+        [newRow.id]: {
+          actuals: newRow.actuals === 0 || newRow.actuals === undefined,
+          comments: !newRow.comments || !newRow.comments.trim(),
+        },
+      }));
+    }
+  };
+
+  const handleActionMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    id: string
+  ) => {
+    event.stopPropagation();
+    setActionMenuAnchor(event.currentTarget);
+    setSelectedRowId(id);
+  };
+
+  const handleActionMenuClose = () => {
+    setActionMenuAnchor(null);
+    setSelectedRowId(null);
+  };
+
+  const handleDeleteRow = () => {
+    if (selectedRowId) {
+      setRows(prevRows => {
+        const deletedRow = prevRows.find(row => row.id === selectedRowId);
+
+        // Reset flags based on the deleted row
+        if (deletedRow?.project === 'Other Work') {
+          setHasOtherWork(false);
+        } else if (deletedRow?.project === 'Personal Time') {
+          setHasPersonalTime(false);
+        }
+
+        const updatedRows = prevRows.filter(row => row.id !== selectedRowId);
+
+        // Check if we still have any unplanned rows
+        const dividerIndex = updatedRows.findIndex(row => row.id === 'divider');
+        const hasUnplannedRows =
+          dividerIndex > -1 && updatedRows.length > dividerIndex + 1;
+
+        return hasUnplannedRows
+          ? updatedRows
+          : updatedRows.filter(row => row.id !== 'divider');
+      });
+    }
+    handleActionMenuClose();
+  };
+
   const menuItems = [
     {
       label: 'Project',
       icon: <FolderIcon fontSize="small" sx={{ color: '#1C2D5F' }} />,
+      disabled: false,
     },
     {
       label: 'Other Work',
@@ -278,9 +517,10 @@ export default function ActualTable() {
           component="img"
           src="/images/icons/otherWork.svg"
           alt="Other Work"
-          sx={{ width: 20, height: 20 }}
+          sx={{ width: 20, height: 20, opacity: hasOtherWork ? 0.5 : 1 }}
         />
       ),
+      disabled: hasOtherWork,
     },
     {
       label: 'Personal Time',
@@ -289,12 +529,12 @@ export default function ActualTable() {
           component="img"
           src="/images/icons/Personal.svg"
           alt="Other Work"
-          sx={{ width: 20, height: 20 }}
+          sx={{ width: 20, height: 20, opacity: hasPersonalTime ? 0.5 : 1 }}
         />
       ),
+      disabled: hasPersonalTime,
     },
   ];
-
   return (
     <>
       <Box borderRadius={1} overflow="hidden" width={530}>
@@ -308,29 +548,37 @@ export default function ActualTable() {
           py={1}
         >
           <Typography fontWeight={600} fontSize=" 0.875rem">
-            Q2 2025
+            {`Q${getQuarter(parseISO(startDate || ''))} ${getYear(startDate || '')}`}
           </Typography>
           <Typography fontWeight={600} fontSize="0.875rem">
-            Week 12
+            {`Week ${getWeek(parseISO(startDate || ''), {
+              weekStartsOn: 1,
+            })}`}
           </Typography>
           <Typography fontWeight={600} fontSize="0.875rem">
-            Apr 08 - Apr 14
+            {formatWeekRangeFromStrings(startDate, endDate)}
           </Typography>
         </Box>
 
         <Box sx={{ height: 350 }}>
           <DataGridPremium
-            rows={[
-              {
-                id: 'total',
-                project: 'Total',
-                planned: totalPlanned,
-                actuals: totalActuals,
-                comments: '',
-              },
-              ...rows,
-            ]}
+            apiRef={apiRef}
+            rows={
+              rows?.length > 0
+                ? [
+                    {
+                      id: 'total',
+                      project: 'Total',
+                      planned: totalPlanned,
+                      actuals: totalActuals,
+                      comments: '',
+                    },
+                    ...rows,
+                  ]
+                : []
+            }
             columns={columns}
+            loading={dataProcessing}
             disableColumnMenu
             disableColumnSorting
             isRowSelectable={params =>
@@ -349,12 +597,23 @@ export default function ActualTable() {
             getRowClassName={params => {
               if (params.id === 'total') return 'second-total-row';
               if (params.id === 'divider') return 'divider-row';
-              if (params.row.id === rows[rows.length - 1].id) return 'last-row';
+              if (params?.row?.id === rows[rows.length - 1]?.id)
+                return 'last-row';
               return 'first-header-row';
             }}
             sx={{
               fontSize: '0.875rem',
               ...actualsTableStyles,
+            }}
+            slots={{
+              //@ts-ignore
+              noRowsOverlay: NoActualsRowsOverlay,
+            }}
+            slotProps={{
+              loadingOverlay: {
+                variant: 'skeleton',
+                noRowsVariant: 'skeleton',
+              },
             }}
           />
         </Box>
@@ -395,8 +654,12 @@ export default function ActualTable() {
           {menuItems.map(item => (
             <MenuItem
               key={item.label}
-              onClick={() => handleMenuClick(item.label)}
+              onClick={() => !item.disabled && handleMenuClick(item.label)}
               sx={{
+                '&.Mui-disabled': {
+                  opacity: 0.5,
+                  color: 'text.disabled',
+                },
                 '&:hover': {
                   backgroundColor: 'rgba(20, 43, 81, 0.7)',
                   '& .menu-icon': {
@@ -420,10 +683,19 @@ export default function ActualTable() {
                   item.icon
                 )}
               </ListItemIcon>
-              <ListItemText primary={item.label} className="menu-text" />
+              <ListItemText
+                primary={item.label}
+                className="menu-text"
+                sx={{
+                  opacity: item.disabled ? 0.5 : 1,
+                }}
+              />
               <img
                 src="images/icons/small-arrowForward.svg"
                 className="menu-icon"
+                style={{
+                  opacity: item.disabled ? 0.5 : 1,
+                }}
               />
             </MenuItem>
           ))}
@@ -436,10 +708,39 @@ export default function ActualTable() {
             setMainMenuAnchor(null);
           }}
           anchorEl={projectMenuAnchor}
-          setRows={setRows}
           existingRows={rows}
+          onAddProjects={newRows => {
+            newRows.forEach(row => {
+              addNewRow(row);
+            });
+          }}
         />
       )}
+      <Menu
+        anchorEl={actionMenuAnchor}
+        open={Boolean(actionMenuAnchor)}
+        onClose={handleActionMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem
+          onClick={handleDeleteRow}
+          sx={{
+            color: 'error.main',
+          }}
+        >
+          <ListItemIcon>
+            <DeleteOutlineIcon fontSize="small" sx={{ color: 'error.main' }} />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
     </>
   );
 }

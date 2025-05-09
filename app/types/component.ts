@@ -22,3 +22,12 @@ export interface ProjectsTableRow {
   Status: string | null;
   id: string;
 }
+
+export interface ActualAllocationTableRow {
+  id: string;
+  project?: string | null;
+  planned?: number | null;
+  actuals?: number | null;
+  comments?: string | null;
+  type?: string | null;
+}
