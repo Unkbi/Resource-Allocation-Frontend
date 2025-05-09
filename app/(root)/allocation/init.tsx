@@ -13,6 +13,7 @@ import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { resetAllocations } from '@/app/redux/reducers/allAllocationsReducer';
 import { ApiResponse, Resource, Team } from '@/app/types';
 import { generateDateWeekMath } from '@/app/utils/common';
+import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 
 interface TopContentProps {
   startDate: string | null;
@@ -40,6 +41,9 @@ export default function AllocationInit() {
   // @ts-ignore
   const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
     (state: RootState) => state.resources
+  );
+  const allocationTheme = useSelector(
+    (state: RootState) => state.settings.allocationTheme
   );
 
   const { allAllocations, calendarDate } = useSelector(
@@ -69,6 +73,9 @@ export default function AllocationInit() {
     }
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
+    }
+    if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
+      dispatch(fetchAllocationTheme());
     }
   }, []);
 
