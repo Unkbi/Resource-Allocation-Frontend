@@ -196,7 +196,15 @@ export default function ActualsPage() {
         alignItems="center"
         justifyContent="center"
       >
-        <IconButton sx={{ borderRadius: '4px' }} onClick={handlePrev}>
+        <IconButton
+          sx={{
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'transparent',
+            },
+          }}
+          onClick={handlePrev}
+        >
           <img
             src="images/icons/leftArrow.svg"
             alt="Left Arrow"
@@ -242,16 +250,30 @@ export default function ActualsPage() {
           </Box>
         </Box>
         <IconButton
-          sx={{ borderRadius: '4px' }}
+          sx={{
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'transparent',
+            },
+          }}
           onClick={handleNext}
           disabled={isCurrentWeek(parseISO(startDate))}
         >
-          <img
-            src="images/icons/rightArrow.svg"
-            alt="Left Arrow"
-            width={48}
-            height={48}
-          />
+          {isCurrentWeek(parseISO(startDate)) ? (
+            <img
+              src="images/icons/rightArrow.svg"
+              alt="Left Arrow"
+              width={48}
+              height={48}
+            />
+          ) : (
+            <img
+              src="images/icons/arrow_circle_right_Enabled.svg"
+              alt="Left Arrow"
+              width={48}
+              height={48}
+            />
+          )}
         </IconButton>
       </Box>
     </Box>
