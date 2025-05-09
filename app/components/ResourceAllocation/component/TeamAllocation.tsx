@@ -235,7 +235,7 @@ export default function TeamAllocation({
     {
       field: 'LocationCategory',
       headerName: 'Location Category',
-      width: 180,
+      width: 160,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -248,7 +248,7 @@ export default function TeamAllocation({
     {
       field: 'AverageWeeklyHours',
       headerName: 'Average Weekly Hours',
-      width: 210,
+      width: 190,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -261,7 +261,7 @@ export default function TeamAllocation({
     {
       field: 'ContractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
-      width: 210,
+      width: 195,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -276,7 +276,7 @@ export default function TeamAllocation({
     {
       field: 'ContractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
-      width: 270,
+      width: 260,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -319,7 +319,7 @@ export default function TeamAllocation({
     {
       field: 'projectOvertimeAllowed',
       headerName: 'Allow Overtime',
-      width: 160,
+      width: 140,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -342,7 +342,7 @@ export default function TeamAllocation({
     {
       field: 'projectCost',
       headerName: 'Project Cost',
-      width: 130,
+      width: 120,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -355,7 +355,7 @@ export default function TeamAllocation({
     {
       field: 'projectCurrency',
       headerName: 'Project Currency',
-      width: 160,
+      width: 150,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -472,7 +472,7 @@ export default function TeamAllocation({
     {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
-      width: 180,
+      width: 170,
       type: 'string',
       isEditable: false,
       sortable: false,

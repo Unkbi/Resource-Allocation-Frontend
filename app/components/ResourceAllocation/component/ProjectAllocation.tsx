@@ -170,7 +170,7 @@ export default function ProjectAllocation({
     {
       field: 'WorkLocation',
       headerName: 'Resource Work Location',
-      width: 170,
+      width: 200,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -186,7 +186,7 @@ export default function ProjectAllocation({
     {
       field: 'LocationCategory',
       headerName: 'Resource Location Category',
-      width: 170,
+      width: 230,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -298,7 +298,7 @@ export default function ProjectAllocation({
     {
       field: 'AverageWeeklyHours',
       headerName: 'Average Weekly Hours',
-      width: 170,
+      width: 190,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -314,7 +314,7 @@ export default function ProjectAllocation({
     {
       field: 'ContractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
-      width: 170,
+      width: 200,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -330,7 +330,7 @@ export default function ProjectAllocation({
     {
       field: 'ContractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
-      width: 170,
+      width: 260,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -411,7 +411,7 @@ export default function ProjectAllocation({
     {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
-      width: 102, // min-width without eliding.
+      width: 110, // min-width without eliding.
       type: 'boolean',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
