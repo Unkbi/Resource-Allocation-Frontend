@@ -175,6 +175,20 @@ export interface ActualAllocationsForPeriodPayload {
   };
 }
 
+export interface ConfirmActuals {
+  Project: string;
+  ActualsEntered: number;
+}
+
+export interface ConfirmActualAllocationsForPeriodRequest {
+  'ResourceAllocation.Core/ConfirmActualsEntered': {
+    Resource: string;
+    Period: string;
+    Status: string;
+    Actuals: ConfirmActuals[];
+  };
+}
+
 export interface ActualAllocations {
   ActualsEntered: number | null;
   AllocationEntered: number | null;

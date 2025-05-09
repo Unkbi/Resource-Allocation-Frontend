@@ -20,7 +20,7 @@ import { useState } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
-import { GridCellParams, useGridApiRef } from '@mui/x-data-grid-premium';
+import { GridCellParams, GridApi } from '@mui/x-data-grid-premium';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/app/redux/store';
@@ -79,6 +79,7 @@ interface ActualTableProps {
   dataProcessing: boolean;
   startDate: string | null;
   endDate: string | null;
+  apiRef: React.RefObject<GridApi>;
 }
 
 export default function ActualTable({
@@ -86,8 +87,8 @@ export default function ActualTable({
   dataProcessing,
   startDate,
   endDate,
+  apiRef,
 }: ActualTableProps) {
-  const apiRef = useGridApiRef();
   const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -128,6 +129,15 @@ export default function ActualTable({
   useEffect(() => {
     if (data) {
       setRows(data);
+      if (data.length > 0 && data.find(row => row.project === 'Other Work')) {
+        setHasOtherWork(true);
+      }
+      if (
+        data.length > 0 &&
+        data.find(row => row.project === 'Personal Time')
+      ) {
+        setHasPersonalTime(true);
+      }
     }
   }, [data]);
 
@@ -213,7 +223,10 @@ export default function ActualTable({
     params: GridCellParams,
     event: React.KeyboardEvent
   ) => {
-    if (['e', 'E', '+', '-'].includes(event.key)) {
+    if (
+      params?.field !== 'comments' &&
+      ['e', 'E', '+', '-'].includes(event.key)
+    ) {
       event.preventDefault();
     }
     if (event.key === 'Enter') {

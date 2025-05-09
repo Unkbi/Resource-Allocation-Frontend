@@ -10,7 +10,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 const initialState: ActualAllocationsState = {
   actualAllocations: [],
   status: null,
-  dataProcessing: false,
+  dataProcessing: true,
   loading: false,
   calendarDate: {
     startDate: getMondayOfISO(new Date().toISOString()),

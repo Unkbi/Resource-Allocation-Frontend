@@ -4,11 +4,15 @@ import { Box, Typography, Button, IconButton } from '@mui/material';
 import ActualTable from '@/app/components/Actuals/ActualTable';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { GET_ACTUAL_ALLOCATIONS } from '@/app/redux/actions/actualAllocationsActions';
+import {
+  CONFIRM_ACTUAL_ALLOCATIONS,
+  GET_ACTUAL_ALLOCATIONS,
+} from '@/app/redux/actions/actualAllocationsActions';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { useSelector } from 'react-redux';
 import { ActualAllocations, ActualAllocationTableRow } from '@/app/types';
 import {
+  formateToFloat,
   generateDateWeekMath,
   getSundayOfISO,
   getUserIdFromEmail,
@@ -18,6 +22,9 @@ import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { setCalendarDate } from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
 import { parseISO } from 'date-fns';
+import { useGridApiRef } from '@mui/x-data-grid-premium';
+import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
@@ -27,11 +34,74 @@ export default function ActualsPage() {
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
   const { resources } = useSelector((state: RootState) => state.resources);
+  const { projects } = useSelector((state: RootState) => state.projects);
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
     ActualAllocationTableRow[]
   >([]);
+  const apiRef = useGridApiRef();
+
   const handleConfirmed = () => {
-    alert('Confirmed!');
+    if (
+      projects &&
+      'result' in projects &&
+      resources &&
+      'result' in resources &&
+      user &&
+      'Email' in user &&
+      actualAllocations &&
+      actualAllocations.length > 0
+    ) {
+      const userId = getUserIdFromEmail(
+        ('result' in resources && resources?.result) || [],
+        // @ts-ignore
+        ('Email' in user && user?.Email) || ''
+      );
+
+      const allData = apiRef.current
+        .getAllRowIds()
+        .map(id => apiRef.current.getRow(id))
+        .filter(row => row.id !== 'total' && row.project);
+
+      const payload = {
+        resource: userId,
+        period: startDate,
+        status: 'Confirmed',
+        actuals: allData.map((row: any) => ({
+          Project: projects?.result?.find(
+            (project: any) => project.Name === row.project
+          )?.Id,
+          ActualsEntered: formateToFloat(row.actuals),
+          Notes: row.comments || '',
+        })),
+      };
+      new Promise((resolve, reject) => {
+        dispatch({
+          type: CONFIRM_ACTUAL_ALLOCATIONS,
+          payload: { ...payload, resolve, reject },
+        });
+      }).catch((error: any) => {
+        console.error('Error confirming actual allocations:', error);
+        dispatch(
+          showToast({
+            open: true,
+            message: `Failed to confirm Actual alloctions.`,
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+      });
+    } else {
+      dispatch(
+        showToast({
+          open: true,
+          message: `Failed to confirm Actual alloctions.`,
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    }
   };
 
   const handleNext = () => {
@@ -57,8 +127,6 @@ export default function ActualsPage() {
   };
 
   useEffect(() => {
-    if (resources.length === 0) {
-    }
     if (resources && 'result' in resources && user && 'Email' in user) {
       const userId = getUserIdFromEmail(
         ('result' in resources && resources?.result) || [],
@@ -97,6 +165,9 @@ export default function ActualsPage() {
     // @ts-ignore
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
+    }
+    if (!projects?.result?.length) {
+      dispatch(fetchAllProjects());
     }
   }, []);
 
@@ -141,6 +212,7 @@ export default function ActualsPage() {
             }
             startDate={startDate}
             endDate={endDate}
+            apiRef={apiRef}
           />
           <Box display="flex" justifyContent="flex-end">
             <Button

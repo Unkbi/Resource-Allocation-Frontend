@@ -589,3 +589,10 @@ export function isCurrentWeek(date) {
   const startOfDateWeek = startOfISOWeek(date, { weekStartsOn: 1 });
   return isSameWeek(startOfCurrentWeek, startOfDateWeek, { weekStartsOn: 1 });
 }
+
+export function formateToFloat(value) {
+  if (value === undefined || value === null) return 0.0;
+  const parsedValue = parseFloat(value);
+  if (isNaN(parsedValue)) return 0.0;
+  return Math.round(value * 10) / 10;
+}

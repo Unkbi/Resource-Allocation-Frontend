@@ -32,6 +32,7 @@ export default function CommentCell(props: CommentCellProps) {
       variant="outlined"
       fullWidth
       required
+      autoFocus
       // multiline
       error={showError}
       placeholder="Enter Comments"
@@ -46,13 +47,17 @@ export default function CommentCell(props: CommentCellProps) {
           padding: '0 8px',
           fontSize: 14,
           alignItems: 'center',
-          '&.Mui-focused': showError ? {} : {
-            outline: 'none',
-            boxShadow: 'none',
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': showError ? {} : {
-            border: 'none',
-          },
+          '&.Mui-focused': showError
+            ? {}
+            : {
+                outline: 'none',
+                boxShadow: 'none',
+              },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': showError
+            ? {}
+            : {
+                border: 'none',
+              },
         },
         '& .MuiOutlinedInput-notchedOutline': {
           borderColor: showError ? '#d32f2f' : 'transparent',
