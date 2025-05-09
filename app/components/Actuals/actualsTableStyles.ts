@@ -92,5 +92,8 @@ export const actualsTableStyles = {
   '.comment-error-cell .MuiDataGrid-cell:focus-within': {
     outline: 'none !important',
     boxShadow: 'none !important',
-  }
+  },
+  '& .MuiDataGrid-filler': {
+    '--rowBorderColor': 'none !important',
+  },
 };
