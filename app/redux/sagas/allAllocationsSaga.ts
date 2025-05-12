@@ -16,6 +16,7 @@ import {
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
 import { Allocation, Resource } from '@/app/types';
+import { injectBlankRows } from '@/app/components/AllocationTable/AllocationGridUtils';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const { projects, teams, resources, startDate, endDate } = action.payload;
@@ -68,7 +69,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       yield put(setAllTeamsResources(formatedTeamResults));
     }
 
-    const allAllocations = formatAllAllocations(
+    const formatted = formatAllAllocations(
       responses.result,
       teams,
       projects,
@@ -78,8 +79,15 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       endDate
     );
 
-    if (allAllocations.length) {
-      yield put(setAllAllocations(allAllocations));
+    const fullAllocations = injectBlankRows({
+      allocations: formatted,
+      teams,
+      teamsResources: teamResourceObject,
+      resources,
+    });
+
+    if (fullAllocations.length) {
+      yield put(setAllAllocations(fullAllocations));
     }
   } catch (error) {
     console.error(
@@ -133,7 +141,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       []
     );
 
-    const teamsAllocations = formatAllAllocations(
+    const formatted = formatAllAllocations(
       allTeamAllocations,
       teams,
       projects,
@@ -142,9 +150,15 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       startDate,
       endDate
     );
+    
+    const fullAllocations = injectBlankRows({
+      allocations: formatted,
+      teams,
+      teamsResources,
+      resources,
+    });
 
-    yield put(updateAllAllocations(teamsAllocations));
-
+    yield put(updateAllAllocations(fullAllocations))
     // Notify if async operation is completed
     if (resolve) resolve();
   } catch (error) {

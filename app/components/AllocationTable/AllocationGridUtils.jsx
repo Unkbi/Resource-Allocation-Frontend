@@ -27,7 +27,7 @@ import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 import ConfirmDialog from '../Dialog/ConfirmDialog';
 import { removeResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
-import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import { setCellSelectionData, setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { deleteRangeAllocation } from '@/app/services/allocationServices';
 
@@ -90,6 +90,38 @@ export const normalizeRow = row => {
   return normalized;
 };
 
+export function injectBlankRows({ allocations, teams, teamsResources, resources }) {
+  const existingKeys = new Set(
+    allocations.map(a => `${a.teams}___${a.resourceId}`)
+  );
+
+  const extraRows = [];
+
+  teams.forEach(team => {
+    const teamRes = teamsResources?.[team.Id] || [];
+    teamRes.forEach(resource => {
+      const key = `${team.Name}___${resource.Id}`;
+      if (!existingKeys.has(key)) {
+        extraRows.push({
+          id: `team/${team.Name}-resource/${resource.FullName}`,
+          teams: team.Name,
+          teamId: team.Id,
+          resource: resource.FullName,
+          resourceId: resource.Id,
+          project: '',
+          projectId: '',
+          totalEffort: 0,
+          hasAllocation: false,
+          teamAllocationManager: team.AllocationManager || '',
+        });
+      }
+    });
+  });
+
+  return [...allocations, ...extraRows];
+}
+
+
 const CellWithMenu = ({
   params,
   handleAddClick,
@@ -113,6 +145,14 @@ const CellWithMenu = ({
   const columnField = params?.colDef?.field;
   const isResourceRow = params?.colDef?.field === "__row_group_by_columns_group_resource__";
   const isProjectRow = params?.colDef?.field === "project";
+  const { calendarDate: _calendarDate } = useSelector(
+    state => state.allAllocations
+  );
+  const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
+  const { projects } = useSelector(state => state.projects);
+  const allAllocations = useSelector(
+    state => state.allAllocations.allAllocations
+  );
 
 
   const handleDeleteClick = params => {
@@ -134,7 +174,7 @@ const CellWithMenu = ({
   
       const allocationIds = [];
   
-      rowState.forEach(r => {
+      (allAllocations || []).forEach(r => {
         if (r.resourceId === resourceId) {
           Object.values(r).forEach(cell => {
             if (cell?.allocationId) {
@@ -152,43 +192,35 @@ const CellWithMenu = ({
           },
         };
         await dispatch(deleteRangeAllocation(payload));
-  
-        let updatedRowState = rowState.filter(
-          r => !(r.resourceId === resourceId && r.projectId)
+    
+        const team = teams?.result?.find(t =>
+          (teamsResources?.[t.Id] || []).some(r => r.Id === resourceId)
         );
-  
-        const stillExists = updatedRowState.some(
-          r => r.resourceId === resourceId
-        );
-  
-        // add blank row 
-        if (!stillExists && matchedResource) {
-          const team = teams?.result?.find(team =>
-            (teamsResources?.[team.Id] || []).some(res => res.Id === resourceId)
-          );
-  
-          if (team) {
-            const blankRow = {
-              id: `team/${team.Name}-resource/${matchedResource.FullName}`,
-              teams: team.Name,
-              teamId: team.Id,
-              resource: matchedResource.FullName,
-              resourceId: matchedResource.Id,
-              project: '',
-              projectId: '',
-              ...normalizeRow({}),
-              totalEffort: 0,
-              hasAllocation: false,
-              teamAllocationManager: getAllocationManagerFromPath(
-                team.AllocationManager,
-                allResources
-              )?.FullName || '',
-            };
-            updatedRowState.push(blankRow);
-          }
+        
+        if (team) {
+          const teamId = team.Id;
+        
+          await new Promise((resolve, reject) => {
+            dispatch({
+              type: 'UPDATE_TEAM_ALLOCATIONS',
+              payload: {
+                teamIds: [teamId],
+                teams: teams?.result,
+                projects: projects?.result,
+                resources: resources?.result,
+                teamsResources: teamsResources,
+                startDate: _startDate,
+                endDate: _endDate,
+                resolve,
+                reject,
+              },
+            });
+          }).then(() => {
+            requestAnimationFrame(() => {
+              handleScrollToResourceRow(matchedResource, team, false);
+            });
+          });
         }
-  
-        dispatch(setRowState(updatedRowState));
   
         dispatch(
           showToast({
@@ -206,8 +238,8 @@ const CellWithMenu = ({
       }
     } else {    
       const allocationIds = Object.values(row)
-        .filter(cell => cell?.allocationId)
-        .map(cell => cell.allocationId);
+      .filter(cell => cell?.allocationId)
+      .map(cell => cell.allocationId);
     
       if (allocationIds.length > 0) {
         const payload = {
@@ -218,55 +250,42 @@ const CellWithMenu = ({
         };
         await dispatch(deleteRangeAllocation(payload));
       }
-    
-      let updatedRowState = rowState.filter(
-        r => !(r.resourceId === resourceId && r.projectId === row.projectId)
+      
+      const resource = allResources.find(r => r.Id === resourceId);
+      const team = teams?.result?.find(t =>
+        (teamsResources?.[t.Id] || []).some(r => r.Id === resourceId)
       );
-    
-      const remainingRowsForResource = updatedRowState.filter(
-        r => r.resourceId === resourceId
-      );
-    
-      if (remainingRowsForResource.length === 0) {
-        const resource = allResources.find(r => r.Id === resourceId);
-        const team = teams?.result?.find(t =>
-          (teamsResources?.[t.Id] || []).some(r => r.Id === resourceId)
-        );
-    
-        if (resource && team) {
-          const blankRow = {
-            id: `team/${team.Name}-resource/${resource.FullName}`,
-            teams: team.Name,
-            teamId: team.Id,
-            resource: resource.FullName,
-            resourceId: resource.Id,
-            project: '',
-            projectId: '',
-          };
-
-          const normalized = normalizeRow(blankRow);
-
-          const totalEffort = calculateTotalEffort(normalized);
-          const manager = getAllocationManagerFromPath(
-            team.AllocationManager,
-            resources?.result || []
-          )?.FullName;
-    
-          updatedRowState.push({
-            ...normalized,
-            totalEffort,
-            hasAllocation: false,
-            teamAllocationManager: manager,
+      
+      if (resource && team) {
+        const teamId = team.Id;
+        await new Promise((resolve, reject) => {
+          dispatch({
+            type: 'UPDATE_TEAM_ALLOCATIONS',
+            payload: {
+              teamIds: [teamId],
+              teams: teams?.result,
+              projects: projects?.result,
+              resources: resources?.result,
+              teamsResources: teamsResources,
+              startDate: _startDate,
+              endDate: _endDate,
+              resolve,
+              reject,
+            },
           });
-        }
-      } else {
-          const updatedRowState = rowState.filter(r =>
-            !(r.resourceId === resourceId && r.projectId === row.projectId)
-          );
-          dispatch(setRowState(updatedRowState));  
-      }
-      dispatch(setRowState(updatedRowState));  
-
+        }).then(() => {
+          requestAnimationFrame(() => {
+            const hasOtherProjects = (allAllocations || []).some(
+              r =>
+                r.resourceId === resourceId &&
+                r.projectId !== row.projectId &&
+                r.projectId !== ''
+            );
+            handleScrollToResourceRow(resource, team, hasOtherProjects);        
+          });
+        });
+      }    
+  
       dispatch(showToast({
         open: true,
         message: (
@@ -284,6 +303,26 @@ const CellWithMenu = ({
     setDeleteParams(null);
     setAnchorEl(null);
   };
+
+  const handleScrollToResourceRow = (resource, team, shouldExpand = false) => {
+    if (!resource || !team) return;
+  
+    const rowId = `auto-generated-row-teams/${team.Name}-resource/${resource.FullName}`;
+  
+      requestAnimationFrame(() => {
+        if (shouldExpand) {
+          dispatch(setExpandRowId([rowId]));
+        }
+    
+        dispatch(
+          setCellSelectionData({
+            [rowId]: {},
+            restoreFocus: true,
+          })
+        );
+      });
+  };
+  
 
   const handleMenuOpen = event => {
     event.stopPropagation();

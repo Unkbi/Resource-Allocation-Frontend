@@ -174,8 +174,12 @@ export default function AllocationGrid({
     ...aggregationModel(startDate, endDate),
   });
 
+  useEffect(() => {
+    setUpdatedRows(data && Array.isArray(data) ? data : []);
+  }, [data]);
+
+  /*
   const teamsResources = useSelector(state => state.teams.teamsResources);
-  
   useEffect(() => {  
     const dataMap = new Map();
     const existingKeys = new Set();
@@ -240,7 +244,7 @@ export default function AllocationGrid({
 
     dispatch(setRowState(newRowState));
   }, [data, groupBy, teams, teamsResources, resources]);
-  
+  */
 
   useEffect(() => {
     try {
@@ -966,10 +970,6 @@ export default function AllocationGrid({
       }
     : {};
 
-    useEffect(() => {
-      setUpdatedRows(rowState); // ensure updatedRows is refreshed
-    }, [rowState]);
-    
   return (
     <StyledDataGrid
       cellSelection
@@ -983,7 +983,7 @@ export default function AllocationGrid({
         console.error('Row update failed:', err);
       }}
       rows={
-        (groupBy === 'teams' && (mode !== 'top' || mode === 'split')) ? rowState : data
+        (groupBy === 'teams' && (mode !== 'top' || mode === 'split')) ? updatedRows : data
       }
       aggregationModel={aggregation}
       columns={finalColumns}
@@ -991,7 +991,7 @@ export default function AllocationGrid({
       onRowClick={groupBy === 'teams' ? onRowClick : () => null}
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={mode === 'split' ? loading : loading || !rowState.length}
+      loading={mode === 'split' ? loading : loading || !updatedRows?.length}
       disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
