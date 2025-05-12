@@ -80,6 +80,7 @@ interface ActualTableProps {
   startDate: string | null;
   endDate: string | null;
   apiRef: React.RefObject<GridApi>;
+  disableView?: boolean;
 }
 
 export default function ActualTable({
@@ -88,6 +89,7 @@ export default function ActualTable({
   startDate,
   endDate,
   apiRef,
+  disableView = false,
 }: ActualTableProps) {
   const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
@@ -276,6 +278,17 @@ export default function ActualTable({
     return roundToOneDecimal(value);
   };
 
+  const isUnplannedRow = (rowId: string | number) => {
+    // Check if it's a string ID (new rows) and contains specific identifiers
+    return (
+      typeof rowId === 'string' && 
+      (rowId.includes('other_work') || 
+       rowId.includes('personal_time') || 
+       rowId.includes('_project_'))
+    );
+  };
+  
+
   const columns: GridColDef[] = [
     {
       field: 'project',
@@ -285,11 +298,12 @@ export default function ActualTable({
       headerClassName: 'header-project',
       cellClassName: 'col-cell-project',
       renderCell: params => {
+        console.log(params,"params");
         // Don't show menu for total, divider, and initial rows
         if (
           params.row.id === 'total' ||
           params.row.type === 'divider' ||
-          typeof params.row.id === 'number'
+          !isUnplannedRow(params.row.id)
         ) {
           return params.value;
         }
@@ -310,6 +324,7 @@ export default function ActualTable({
             <IconButton
               size="small"
               onClick={e => handleActionMenuOpen(e, params.row.id)}
+              disabled={disableView}
               sx={{
                 padding: '0px',
                 position: 'absolute',
@@ -346,7 +361,7 @@ export default function ActualTable({
       field: 'actuals',
       headerName: 'Actuals',
       type: 'number',
-      editable: true,
+      editable: !disableView,
       width: 68,
       align: 'center',
       headerAlign: 'center',
@@ -360,7 +375,7 @@ export default function ActualTable({
     {
       field: 'comments',
       headerName: 'Comments',
-      editable: true,
+      editable: !disableView,
       flex: 1,
       minWidth: 158,
       headerClassName: 'header-comments',
@@ -586,6 +601,7 @@ export default function ActualTable({
               params.row.id !== 'second-total-row'
             }
             isCellEditable={params => {
+              if (disableView) return false;
               if (params.id === 'total' || params.row.id === 'divider')
                 return false;
               return true;
@@ -619,10 +635,18 @@ export default function ActualTable({
         </Box>
       </Box>
 
-      <Box px={2} py={1} sx={{ paddingBottom: '0', paddingLeft: '0' }}>
+      <Box
+        px={2}
+        py={1}
+        sx={{
+          paddingBottom: '0',
+          paddingLeft: '0',
+        }}
+      >
         <Button
           variant="text"
           size="small"
+          disabled={disableView}
           sx={{
             color: '#0D1F52',
             textTransform: 'none',
