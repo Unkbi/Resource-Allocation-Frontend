@@ -281,13 +281,12 @@ export default function ActualTable({
   const isUnplannedRow = (rowId: string | number) => {
     // Check if it's a string ID (new rows) and contains specific identifiers
     return (
-      typeof rowId === 'string' && 
-      (rowId.includes('other_work') || 
-       rowId.includes('personal_time') || 
-       rowId.includes('_project_'))
+      typeof rowId === 'string' &&
+      (rowId.includes('other_work') ||
+        rowId.includes('personal_time') ||
+        rowId.includes('_project_'))
     );
   };
-  
 
   const columns: GridColDef[] = [
     {
@@ -298,7 +297,6 @@ export default function ActualTable({
       headerClassName: 'header-project',
       cellClassName: 'col-cell-project',
       renderCell: params => {
-        console.log(params,"params");
         // Don't show menu for total, divider, and initial rows
         if (
           params.row.id === 'total' ||
@@ -367,9 +365,9 @@ export default function ActualTable({
       headerAlign: 'center',
       headerClassName: 'header-actuals',
       cellClassName: params =>
-        rowValidationErrors[params.id as string]?.actuals
-          ? 'error-cell'
-          : 'col-cell-actuals',
+        `col-cell-actuals ${disableView ? 'disabled-cell' : ''} ${
+          rowValidationErrors[params.id as string]?.actuals ? 'error-cell' : ''
+        }`,
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -380,10 +378,12 @@ export default function ActualTable({
       minWidth: 158,
       headerClassName: 'header-comments',
       cellClassName: params =>
-        rowValidationErrors[params.id as string]?.comments &&
-        (!params.row.comments || !params.row.comments.trim())
-          ? 'comment-error-cell'
-          : 'col-cell-comments',
+        `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
+          rowValidationErrors[params.id as string]?.comments &&
+          (!params.row.comments || !params.row.comments.trim())
+            ? 'comment-error-cell'
+            : ''
+        }`,
       renderEditCell: params => (
         <CommentCell
           {...params}

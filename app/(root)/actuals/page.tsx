@@ -106,6 +106,7 @@ export default function ActualsPage() {
   };
 
   const handleNext = () => {
+    if(startDate && endDate) {
     dispatch(
       setCalendarDate({
         startDate: generateDateWeekMath('WEEK_PLUS', 1, parseISO(startDate)),
@@ -114,9 +115,11 @@ export default function ActualsPage() {
         ),
       })
     );
+  }
   };
 
   const handlePrev = () => {
+     if(startDate && endDate) {
     dispatch(
       setCalendarDate({
         startDate: generateDateWeekMath('WEEK_MINUS', 1, parseISO(startDate)),
@@ -125,6 +128,7 @@ export default function ActualsPage() {
         ),
       })
     );
+  }
   };
 
   useEffect(() => {
@@ -211,12 +215,22 @@ export default function ActualsPage() {
             dataProcessing={
               (dataProcessing && actualAllocations?.length === 0) || false
             }
-            disableView={status === "Confirmed"}
+            disableView={status === "Confirmed" && startDate !== null && !isCurrentWeek(parseISO(startDate))}
             startDate={startDate}
             endDate={endDate}
             apiRef={apiRef}
           />
-          <Box display="flex" justifyContent="space-between" mt={8}>
+            <Box mt={4} width="100%">
+              <Box
+              sx={{
+                borderBottom: '1px solid #E0E0E0',
+                width: '85vw',
+                position: 'relative',
+                left: 'calc(-43vw + 50%)',
+              }}
+              />
+            </Box>
+          <Box display="flex" justifyContent="space-between" mt={4}>
             <Button
               startIcon={<ChevronLeftIcon />}
               onClick={handlePrev}
@@ -245,7 +259,7 @@ export default function ActualsPage() {
                 height: '36px',
                 borderRadius: '5px',
               }}
-              disabled={status === "Confirmed"}
+              disabled={status === "Confirmed" && startDate !== null && !isCurrentWeek(parseISO(startDate))}
               onClick={handleConfirmed}
             >
               <Typography
@@ -265,7 +279,7 @@ export default function ActualsPage() {
             <Button
               endIcon={<ChevronRightIcon />}
               onClick={handleNext}
-              disabled={isCurrentWeek(parseISO(startDate))}
+              disabled={startDate ? isCurrentWeek(parseISO(startDate)) : false}
               sx={{
                 color: '#152e75',
                 fontSize: '14px',
@@ -283,32 +297,6 @@ export default function ActualsPage() {
             </Button>
           </Box>
         </Box>
-        {/* <IconButton
-          sx={{
-            borderRadius: '4px',
-            '&:hover': {
-              backgroundColor: 'transparent',
-            },
-          }}
-          onClick={handleNext}
-          disabled={isCurrentWeek(parseISO(startDate))}
-        >
-          {isCurrentWeek(parseISO(startDate)) ? (
-            <img
-              src="images/icons/rightArrow.svg"
-              alt="Left Arrow"
-              width={48}
-              height={48}
-            />
-          ) : (
-            <img
-              src="images/icons/arrow_circle_right_Enabled.svg"
-              alt="Left Arrow"
-              width={48}
-              height={48}
-            />
-          )}
-        </IconButton> */}
       </Box>
     </Box>
   );

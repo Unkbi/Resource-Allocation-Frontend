@@ -9,6 +9,7 @@ export const actualsTableStyles = {
   },
   '& .MuiDataGrid-cell': {
     borderRight: '1px solid #EEEEEE',
+    borderBottom: '1px solid #EEEEEE',
     backgroundColor: 'white',
   },
   '.col-cell-actuals, .col-cell-planned': {
@@ -95,5 +96,8 @@ export const actualsTableStyles = {
   },
   '& .MuiDataGrid-filler': {
     '--rowBorderColor': 'none !important',
+  },
+  '.disabled-cell': {
+    backgroundColor: '#F8F9FA',
   },
 };
