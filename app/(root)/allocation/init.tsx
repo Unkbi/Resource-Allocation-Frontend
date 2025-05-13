@@ -66,13 +66,6 @@ export default function AllocationInit() {
         ? currentView?.EndDate
         : endDate
   );
-
-  // const currentViewEndDate = currentView?.isDynamicRange
-  //   ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-  //   : currentView?.isFixedRange
-  //     ? currentView?.EndDate
-  //     : endDate;
-
   useEffect(() => {
     if (!teams?.result?.length) {
       dispatch(fetchAllTeams());
