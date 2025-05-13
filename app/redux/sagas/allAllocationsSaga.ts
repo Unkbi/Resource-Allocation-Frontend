@@ -8,7 +8,7 @@ import {
   setDataProcessing,
   updateAllAllocations,
 } from '../reducers/allAllocationsReducer';
-import { formatAllAllocations } from '@/app/utils/allocationUtils';
+import { formatAllAllocations, formatCostAllocations } from '@/app/utils/allocationUtils';
 import {
   fetchResourcesAgainstTeamsForSaga,
   fetchTeamAllocationsForSaga,
@@ -16,6 +16,8 @@ import {
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
 import { Allocation, Resource } from '@/app/types';
+import { mockAllocationData } from '@/app/constants/mockAllocations';
+import { setCost, updateProjectCosts } from '../reducers/projectCostReducer';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const { projects, teams, resources, startDate, endDate } = action.payload;
@@ -78,8 +80,91 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       endDate
     );
 
+    // console.log("allAllocations =", allAllocations)
+
     if (allAllocations.length) {
       yield put(setAllAllocations(allAllocations));
+    }
+  } catch (error) {
+    console.error(
+      'Saga error, Failed to fetch team project/allocations : ',
+      error
+    );
+  } finally {
+    yield put(setDataProcessing(false));
+  }
+}
+
+function* fetchProjectCostAllocationsSaga(action: any): Generator<any, void, any> {
+  const { projects, teams, resources, startDate, endDate } = action.payload;
+  try {
+    yield put(setDataProcessing(true));
+
+    // const postData = {
+    //   'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
+    //     StartDate: getMondayOfISO(startDate),
+    //     EndDate: getMondayOfISO(endDate),
+    //   },
+    // };
+
+    // const responses = yield call(fetchAllAllocations, postData);
+    const responses = mockAllocationData
+
+    // console.log("responses in cost fetch =", responses)
+    // Got your response now, format the data to have a combination of teams and projects data.
+
+    const teamResults = yield all(
+      teams.map((team: any) =>
+        call(function* () {
+          const resourcesPostData = {
+            'ResourceAllocation.Core/GetTeamResources': { TeamId: team.Id },
+          };
+          //@ts-ignore
+          const resourcesResult = yield call(
+            fetchResourcesAgainstTeamsForSaga,
+            resourcesPostData
+          );
+
+          return { resourcesResult, team };
+        })
+      )
+    );
+
+    let teamResourceObject: Record<string, Resource[]> = {};
+    const formatedTeamResults = teamResults
+      // @ts-ignore
+      ?.map(teamResult => ({
+        id: teamResult?.team?.Id,
+        resource: teamResult?.resourcesResult?.result,
+      }));
+
+    formatedTeamResults.forEach(
+      (payload: { id: string; resource: Resource[] }) => {
+        teamResourceObject = teamResourceObject || {};
+        teamResourceObject[payload.id] = payload.resource;
+      }
+    );
+
+    if (teamResults) {
+      yield put(setAllTeamsResources(formatedTeamResults));
+    }
+
+    const allAllocations = formatCostAllocations(
+      responses.result,
+      teams,
+      projects,
+      resources,
+      teamResourceObject,
+      startDate,
+      endDate
+    );
+
+    // console.log("allAllocations for cost=", allAllocations)
+
+    //  debugger
+
+    if (allAllocations.length) {
+      yield put(setCost(allAllocations));
     }
   } catch (error) {
     console.error(
@@ -222,4 +307,5 @@ export function* allAllocationsSaga() {
   yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga); // This is for subsequent fetch. Ex : Date Shift.
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
+  yield takeLatest('FETCH_PROJECT_COST_ALLOCATIONS', fetchProjectCostAllocationsSaga);
 }

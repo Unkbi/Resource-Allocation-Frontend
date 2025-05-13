@@ -76,6 +76,7 @@ export default function AllocationGrid({
   NoRowsOverlay,
   mode,
   columnsFilterable = true,
+  type = ""
 }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
@@ -171,7 +172,7 @@ export default function AllocationGrid({
 
   const [aggregation, setAggregation] = useState({
     totalEffort: 'sum',
-    ...aggregationModel(startDate, endDate),
+    ...aggregationModel(startDate, endDate, type === "cost"),
   });
 
   const normalizeRow = row => {
@@ -312,7 +313,7 @@ export default function AllocationGrid({
     if (startDate && endDate) {
       setAggregation({
         totalEffort: 'sum',
-        ...aggregationModel(startDate, endDate),
+        ...aggregationModel(startDate, endDate, type === "cost"),
       });
     }
   }, [startDate, endDate]);
@@ -585,7 +586,8 @@ export default function AllocationGrid({
       : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
     currentView?.isFixedRange
       ? currentView.endDate || endDate
-      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
+      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
+    type === "cost"
   );
 
   const showField = [
@@ -1027,8 +1029,9 @@ export default function AllocationGrid({
     <StyledDataGrid
       cellSelection
       allocationTheme={allocationTheme}
-      isCellEditable={params => !params.row.hasButton}
+      isCellEditable={params => type === "cost" ? false : !params.row.hasButton}
       onCellKeyDown={handleCellKeyDown}
+      type = {type}
       rowModesModel={rowModesModel}
       onRowModesModelChange={handleRowModesModelChange}
       processRowUpdate={handleCellUpdate}

@@ -45,7 +45,7 @@ const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
     params.value == null ? 'weeklyCell' : clsx('super-app', 'weeklyCell'),
 });
 
-const createValueHandlers = dispatch => ({
+const createValueHandlers = (dispatch, isFormatWithK) => ({
   valueParser: value => {
     const parsed = parseFloat(
       value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
@@ -54,13 +54,13 @@ const createValueHandlers = dispatch => ({
   },
 
   valueFormatter: value => {
-    if (!value) {
-      return value;
-    }
-    if (typeof value === 'number') {
-      return value.toFixed(1);
-    }
-    return value;
+    if (value == null || value === '') return '';
+    const num = typeof value === 'number' ? value : parseFloat(value);
+    return isNaN(num)
+      ? ''
+      : isFormatWithK
+      ? `${num.toFixed(1)}k`
+      : num.toFixed(1);
   },
   valueGetter: params => {
     return params?.value ?? null;
@@ -98,7 +98,8 @@ const createValueHandlers = dispatch => ({
   },
 });
 
-export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
+
+export const generateWeeklyColumns = (startDate, endDate, dispatch, isFormatWithK) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
   const currentDate = new Date();
@@ -123,7 +124,7 @@ export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
 
     return {
       ...createBaseColumnConfig(weekStartDate, isCurrentWeek),
-      ...(dispatch ? createValueHandlers(dispatch) : {}),
+      ...(dispatch ? createValueHandlers(dispatch, isFormatWithK) : {}),
     };
   });
 };
@@ -181,16 +182,17 @@ export const getAllColumnsWithWeek = (
   existingColumns = [],
   dispatch,
   startDate,
-  endDate
+  endDate,
+  isFormatWithK
 ) => {
   return [
     ...existingColumns,
-    ...generateWeeklyColumns(startDate, endDate, dispatch),
+    ...generateWeeklyColumns(startDate, endDate, dispatch, isFormatWithK),
   ];
 };
 
-export const aggregationModel = (startDate, endDate) => {
-  return generateWeeklyColumns(startDate, endDate)
+export const aggregationModel = (startDate, endDate, isFormatWithK) => {
+  return generateWeeklyColumns(startDate, endDate, undefined, isFormatWithK)
     .filter(column => /^W\d+/.test(column.field))
     .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
 };

@@ -273,7 +273,8 @@ export const getFinalColumns = (
   setSelectedResourceId,
   dispatch,
   startDate,
-  endDate
+  endDate,
+  isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
@@ -284,7 +285,8 @@ export const getFinalColumns = (
     columns,
     dispatch,
     startDate,
-    endDate
+    endDate,
+    isFormatWithK
   );
 
   const handleAddClick = params => {

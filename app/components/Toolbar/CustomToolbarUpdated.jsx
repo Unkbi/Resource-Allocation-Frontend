@@ -47,6 +47,7 @@ import {
 import { parseISO } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CheckIcon from '@mui/icons-material/Check';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -568,6 +569,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     {
       name: 'Project',
       icon: <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    },
+    {
+      name: 'Project Cost',
+      icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
     // 'Organizations'
   ];
