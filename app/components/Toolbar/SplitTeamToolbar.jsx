@@ -689,7 +689,7 @@ const SplitTeamToolbar = memo(
                   size="small"
                   step={0.1}
                   min={0.0}
-                  max={1.1}
+                  max={1.2}
                   marks={[
                     { value: 0, label: '0' },
                     { value: 0.2, label: '0.2' },
@@ -697,10 +697,10 @@ const SplitTeamToolbar = memo(
                     { value: 0.6, label: '0.6' },
                     { value: 0.8, label: '0.8' },
                     { value: 1, label: '1.0' },
-                    { value: 1.1, label: '1+' },
+                    { value: 1.2, label: 'max' },
                   ]}
                   valueLabelFormat={value =>
-                    value === 1.1 ? '>1' : `${value}`
+                    value === 1.1 ? 'max' : value === 1.2 ? 'max' : `${value}`
                   }
                 />
               </Box>

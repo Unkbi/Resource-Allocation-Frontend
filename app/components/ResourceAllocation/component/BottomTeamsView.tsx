@@ -28,7 +28,7 @@ export default function BottomTeamsView({
   const [selectedTeam, setSelectedTeam] = useState<
     Array<{ label: string; value: string }>
   >([]);
-  const [allocationThreshold, setAllocationThreshold] = useState(1.1);
+  const [allocationThreshold, setAllocationThreshold] = useState(1.2);
   const dispatch = useDispatch<AppDispatch>();
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
@@ -153,7 +153,7 @@ export default function BottomTeamsView({
       return teamMatch && hasZeroAllocation(row);
     }
       if (allocationThreshold > 1) {
-        return teamMatch && avgWeekly > 1;
+        return teamMatch;
       }
 
       return teamMatch && avgWeekly <= allocationThreshold;
