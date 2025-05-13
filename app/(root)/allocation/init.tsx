@@ -51,11 +51,13 @@ export default function AllocationInit() {
   );
   const { startDate, endDate } = calendarDate || {};
   const dispatch: AppDispatch = useDispatch();
-  const [currentViewStartDate, setCurrentViewStartDate] =useState(currentView?.isDynamicRange
-    ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
-    : currentView?.isFixedRange
-      ? currentView?.StartDate
-      : startDate) ;
+  const [currentViewStartDate, setCurrentViewStartDate] = useState(
+    currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+      : currentView?.isFixedRange
+        ? currentView?.StartDate
+        : startDate
+  );
 
   const [currentViewEndDate, setCurrentViewEndDate] = useState(
     currentView?.isDynamicRange
@@ -63,9 +65,7 @@ export default function AllocationInit() {
       : currentView?.isFixedRange
         ? currentView?.EndDate
         : endDate
-  ); 
-
-
+  );
 
   // const currentViewEndDate = currentView?.isDynamicRange
   //   ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
@@ -126,18 +126,21 @@ export default function AllocationInit() {
           endDate: currentViewEndDate,
         },
       });
-      setCurrentViewStartDate(currentView?.isDynamicRange
-      ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
-      : currentView?.isFixedRange
-        ? currentView?.StartDate
-        : startDate)
-        setCurrentViewEndDate(
-          currentView?.isDynamicRange
-            ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-            : currentView?.isFixedRange
-              ? currentView?.EndDate
-              : endDate
-        );
+
+      setCurrentViewStartDate(
+        currentView?.isDynamicRange
+          ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+          : currentView?.isFixedRange
+            ? currentView?.StartDate
+            : startDate
+      );
+      setCurrentViewEndDate(
+        currentView?.isDynamicRange
+          ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+          : currentView?.isFixedRange
+            ? currentView?.EndDate
+            : endDate
+      );
     }
   }, [
     currentView?.isDynamicRange,
