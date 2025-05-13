@@ -37,6 +37,7 @@ import {
   getTeamsIamAllocationManager,
   getTotalWeeks,
   isObjectEqual,
+  calculateWeekRanges,
 } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
@@ -74,6 +75,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import { StyledInput } from '../Input/StyledInput';
 import CopyLinkInput from '../Input/InputWithButton';
 import ShareLinkDialog from '../Dialog/ShareLinkDialog';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 140,
@@ -351,11 +353,25 @@ const SplitTeamToolbar = memo(
     const { user } = useSelector(state => state.user);
     const { resources } = useSelector(state => state.resources);
     const { teams } = useSelector(state => state.teams);
-    const { startDate, endDate } = getStartAndEndDateForView(
-      view,
-      projectsCalendar,
-      teamsCalendar
+
+    const splitViewCurrentProject = useSelector(
+      state => state.allocationView.splitViewCurrentProject
     );
+    console.log(splitViewCurrentProject, 'get details');
+
+    const { startDate, endDate, isFixedRange } = splitViewCurrentProject
+      ? {
+          startDate: splitViewCurrentProject.StartDate,
+          endDate: splitViewCurrentProject.EndDate,
+          isFixedRange: true,
+        }
+      : {
+          ...getStartAndEndDateForView(view, projectsCalendar, teamsCalendar),
+          isFixedRange: false,
+        };
+
+      console.log(startDate, endDate, isFixedRange);
+      
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [shareLink, setShareLink] = useState('');
     const [deleteView, setDeleteView] = useState(null);
@@ -366,6 +382,8 @@ const SplitTeamToolbar = memo(
     const myTeamsButtonRef = useRef(null);
     const myProjectsButtonRef = useRef(null);
     const { initialData } = useSelector(state => state.globalDialog.formState);
+    const [isRangePickerOpen, setIsRangePickerOpen] = useState(false);
+
 
     const handleClose = () => {
       setAnchorEl(null);
@@ -389,83 +407,85 @@ const SplitTeamToolbar = memo(
     );
 
     const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
-      const isNext = type === 'next';
-
-      // Handle the saveView changes
-
-      if (type === 'isFixedRange') {
-        const currentDate = new Date();
-        const { weekMinus, weekPlus } = calculateWeekRanges(
-          StartDate,
-          EndDate,
-          currentDate
-        );
-        dispatch(
-          updateCurrentView({
-            isDynamicRange: false,
-            isFixedRange: true,
-            StartDate: StartDate,
-            EndDate: EndDate,
-            WeekPlus: weekPlus,
-            WeekMinus: weekMinus,
-          })
-        );
-      } else {
-        const totalWeeks = getTotalWeeks(
-          currentView?.StartDate,
-          currentView?.EndDate
-        );
-
-        const toShift = currentView.isFixedRange
-          ? totalWeeks
-          : TOTAL_FUTURE_WEEKS_ARROW;
-
-        const toNextWeekPlus =
-          currentView.WeekPlus != null
-            ? currentView.WeekPlus + toShift
-            : DEFAULT_PROJECT_WEEK_PLUS + 4;
-
-        const toNextWeekMinus =
-          currentView.WeekMinus != null
-            ? currentView.WeekMinus - toShift
-            : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW;
-
-        const toPrevWeekPlus =
-          currentView.WeekPlus != null
-            ? currentView.WeekPlus - toShift
-            : DEFAULT_PROJECT_WEEK_MINUS - 4;
-
-        const toPrevWeekMinus =
-          currentView.WeekMinus != null
-            ? currentView.WeekMinus + toShift
-            : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW;
-
-        dispatch(
-          updateCurrentView({
-            ...(!currentView.isFixedRange && { isDynamicRange: true }),
-            ...(isNext
-              ? {
-                  StartDate: generateDateWeekMath(
-                    'WEEK_MINUS',
-                    toNextWeekMinus
-                  ),
-                  EndDate: generateDateWeekMath('WEEK_PLUS', toNextWeekPlus),
-                  WeekPlus: toNextWeekPlus,
-                  WeekMinus: toNextWeekMinus,
-                }
-              : {
-                  StartDate: generateDateWeekMath(
-                    'WEEK_MINUS',
-                    toPrevWeekMinus
-                  ),
-                  EndDate: generateDateWeekMath('WEEK_PLUS', toPrevWeekPlus),
-                  WeekMinus: toPrevWeekMinus,
-                  WeekPlus: toPrevWeekPlus,
-                }),
-          })
-        );
-      }
-    };
+        // const isTeams = view === 'Teams';
+        const isNext = type === 'next';
+        // const action = isTeams
+        //   ? updateStartAndEndDate
+        //   : updateProjectStartAndEndDate;
+    
+        // Handle the saveView changes
+    
+        if (type === 'isFixedRange') {
+          const currentDate = new Date();
+          const { weekMinus, weekPlus } = calculateWeekRanges(
+            StartDate,
+            EndDate,
+            currentDate
+          );
+          dispatch(
+            updateCurrentView({
+              isDynamicRange: false,
+              isFixedRange: true,
+              StartDate: StartDate,
+              EndDate: EndDate,
+              WeekPlus: weekPlus,
+              WeekMinus: weekMinus,
+            })
+          );
+        } else {
+          const totalWeeks = getTotalWeeks(
+            currentView?.StartDate,
+            currentView?.EndDate
+          );
+    
+          const toShift = currentView.isFixedRange
+            ? totalWeeks >= TOTAL_FUTURE_WEEKS_ARROW
+              ? TOTAL_FUTURE_WEEKS_ARROW
+              : totalWeeks
+            : TOTAL_FUTURE_WEEKS_ARROW;
+    
+          const toNextWeekPlus =
+            currentView.WeekPlus != null
+              ? currentView.WeekPlus + toShift
+              : DEFAULT_PROJECT_WEEK_PLUS + 4;
+    
+          const toNextWeekMinus =
+            currentView.WeekMinus != null
+              ? currentView.WeekMinus - toShift
+              : DEFAULT_PROJECT_WEEK_MINUS - TOTAL_FUTURE_WEEKS_ARROW;
+    
+          const toPrevWeekPlus =
+            currentView.WeekPlus != null
+              ? currentView.WeekPlus - toShift
+              : DEFAULT_PROJECT_WEEK_MINUS - 4;
+    
+          const toPrevWeekMinus =
+            currentView.WeekMinus != null
+              ? currentView.WeekMinus + toShift
+              : DEFAULT_PROJECT_WEEK_PLUS + TOTAL_FUTURE_WEEKS_ARROW;
+    
+          dispatch(
+            updateCurrentView({
+              ...(!currentView.isFixedRange && { isDynamicRange: true }),
+              ...(isNext
+                ? {
+                    StartDate: generateDateWeekMath('WEEK_MINUS', toNextWeekMinus),
+                    EndDate: generateDateWeekMath('WEEK_PLUS', toNextWeekPlus),
+                    WeekPlus: toNextWeekPlus,
+                    WeekMinus: toNextWeekMinus,
+                  }
+                : {
+                    StartDate: generateDateWeekMath('WEEK_MINUS', toPrevWeekMinus),
+                    EndDate: generateDateWeekMath('WEEK_PLUS', toPrevWeekPlus),
+                    WeekMinus: toPrevWeekMinus,
+                    WeekPlus: toPrevWeekPlus,
+                  }),
+            })
+          );
+        }
+    
+        // dispatch(action({ startDate: startKey, endDate: endKey }));
+      };
 
     const open = Boolean(anchorEl);
     const openPopover = Boolean(popOverAnchorEl);
@@ -505,6 +525,27 @@ const SplitTeamToolbar = memo(
       '& .MuiAutocomplete-popper': { fontSize: '12px' },
       '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
     };
+
+
+    const handleDateField = (StartDate, EndDate) => {
+        changeCalendarDate('isFixedRange', StartDate, EndDate);
+        const isTeams = view === 'Teams';
+        const action = isTeams
+          ? updateStartAndEndDate
+          : updateProjectStartAndEndDate;
+        if (
+          currentView?.isFixedRange &&
+          currentView?.StartDate &&
+          currentView?.EndDate
+        ) {
+          dispatch(
+            action({
+              startDate: StartDate,
+              endDate: EndDate,
+            })
+          );
+        }
+      };
 
     const commonSlotProps = {
       popper: {
@@ -706,7 +747,23 @@ const SplitTeamToolbar = memo(
             >
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            <Button className="selectedDate">{`${first} - ${last}`}</Button>
+
+  
+            
+            <CustomDateRangePicker
+              open={isRangePickerOpen}
+              placeholder={`${first} - ${last}`}
+              isButton={true}
+              value={{
+                StartDate:startDate,
+                EndDate: endDate,
+              }}
+              onOpen={() => setIsRangePickerOpen(true)}
+              onClose={() => setIsRangePickerOpen(false)}
+              showLabel={false}
+              format="MMM YY"
+              handleDateField={handleDateField}
+            />
 
             <IconButton
               onClick={() => changeCalendarDate('next')}

@@ -174,6 +174,7 @@ export default function Project() {
 
     const handleOpenSplitView = (params) => {
       dispatch(setSplitView(true));
+      // debugger;
       dispatch(setSplitViewCurrentProject(params.row))
       router.replace("/allocation")
     }
@@ -319,8 +320,9 @@ export default function Project() {
       ]
 
     const handleMenuClick = (event, id) => {
-        setAnchorEl(event.currentTarget)
-        setSelectedRow(id)
+      // debugger;
+      setAnchorEl(event.currentTarget);
+      setSelectedRow(id);
     }
 
     const handleMenuClose = (params) => {

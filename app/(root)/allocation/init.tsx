@@ -5,7 +5,7 @@ import HorizontalSplitView from '@/app/components/Shared/SplitView';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import TopProjectsView from '@/app/components/ResourceAllocation/component/TopProjectsView';
 import BottomTeamsView from '@/app/components/ResourceAllocation/component/BottomTeamsView';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
@@ -51,18 +51,27 @@ export default function AllocationInit() {
   );
   const { startDate, endDate } = calendarDate || {};
   const dispatch: AppDispatch = useDispatch();
-
-  const currentViewStartDate = currentView?.isDynamicRange
+  const [currentViewStartDate, setCurrentViewStartDate] =useState(currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
     : currentView?.isFixedRange
       ? currentView?.StartDate
-      : startDate;
+      : startDate) ;
 
-  const currentViewEndDate = currentView?.isDynamicRange
-    ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-    : currentView?.isFixedRange
-      ? currentView?.EndDate
-      : endDate;
+  const [currentViewEndDate, setCurrentViewEndDate] = useState(
+    currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+      : currentView?.isFixedRange
+        ? currentView?.EndDate
+        : endDate
+  ); 
+
+
+
+  // const currentViewEndDate = currentView?.isDynamicRange
+  //   ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+  //   : currentView?.isFixedRange
+  //     ? currentView?.EndDate
+  //     : endDate;
 
   useEffect(() => {
     if (!teams?.result?.length) {
@@ -117,6 +126,18 @@ export default function AllocationInit() {
           endDate: currentViewEndDate,
         },
       });
+      setCurrentViewStartDate(currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+      : currentView?.isFixedRange
+        ? currentView?.StartDate
+        : startDate)
+        setCurrentViewEndDate(
+          currentView?.isDynamicRange
+            ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+            : currentView?.isFixedRange
+              ? currentView?.EndDate
+              : endDate
+        );
     }
   }, [
     currentView?.isDynamicRange,
