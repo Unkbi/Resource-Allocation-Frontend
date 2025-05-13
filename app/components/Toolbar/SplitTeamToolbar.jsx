@@ -364,13 +364,9 @@ const SplitTeamToolbar = memo(
       : currentView?.isFixedRange
         ? currentView?.EndDate
         : _endDate;
-
-    console.log(startDate, endDate, 'start date');
     const splitViewCurrentProject = useSelector(
       state => state.allocationView.splitViewCurrentProject
     );
-    console.log(splitViewCurrentProject, 'get details');
-
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [shareLink, setShareLink] = useState('');
     const [deleteView, setDeleteView] = useState(null);
@@ -405,14 +401,7 @@ const SplitTeamToolbar = memo(
     );
 
     const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
-      // const isTeams = view === 'Teams';
       const isNext = type === 'next';
-      // const action = isTeams
-      //   ? updateStartAndEndDate
-      //   : updateProjectStartAndEndDate;
-
-      // Handle the saveView changes
-
       if (type === 'isFixedRange') {
         const currentDate = new Date();
         const { weekMinus, weekPlus } = calculateWeekRanges(
@@ -487,8 +476,6 @@ const SplitTeamToolbar = memo(
           })
         );
       }
-
-      // dispatch(action({ startDate: startKey, endDate: endKey }));
     };
 
     const open = Boolean(anchorEl);

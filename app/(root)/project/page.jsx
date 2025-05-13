@@ -12,8 +12,10 @@ import {
 import { useEffect, useState } from 'react';
 import {
   calculateWeekRanges,
+  generateDateWeekMath,
   generateRandomColor,
   getInitials,
+  getTotalWeeks,
 } from '@/app/utils/common';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,6 +33,7 @@ import {
 } from '@/app/redux/reducers/allocationViewReducer';
 import { useRouter } from 'next/navigation';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { differenceInWeeks } from 'date-fns';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -189,19 +192,42 @@ export default function Project() {
   const handleOpenSplitView = params => {
     dispatch(setSplitView(true));
     dispatch(setSplitViewCurrentProject(params.row));
-    if (params.row.StartDate && params.row.EndDate) {
-      const currentDate = new Date();
+    const { StartDate, EndDate } = params.row;
+    const currentDate = new Date();
+  
+    const getDateRange = (start, end) => {
+      if (start && end) {
+        const weeks = getTotalWeeks(start, end);
+        return weeks > 52
+          ? [start, generateDateWeekMath('WEEK_PLUS', 51, new Date(start))]
+          : [start, end];
+      }
+
+      if (!start && end)
+        return [generateDateWeekMath('WEEK_MINUS', 20, new Date(end)), end];
+      if (start && !end)
+        return [start, generateDateWeekMath('WEEK_PLUS', 20, new Date(start))];
+
+      return [
+        generateDateWeekMath('WEEK_MINUS', 1, currentDate),
+        generateDateWeekMath('WEEK_PLUS', 19, currentDate),
+      ];
+    };
+
+    const [startRange, endRange] = getDateRange(StartDate, EndDate);
+
+    if (startRange && endRange) {
       const { weekMinus, weekPlus } = calculateWeekRanges(
-        params.row.StartDate,
-        params.row.EndDate,
+        startRange,
+        endRange,
         currentDate
       );
       dispatch(
         updateCurrentView({
           isDynamicRange: false,
           isFixedRange: true,
-          StartDate: params.row.StartDate,
-          EndDate: params.row.EndDate,
+          StartDate: startRange,
+          EndDate: endRange,
           WeekPlus: weekPlus,
           WeekMinus: weekMinus,
         })
@@ -209,7 +235,7 @@ export default function Project() {
     }
     router.replace('/allocation');
   };
-
+  
   const columns = [
     {
       field: 'Name',
