@@ -68,6 +68,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
+    [`& .${gridClasses.cell}[data-field="resourceType"].secondGroupsRow`]: {
+      backgroundColor: !loading && '#F0F7FF',
+    },
     [`& .${gridClasses.cell}[data-field="FullName"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
