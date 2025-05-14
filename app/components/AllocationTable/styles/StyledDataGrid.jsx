@@ -15,12 +15,13 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       // Primary styles for teams
       allocationRangeStyles[`& .allocation-theme-${range.id}`] = {
         backgroundColor: range.Color,
+        borderBottom: `3px solid ${range.DarkColor}`,
       };
 
       // Secondary styles for resources
       allocationRangeStyles[`& .allocation-theme-${range.id}-secondGroup`] = {
         backgroundColor: ` ${range.Color}66`,
-        borderBottom: `2px solid ${range.DarkColor}`,
+        borderBottom: `1px solid ${range.DarkColor}`,
       };
     });
   }

@@ -25,12 +25,13 @@ import { parseISO } from 'date-fns';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
-  const { actualAllocations, calendarDate, dataProcessing } = useSelector(
-    (state: RootState) => state.actualAllocations
-  );
+  const { actualAllocations, status, calendarDate, dataProcessing } =
+    useSelector((state: RootState) => state.actualAllocations);
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
   const { resources } = useSelector((state: RootState) => state.resources);
@@ -105,6 +106,7 @@ export default function ActualsPage() {
   };
 
   const handleNext = () => {
+    if(startDate && endDate) {
     dispatch(
       setCalendarDate({
         startDate: generateDateWeekMath('WEEK_PLUS', 1, parseISO(startDate)),
@@ -113,9 +115,11 @@ export default function ActualsPage() {
         ),
       })
     );
+  }
   };
 
   const handlePrev = () => {
+     if(startDate && endDate) {
     dispatch(
       setCalendarDate({
         startDate: generateDateWeekMath('WEEK_MINUS', 1, parseISO(startDate)),
@@ -124,6 +128,7 @@ export default function ActualsPage() {
         ),
       })
     );
+  }
   };
 
   useEffect(() => {
@@ -196,33 +201,55 @@ export default function ActualsPage() {
         alignItems="center"
         justifyContent="center"
       >
-        <IconButton
-          sx={{
-            borderRadius: '4px',
-            '&:hover': {
-              backgroundColor: 'transparent',
-            },
-          }}
-          onClick={handlePrev}
-        >
-          <img
-            src="images/icons/leftArrow.svg"
-            alt="Left Arrow"
-            width={46}
-            height={46}
-          />
-        </IconButton>
         <Box mx={2} maxWidth={580} minHeight={350} width={530}>
+          <Typography
+            style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}
+          >
+            Current Status :{' '}
+            <span style={{ color: status === "Confirmed" ? '#198F35' : '#FF7912' }}>
+              {status === "Confirmed" ? status : 'Proposed'}
+            </span>
+          </Typography>
           <ActualTable
             data={formattedActualAllocations || []}
             dataProcessing={
               (dataProcessing && actualAllocations?.length === 0) || false
             }
+            disableView={status === "Confirmed" && startDate !== null && !isCurrentWeek(parseISO(startDate))}
             startDate={startDate}
             endDate={endDate}
             apiRef={apiRef}
           />
-          <Box display="flex" justifyContent="flex-end">
+            <Box mt={4} width="100%">
+              <Box
+              sx={{
+                borderBottom: '1px solid #E0E0E0',
+                width: '85vw',
+                position: 'relative',
+                left: 'calc(-43vw + 50%)',
+              }}
+              />
+            </Box>
+          <Box display="flex" justifyContent="space-between" mt={4}>
+            <Button
+              startIcon={<ChevronLeftIcon />}
+              onClick={handlePrev}
+              sx={{
+                fontSize: '14px',
+                color: '#152e75',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+                '& .MuiButton-startIcon': {
+                  marginRight: '0px',
+                },
+              }}
+              variant="text"
+            >
+              Prev Week
+            </Button>
+
             <Button
               variant="contained"
               sx={{
@@ -232,6 +259,7 @@ export default function ActualsPage() {
                 height: '36px',
                 borderRadius: '5px',
               }}
+              disabled={status === "Confirmed" && startDate !== null && !isCurrentWeek(parseISO(startDate))}
               onClick={handleConfirmed}
             >
               <Typography
@@ -244,37 +272,31 @@ export default function ActualsPage() {
                   textTransform: 'none',
                 }}
               >
-                Confirm
+                {status === "Confirmed" ? "Modify": "Confirm"}
               </Typography>
+            </Button>
+
+            <Button
+              endIcon={<ChevronRightIcon />}
+              onClick={handleNext}
+              disabled={startDate ? isCurrentWeek(parseISO(startDate)) : false}
+              sx={{
+                color: '#152e75',
+                fontSize: '14px',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
+                '& .MuiButton-endIcon': {
+                  marginLeft: '0px',
+                },
+              }}
+              variant="text"
+            >
+              Next Week
             </Button>
           </Box>
         </Box>
-        <IconButton
-          sx={{
-            borderRadius: '4px',
-            '&:hover': {
-              backgroundColor: 'transparent',
-            },
-          }}
-          onClick={handleNext}
-          disabled={isCurrentWeek(parseISO(startDate))}
-        >
-          {isCurrentWeek(parseISO(startDate)) ? (
-            <img
-              src="images/icons/rightArrow.svg"
-              alt="Left Arrow"
-              width={48}
-              height={48}
-            />
-          ) : (
-            <img
-              src="images/icons/arrow_circle_right_Enabled.svg"
-              alt="Left Arrow"
-              width={48}
-              height={48}
-            />
-          )}
-        </IconButton>
       </Box>
     </Box>
   );
