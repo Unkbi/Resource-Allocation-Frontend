@@ -17,8 +17,7 @@ function CustomColumnMenu(props) {
     );
   }
   
-const ProjectTable = ({columns, rows, loading}) => {
-    const apiRef = useGridApiRef();
+const ProjectTable = ({columns, rows, loading, apiRef}) => {
     const [filterButtonEl, setFilterButtonEl] = useState(null);
     return (
         <StyledDataGrid
@@ -28,6 +27,11 @@ const ProjectTable = ({columns, rows, loading}) => {
             hideFooter={true}
             loading={loading}
             initialState={{
+                sorting: {
+                  sortModel: [
+                    { field: 'Name', sort: 'asc' },
+                  ],
+                },
                 columns: {
                   columnVisibilityModel: {
                     Owner: false, 

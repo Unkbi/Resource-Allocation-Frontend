@@ -18,6 +18,7 @@ interface ResourceTableProps {
   columns: GridColDef[];
   rows: Resource[];
   loading: boolean;
+  apiRef: ReturnType<typeof useGridApiRef>;
 }
 
 function CustomColumnMenu(props: GridColumnMenuProps) {
@@ -32,8 +33,7 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
   );
 }
 
-const ResourceTable = ({ columns, rows, loading }: ResourceTableProps) => {
-  const apiRef = useGridApiRef();
+const ResourceTable = ({ columns, rows, loading, apiRef  }: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (
@@ -45,6 +45,11 @@ const ResourceTable = ({ columns, rows, loading }: ResourceTableProps) => {
       hideFooterSelectedRowCount={true}
       loading={loading}
       initialState={{
+        sorting: {
+          sortModel: [
+            { field: 'FullName', sort: 'asc' },
+          ],
+        },
         columns: {
           columnVisibilityModel: {
             team: false,
