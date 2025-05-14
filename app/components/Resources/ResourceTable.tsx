@@ -4,11 +4,11 @@ import {
   StyledDataGrid,
 } from '../AllocationTable/styles/StyledDataGrid';
 import {
+  GridApi,
   GridColDef,
   GridColumnMenu,
   GridColumnMenuProps,
   GridToolbarProps,
-  useGridApiRef,
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
@@ -18,7 +18,7 @@ interface ResourceTableProps {
   columns: GridColDef[];
   rows: Resource[];
   loading: boolean;
-  apiRef: ReturnType<typeof useGridApiRef>;
+  apiRef: React.RefObject<GridApi>;
 }
 
 function CustomColumnMenu(props: GridColumnMenuProps) {
@@ -33,7 +33,12 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
   );
 }
 
-const ResourceTable = ({ columns, rows, loading, apiRef  }: ResourceTableProps) => {
+const ResourceTable = ({
+  columns,
+  rows,
+  loading,
+  apiRef,
+}: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (
@@ -46,9 +51,7 @@ const ResourceTable = ({ columns, rows, loading, apiRef  }: ResourceTableProps) 
       loading={loading}
       initialState={{
         sorting: {
-          sortModel: [
-            { field: 'FullName', sort: 'asc' },
-          ],
+          sortModel: [{ field: 'FullName', sort: 'asc' }],
         },
         columns: {
           columnVisibilityModel: {
