@@ -7,6 +7,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 import {
+  AllAllocations,
   Allocation,
   AllocationGridCell,
   AllocationGridCellData,
@@ -121,6 +122,29 @@ function getWeeksInRange(start: string, end: string) {
   return weeks;
 }
 
+export function sortAllAllocations(allocations: AllAllocations[], by = 'team') {
+  if (by === 'team') {
+    return allocations.sort((a, b) => {
+      if (!a.teams) return 1;
+      if (!b.teams) return -1;
+      return a.teams.localeCompare(b.teams);
+    });
+  } else if (by === 'project') {
+    return allocations.sort((a, b) => {
+      if (!a.project) return 1;
+      if (!b.project) return -1;
+      return a.project.localeCompare(b.project);
+    });
+  } else if (by === 'resource') {
+    return allocations.sort((a, b) => {
+      if (!a.resource) return 1;
+      if (!b.resource) return -1;
+      return a.resource.localeCompare(b.resource);
+    });
+  }
+  return allocations;
+}
+
 export function formatAllAllocations(
   allocations: Allocation[],
   teams: Team[],
@@ -202,5 +226,5 @@ export function formatAllAllocations(
     entry.totalEffort += alloc.AllocationEntered;
   }
 
-  return Array.from(grouped.values());
+  return sortAllAllocations(Array.from(grouped.values()));
 }
