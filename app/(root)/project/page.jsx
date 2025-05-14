@@ -33,9 +33,8 @@ import {
 } from '@/app/redux/reducers/allocationViewReducer';
 import { useRouter } from 'next/navigation';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { differenceInWeeks } from 'date-fns';
-import { useGridApiRef } from "@mui/x-data-grid-premium";
-import { clearHighlightedRowId } from "@/app/redux/reducers/highlightedRowReducer";
+import { useGridApiRef } from '@mui/x-data-grid-premium';
+import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -123,7 +122,7 @@ const AddAllocationIcon = () => (
 export default function Project() {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
-  const { id: highlightedRowId } = useSelector((state) => state.highlightedRow);
+  const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -188,7 +187,9 @@ export default function Project() {
           apiRef.current.setCellFocus(highlightedRowId, 'Name');
           apiRef.current.selectRow?.(highlightedRowId, true);
 
-          const scroller = document.querySelector('.MuiDataGrid-virtualScroller');
+          const scroller = document.querySelector(
+            '.MuiDataGrid-virtualScroller'
+          );
           if (scroller) {
             const original = scroller.scrollTop;
             scroller.scrollTop = original + 1;
@@ -197,11 +198,11 @@ export default function Project() {
 
           dispatch(clearHighlightedRowId());
         } catch (err) {
-          console.error("Scroll error:", err);
+          console.error('Scroll error:', err);
           dispatch(clearHighlightedRowId());
         }
       });
-    }, 300); 
+    }, 300);
 
     return () => clearTimeout(timeout);
   }, [projects, highlightedRowId]);
@@ -237,7 +238,7 @@ export default function Project() {
     dispatch(setSplitViewCurrentProject(params.row));
     const { StartDate, EndDate } = params.row;
     const currentDate = new Date();
-  
+
     const getDateRange = (start, end) => {
       if (start && end) {
         const weeks = getTotalWeeks(start, end);
@@ -278,151 +279,166 @@ export default function Project() {
     }
     router.replace('/allocation');
   };
-  
-    const columns = [
-        {
-          field: "Name",
-          headerName: "Project Name",
-          flex: 1,
-          minWidth: 180,
-          renderCell: (params) => {
-            const handleNameClick = () => {
-              handleOpenDialog('Edit Project', 'edit_project', params.row)
-            };
-            return (
-              <Box sx={{ display: 'flex' }}>
-                <CustomAvatar value={params.value} showFullName={false} />
-                <Box
-                  onClick={handleNameClick}
-                  sx={{
-                    display: 'inline-block',
-                    maxWidth: '100%',
-                    color: '#152E75',
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    minWidth: 0,
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    },
-                  }}
-                >
-                  {params.value}
-                </Box>
-              </Box>
-            );
-          }
-        },
-        {
-          field: "Owner",
-          headerName: "Project Sponsor",
-          flex: 2,
-          minWidth: 180,
-          renderCell: (params) => {
-            const owner = params.value
-            return (
-              owner.name &&  <CustomAvatar value={owner.name} showFullName={true} />
-            )
-          },
-        },
-        {
-          field: "ProjectManager",
-          headerName: "Project Manager",
-          flex: 2,
-          minWidth: 180,
-          renderCell: (params) => {
-            const projectManager = params.value
-            return (
-              projectManager &&  <CustomAvatar value={projectManager} showFullName={true} />
-            )
-          },
-        },
-        {
-          field: "Location",
-          headerName: "Location",
-          flex: 1,
-          minWidth: 150,
-        },
-        {
-          field: "Type",
-          headerName: "Type",
-          flex: 1,
-          minWidth: 150,
-        },
-        {
-          field: "AllowOvertime",
-          headerName: "Allow Overtime",
-          flex: 1,
-          minWidth: 130,
-          valueGetter: (params) => (params? "Yes" : "No"),
-        },
-        {
-          field: "Status",
-          headerName: "Status",
-          flex: 1,
-          minWidth: 140,
-          renderCell: (params) => (
-            <StatusPill status={params.value}>{params.value}</StatusPill>
-          ),
-        },
-        {
-          field: "StartDate",
-          headerName: "Start Date",
-          flex: 1,
-          minWidth: 120,
-          renderCell: (params) => {
-            if(params && params.value)
-            {
-            const date = new Date(params.value);
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${month}/${day}/${year}`;
-            }
-            return '';
-          },
-        },
-        {
-          field: "EndDate",
-          headerName: "End Date",
-          flex: 1,
-          minWidth: 120,
-          renderCell: (params) => {
-            if(params && params.value)
-            {
-            const date = new Date(params.value);
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${month}/${day}/${year}`;
-            }
-            return '';
-          },
-        },
-        {
-          field: "actions",
-          headerName: "Action",
-          width: 80,
-          sortable: false,
-          filterable: false,
-          renderCell: (params) => (
-            <>
-              <IconButton size="small" onClick={(e) => handleMenuClick(e, params.row.id)}>
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl) && selectedRow === params.row.id}
-                onClose={handleMenuClose}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "left",
-                }}
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
+
+  const columns = [
+    {
+      field: 'Name',
+      headerName: 'Project Name',
+      flex: 1,
+      minWidth: 180,
+      renderCell: params => {
+        const handleNameClick = () => {
+          handleOpenDialog('Edit Project', 'edit_project', params.row);
+        };
+        return (
+          <Box sx={{ display: 'flex' }}>
+            <CustomAvatar value={params.value} showFullName={false} />
+            <Box
+              onClick={handleNameClick}
+              sx={{
+                display: 'inline-block',
+                maxWidth: '100%',
+                color: '#152E75',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              {params.value}
+            </Box>
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'Owner',
+      headerName: 'Project Sponsor',
+      flex: 2,
+      minWidth: 180,
+      renderCell: params => {
+        const owner = params.value;
+        return (
+          owner.name && <CustomAvatar value={owner.name} showFullName={true} />
+        );
+      },
+    },
+    {
+      field: 'ProjectManager',
+      headerName: 'Project Manager',
+      flex: 2,
+      minWidth: 180,
+      renderCell: params => {
+        const projectManager = params.value;
+        return (
+          projectManager && (
+            <CustomAvatar value={projectManager} showFullName={true} />
+          )
+        );
+      },
+    },
+    {
+      field: 'Location',
+      headerName: 'Location',
+      flex: 1,
+      minWidth: 150,
+    },
+    {
+      field: 'Type',
+      headerName: 'Type',
+      flex: 1,
+      minWidth: 150,
+    },
+    {
+      field: 'AllowOvertime',
+      headerName: 'Allow Overtime',
+      flex: 1,
+      minWidth: 130,
+      valueGetter: params => (params ? 'Yes' : 'No'),
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      flex: 1,
+      minWidth: 140,
+      renderCell: params => (
+        <StatusPill status={params.value}>{params.value}</StatusPill>
+      ),
+    },
+    {
+      field: 'StartDate',
+      headerName: 'Start Date',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: 'EndDate',
+      headerName: 'End Date',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: 'actions',
+      headerName: 'Action',
+      width: 80,
+      sortable: false,
+      filterable: false,
+      renderCell: params => (
+        <>
+          <IconButton
+            size="small"
+            onClick={e => handleMenuClick(e, params.row.id)}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl) && selectedRow === params.row.id}
+            onClose={handleMenuClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            sx={{
+              flexShrink: 0,
+              paddingTop: '2px',
+              paddingBottom: '4px',
+            }}
+          >
+            <MenuItem
+              onClick={() => handleOpenSplitView(params)}
+              sx={menuItemStyle}
+            >
+              <AddAllocationIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+              <Typography
                 sx={{
                   fontSize: '12px',
                   fontWeight: '600',
@@ -473,7 +489,6 @@ export default function Project() {
   ];
 
   const handleMenuClick = (event, id) => {
-    // debugger;
     setAnchorEl(event.currentTarget);
     setSelectedRow(id);
   };
@@ -483,23 +498,28 @@ export default function Project() {
     setSelectedRow(null);
   };
 
-    return (
-        <Box
-          sx={{
-            backgroundColor: '#fff',
-            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-            height: '100%',
-          }}
-        >            
-            <ProjectTable loading={loading }columns={columns} rows={modifyData(rows)} apiRef={apiRef} />
-            <ConfirmDialog
-              open={deleteDialogOpen}
-              onConfirm={handleConfirmDelete}
-              onCancel={handleCancelDelete}
-              title="Are you sure you want to delete this project?"
-              >
-              This will permanently delete the project.
-              </ConfirmDialog>
-        </Box>
-    )
+  return (
+    <Box
+      sx={{
+        backgroundColor: '#fff',
+        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+        height: '100%',
+      }}
+    >
+      <ProjectTable
+        loading={loading}
+        columns={columns}
+        rows={modifyData(rows)}
+        apiRef={apiRef}
+      />
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        title="Are you sure you want to delete this project?"
+      >
+        This will permanently delete the project.
+      </ConfirmDialog>
+    </Box>
+  );
 }
