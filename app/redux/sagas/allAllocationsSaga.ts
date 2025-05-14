@@ -8,7 +8,10 @@ import {
   setDataProcessing,
   updateAllAllocations,
 } from '../reducers/allAllocationsReducer';
-import { formatAllAllocations } from '@/app/utils/allocationUtils';
+import {
+  formatAllAllocations,
+  injectBlankRows,
+} from '@/app/utils/allocationUtils';
 import {
   fetchResourcesAgainstTeamsForSaga,
   fetchTeamAllocationsForSaga,
@@ -68,7 +71,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       yield put(setAllTeamsResources(formatedTeamResults));
     }
 
-    const allAllocations = formatAllAllocations(
+    const formattedAllocations = formatAllAllocations(
       responses.result,
       teams,
       projects,
@@ -78,8 +81,14 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       endDate
     );
 
-    if (allAllocations.length) {
-      yield put(setAllAllocations(allAllocations));
+    const fullAllocations = injectBlankRows(
+      formattedAllocations,
+      teams,
+      teamResourceObject
+    );
+
+    if (fullAllocations.length) {
+      yield put(setAllAllocations(fullAllocations));
     }
   } catch (error) {
     console.error(
@@ -133,7 +142,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       []
     );
 
-    const teamsAllocations = formatAllAllocations(
+    const formattedAllocations = formatAllAllocations(
       allTeamAllocations,
       teams,
       projects,
@@ -143,8 +152,13 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       endDate
     );
 
-    yield put(updateAllAllocations(teamsAllocations));
+    const fullAllocations = injectBlankRows(
+      formattedAllocations,
+      teams,
+      teamsResources
+    );
 
+    yield put(updateAllAllocations(fullAllocations));
     // Notify if async operation is completed
     if (resolve) resolve();
   } catch (error) {
