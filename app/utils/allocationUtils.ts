@@ -228,3 +228,51 @@ export function formatAllAllocations(
 
   return sortAllAllocations(Array.from(grouped.values()));
 }
+
+export function injectBlankRows(
+  allocations: AllAllocations[],
+  teams: Team[],
+  teamsResources: Record<string, Resource[]>
+) {
+  const existingKeys = new Set(
+    allocations.map(a => `${a.teams}___${a.resourceId}`)
+  );
+
+  const extraRows: AllAllocations[] = [];
+
+  teams.forEach(team => {
+    const teamRes = teamsResources?.[team.Id] || [];
+    teamRes.forEach(resource => {
+      const key = `${team.Name}___${resource.Id}`;
+      if (!existingKeys.has(key)) {
+        extraRows.push({
+          id: `team/${team.Name}-resource/${resource.FullName}`,
+          resourceId: resource.Id,
+          project: '',
+          projectId: '',
+          projectSponsor: '',
+          projectManager: '',
+          projectStatus: '',
+          projectLocation: '',
+          projectType: '',
+          projectOvertimeAllowed: null,
+          projectCost: null,
+          projectCurrency: '',
+          projectStartDate: '',
+          projectEndDate: '',
+          resource: resource.FullName,
+          totalEffort: 0,
+          role: resource.Role || '',
+          teams: team.Name,
+          resourceType: resource.Type,
+          teamStatus: team.Status || '',
+          teamAllocationManager: team.AllocationManager || '',
+          teamId: team.Id,
+          hasAllocation: false,
+        });
+      }
+    });
+  });
+
+  return [...allocations, ...extraRows];
+}

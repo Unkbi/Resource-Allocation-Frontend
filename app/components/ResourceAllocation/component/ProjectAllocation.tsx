@@ -10,6 +10,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
+import { AllAllocations } from '@/app/types';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -512,6 +513,10 @@ export default function ProjectAllocation({
     },
   ];
 
+  const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
+    return allocations.filter(allocation => allocation.project);
+  };
+
   return (
     <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
@@ -559,7 +564,7 @@ export default function ProjectAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={allAllocations}
+          data={removeResourcesWithNoProjects(allAllocations || [])}
           loading={loading || dataProcessing}
         />
       </Box>
