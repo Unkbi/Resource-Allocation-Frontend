@@ -68,8 +68,17 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
-    [`& .${gridClasses.cell}[data-field="resourceType"].secondGroupsRow`]: {
-      backgroundColor: !loading && '#F0F7FF',
+    [`& .${gridClasses.cell}[data-field="FullName"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="team"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="organization"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="Manager"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
     },
     [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
       backgroundColor: !loading && '#F7FBFF',
@@ -296,7 +305,22 @@ export const StyledDataGrid = styled(DataGridPremium)(({
         !loading &&
         (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
     },
-
+    [`& .${gridClasses.cell}[data-field="Name"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Location"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="AllowOvertime"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="actions"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
     //  '& .MuiDataGrid-row:hover': {
     //   backgroundColor: 'inherit !important',
     //   },
