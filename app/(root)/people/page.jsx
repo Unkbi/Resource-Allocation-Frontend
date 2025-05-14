@@ -89,6 +89,10 @@ const StatusPill = styled('div')(({ theme, status }) => {
       backgroundColor = '#F5B5441A'; 
       textColor = '#F5B544'; 
       break;
+    case 'Inactive':
+      backgroundColor = '#FCF0ED';
+      textColor = '#C73732';
+      break;
     default:
       backgroundColor = '#e0e0e0'; 
       textColor = '#6c757d'; 
