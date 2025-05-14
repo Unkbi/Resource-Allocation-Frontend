@@ -16,6 +16,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { setSplitView, setSplitViewCurrentProject } from "@/app/redux/reducers/allocationViewReducer";
 import { useRouter } from "next/navigation";
 import { fetchAllResources } from "@/app/redux/actions/fetchResourcesAction";
+import { useGridApiRef } from "@mui/x-data-grid-premium";
+import { clearHighlightedRowId } from "@/app/redux/reducers/highlightedRowReducer";
 
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
@@ -104,6 +106,8 @@ const AddAllocationIcon = () => (
 
 export default function Project() {
     const dispatch = useDispatch()
+    const apiRef = useGridApiRef();
+    const { id: highlightedRowId } = useSelector((state) => state.highlightedRow);
     const { projects, updating , loading} = useSelector(state => state.projects)
     const { resources } = useSelector((state) => state.resources)
     const [anchorEl, setAnchorEl] = useState(null)
@@ -147,6 +151,45 @@ export default function Project() {
       return []
   }
 
+  useEffect(() => {
+    if (!highlightedRowId || !apiRef?.current) return;
+
+    const sortedRowIds = apiRef.current.getSortedRowIds?.();
+    const totalRows = sortedRowIds?.length ?? 0;
+    const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
+
+    if (rowIndex === -1 || rowIndex === undefined) {
+      dispatch(clearHighlightedRowId());
+      return;
+    }
+
+    const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
+
+    const timeout = setTimeout(() => {
+      requestAnimationFrame(() => {
+        try {
+          apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
+          apiRef.current.setCellFocus(highlightedRowId, 'Name');
+          apiRef.current.selectRow?.(highlightedRowId, true);
+
+          const scroller = document.querySelector('.MuiDataGrid-virtualScroller');
+          if (scroller) {
+            const original = scroller.scrollTop;
+            scroller.scrollTop = original + 1;
+            scroller.scrollTop = original;
+          }
+
+          dispatch(clearHighlightedRowId());
+        } catch (err) {
+          console.error("Scroll error:", err);
+          dispatch(clearHighlightedRowId());
+        }
+      });
+    }, 300); 
+
+    return () => clearTimeout(timeout);
+  }, [projects, highlightedRowId]);
+
   const handleConfirmDelete = () => {
     if (!projectToDelete?.Id) return;
     dispatch(deleteProject(projectToDelete.Id))
@@ -184,6 +227,34 @@ export default function Project() {
           headerName: "Project Name",
           flex: 1,
           minWidth: 180,
+          renderCell: (params) => {
+            const handleNameClick = () => {
+              handleOpenDialog('Edit Project', 'edit_project', params.row)
+            };
+            return (
+              <Box sx={{ display: 'flex' }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+                <Box
+                  onClick={handleNameClick}
+                  sx={{
+                    display: 'inline-block',
+                    maxWidth: '100%',
+                    color: '#152E75',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  {params.value}
+                </Box>
+              </Box>
+            );
+          }
         },
         {
           field: "Owner",
@@ -329,8 +400,14 @@ export default function Project() {
     }
 
     return (
-        <Box>
-            <ProjectTable loading={loading }columns={columns} rows={modifyData(rows)} />
+        <Box
+          sx={{
+            backgroundColor: '#fff',
+            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+            height: '100%',
+          }}
+        >            
+            <ProjectTable loading={loading }columns={columns} rows={modifyData(rows)} apiRef={apiRef} />
             <ConfirmDialog
               open={deleteDialogOpen}
               onConfirm={handleConfirmDelete}

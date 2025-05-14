@@ -2,7 +2,7 @@
 import ResourceTable from "@/app/components/Resources/ResourceTable";
 import { Box, styled } from "@mui/system";
 import { IconButton, Menu, MenuItem, Stack, Tab, Tabs } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { generateRandomColor, getInitials } from "@/app/utils/common";
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 import { useDispatch, useSelector } from "react-redux";
@@ -14,6 +14,8 @@ import { getAllTeams } from "@/app/services/teamServices";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from "@/app/services/resourceServices";
+import { clearHighlightedRowId } from "@/app/redux/reducers/highlightedRowReducer";
+import { useGridApiRef } from "@mui/x-data-grid-premium";
 
 const demoResources = {
     "result" :[
@@ -124,12 +126,15 @@ const menuItemStyle = {
 
 export default function Resources() {
     const dispatch = useDispatch();
+    const apiRef = useGridApiRef();
     const {resources,updating,loading} =useSelector(state=> state.resources);
     const [anchorEl, setAnchorEl] = useState(null)
     const [selectedRow, setSelectedRow] = useState(null)
     const [rows, setRows] = useState(resources?.result || null)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false); 
     const [deleteTarget, setDeleteTarget] = useState({ id: "", name: "" });
+    const { id: highlightedRowId } = useSelector((state) => state.highlightedRow);
+
     useEffect(() => {
       if(!updating){
         dispatch(fetchAllResources());
@@ -158,6 +163,45 @@ export default function Resources() {
       }
       return []
     }
+
+    useEffect(() => {
+      if (!highlightedRowId || !apiRef?.current) return;
+
+      const sortedRowIds = apiRef.current.getSortedRowIds?.();
+      const totalRows = sortedRowIds?.length ?? 0;
+      const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
+
+      if (rowIndex === -1 || rowIndex === undefined) {
+        dispatch(clearHighlightedRowId());
+        return;
+      }
+
+      const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
+
+      const timeout = setTimeout(() => {
+        requestAnimationFrame(() => {
+          try {
+            apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
+            apiRef.current.setCellFocus(highlightedRowId, 'FullName');
+            apiRef.current.selectRow?.(highlightedRowId, true);
+
+            const scroller = document.querySelector('.MuiDataGrid-virtualScroller');
+            if (scroller) {
+              const original = scroller.scrollTop;
+              scroller.scrollTop = original + 1;
+              scroller.scrollTop = original;
+            }
+
+            dispatch(clearHighlightedRowId());
+          } catch (err) {
+            console.error("Scroll error:", err);
+            dispatch(clearHighlightedRowId());
+          }
+        });
+      }, 300);
+
+      return () => clearTimeout(timeout);
+    }, [resources, highlightedRowId]);
 
     const handleConfirmDelete = () => {
       if (!deleteTarget.id) return;
@@ -209,12 +253,14 @@ export default function Resources() {
                   display: 'inline-block',
                   maxWidth: '100%',
                   color: '#152E75',
-                  textDecoration: 'underline',
                   cursor: 'pointer',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   minWidth: 0,
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
                 }}
               >
                 {params.value}
@@ -384,7 +430,7 @@ export default function Resources() {
         boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
         height: '100%'
       }}>
-        <ResourceTable loading={loading }columns={columns} rows={modifyData(rows)}  />
+        <ResourceTable loading={loading }columns={columns} rows={modifyData(rows)} apiRef={apiRef} />
         <ConfirmDialog
           open={deleteDialogOpen}
           onConfirm={handleConfirmDelete}

@@ -13,6 +13,7 @@ import allAllocationReducer from './reducers/allAllocationsReducer';
 import actualAllocationReducer from './reducers/actualAllocationsReducer';
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from './sagas';
+import highlightedRowReducer from './reducers/highlightedRowReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -31,6 +32,7 @@ export const makeStore = () => {
       settings: settingsReducer,
       allAllocations: allAllocationReducer,
       actualAllocations: actualAllocationReducer,
+      highlightedRow: highlightedRowReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({
