@@ -27,7 +27,7 @@ interface Resource {
 const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const dispatch: AppDispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('');
-  const { costs: projectCosts, loading } = useSelector(
+  const { costs: projectCosts, dataProcessing } = useSelector(
     (state: RootState) => state.allocationsCost
   );
   const { teams } = useSelector((state: RootState) => state.teams);
@@ -48,7 +48,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
         endDate: endDate,
       },
     });
-  }, [teams, projects, resources]);
+  }, [startDate, endDate, teams, projects, resources]);
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
@@ -585,7 +585,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
           }}
           NoRowsOverlay={NoRowsOverlay}
           data={removeResourcesWithNoProjects(projectCosts)}
-          loading={loading}
+          loading={dataProcessing}
         />
       </Box>
     </>

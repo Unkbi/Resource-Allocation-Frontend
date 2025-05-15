@@ -65,4 +65,5 @@ export interface AllocationsCostState {
   costs: AllAllocations[];
   loading: boolean;
   error: string | null;
+  dataProcessing: boolean;
 }

@@ -3,6 +3,7 @@ import { AllAllocations, AllocationsCostState } from '@/app/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 const initialState: AllocationsCostState = {
+  dataProcessing: true,
   costs: [],
   loading: false,
   error: null,
@@ -16,7 +17,7 @@ const allocationsCostSlice = createSlice({
       state.costs = action.payload;
     },
     setDataProcessing: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
+      state.dataProcessing = action.payload;
     },
     updateAllocationsCosts: (
       state,

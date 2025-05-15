@@ -1173,10 +1173,13 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Box>
           <Button
             startIcon={<AddIcon />}
-            disabled={isObjectEqual(
-              savedViews.find(view => view.Id === selectedView),
-              currentView
-            )}
+            disabled={
+              currentView.GroupBy.includes('Cost') ||
+              isObjectEqual(
+                savedViews.find(view => view.Id === selectedView),
+                currentView
+              )
+            }
             onClick={handleSaveView}
             sx={{
               border: 'none !important',

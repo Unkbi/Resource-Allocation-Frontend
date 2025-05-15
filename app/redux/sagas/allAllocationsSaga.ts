@@ -1,8 +1,6 @@
 import { call, put, takeLatest, all, takeLeading } from 'redux-saga/effects';
 import { fetchAllAllocations } from '@/app/services/allocationServices';
-import { getMonday, getMondayOfISO } from '@/app/utils/common';
-import { format } from 'date-fns';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import { getMondayOfISO } from '@/app/utils/common';
 import {
   setAllAllocations,
   setDataProcessing,
@@ -20,7 +18,10 @@ import {
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
 import { Allocation, Resource } from '@/app/types';
-import { setCost } from '../reducers/allocationsCostReducer';
+import {
+  setCost,
+  setDataProcessing as setCostDataProcessing,
+} from '../reducers/allocationsCostReducer';
 import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
@@ -106,7 +107,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
   const { projects, teams, resources, startDate, endDate } = action.payload;
   try {
-    yield put(setDataProcessing(true));
+    yield put(setCostDataProcessing(true));
 
     const postData = {
       'ResourceAllocation.Core/GetAllCostForPeriod': {
@@ -179,7 +180,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       error
     );
   } finally {
-    yield put(setDataProcessing(false));
+    yield put(setCostDataProcessing(false));
   }
 }
 
