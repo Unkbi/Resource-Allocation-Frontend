@@ -3,7 +3,6 @@ import userReducer from './reducers/authReducer';
 import allocationViewReducer from './reducers/allocationViewReducer';
 import teamsReducer from './reducers/teamsReducer';
 import projectsReducer from './reducers/projectsReducer';
-import allocationsCostReducer from './reducers/AllocationsCostReducer';
 import resourcesReducer from './reducers/resourcesReducer';
 import resourceAllocationReducer from './reducers/resourceAllocationReducer';
 import toastSlice from './reducers/toastReducer';
@@ -11,6 +10,7 @@ import dialogReducer from './reducers/dialogReducer';
 import dataGridReducer from './reducers/dataGridReducer';
 import settingsReducer from './reducers/settingsReducer';
 import allAllocationReducer from './reducers/allAllocationsReducer';
+import allocationsCostReducer from './reducers/allocationsCostReducer';
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from './sagas';
 

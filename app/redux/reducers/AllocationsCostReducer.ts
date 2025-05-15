@@ -18,10 +18,13 @@ const allocationsCostSlice = createSlice({
     setDataProcessing: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    updateProjectCosts: (state, action: PayloadAction<AllocationsCost[]>) => {
+    updateAllocationsCosts: (
+      state,
+      action: PayloadAction<AllocationsCost[]>
+    ) => {
       state.costs = action.payload;
     },
-    resetProjectCosts: state => {
+    resetAllocationsCosts: state => {
       state.costs = [];
     },
   },
@@ -30,8 +33,8 @@ const allocationsCostSlice = createSlice({
 export const {
   setCost,
   setDataProcessing,
-  updateProjectCosts,
-  resetProjectCosts,
+  updateAllocationsCosts,
+  resetAllocationsCosts,
 } = allocationsCostSlice.actions;
 
 export default allocationsCostSlice.reducer;

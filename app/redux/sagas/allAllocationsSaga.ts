@@ -19,7 +19,7 @@ import {
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
 import { Allocation, Resource } from '@/app/types';
-import { setCost } from '../reducers/AllocationsCostReducer';
+import { setCost } from '../reducers/allocationsCostReducer';
 import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
