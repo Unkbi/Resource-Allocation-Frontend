@@ -11,6 +11,7 @@ interface EllipsisNameCellProps {
   AddIconComponent?: ReactNode;
   showAvatar?: boolean;
   showAddButton?: boolean;
+  isFormatWithK?: boolean;
 }
 
 const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
@@ -21,6 +22,7 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
   AddIconComponent,
   showAvatar = false,
   showAddButton = true,
+  isFormatWithK
 }) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -96,6 +98,7 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
             count={resourceCount}
             onClick={onAddClick}
             showAddButton={showAddButton}
+            isFormatWithK = {isFormatWithK}
           />
           </div>
         ))}

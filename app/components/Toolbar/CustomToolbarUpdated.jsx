@@ -574,6 +574,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       name: 'Project Cost',
       icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
+      {
+      name: 'Teams Cost',
+      icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    },
     // 'Organizations'
   ];
   const [active, setActive] = useState(false);
@@ -897,7 +901,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <ToolBox2 flex={1} className="filterTopRow">
         <Box className="filterColBlock">
           <Box className="projectIcon">
-            {view === 'Project' ? (
+            {view.includes('Project')  ? (
               <>
                 <TooltipButton
                   msg="My Project"
@@ -944,7 +948,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <Typography variant="body2">No projects found.</Typography>
                 </Popover>
               </>
-            ) : view === 'Teams' ? (
+            ) : view.includes('Teams')  ? (
               <>
                 <TooltipButton
                   msg="My Teams"

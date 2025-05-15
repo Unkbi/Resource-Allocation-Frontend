@@ -62,6 +62,7 @@ const CellWithMenu = ({
   handleAddClick,
   handleCloneClick,
   handleTranferClick,
+  isFormatWithK,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -222,10 +223,12 @@ const CellWithMenu = ({
             value={params.value}
             showAddIcon={false}
             showAvatar={true}
+            isFormatWithK = {isFormatWithK}
           />
         }
         onClick={() => handleAddClick(params)}
         menu={menu}
+        isFormatWithK = {isFormatWithK}
       />
       <ConfirmDialog
         open={showDeleteDialog}
@@ -371,6 +374,7 @@ export const getFinalColumns = (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
+              isFormatWithK = {isFormatWithK}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
             />
@@ -424,11 +428,13 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                isFormatWithK = {isFormatWithK}
               >
                 <EllipsisNameCell
                   value={params.value}
                   showAddIcon
                   onAddClick={() => handleAddClick(params)}
+                  isFormatWithK = {isFormatWithK}
                 />
               </CellWithMenu>
             );
@@ -456,7 +462,7 @@ export const getFinalColumns = (
                 }}
               >
                 {!isGroupExpanded && (
-                  <EllipsisNameCell value={firstProject} showAddIcon={false} />
+                  <EllipsisNameCell value={firstProject} showAddIcon={false} isFormatWithK = {isFormatWithK} />
                 )}
                 {!isGroupExpanded && (
                   <span
@@ -507,6 +513,7 @@ export const getFinalColumns = (
               handleAddClick={handleAddClick}
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
+              isFormatWithK = {isFormatWithK}
             />
           ) : null;
         },

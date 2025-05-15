@@ -21,7 +21,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       // Secondary styles for resources
       allocationRangeStyles[`& .allocation-theme-${range.id}-secondGroup`] = {
         backgroundColor: ` ${range.Color}66`,
-        borderBottom: `2px solid ${range.DarkColor}`,
+        borderBottom: type === 'cost' ? '' : `2px solid ${range.DarkColor}`,
       };
     });
   }
