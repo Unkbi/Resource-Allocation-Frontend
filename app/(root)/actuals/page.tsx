@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Button, IconButton } from '@mui/material';
+import { Box, Typography, Button, IconButton, Skeleton } from '@mui/material';
 import ActualTable from '@/app/components/Actuals/ActualTable';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -40,6 +40,11 @@ export default function ActualsPage() {
     ActualAllocationTableRow[]
   >([]);
   const apiRef = useGridApiRef();
+  const [hasInvalidRows, setHasInvalidRows] = useState(false);
+
+  const handleValidationChange = (hasInvalid: boolean) => {
+    setHasInvalidRows(hasInvalid);
+  };
 
   const handleConfirmed = () => {
     if (
@@ -80,18 +85,32 @@ export default function ActualsPage() {
           type: CONFIRM_ACTUAL_ALLOCATIONS,
           payload: { ...payload, resolve, reject },
         });
-      }).catch((error: any) => {
-        console.error('Error confirming actual allocations:', error);
-        dispatch(
-          showToast({
-            open: true,
-            message: `Failed to confirm Actual alloctions.`,
-            type: 'error',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-      });
+      })
+        .then((response: any) => {
+          if (response?.status === 'ok') {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Success. Thank you! Successfully updated Actuals!',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        })
+        .catch((error: any) => {
+          console.error('Error confirming actual allocations:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to confirm Actual alloctions.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        });
     } else {
       dispatch(
         showToast({
@@ -106,29 +125,29 @@ export default function ActualsPage() {
   };
 
   const handleNext = () => {
-    if(startDate && endDate) {
-    dispatch(
-      setCalendarDate({
-        startDate: generateDateWeekMath('WEEK_PLUS', 1, parseISO(startDate)),
-        endDate: getSundayOfISO(
-          generateDateWeekMath('WEEK_PLUS', 1, parseISO(endDate))
-        ),
-      })
-    );
-  }
+    if (startDate && endDate) {
+      dispatch(
+        setCalendarDate({
+          startDate: generateDateWeekMath('WEEK_PLUS', 1, parseISO(startDate)),
+          endDate: getSundayOfISO(
+            generateDateWeekMath('WEEK_PLUS', 1, parseISO(endDate))
+          ),
+        })
+      );
+    }
   };
 
   const handlePrev = () => {
-     if(startDate && endDate) {
-    dispatch(
-      setCalendarDate({
-        startDate: generateDateWeekMath('WEEK_MINUS', 1, parseISO(startDate)),
-        endDate: getSundayOfISO(
-          generateDateWeekMath('WEEK_MINUS', 1, parseISO(endDate))
-        ),
-      })
-    );
-  }
+    if (startDate && endDate) {
+      dispatch(
+        setCalendarDate({
+          startDate: generateDateWeekMath('WEEK_MINUS', 1, parseISO(startDate)),
+          endDate: getSundayOfISO(
+            generateDateWeekMath('WEEK_MINUS', 1, parseISO(endDate))
+          ),
+        })
+      );
+    }
   };
 
   useEffect(() => {
@@ -191,8 +210,8 @@ export default function ActualsPage() {
         mb={2}
         sx={{ textAlign: 'left', fontSize: '14px' }}
       >
-        It’s time to wrap up this week! Did you stick to your planned
-        allocation?
+        Confirm your actual effort against the pre-filled planned allocation
+        values.
       </Typography>
 
       <Box
@@ -206,30 +225,47 @@ export default function ActualsPage() {
             style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}
           >
             Current Status :{' '}
-            <span style={{ color: status === "Confirmed" ? '#198F35' : '#FF7912' }}>
-              {status === "Confirmed" ? status : 'Proposed'}
-            </span>
+            {dataProcessing ? (
+              <Skeleton
+                variant="text"
+                sx={{
+                  display: 'inline-block',
+                  width: '80px',
+                  height: '21px',
+                  marginLeft: '4px',
+                  verticalAlign: 'middle',
+                }}
+              />
+            ) : (
+              <span
+                style={{
+                  color: status === 'Confirmed' ? '#198F35' : '#FF7912',
+                }}
+              >
+                {status === 'Confirmed' ? status : 'Proposed'}
+              </span>
+            )}
           </Typography>
           <ActualTable
             data={formattedActualAllocations || []}
-            dataProcessing={
-              (dataProcessing && actualAllocations?.length === 0) || false
+            dataProcessing={dataProcessing || false}
+            disableView={
+              status === 'Confirmed' &&
+              startDate !== null &&
+              !isCurrentWeek(parseISO(startDate))
             }
-            disableView={status === "Confirmed" && startDate !== null && !isCurrentWeek(parseISO(startDate))}
             startDate={startDate}
             endDate={endDate}
             apiRef={apiRef}
+            onValidationChange={handleValidationChange}
           />
-            <Box mt={4} width="100%">
-              <Box
+          <Box mt={4} width="100%">
+            <Box
               sx={{
                 borderBottom: '1px solid #E0E0E0',
-                width: '85vw',
-                position: 'relative',
-                left: 'calc(-43vw + 50%)',
               }}
-              />
-            </Box>
+            />
+          </Box>
           <Box display="flex" justifyContent="space-between" mt={4}>
             <Button
               startIcon={<ChevronLeftIcon />}
@@ -259,7 +295,16 @@ export default function ActualsPage() {
                 height: '36px',
                 borderRadius: '5px',
               }}
-              disabled={status === "Confirmed" && startDate !== null && !isCurrentWeek(parseISO(startDate))}
+              disabled={
+                (status === 'Confirmed' &&
+                  startDate !== null &&
+                  !isCurrentWeek(parseISO(startDate))) || // Case 1
+                (status === 'Proposed' &&
+                  startDate !== null &&
+                  !isCurrentWeek(parseISO(startDate)) &&
+                  hasInvalidRows) || // Case 2
+                hasInvalidRows // Case 3
+              }
               onClick={handleConfirmed}
             >
               <Typography
@@ -272,7 +317,7 @@ export default function ActualsPage() {
                   textTransform: 'none',
                 }}
               >
-                {status === "Confirmed" ? "Modify": "Confirm"}
+                {status === 'Confirmed' ? 'Modify' : 'Confirm'}
               </Typography>
             </Button>
 
