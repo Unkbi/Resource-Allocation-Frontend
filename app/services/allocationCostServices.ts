@@ -6,7 +6,7 @@ export const fetchAllAllocationCosts = async (
   postData: GetAllCostForPeriodPayload
 ) => {
   const response = await axiosInstance.post(
-    `${API_PROJECT_PORTFOLIO}/GetAllAllocationsForPeriod`,
+    `${API_PROJECT_PORTFOLIO}/GetAllCostForPeriod`,
     postData
   );
   return response.data;
