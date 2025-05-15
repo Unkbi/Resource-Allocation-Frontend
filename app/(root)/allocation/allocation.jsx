@@ -17,6 +17,7 @@ import { useSearchParams } from 'next/navigation';
 import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
+import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCost';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -61,6 +62,8 @@ export default function Allocation({ startDate, endDate }) {
           return <ProjectAllocation startDate={startDate} endDate={endDate} />;
         case 'Teams':
           return <TeamAllocation startDate={startDate} endDate={endDate} />;
+          case 'Project Cost':
+          return <ProjectCost startDate={startDate} endDate={endDate} />;
         default:
           return null;
       }
@@ -68,10 +71,10 @@ export default function Allocation({ startDate, endDate }) {
       switch (view) {
         case 'Project':
           return <ProjectAllocation startDate={startDate} endDate={endDate} />;
-        // case 'Organizations':
-        //   return <OrganizationAllocation />;
         case 'Teams':
           return <TeamAllocation startDate={startDate} endDate={endDate} />;
+          case 'Project Cost':
+          return <ProjectCost startDate={startDate} endDate={endDate} />;
         default:
           return null;
       }

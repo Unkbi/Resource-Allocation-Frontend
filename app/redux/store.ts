@@ -11,6 +11,7 @@ import dataGridReducer from './reducers/dataGridReducer';
 import settingsReducer from './reducers/settingsReducer';
 import allAllocationReducer from './reducers/allAllocationsReducer';
 import actualAllocationReducer from './reducers/actualAllocationsReducer';
+import allocationsCostReducer from './reducers/allocationsCostReducer';
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from './sagas';
 import highlightedRowReducer from './reducers/highlightedRowReducer';
@@ -33,6 +34,7 @@ export const makeStore = () => {
       allAllocations: allAllocationReducer,
       actualAllocations: actualAllocationReducer,
       highlightedRow: highlightedRowReducer,
+      allocationsCost: allocationsCostReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({

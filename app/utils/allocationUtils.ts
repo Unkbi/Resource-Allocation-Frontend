@@ -12,6 +12,7 @@ import {
   AllocationGridCell,
   AllocationGridCellData,
   ApiResponse,
+  CostAllocation,
   Project,
   Resource,
   Team,
@@ -275,4 +276,93 @@ export function injectBlankRows(
   });
 
   return [...allocations, ...extraRows];
+}
+
+export function formatCostAllocations(
+  allocations: CostAllocation[],
+  teams: Team[],
+  projects: Project[],
+  resources: Resource[],
+  teamResources: Record<string, Resource[]>, // UPDATED TYPE
+  startDate: string,
+  endDate: string
+) {
+  const weeks = getWeeksInRange(startDate, endDate);
+
+  // Divide all allocationCosts by 1000
+  allocations = allocations.map(alloc => ({
+    ...alloc,
+    Cost: alloc.Cost / 1000,
+  }));
+
+  // Build a lookup map from resource ID to team
+  const resourceIdToTeam = new Map<string, Team>();
+
+  for (const [teamId, teamResourceList] of Object.entries(teamResources)) {
+    const team = teams.find(t => t.Id === teamId); // find the team based on teamId
+    if (!team) continue; // skip if team not found
+
+    for (const res of teamResourceList) {
+      resourceIdToTeam.set(res.Id, team);
+    }
+  }
+
+  const grouped = new Map<string, any>();
+
+  for (const alloc of allocations) {
+    const project = projects.find(p => p.Id === alloc.Project);
+    const resource = resources.find(r => r.Id === alloc.Resource);
+    const team = resourceIdToTeam.get(alloc.Resource);
+
+    const key = `${alloc.Resource}-${team?.Id}-${alloc.Project}`;
+
+    if (!grouped.has(key)) {
+      const base: any = {
+        id: key,
+        resourceId: resource?.Id || null,
+        resource: resource?.FullName || alloc.ResourceName || null,
+        role: resource?.Role || null,
+        resourceType: resource?.Type || null,
+        teams: team?.Name || null,
+        teamStatus: team?.Status || null,
+        teamAllocationManager: team?.AllocationManager || null,
+
+        project: project?.Name || alloc.ProjectName || null,
+        projectId: project?.Id || alloc.Project || null,
+        projectSponsor: project?.Owner || null,
+        projectManager: project?.ProjectManager || null,
+        projectStatus: project?.Status || null,
+        projectLocation: project?.Location || null,
+        projectType: project?.Type || null,
+        projectOvertimeAllowed: project?.AllowOvertime ?? null,
+        projectCost: project?.Cost ?? null,
+        projectCurrency: project?.CostCurrency || null,
+        projectStartDate: project?.StartDate || null,
+        projectEndDate: project?.EndDate || null,
+
+        totalEffort: 0,
+      };
+
+      for (const w of weeks) {
+        base[w.key] = {
+          allocationId: null,
+          value: null,
+          period: w.period,
+        };
+      }
+
+      grouped.set(key, base);
+    }
+
+    const weekKey = getWeekNumber(parseISO(alloc.Period));
+    const entry = grouped.get(key);
+    entry[weekKey] = {
+      allocationId: alloc.Id,
+      value: alloc.Cost,
+      period: alloc.Period,
+    };
+    entry.totalCost += alloc.Cost;
+  }
+
+  return Array.from(grouped.values());
 }

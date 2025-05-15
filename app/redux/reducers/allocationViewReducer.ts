@@ -119,6 +119,36 @@ const initialState: AllocationGridViewState = {
       'ContractorHourlyRate',
       'ContractorHourlyRateCurrency',
     ],
+    project_cost: [
+      '__row_group_by_columns_group__',
+      'resource',
+      'totalCost',
+      'project',
+      'projectSponsor',
+      'projectManager',
+      'projectStatus',
+      'projectLocation',
+      'projectType',
+      'projectOvertimeAllowed',
+      'projectCost',
+      'projectCurrency',
+      'projectStartDate',
+      'projectEndDate',
+      'Email',
+      'PhoneNumber',
+      'Department',
+      'WorkLocation',
+      'LocationCategory',
+      'Type',
+      'Status',
+      'HRLevel',
+      'Role',
+      'StartDate',
+      'EndDate',
+      'AverageWeeklyHours',
+      'ContractorHourlyRate',
+      'ContractorHourlyRateCurrency',
+    ],
   },
   currentView: COMPANY_DEFAULT_VIEW,
   savedViews: [COMPANY_DEFAULT_VIEW],
@@ -133,10 +163,9 @@ const viewSlice = createSlice({
       state.currentView = {
         ...state.currentView,
         GroupBy: action.payload,
-        ColumnsVisible:
-          action.payload === 'Teams'
-            ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-            : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+        ColumnsVisible: action.payload.includes('Teams')
+          ? DEFAULT_VISIBLE_TEAMS_COLUMNS
+          : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
       };
     },
     setSplitView: (state, action) => {

@@ -6,6 +6,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
   theme,
   loading,
   groupBy,
+  type,
   allocationTheme = [],
 }) => {
   const allocationRangeStyles = {};
@@ -469,6 +470,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       fontSize: '14px',
       color: '#212121',
       padding: '3px',
+      ...(type === "cost" && { backgroundColor: '#F1F6FF' }),
       lineHeight: '45px',
       '&.MuiDataGrid-cell--editing:focus-within': {
         outline: 'none',
