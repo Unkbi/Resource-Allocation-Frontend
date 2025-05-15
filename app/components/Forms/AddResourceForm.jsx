@@ -138,26 +138,7 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
           helperText={touched.Email && errors.Email}
         />           
       </Box>
-      {/*} currently not using phone number
-      <StyledLabel>
-        Phone Number <span style={{ color: "red" }}>*</span>
-      </StyledLabel>
 
-      <Box sx={{ pb: 2 }}>
-        <StyledInput
-          name="PhoneNumber"
-          placeholder="Enter phone number"
-          value={values.PhoneNumber || ''}
-          onChange={(e) => {
-            const numericOnly = e.target.value.replace(/\D/g, '');
-            formikProps.setFieldValue('PhoneNumber', numericOnly);
-          }}          
-          onBlur={handleBlur}
-          error={touched.PhoneNumber && Boolean(errors.PhoneNumber)}
-          helperText={touched.PhoneNumber && errors.PhoneNumber}
-        />     
-      </Box>
-      */}
       <Box
         sx={{
           pb: 2,
@@ -361,23 +342,6 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             onBlur={handleBlur}
             error={touched.WorkLocation && Boolean(errors.WorkLocation)}
             helperText={touched.WorkLocation && errors.WorkLocation}            
-          />
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <StyledLabel>
-            Status
-          </StyledLabel>
-          <CustomSelect
-            name="Status"
-            options={statusOptions}
-            width={"100%"}
-            value={values.Status || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            width={"100%"}
-            error={touched.Status && Boolean(errors.Status)}
-            helperText={formikProps.errors.Status}
-            isResourceForm={true}
           />
         </Box>
       </Box>
