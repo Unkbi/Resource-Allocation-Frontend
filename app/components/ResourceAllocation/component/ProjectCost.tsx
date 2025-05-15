@@ -9,6 +9,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
+import { AllAllocations } from '@/app/types';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -529,6 +530,11 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       },
     },
   ];
+
+  const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
+    return allocations.filter(allocation => allocation.project);
+  };
+
   return (
     <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
@@ -578,7 +584,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={projectCosts}
+          data={removeResourcesWithNoProjects(projectCosts)}
           loading={loading}
         />
       </Box>

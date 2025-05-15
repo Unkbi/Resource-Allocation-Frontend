@@ -1,3 +1,5 @@
+import { AllAllocations, AllocationGridCellData } from './allocationTypes';
+
 export interface CostAllocation {
   ProjectName: string | null;
   Id: string;
@@ -28,8 +30,39 @@ export interface AllocationsCost {
   cost: number;
 }
 
+export interface AllAllocationsCost {
+  id: string;
+  resourceId: string | null;
+  project: string | null;
+  projectId: string | null;
+  projectSponsor: string | null;
+  projectManager: string | null;
+  projectStatus: string | null;
+  projectLocation: string | null;
+  projectType: string | null;
+  projectOvertimeAllowed: boolean | null;
+  projectCost: number | null;
+  projectCurrency: string | null;
+  projectStartDate: string | null;
+  projectEndDate: string | null;
+  resource: string | null;
+  totalCost: number | null;
+  role: string | null;
+  teams: string | null;
+  resourceType: string | null;
+  teamStatus: string | null;
+  teamAllocationManager: string | null;
+  [key: string]:
+    | AllocationGridCellData
+    | string
+    | number
+    | boolean
+    | null
+    | undefined;
+}
+
 export interface AllocationsCostState {
-  costs: AllocationsCost[];
+  costs: AllAllocations[];
   loading: boolean;
   error: string | null;
 }

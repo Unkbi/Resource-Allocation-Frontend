@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { useEffect, useState } from "react"
 import { TextField, Box, Typography, RadioGroup, FormControlLabel, Radio, Input, FormHelperText, Autocomplete } from "@mui/material"
@@ -166,7 +166,9 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
   return (
   <Box>
   <Box sx={{ pb: 2 }}>
-  <StyledLabel>Resource</StyledLabel>
+        <StyledLabel>
+          Resource <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
   <Autocomplete
     sx= {commonAutocompleteStyles}
     multiple
@@ -202,7 +204,10 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
 </Box>
 
   <Box sx={{ pb: 2 }}>
-  <StyledLabel>Project</StyledLabel>
+        <StyledLabel>
+          Project
+          <span style={{ color: 'red' }}> *</span>
+        </StyledLabel>
   <Autocomplete
     sx={commonAutocompleteStyles}
     multiple
@@ -251,7 +256,11 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
               error={formikProps.touched.StartDate && Boolean(formikProps.errors.StartDate)}
               helperText={formikProps.touched.StartDate && formikProps.errors.StartDate}
               customStyles={true}
-              title="Date Range"
+              title={
+                <>
+                  Date Range <span style={{ color: 'red' }}>*</span>
+                </>
+              }
             />
           </Box>
           {warnings.map((msg, i) => (
@@ -284,9 +293,11 @@ const AddAllocationForm = ({ formikProps , setFormValue}) => {
           </Typography>
         </Box>
         <Box sx={{ pb: 2, pt: 2,ml :1/2, }}>
-          <Box sx={{pb: 1/2,pr:2,pt:1,display:"flex" ,justifyContent :'space-between',alignItems:'center'}}>
-        <Box sx={{display:'flex',justifyContent :'space-between' ,gap:'153px'}}>
-        <StyledLabel>Allocation Value</StyledLabel>
+         <Box sx={{pb: 1/2,pr:2,pt:1,display:"flex" ,justifyContent :'space-between',alignItems:'center'}}>
+        <Box sx={{display:'flex',justifyContent :'space-between' ,gap:'126px'}}>
+        <StyledLabel>Allocation Value
+           <span style={{ color: 'red' }}>*</span>
+          </StyledLabel>
         <StyledLabel>Custom</StyledLabel></Box></Box>
           <RadioGroup
             row

@@ -61,7 +61,7 @@ export const addResourceValidationSchema = Yup.object({
   FirstName: Yup.string().required('First Name is required'),
   LastName: Yup.string().required('Last Name is required'),
   Email: Yup.string().email('Invalid email').required('Email is required'),
-  PhoneNumber: Yup.string().required('Phone number is required'),
+  // PhoneNumber: Yup.string().required('Phone number is required'),
   Department: Yup.string().required('Department is required'),
   Role: Yup.string().required('Role is required'),
   HRLevel: Yup.string().required('HR Level is required'),

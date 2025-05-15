@@ -45,7 +45,7 @@ import {
   setSplitViewCurrentProject,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
-import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
+import { fetchAllProjectAllocations, fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   addUsersSavedViewAction,
@@ -62,6 +62,7 @@ import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
+import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 
 const initialValuesMap = {
   add_project: {
@@ -181,6 +182,7 @@ const AllocationForm = () => {
     state => state.allAllocations
   );
   const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
+  const newResourceId = useSelector((state) => state.newResource?.id);
 
   const getValidationSchema = formType => {
     switch (formType) {
@@ -302,7 +304,7 @@ const AllocationForm = () => {
         };
         try {
           dispatch(addProject(postData))
-            .then(response => {
+            .then(async (response) => {
               if (response.meta.requestStatus === 'rejected') {
                 dispatch(
                   showToast({
@@ -314,6 +316,12 @@ const AllocationForm = () => {
                   })
                 );
                 return;
+              }
+
+              const newProjectId = response.payload?.result?.Id;
+              if (newProjectId) {
+                await dispatch(fetchAllProjects()); 
+                dispatch(setHighlightedRowId(newProjectId));
               }
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
@@ -344,7 +352,7 @@ const AllocationForm = () => {
             router.replace('/project');
           }
         } catch (e) {
-          console.log(e);
+          console.error('Failed to add project:', e);
         }
         break;
 
@@ -357,8 +365,10 @@ const AllocationForm = () => {
         };
         try {
           dispatch(updateProject({ postData, projectId: initialData.Id }));
+          await dispatch(fetchAllProjects()); 
+          dispatch(setHighlightedRowId(initialData.Id))
         } catch (e) {
-          console.log(e);
+          console.error('Failed to edit project:', e);
         }
         break;
 
@@ -372,8 +382,14 @@ const AllocationForm = () => {
         };
 
         try {
-          await dispatch(addResource(postData));
-          await dispatch(fetchAllResources());
+          const result = await dispatch(addResource(postData));
+          const newResourceId = result?.payload?.result?.Id ?? null;
+
+          if (newResourceId) {
+            await dispatch(fetchAllResources()); 
+            dispatch(setHighlightedRowId(newResourceId));
+          }
+
           if (pathname !== '/people') {
             router.replace('/people');
           }
@@ -396,6 +412,8 @@ const AllocationForm = () => {
             })
           );
           await dispatch(fetchAllResources());
+          dispatch(setHighlightedRowId(initialData.Id));
+
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);

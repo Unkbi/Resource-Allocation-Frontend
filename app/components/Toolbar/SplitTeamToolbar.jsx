@@ -37,6 +37,7 @@ import {
   getTeamsIamAllocationManager,
   getTotalWeeks,
   isObjectEqual,
+  calculateWeekRanges,
 } from '@/app/utils/common';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
@@ -74,6 +75,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import { StyledInput } from '../Input/StyledInput';
 import CopyLinkInput from '../Input/InputWithButton';
 import ShareLinkDialog from '../Dialog/ShareLinkDialog';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 140,
@@ -344,17 +346,26 @@ const SplitTeamToolbar = memo(
     const { view, savedViews, currentView } = useSelector(
       state => state.allocationView
     );
-    const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
-    const { projects, calendarDate: projectsCalendar } = useSelector(
-      state => state.projects
-    );
+    const { calendarDate } = useSelector(state => state.allAllocations);
     const { user } = useSelector(state => state.user);
     const { resources } = useSelector(state => state.resources);
     const { teams } = useSelector(state => state.teams);
-    const { startDate, endDate } = getStartAndEndDateForView(
-      view,
-      projectsCalendar,
-      teamsCalendar
+
+    const { startDate: _startDate, endDate: _endDate } = calendarDate || {};
+
+    const startDate = currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+      : currentView?.isFixedRange
+        ? currentView?.StartDate
+        : _startDate;
+
+    const endDate = currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+      : currentView?.isFixedRange
+        ? currentView?.EndDate
+        : _endDate;
+    const splitViewCurrentProject = useSelector(
+      state => state.allocationView.splitViewCurrentProject
     );
     const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [shareLink, setShareLink] = useState('');
@@ -366,6 +377,7 @@ const SplitTeamToolbar = memo(
     const myTeamsButtonRef = useRef(null);
     const myProjectsButtonRef = useRef(null);
     const { initialData } = useSelector(state => state.globalDialog.formState);
+    const [isRangePickerOpen, setIsRangePickerOpen] = useState(false);
 
     const handleClose = () => {
       setAnchorEl(null);
@@ -390,9 +402,6 @@ const SplitTeamToolbar = memo(
 
     const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
       const isNext = type === 'next';
-
-      // Handle the saveView changes
-
       if (type === 'isFixedRange') {
         const currentDate = new Date();
         const { weekMinus, weekPlus } = calculateWeekRanges(
@@ -417,7 +426,9 @@ const SplitTeamToolbar = memo(
         );
 
         const toShift = currentView.isFixedRange
-          ? totalWeeks
+          ? totalWeeks >= TOTAL_FUTURE_WEEKS_ARROW
+            ? TOTAL_FUTURE_WEEKS_ARROW
+            : totalWeeks
           : TOTAL_FUTURE_WEEKS_ARROW;
 
         const toNextWeekPlus =
@@ -506,6 +517,26 @@ const SplitTeamToolbar = memo(
       '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
     };
 
+    const handleDateField = (StartDate, EndDate) => {
+      changeCalendarDate('isFixedRange', StartDate, EndDate);
+      const isTeams = view === 'Teams';
+      const action = isTeams
+        ? updateStartAndEndDate
+        : updateProjectStartAndEndDate;
+      if (
+        currentView?.isFixedRange &&
+        currentView?.StartDate &&
+        currentView?.EndDate
+      ) {
+        dispatch(
+          action({
+            startDate: StartDate,
+            endDate: EndDate,
+          })
+        );
+      }
+    };
+
     const commonSlotProps = {
       popper: {
         modifiers: [
@@ -531,12 +562,39 @@ const SplitTeamToolbar = memo(
       })) || [];
 
     const handleTeamChange = (event, newValue) => {
-      if (newValue) {
-        const selectedOptions = newValue.map(item => ({
-          label: item.label,
-          value: item.value,
-        }));
-        setSelectedTeam(selectedOptions);
+      if (!newValue) return;
+
+      if (newValue.length === 0 && selectedTeam.length > 0) {
+        setSelectedTeam([]);
+        return;
+      }
+
+      if (newValue.length < selectedTeam.length) {
+        const removedTeam = selectedTeam.find(
+          team => !newValue.some(newItem => newItem.value === team.value)
+        );
+        if (removedTeam) {
+          const updated = selectedTeam.filter(
+            team => team.value !== removedTeam.value
+          );
+          setSelectedTeam(updated);
+        } else {
+          setSelectedTeam(newValue);
+        }
+        return;
+      }
+      const lastItem = newValue[newValue.length - 1];
+      const alreadySelected = selectedTeam.some(
+        team => team.value === lastItem.value
+      );
+
+      if (alreadySelected) {
+        const updatedSelection = selectedTeam.filter(
+          team => team.value !== lastItem.value
+        );
+        setSelectedTeam(updatedSelection);
+      } else {
+        setSelectedTeam([...selectedTeam, lastItem]);
       }
     };
 
@@ -562,6 +620,26 @@ const SplitTeamToolbar = memo(
                 limitTags={3}
                 onChange={handleTeamChange}
                 slotProps={commonSlotProps}
+                renderOption={(props, option) => {
+                  const isSelected = selectedTeam.some(
+                    team => team.value === option.value
+                  );
+                  const { key, ...rest } = props;
+                  return (
+                    <li
+                      key={key}
+                      {...rest}
+                      style={{
+                        ...rest.style,
+                        backgroundColor: isSelected
+                          ? '#f0f0f0'
+                          : props.style?.backgroundColor,
+                      }}
+                    >
+                      {option.label}
+                    </li>
+                  );
+                }}
                 renderInput={params => (
                   <TextField
                     {...params}
@@ -594,11 +672,11 @@ const SplitTeamToolbar = memo(
                 <StyledSlider
                   value={allocationThreshold}
                   onChange={handleAllocationRangeChange}
-                  valueLabelDisplay="auto"
+                  valueLabelDisplay="on"
                   size="small"
                   step={0.1}
                   min={0.0}
-                  max={1.0}
+                  max={1.2}
                   marks={[
                     { value: 0, label: '0' },
                     { value: 0.2, label: '0.2' },
@@ -606,8 +684,11 @@ const SplitTeamToolbar = memo(
                     { value: 0.6, label: '0.6' },
                     { value: 0.8, label: '0.8' },
                     { value: 1, label: '1.0' },
+                    { value: 1.2, label: 'max' },
                   ]}
-                  valueLabelFormat={value => `${value}`}
+                  valueLabelFormat={value =>
+                    value === 1.1 ? 'max' : value === 1.2 ? 'max' : `${value}`
+                  }
                 />
               </Box>
             </Box>
@@ -662,7 +743,21 @@ const SplitTeamToolbar = memo(
             >
               <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
             </IconButton>
-            <Button className="selectedDate">{`${first} - ${last}`}</Button>
+
+            <CustomDateRangePicker
+              open={isRangePickerOpen}
+              placeholder={`${first} - ${last}`}
+              isButton={true}
+              value={{
+                StartDate: startDate,
+                EndDate: endDate,
+              }}
+              onOpen={() => setIsRangePickerOpen(true)}
+              onClose={() => setIsRangePickerOpen(false)}
+              showLabel={false}
+              format="MMM YY"
+              handleDateField={handleDateField}
+            />
 
             <IconButton
               onClick={() => changeCalendarDate('next')}

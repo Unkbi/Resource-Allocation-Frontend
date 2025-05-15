@@ -9,10 +9,22 @@ export const actualsTableStyles = {
   },
   '& .MuiDataGrid-cell': {
     borderRight: '1px solid #EEEEEE',
+    borderBottom: '1px solid #EEEEEE',
     backgroundColor: 'white',
   },
   '.col-cell-actuals, .col-cell-planned': {
     padding: 0,
+  },
+  '.error-cell': {
+    border: '1px solid red !important',
+    borderRadius: '4px',
+  },
+  '.comment-error-cell': {
+    border: '1px solid red',
+    borderRadius: '4px',
+    boxSizing: 'border-box',
+    display: 'flex',
+    alignItems: 'center',
   },
   '& .MuiDataGrid-columnHeaderTitle': {
     color: '#1C2D5F',
@@ -77,5 +89,15 @@ export const actualsTableStyles = {
   '& .last-row': {
     marginBottom: '0',
     paddingBottom: '0',
+  },
+  '.comment-error-cell .MuiDataGrid-cell:focus-within': {
+    outline: 'none !important',
+    boxShadow: 'none !important',
+  },
+  '& .MuiDataGrid-filler': {
+    '--rowBorderColor': 'none !important',
+  },
+  '.disabled-cell': {
+    backgroundColor: '#F8F9FA',
   },
 };

@@ -10,6 +10,7 @@ import {
 } from '../reducers/allAllocationsReducer';
 import {
   formatAllAllocations,
+  injectBlankRows,
   formatCostAllocations,
 } from '@/app/utils/allocationUtils';
 import {
@@ -73,7 +74,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       yield put(setAllTeamsResources(formatedTeamResults));
     }
 
-    const allAllocations = formatAllAllocations(
+    const formattedAllocations = formatAllAllocations(
       responses.result,
       teams,
       projects,
@@ -83,8 +84,14 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       endDate
     );
 
-    if (allAllocations.length) {
-      yield put(setAllAllocations(allAllocations));
+    const fullAllocations = injectBlankRows(
+      formattedAllocations,
+      teams,
+      teamResourceObject
+    );
+
+    if (fullAllocations.length) {
+      yield put(setAllAllocations(fullAllocations));
     }
   } catch (error) {
     console.error(
@@ -147,7 +154,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       yield put(setAllTeamsResources(formatedTeamResults));
     }
 
-    const allAllocations = formatCostAllocations(
+    const formattedAllocations = formatCostAllocations(
       responses.result,
       teams,
       projects,
@@ -157,12 +164,18 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       endDate
     );
 
-    if (allAllocations.length) {
-      yield put(setCost(allAllocations));
+    const fullAllocations = injectBlankRows(
+      formattedAllocations,
+      teams,
+      teamResourceObject
+    );
+
+    if (fullAllocations.length) {
+      yield put(setCost(fullAllocations));
     }
   } catch (error) {
     console.error(
-      'Saga error, Failed to fetch team project/allocations : ',
+      'Saga error, Failed to fetch team project/allocations cost : ',
       error
     );
   } finally {
@@ -212,7 +225,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       []
     );
 
-    const teamsAllocations = formatAllAllocations(
+    const formattedAllocations = formatAllAllocations(
       allTeamAllocations,
       teams,
       projects,
@@ -222,8 +235,13 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       endDate
     );
 
-    yield put(updateAllAllocations(teamsAllocations));
+    const fullAllocations = injectBlankRows(
+      formattedAllocations,
+      teams,
+      teamsResources
+    );
 
+    yield put(updateAllAllocations(fullAllocations));
     // Notify if async operation is completed
     if (resolve) resolve();
   } catch (error) {

@@ -5,7 +5,7 @@ import HorizontalSplitView from '@/app/components/Shared/SplitView';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import TopProjectsView from '@/app/components/ResourceAllocation/component/TopProjectsView';
 import BottomTeamsView from '@/app/components/ResourceAllocation/component/BottomTeamsView';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
@@ -13,6 +13,7 @@ import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { resetAllocations } from '@/app/redux/reducers/allAllocationsReducer';
 import { ApiResponse, Resource, Team } from '@/app/types';
 import { generateDateWeekMath } from '@/app/utils/common';
+import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 
 interface TopContentProps {
   startDate: string | null;
@@ -41,25 +42,30 @@ export default function AllocationInit() {
   const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
     (state: RootState) => state.resources
   );
+  const allocationTheme = useSelector(
+    (state: RootState) => state.settings.allocationTheme
+  );
 
   const { allAllocations, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
   const { startDate, endDate } = calendarDate || {};
   const dispatch: AppDispatch = useDispatch();
+  const [currentViewStartDate, setCurrentViewStartDate] = useState(
+    currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+      : currentView?.isFixedRange
+        ? currentView?.StartDate
+        : startDate
+  );
 
-  const currentViewStartDate = currentView?.isDynamicRange
-    ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
-    : currentView?.isFixedRange
-      ? currentView?.StartDate
-      : startDate;
-
-  const currentViewEndDate = currentView?.isDynamicRange
-    ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-    : currentView?.isFixedRange
-      ? currentView?.EndDate
-      : endDate;
-
+  const [currentViewEndDate, setCurrentViewEndDate] = useState(
+    currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+      : currentView?.isFixedRange
+        ? currentView?.EndDate
+        : endDate
+  );
   useEffect(() => {
     if (!teams?.result?.length) {
       dispatch(fetchAllTeams());
@@ -69,6 +75,9 @@ export default function AllocationInit() {
     }
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
+    }
+    if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
+      dispatch(fetchAllocationTheme());
     }
   }, []);
 
@@ -110,6 +119,21 @@ export default function AllocationInit() {
           endDate: currentViewEndDate,
         },
       });
+
+      setCurrentViewStartDate(
+        currentView?.isDynamicRange
+          ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+          : currentView?.isFixedRange
+            ? currentView?.StartDate
+            : startDate
+      );
+      setCurrentViewEndDate(
+        currentView?.isDynamicRange
+          ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+          : currentView?.isFixedRange
+            ? currentView?.EndDate
+            : endDate
+      );
     }
   }, [
     currentView?.isDynamicRange,

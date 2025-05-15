@@ -138,10 +138,11 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
           helperText={touched.Email && errors.Email}
         />           
       </Box>
-
+      {/*} currently not using phone number
       <StyledLabel>
         Phone Number <span style={{ color: "red" }}>*</span>
       </StyledLabel>
+
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="PhoneNumber"
@@ -156,7 +157,7 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
           helperText={touched.PhoneNumber && errors.PhoneNumber}
         />     
       </Box>
-
+      */}
       <Box
         sx={{
           pb: 2,

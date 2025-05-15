@@ -1,5 +1,5 @@
 // src/reducers/projectCostSlice.ts
-import { AllocationsCost, AllocationsCostState } from '@/app/types';
+import { AllAllocations, AllocationsCostState } from '@/app/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 const initialState: AllocationsCostState = {
@@ -20,7 +20,7 @@ const allocationsCostSlice = createSlice({
     },
     updateAllocationsCosts: (
       state,
-      action: PayloadAction<AllocationsCost[]>
+      action: PayloadAction<AllAllocations[]>
     ) => {
       state.costs = action.payload;
     },

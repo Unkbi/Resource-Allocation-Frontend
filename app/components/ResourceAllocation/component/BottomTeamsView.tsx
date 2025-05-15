@@ -28,7 +28,7 @@ export default function BottomTeamsView({
   const [selectedTeam, setSelectedTeam] = useState<
     Array<{ label: string; value: string }>
   >([]);
-  const [allocationThreshold, setAllocationThreshold] = useState(0);
+  const [allocationThreshold, setAllocationThreshold] = useState(1.2);
   const dispatch = useDispatch<AppDispatch>();
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
@@ -128,6 +128,20 @@ export default function BottomTeamsView({
     removeResourcesWithNoTeams(allAllocations || []) ?? []
   );
 
+   const hasZeroAllocation = (row: AllAllocations) => {
+     if (row._avgPeriodAllocation === 0) return true;
+     return Object.keys(row).every(key => {
+       if (/^W\d+/.test(key)) {
+         const value = row[key];
+         if (value && typeof value === 'object' && 'value' in value) {
+           return value.value === 0 || value.value === undefined;
+         }
+         return true; 
+       }
+       return true; 
+     });
+   };
+
   const filteredResources = useMemo(() => {
     return enrichedResources.filter(row => {
       const teamMatch = selectedTeam.length
@@ -136,6 +150,9 @@ export default function BottomTeamsView({
 
       const avgWeekly = row._avgPeriodAllocation ?? 0;
       if (allocationThreshold === 0) {
+      return teamMatch && hasZeroAllocation(row);
+    }
+      if (allocationThreshold > 1) {
         return teamMatch;
       }
 
