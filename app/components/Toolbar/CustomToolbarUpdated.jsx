@@ -859,7 +859,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   return (
     <Box
       display={'flex'}
-      height={'60px'}
+      // height={'60px'}
       boxShadow={'0 1px 0 0 #DDE1E4'}
       position={'relative'}
       zIndex={1}
