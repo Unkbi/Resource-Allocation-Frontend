@@ -21,7 +21,7 @@ import { Allocation, Resource } from '@/app/types';
 import {
   setCost,
   setDataProcessing as setCostDataProcessing,
-} from '../reducers/allocationsCostReducer';
+} from '../reducers/AllocationsCostReducer';
 import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
