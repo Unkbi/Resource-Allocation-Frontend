@@ -12,18 +12,6 @@ export interface Allocation {
   Project: string;
 }
 
-export interface CostAllocation {
-  ProjectName: string | null;
-  Id: string;
-  ProjectManager: string | null;
-  Period: string;
-  Resource: string;
-  Duration: string | null;
-  ResourceName: string | null;
-  Cost : number;
-  Project: string;
-}
-
 export interface GetAllAllocationsForPeriodPayload {
   'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
     StartDate: string;
@@ -97,7 +85,7 @@ export interface AllocationGridView {
 export interface AllColumns {
   team: string[];
   project: string[];
-  cost: string[]
+  project_cost: string[];
 }
 
 export interface AllocationGridViewState {

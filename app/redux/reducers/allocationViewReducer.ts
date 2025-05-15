@@ -108,7 +108,7 @@ const initialState: AllocationGridViewState = {
       'ContractorHourlyRate',
       'ContractorHourlyRateCurrency',
     ],
-    cost: [
+    project_cost: [
       '__row_group_by_columns_group__',
       'resource',
       'totalCost',
@@ -152,10 +152,9 @@ const viewSlice = createSlice({
       state.currentView = {
         ...state.currentView,
         GroupBy: action.payload,
-        ColumnsVisible:
-          action.payload === 'Teams'
-            ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-            : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+        ColumnsVisible: action.payload.includes('Teams')
+          ? DEFAULT_VISIBLE_TEAMS_COLUMNS
+          : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
       };
     },
     setSplitView: (state, action) => {

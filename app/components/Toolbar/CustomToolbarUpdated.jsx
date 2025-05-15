@@ -12,6 +12,8 @@ import {
   Typography,
   Popover,
   TextField,
+  Stack,
+  Switch,
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -814,6 +816,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     }
   };
 
+  const handleAllocationCostSwitch = () => {
+    const isCost = currentView?.GroupBy.includes('Cost');
+    const newGroupBy = isCost
+      ? currentView?.GroupBy.replace(' Cost', '')
+      : `${currentView?.GroupBy} Cost`;
+    dispatch(performChangeView(newGroupBy));
+  };
+
   const open = Boolean(anchorEl);
   const openPopover = Boolean(popOverAnchorEl);
 
@@ -860,7 +870,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             value={
               currentView?.GroupBy === 'Project'
                 ? 'Projects'
-                : currentView?.GroupBy || 'Teams'
+                : currentView?.GroupBy === 'Project Cost'
+                  ? 'Projects Cost'
+                  : currentView?.GroupBy || 'Teams'
             }
             onChange={handleViewChange}
             className="projectDropdown"
@@ -876,10 +888,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             }}
             renderValue={selected => (
               <MenuItemContent>
-                {selected === 'Project' ? (
+                {selected === 'Projects' ? (
                   <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />
-                ) : (
+                ) : selected === 'Teams' ? (
                   <PeopleIcon sx={{ fontSize: 20, color: '#344665' }} />
+                ) : (
+                  <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />
                 )}
                 {selected}
               </MenuItemContent>
@@ -888,7 +902,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             {viewOptions.map(option => (
               <StyledMenuItem value={option.name}>
                 {option.icon}
-                {option.name === 'Project' ? 'Projects' : option.name}
+                {option.name === 'Project'
+                  ? 'Projects'
+                  : option.name === 'Project Cost'
+                    ? 'Projects Cost'
+                    : option.name}
               </StyledMenuItem>
             ))}
           </StyledSelect>
@@ -897,7 +915,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <ToolBox2 flex={1} className="filterTopRow">
         <Box className="filterColBlock">
           <Box className="projectIcon">
-            {view === 'Project' ? (
+            {view.includes('Project') ? (
               <>
                 <TooltipButton
                   msg="My Project"
@@ -944,7 +962,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <Typography variant="body2">No projects found.</Typography>
                 </Popover>
               </>
-            ) : view === 'Teams' ? (
+            ) : view.includes('Teams') ? (
               <>
                 <TooltipButton
                   msg="My Teams"
@@ -1072,30 +1090,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
           </Box>
-          <StyledFormControlForWeek size="small">
-            <StyledSelectForWeek
-              disabled
-              size="small"
-              value={'Week'}
-              IconComponent={KeyboardArrowDown}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    backgroundColor: '#FFFFFF',
-                    boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.1)',
-                    marginTop: '4px',
-                  },
-                },
-              }}
-              renderValue={selected => (
-                <MenuItemContent>{selected}</MenuItemContent>
-              )}
-            >
-              <StyledMenuItem value="Week">
-                <Typography>Week</Typography>
-              </StyledMenuItem>
-            </StyledSelectForWeek>
-          </StyledFormControlForWeek>
           <Box>
             <ViewButton
               startIcon={<PreferencesIcon />}
@@ -1197,7 +1191,17 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Button>
         </Box>
       </ToolBox2>
-      <ToolBox2>
+      <ToolBox2 sx={{ gap: 1 }}>
+        <Box>
+          <Stack direction="row" sx={{ alignItems: 'center' }}>
+            <Typography fontWeight={500}>Allocations</Typography>
+            <Switch
+              checked={currentView?.GroupBy.includes('Cost')}
+              onChange={handleAllocationCostSwitch}
+            />
+            <Typography fontWeight={500}>Costs</Typography>
+          </Stack>
+        </Box>
         <Box>
           <StyledShareButton onClick={handleShareDeepLink} variant="outlined">
             Share

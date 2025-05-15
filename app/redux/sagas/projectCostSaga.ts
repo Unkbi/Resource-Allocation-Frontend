@@ -1,25 +1,13 @@
 // src/sagas/projectCostSaga.ts
 import { put, delay, takeLatest, fork, cancel, call } from 'redux-saga/effects';
-import { setDataProcessing, updateProjectCosts } from '../reducers/projectCostReducer';
-import { mockAllocationData } from '@/app/constants/mockAllocations';
+import {
+  setDataProcessing,
+  updateProjectCosts,
+} from '../reducers/projectCostReducer';
 import { sagaTaskRefs } from './sagaTasks';
 import { getMondayOfISO } from '@/app/utils/common';
 import { formatAllocations } from '@/app/utils/allocationUtils';
-// import {
-//   setDataProcessing,
-// } from '../reducers/projectsReducer';
-
-// function* fetchProjectCostsSaga(action: any): Generator<any, void, any> {
-//   try {
-//     yield put(setDataProcessing(true));
-//     yield delay(1000); // simulate API delay
-//     yield put(updateProjectCosts(mockAllocationData));
-//   } catch (error) {
-//     console.error('Saga error, failed to fetch mock project costs:', error);
-//   } finally {
-//     yield put(setDataProcessing(false));
-//   }
-// }
+import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const { projects, startDate, endDate } = action.payload;
@@ -27,19 +15,17 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   try {
     yield put(setDataProcessing(true));
 
-    // const postData = {
-    //   'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
-    //     StartDate: getMondayOfISO(startDate),
-    //     EndDate: getMondayOfISO(endDate),
-    //   },
-    // };
+    const postData = {
+      'ResourceAllocation.Core/GetAllCostForPeriod': {
+        StartDate: getMondayOfISO(startDate),
+        EndDate: getMondayOfISO(endDate),
+      },
+    };
 
-    // const responses = yield call(fetchAllAllocations, postData);
-    const responses = mockAllocationData;
-    // console.log("responses =", responses)
+    const responses = yield call(fetchAllAllocationCosts, postData);
 
     const allAllocations = formatAllocations(responses as any, projects);
-    // console.log("allAllocations=", allAllocations)
+
     if (allAllocations.length) {
       yield put(updateProjectCosts(allAllocations));
     }

@@ -123,7 +123,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     {
       field: 'totalEffort',
       headerName: 'Total Cost $',
-      width: 106,
+      width: 110,
       type: 'number',
       sortable: false,
       isEditable: false,
