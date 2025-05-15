@@ -27,7 +27,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const dispatch: AppDispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('');
   const { costs: projectCosts, loading } = useSelector(
-    (state: RootState) => state.projectCost
+    (state: RootState) => state.allocationsCost
   );
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
@@ -38,7 +38,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
 
   useEffect(() => {
     dispatch({
-      type: 'FETCH_PROJECT_COST_ALLOCATIONS',
+      type: 'FETCH_ALLOCATIONS_COST',
       payload: {
         teams: teams?.result,
         projects: projects?.result,

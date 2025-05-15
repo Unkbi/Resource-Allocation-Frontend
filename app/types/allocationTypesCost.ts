@@ -16,3 +16,20 @@ export interface GetAllCostForPeriodPayload {
     EndDate: string;
   };
 }
+
+export interface AllocationsCost {
+  id: string;
+  Project: string;
+  ProjectName: string;
+  Resource: string;
+  ResourceName: string;
+  Period: string;
+  Duration: 'week' | 'month' | string;
+  cost: number;
+}
+
+export interface AllocationsCostState {
+  costs: AllocationsCost[];
+  loading: boolean;
+  error: string | null;
+}
