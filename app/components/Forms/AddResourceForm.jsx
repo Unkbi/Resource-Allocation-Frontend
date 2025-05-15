@@ -22,7 +22,7 @@ import { useEffect } from "react";
 import CustomDatePicker from "../DatePicker/CustomDatePicker";
 
 const AddResourceForm = ({ formikProps , setFormValue}) => {
-  const { values, handleChange, handleBlur, errors, touched, resetForm, setTouched } = formikProps
+  const { values, handleChange, handleBlur, errors, touched, resetForm, setTouched, setFieldValue } = formikProps
   const { initialData } = useSelector((state) => state.globalDialog.formState)
   const { resources } = useSelector((state) => state.resources)
   const resourceListOptions = resources && resources.result.map((resource) => {
@@ -103,7 +103,11 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             placeholder="Enter first name"
             value={values.FirstName || ''}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={e => {
+              const trimmedValue = e.target.value.trim();
+              setFieldValue('FirstName', trimmedValue);
+              handleBlur(e);
+            }}            
             error={touched.FirstName && Boolean(errors.FirstName)}
             helperText={touched.FirstName && errors.FirstName}
           />        
@@ -117,7 +121,11 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             placeholder="Enter last name"
             value={values.LastName || ''}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={e => {
+              const trimmedValue = e.target.value.trim();
+              setFieldValue('LastName', trimmedValue);
+              handleBlur(e);
+            }} 
             error={touched.LastName && Boolean(errors.LastName)}
             helperText={touched.LastName && errors.LastName}
           />        
@@ -177,7 +185,11 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             placeholder="Enter department"
             value={values.Department || ''}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={e => {
+              const trimmedValue = e.target.value.trim();
+              setFieldValue('Department', trimmedValue);
+              handleBlur(e);
+            }}             
             error={touched.Department && Boolean(errors.Department)}
             helperText={touched.Department && errors.Department}
           /> 
@@ -191,7 +203,11 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             placeholder="Enter role"
             value={values.Role || ''}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={e => {
+              const trimmedValue = e.target.value.trim();
+              setFieldValue('Role', trimmedValue);
+              handleBlur(e);
+            }}
             error={touched.Role && Boolean(errors.Role)}
             helperText={touched.Role && errors.Role}
           /> 
@@ -358,7 +374,11 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             placeholder="Enter location"
             value={values.WorkLocation || ''}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={e => {
+              const trimmedValue = e.target.value.trim();
+              setFieldValue('WorkLocation', trimmedValue);
+              handleBlur(e);
+            }} 
             error={touched.WorkLocation && Boolean(errors.WorkLocation)}
             helperText={touched.WorkLocation && errors.WorkLocation}            
           />
