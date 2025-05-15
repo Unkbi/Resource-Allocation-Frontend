@@ -289,6 +289,12 @@ export function formatCostAllocations(
 ) {
   const weeks = getWeeksInRange(startDate, endDate);
 
+  // Divide all allocationCosts by 1000
+  allocations = allocations.map(alloc => ({
+    ...alloc,
+    Cost: alloc.Cost / 1000,
+  }));
+
   // Build a lookup map from resource ID to team
   const resourceIdToTeam = new Map<string, Team>();
 
