@@ -197,6 +197,8 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     border: '1px solid #D6DCE1',
     borderRadius: '4px',
     height: '32px',
+    marginLeft: '5px',
+    marginRight: '2px',
   },
 }));
 
