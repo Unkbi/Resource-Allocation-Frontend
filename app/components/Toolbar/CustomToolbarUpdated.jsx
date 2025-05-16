@@ -517,6 +517,10 @@ const ShareIcon = () => (
   <img src="/images/icons/ShareRounded.svg" alt="share" />
 );
 
+const HistoryIcon = () => (
+  <img src="/images/icons/HistoryButton.svg" alt="share" />
+);
+
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
@@ -1232,6 +1236,16 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             className="nextPrevIcon"
           >
             <ShareIcon />
+          </IconButton>
+        </Box>
+        <Box>
+          <IconButton
+            variant="outlined"
+            size="small"
+            disabled={true}
+            sx={{ width: '32px', height: '32px' }}
+          >
+            <HistoryIcon />
           </IconButton>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
