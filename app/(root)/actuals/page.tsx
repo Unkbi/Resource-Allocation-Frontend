@@ -41,9 +41,19 @@ export default function ActualsPage() {
   >([]);
   const apiRef = useGridApiRef();
   const [hasInvalidRows, setHasInvalidRows] = useState(false);
+  const [show, setShow] = useState(true);
+  const [isModified, setIsModified] = useState(false);
+
+  const handleModificationChange = (modified: boolean) => {
+    setIsModified(modified);
+  };
 
   const handleValidationChange = (hasInvalid: boolean) => {
     setHasInvalidRows(hasInvalid);
+  };
+
+  const handleSetShow = (val: boolean) => {
+    setShow(val);
   };
 
   const handleConfirmed = () => {
@@ -126,6 +136,8 @@ export default function ActualsPage() {
 
   const handleNext = () => {
     if (startDate && endDate) {
+      setHasInvalidRows(false);
+      setShow(true);
       dispatch(
         setCalendarDate({
           startDate: generateDateWeekMath('WEEK_PLUS', 1, parseISO(startDate)),
@@ -139,6 +151,8 @@ export default function ActualsPage() {
 
   const handlePrev = () => {
     if (startDate && endDate) {
+      setHasInvalidRows(false);
+      setShow(true);
       dispatch(
         setCalendarDate({
           startDate: generateDateWeekMath('WEEK_MINUS', 1, parseISO(startDate)),
@@ -258,6 +272,8 @@ export default function ActualsPage() {
             endDate={endDate}
             apiRef={apiRef}
             onValidationChange={handleValidationChange}
+            setShow={handleSetShow}
+            onModificationChange={handleModificationChange}
           />
           <Box mt={4} width="100%">
             <Box
@@ -296,14 +312,7 @@ export default function ActualsPage() {
                 borderRadius: '5px',
               }}
               disabled={
-                (status === 'Confirmed' &&
-                  startDate !== null &&
-                  !isCurrentWeek(parseISO(startDate))) || // Case 1
-                (status === 'Proposed' &&
-                  startDate !== null &&
-                  !isCurrentWeek(parseISO(startDate)) &&
-                  hasInvalidRows) || // Case 2
-                hasInvalidRows // Case 3
+                !isModified || show || hasInvalidRows
               }
               onClick={handleConfirmed}
             >

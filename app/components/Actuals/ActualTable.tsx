@@ -83,6 +83,8 @@ interface ActualTableProps {
   apiRef: React.RefObject<GridApi>;
   disableView?: boolean;
   onValidationChange?: (hasInvalidRows: boolean) => void;
+  setShow?: (val: boolean) => void;
+  onModificationChange?: (isModified: boolean) => void;
 }
 
 export default function ActualTable({
@@ -92,7 +94,9 @@ export default function ActualTable({
   endDate,
   apiRef,
   disableView = false,
+  setShow,
   onValidationChange,
+  onModificationChange,
 }: ActualTableProps) {
   const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
@@ -154,8 +158,23 @@ export default function ActualTable({
     if (onValidationChange) {
       const hasInvalidRows = Object.keys(rowValidationErrors).length > 0;
       onValidationChange(hasInvalidRows);
+      if(hasInvalidRows){
+      setShow && setShow(false);
     }
+    }
+    
   }, [rowValidationErrors, onValidationChange]);
+
+  useEffect(() => {
+  if (onModificationChange) {
+    const isModified =
+      rows.length !== data.length || // Check if rows were added or deleted
+      rows.some((row, index) => JSON.stringify(row) !== JSON.stringify(data[index])); // Check if rows were modified
+
+    onModificationChange(isModified);
+  }
+}, [rows, data, onModificationChange]);
+
 
   // Organize rows into sections
   const getOrganizedRows = () => {
