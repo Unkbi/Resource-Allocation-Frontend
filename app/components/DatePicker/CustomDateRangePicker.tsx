@@ -131,13 +131,7 @@ export default function CustomDateRangePicker({
   ];
 
   const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
-    let [start, end] = newValue;
-    if (start && end) {
-      const maxEnd = dayjs(start).add(50, 'weeks');
-      if (end.isAfter(maxEnd)) {
-        end = maxEnd;
-      }
-    }
+    const [start, end] = newValue;
     if (isButton) {
       if (start && end) {
         const formattedStart = dayjs(start).format('YYYY-MM-DD');
