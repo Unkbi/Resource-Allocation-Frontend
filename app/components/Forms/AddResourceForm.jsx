@@ -212,7 +212,12 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             name="HRLevel"
             placeholder="Enter level"
             value={values.HRLevel || ''}
-            onChange={handleChange}
+            onChange={(e) => {
+              const input = e.target.value;
+              if (/^\d*$/.test(input)) {
+                formikProps.setFieldValue('HRLevel', input);
+              }
+            }}
             onBlur={handleBlur}
             error={touched.HRLevel && Boolean(errors.HRLevel)}
             helperText={touched.HRLevel && errors.HRLevel}

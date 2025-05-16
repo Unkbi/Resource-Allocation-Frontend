@@ -383,6 +383,18 @@ const AllocationForm = () => {
 
         try {
           const result = await dispatch(addResource(postData));
+          if (result.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to add resource`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
           const newResourceId = result?.payload?.result?.Id ?? null;
 
           if (newResourceId) {
