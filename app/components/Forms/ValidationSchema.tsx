@@ -72,10 +72,24 @@ export const addResourceValidationSchema = Yup.object({
   Manager: Yup.string().required('Manager is required'),
   ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
   AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
-  EndDate: Yup.string().when('Status', {
-    is: 'Inactive',
-    then: (schema) => schema.required('End Date is required'),
-    otherwise: (schema) => schema.notRequired(),
+  EndDate: Yup.string()
+  .nullable()
+  .when(['Status', 'StartDate'], {
+    is: (status: String) => status === 'Inactive',
+    then: (schema) =>
+      schema
+        .required('End Date is required')
+        .test('end-after-start', 'End Date cannot be before Start Date', function (endDate) {
+          const { StartDate } = this.parent;
+          if (!endDate || !StartDate) return true;
+          return new Date(endDate) >= new Date(StartDate);
+        }),
+    otherwise: (schema) =>
+      schema.test('end-after-start', 'End Date cannot be before Start Date', function (endDate) {
+        const { StartDate } = this.parent;
+        if (!endDate || !StartDate) return true;
+        return new Date(endDate) >= new Date(StartDate);
+      }),
   }),
 });
 
