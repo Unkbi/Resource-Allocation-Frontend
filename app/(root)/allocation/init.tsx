@@ -115,8 +115,16 @@ export default function AllocationInit() {
           teams: teams?.result,
           projects: projects?.result,
           resources: resources?.result,
-          startDate: currentViewStartDate,
-          endDate: currentViewEndDate,
+          startDate: currentView?.isDynamicRange
+            ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+            : currentView?.isFixedRange
+              ? currentView?.StartDate
+              : startDate,
+          endDate: currentView?.isDynamicRange
+            ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+            : currentView?.isFixedRange
+              ? currentView?.EndDate
+              : endDate,
         },
       });
 

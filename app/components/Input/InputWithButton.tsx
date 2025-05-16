@@ -141,7 +141,7 @@ export default function CopyLinkInput({
       <StyledTextField
         inputRef={inputRef}
         size="small"
-        value={truncateEnd(value, 54)}
+        value={truncateEnd(value, 52)}
         onChange={handleChange}
         placeholder={placeholder}
         label={label}

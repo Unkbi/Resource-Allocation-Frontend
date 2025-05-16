@@ -9,6 +9,7 @@ interface CustomAddIconProps {
   menu?: React.ReactNode | null;
   columnType?: 'teams' | 'resource';
   showAddButton?: boolean;
+  isFormatWithK?: boolean
 }
 
 export const CustomAddIcon = ({
@@ -17,7 +18,8 @@ export const CustomAddIcon = ({
   onClick = () => {},
   menu = null,
   columnType = 'teams',
-  showAddButton = true,
+  isFormatWithK,
+  showAddButton = isFormatWithK === true ? false : true,
 }: CustomAddIconProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);

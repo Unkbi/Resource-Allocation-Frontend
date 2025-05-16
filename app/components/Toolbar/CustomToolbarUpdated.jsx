@@ -138,6 +138,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '7px 14px 5px 14px',
+  borderRight: '#DDE1E4 solid 1px',
   '& .filterColBlock': {
     display: 'flex',
     alignItems: 'center',
@@ -512,6 +513,14 @@ const PreferencesIcon = () => (
   <img src="/images/icons/preferences.svg" alt="preferences" />
 );
 
+const ShareIcon = () => (
+  <img src="/images/icons/ShareRounded.svg" alt="share" />
+);
+
+const HistoryIcon = () => (
+  <img src="/images/icons/HistoryButton.svg" alt="share" />
+);
+
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
@@ -574,6 +583,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     },
     {
       name: 'Project Cost',
+      icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    },
+    {
+      name: 'Teams Cost',
       icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
     // 'Organizations'
@@ -787,7 +800,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         teams?.result || []
       );
 
-      if (view === 'Teams' && teamsIAmAllocationManager.length === 0) {
+      if (view.includes('Teams') && teamsIAmAllocationManager.length === 0) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
@@ -802,16 +815,16 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         projects?.result || []
       );
 
-      if (view === 'Project' && projectsIAmProjectManager.length === 0) {
+      if (view.includes('Project') && projectsIAmProjectManager.length === 0) {
         setPopOverAnchorEl(myProjectsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
       }
     }
 
-    if (view === 'Teams') {
+    if (view.includes('Teams')) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
-    } else if (view === 'Project') {
+    } else if (view.includes('Project')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
     }
   };
@@ -1196,18 +1209,44 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <ToolBox2 sx={{ gap: 1 }}>
         <Box>
           <Stack direction="row" sx={{ alignItems: 'center' }}>
-            <Typography fontWeight={500}>Allocations</Typography>
+            <Typography
+              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
+            >
+              Allocations
+            </Typography>
             <Switch
+              size="small"
               checked={currentView?.GroupBy.includes('Cost')}
               onChange={handleAllocationCostSwitch}
             />
-            <Typography fontWeight={500}>Costs</Typography>
+            <Typography
+              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
+            >
+              Costs
+            </Typography>
           </Stack>
         </Box>
+      </ToolBox2>
+      <ToolBox2 sx={{ gap: 1 }}>
         <Box>
-          <StyledShareButton onClick={handleShareDeepLink} variant="outlined">
-            Share
-          </StyledShareButton>
+          <IconButton
+            variant="outlined"
+            onClick={handleShareDeepLink}
+            size="small"
+            className="nextPrevIcon"
+          >
+            <ShareIcon />
+          </IconButton>
+        </Box>
+        <Box>
+          <IconButton
+            variant="outlined"
+            size="small"
+            disabled={true}
+            sx={{ width: '32px', height: '32px' }}
+          >
+            <HistoryIcon />
+          </IconButton>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <CustomExport />
