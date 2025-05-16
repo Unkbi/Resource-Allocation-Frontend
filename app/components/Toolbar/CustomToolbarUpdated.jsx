@@ -138,6 +138,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '7px 14px 5px 14px',
+  borderRight: '#DDE1E4 solid 1px',
   '& .filterColBlock': {
     display: 'flex',
     alignItems: 'center',
@@ -510,6 +511,10 @@ const DeleteActionIcon = () => (
 
 const PreferencesIcon = () => (
   <img src="/images/icons/preferences.svg" alt="preferences" />
+);
+
+const ShareIcon = () => (
+  <img src="/images/icons/ShareRounded.svg" alt="share" />
 );
 
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
@@ -1200,18 +1205,34 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <ToolBox2 sx={{ gap: 1 }}>
         <Box>
           <Stack direction="row" sx={{ alignItems: 'center' }}>
-            <Typography fontWeight={500}>Allocations</Typography>
+            <Typography
+              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
+            >
+              Allocations
+            </Typography>
             <Switch
+              size="small"
               checked={currentView?.GroupBy.includes('Cost')}
               onChange={handleAllocationCostSwitch}
             />
-            <Typography fontWeight={500}>Costs</Typography>
+            <Typography
+              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
+            >
+              Costs
+            </Typography>
           </Stack>
         </Box>
+      </ToolBox2>
+      <ToolBox2 sx={{ gap: 1 }}>
         <Box>
-          <StyledShareButton onClick={handleShareDeepLink} variant="outlined">
-            Share
-          </StyledShareButton>
+          <IconButton
+            variant="outlined"
+            onClick={handleShareDeepLink}
+            size="small"
+            className="nextPrevIcon"
+          >
+            <ShareIcon />
+          </IconButton>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <CustomExport />
