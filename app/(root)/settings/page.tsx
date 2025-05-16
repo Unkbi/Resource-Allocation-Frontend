@@ -288,7 +288,7 @@ const SettingsPanel = () => {
       if (itemsWithId.length > 0) {
         const payload = {
           postData: transformedAllocationRanges,
-          __Id__: allocationRanges[0]?.__Id__,
+          __Id__: itemsWithId[0]?.__Id__,
         };
         dispatch(updateAllocationThemeAction(payload)).then(response => {
           if (response?.meta?.requestStatus === 'fulfilled') {
