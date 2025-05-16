@@ -287,6 +287,7 @@ export function formatCostAllocations(
   startDate: string,
   endDate: string
 ) {
+  debugger;
   const weeks = getWeeksInRange(startDate, endDate);
 
   // Divide all allocationCosts by 1000

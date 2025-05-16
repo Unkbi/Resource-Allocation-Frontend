@@ -791,7 +791,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         teams?.result || []
       );
 
-      if (view === 'Teams' && teamsIAmAllocationManager.length === 0) {
+      if (view.includes('Teams') && teamsIAmAllocationManager.length === 0) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
@@ -806,16 +806,16 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         projects?.result || []
       );
 
-      if (view === 'Project' && projectsIAmProjectManager.length === 0) {
+      if (view.includes('Project') && projectsIAmProjectManager.length === 0) {
         setPopOverAnchorEl(myProjectsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
       }
     }
 
-    if (view === 'Teams') {
+    if (view.includes('Teams')) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
-    } else if (view === 'Project') {
+    } else if (view.includes('Project')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
     }
   };

@@ -10,7 +10,6 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
-import { TeamCostAllocation } from '@/app/redux/reducers/teamsCostReducer';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -44,12 +43,12 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     (state: RootState) => state.allocationView
   );
    const { costs: teamsCost, loading} = useSelector(
-    (state: RootState) => state.teamsCost
+    (state: RootState) => state.allocationsCost
   );
 
    useEffect(() => {
       dispatch({
-        type: 'FETCH_TEAM_COST_ALLOCATIONS',
+        type: 'FETCH_ALLOCATIONS_COST',
         payload: {
           teams: teams?.result,
           projects: projects?.result,
@@ -58,7 +57,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
           endDate: endDate,
         },
       });
-    }, [teams, projects, resources]);
+    }, [startDate, endDate, teams, projects, resources]);
 
     const handleAddClick = (params: GridCellParams) => {
         dispatch(
@@ -344,7 +343,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     },
   ];
 
-  const removeResourcesWithNoTeams = (allocations: TeamCostAllocation[]) => {
+  const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
     return allocations.filter(allocation => allocation.teams);
   };
   return (
