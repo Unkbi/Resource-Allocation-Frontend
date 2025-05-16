@@ -63,9 +63,7 @@ export default function ActualsPage() {
       resources &&
       'result' in resources &&
       user &&
-      'Email' in user &&
-      actualAllocations &&
-      actualAllocations.length > 0
+      'Email' in user
     ) {
       const userId = getUserIdFromEmail(
         ('result' in resources && resources?.result) || [],
@@ -311,9 +309,7 @@ export default function ActualsPage() {
                 height: '36px',
                 borderRadius: '5px',
               }}
-              disabled={
-                !isModified || show || hasInvalidRows
-              }
+              disabled={!isModified || show || hasInvalidRows}
               onClick={handleConfirmed}
             >
               <Typography
