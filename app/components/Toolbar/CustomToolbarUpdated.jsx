@@ -843,25 +843,49 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const currentViewName =
     savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
 
-  const handleDateField = (StartDate, EndDate) => {
-    changeCalendarDate('isFixedRange', StartDate, EndDate);
-    const isTeams = view === 'Teams';
-    const action = isTeams
-      ? updateStartAndEndDate
-      : updateProjectStartAndEndDate;
-    if (
-      currentView?.isFixedRange &&
-      currentView?.StartDate &&
-      currentView?.EndDate
-    ) {
-      dispatch(
-        action({
-          startDate: StartDate,
-          endDate: EndDate,
-        })
-      );
-    }
-  };
+    const handleDateField = (StartDate, EndDate) => {
+      const weeks = getTotalWeeks(StartDate, EndDate);
+      if (weeks > 51) {
+        dispatch(
+          showToastAction(true, 'Date range limited to 51 weeks', 'warning')
+        );
+        const adjustedEndDate = generateDateWeekMath(
+          'WEEK_PLUS',
+          51,
+          new Date(StartDate)
+        );
+        changeCalendarDate('isFixedRange', StartDate, adjustedEndDate);
+
+        const isTeams = view === 'Teams';
+        const action = isTeams
+          ? updateStartAndEndDate
+          : updateProjectStartAndEndDate;
+        dispatch(
+          action({
+            startDate: StartDate,
+            endDate: adjustedEndDate,
+          })
+        );
+        return;
+      }
+      changeCalendarDate('isFixedRange', StartDate, EndDate);
+      const isTeams = view === 'Teams';
+      const action = isTeams
+        ? updateStartAndEndDate
+        : updateProjectStartAndEndDate;
+      if (
+        currentView?.isFixedRange &&
+        currentView?.StartDate &&
+        currentView?.EndDate
+      ) {
+        dispatch(
+          action({
+            startDate: StartDate,
+            endDate: EndDate,
+          })
+        );
+      }
+    };
 
   useEffect(() => {
     if (currentView?.Name) {
@@ -1092,6 +1116,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               onClose={() => setIsRangePickerOpen(false)}
               showLabel={false}
               format="MMM YY"
+              maxWeeks={51} 
               handleDateField={handleDateField}
             />
             <IconButton
