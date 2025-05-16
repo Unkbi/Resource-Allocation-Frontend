@@ -45,7 +45,10 @@ import {
   setSplitViewCurrentProject,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
-import { fetchAllProjectAllocations, fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
+import {
+  fetchAllProjectAllocations,
+  fetchAllProjects,
+} from '@/app/redux/actions/fetchProjectsAction';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   addUsersSavedViewAction,
@@ -182,7 +185,7 @@ const AllocationForm = () => {
     state => state.allAllocations
   );
   const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
-  const newResourceId = useSelector((state) => state.newResource?.id);
+  const newResourceId = useSelector(state => state.newResource?.id);
 
   const getValidationSchema = formType => {
     switch (formType) {
@@ -222,10 +225,7 @@ const AllocationForm = () => {
     resources?.forEach(resource => {
       projects?.forEach(project => {
         const [{ Id }] = Array.isArray(project) ? project : [project];
-        const key =
-          view === 'Teams'
-            ? `${resource.Id}-${resource.teamId}-${Id}`
-            : `${resource.Id}-${Id}`;
+        const key = `${resource.Id}-${resource.teamId}-${Id}`;
 
         cellData[key] = weeksObject;
       });
@@ -304,7 +304,7 @@ const AllocationForm = () => {
         };
         try {
           dispatch(addProject(postData))
-            .then(async (response) => {
+            .then(async response => {
               if (response.meta.requestStatus === 'rejected') {
                 dispatch(
                   showToast({
@@ -320,7 +320,7 @@ const AllocationForm = () => {
 
               const newProjectId = response.payload?.result?.Id;
               if (newProjectId) {
-                await dispatch(fetchAllProjects()); 
+                await dispatch(fetchAllProjects());
                 dispatch(setHighlightedRowId(newProjectId));
               }
               if (submitType === 'secondary') {
@@ -365,8 +365,8 @@ const AllocationForm = () => {
         };
         try {
           dispatch(updateProject({ postData, projectId: initialData.Id }));
-          await dispatch(fetchAllProjects()); 
-          dispatch(setHighlightedRowId(initialData.Id))
+          await dispatch(fetchAllProjects());
+          dispatch(setHighlightedRowId(initialData.Id));
         } catch (e) {
           console.error('Failed to edit project:', e);
         }
@@ -398,7 +398,7 @@ const AllocationForm = () => {
           const newResourceId = result?.payload?.result?.Id ?? null;
 
           if (newResourceId) {
-            await dispatch(fetchAllResources()); 
+            await dispatch(fetchAllResources());
             dispatch(setHighlightedRowId(newResourceId));
           }
 

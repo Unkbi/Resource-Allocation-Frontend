@@ -292,7 +292,7 @@ export default function AllocationGrid({
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
       setCellSelectionModel(cellSelectionData);
     };
-    const timeoutId = setTimeout(handleScrollAndFocus, 1000);
+    const timeoutId = setTimeout(handleScrollAndFocus, 50);
     setExpandRowId(null);
     return () => clearTimeout(timeoutId);
   }, [rowState, apiRef, cellSelectionData, view, data]);
