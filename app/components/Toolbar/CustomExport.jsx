@@ -5,7 +5,7 @@ import {
   GridToolbarExportContainer,
   useGridApiContext,
 } from '@mui/x-data-grid-premium';
-import { MenuItem, styled } from '@mui/material';
+import { Button, MenuItem, styled } from '@mui/material';
 import { useSelector } from 'react-redux';
 
 const GridToolbarExport = () => {
@@ -142,7 +142,22 @@ const GridToolbarExport = () => {
   };
 
   return (
-    <GridToolbarExportContainer>
+    <GridToolbarExportContainer
+      slotProps={{
+        button: {
+          variant: 'outlined',
+          sx: {
+            minWidth: '32px',
+            height: '32px',
+            padding: '0px 0px',
+            color: '#555',
+            borderColor: '#ddd',
+            backgroundColor: 'rgba(28, 45, 95, 0.02)',
+            '.MuiButton-startIcon': { margin: '0px' },
+          },
+        },
+      }}
+    >
       <GridExcelExportMenuItem
         options={{
           exceljsPostProcess: excelPostProcess,

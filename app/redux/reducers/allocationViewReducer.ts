@@ -77,6 +77,17 @@ const initialState: AllocationGridViewState = {
       'AverageWeeklyHours',
       'ContractorHourlyRate',
       'ContractorHourlyRateCurrency',
+      'projectOvertimeAllowed',
+      'projectCost',
+      'projectCurrency',
+      'Description',
+      'projectLocation',
+      'ProjectManager',
+      'Owner',
+      'projectEndDate',
+      'projectStartDate',
+      'Status',
+      'Type',
     ],
     project: [
       '__row_group_by_columns_group__',
@@ -108,7 +119,7 @@ const initialState: AllocationGridViewState = {
       'ContractorHourlyRate',
       'ContractorHourlyRateCurrency',
     ],
-    cost: [
+    project_cost: [
       '__row_group_by_columns_group__',
       'resource',
       'totalCost',

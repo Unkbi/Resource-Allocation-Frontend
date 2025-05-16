@@ -27,7 +27,7 @@ const TopPanel = styled('div')<{ height: string | number }>(({ height }) => ({
   height,
   overflow: 'auto',
   flexShrink: 0,
-  position: 'relative',
+  background: '#fff',
 }));
 
 const Resizer = styled('div')(({ theme }) => ({
@@ -45,7 +45,7 @@ const Resizer = styled('div')(({ theme }) => ({
 const BottomPanel = styled('div')({
   flex: 1,
   overflow: 'auto',
-  position: 'relative',
+  position: 'relative'
 });
 
 const getScrollTarget = (panel: HTMLDivElement | null): HTMLElement | null => {

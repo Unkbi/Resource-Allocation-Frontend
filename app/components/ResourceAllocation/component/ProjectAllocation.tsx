@@ -10,6 +10,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
+import { AllAllocations } from '@/app/types';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -170,7 +171,7 @@ export default function ProjectAllocation({
     {
       field: 'WorkLocation',
       headerName: 'Resource Work Location',
-      width: 170,
+      width: 200,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -186,7 +187,7 @@ export default function ProjectAllocation({
     {
       field: 'LocationCategory',
       headerName: 'Resource Location Category',
-      width: 170,
+      width: 230,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -298,7 +299,7 @@ export default function ProjectAllocation({
     {
       field: 'AverageWeeklyHours',
       headerName: 'Average Weekly Hours',
-      width: 170,
+      width: 190,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -314,7 +315,7 @@ export default function ProjectAllocation({
     {
       field: 'ContractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
-      width: 170,
+      width: 200,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -330,7 +331,7 @@ export default function ProjectAllocation({
     {
       field: 'ContractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
-      width: 170,
+      width: 260,
       isEditable: 'false',
       sortable: 'false',
       type: 'string',
@@ -411,7 +412,7 @@ export default function ProjectAllocation({
     {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
-      width: 102, // min-width without eliding.
+      width: 110, // min-width without eliding.
       type: 'boolean',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
@@ -512,6 +513,10 @@ export default function ProjectAllocation({
     },
   ];
 
+  const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
+    return allocations.filter(allocation => allocation.project);
+  };
+
   return (
     <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
@@ -559,7 +564,7 @@ export default function ProjectAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={allAllocations}
+          data={removeResourcesWithNoProjects(allAllocations || [])}
           loading={loading || dataProcessing}
         />
       </Box>

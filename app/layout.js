@@ -52,7 +52,7 @@ function LayoutContent({ children }) {
           return 'Resources';
         case '/report':
           return 'Reports';
-        case '/actual':
+        case '/actuals':
           return 'Actuals';
         default:
           return 'Dashboard';

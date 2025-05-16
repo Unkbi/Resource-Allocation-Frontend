@@ -9,6 +9,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
+import { AllAllocations } from '@/app/types';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -26,8 +27,8 @@ interface Resource {
 const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const dispatch: AppDispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('');
-  const { costs: projectCosts, loading } = useSelector(
-    (state: RootState) => state.projectCost
+  const { costs: projectCosts, dataProcessing } = useSelector(
+    (state: RootState) => state.allocationsCost
   );
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
@@ -38,7 +39,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
 
   useEffect(() => {
     dispatch({
-      type: 'FETCH_PROJECT_COST_ALLOCATIONS',
+      type: 'FETCH_ALLOCATIONS_COST',
       payload: {
         teams: teams?.result,
         projects: projects?.result,
@@ -47,7 +48,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
         endDate: endDate,
       },
     });
-  }, [teams, projects, resources]);
+  }, [startDate, endDate, teams, projects, resources]);
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
@@ -123,7 +124,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     {
       field: 'totalEffort',
       headerName: 'Total Cost $',
-      width: 106,
+      width: 110,
       type: 'number',
       sortable: false,
       isEditable: false,
@@ -529,6 +530,11 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       },
     },
   ];
+
+  const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
+    return allocations.filter(allocation => allocation.project);
+  };
+
   return (
     <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
@@ -578,8 +584,8 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={projectCosts}
-          loading={loading}
+          data={removeResourcesWithNoProjects(projectCosts)}
+          loading={dataProcessing}
         />
       </Box>
     </>

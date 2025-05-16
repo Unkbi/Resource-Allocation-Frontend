@@ -73,6 +73,17 @@ const getColumnLabel = column => {
     AverageWeeklyHours: 'Average Weekly Hours',
     ContractorHourlyRate: 'Contractor Hourly Rate',
     ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
+    projectOvertimeAllowed: 'Allow Overtime',
+    projectCost: 'Project Cost',
+    projectCurrency: 'Project Currency',
+    Description: 'Project Description',
+    projectLocation: 'Project Location',
+    ProjectManager: 'Project Manager',
+    Owner: 'Project Sponsor',
+    ProjectEndDate: 'Project End Date',
+    ProjectStartDate: 'Project Start Date',
+    Status: 'Project Status',
+    Type: 'Project Type',
   };
 
   return columnLabels[column];

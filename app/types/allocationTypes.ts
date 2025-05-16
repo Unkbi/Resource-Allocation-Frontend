@@ -12,18 +12,6 @@ export interface Allocation {
   Project: string;
 }
 
-export interface CostAllocation {
-  ProjectName: string | null;
-  Id: string;
-  ProjectManager: string | null;
-  Period: string;
-  Resource: string;
-  Duration: string | null;
-  ResourceName: string | null;
-  Cost : number;
-  Project: string;
-}
-
 export interface GetAllAllocationsForPeriodPayload {
   'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
     StartDate: string;
@@ -97,7 +85,7 @@ export interface AllocationGridView {
 export interface AllColumns {
   team: string[];
   project: string[];
-  cost: string[]
+  project_cost: string[];
 }
 
 export interface AllocationGridViewState {
@@ -172,6 +160,56 @@ export interface AllAllocations {
 
 export interface AllAllocationsState {
   allAllocations: AllAllocations[] | null;
+  dataProcessing: boolean | null;
+  loading: boolean | null;
+  calendarDate: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+}
+
+export interface ActualAllocationsForPeriodPayload {
+  'ResourceAllocation.Core/GetActualizedAllocationsByPeriod': {
+    Resource: string;
+    StartDate: string;
+    EndDate: string;
+  };
+}
+
+export interface ConfirmActuals {
+  Project: string;
+  ActualsEntered: number;
+}
+
+export interface ConfirmActualAllocationsForPeriodRequest {
+  'ResourceAllocation.Core/ConfirmActualsEntered': {
+    Resource: string;
+    Period: string;
+    Status: string;
+    Actuals: ConfirmActuals[];
+  };
+}
+
+export interface ActualAllocations {
+  ActualsEntered: number | null;
+  AllocationEntered: number | null;
+  Duration: string | null;
+  Id: string | null;
+  Notes: string | null;
+  Period: string | null;
+  Project: string | null;
+  ProjectName: string | null;
+  Resource: string | null;
+}
+
+export interface ActualAllocationsForPeriodResponse {
+  Allocs: ActualAllocations[];
+  Status: string | null;
+}
+
+export interface ActualAllocationsState {
+  actualAllocations: ActualAllocations[] | null;
+  status: string | null;
   dataProcessing: boolean | null;
   loading: boolean | null;
   calendarDate: {

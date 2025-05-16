@@ -7,6 +7,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 import {
+  AllAllocations,
   Allocation,
   AllocationGridCell,
   AllocationGridCellData,
@@ -122,6 +123,29 @@ function getWeeksInRange(start: string, end: string) {
   return weeks;
 }
 
+export function sortAllAllocations(allocations: AllAllocations[], by = 'team') {
+  if (by === 'team') {
+    return allocations.sort((a, b) => {
+      if (!a.teams) return 1;
+      if (!b.teams) return -1;
+      return a.teams.localeCompare(b.teams);
+    });
+  } else if (by === 'project') {
+    return allocations.sort((a, b) => {
+      if (!a.project) return 1;
+      if (!b.project) return -1;
+      return a.project.localeCompare(b.project);
+    });
+  } else if (by === 'resource') {
+    return allocations.sort((a, b) => {
+      if (!a.resource) return 1;
+      if (!b.resource) return -1;
+      return a.resource.localeCompare(b.resource);
+    });
+  }
+  return allocations;
+}
+
 export function formatAllAllocations(
   allocations: Allocation[],
   teams: Team[],
@@ -203,7 +227,55 @@ export function formatAllAllocations(
     entry.totalEffort += alloc.AllocationEntered;
   }
 
-  return Array.from(grouped.values());
+  return sortAllAllocations(Array.from(grouped.values()));
+}
+
+export function injectBlankRows(
+  allocations: AllAllocations[],
+  teams: Team[],
+  teamsResources: Record<string, Resource[]>
+) {
+  const existingKeys = new Set(
+    allocations.map(a => `${a.teams}___${a.resourceId}`)
+  );
+
+  const extraRows: AllAllocations[] = [];
+
+  teams.forEach(team => {
+    const teamRes = teamsResources?.[team.Id] || [];
+    teamRes.forEach(resource => {
+      const key = `${team.Name}___${resource.Id}`;
+      if (!existingKeys.has(key)) {
+        extraRows.push({
+          id: `team/${team.Name}-resource/${resource.FullName}`,
+          resourceId: resource.Id,
+          project: '',
+          projectId: '',
+          projectSponsor: '',
+          projectManager: '',
+          projectStatus: '',
+          projectLocation: '',
+          projectType: '',
+          projectOvertimeAllowed: null,
+          projectCost: null,
+          projectCurrency: '',
+          projectStartDate: '',
+          projectEndDate: '',
+          resource: resource.FullName,
+          totalEffort: 0,
+          role: resource.Role || '',
+          teams: team.Name,
+          resourceType: resource.Type,
+          teamStatus: team.Status || '',
+          teamAllocationManager: team.AllocationManager || '',
+          teamId: team.Id,
+          hasAllocation: false,
+        });
+      }
+    });
+  });
+
+  return [...allocations, ...extraRows];
 }
 
 export function formatCostAllocations(
@@ -216,6 +288,12 @@ export function formatCostAllocations(
   endDate: string
 ) {
   const weeks = getWeeksInRange(startDate, endDate);
+
+  // Divide all allocationCosts by 1000
+  allocations = allocations.map(alloc => ({
+    ...alloc,
+    Cost: alloc.Cost / 1000,
+  }));
 
   // Build a lookup map from resource ID to team
   const resourceIdToTeam = new Map<string, Team>();
