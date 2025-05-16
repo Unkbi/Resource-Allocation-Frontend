@@ -41,11 +41,11 @@ const colorPairs: ColorPair[] = [
   { pastel: '#D9F1B7', dark: '#93CB41' },
   { pastel: '#B2D0FF', dark: '#2772F0' },
   { pastel: '#FBB7AE', dark: '#C55858' },
-  { pastel: '#45C0CD', dark: '#45COCD' },
-  { pastel: '#FFE685', dark: '#FFE685' },
-  { pastel: '#FFA8DE', dark: '#FFA8DE' },
-  // { pastel: '#847ODE', dark: '#8470DE' },
-  { pastel: '#959AA3', dark: '#959AA3' },
+  { pastel: '#DDFDF0', dark: '#45C0CD' },
+  { pastel: '#FCF5D9', dark: '#FFE685' },
+  { pastel: '#FEECF7', dark: '#FFA8DE' },
+  { pastel: '#F2EFFE', dark: '#8470DE' },
+  { pastel: '#EEF1F5', dark: '#959AA3' },
   { pastel: '#FFFFFF', dark: '#FFFFFF' },
 ];
 
