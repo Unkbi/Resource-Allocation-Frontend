@@ -292,9 +292,6 @@ export default function Project() {
         };
         return (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ mr: 0.1, flexShrink: 0 }}>
-              <CustomAvatar value={params.value} showFullName={false} />
-            </Box>
             <Box
               onClick={handleNameClick}
               sx={{
