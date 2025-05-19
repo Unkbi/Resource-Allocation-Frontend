@@ -4,6 +4,7 @@ import allocationViewReducer from './reducers/allocationViewReducer';
 import teamsReducer from './reducers/teamsReducer';
 import projectsReducer from './reducers/projectsReducer';
 import resourcesReducer from './reducers/resourcesReducer';
+import orgaisationsReducer from './reducers/oraganisationsReducer';
 import resourceAllocationReducer from './reducers/resourceAllocationReducer';
 import toastSlice from './reducers/toastReducer';
 import dialogReducer from './reducers/dialogReducer';
@@ -26,6 +27,7 @@ export const makeStore = () => {
       teams: teamsReducer,
       projects: projectsReducer,
       resources: resourcesReducer,
+      organisations: orgaisationsReducer,
       resourceAllocations: resourceAllocationReducer,
       toast: toastSlice,
       globalDialog: dialogReducer,
