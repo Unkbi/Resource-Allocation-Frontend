@@ -21,6 +21,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PROJECT_TOTAL_COST_CATEGORIES,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
@@ -595,4 +596,40 @@ export function formateToFloat(value) {
   const parsedValue = parseFloat(value);
   if (isNaN(parsedValue)) return 0.0;
   return Math.round(value * 10) / 10;
+}
+
+export function getProjectTypeColorLine(projectType) {
+  const projectTypeColors = {
+    'key initiative': '#5080DA',
+    rtb: '#A3A2A4',
+    ctb: '#F5B544',
+    stb: '#4B9F47',
+    ongoing: '#3730A3',
+  };
+  return projectTypeColors[projectType.toLowerCase()] || '#FF0000';
+}
+
+export function getProjectBudgetColor(budgetCategory = 'onBudget') {
+  const projectBudgetColors = {
+    onBudget: '#B91C1C',
+    overBudget: '#FF0000',
+    underBudget: '#4B9F47',
+  };
+
+  return projectBudgetColors[budgetCategory];
+}
+
+export function getProjectBudgetCategory(projectBudget, currentBudget) {
+  const projectBudgetCategories = {
+    onBudget: 'onBudget',
+    overBudget: 'overBudget',
+    underBudget: 'underBudget',
+  };
+  if (currentBudget < projectBudget - projectBudget * 0.1) {
+    return projectBudgetCategories['underBudget'];
+  }
+  if (currentBudget > projectBudget + projectBudget * 0.1) {
+    return projectBudgetCategories['overBudget'];
+  }
+  return projectBudgetCategories['onBudget'];
 }
