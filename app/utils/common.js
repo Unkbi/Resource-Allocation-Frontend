@@ -633,3 +633,12 @@ export function getProjectBudgetCategory(projectBudget, currentBudget) {
   }
   return projectBudgetCategories['onBudget'];
 }
+
+export function getProjectBudgetCategoryDisplayName(budgetCategory) {
+  const projectBudgetCategories = {
+    onBudget: 'On-Budget',
+    overBudget: 'Over-Budget',
+    underBudget: 'Under-Budget',
+  };
+  return projectBudgetCategories[budgetCategory];
+}

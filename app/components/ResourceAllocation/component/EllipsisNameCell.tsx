@@ -13,6 +13,7 @@ interface EllipsisNameCellProps {
   showAddButton?: boolean;
   isFormatWithK?: boolean;
   leftBorderColor?: string;
+  CustomTooptip?: React.ReactElement;
 }
 
 const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
@@ -25,10 +26,10 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
   showAddButton = true,
   leftBorderColor = '',
   isFormatWithK,
+  CustomTooptip,
 }) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const checkOverflow = () => {
       const el = textRef.current;
@@ -96,7 +97,31 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
           </div>
         )}
 
-        {isOverflowing ? (
+        {CustomTooptip ? (
+          <Tooltip
+            title={CustomTooptip}
+            placement="right"
+            arrow
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  backgroundColor: '#fff',
+                  color: '#000',
+                  boxShadow: 2,
+                  border: '1px solid #ddd',
+                  padding: 0,
+                },
+              },
+              arrow: {
+                sx: {
+                  color: '#fff',
+                },
+              },
+            }}
+          >
+            {content}
+          </Tooltip>
+        ) : isOverflowing ? (
           <Tooltip title={value} placement="right" arrow>
             {content}
           </Tooltip>
