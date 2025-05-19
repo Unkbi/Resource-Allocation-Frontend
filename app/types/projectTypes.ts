@@ -3,7 +3,7 @@ import { AllocationGridCell } from './allocationTypes';
 
 export interface Project {
   ProjectManager: string | null;
-  CostCurrency: string | null;
+  BudgetCurrency: string | null;
   StartDate: string | null;
   Id: string;
   Owner: string | null;
@@ -13,7 +13,7 @@ export interface Project {
   Description: string | null;
   Type: string | null;
   EndDate: string | null;
-  Cost: number | null;
+  Budget: number | null;
   Location: string | null;
   __parent__: string | null;
   Status: string | null;

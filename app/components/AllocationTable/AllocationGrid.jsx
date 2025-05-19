@@ -1062,7 +1062,13 @@ export default function AllocationGrid({
       defaultGroupingExpansionDepth={1}
       disableAutosize
       getCellClassName={params =>
-        getCellClassName(params, updatedRows, allocationTheme)
+        getCellClassName(
+          params,
+          updatedRows,
+          allocationTheme,
+          type,
+          projects?.result
+        )
       }
       getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}
