@@ -3,6 +3,7 @@ import { projectsSaga } from './projectsSaga';
 import teamSaga from './teamsSaga';
 import { allAllocationsSaga } from './allAllocationsSaga';
 import { actualAllocationsSaga } from './actualAllocationsSaga';
+import { organisationsSaga } from './organisationsSaga';
 
 export default function* rootSaga() {
   yield all([
@@ -10,6 +11,7 @@ export default function* rootSaga() {
     teamSaga(),
     allAllocationsSaga(),
     actualAllocationsSaga(),
+    organisationsSaga(),
     // ...add more watchers here
   ]);
 }

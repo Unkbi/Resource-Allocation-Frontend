@@ -11,30 +11,47 @@ import {
   Radio,
   Button,
   Typography,
-} from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import StyledLabel from "../Label/StyledLabel";
-import { StyledInput } from "../Input/StyledInput";
-import CustomSelect from "../Select/CustomSelect";
-import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker";
-import { useSelector } from "react-redux";
-import { useEffect } from "react";
-import CustomDatePicker from "../DatePicker/CustomDatePicker";
+} from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import StyledLabel from '../Label/StyledLabel';
+import { StyledInput } from '../Input/StyledInput';
+import CustomSelect from '../Select/CustomSelect';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import CustomDatePicker from '../DatePicker/CustomDatePicker';
+import { useDispatch } from 'react-redux';
+import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 
-const AddResourceForm = ({ formikProps , setFormValue}) => {
-  const { values, handleChange, handleBlur, errors, touched, resetForm, setTouched, setFieldValue } = formikProps
-  const { initialData } = useSelector((state) => state.globalDialog.formState)
-  const { resources } = useSelector((state) => state.resources)
-  const resourceListOptions = resources && resources.result.map((resource) => {
-    return { value: resource.FullName, label: resource.FullName }
-  })
+const AddResourceForm = ({ formikProps, setFormValue }) => {
+  const {
+    values,
+    handleChange,
+    handleBlur,
+    errors,
+    touched,
+    resetForm,
+    setTouched,
+    setFieldValue,
+  } = formikProps;
+  const { initialData } = useSelector(state => state.globalDialog.formState);
+  const { resources } = useSelector(state => state.resources);
+  const { organisations } = useSelector(state => state.organisations);
+  const resourceListOptions =
+    resources &&
+    resources.result.map(resource => {
+      return { value: resource.FullName, label: resource.FullName };
+    });
+  const dispatch = useDispatch();
+
   useEffect(() => {
-    const fullName = [values.FirstName, values.LastName].filter(Boolean).join(' ');
+    const fullName = [values.FirstName, values.LastName]
+      .filter(Boolean)
+      .join(' ');
     if (values.FullName !== fullName) {
       formikProps.setFieldValue('FullName', fullName);
     }
   }, [values.FirstName, values.LastName]);
-  
 
   useEffect(() => {
     if (initialData) {
@@ -53,27 +70,27 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
         AverageWeeklyHours: initialData.AverageWeeklyHours || null,
         Department: initialData.Department || '',
         Role: initialData.Role || '',
-        PhoneNumber: initialData.PhoneNumber || ''
+        PhoneNumber: initialData.PhoneNumber || '',
       };
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
       formikProps.setTouched({});
     }
   }, [initialData]);
-  
+
   const statusOptions = [
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" },
-  ]
+    { value: 'Active', label: 'Active' },
+    { value: 'Inactive', label: 'Inactive' },
+  ];
 
   const typeOptions = [
-    { value: "FTE", label: "FTE" },
-    { value: "Contractor - FT", label: "Contractor - FT" },
-    { value: "Contractor - PT", label: "Contractor - PT" },
-    { value: "Intern", label: "Intern" },
-    { value: "Temp", label: "Temp" },
-    { value: "Vendor", label: "Vendor" },
-  ]
+    { value: 'FTE', label: 'FTE' },
+    { value: 'Contractor - FT', label: 'Contractor - FT' },
+    { value: 'Contractor - PT', label: 'Contractor - PT' },
+    { value: 'Intern', label: 'Intern' },
+    { value: 'Temp', label: 'Temp' },
+    { value: 'Vendor', label: 'Vendor' },
+  ];
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -82,21 +99,30 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!organisations || organisations.length === 0) {
+      dispatch({
+        type: FETCH_ORGANISATIONS,
+        payload: {},
+      });
+    }
+  }, []);
+
   return (
     <Box>
       <Box
         sx={{
           pb: 2,
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          width: "100%",
-          gap: 1
-        }} 
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          width: '100%',
+          gap: 1,
+        }}
       >
         <Box sx={{ flex: 1 }}>
           <StyledLabel>
-            First Name <span style={{ color: "red" }}>*</span>
+            First Name <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
             name="FirstName"
@@ -107,14 +133,14 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
               const trimmedValue = e.target.value.trim();
               setFieldValue('FirstName', trimmedValue);
               handleBlur(e);
-            }}            
+            }}
             error={touched.FirstName && Boolean(errors.FirstName)}
             helperText={touched.FirstName && errors.FirstName}
-          />        
+          />
         </Box>
         <Box sx={{ flex: 1 }}>
           <StyledLabel>
-            Last Name <span style={{ color: "red" }}>*</span>
+            Last Name <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
             name="LastName"
@@ -125,15 +151,15 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
               const trimmedValue = e.target.value.trim();
               setFieldValue('LastName', trimmedValue);
               handleBlur(e);
-            }} 
+            }}
             error={touched.LastName && Boolean(errors.LastName)}
             helperText={touched.LastName && errors.LastName}
-          />        
-          </Box>
+          />
+        </Box>
       </Box>
 
       <StyledLabel>
-        Email ID <span style={{ color: "red" }}>*</span>
+        Email ID <span style={{ color: 'red' }}>*</span>
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
@@ -144,22 +170,22 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
           onBlur={handleBlur}
           error={touched.Email && Boolean(errors.Email)}
           helperText={touched.Email && errors.Email}
-        />           
+        />
       </Box>
 
       <Box
         sx={{
           pb: 2,
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          width: "100%",
-          gap: 1
-        }} 
-      >        
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          width: '100%',
+          gap: 1,
+        }}
+      >
         <Box sx={{ flex: 1 }}>
           <StyledLabel>
-            Department <span style={{ color: "red" }}>*</span>
+            Department <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
             name="Department"
@@ -170,14 +196,14 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
               const trimmedValue = e.target.value.trim();
               setFieldValue('Department', trimmedValue);
               handleBlur(e);
-            }}             
+            }}
             error={touched.Department && Boolean(errors.Department)}
             helperText={touched.Department && errors.Department}
-          /> 
+          />
         </Box>
         <Box sx={{ flex: 1 }}>
           <StyledLabel>
-            Role <span style={{ color: "red" }}>*</span>
+            Role <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
             name="Role"
@@ -191,28 +217,28 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             }}
             error={touched.Role && Boolean(errors.Role)}
             helperText={touched.Role && errors.Role}
-          /> 
+          />
         </Box>
       </Box>
 
       <Box
         sx={{
           pb: 2,
-          display: "flex",
-          alignItems: "flex-end", 
-          width: "100%",
+          display: 'flex',
+          alignItems: 'flex-end',
+          width: '100%',
           gap: 1,
         }}
       >
-        <Box sx={{ width: "50%" }}>
+        <Box sx={{ width: '50%' }}>
           <StyledLabel>
-            HR Level <span style={{ color: "red" }}>*</span>
+            HR Level <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
             name="HRLevel"
             placeholder="Enter level"
             value={values.HRLevel || ''}
-            onChange={(e) => {
+            onChange={e => {
               const input = e.target.value;
               if (/^\d*$/.test(input)) {
                 formikProps.setFieldValue('HRLevel', input);
@@ -221,17 +247,17 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
             onBlur={handleBlur}
             error={touched.HRLevel && Boolean(errors.HRLevel)}
             helperText={touched.HRLevel && errors.HRLevel}
-          /> 
+          />
         </Box>
 
-        <Box sx={{ width: "50%" }}>
+        <Box sx={{ width: '50%' }}>
           <StyledLabel>
-            Resource Type <span style={{ color: "red" }}>*</span>
+            Resource Type <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <CustomSelect
             name="Type"
             options={typeOptions}
-            width={"100%"}
+            width={'100%'}
             value={values.Type || ''}
             onChange={handleChange}
             onBlur={handleBlur}
@@ -241,14 +267,15 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
         </Box>
       </Box>
 
-      {(values.Type === "Contractor - FT" || values.Type === "Contractor - PT") && (
+      {(values.Type === 'Contractor - FT' ||
+        values.Type === 'Contractor - PT') && (
         <Box
           sx={{
             pb: 2,
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            width: "100%",
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            width: '100%',
             gap: 1,
           }}
         >
@@ -259,14 +286,19 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
               name="ContractorHourlyRate"
               placeholder="Enter rate"
               value={values.ContractorHourlyRate ?? ''}
-              onChange={(e) => {
+              onChange={e => {
                 const input = e.target.value;
                 const parsed = input === '' ? null : Number(input);
                 formikProps.setFieldValue('ContractorHourlyRate', parsed);
               }}
               onBlur={handleBlur}
-              error={touched.ContractorHourlyRate && Boolean(errors.ContractorHourlyRate)}
-              helperText={touched.ContractorHourlyRate && errors.ContractorHourlyRate}
+              error={
+                touched.ContractorHourlyRate &&
+                Boolean(errors.ContractorHourlyRate)
+              }
+              helperText={
+                touched.ContractorHourlyRate && errors.ContractorHourlyRate
+              }
               InputProps={{
                 startAdornment: <span>$&nbsp;</span>,
               }}
@@ -279,14 +311,18 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
               name="AverageWeeklyHours"
               placeholder="Enter hours"
               value={values.AverageWeeklyHours ?? ''}
-              onChange={(e) => {
+              onChange={e => {
                 const input = e.target.value;
                 const parsed = input === '' ? null : Number(input);
                 formikProps.setFieldValue('AverageWeeklyHours', parsed);
               }}
               onBlur={handleBlur}
-              error={touched.AverageWeeklyHours && Boolean(errors.AverageWeeklyHours)}
-              helperText={touched.AverageWeeklyHours && errors.AverageWeeklyHours}
+              error={
+                touched.AverageWeeklyHours && Boolean(errors.AverageWeeklyHours)
+              }
+              helperText={
+                touched.AverageWeeklyHours && errors.AverageWeeklyHours
+              }
             />
           </Box>
         </Box>
@@ -294,7 +330,7 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>
-          Manager <span style={{ color: "red" }}>*</span>
+          Manager <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <CustomSelect
           name="Manager"
@@ -302,7 +338,7 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
           value={values.Manager || ''}
           onChange={handleChange}
           onBlur={handleBlur}
-          width={"100%"}
+          width={'100%'}
           error={touched.Manager && Boolean(errors.Manager)}
           helperText={formikProps.errors.Manager}
         />
@@ -311,19 +347,24 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
       <Box
         sx={{
           pb: 2,
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          width: "100%",
-          gap: 1
-        }} 
-      >        
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          width: '100%',
+          gap: 1,
+        }}
+      >
         <CustomDatePicker
           name="StartDate"
           value={formikProps.values.StartDate || null}
           formikProps={formikProps}
-          error={formikProps.touched.StartDate && Boolean(formikProps.errors.StartDate)}
-          helperText={formikProps.touched.StartDate && formikProps.errors.StartDate}
+          error={
+            formikProps.touched.StartDate &&
+            Boolean(formikProps.errors.StartDate)
+          }
+          helperText={
+            formikProps.touched.StartDate && formikProps.errors.StartDate
+          }
           label="Start Date"
           placeholder="MM/DD/YYYY"
           title="Start Date"
@@ -333,7 +374,9 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
           name="EndDate"
           value={formikProps.values.EndDate || null}
           formikProps={formikProps}
-          error={formikProps.touched.EndDate && Boolean(formikProps.errors.EndDate)}
+          error={
+            formikProps.touched.EndDate && Boolean(formikProps.errors.EndDate)
+          }
           helperText={formikProps.touched.EndDate && formikProps.errors.EndDate}
           label="End Date"
           placeholder="MM/DD/YYYY"
@@ -344,17 +387,15 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
 
       <Box
         sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          width: "100%",
-          gap: 1
-        }} 
-      >           
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          width: '100%',
+          gap: 1,
+        }}
+      >
         <Box sx={{ flex: 1 }}>
-          <StyledLabel>
-            Work Location
-          </StyledLabel>
+          <StyledLabel>Work Location</StyledLabel>
           <StyledInput
             name="WorkLocation"
             placeholder="Enter location"
@@ -364,9 +405,9 @@ const AddResourceForm = ({ formikProps , setFormValue}) => {
               const trimmedValue = e.target.value.trim();
               setFieldValue('WorkLocation', trimmedValue);
               handleBlur(e);
-            }} 
+            }}
             error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-            helperText={touched.WorkLocation && errors.WorkLocation}            
+            helperText={touched.WorkLocation && errors.WorkLocation}
           />
         </Box>
       </Box>
