@@ -9,7 +9,12 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Project } from '@/app/types';
+import {
+  getProjectBudgetCategory,
+  getProjectBudgetColor,
+} from '@/app/utils/common';
+import ProjectTotalCustomToolTip from '../../AllocationTable/components/ProjectTotalCustomToolTip';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -139,7 +144,34 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
           !isNaN(value) && value !== null
             ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
             : null;
-        return <EllipsisNameCell value={`${formattedValue}k`} />;
+        const project: Project | undefined = projects?.result?.find(
+          // @ts-ignore
+          (project: Project) => project.Name === params?.rowNode?.groupingKey
+        );
+        const projectCategory = getProjectBudgetCategory(
+          project?.Budget || 0,
+          params?.value || 0
+        );
+        const projectBudgetColor = getProjectBudgetColor(projectCategory);
+        return (
+          <EllipsisNameCell
+            value={`${formattedValue}k`}
+            // @ts-ignore
+            {...(params?.rowNode?.groupingField === 'project'
+              ? {
+                  CustomTooptip: (
+                    <ProjectTotalCustomToolTip
+                      params={params}
+                      projectCategory={projectCategory}
+                      projectBudgetColor={projectBudgetColor}
+                      formattedValue={formattedValue || ''}
+                      project={project}
+                    />
+                  ),
+                }
+              : {})}
+          />
+        );
       },
     },
     {
