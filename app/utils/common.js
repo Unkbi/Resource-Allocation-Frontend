@@ -600,19 +600,19 @@ export function formateToFloat(value) {
 
 export function getProjectTypeColorLine(projectType) {
   const projectTypeColors = {
-    'key initiative': '#5080DA',
+    'key initiative': '#3730A3',
     rtb: '#A3A2A4',
-    ctb: '#F5B544',
-    stb: '#4B9F47',
-    ongoing: '#3730A3',
+    ctb: '#5080DA',
+    stb: '#F5B544',
+    ongoing: '#4B9F47',
   };
   return projectTypeColors[projectType.toLowerCase()] || '#FF0000';
 }
 
 export function getProjectBudgetColor(budgetCategory = 'onBudget') {
   const projectBudgetColors = {
-    onBudget: '#B91C1C',
-    overBudget: '#FF0000',
+    onBudget: '#1565C0',
+    overBudget: '#B91C1C',
     underBudget: '#4B9F47',
   };
 

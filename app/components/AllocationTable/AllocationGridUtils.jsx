@@ -566,7 +566,6 @@ export const getCellClassName = (
       const project = allProjects.find(
         row => row.Name === params.rowNode.groupingKey
       );
-      debugger;
       const projectCategory = getProjectBudgetCategory(
         project?.Budget || 0,
         params?.value || 0
@@ -649,14 +648,20 @@ export const getCellClassName = (
       const project = allProjects.find(
         row => row.Name === params.rowNode.groupingKey
       );
-      const isWithinProjectDateRange =
-        project &&
-        project.StartDate &&
-        project.EndDate &&
-        parseISO(project.StartDate) <= parseISO(new Date().toISOString()) &&
-        parseISO(project.EndDate) >= parseISO(new Date().toISOString());
-      if (isWithinProjectDateRange && project.Type) {
-        return `firstGroupsRow project-type-${project.Type.toLowerCase().split(' ').join('_')}`;
+
+      const currentWeekData = updatedRows.find(
+        row => row.projectId === project?.Id
+      )?.[params.field];
+      if (project && currentWeekData && currentWeekData?.period) {
+        const isWithinProjectDateRange =
+          project &&
+          project.StartDate &&
+          project.EndDate &&
+          parseISO(project.StartDate) <= parseISO(currentWeekData?.period) &&
+          parseISO(project.EndDate) >= parseISO(currentWeekData?.period);
+        if (isWithinProjectDateRange && project.Type) {
+          return `firstGroupsRow project-type-${project.Type.toLowerCase().split(' ').join('_')}`;
+        }
       }
     }
   }
