@@ -129,7 +129,6 @@ export default function ActualTable({
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
   >({});
-  const rowIdCounterRef = useRef(1000000);
 
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
@@ -236,7 +235,13 @@ export default function ActualTable({
           return sum + newActual;
         }
         if (row.id !== 'total' && row.id !== 'second-total') {
-          return sum + (parseFloat(`${row.actuals}`) || 0);
+          return (
+            Math.round(
+              (sum +
+                (row?.actuals ? parseFloat(row?.actuals?.toFixed(1)) : 0)) *
+                10
+            ) / 10
+          );
         }
         return sum;
       }, 0);
