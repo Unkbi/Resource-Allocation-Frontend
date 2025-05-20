@@ -108,7 +108,7 @@ export default function ActualTable({
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
-  const {status } = useSelector((state: RootState) => state.actualAllocations);
+  const { status } = useSelector((state: RootState) => state.actualAllocations);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -153,7 +153,7 @@ export default function ActualTable({
         setHasPersonalTime(true);
       }
     }
-  }, [startDate, endDate,data]);
+  }, [startDate, endDate, data]);
 
   useEffect(() => {
     if (onValidationChange) {
@@ -176,7 +176,6 @@ export default function ActualTable({
     }
   }, [rows, data, onModificationChange]);
 
-  
   // Organize rows into sections
   const getOrganizedRows = () => {
     const plannedRows = rows.filter(
@@ -195,15 +194,27 @@ export default function ActualTable({
       row => row.project === 'Other Work' || row.project === 'Personal Time'
     );
 
-    const organizedRows = [
-      ...(plannedRows.length > 0 ? [...plannedRows] : []),
-      ...(unplannedRows.length > 0
-        ? [{ id: 'divider-1', type: 'divider' }, ...unplannedRows]
-        : []),
-      ...(otherRows.length > 0
-        ? [{ id: 'divider-2', type: 'divider' }, ...otherRows]
-        : []),
-    ];
+    // Mark last row of each section
+    if (plannedRows.length > 0) {
+      plannedRows[plannedRows.length - 1] = {
+        ...plannedRows[plannedRows.length - 1],
+        sectionEnd: 'planned',
+      };
+    }
+    if (unplannedRows.length > 0) {
+      unplannedRows[unplannedRows.length - 1] = {
+        ...unplannedRows[unplannedRows.length - 1],
+        sectionEnd: 'unplanned',
+      };
+    }
+    if (otherRows.length > 0) {
+      otherRows[otherRows.length - 1] = {
+        ...otherRows[otherRows.length - 1],
+        sectionEnd: 'other',
+      };
+    }
+
+    const organizedRows = [...plannedRows, ...unplannedRows, ...otherRows];
 
     return organizedRows;
   };
@@ -511,11 +522,7 @@ export default function ActualTable({
   const addNewRow = (newRow: GridValidRowModel) => {
     setRows(prevRows => {
       const updatedRows = [...prevRows];
-      const hasDivider = updatedRows.some(row => row.id === 'divider');
 
-      if (!hasDivider) {
-        updatedRows.push({ id: 'divider', type: 'divider' });
-      }
 
       updatedRows.push(newRow as ActualAllocationTableRow);
       return updatedRows;
@@ -670,10 +677,16 @@ export default function ActualTable({
             onCellKeyDown={handleCellKeyDown}
             processRowUpdate={handleProcessRowUpdate}
             getRowClassName={params => {
-              if (params.id === 'total') return 'second-total-row';
-              if (params.id === 'divider'|| params.id === 'divider-1' || params.id === 'divider-2') return 'divider-row';
-              if (params?.row?.id === rows[rows.length - 1]?.id)
-                return 'last-row';
+              const isLastRow =
+                params?.row?.id ===
+                getOrganizedRows()[getOrganizedRows().length - 1]?.id;
+              if (!isLastRow && params.row.sectionEnd === 'planned')
+                return 'section-end-planned';
+              if (!isLastRow && params.row.sectionEnd === 'unplanned')
+                return 'section-end-unplanned';
+              if (!isLastRow && params.row.sectionEnd === 'other')
+                return 'section-end-other';
+              if (isLastRow) return 'last-row';
               return 'first-header-row';
             }}
             sx={{
