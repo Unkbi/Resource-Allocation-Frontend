@@ -2,7 +2,7 @@
 import ResourceTable from "@/app/components/Resources/ResourceTable";
 import { Box, styled } from "@mui/system";
 import { IconButton, Menu, MenuItem, Stack, Tab, Tabs } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { generateRandomColor, getInitials } from "@/app/utils/common";
 import MoreVertIcon from "@mui/icons-material/MoreVert"
 import { useDispatch, useSelector } from "react-redux";
@@ -138,6 +138,16 @@ export default function Resources() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false); 
     const [deleteTarget, setDeleteTarget] = useState({ id: "", name: "" });
     const { id: highlightedRowId } = useSelector((state) => state.highlightedRow);
+
+    const managerMap = useMemo(() => {
+      const map = {};
+      if (resources?.result) {
+        resources.result.forEach((res) => {
+          map[res.Id] = res.FullName;
+        });
+      }
+      return map;
+    }, [resources]);
 
     useEffect(() => {
       if(!updating){
@@ -339,6 +349,10 @@ export default function Resources() {
             width: 170,
             sortable: true,
             filterable: true,
+            renderCell: (params) => {
+              const managerId = params?.row?.Manager;
+              return <span>{managerMap?.[managerId] || managerId || ''}</span>;
+            },
         },
         {
           field: "StartDate",

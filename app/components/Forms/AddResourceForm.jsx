@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useDispatch } from 'react-redux';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+import { getResourceDetail } from '@/app/services/teamServices';
 
 const AddResourceForm = ({ formikProps, setFormValue }) => {
   const {
@@ -36,47 +37,75 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
   } = formikProps;
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
+  const { teams } = useSelector((state) => state.teams);
   const { organisations } = useSelector(state => state.organisations);
   const resourceListOptions =
     resources &&
     resources.result.map(resource => {
-      return { value: resource.FullName, label: resource.FullName };
+      return { value: resource.Id, label: resource.FullName };
     });
+  const organisationListOptions =
+    organisations?.map(org => ({
+      value: org.Name,
+      label: org.Name,
+    })) || [];
+  const teamListOptions = teams?.result?.map((team) => ({
+    value: team.__path__,
+    label: team.Name,
+  })) || [];
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fullName = [values.FirstName, values.LastName]
-      .filter(Boolean)
-      .join(' ');
+    const firstNameToUse = values.PreferredFirstName?.trim() || values.FirstName;
+    const fullName = [firstNameToUse, values.LastName].filter(Boolean).join(' ');
     if (values.FullName !== fullName) {
       formikProps.setFieldValue('FullName', fullName);
     }
-  }, [values.FirstName, values.LastName]);
+  }, [values.PreferredFirstName, values.FirstName, values.LastName]);
 
-  useEffect(() => {
-    if (initialData) {
-      const rowData = {
-        StartDate: initialData.StartDate || null,
-        EndDate: initialData.EndDate || null,
-        WorkLocation: initialData.WorkLocation || null,
-        Manager: initialData.Manager || '',
-        FirstName: initialData.FirstName || '',
-        LastName: initialData.LastName || '',
-        Type: initialData.Type || 'Contractor - FT',
-        Status: initialData.Status || 'Active',
-        Email: initialData.Email || '',
-        HRLevel: initialData.HRLevel || '',
-        ContractorHourlyRate: initialData.ContractorHourlyRate || null,
-        AverageWeeklyHours: initialData.AverageWeeklyHours || null,
-        Department: initialData.Department || '',
-        Role: initialData.Role || '',
-        PhoneNumber: initialData.PhoneNumber || '',
-      };
-      setFormValue(rowData);
-      formikProps.resetForm({ values: rowData });
-      formikProps.setTouched({});
+useEffect(() => {
+  const loadAndSetForm = async () => {
+    if (!initialData) return;
+
+    // 1. Setup default form values from initialData
+    const rowData = {
+      StartDate: initialData.StartDate || null,
+      EndDate: initialData.EndDate || null,
+      WorkLocation: initialData.WorkLocation || null,
+      Manager: initialData.Manager || '',
+      FirstName: initialData.FirstName || '',
+      LastName: initialData.LastName || '',
+      PreferredFirstName: initialData.PreferredFirstName || '',
+      Type: initialData.Type || 'Contractor - FT',
+      Status: initialData.Status || 'Active',
+      Email: initialData.Email || '',
+      HRLevel: initialData.HRLevel || '',
+      ContractorHourlyRate: initialData.ContractorHourlyRate || null,
+      AverageWeeklyHours: initialData.AverageWeeklyHours || null,
+      Department: initialData.Department || '',
+      Role: initialData.Role || '',
+      PhoneNumber: initialData.PhoneNumber || '',
+      LocationCategory: initialData.LocationCategory || '',
+      Team: '',
+    };
+
+    try {
+      const detailResult = await dispatch(getResourceDetail(initialData.Id));
+      const resourceDetail = detailResult?.payload;
+      if (resourceDetail?.Team?.__path__) {
+        rowData.Team = resourceDetail.Team.__path__;
+      }
+    } catch (error) {
+      console.error('Failed to fetch team detail', error);
     }
-  }, [initialData]);
+
+    setFormValue(rowData);
+    formikProps.resetForm({ values: rowData });
+    formikProps.setTouched({});
+  };
+
+  loadAndSetForm();
+}, [initialData?.Id]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -91,7 +120,10 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     { value: 'Temp', label: 'Temp' },
     { value: 'Vendor', label: 'Vendor' },
   ];
-
+  const LocationCategoryOptions = [
+    {value: 'Onshore', label: 'Onshore' },
+    {value: 'Offshore', label: 'Offshore' }
+  ]
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -159,6 +191,25 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       </Box>
 
       <StyledLabel>
+        Preferred First Name
+      </StyledLabel>
+      <Box sx={{ pb: 2 }}>
+        <StyledInput
+          name="PreferredFirstName"
+          placeholder="Enter preferred first name"
+          value={values.PreferredFirstName || ''}
+          onChange={handleChange}
+          onBlur={e => {
+            const trimmedValue = e.target.value.trim();
+            setFieldValue('PreferredFirstName', trimmedValue);
+            handleBlur(e);
+          }}
+          error={touched.PreferredFirstName && Boolean(errors.PreferredFirstName)}
+          helperText={touched.PreferredFirstName && errors.PreferredFirstName}
+        />
+      </Box>
+
+      <StyledLabel>
         Email ID <span style={{ color: 'red' }}>*</span>
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
@@ -173,6 +224,25 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         />
       </Box>
 
+      <StyledLabel>
+        Phone Number
+      </StyledLabel>
+
+      <Box sx={{ pb: 2 }}>
+        <StyledInput
+          name="PhoneNumber"
+          placeholder="Enter phone number"
+          value={values.PhoneNumber || ''}
+          onChange={(e) => {
+            const numericOnly = e.target.value.replace(/\D/g, '');
+            formikProps.setFieldValue('PhoneNumber', numericOnly);
+          }}          
+          onBlur={handleBlur}
+          error={touched.PhoneNumber && Boolean(errors.PhoneNumber)}
+          helperText={touched.PhoneNumber && errors.PhoneNumber}
+        />     
+      </Box>
+
       <Box
         sx={{
           pb: 2,
@@ -183,20 +253,18 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
           gap: 1,
         }}
       >
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, width: '50%' }}>
           <StyledLabel>
-            Department <span style={{ color: 'red' }}>*</span>
+            Organization <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
-          <StyledInput
+          <CustomSelect
             name="Department"
-            placeholder="Enter department"
+            width={'100%'}
+            placeholder="Enter organization"
             value={values.Department || ''}
+            options={organisationListOptions}
             onChange={handleChange}
-            onBlur={e => {
-              const trimmedValue = e.target.value.trim();
-              setFieldValue('Department', trimmedValue);
-              handleBlur(e);
-            }}
+            onBlur={handleBlur}
             error={touched.Department && Boolean(errors.Department)}
             helperText={touched.Department && errors.Department}
           />
@@ -232,7 +300,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       >
         <Box sx={{ width: '50%' }}>
           <StyledLabel>
-            HR Level <span style={{ color: 'red' }}>*</span>
+            HR Level
           </StyledLabel>
           <StyledInput
             name="HRLevel"
@@ -258,7 +326,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
             name="Type"
             options={typeOptions}
             width={'100%'}
-            value={values.Type || ''}
+            value={values.Type || 'Contractor - FT'}
             onChange={handleChange}
             onBlur={handleBlur}
             error={touched.Type && Boolean(errors.Type)}
@@ -327,6 +395,22 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
           </Box>
         </Box>
       )}
+
+      <Box sx={{ pb: 2 }}>
+        <StyledLabel sx={{ flex: 1 }}>
+          Team <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
+        <CustomSelect
+          name="Team"
+          options={teamListOptions}
+          value={values.Team || ''}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          width={'100%'}
+          error={touched.Team && Boolean(errors.Team)}
+          helperText={formikProps.errors.Team}
+        />
+      </Box>
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>
@@ -408,6 +492,23 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
             }}
             error={touched.WorkLocation && Boolean(errors.WorkLocation)}
             helperText={touched.WorkLocation && errors.WorkLocation}
+          />
+        </Box>
+
+        <Box sx={{ flex: 1 }}>
+          <StyledLabel>
+            Location Category
+          </StyledLabel>
+          <CustomSelect
+            name="LocationCategory"
+            options={LocationCategoryOptions}
+            width={"100%"}
+            value={values.LocationCategory || ''}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            width={"100%"}
+            error={touched.LocationCategory && Boolean(errors.LocationCategory)}
+            helperText={formikProps.errors.LocationCategory}
           />
         </Box>
       </Box>

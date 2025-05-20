@@ -66,6 +66,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
+import { addResourceToTeam } from '@/app/services/teamServices';
 
 const initialValuesMap = {
   add_project: {
@@ -88,9 +89,10 @@ const initialValuesMap = {
     Department: '',
     Role: '',
     HRLevel: '',
-    Type: 'Contractor',
+    Type: 'Contractor - FT',
     ContractorHourlyRate: null,
     AverageWeeklyHours: null,
+    Team: '',
     Manager: '',
     StartDate: '',
     EndDate: '',
@@ -288,7 +290,7 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { submitType, ...cleanedValues } = values;
+    const { submitType, Team, ...cleanedValues } = values;
 
     switch (formType) {
       case 'add_project':
@@ -395,7 +397,14 @@ const AllocationForm = () => {
             );
             return;
           }
-          const newResourceId = result?.payload?.result?.Id ?? null;
+          const newResource = result?.payload?.result;
+          const newResourceId = newResource?.Id ?? null;
+          const resourcePath = newResource?.__path__;
+          const teamPath = values.Team;
+
+          if (resourcePath && teamPath) {
+            await dispatch(addResourceToTeam({ teamPath, resourcePath }));
+          }
 
           if (newResourceId) {
             await dispatch(fetchAllResources());
