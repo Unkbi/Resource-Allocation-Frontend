@@ -132,7 +132,7 @@ export default function Project() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
-  const allResources = resources.result || []; 
+  const allResources = resources.result || [];
 
   useEffect(() => {
     if (!updating) {
@@ -323,7 +323,9 @@ export default function Project() {
       minWidth: 180,
       renderCell: params => {
         const projectSponsorId = params.value;
-        const projectSponsor = allResources.find?.(res => res.Id === projectSponsorId.name);
+        const projectSponsor = allResources.find?.(
+          res => res.Id === projectSponsorId.name
+        );
         const fullName = projectSponsor?.FullName || '';
         return fullName ? (
           <EllipsisNameCell showAvatar={true} value={fullName} />
@@ -339,9 +341,15 @@ export default function Project() {
       minWidth: 180,
       renderCell: params => {
         const projectManagerId = params.value;
-        const projectManager = allResources.find?.(res => res.Id === projectManagerId);
+        const projectManager = allResources.find?.(
+          res => res.Id === projectManagerId
+        );
         const fullName = projectManager?.FullName || '';
-        return projectManager && <EllipsisNameCell showAvatar={!!fullName} value={fullName} />;
+        return (
+          projectManager && (
+            <EllipsisNameCell showAvatar={!!fullName} value={fullName} />
+          )
+        );
       },
     },
     {

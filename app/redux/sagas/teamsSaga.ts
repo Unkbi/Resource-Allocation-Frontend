@@ -4,9 +4,12 @@ import {
   setTeamsDataProcessing,
   updateResources,
 } from '../reducers/teamsReducer';
-import { fetchResourcesAgainstTeamsForSaga } from '@/app/services/teamServices';
+import {
+  fetchAllTeamsForSaga,
+  fetchResourcesAgainstTeamsForSaga,
+} from '@/app/services/teamServices';
 import { setAllocations } from '../reducers/dataGridReducer';
-import { Allocation, AllocationGridCell, Resource } from '@/app/types';
+import { Allocation, AllocationGridCell, Resource, Team } from '@/app/types';
 import {
   getMonday,
   getMondayOfISO,
@@ -316,6 +319,59 @@ function* fetchResourcesAgainstTeamsSaga(
   }
 }
 
+function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
+  const { teams } = action.payload;
+  try {
+    yield put(setTeamsDataProcessing(true));
+
+    let allTeams: Team[] = teams;
+    if (!teams || teams.length === 0) {
+      const response = yield call(fetchAllTeamsForSaga);
+      allTeams = response?.result;
+    }
+
+    const teamResults = yield all(
+      allTeams.map((team: any) =>
+        call(function* () {
+          const resourcesPostData = {
+            'ResourceAllocation.Core/GetTeamResources': { TeamId: team.Id },
+          };
+          //@ts-ignore
+          const resourcesResult = yield call(
+            fetchResourcesAgainstTeamsForSaga,
+            resourcesPostData
+          );
+
+          return { resourcesResult, team };
+        })
+      )
+    );
+
+    let teamResourceObject: Record<string, Resource[]> = {};
+    const formatedTeamResults = teamResults
+      // @ts-ignore
+      ?.map(teamResult => ({
+        id: teamResult?.team?.Id,
+        resource: teamResult?.resourcesResult?.result,
+      }));
+
+    formatedTeamResults.forEach(
+      (payload: { id: string; resource: Resource[] }) => {
+        teamResourceObject = teamResourceObject || {};
+        teamResourceObject[payload.id] = payload.resource;
+      }
+    );
+
+    if (teamResults) {
+      yield put(setAllTeamsResources(formatedTeamResults));
+    }
+  } catch (err) {
+    console.error('Saga: Failed to fetch team resources/allocations', err);
+  } finally {
+    yield put(setTeamsDataProcessing(false));
+  }
+}
+
 export default function* teamSaga() {
   yield takeLatest('FETCH_RESOURCES_AGAINST_TEAMS', function* (action) {
     // Cancel projects task if active
@@ -333,4 +389,6 @@ export default function* teamSaga() {
       action
     );
   });
+
+  yield takeLatest('FETCH_TEAM_RESOURCES', fetchTeamsResourcesSaga);
 }

@@ -32,6 +32,11 @@ export const getResourcesAgainstTeams = createAsyncThunk(
   }
 );
 
+export const fetchAllTeamsForSaga = async () => {
+  const response = await axiosInstance.get(`${API_PROJECT_PORTFOLIO}/Team`);
+  return response.data;
+};
+
 export const fetchResourcesAgainstTeamsForSaga = async (
   postData: GetTeamResourcesPayload
 ) => {
