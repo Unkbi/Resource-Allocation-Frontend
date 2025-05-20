@@ -40,7 +40,6 @@ export default function ProjectAllocation({
     loading?: boolean;
     error?: string;
   };
-  const allResources = _resources.result || []; 
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
 
@@ -123,10 +122,8 @@ export default function ProjectAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
-        const sponsorId = firstChild?.projectSponsor; 
-        const sponsor  = allResources.find?.(res => res.Id === sponsorId);
         return firstChild ? (
-          <EllipsisNameCell value={sponsor?.FullName || ''} />
+          <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'} />
         ) : null;
       },
     },
@@ -366,10 +363,8 @@ export default function ProjectAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
-        const ManagerId = firstChild?.projectManager; 
-        const manager = allResources.find?.(res => res.Id === ManagerId);
         return firstChild ? (
-          <EllipsisNameCell value={manager?.FullName || ''} />
+          <EllipsisNameCell value={firstChild.projectManager ?? 'N/A'} />
         ) : null;
       },
     },

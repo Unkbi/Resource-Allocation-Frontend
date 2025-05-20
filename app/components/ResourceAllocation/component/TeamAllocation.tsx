@@ -60,7 +60,6 @@ export default function TeamAllocation({
   const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const allResources = _resources.result || []; 
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -432,9 +431,7 @@ export default function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        const sponsorId = allocation?.projectSponsor;
-        const sponsor = allResources.find?.(res => res.Id === sponsorId);
-        return <EllipsisNameCell value={sponsor?.FullName || ''} />;
+        return <EllipsisNameCell value={allocation?.projectSponsor || ''} />;
       },
     },
     {
@@ -447,9 +444,7 @@ export default function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        const managerId = allocation?.projectManager;
-        const manager = allResources.find?.(res => res.Id === managerId);
-        return <EllipsisNameCell value={manager?.FullName || ''} />;
+        return <EllipsisNameCell value={allocation?.projectManager || ''} />;
       },
     },
     {
