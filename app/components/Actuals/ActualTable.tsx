@@ -108,7 +108,7 @@ export default function ActualTable({
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
-  const {status } = useSelector((state: RootState) => state.actualAllocations);
+  const { status } = useSelector((state: RootState) => state.actualAllocations);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -153,7 +153,7 @@ export default function ActualTable({
         setHasPersonalTime(true);
       }
     }
-  }, [startDate, endDate,data]);
+  }, [startDate, endDate, data]);
 
   useEffect(() => {
     if (onValidationChange) {
@@ -176,7 +176,6 @@ export default function ActualTable({
     }
   }, [rows, data, onModificationChange]);
 
-  
   // Organize rows into sections
   const getOrganizedRows = () => {
     const plannedRows = rows.filter(
@@ -225,7 +224,13 @@ export default function ActualTable({
           return sum + newActual;
         }
         if (row.id !== 'total' && row.id !== 'second-total') {
-          return sum + (parseFloat(`${row.actuals}`) || 0);
+          return (
+            Math.round(
+              (sum +
+                (row?.actuals ? parseFloat(row?.actuals?.toFixed(1)) : 0)) *
+                10
+            ) / 10
+          );
         }
         return sum;
       }, 0);
@@ -671,7 +676,12 @@ export default function ActualTable({
             processRowUpdate={handleProcessRowUpdate}
             getRowClassName={params => {
               if (params.id === 'total') return 'second-total-row';
-              if (params.id === 'divider'|| params.id === 'divider-1' || params.id === 'divider-2') return 'divider-row';
+              if (
+                params.id === 'divider' ||
+                params.id === 'divider-1' ||
+                params.id === 'divider-2'
+              )
+                return 'divider-row';
               if (params?.row?.id === rows[rows.length - 1]?.id)
                 return 'last-row';
               return 'first-header-row';
