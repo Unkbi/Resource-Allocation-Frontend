@@ -45,6 +45,7 @@ export default function ActualsPage() {
   const [isModified, setIsModified] = useState(false);
 
   const handleModificationChange = (modified: boolean) => {
+    setShow(false); 
     setIsModified(modified);
   };
 

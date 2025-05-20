@@ -16,7 +16,7 @@ import {
   GridRowsProp,
   GridValidRowModel,
 } from '@mui/x-data-grid-premium';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
@@ -31,7 +31,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ActualAllocationTableRow } from '@/app/types';
-import {isCurrentWeek} from '@/app/utils/common';
+import { isCurrentWeek } from '@/app/utils/common';
 //@ts-ignore
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
@@ -129,6 +129,7 @@ export default function ActualTable({
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
   >({});
+  const rowIdCounterRef = useRef(1000000);
 
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
@@ -158,41 +159,51 @@ export default function ActualTable({
     if (onValidationChange) {
       const hasInvalidRows = Object.keys(rowValidationErrors).length > 0;
       onValidationChange(hasInvalidRows);
-      if(hasInvalidRows){
-      setShow && setShow(false);
+      if (hasInvalidRows) {
+        setShow && setShow(false);
+      }
     }
-    }
-    
   }, [rowValidationErrors, onValidationChange]);
 
   useEffect(() => {
-  if (onModificationChange) {
-    const isModified =
-      rows.length !== data.length || // Check if rows were added or deleted
-      rows.some((row, index) => JSON.stringify(row) !== JSON.stringify(data[index])); // Check if rows were modified
+    if (onModificationChange) {
+      const isModified =
+        rows.length !== data.length || // Check if rows were added or deleted
+        rows.some(
+          (row, index) => JSON.stringify(row) !== JSON.stringify(data[index])
+        ); // Check if rows were modified
+      onModificationChange(isModified);
+    }
+  }, [rows, data, onModificationChange]);
 
-    onModificationChange(isModified);
-  }
-}, [rows, data, onModificationChange]);
-
-
+  
   // Organize rows into sections
   const getOrganizedRows = () => {
     const plannedRows = rows.filter(
-      row => row.planned !== 0 && row.project !== 'Other Work' && row.project !== 'Personal Time'
+      row =>
+        row.planned !== 0 &&
+        row.project !== 'Other Work' &&
+        row.project !== 'Personal Time'
     );
     const unplannedRows = rows.filter(
-      row => row.planned === 0 && row.project !== 'Other Work' && row.project !== 'Personal Time'
+      row =>
+        row.planned === 0 &&
+        row.project !== 'Other Work' &&
+        row.project !== 'Personal Time'
     );
     const otherRows = rows.filter(
       row => row.project === 'Other Work' || row.project === 'Personal Time'
     );
 
-     const organizedRows = [
-    ...(plannedRows.length > 0 ? [...plannedRows] : []),
-    ...(unplannedRows.length > 0 ? [{ id: 'divider-1', type: 'divider' }, ...unplannedRows] : []),
-    ...(otherRows.length > 0 ? [{ id: 'divider-2', type: 'divider' }, ...otherRows] : []),
-  ];
+    const organizedRows = [
+      ...(plannedRows.length > 0 ? [...plannedRows] : []),
+      ...(unplannedRows.length > 0
+        ? [{ id: 'divider-1', type: 'divider' }, ...unplannedRows]
+        : []),
+      ...(otherRows.length > 0
+        ? [{ id: 'divider-2', type: 'divider' }, ...otherRows]
+        : []),
+    ];
 
     return organizedRows;
   };
@@ -252,23 +263,23 @@ export default function ActualTable({
           : row
       );
     });
-    
+
     const actualsInvalid = !newRow.actuals || newRow.actuals === 0;
-      const commentsInvalid = !newRow.comments || !newRow.comments.trim();
+    const commentsInvalid = !newRow.comments || !newRow.comments.trim();
 
     setRowValidationErrors(prev => {
       const updated = { ...prev };
 
       if (actualsInvalid || commentsInvalid) {
-      // Only update if there are errors
-      updated[newRow.id] = {
-        actuals: actualsInvalid,
-        comments: commentsInvalid,
-      };
-    } else {
-      // Remove the row from validation errors if both fields are valid
-      delete updated[newRow.id];
-    }
+        // Only update if there are errors
+        updated[newRow.id] = {
+          actuals: actualsInvalid,
+          comments: commentsInvalid,
+        };
+      } else {
+        // Remove the row from validation errors if both fields are valid
+        delete updated[newRow.id];
+      }
 
       return updated;
     });
@@ -561,11 +572,11 @@ export default function ActualTable({
         const updatedRows = prevRows.filter(row => row.id !== selectedRowId);
 
         // Remove validation errors for the deleted row
-      setRowValidationErrors(prev => {
-        const updatedErrors = { ...prev };
-        delete updatedErrors[selectedRowId];
-        return updatedErrors;
-      });
+        setRowValidationErrors(prev => {
+          const updatedErrors = { ...prev };
+          delete updatedErrors[selectedRowId];
+          return updatedErrors;
+        });
 
         // Check if we still have any unplanned rows
         const dividerIndex = updatedRows.findIndex(row => row.id === 'divider');
@@ -639,20 +650,7 @@ export default function ActualTable({
         <Box sx={{ height: 350 }}>
           <DataGridPremium
             apiRef={apiRef}
-            rows={
-              rows?.length > 0
-                ? [
-                    {
-                      id: 'total',
-                      project: 'Total',
-                      planned: totalPlanned,
-                      actuals: totalActuals,
-                      comments: '',
-                    },
-                    ...getOrganizedRows(),
-                  ]
-                : []
-            }
+            rows={getOrganizedRows()}
             columns={columns}
             loading={dataProcessing}
             disableColumnMenu
@@ -691,6 +689,17 @@ export default function ActualTable({
                 variant: 'skeleton',
                 noRowsVariant: 'skeleton',
               },
+            }}
+            pinnedRows={{
+              top: [
+                {
+                  id: 'total',
+                  project: 'Total',
+                  planned: totalPlanned,
+                  actuals: totalActuals,
+                  comments: '',
+                },
+              ],
             }}
           />
         </Box>
