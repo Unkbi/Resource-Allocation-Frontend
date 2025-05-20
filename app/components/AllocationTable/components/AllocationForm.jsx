@@ -66,6 +66,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
+import { addResourceToTeam } from '@/app/services/teamServices';
 
 const initialValuesMap = {
   add_project: {
@@ -88,9 +89,10 @@ const initialValuesMap = {
     Department: '',
     Role: '',
     HRLevel: '',
-    Type: 'Contractor',
+    Type: 'Contractor - FT',
     ContractorHourlyRate: null,
     AverageWeeklyHours: null,
+    Team: '',
     Manager: '',
     StartDate: '',
     EndDate: '',
@@ -288,7 +290,7 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { submitType, ...cleanedValues } = values;
+    const { submitType, Team, ...cleanedValues } = values;
 
     switch (formType) {
       case 'add_project':
@@ -377,10 +379,30 @@ const AllocationForm = () => {
           const today = new Date().toISOString().split('T')[0]; // default to today
           cleanedValues.StartDate = today;
         }
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
         postData = {
-          'ResourceAllocation.Core/Resource': cleanedValues,
+          'ResourceAllocation.Core/Resource': {
+            FirstName: cleanedValues.FirstName,
+            StartDate: cleanedValues.StartDate,
+            LocationCategory: cleanedValues.LocationCategory,
+            Email: cleanedValues.Email,
+            Manager: cleanedValues.Manager,
+            LastName: cleanedValues.LastName,
+            ContractorHourlyRateCurrency:
+              cleanedValues.ContractorHourlyRateCurrency,
+            AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
+            Department: cleanedValues.Department,
+            Type: cleanedValues.Type,
+            EndDate: cleanedValues.EndDate,
+            Role: cleanedValues.Role,
+            FullName: cleanedValues.FullName,
+            Status: cleanedValues.Status,
+          },
         };
-
         try {
           const result = await dispatch(addResource(postData));
           if (result.meta.requestStatus === 'rejected') {
@@ -395,7 +417,14 @@ const AllocationForm = () => {
             );
             return;
           }
-          const newResourceId = result?.payload?.result?.Id ?? null;
+          const newResource = result?.payload?.result;
+          const newResourceId = newResource?.Id ?? null;
+          const resourcePath = newResource?.__path__;
+          const teamPath = values.Team;
+
+          if (resourcePath && teamPath) {
+            await dispatch(addResourceToTeam({ teamPath, resourcePath }));
+          }
 
           if (newResourceId) {
             await dispatch(fetchAllResources());
@@ -412,6 +441,11 @@ const AllocationForm = () => {
         break;
 
       case 'edit_resource':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
         postData = {
           'ResourceAllocation.Core/Resource': cleanedValues,
         };
