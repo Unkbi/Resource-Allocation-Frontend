@@ -383,13 +383,29 @@ const AllocationForm = () => {
           const today = new Date().toISOString().split('T')[0]; // default to today
           cleanedValues.StartDate = today;
         }
-        Object.keys(cleanedValues).forEach((key) => {
+        Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': cleanedValues,
+          'ResourceAllocation.Core/Resource': {
+            FirstName: cleanedValues.FirstName,
+            StartDate: cleanedValues.StartDate,
+            LocationCategory: cleanedValues.LocationCategory,
+            Email: cleanedValues.Email,
+            Manager: cleanedValues.Manager,
+            LastName: cleanedValues.LastName,
+            ContractorHourlyRateCurrency:
+              cleanedValues.ContractorHourlyRateCurrency,
+            AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
+            Department: cleanedValues.Department,
+            Type: cleanedValues.Type,
+            EndDate: cleanedValues.EndDate,
+            Role: cleanedValues.Role,
+            FullName: cleanedValues.FullName,
+            Status: cleanedValues.Status,
+          },
         };
         try {
           const result = await dispatch(addResource(postData));
