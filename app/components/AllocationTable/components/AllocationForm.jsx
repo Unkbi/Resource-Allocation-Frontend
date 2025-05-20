@@ -162,13 +162,9 @@ const initialValuesMap = {
 
 const AllocationForm = () => {
   const { formType } = useSelector(state => state.globalDialog.formState);
-  const [formValue, setFormValue] = useState(() => {
-    const initial = initialValuesMap[formType] || initialValuesMap.add_project;
-    return {
-      ...initial,
-      Type: initial.Type || 'Contractor - FT',
-    };
-  });
+  const [formValue, setFormValue] = useState(
+    initialValuesMap[formType] || initialValuesMap.add_project
+  );
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { projects } = useSelector(state => state.projects);
@@ -445,6 +441,11 @@ const AllocationForm = () => {
         break;
 
       case 'edit_resource':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
         postData = {
           'ResourceAllocation.Core/Resource': cleanedValues,
         };
