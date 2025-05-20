@@ -437,6 +437,10 @@ export const getResourceFromEmail = (userEmail, resources) => {
   return null;
 };
 
+export const getResourceFromUid = (uid, resources) => {
+  return resources.find(resource => resource.Id === uid);
+};
+
 export const getAllocationManagerFromPath = (
   allocationManager_Path,
   resources
@@ -446,9 +450,9 @@ export const getAllocationManagerFromPath = (
   );
 };
 
-export const getProjectsIamProjectManager = (fullName, projects) => {
+export const getProjectsIamProjectManager = (uid, projects) => {
   return projects.filter(
-    project => project.ProjectManager?.toLowerCase() === fullName
+    project => project.ProjectManager?.toLowerCase() === uid
   );
 };
 

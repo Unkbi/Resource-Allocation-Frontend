@@ -17,7 +17,7 @@ import {
   Resource,
   Team,
 } from '../types';
-import { generateAllWeeks, getWeekNumber } from './common';
+import { generateAllWeeks, getResourceFromUid, getWeekNumber } from './common';
 import { DATE_FORMAT } from '../constants/constants';
 
 export const formatAllocations = (
@@ -43,7 +43,7 @@ export const formatAllocations = (
           allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
           projectStatus: project?.Status ?? 'Status',
-          projectSponsor: project?.Owner,
+          projectSponsor: project?.ProjectSponsor,
           projectManager: project?.ProjectManager,
           projectLocation: project?.Location,
           projectType: project?.Type,
@@ -62,7 +62,7 @@ export const formatAllocations = (
         resourceId: allocation.Resource,
         project: allocation.ProjectName,
         projectId: allocation.Project,
-        projectSponsor: project?.Owner,
+        projectSponsor: project?.ProjectSponsor,
         projectManager: project?.ProjectManager,
         projectStatus: project?.Status ?? 'Status',
         projectLocation: project?.Location,
@@ -194,8 +194,12 @@ export function formatAllAllocations(
 
         project: project?.Name || alloc.ProjectName || null,
         projectId: project?.Id || alloc.Project || null,
-        projectSponsor: project?.Owner || null,
-        projectManager: project?.ProjectManager || null,
+        projectSponsor:
+          getResourceFromUid(project?.ProjectSponsor, resources)?.FullName ||
+          null,
+        projectManager:
+          getResourceFromUid(project?.ProjectManager, resources)?.FullName ||
+          null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
         projectType: project?.Type || null,
@@ -335,8 +339,12 @@ export function formatCostAllocations(
 
         project: project?.Name || alloc.ProjectName || null,
         projectId: project?.Id || alloc.Project || null,
-        projectSponsor: project?.Owner || null,
-        projectManager: project?.ProjectManager || null,
+        projectSponsor:
+          getResourceFromUid(project?.ProjectSponsor, resources)?.FullName ||
+          null,
+        projectManager:
+          getResourceFromUid(project?.ProjectManager, resources)?.FullName ||
+          null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
         projectType: project?.Type || null,

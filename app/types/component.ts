@@ -5,7 +5,7 @@ export interface ProjectsTableRow {
   CostCurrency: string | null;
   StartDate: string | null;
   Id: string;
-  Owner: {
+  ProjectSponsor: {
     name: string | null;
     bgColor: string | null;
     initials: string | null;

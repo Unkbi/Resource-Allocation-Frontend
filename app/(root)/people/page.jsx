@@ -165,14 +165,14 @@ export default function Resources() {
       if(data) {
         return data.map((item) => {
             return {
-                ...item,
-                id: item.Id,
-                Owner: {
-                    name : item.Owner,
-                    bgColor: "#fff",
-                    initials: getInitials(item.Owner),
-                },
-            }
+              ...item,
+              id: item.Id,
+              ProjectSponsor: {
+                name: item.ProjectSponsor,
+                bgColor: '#fff',
+                initials: getInitials(item.ProjectSponsor),
+              },
+            };
         })
       }
       return []
