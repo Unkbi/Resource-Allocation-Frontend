@@ -214,7 +214,10 @@ const AllocationForm = () => {
         return null;
     }
   };
-
+  useEffect(() => {
+    setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+  }, [formType]);
+  
   const handleScrollAndFocus = (resources, period, projects) => {
     const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
     const weeksObject = {};
