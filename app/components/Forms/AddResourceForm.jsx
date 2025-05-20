@@ -65,9 +65,8 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
 
 useEffect(() => {
   const loadAndSetForm = async () => {
-    if (!initialData) return;
+    if (!initialData || !initialData.Id) return;
 
-    // 1. Setup default form values from initialData
     const rowData = {
       StartDate: initialData.StartDate || null,
       EndDate: initialData.EndDate || null,
@@ -326,7 +325,7 @@ useEffect(() => {
             name="Type"
             options={typeOptions}
             width={'100%'}
-            value={values.Type || 'Contractor - FT'}
+            value={values.Type}
             onChange={handleChange}
             onBlur={handleBlur}
             error={touched.Type && Boolean(errors.Type)}
