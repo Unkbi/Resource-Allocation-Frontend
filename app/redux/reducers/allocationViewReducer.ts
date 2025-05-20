@@ -83,7 +83,7 @@ const initialState: AllocationGridViewState = {
       'Description',
       'projectLocation',
       'ProjectManager',
-      'Owner',
+      'ProjectSponsor',
       'projectEndDate',
       'projectStartDate',
       'Status',

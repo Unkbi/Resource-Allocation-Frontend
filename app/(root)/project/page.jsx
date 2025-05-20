@@ -35,6 +35,7 @@ import { useRouter } from 'next/navigation';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
+import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -131,6 +132,7 @@ export default function Project() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
+  const allResources = resources.result || []; 
 
   useEffect(() => {
     if (!updating) {
@@ -155,10 +157,10 @@ export default function Project() {
         return {
           ...item,
           id: item.Id,
-          Owner: {
-            name: item.Owner,
+          ProjectSponsor: {
+            name: item.ProjectSponsor,
             bgColor: '#fff',
-            initials: getInitials(item.Owner),
+            initials: getInitials(item.ProjectSponsor),
           },
         };
       });
@@ -315,14 +317,18 @@ export default function Project() {
       },
     },
     {
-      field: 'Owner',
+      field: 'ProjectSponsor',
       headerName: 'Project Sponsor',
       flex: 2,
       minWidth: 180,
       renderCell: params => {
-        const owner = params.value;
-        return (
-          owner.name && <CustomAvatar value={owner.name} showFullName={true} />
+        const projectSponsorId = params.value;
+        const projectSponsor = allResources.find?.(res => res.Id === projectSponsorId.name);
+        const fullName = projectSponsor?.FullName || '';
+        return fullName ? (
+          <EllipsisNameCell showAvatar={true} value={fullName} />
+        ) : (
+          ''
         );
       },
     },
@@ -332,12 +338,10 @@ export default function Project() {
       flex: 2,
       minWidth: 180,
       renderCell: params => {
-        const projectManager = params.value;
-        return (
-          projectManager && (
-            <CustomAvatar value={projectManager} showFullName={true} />
-          )
-        );
+        const projectManagerId = params.value;
+        const projectManager = allResources.find?.(res => res.Id === projectManagerId);
+        const fullName = projectManager?.FullName || '';
+        return projectManager && <EllipsisNameCell showAvatar={!!fullName} value={fullName} />;
       },
     },
     {

@@ -33,7 +33,7 @@ export interface Project {
   Description: string;
   EndDate: string;
   Location: string;
-  Owner: string;
+  ProjectSponsor: string;
   ProjectManager: string;
   StartDate: string;
   Status: string;
@@ -60,6 +60,7 @@ export default function TeamAllocation({
   const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
+  const allResources = _resources.result || []; 
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -205,6 +206,10 @@ export default function TeamAllocation({
       isEditable: 'false',
       sortable: 'false',
       primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+      },
     },
     {
       field: 'StartDate',
@@ -418,7 +423,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Owner',
+      field: 'ProjectSponsor',
       headerName: 'Project Sponsor',
       width: 160,
       type: 'string',
@@ -427,7 +432,9 @@ export default function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectSponsor || ''} />;
+        const sponsorId = allocation?.projectSponsor;
+        const sponsor = allResources.find?.(res => res.Id === sponsorId);
+        return <EllipsisNameCell value={sponsor?.FullName || ''} />;
       },
     },
     {
@@ -440,7 +447,9 @@ export default function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectManager || ''} />;
+        const managerId = allocation?.projectManager;
+        const manager = allResources.find?.(res => res.Id === managerId);
+        return <EllipsisNameCell value={manager?.FullName || ''} />;
       },
     },
     {
@@ -539,7 +548,7 @@ export default function TeamAllocation({
                 Description: false,
                 projectLocation: false,
                 ProjectManager: false,
-                Owner: false,
+                projectSponsor: false,
                 projectEndDate: false,
                 projectStartDate: false,
                 Status: false,

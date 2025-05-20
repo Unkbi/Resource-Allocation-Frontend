@@ -6,7 +6,7 @@ export interface Project {
   BudgetCurrency: string | null;
   StartDate: string | null;
   Id: string;
-  Owner: string | null;
+  ProjectSponsor: string | null;
   AllowOvertime: boolean;
   Name: string;
   __path__: string | null;

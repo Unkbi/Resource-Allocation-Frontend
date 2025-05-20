@@ -72,12 +72,13 @@ const initialValuesMap = {
     StartDate: '',
     EndDate: '',
     Name: '',
-    Owner: '',
+    ProjectSponsor: '',
     AllowOvertime: '',
     Location: '',
     ProjectManager: '',
     Status: '',
     Type: '',
+    Budget: 0,
   },
   add_resource: {
     FirstName: '',
@@ -299,6 +300,7 @@ const AllocationForm = () => {
         postData = {
           'ResourceAllocation.Core/Project': {
             ...cleanedValues,
+            Budget: cleanedValues.Budget || 0,
             Description: 'string',
           },
         };
@@ -360,6 +362,7 @@ const AllocationForm = () => {
         postData = {
           'ResourceAllocation.Core/Project': {
             ...cleanedValues,
+            Budget: cleanedValues.Budget || 0,
             Description: 'string',
           },
         };

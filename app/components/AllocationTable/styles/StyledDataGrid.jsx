@@ -302,11 +302,11 @@ export const StyledDataGrid = styled(DataGridPremium)(({
         !loading &&
         (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
     },
-    [`& .${gridClasses.cell}[data-field="Owner"]`]: {
+    [`& .${gridClasses.cell}[data-field="ProjectSponsor"]`]: {
       backgroundColor:
         !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
     },
-    [`& .${gridClasses.cell}[data-field="Owner"].secondGroupsRow`]: {
+    [`& .${gridClasses.cell}[data-field="ProjectSponsor"].secondGroupsRow`]: {
       backgroundColor:
         !loading &&
         (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),

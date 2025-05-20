@@ -21,23 +21,25 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { resources } = useSelector(state => state.resources);
 
   const resourceTypeOptions =
-    resources &&
-    resources?.result?.map(resource => {
-      return { value: resource.FullName, label: resource.FullName };
-    });
+    resources?.result?.map(resource => ({
+      value: resource.Id, 
+      label: resource.FullName, 
+    })) || [];
+
 
   useEffect(() => {
     if (initialData) {
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
-        Owner: initialData.Owner?.name || '',
+        ProjectSponsor: initialData.ProjectSponsor?.id || '',
         AllowOvertime: initialData.AllowOvertime ?? '',
         Location: initialData.Location || '',
         ProjectManager: initialData.ProjectManager || '',
         Name: initialData.Name || '',
         Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
+        Budget: initialData.Budget || 0,
       };
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
@@ -84,14 +86,14 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Sponsor</StyledLabel>
         <CustomSelect
-          name="Owner"
+          name="ProjectSponsor"
           options={resourceTypeOptions}
-          value={values.Owner || ''}
+          value={values.ProjectSponsor || ''}
           onChange={handleChange}
           onBlur={handleBlur}
           width={'100%'}
-          error={touched.Owner && Boolean(errors.Owner)}
-          helperText={touched.Owner && formikProps.errors.Owner}
+          error={touched.ProjectSponsor && Boolean(errors.ProjectSponsor)}
+          helperText={touched.ProjectSponsor && formikProps.errors.ProjectSponsor}
         />
       </Box>
       <Box sx={{ pb: 2 }}>

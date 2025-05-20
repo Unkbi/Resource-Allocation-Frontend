@@ -79,7 +79,7 @@ const getColumnLabel = column => {
     Description: 'Project Description',
     projectLocation: 'Project Location',
     ProjectManager: 'Project Manager',
-    Owner: 'Project Sponsor',
+    ProjectSponsor: 'Project Sponsor',
     ProjectEndDate: 'Project End Date',
     ProjectStartDate: 'Project Start Date',
     Status: 'Project Status',
