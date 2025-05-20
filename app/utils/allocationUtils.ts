@@ -155,6 +155,9 @@ export function formatAllAllocations(
   startDate: string,
   endDate: string
 ) {
+  if (!allocations || allocations.length === 0) {
+    return [];
+  }
   const weeks = getWeeksInRange(startDate, endDate);
 
   // Build a lookup map from resource ID to team
@@ -287,10 +290,13 @@ export function formatCostAllocations(
   startDate: string,
   endDate: string
 ) {
+  if (!allocations || allocations.length === 0) {
+    return [];
+  }
   const weeks = getWeeksInRange(startDate, endDate);
 
   // Divide all allocationCosts by 1000
-  allocations = allocations.map(alloc => ({
+  allocations = allocations?.map(alloc => ({
     ...alloc,
     Cost: alloc.Cost / 1000,
   }));
