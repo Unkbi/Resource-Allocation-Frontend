@@ -307,7 +307,7 @@ export const getFinalColumns = (
           formType: 'add_allocation',
           initialData: {
             Resource: params.value,
-            Project: splitViewCurrentProject.Name,
+            Project: [splitViewCurrentProject.Name],
           },
         })
       );
@@ -321,7 +321,7 @@ export const getFinalColumns = (
           initialData: {
             Resource: params.row.resource || params.value,
             ResourceId: params.row.resourceId,
-            Project: params.row.project || params.value,
+            Project: [params.row.project || params.value],
             Team: params.row.teams,
           },
         })

@@ -652,7 +652,6 @@ export function getTeamForResource(resourceId, teams, teamsResources) {
     const teamResources = teamsResources[teamId];
     return teamResources.some(resource => resource.Id === resourceId);
   });
-  debugger;
   if (team) {
     return teams.find(t => t.Id === team);
   }
