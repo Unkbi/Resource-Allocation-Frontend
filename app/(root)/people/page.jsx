@@ -1,11 +1,20 @@
 'use client';
 import ResourceTable from '@/app/components/Resources/ResourceTable';
 import { Box, styled } from '@mui/system';
-import { IconButton, Menu, MenuItem, Stack, Tab, Tabs } from '@mui/material';
+import {
+  IconButton,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Stack,
+  Tab,
+  Tabs,
+} from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   generateRandomColor,
   getInitials,
+  getOrganisationForResource,
   getTeamForResource,
 } from '@/app/utils/common';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -20,6 +29,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
+import {
+  FETCH_ORGANISATIONS,
+  FETCH_ORGANISATIONS_RESOURCES,
+} from '@/app/redux/actions/organizationsAction';
 
 const demoResources = {
   result: [
@@ -138,7 +151,14 @@ export default function Resources() {
   const { resources, updating, loading } = useSelector(
     state => state.resources
   );
-  const { teams, teamsResources } = useSelector(state => state.teams);
+  const { teams, teamsResources, dataProcessing } = useSelector(
+    state => state.teams
+  );
+  const {
+    organisations,
+    organisationsResources,
+    loading: organisationLoading,
+  } = useSelector(state => state.organisations);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(resources?.result || null);
@@ -180,6 +200,17 @@ export default function Resources() {
     if (!teams || teams?.result?.length === 0) {
       dispatch(getAllTeams());
     }
+    if (
+      !organisationsResources ||
+      Object.keys(organisationsResources).length === 0
+    ) {
+      dispatch({
+        type: FETCH_ORGANISATIONS_RESOURCES,
+        payload: {
+          organisations: [],
+        },
+      });
+    }
   }, []);
 
   const modifyData = data => {
@@ -188,9 +219,15 @@ export default function Resources() {
         return {
           ...item,
           id: item.Id,
-          team:
+          Team:
             getTeamForResource(item.Id, teams?.result, teamsResources)?.Name ||
             '',
+          Organization:
+            getOrganisationForResource(
+              item.Id,
+              organisations,
+              organisationsResources
+            )?.Name || '',
         };
       });
     }
@@ -305,13 +342,13 @@ export default function Resources() {
       },
     },
     {
-      field: 'team',
+      field: 'Team',
       headerName: 'Team',
       flex: 2,
       minWidth: 180,
       maxWidth: 500,
       renderCell: params => {
-        return params.value && <span>{params.value}</span>;
+        params.value && <span>{params.value}</span>;
       },
     },
     {
@@ -350,10 +387,13 @@ export default function Resources() {
       },
     },
     {
-      field: 'organization',
+      field: 'Organization',
       headerName: 'Organization',
       flex: 1,
       minWidth: 180,
+      renderCell: params => {
+        return params.value && <span>{params.value}</span>;
+      },
     },
     {
       field: 'Manager',
@@ -471,7 +511,7 @@ export default function Resources() {
       }}
     >
       <ResourceTable
-        loading={loading}
+        loading={loading || dataProcessing || organisationLoading}
         columns={columns}
         rows={modifyData(rows)}
         apiRef={apiRef}

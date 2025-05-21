@@ -1,8 +1,10 @@
+import { Resource } from '@/app/types';
 import { OrganisationState } from '@/app/types/organisationTypes';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: OrganisationState = {
   organisations: [],
+  organisationsResources: {},
   loading: false,
   error: null,
 };
@@ -17,6 +19,14 @@ const organisationsSlice = createSlice({
     clearOrganisations: state => {
       state.organisations = [];
     },
+    setAllOrganisationsResources: (state, action) => {
+      action.payload.forEach(
+        (payload: { id: string; resource: Resource[] }) => {
+          state.organisationsResources = state.organisationsResources || {};
+          state.organisationsResources[payload.id] = payload.resource;
+        }
+      );
+    },
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
@@ -26,6 +36,11 @@ const organisationsSlice = createSlice({
   },
 });
 
-export const { setOrganisations, clearOrganisations, setLoading, setError } =
-  organisationsSlice.actions;
+export const {
+  setOrganisations,
+  clearOrganisations,
+  setAllOrganisationsResources,
+  setLoading,
+  setError,
+} = organisationsSlice.actions;
 export default organisationsSlice.reducer;

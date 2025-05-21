@@ -110,6 +110,12 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="organization"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
+    [`& .${gridClasses.cell}[data-field="Team"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="Organization"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
     [`& .${gridClasses.cell}[data-field="Manager"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },

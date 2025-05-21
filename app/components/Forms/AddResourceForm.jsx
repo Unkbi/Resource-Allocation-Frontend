@@ -41,7 +41,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
   const { organisations } = useSelector(state => state.organisations);
   const resourceListOptions =
     resources &&
-    resources.result.map(resource => {
+    resources?.result?.map(resource => {
       return { value: resource.Id, label: resource.FullName };
     });
   const organisationListOptions =
@@ -51,7 +51,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     })) || [];
   const teamListOptions =
     teams?.result?.map(team => ({
-      value: team.__path__,
+      value: team.Name,
       label: team.Name,
     })) || [];
   const dispatch = useDispatch();
@@ -89,23 +89,9 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         Role: initialData.Role || '',
         PhoneNumber: initialData.PhoneNumber || '',
         LocationCategory: initialData.LocationCategory || '',
-        Team: '',
-        Organisation: '',
+        Team: initialData.Team || '',
+        Organisation: initialData.Organization || '',
       };
-
-      setFormValue(rowData);
-      formikProps.resetForm({ values: rowData });
-      formikProps.setTouched({});
-
-      try {
-        const detailResult = await dispatch(getResourceDetail(initialData.Id));
-        const resourceDetail = detailResult?.payload;
-        if (resourceDetail?.Team?.__path__) {
-          rowData.Team = resourceDetail.Team.__path__;
-        }
-      } catch (error) {
-        console.error('Failed to fetch team detail', error);
-      }
 
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });

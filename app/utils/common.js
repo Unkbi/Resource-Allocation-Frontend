@@ -657,3 +657,20 @@ export function getTeamForResource(resourceId, teams, teamsResources) {
   }
   return null;
 }
+
+export function getOrganisationForResource(
+  resourceId,
+  organisations,
+  organisationsResources
+) {
+  const organisation = Object.keys(organisationsResources).find(
+    organisationId => {
+      const organisationResources = organisationsResources[organisationId];
+      return organisationResources.some(resource => resource.Id === resourceId);
+    }
+  );
+  if (organisation) {
+    return organisations.find(o => o.Id === organisation);
+  }
+  return null;
+}
