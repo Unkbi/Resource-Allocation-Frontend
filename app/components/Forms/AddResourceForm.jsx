@@ -85,22 +85,23 @@ useEffect(() => {
       Role: initialData.Role || '',
       PhoneNumber: initialData.PhoneNumber || '',
       LocationCategory: initialData.LocationCategory || '',
-      Team: '',
+      Team: '', 
     };
-
-    try {
-      const detailResult = await dispatch(getResourceDetail(initialData.Id));
-      const resourceDetail = detailResult?.payload;
-      if (resourceDetail?.Team?.__path__) {
-        rowData.Team = resourceDetail.Team.__path__;
-      }
-    } catch (error) {
-      console.error('Failed to fetch team detail', error);
-    }
 
     setFormValue(rowData);
     formikProps.resetForm({ values: rowData });
     formikProps.setTouched({});
+
+    try {
+      const detailResult = await dispatch(getResourceDetail(initialData.Id));
+      const resourceDetail = detailResult?.payload;
+
+      if (resourceDetail?.Team?.__path__) {
+        formikProps.setFieldValue('Team', resourceDetail.Team.__path__);
+      }
+    } catch (error) {
+      console.error('Failed to fetch team detail', error);
+    }
   };
 
   loadAndSetForm();
