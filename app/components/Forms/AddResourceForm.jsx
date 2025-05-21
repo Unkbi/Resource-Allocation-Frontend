@@ -93,6 +93,10 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         Organisation: '',
       };
 
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
+
       try {
         const detailResult = await dispatch(getResourceDetail(initialData.Id));
         const resourceDetail = detailResult?.payload;
@@ -492,25 +496,24 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
           title="End Date"
           isRequired={true}
         />
-
       </Box>
-        <Box sx={{ flex: 1 }}>
-          <StyledLabel>Work Location</StyledLabel>
-          <StyledInput
-            name="WorkLocation"
-            placeholder="Enter location"
-            value={values.WorkLocation || ''}
-            onChange={handleChange}
-            onBlur={e => {
-              const trimmedValue = e.target.value.trim();
-              setFieldValue('WorkLocation', trimmedValue);
-              handleBlur(e);
-            }}
-            error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-            helperText={touched.WorkLocation && errors.WorkLocation}
-          />
-        </Box>
+      <Box sx={{ flex: 1 }}>
+        <StyledLabel>Work Location</StyledLabel>
+        <StyledInput
+          name="WorkLocation"
+          placeholder="Enter location"
+          value={values.WorkLocation || ''}
+          onChange={handleChange}
+          onBlur={e => {
+            const trimmedValue = e.target.value.trim();
+            setFieldValue('WorkLocation', trimmedValue);
+            handleBlur(e);
+          }}
+          error={touched.WorkLocation && Boolean(errors.WorkLocation)}
+          helperText={touched.WorkLocation && errors.WorkLocation}
+        />
       </Box>
+    </Box>
   );
 };
 
