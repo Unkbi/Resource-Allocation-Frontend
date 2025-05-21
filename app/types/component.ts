@@ -30,4 +30,5 @@ export interface ActualAllocationTableRow {
   actuals?: number | null;
   comments?: string | null;
   type?: string | null;
+  sectionEnd?: string;
 }
