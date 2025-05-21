@@ -97,7 +97,7 @@ const initialValuesMap = {
     AverageWeeklyHours: null,
     Team: '',
     Manager: '',
-    StartDate: '',
+    StartDate: parseISO(new Date().toISOString()),
     EndDate: '',
     WorkLocation: '',
     Status: '',
@@ -405,10 +405,6 @@ const AllocationForm = () => {
         break;
 
       case 'add_resource':
-        if (!cleanedValues.StartDate) {
-          const today = new Date().toISOString().split('T')[0]; // default to today
-          cleanedValues.StartDate = today;
-        }
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
