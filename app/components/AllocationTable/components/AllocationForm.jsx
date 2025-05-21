@@ -291,7 +291,7 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { submitType, Team, ...cleanedValues } = values;
+    const { Organisation, submitType, Team, ...cleanedValues } = values;
 
     switch (formType) {
       case 'add_project':

@@ -65,7 +65,6 @@ export const addResourceValidationSchema = Yup.object({
   Email: Yup.string()
     .required('Email is required')
     .matches(emailRegex, 'Enter a valid email address'),  
-  Department: Yup.string().required('Organization is required'),
   Role: Yup.string().required('Role is required'),
   Type: Yup.string().required('Resource type is required'),
   Manager: Yup.string().required('Manager is required'),
