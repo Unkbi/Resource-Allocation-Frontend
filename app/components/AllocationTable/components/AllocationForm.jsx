@@ -20,6 +20,7 @@ import {
   saveViewValidationSchema,
   cloneResourceValidationSchema,
   transferResourceValidationSchema,
+  editResourceValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -88,6 +89,27 @@ const initialValuesMap = {
     Email: '',
     PhoneNumber: '',
     Department: '',
+    Organisation: '',
+    Role: '',
+    HRLevel: '',
+    Type: 'Contractor - FT',
+    ContractorHourlyRate: null,
+    AverageWeeklyHours: null,
+    Team: '',
+    Manager: '',
+    StartDate: '',
+    EndDate: '',
+    WorkLocation: '',
+    Status: '',
+  },
+  edit_resource: {
+    FirstName: '',
+    LastName: '',
+    FullName: '',
+    Email: '',
+    PhoneNumber: '',
+    Department: '',
+    Organisation: '',
     Role: '',
     HRLevel: '',
     Type: 'Contractor - FT',
@@ -196,6 +218,8 @@ const AllocationForm = () => {
         return addProjectValidationSchema(projects);
       case 'add_resource':
         return addResourceValidationSchema;
+      case 'edit_resource': // Temporary later on this will be same as add_resource
+        return editResourceValidationSchema;
       case 'add_allocation':
         return addAllocationValidationSchema;
       case 'assign_allocation':
@@ -214,7 +238,10 @@ const AllocationForm = () => {
         return null;
     }
   };
-
+  useEffect(() => {
+    setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+  }, [formType]);
+  
   const handleScrollAndFocus = (resources, period, projects) => {
     const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
     const weeksObject = {};
@@ -291,7 +318,7 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { submitType, Team, ...cleanedValues } = values;
+    const { Organisation, submitType, Team, ...cleanedValues } = values;
 
     switch (formType) {
       case 'add_project':

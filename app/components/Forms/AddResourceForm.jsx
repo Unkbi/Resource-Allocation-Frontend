@@ -37,7 +37,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
   } = formikProps;
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
-  const { teams } = useSelector((state) => state.teams);
+  const { teams } = useSelector(state => state.teams);
   const { organisations } = useSelector(state => state.organisations);
   const resourceListOptions =
     resources &&
@@ -49,62 +49,67 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       value: org.Name,
       label: org.Name,
     })) || [];
-  const teamListOptions = teams?.result?.map((team) => ({
-    value: team.__path__,
-    label: team.Name,
-  })) || [];
+  const teamListOptions =
+    teams?.result?.map(team => ({
+      value: team.__path__,
+      label: team.Name,
+    })) || [];
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const firstNameToUse = values.PreferredFirstName?.trim() || values.FirstName;
-    const fullName = [firstNameToUse, values.LastName].filter(Boolean).join(' ');
+    const firstNameToUse =
+      values.PreferredFirstName?.trim() || values.FirstName;
+    const fullName = [firstNameToUse, values.LastName]
+      .filter(Boolean)
+      .join(' ');
     if (values.FullName !== fullName) {
       formikProps.setFieldValue('FullName', fullName);
     }
   }, [values.PreferredFirstName, values.FirstName, values.LastName]);
 
-useEffect(() => {
-  const loadAndSetForm = async () => {
-    if (!initialData || !initialData.Id) return;
+  useEffect(() => {
+    const loadAndSetForm = async () => {
+      if (!initialData || !initialData.Id) return;
 
-    const rowData = {
-      StartDate: initialData.StartDate || null,
-      EndDate: initialData.EndDate || null,
-      WorkLocation: initialData.WorkLocation || null,
-      Manager: initialData.Manager || '',
-      FirstName: initialData.FirstName || '',
-      LastName: initialData.LastName || '',
-      PreferredFirstName: initialData.PreferredFirstName || '',
-      Type: initialData.Type || 'Contractor - FT',
-      Status: initialData.Status || 'Active',
-      Email: initialData.Email || '',
-      HRLevel: initialData.HRLevel || '',
-      ContractorHourlyRate: initialData.ContractorHourlyRate || null,
-      AverageWeeklyHours: initialData.AverageWeeklyHours || null,
-      Department: initialData.Department || '',
-      Role: initialData.Role || '',
-      PhoneNumber: initialData.PhoneNumber || '',
-      LocationCategory: initialData.LocationCategory || '',
-      Team: '',
+      const rowData = {
+        StartDate: initialData.StartDate || null,
+        EndDate: initialData.EndDate || null,
+        WorkLocation: initialData.WorkLocation || null,
+        Manager: initialData.Manager || '',
+        FirstName: initialData.FirstName || '',
+        LastName: initialData.LastName || '',
+        PreferredFirstName: initialData.PreferredFirstName || '',
+        Type: initialData.Type || 'Contractor - FT',
+        Status: initialData.Status || 'Active',
+        Email: initialData.Email || '',
+        HRLevel: initialData.HRLevel || '',
+        ContractorHourlyRate: initialData.ContractorHourlyRate || null,
+        AverageWeeklyHours: initialData.AverageWeeklyHours || null,
+        Department: initialData.Department || '',
+        Role: initialData.Role || '',
+        PhoneNumber: initialData.PhoneNumber || '',
+        LocationCategory: initialData.LocationCategory || '',
+        Team: '',
+        Organisation: '',
+      };
+
+      try {
+        const detailResult = await dispatch(getResourceDetail(initialData.Id));
+        const resourceDetail = detailResult?.payload;
+        if (resourceDetail?.Team?.__path__) {
+          rowData.Team = resourceDetail.Team.__path__;
+        }
+      } catch (error) {
+        console.error('Failed to fetch team detail', error);
+      }
+
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
     };
 
-    try {
-      const detailResult = await dispatch(getResourceDetail(initialData.Id));
-      const resourceDetail = detailResult?.payload;
-      if (resourceDetail?.Team?.__path__) {
-        rowData.Team = resourceDetail.Team.__path__;
-      }
-    } catch (error) {
-      console.error('Failed to fetch team detail', error);
-    }
-
-    setFormValue(rowData);
-    formikProps.resetForm({ values: rowData });
-    formikProps.setTouched({});
-  };
-
-  loadAndSetForm();
-}, [initialData?.Id]);
+    loadAndSetForm();
+  }, [initialData?.Id]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -186,9 +191,7 @@ useEffect(() => {
         </Box>
       </Box>
 
-      <StyledLabel>
-        Preferred First Name
-      </StyledLabel>
+      <StyledLabel>Preferred First Name</StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="PreferredFirstName"
@@ -200,7 +203,9 @@ useEffect(() => {
             setFieldValue('PreferredFirstName', trimmedValue);
             handleBlur(e);
           }}
-          error={touched.PreferredFirstName && Boolean(errors.PreferredFirstName)}
+          error={
+            touched.PreferredFirstName && Boolean(errors.PreferredFirstName)
+          }
           helperText={touched.PreferredFirstName && errors.PreferredFirstName}
         />
       </Box>
@@ -220,23 +225,49 @@ useEffect(() => {
         />
       </Box>
 
-      <StyledLabel>
-        Phone Number
-      </StyledLabel>
+      <Box
+        sx={{
+          pb: 2,
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          width: '100%',
+          gap: 1,
+        }}
+      >
+        <Box sx={{ flex: 1, width: '50%' }}>
+          <StyledLabel>Phone Number</StyledLabel>
+          <StyledInput
+            name="PhoneNumber"
+            placeholder="Enter phone number"
+            value={values.PhoneNumber || ''}
+            onChange={e => {
+              const numericOnly = e.target.value.replace(/\D/g, '');
+              formikProps.setFieldValue('PhoneNumber', numericOnly);
+            }}
+            onBlur={handleBlur}
+            error={touched.PhoneNumber && Boolean(errors.PhoneNumber)}
+            helperText={touched.PhoneNumber && errors.PhoneNumber}
+          />
+        </Box>
 
-      <Box sx={{ pb: 2 }}>
-        <StyledInput
-          name="PhoneNumber"
-          placeholder="Enter phone number"
-          value={values.PhoneNumber || ''}
-          onChange={(e) => {
-            const numericOnly = e.target.value.replace(/\D/g, '');
-            formikProps.setFieldValue('PhoneNumber', numericOnly);
-          }}          
-          onBlur={handleBlur}
-          error={touched.PhoneNumber && Boolean(errors.PhoneNumber)}
-          helperText={touched.PhoneNumber && errors.PhoneNumber}
-        />     
+        <Box sx={{ flex: 1 }}>
+          <StyledLabel>Department</StyledLabel>
+          <StyledInput
+            name="Department"
+            width={'100%'}
+            placeholder="Enter Department"
+            value={values.Department || ''}
+            onChange={handleChange}
+            onBlur={e => {
+              const trimmedValue = e.target.value.trim();
+              setFieldValue('Department', trimmedValue);
+              handleBlur(e);
+            }}
+            error={touched.Department && Boolean(errors.Department)}
+            helperText={touched.Department && errors.Department}
+          />
+        </Box>
       </Box>
 
       <Box
@@ -254,15 +285,15 @@ useEffect(() => {
             Organization <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <CustomSelect
-            name="Department"
+            name="Organisation"
             width={'100%'}
             placeholder="Enter organization"
-            value={values.Department || ''}
+            value={values.Organisation || ''}
             options={organisationListOptions}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.Department && Boolean(errors.Department)}
-            helperText={touched.Department && errors.Department}
+            error={touched.Organisation && Boolean(errors.Organisation)}
+            helperText={touched.Organisation && errors.Organisation}
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -295,9 +326,7 @@ useEffect(() => {
         }}
       >
         <Box sx={{ width: '50%' }}>
-          <StyledLabel>
-            HR Level
-          </StyledLabel>
+          <StyledLabel>HR Level</StyledLabel>
           <StyledInput
             name="HRLevel"
             placeholder="Enter level"
