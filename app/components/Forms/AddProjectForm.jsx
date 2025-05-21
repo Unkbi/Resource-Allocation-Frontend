@@ -32,7 +32,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
-        ProjectSponsor: initialData.ProjectSponsor?.id || '',
+        ProjectSponsor: initialData.ProjectSponsor?.name || '',
         AllowOvertime: initialData.AllowOvertime ?? '',
         Location: initialData.Location || '',
         ProjectManager: initialData.ProjectManager || '',
