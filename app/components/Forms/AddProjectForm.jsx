@@ -6,6 +6,8 @@ import { StyledInput } from '../Input/StyledInput';
 import { useSelector } from 'react-redux';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
+import { useDispatch } from 'react-redux';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -19,23 +21,35 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   } = formikProps;
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
+  const dispatch = useDispatch();
 
   const resourceTypeOptions =
     resources?.result?.map(resource => ({
-      value: resource.Id, 
-      label: resource.FullName, 
+      value: resource.Id,
+      label: resource.FullName,
     })) || [];
 
+  useEffect(() => {
+    if (!resources || !resources?.result) {
+      dispatch(fetchAllResources());
+    }
+  }, []);
 
   useEffect(() => {
     if (initialData) {
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
-        ProjectSponsor: initialData.ProjectSponsor?.name || '',
+        ProjectSponsor:
+          resources?.result?.find(
+            res => res.FullName === initialData.ProjectSponsor
+          )?.Id || '',
         AllowOvertime: initialData.AllowOvertime ?? '',
         Location: initialData.Location || '',
-        ProjectManager: initialData.ProjectManager || '',
+        ProjectManager:
+          resources?.result?.find(
+            res => res.FullName === initialData.ProjectManager
+          )?.Id || '',
         Name: initialData.Name || '',
         Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
@@ -93,7 +107,9 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           onBlur={handleBlur}
           width={'100%'}
           error={touched.ProjectSponsor && Boolean(errors.ProjectSponsor)}
-          helperText={touched.ProjectSponsor && formikProps.errors.ProjectSponsor}
+          helperText={
+            touched.ProjectSponsor && formikProps.errors.ProjectSponsor
+          }
         />
       </Box>
       <Box sx={{ pb: 2 }}>

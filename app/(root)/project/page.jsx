@@ -15,6 +15,7 @@ import {
   generateDateWeekMath,
   generateRandomColor,
   getInitials,
+  getResourceFromUid,
   getTotalWeeks,
 } from '@/app/utils/common';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -125,7 +126,9 @@ export default function Project() {
   const apiRef = useGridApiRef();
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
-  const { resources } = useSelector(state => state.resources);
+  const { resources, loading: resourceLoading } = useSelector(
+    state => state.resources
+  );
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(projects?.result || null);
@@ -157,11 +160,10 @@ export default function Project() {
         return {
           ...item,
           id: item.Id,
-          ProjectSponsor: {
-            name: item.ProjectSponsor,
-            bgColor: '#fff',
-            initials: getInitials(item.ProjectSponsor),
-          },
+          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+            ?.FullName,
+          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+            ?.FullName,
         };
       });
     }
@@ -322,11 +324,7 @@ export default function Project() {
       flex: 2,
       minWidth: 180,
       renderCell: params => {
-        const projectSponsorId = params.value;
-        const projectSponsor = allResources.find?.(
-          res => res.Id === projectSponsorId.name
-        );
-        const fullName = projectSponsor?.FullName || '';
+        const fullName = params.value;
         return fullName ? (
           <EllipsisNameCell showAvatar={true} value={fullName} />
         ) : (
@@ -340,13 +338,9 @@ export default function Project() {
       flex: 2,
       minWidth: 180,
       renderCell: params => {
-        const projectManagerId = params.value;
-        const projectManager = allResources.find?.(
-          res => res.Id === projectManagerId
-        );
-        const fullName = projectManager?.FullName || '';
+        const fullName = params.value;
         return (
-          projectManager && (
+          fullName && (
             <EllipsisNameCell showAvatar={!!fullName} value={fullName} />
           )
         );
@@ -518,7 +512,7 @@ export default function Project() {
       }}
     >
       <ProjectTable
-        loading={loading}
+        loading={loading || resourceLoading}
         columns={columns}
         rows={modifyData(rows)}
         apiRef={apiRef}
