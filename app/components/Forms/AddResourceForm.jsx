@@ -124,10 +124,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     { value: 'Temp', label: 'Temp' },
     { value: 'Vendor', label: 'Vendor' },
   ];
-  const LocationCategoryOptions = [
-    { value: 'Onshore', label: 'Onshore' },
-    { value: 'Offshore', label: 'Offshore' },
-  ];
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -495,17 +492,8 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
           title="End Date"
           isRequired={true}
         />
-      </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          width: '100%',
-          gap: 1,
-        }}
-      >
+      </Box>
         <Box sx={{ flex: 1 }}>
           <StyledLabel>Work Location</StyledLabel>
           <StyledInput
@@ -522,23 +510,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
             helperText={touched.WorkLocation && errors.WorkLocation}
           />
         </Box>
-
-        <Box sx={{ flex: 1 }}>
-          <StyledLabel>Location Category</StyledLabel>
-          <CustomSelect
-            name="LocationCategory"
-            options={LocationCategoryOptions}
-            width={'100%'}
-            value={values.LocationCategory || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            width={'100%'}
-            error={touched.LocationCategory && Boolean(errors.LocationCategory)}
-            helperText={formikProps.errors.LocationCategory}
-          />
-        </Box>
       </Box>
-    </Box>
   );
 };
 
