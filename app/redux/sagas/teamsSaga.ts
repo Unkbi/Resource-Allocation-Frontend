@@ -366,7 +366,7 @@ function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
       yield put(setAllTeamsResources(formatedTeamResults));
     }
   } catch (err) {
-    console.error('Saga: Failed to fetch team resources/allocations', err);
+    console.error('Saga: Failed to fetch team resources', err);
   } finally {
     yield put(setTeamsDataProcessing(false));
   }
