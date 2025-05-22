@@ -144,31 +144,54 @@ export default function ExecutiveDashboardPage() {
             size="small"
             onClick={e => {
               e.stopPropagation();
-              toggleChartVisibility('resourceCoverage');
-            }}
-          >
-            {chartVisibility.resourceCoverage ? (
-              <VisibilityIcon />
-            ) : (
-              <VisibilityOffIcon />
-            )}
-          </IconButton>
-        </Box>
-        {chartVisibility.resourceCoverage && (
-          <LineChart
-            xAxis={[
-              {
+                toggleChartVisibility('resourceCoverage');
+              }}
+              >
+              {chartVisibility.resourceCoverage ? (
+                <VisibilityIcon />
+              ) : (
+                <VisibilityOffIcon />
+              )}
+              </IconButton>
+            </Box>
+            {chartVisibility.resourceCoverage && (
+              <LineChart
+              xAxis={[
+                {
                 scaleType: 'point',
-                data: periods.map(p => new Date(p).toLocaleDateString()),
-                label: 'Time Period',
-              },
-            ]}
-            series={series}
-            height={300}
-          />
-        )}
-      </DashboardWidget>
-    ),
+                data: periods.map(p => {
+                  const date = new Date(p);
+                  // Get week number (ISO week)
+                  const tempDate = new Date(date.getTime());
+                  tempDate.setHours(0, 0, 0, 0);
+                  // Thursday in current week decides the year.
+                  tempDate.setDate(tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7));
+                  // January 4 is always in week 1.
+                  const week1 = new Date(tempDate.getFullYear(), 0, 4);
+                  // Adjust to Thursday in week 1 and count number of weeks from date to week1.
+                  const weekNumber = 1 + Math.round(
+                  ((tempDate.getTime() - week1.getTime()) / 86400000
+                    - 3 + ((week1.getDay() + 6) % 7)) / 7
+                  );
+                  return `W${weekNumber}`;
+                }),
+                label: 'Week Number',
+                },
+              ]}
+              yAxis={[
+                {
+                min: 0,
+                max: 150,
+                tickInterval: 10,
+                label: 'Coverage %',
+                },
+              ]}
+              series={series}
+              height={300}
+              />
+            )}
+            </DashboardWidget>
+          ),
     // revenueTrend: (
     //   <DashboardWidget onClick={() => handleChartClick('Revenue Trend by Month')}>
     //     <Typography variant="subtitle1">Revenue Trend</Typography>
