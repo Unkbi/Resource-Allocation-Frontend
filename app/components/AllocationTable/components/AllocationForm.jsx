@@ -97,7 +97,7 @@ const initialValuesMap = {
     AverageWeeklyHours: null,
     Team: '',
     Manager: '',
-    StartDate: parseISO(new Date().toISOString()),
+    StartDate: new Date().toISOString().split('T')[0],
     EndDate: '',
     WorkLocation: '',
     Status: '',

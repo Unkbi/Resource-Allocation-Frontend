@@ -51,7 +51,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     })) || [];
   const teamListOptions =
     teams?.result?.map(team => ({
-      value: team.Name,
+      value: team.__path__,
       label: team.Name,
     })) || [];
   const dispatch = useDispatch();
@@ -89,7 +89,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         Role: initialData.Role || '',
         PhoneNumber: initialData.PhoneNumber || '',
         LocationCategory: initialData.LocationCategory || '',
-        Team: initialData.Team || '',
+        Team: teams?.result?.find(team => team.Name === initialData.Team)?.__path__ || '',
         Organisation: initialData.Organization || '',
       };
 
