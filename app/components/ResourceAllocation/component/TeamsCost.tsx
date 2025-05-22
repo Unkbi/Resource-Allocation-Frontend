@@ -158,7 +158,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
     },
     {
       field: 'Department',
-      headerName: 'Organisation',
+      headerName: 'Organization',
       width: 180,
       type: 'string',
       isEditable: 'false',

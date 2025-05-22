@@ -224,7 +224,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     },
     {
       field: 'Department',
-      headerName: 'Organisation',
+      headerName: 'Organization',
       width: 170,
       isEditable: 'false',
       sortable: 'false',
