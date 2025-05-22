@@ -216,6 +216,8 @@ const AllocationForm = () => {
     switch (formType) {
       case 'add_project':
         return addProjectValidationSchema(projects);
+      case 'edit_project':
+        return addProjectValidationSchema(projects, initialData?.Name || '');
       case 'add_resource':
         return addResourceValidationSchema;
       case 'edit_resource': // Temporary later on this will be same as add_resource
@@ -241,7 +243,7 @@ const AllocationForm = () => {
   useEffect(() => {
     setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
   }, [formType]);
-  
+
   const handleScrollAndFocus = (resources, period, projects) => {
     const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
     const weeksObject = {};
