@@ -98,7 +98,9 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Sponsor</StyledLabel>
+        <StyledLabel>
+          Sponsor <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
         <CustomSelect
           name="ProjectSponsor"
           options={resourceTypeOptions}
@@ -113,7 +115,9 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Project Manager</StyledLabel>
+        <StyledLabel>
+          Project Manager <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
         <CustomSelect
           name="ProjectManager"
           options={resourceTypeOptions}
@@ -196,11 +200,13 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           startDateLabel="Start Date"
           formikProps={formikProps}
           error={
-            formikProps.touched.StartDate &&
-            Boolean(formikProps.errors.StartDate)
+            (formikProps.touched.StartDate &&
+              Boolean(formikProps.errors.StartDate)) ||
+            (formikProps.touched.EndDate && Boolean(formikProps.errors.EndDate))
           }
           helperText={
-            formikProps.touched.StartDate && formikProps.errors.StartDate
+            (formikProps.touched.StartDate && formikProps.errors.StartDate) ||
+            (formikProps.touched.EndDate && formikProps.errors.EndDate)
           }
           customStyles={true}
           isProjectForm={true}

@@ -19,7 +19,10 @@ interface Values {
   [key: string]: any;
 }
 
-export const addProjectValidationSchema = (projects: ProjectsPayload = {}) => {
+export const addProjectValidationSchema = (
+  projects: ProjectsPayload = {},
+  initialName = ''
+) => {
   const projectNames = Array.isArray(projects?.result)
     ? projects.result.map(project => project.Name?.toLowerCase().trim())
     : [];
@@ -33,6 +36,7 @@ export const addProjectValidationSchema = (projects: ProjectsPayload = {}) => {
         'Project Name already exists. Please choose another name.',
         value => {
           if (!value) return true;
+          if (initialName && value === initialName) return true; // Allow the same name if it's the initial value
           return !projectNames.includes(value.toLowerCase().trim());
         }
       ),
@@ -40,6 +44,8 @@ export const addProjectValidationSchema = (projects: ProjectsPayload = {}) => {
     AllowOvertime: Yup.boolean().required(
       'Allow overtime selection is required'
     ),
+    ProjectSponsor: Yup.string().required('Project sponsor is required'),
+    ProjectManager: Yup.string().required('Project manager is required'),
     StartDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')
