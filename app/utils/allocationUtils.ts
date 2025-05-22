@@ -234,7 +234,11 @@ export function formatAllAllocations(
     entry.totalEffort += alloc.AllocationEntered;
   }
 
-  return sortAllAllocations(Array.from(grouped.values()));
+  return sortAllAllocations(
+    Array.from(grouped.values()).filter(allocation =>
+      hasAllocations(allocation)
+    )
+  );
 }
 
 export function injectBlankRows(
@@ -380,3 +384,22 @@ export function formatCostAllocations(
 
   return Array.from(grouped.values());
 }
+
+export const hasAllocations = (allocation: AllAllocations) => {
+  // No Projects, only when the empty row, which is needed. So even though it has no allocation, we need to show it.
+  if (allocation.project === '') {
+    return true;
+  }
+  for (const key in allocation) {
+    if (
+      /^W\d+/.test(key) &&
+      allocation[key] &&
+      (allocation[key] as AllocationGridCellData).value &&
+      // @ts-ignore
+      (allocation[key] as AllocationGridCellData).value > 0
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
