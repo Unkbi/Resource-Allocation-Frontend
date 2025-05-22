@@ -12,11 +12,11 @@ import {
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
-import { Resource } from '@/app/types';
+import { Team } from '@/app/types';
 
-interface ResourceTableProps {
+interface TeamsTableProps {
   columns: GridColDef[];
-  rows: Resource[];
+  rows: Team[];
   loading: boolean;
   apiRef: React.RefObject<GridApi>;
   value: String;
@@ -35,15 +35,16 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
   );
 }
 
-const ResourceTable = ({
+const TeamsTable = ({
   columns,
   rows,
   loading,
   apiRef,
   value,
   onChange = () => {},
-}: ResourceTableProps) => {
+}: TeamsTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+
   return (
     <StyledDataGrid
       apiRef={apiRef}
@@ -54,19 +55,18 @@ const ResourceTable = ({
       loading={loading}
       initialState={{
         sorting: {
-          sortModel: [{ field: 'FullName', sort: 'asc' }],
+          sortModel: [{ field: 'Team', sort: 'asc' }],
         },
         columns: {
           columnVisibilityModel: {
-            team: false,
-            organization: false,
+            Team: true,
           },
         },
       }}
       slots={{
         toolbar:
-          ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
-          columnMenu: CustomColumnMenu,
+        ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
+        columnMenu: CustomColumnMenu,
       }}
       localeText={{
         toolbarFilters: '',
@@ -75,7 +75,7 @@ const ResourceTable = ({
       sx={{
         height: '95vh',
         '& .MuiDataGrid-columnHeader': {
-          padding: '0 16px',
+          padding: '0 46px',
           borderRight: 'none',
         },
         '& .MuiDataGrid-footer': {
@@ -132,4 +132,4 @@ const ResourceTable = ({
   );
 };
 
-export default ResourceTable;
+export default TeamsTable;
