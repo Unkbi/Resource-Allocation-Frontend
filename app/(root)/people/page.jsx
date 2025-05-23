@@ -33,6 +33,8 @@ import {
   FETCH_ORGANISATIONS,
   FETCH_ORGANISATIONS_RESOURCES,
 } from '@/app/redux/actions/organizationsAction';
+import TeamsTable from '@/app/components/Resources/TeamsTable';
+import { getAllocationManagerFromPath } from '@/app/utils/common';
 
 const demoResources = {
   result: [
@@ -162,146 +164,12 @@ export default function Resources() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(resources?.result || null);
+  const [teamRows, setTeamRows] = useState(teams?.result || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
+  const [value, setValue] = useState('resource');
 
-  const managerMap = useMemo(() => {
-    const map = {};
-    if (resources?.result) {
-      resources.result.forEach(res => {
-        map[res.Id] = res.FullName;
-      });
-    }
-    return map;
-  }, [resources]);
-
-  useEffect(() => {
-    if (!updating) {
-      dispatch(fetchAllResources());
-      dispatch(getAllTeams());
-      dispatch(closeDialog());
-    }
-  }, [updating]);
-
-  useEffect(() => {
-    setRows(resources?.result);
-  }, [resources]);
-
-  useEffect(() => {
-    if (!teamsResources || Object.keys(teamsResources).length === 0) {
-      dispatch({
-        type: 'FETCH_TEAM_RESOURCES',
-        payload: {
-          teams: [],
-        },
-      });
-    }
-    if (!teams || teams?.result?.length === 0) {
-      dispatch(getAllTeams());
-    }
-    if (
-      !organisationsResources ||
-      Object.keys(organisationsResources).length === 0
-    ) {
-      dispatch({
-        type: FETCH_ORGANISATIONS_RESOURCES,
-        payload: {
-          organisations: [],
-        },
-      });
-    }
-  }, []);
-
-  const modifyData = data => {
-    if (data) {
-      return data.map(item => {
-        return {
-          ...item,
-          id: item.Id,
-          Team:
-            getTeamForResource(item.Id, teams?.result, teamsResources)?.Name ||
-            '',
-          Organization:
-            getOrganisationForResource(
-              item.Id,
-              organisations,
-              organisationsResources
-            )?.Name || '',
-        };
-      });
-    }
-    return [];
-  };
-
-  useEffect(() => {
-    if (!highlightedRowId || !apiRef?.current) return;
-
-    const sortedRowIds = apiRef.current.getSortedRowIds?.();
-    const totalRows = sortedRowIds?.length ?? 0;
-    const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
-
-    if (rowIndex === -1 || rowIndex === undefined) {
-      dispatch(clearHighlightedRowId());
-      return;
-    }
-
-    const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
-
-    const timeout = setTimeout(() => {
-      requestAnimationFrame(() => {
-        try {
-          apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          apiRef.current.setCellFocus(highlightedRowId, 'FullName');
-          apiRef.current.selectRow?.(highlightedRowId, true);
-
-          const scroller = document.querySelector(
-            '.MuiDataGrid-virtualScroller'
-          );
-          if (scroller) {
-            const original = scroller.scrollTop;
-            scroller.scrollTop = original + 1;
-            scroller.scrollTop = original;
-          }
-
-          dispatch(clearHighlightedRowId());
-        } catch (err) {
-          console.error('Scroll error:', err);
-          dispatch(clearHighlightedRowId());
-        }
-      });
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [resources, highlightedRowId]);
-
-  const handleConfirmDelete = () => {
-    if (!deleteTarget.id) return;
-    dispatch(deleteResource(deleteTarget.id))
-      .then(() => {
-        dispatch(fetchAllResources());
-      })
-      .catch(error => {
-        console.error('Error deleting resource:', error);
-      });
-    setDeleteDialogOpen(false);
-    setDeleteTarget({ id: '', name: '' });
-  };
-
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
-  };
-  const handleOpenDialog = (title, formType, row) => {
-    dispatch(
-      openDialog({
-        title: title,
-        submitButtonText: 'Update',
-        cancelButtonText: 'Cancel',
-        formType: formType,
-        initialData: row,
-      })
-    );
-  };
   const columns = [
     {
       field: 'FullName',
@@ -329,7 +197,6 @@ export default function Resources() {
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                minWidth: 0,
                 '&:hover': {
                   textDecoration: 'underline',
                 },
@@ -344,9 +211,8 @@ export default function Resources() {
     {
       field: 'Team',
       headerName: 'Team',
-      flex: 2,
+      flex: 1,
       minWidth: 180,
-      maxWidth: 500,
       renderCell: params => {
         params.value && <span>{params.value}</span>;
       },
@@ -492,6 +358,322 @@ export default function Resources() {
     },
   ];
 
+  const teamColumns = [
+    {
+      field: 'Team',
+      headerName: 'Team Name',
+      minWidth: 290,
+      maxWidth: 500,
+      headerAlign: 'left',
+      renderCell: params => {
+        const handleNameClick = () => {
+          handleOpenDialog();
+        };
+
+        return (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'left',
+            }}
+          >
+            <Box
+              onClick={handleNameClick}
+              sx={{
+                display: 'inline-block',
+                width: '100%',
+                color: '#152E75',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                paddingLeft: '32px',
+
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              {params.value}
+            </Box>
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'AllocationManager',
+      headerName: 'Team Allocation Manager',
+      headerAlign: 'left',
+      minWidth: 290,
+      renderCell: params => {
+        const manager =
+          resources &&
+          'result' in resources &&
+          getAllocationManagerFromPath(params.value, resources.result);
+
+        if (!manager?.FullName) return <span>N/A</span>;
+        return (
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', paddingLeft: '30px' }}
+          >
+            <Box sx={{ mr: 0.5, flexShrink: 0 }}>
+              <CustomAvatar value={manager.FullName} showFullName={false} />
+            </Box>
+            <Box
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {manager.FullName}
+            </Box>
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      width: 170,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        const status = params.value;
+        return (
+          status && (
+            <Box sx={{ paddingLeft: '20px' }}>
+              <StatusPill status={status}>{status}</StatusPill>
+            </Box>
+          )
+        );
+      },
+    },
+    {
+      field: 'actions',
+      headerName: '',
+      flex: 1,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      hideable: false,
+      headerAlign: 'center',
+      renderCell: params => (
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            pr: 1,
+          }}
+        >
+          <IconButton
+            size="small"
+            onClick={e => handleMenuClick(e, params.row.Id)}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl) && selectedRow === params.row.Id}
+            onClose={handleMenuClose}
+            anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem
+              onClick={() => {
+                handleMenuClose();
+                handleOpenDialog('Edit Team', 'edit_team', params.row);
+              }}
+              sx={menuItemStyle}
+            >
+              <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+              Edit
+            </MenuItem>
+
+            <MenuItem
+              onClick={() => {
+                setDeleteDialogOpen(true);
+                handleMenuClose();
+                setDeleteTarget({
+                  id: params.row.Id,
+                  name: params.row.Name,
+                });
+              }}
+              sx={menuItemStyle}
+            >
+              <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+              Delete
+            </MenuItem>
+          </Menu>
+        </Box>
+      ),
+    },
+  ];
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+    if (newValue === 'teams') {
+      dispatch(getAllTeams());
+    }
+  };
+
+  const managerMap = useMemo(() => {
+    const map = {};
+    if (resources?.result) {
+      resources.result.forEach(res => {
+        map[res.Id] = res.FullName;
+      });
+    }
+    return map;
+  }, [resources]);
+
+  useEffect(() => {
+    if (!updating) {
+      dispatch(fetchAllResources());
+      dispatch(getAllTeams());
+      dispatch(closeDialog());
+    }
+  }, [updating]);
+
+  useEffect(() => {
+    setRows(resources?.result);
+  }, [resources]);
+
+  useEffect(() => {
+    setTeamRows(teams?.result);
+  }, [teams]);
+
+  useEffect(() => {
+    if (!teamsResources || Object.keys(teamsResources).length === 0) {
+      dispatch({
+        type: 'FETCH_TEAM_RESOURCES',
+        payload: {
+          teams: [],
+        },
+      });
+    }
+    if (!teams || teams?.result?.length === 0) {
+      dispatch(getAllTeams());
+    }
+    if (
+      !organisationsResources ||
+      Object.keys(organisationsResources).length === 0
+    ) {
+      dispatch({
+        type: FETCH_ORGANISATIONS_RESOURCES,
+        payload: {
+          organisations: [],
+        },
+      });
+    }
+  }, []);
+
+  const modifyData = data => {
+    if (data) {
+      return data.map(item => {
+        return {
+          ...item,
+          id: item.Id,
+          Team:
+            getTeamForResource(item.Id, teams?.result, teamsResources)?.Name ||
+            '',
+          Organization:
+            getOrganisationForResource(
+              item.Id,
+              organisations,
+              organisationsResources
+            )?.Name || '',
+        };
+      });
+    }
+    return [];
+  };
+
+  const modifyTeamData = data => {
+    if (data) {
+      return data.map(item => ({
+        id: item.Id,
+        Team: item.Name,
+        AllocationManager: item.AllocationManager,
+        Status: item.Status,
+      }));
+    }
+    return [];
+  };
+
+  useEffect(() => {
+    if (!highlightedRowId || !apiRef?.current) return;
+
+    const sortedRowIds = apiRef.current.getSortedRowIds?.();
+    const totalRows = sortedRowIds?.length ?? 0;
+    const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
+
+    if (rowIndex === -1 || rowIndex === undefined) {
+      dispatch(clearHighlightedRowId());
+      return;
+    }
+
+    const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
+
+    const timeout = setTimeout(() => {
+      requestAnimationFrame(() => {
+        try {
+          apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
+          apiRef.current.setCellFocus(highlightedRowId, 'FullName');
+          apiRef.current.selectRow?.(highlightedRowId, true);
+
+          const scroller = document.querySelector(
+            '.MuiDataGrid-virtualScroller'
+          );
+          if (scroller) {
+            const original = scroller.scrollTop;
+            scroller.scrollTop = original + 1;
+            scroller.scrollTop = original;
+          }
+
+          dispatch(clearHighlightedRowId());
+        } catch (err) {
+          console.error('Scroll error:', err);
+          dispatch(clearHighlightedRowId());
+        }
+      });
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [resources, highlightedRowId]);
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget.id) return;
+    dispatch(deleteResource(deleteTarget.id))
+      .then(() => {
+        dispatch(fetchAllResources());
+      })
+      .catch(error => {
+        console.error('Error deleting resource:', error);
+      });
+    setDeleteDialogOpen(false);
+    setDeleteTarget({ id: '', name: '' });
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  };
+  const handleOpenDialog = (title, formType, row) => {
+    dispatch(
+      openDialog({
+        title: title,
+        submitButtonText: 'Update',
+        cancelButtonText: 'Cancel',
+        formType: formType,
+        initialData: row,
+      })
+    );
+  };
+
   const handleMenuClick = (event, id) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(id);
@@ -502,6 +684,50 @@ export default function Resources() {
     setSelectedRow(null);
   };
 
+  const onChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
+  const renderTable = () => {
+    switch (value) {
+      case 'resource':
+        return (
+          <ResourceTable
+            loading={loading || dataProcessing || organisationLoading}
+            columns={columns}
+            rows={modifyData(rows)}
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
+        );
+      case 'teams':
+        return (
+          <TeamsTable
+            loading={dataProcessing}
+            columns={teamColumns}
+            rows={modifyTeamData(teamRows) || []}
+            value={value}
+            onChange={onChange}
+            componentsProps={{
+              columnHeaders: {
+                sx: {
+                  color: '#313F68',
+                  fontFamily: '"Open Sans", sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  lineHeight: '20px',
+                  fontStyle: 'normal',
+                },
+              },
+            }}
+          />
+        );
+      default:
+        return <>1</>;
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -510,12 +736,7 @@ export default function Resources() {
         height: '100%',
       }}
     >
-      <ResourceTable
-        loading={loading || dataProcessing || organisationLoading}
-        columns={columns}
-        rows={modifyData(rows)}
-        apiRef={apiRef}
-      />
+      {renderTable()}
       <ConfirmDialog
         open={deleteDialogOpen}
         onConfirm={handleConfirmDelete}
