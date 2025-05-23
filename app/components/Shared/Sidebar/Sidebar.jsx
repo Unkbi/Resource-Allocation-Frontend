@@ -259,8 +259,12 @@ const menuItems = [
       </Box>
       )}
     </Box>
+    </Box>
 
-    <Box  className= "extra-menuitems-parent" sx={{ marginTop: '0px', paddingTop: '20px' }}>
+        <Box
+          className="extra-menuitems-parent"
+          sx={{ marginTop: '0px', paddingTop: '16px' }}
+        >
     <Box
     sx={{
       paddingTop: "0px",
@@ -297,30 +301,65 @@ const menuItems = [
           >
             <img src={"/images/icons/profile.svg"} className="profle-img" alt='' />
             {sidebarExpanded && (
-              <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'30px'}}>
-            {sidebarExpanded && (
-              <>
+                 <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flex: 1,
+                      overflow: 'hidden',
+                      gap: '12px',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        textOverflow: 'ellipsis',
+                        flex: 1,
+                        alignItems: 'flex-start',
+                      }}
+                    >
         <Typography 
         sx={{ 
           fontSize: '14px', 
           fontWeight: '500', 
           color: '#95979E',
-          padding :'2px',
-          textAlign: 'left',
-          display: 'block',
-          width: '100%',
-           }}>
+          padding: '0',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+          maxWidth: '160px',
+               }}
+          className="profile-name"
+              >
       {user && user.FirstName && user.LastName 
       ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
-       : ''}   {user?.Email}
-    </Typography>
+               : ''}
+              </Typography>
+                <Typography
+                        sx={{
+                          fontSize: '12px',
+                          color: '#95979E',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '160px',
+                        }}
+                        className="profile-email"
+                      >
+                        {user?.Email}
+                      </Typography>
+                    </Box>
+
     <img 
     src={open ? "/images/icons/iconUp.svg" : "/images/icons/icon.svg"}
     className="down-img"
     alt=""
+    style={{ flexShrink: 0 }}
     />
-  </>  
-  )}
   </Box>
 )}
         </Box>
@@ -419,7 +458,6 @@ const menuItems = [
            alignItems: 'center',  
            width: '100%',  
            }}>
-           </Box>
       </Box>
     </Box>
   </Box>
