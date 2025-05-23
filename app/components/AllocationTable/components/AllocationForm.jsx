@@ -241,7 +241,9 @@ const AllocationForm = () => {
     }
   };
   useEffect(() => {
-    setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+    if (formType && formType !== 'name_view') {
+      setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+    }
   }, [formType]);
 
   const handleScrollAndFocus = (resources, period, projects) => {
@@ -333,6 +335,14 @@ const AllocationForm = () => {
             ...cleanedValues,
             Budget: cleanedValues.Budget || 0,
             Description: 'string',
+            ProjectSponsor:
+              cleanedValues.ProjectSponsor === ''
+                ? null
+                : cleanedValues.ProjectSponsor,
+            ProjectManager:
+              cleanedValues.ProjectManager === ''
+                ? null
+                : cleanedValues.ProjectManager,
           },
         };
         try {
@@ -395,6 +405,14 @@ const AllocationForm = () => {
             ...cleanedValues,
             Budget: cleanedValues.Budget || 0,
             Description: 'string',
+            ProjectSponsor:
+              cleanedValues.ProjectSponsor === ''
+                ? null
+                : cleanedValues.ProjectSponsor,
+            ProjectManager:
+              cleanedValues.ProjectManager === ''
+                ? null
+                : cleanedValues.ProjectManager,
           },
         };
         try {

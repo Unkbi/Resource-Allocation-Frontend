@@ -44,8 +44,6 @@ export const addProjectValidationSchema = (
     AllowOvertime: Yup.boolean().required(
       'Allow overtime selection is required'
     ),
-    ProjectSponsor: Yup.string().required('Project sponsor is required'),
-    ProjectManager: Yup.string().required('Project manager is required'),
     StartDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')

@@ -98,9 +98,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>
-          Sponsor <span style={{ color: 'red' }}>*</span>
-        </StyledLabel>
+        <StyledLabel>Project Sponsor</StyledLabel>
         <CustomSelect
           name="ProjectSponsor"
           options={resourceTypeOptions}
@@ -139,9 +137,31 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>
-          Project Manager <span style={{ color: 'red' }}>*</span>
-        </StyledLabel>
+        <StyledLabel>Project Budget</StyledLabel>
+        <StyledInput
+          type="number"
+          name="Budget"
+          value={values.Budget || ''}
+          onChange={e => {
+            const input = e.target.value;
+            const parsed = input === '' ? null : Number(input);
+            formikProps.setFieldValue('Budget', parsed);
+          }}
+          onBlur={handleBlur}
+          error={touched.Budget && Boolean(errors.Budget)}
+          helperText={touched.Budget && formikProps.errors.Budget}
+          onKeyDown={e => {
+            if (['e', 'E', '+', '-'].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
+          InputProps={{
+            startAdornment: <span>$&nbsp;</span>,
+          }}
+        />
+      </Box>
+      <Box sx={{ pb: 2 }}>
+        <StyledLabel>Project Manager</StyledLabel>
         <CustomSelect
           name="ProjectManager"
           options={resourceTypeOptions}
