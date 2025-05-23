@@ -346,7 +346,7 @@ export default function TeamAllocation({
     {
       field: 'projectCost',
       headerName: 'Project Budget',
-      width: 120,
+      width: 140,
       type: 'string',
       isEditable: false,
       sortable: false,
