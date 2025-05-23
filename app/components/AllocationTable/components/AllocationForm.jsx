@@ -241,7 +241,9 @@ const AllocationForm = () => {
     }
   };
   useEffect(() => {
-    setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+    if (formType && formType !== 'name_view') {
+      setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+    }
   }, [formType]);
 
   const handleScrollAndFocus = (resources, period, projects) => {

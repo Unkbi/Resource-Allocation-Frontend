@@ -16,14 +16,14 @@ import {
 } from '@/app/types';
 import { createSlice } from '@reduxjs/toolkit';
 
-const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
+export const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
   '__row_group_by_columns_group_teams__',
   '__row_group_by_columns_group_resource__',
   'project',
   'resourceType',
 ];
 
-const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
+export const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
   '__row_group_by_columns_group__',
   'resource',
   'totalEffort',
