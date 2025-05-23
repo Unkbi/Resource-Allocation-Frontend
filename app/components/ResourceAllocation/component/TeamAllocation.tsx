@@ -353,7 +353,8 @@ export default function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectCost || ''} />;
+        const cost = allocation?.projectCost;
+        return <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />;
       },
     },
     {

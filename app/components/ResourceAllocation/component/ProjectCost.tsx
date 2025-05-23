@@ -508,8 +508,9 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
+        const cost = firstChild?.projectCost;
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCost ?? 'N/A'} />
+          <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />
         ) : null;
       },
     },
