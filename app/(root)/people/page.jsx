@@ -228,6 +228,42 @@ export default function Resources() {
       },
     },
     {
+      field: 'ContractorHourlyRate',
+      headerName: 'Hourly Rate',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        params.value && <span>{params.value}</span>;
+      },
+    },
+    {
+      field: 'AverageWeeklyHours',
+      headerName: 'Average Weekly Hours',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        params.value && <span>{params.value}</span>;
+      },
+    },
+    {
+      field: 'WorkLocation',
+      headerName: 'Work Location',
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        params.value && <span>{params.value}</span>;
+      },
+    },
+    {
+      field: 'PhoneNumber',
+      headerName: 'Phone Number',
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        params.value && <span>{params.value}</span>;
+      },
+    },
+    {
       field: 'Role',
       headerName: 'Role',
       flex: 1,
