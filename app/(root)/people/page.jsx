@@ -522,6 +522,13 @@ export default function Resources() {
             onClose={handleMenuClose}
             anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            PaperProps={{
+              elevation: 0, 
+              sx: {
+                boxShadow: 'none', 
+                border: '1px solid #ccc', 
+              },
+            }}
           >
             <MenuItem
               onClick={() => {
