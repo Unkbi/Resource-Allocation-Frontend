@@ -35,6 +35,7 @@ import {
 } from '@/app/redux/actions/organizationsAction';
 import TeamsTable from '@/app/components/Resources/TeamsTable';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
+import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 
 const demoResources = {
   result: [
@@ -161,6 +162,7 @@ export default function Resources() {
     organisationsResources,
     loading: organisationLoading,
   } = useSelector(state => state.organisations);
+  const { employeeRates } = useSelector(state => state.employeeRates);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(resources?.result || null);
@@ -170,6 +172,7 @@ export default function Resources() {
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const [value, setValue] = useState('resource');
 
+  console.log('employeeRates :', employeeRates);
   const columns = [
     {
       field: 'FullName',
@@ -572,6 +575,12 @@ export default function Resources() {
         payload: {
           organisations: [],
         },
+      });
+    }
+    if (!employeeRates || employeeRates?.length === 0) {
+      dispatch({
+        type: FETCH_EMPLOYEE_RATES,
+        payload: {},
       });
     }
   }, []);
