@@ -445,8 +445,18 @@ const AllocationForm = () => {
             Type: cleanedValues.Type,
             EndDate: cleanedValues.EndDate,
             Role: cleanedValues.Role,
-            FullName: cleanedValues.FullName,
+            FullName:
+              cleanedValues.FirstName?.trim() +
+              ' ' +
+              cleanedValues.LastName?.trim(),
             Status: cleanedValues.Status,
+            ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
+            HRLevel: cleanedValues.HRLevel,
+            PhoneNumber: cleanedValues.PhoneNumber,
+            WorkLocation: cleanedValues.WorkLocation,
+            ...(cleanedValues.PreferredFirstName
+              ? { PreferredFirstName: cleanedValues.PreferredFirstName }
+              : {}),
           },
         };
         try {
@@ -470,6 +480,16 @@ const AllocationForm = () => {
 
           if (resourcePath && teamPath) {
             await dispatch(addResourceToTeam({ teamPath, resourcePath }));
+            await dispatch({
+              type: 'FETCH_TEAM_RESOURCES',
+              payload: {
+                teams: [
+                  {
+                    Id: teamPath.split(',')[1],
+                  },
+                ],
+              },
+            });
           }
 
           if (newResourceId) {
