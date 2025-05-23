@@ -227,7 +227,7 @@ const CellWithMenu = ({
           <EllipsisNameCell
             value={params.value}
             showAddIcon={false}
-            showAvatar={true}
+            showAvatar={showAvatar}
             isFormatWithK={isFormatWithK}
           />
         }
