@@ -422,7 +422,7 @@ export default function Resources() {
           >
             <Box
               /*
-               * To Be Implemented...
+               * To Be Implemented..
                */
               // onClick={handleNameClick}
               sx={{
@@ -569,8 +569,8 @@ export default function Resources() {
       field: 'HRLevel',
       headerName: 'HR Level',
       headerAlign: 'left',
-      sortable :'false' ,
-      filterable :'false' ,
+      sortable: 'false',
+      filterable: 'false',
       minWidth: 155,
       renderCell: params => {
         return <Box sx={{ paddingLeft: '42px' }}>{params.value}</Box>;
@@ -605,18 +605,18 @@ export default function Resources() {
       sortable: true,
       filterable: true,
       headerAlign: 'left',
-      renderCell : (params) => {
+      renderCell: params => {
         if (params && params.value) {
           const date = new Date(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
           const formattedDate = `${month}/${day}/${year}`;
-      
+
           return <Box sx={{ paddingLeft: '32px' }}>{formattedDate}</Box>;
         }
         return <Box sx={{ paddingLeft: '32px' }} />;
-      }
+      },
     },
     {
       field: 'ValidityEndDate',
@@ -632,10 +632,10 @@ export default function Resources() {
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
           const formattedDate = `${month}/${day}/${year}`;
-        return <Box sx={{ paddingLeft: '32px' }}>{formattedDate}</Box>;
-      }
-      return <Box sx={{ paddingLeft: '32px' }} /> 
-    }
+          return <Box sx={{ paddingLeft: '32px' }}>{formattedDate}</Box>;
+        }
+        return <Box sx={{ paddingLeft: '32px' }} />;
+      },
     },
     {
       field: 'Status',
