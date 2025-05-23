@@ -333,6 +333,14 @@ const AllocationForm = () => {
             ...cleanedValues,
             Budget: cleanedValues.Budget || 0,
             Description: 'string',
+            ProjectSponsor:
+              cleanedValues.ProjectSponsor === ''
+                ? null
+                : cleanedValues.ProjectSponsor,
+            ProjectManager:
+              cleanedValues.ProjectManager === ''
+                ? null
+                : cleanedValues.ProjectManager,
           },
         };
         try {
@@ -395,6 +403,14 @@ const AllocationForm = () => {
             ...cleanedValues,
             Budget: cleanedValues.Budget || 0,
             Description: 'string',
+            ProjectSponsor:
+              cleanedValues.ProjectSponsor === ''
+                ? null
+                : cleanedValues.ProjectSponsor,
+            ProjectManager:
+              cleanedValues.ProjectManager === ''
+                ? null
+                : cleanedValues.ProjectManager,
           },
         };
         try {
