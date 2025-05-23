@@ -170,352 +170,262 @@ const menuItems = [
 
   // const {FirstName ,LastName} = user | {} ; might need in future
   return (
-    <MainBox className="main-parent" sidebarExpanded={sidebarExpanded}>
-      <Box
-        className="logo"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '1px 17px',
-          height: '76px',
-        }}
-      >
-        <Box
-          className="logo-parent"
-          sx={{
-            display: 'flex',
-            flexDirection: sidebarExpanded ? 'row' : 'column',
-            alignItems: 'center',
-            height: '90px',
-            width: sidebarExpanded ? '200px' : '',
-            justifyContent: 'space-between',
-            gap: sidebarExpanded ? '20px' : '0',
-            marginRight: sidebarExpanded ? '40px' : '',
-          }}
-        >
-          <Link href={''}>
-            <img alt="cio-logo" src="/images/icons/cio-logo.svg" />
-          </Link>
+  <MainBox className="main-parent" sidebarExpanded={sidebarExpanded} >
+  <Box className='logo' sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '1px 17px', height: '76px' }}>
+  <Box 
+    className="logo-parent" 
+    sx={{ 
+      display: 'flex', 
+      flexDirection: sidebarExpanded ? 'row' : 'column', 
+      alignItems: 'center', 
+      height: '90px' ,
+      width: sidebarExpanded ?'200px': '',
+      justifyContent: 'space-between', 
+      gap: sidebarExpanded ? '20px' : '0', 
+      marginRight:  sidebarExpanded ?"40px" :'',
+    }}
+  >
+    <Link href={''} >
+      <img alt="cio-logo" src="/images/icons/cio-logo.svg" />
+      </Link>
 
-          <img
-            alt="CIO-Image"
-            src="/images/icons/CIOptimize.svg"
-            style={{
-              display: sidebarExpanded ? 'flex' : 'none',
-            }}
-          />
+      <img 
+        alt="CIO-Image" 
+        src="/images/icons/CIOptimize.svg" 
+        style={{ 
+          display: sidebarExpanded ? 'flex' : 'none',  
+        }} 
+      />
 
-          <Button
-            onClick={toggleSidebar}
-            disableRipple
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.3s ease-in-out, gap 0.3s ease-in-out',
-              transform: `translateY(${sidebarExpanded ? '0' : '4px'})`,
-              justifyContent: sidebarExpanded ? 'flex-start' : 'center',
-              width: '100%',
-              marginBottom: '10px',
-              marginLeft: sidebarExpanded ? '3px' : '',
-              padding: '0px',
-              background: 'transparent',
-              boxShadow: 'none',
-              minWidth: '0px',
-            }}
-          >
-            <img
-              src={'/images/icons/sidebar-left.svg'}
-              className="expand-img"
-              alt=""
-              style={{
-                marginRight: sidebarExpanded ? '10px' : '0',
-                // transition: 'margin 0.7s ease-in-out',
-                padding: '0px',
-              }}
-            />
-          </Button>
+  <Button 
+    onClick={toggleSidebar} 
+    disableRipple
+    sx={{
+      display: 'flex', 
+      alignItems: 'center', 
+      transition: 'all 0.3s ease-in-out, gap 0.3s ease-in-out', 
+      transform: `translateY(${sidebarExpanded ? '0' : '4px'})`, 
+      justifyContent: sidebarExpanded ? 'flex-start' : 'center', 
+      width: '100%', 
+      marginBottom: '10px',
+      marginLeft :sidebarExpanded ? '3px' :'' ,
+      padding: '0px',
+      background: 'transparent', 
+      boxShadow: 'none',  
+      minWidth :'0px' ,  
+    }}
+  >
+    <img 
+      src={"/images/icons/sidebar-left.svg"} 
+      className="expand-img" 
+      alt='' 
+      style={{
+        marginRight: sidebarExpanded ? '10px' : '0', 
+        // transition: 'margin 0.7s ease-in-out',
+        padding :'0px' ,
+      }} 
+    />
+  </Button>
+
+  </Box>
+    <img src="/images/icons/line1-expand.svg"/>
+  </Box>
+      
+  <Box className= "items-parent">
+    <Box className= "items-parent-wrapper">
+      <Box className="menu-items-parent" sx={ {marginTop: '15px',}}>
+      <List>
+        {menuItems.map((item, index) => (
+          <MenuItem
+            className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
+            key={index}
+                onClick={() => handleMenuClick(item.url, item.disabled)}
+                sx={{
+                  opacity: item.disabled ? 0.5 : 1,
+                  cursor: item.disabled ? 'not-allowed' : 'pointer',
+                  margin :"8px",
+                  color :'#95979E'
+                }}
+              >
+                <img src={item.icon} alt={item.text} sx={{ width: '16px', height: '16px' }}/>
+                {sidebarExpanded && <Typography sx={{ marginLeft: '10px' }}>{item.text}</Typography>}
+              </MenuItem>
+            ))}
+          </List>
         </Box>
-        <img src="/images/icons/line1-expand.svg" />
+        {sidebarExpanded && (
+      <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom:' 100px', }}>
+      <img src="/images/icons/line2-expand.svg" alt="Divider" />
       </Box>
+      )}
+    </Box>
 
-      <Box className="items-parent">
-        <Box className="items-parent-wrapper">
-          <Box className="menu-items-parent" sx={{ marginTop: '15px' }}>
-            <List>
-              {menuItems.map((item, index) => (
-                <MenuItem
-                  className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
-                  key={index}
-                  onClick={() => handleMenuClick(item.url, item.disabled)}
-                  sx={{
-                    opacity: item.disabled ? 0.5 : 1,
-                    cursor: item.disabled ? 'not-allowed' : 'pointer',
-                    margin: '8px',
-                    color: '#95979E',
-                  }}
-                >
-                  <img
-                    src={item.icon}
-                    alt={item.text}
-                    sx={{ width: '16px', height: '16px' }}
-                  />
-                  {sidebarExpanded && (
-                    <Typography sx={{ marginLeft: '10px' }}>
-                      {item.text}
-                    </Typography>
-                  )}
-                </MenuItem>
-              ))}
-            </List>
-          </Box>
-          {sidebarExpanded && (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginBottom: ' 100px',
+    <Box  className= "extra-menuitems-parent" sx={{ marginTop: '0px', paddingTop: '20px' }}>
+    <Box
+    sx={{
+      paddingTop: "0px",
+      marginTop: '0px', 
+    }}>
+   </Box>
+    <Box
+     sx={{
+      marginTop: '15px', 
+    }}>  
+  <Box className ="profile-section">
+          <Box lineHeight={'10px'}
+            onClick={handleToggle}
+            ref={anchorRef}
+            id="composition-button"
+            aria-controls={open ? 'composition-menu' : undefined}
+            sx={{ cursor: 'pointer' ,
+              marginBottom:"9px",
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: sidebarExpanded ? '15px' : '0',
+              marginLeft : sidebarExpanded ? "10px" :"17px",
+              width: sidebarExpanded ?'250px':'',
+              height :sidebarExpanded?'52px' :'',
+              borderRadius :"8px",
+              '&:hover': {
+              background: '#0D1F52', 
+              },
+             '&.active': {
+              background: '#0D1F52',
+            },
+          }}
+          className={selectedMenu === '/profile' ? 'active' : ''} 
+          >
+            <img src={"/images/icons/profile.svg"} className="profle-img" alt='' />
+            {sidebarExpanded && (
+              <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'30px'}}>
+            {sidebarExpanded && (
+              <>
+        <Typography 
+        sx={{ 
+          fontSize: '14px', 
+          fontWeight: '500', 
+          color: '#95979E',
+          padding :'2px',
+          textAlign: 'left',
+          display: 'block',
+          width: '100%',
+           }}>
+      {user && user.FirstName && user.LastName 
+      ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
+       : ''}   {user?.Email}
+    </Typography>
+    <img 
+    src={open ? "/images/icons/iconUp.svg" : "/images/icons/icon.svg"}
+    className="down-img"
+    alt=""
+    />
+  </>  
+  )}
+  </Box>
+)}
+        </Box>
+          <Popper
+          open={open}
+          anchorEl={anchorRef.current}
+          role={undefined}
+          placement={ "top-start"}
+          transition
+          disablePortal
+          modifiers={[
+            {
+              name: "offset",
+              options: {
+                offset: [0, 2], 
+              },
+            },
+          ]}
+        >
+          {({ TransitionProps, placement }) => (
+            <Grow
+              {...TransitionProps}
+              style={{
+                transformOrigin: sidebarExpanded
+                  ? "left bottom" 
+                  : "left top",
+                marginTop: sidebarExpanded ? "-12px" : "-4px", 
               }}
             >
-              <img src="/images/icons/line2-expand.svg" alt="Divider" />
-            </Box>
+              <Paper className="profileMenu" sx={{
+               display: "flex",
+               width: sidebarExpanded?"250px" :"230px",
+               padding: "16px", 
+               flexDirection: "column",
+               marginLeft : "-9px" ,
+               borderRadius : "8px",
+               boxShadow: "0 4px 20px 0 rgba(0, 0, 0, 0.06)",
+              background :'#0D1F52',
+        }}>
+                <ClickAwayListener onClickAway={handleClose}>
+                  <MenuList
+                    autoFocusItem={open}
+                    id="composition-menu"
+                    aria-labelledby="composition-button"
+                    onKeyDown={handleListKeyDown}
+              
+                  >
+                    {extraMenuItems.map((item, index) => (
+                      <MenuItem
+                        key={index}
+                        onClick={() => handleMenuClick(item.url, item.disabled)}
+                        disabled={item.disabled}
+                        sx={{
+                          cursor: item.disabled ? "not-allowed" : "pointer",
+                          opacity: item.disabled ? 0.5 : 1,
+                          background:'#0D1F52',
+                          marginBottom:"6px",
+                          marginLeft:"0px",
+                        }}
+                      >
+                        <img
+                          src={item.icon}
+                          alt={item.text}
+                          style={{ width: "16px", height: "16px", marginRight: "10px" }}
+                        />
+                        {item.text}
+                      </MenuItem>
+                    ))}
+                    <div></div>
+                    {/* Logout Option */}
+                    <MenuItem onClick={handleLogout}>
+                      <img
+                        src="/images/icons/exiticon.svg"
+                        alt="Logout"
+                        style={{ width: "16px", height: "16px", marginRight: "10px",color:' #95979E',
+                        fontFamily: theme => theme.typography.fontFamily,
+                         fontsize: '14px',
+                         fontStyle:' normal',
+                         fontweight: '400',
+                         lineheight: 'normal', 
+                        }}
+                      />
+                      Logout
+                    </MenuItem>
+                  </MenuList>
+                </ClickAwayListener>
+              </Paper>
+            </Grow>
           )}
-        </Box>
-
-        <Box
-          className="extra-menuitems-parent"
-          sx={{ marginTop: '0px', paddingTop: '16px' }}
-        >
-          <Box
-            sx={{
-              paddingTop: '0px',
-              marginTop: '0px',
-            }}
-          ></Box>
-          <Box
-            sx={{
-              marginTop: '15px',
-            }}
-          >
-            <Box className="profile-section">
-              <Box
-                lineHeight={'10px'}
-                onClick={handleToggle}
-                ref={anchorRef}
-                id="composition-button"
-                aria-controls={open ? 'composition-menu' : undefined}
-                sx={{
-                  cursor: 'pointer',
-                  marginBottom: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: sidebarExpanded ? '15px' : '0',
-                  marginLeft: sidebarExpanded ? '10px' : '17px',
-                  width: sidebarExpanded ? '250px' : '',
-                  height: sidebarExpanded ? '52px' : '',
-                  borderRadius: '8px',
-                  '&:hover': {
-                    background: '#0D1F52',
-                  },
-                  '&.active': {
-                    background: '#0D1F52',
-                  },
-                }}
-                className={selectedMenu === '/profile' ? 'active' : ''}
-              >
-                <img
-                  src={'/images/icons/profile.svg'}
-                  className="profle-img"
-                  alt=""
-                />
-                {sidebarExpanded && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      flex: 1,
-                      overflow: 'hidden',
-                      gap: '12px',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                        textOverflow: 'ellipsis',
-                        flex: 1,
-                        alignItems: 'flex-start',
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: '14px',
-                          fontWeight: 500,
-                          color: '#95979E',
-                          padding: '0',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '160px',
-                        }}
-                        className="profile-name"
-                      >
-                        {user && user.FirstName && user.LastName
-                          ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
-                          : ''}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '12px',
-                          color: '#95979E',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '160px',
-                        }}
-                        className="profile-email"
-                      >
-                        {user?.Email}
-                      </Typography>
-                    </Box>
-
-                    <img
-                      src={
-                        open
-                          ? '/images/icons/iconUp.svg'
-                          : '/images/icons/icon.svg'
-                      }
-                      className="down-img"
-                      alt=""
-                      style={{ flexShrink: 0 }}
-                    />
-                  </Box>
-                )}
-              </Box>
-              <Popper
-                open={open}
-                anchorEl={anchorRef.current}
-                role={undefined}
-                placement={'top-start'}
-                transition
-                disablePortal
-                modifiers={[
-                  {
-                    name: 'offset',
-                    options: {
-                      offset: [0, 2],
-                    },
-                  },
-                ]}
-              >
-                {({ TransitionProps, placement }) => (
-                  <Grow
-                    {...TransitionProps}
-                    style={{
-                      transformOrigin: sidebarExpanded
-                        ? 'left bottom'
-                        : 'left top',
-                      marginTop: sidebarExpanded ? '-12px' : '-4px',
-                    }}
-                  >
-                    <Paper
-                      className="profileMenu"
-                      sx={{
-                        display: 'flex',
-                        width: sidebarExpanded ? '250px' : '230px',
-                        padding: '16px',
-                        flexDirection: 'column',
-                        marginLeft: '-9px',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.06)',
-                        background: '#0D1F52',
-                      }}
-                    >
-                      <ClickAwayListener onClickAway={handleClose}>
-                        <MenuList
-                          autoFocusItem={open}
-                          id="composition-menu"
-                          aria-labelledby="composition-button"
-                          onKeyDown={handleListKeyDown}
-                        >
-                          {extraMenuItems.map((item, index) => (
-                            <MenuItem
-                              key={index}
-                              onClick={() =>
-                                handleMenuClick(item.url, item.disabled)
-                              }
-                              disabled={item.disabled}
-                              sx={{
-                                cursor: item.disabled
-                                  ? 'not-allowed'
-                                  : 'pointer',
-                                opacity: item.disabled ? 0.5 : 1,
-                                background: '#0D1F52',
-                                marginBottom: '6px',
-                                marginLeft: '0px',
-                              }}
-                            >
-                              <img
-                                src={item.icon}
-                                alt={item.text}
-                                style={{
-                                  width: '16px',
-                                  height: '16px',
-                                  marginRight: '10px',
-                                }}
-                              />
-                              {item.text}
-                            </MenuItem>
-                          ))}
-                          <div></div>
-                          {/* Logout Option */}
-                          <MenuItem onClick={handleLogout}>
-                            <img
-                              src="/images/icons/exiticon.svg"
-                              alt="Logout"
-                              style={{
-                                width: '16px',
-                                height: '16px',
-                                marginRight: '10px',
-                                color: ' #95979E',
-                                fontFamily: theme =>
-                                  theme.typography.fontFamily,
-                                fontsize: '14px',
-                                fontStyle: ' normal',
-                                fontweight: '400',
-                                lineheight: 'normal',
-                              }}
-                            />
-                            Logout
-                          </MenuItem>
-                        </MenuList>
-                      </ClickAwayListener>
-                    </Paper>
-                  </Grow>
-                )}
-              </Popper>
-            </Box>
-
-            <Box
-              className="logout"
-              sx={{
-                display: 'flex',
-                justifyContent: sidebarExpanded ? 'start' : 'center',
-                alignItems: 'center',
-                width: '100%',
-              }}
-            ></Box>
-          </Box>
-        </Box>
+        </Popper>
       </Box>
-    </MainBox>
+
+      <Box className= "logout" 
+      sx={{display:"flex",
+           justifyContent: sidebarExpanded ? 'start' : 'center', 
+           alignItems: 'center',  
+           width: '100%',  
+           }}>
+           </Box>
+      </Box>
+    </Box>
+  </Box>
+      
+  </MainBox>
   );
 };
 
 export default Sidebar;
-
-
