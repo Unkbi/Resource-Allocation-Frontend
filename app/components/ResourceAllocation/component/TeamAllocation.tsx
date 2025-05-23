@@ -345,15 +345,16 @@ export default function TeamAllocation({
     },
     {
       field: 'projectCost',
-      headerName: 'Project Cost',
-      width: 120,
+      headerName: 'Project Budget',
+      width: 140,
       type: 'string',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectCost || ''} />;
+        const cost = allocation?.projectCost;
+        return <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />;
       },
     },
     {
