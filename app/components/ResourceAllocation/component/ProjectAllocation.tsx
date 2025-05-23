@@ -436,7 +436,7 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectCost',
-      headerName: 'Project Cost',
+      headerName: 'Project Budget',
       width: 150,
       type: 'string ',
       headerClassName: 'secondary-header',

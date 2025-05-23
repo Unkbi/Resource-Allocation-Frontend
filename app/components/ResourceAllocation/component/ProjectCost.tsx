@@ -499,7 +499,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     },
     {
       field: 'projectCost',
-      headerName: 'Project Cost',
+      headerName: 'Project Budget',
       width: 150,
       type: 'string ',
       headerClassName: 'secondary-header',
