@@ -98,9 +98,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>
-          Sponsor <span style={{ color: 'red' }}>*</span>
-        </StyledLabel>
+        <StyledLabel>Project Sponsor</StyledLabel>
         <CustomSelect
           name="ProjectSponsor"
           options={resourceTypeOptions}
@@ -115,9 +113,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>
-          Project Manager <span style={{ color: 'red' }}>*</span>
-        </StyledLabel>
+        <StyledLabel>Project Manager</StyledLabel>
         <CustomSelect
           name="ProjectManager"
           options={resourceTypeOptions}
