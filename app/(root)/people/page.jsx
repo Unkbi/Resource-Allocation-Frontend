@@ -35,6 +35,7 @@ import {
 } from '@/app/redux/actions/organizationsAction';
 import TeamsTable from '@/app/components/Resources/TeamsTable';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
+import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 
 const demoResources = {
   result: [
@@ -161,6 +162,9 @@ export default function Resources() {
     organisationsResources,
     loading: organisationLoading,
   } = useSelector(state => state.organisations);
+  const { employeeRates, loading: employeeRatesLoading } = useSelector(
+    state => state.employeeRates
+  );
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(resources?.result || null);
@@ -417,6 +421,9 @@ export default function Resources() {
             }}
           >
             <Box
+              /*
+               * To Be Implemented...
+               */
               // onClick={handleNameClick}
               sx={{
                 display: 'inline-block',
@@ -475,6 +482,7 @@ export default function Resources() {
       field: 'Status',
       headerName: 'Status',
       width: 170,
+      flex: 1,
       sortable: true,
       filterable: true,
       headerAlign: 'left',
@@ -482,75 +490,226 @@ export default function Resources() {
         const status = params.value;
         return (
           status && (
-            <Box sx={{ paddingLeft: '20px' }}>
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <StatusPill status={status}>{status}</StatusPill>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   handleMenuClose();
+                    //   handleOpenDialog('Edit Team', 'edit_team', params.row);
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   setDeleteDialogOpen(true);
+                    //   handleMenuClose();
+                    //   setDeleteTarget({
+                    //     id: params.row.Id,
+                    //     name: params.row.Name,
+                    //   });
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </Box>
             </Box>
           )
         );
       },
     },
+  ];
+
+  const employeeRatesColumns = [
     {
-      field: 'actions',
-      headerName: '',
-      flex: 1,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
+      field: 'WorkLocation',
+      headerName: 'Location',
+      minWidth: 220,
+      headerAlign: 'left',
       hideable: false,
-      headerAlign: 'center',
-      renderCell: params => (
-        <Box
-          sx={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            pr: 1,
-            pt: 1,
-          }}
-        >
-          <IconButton
-            size="small"
-            onClick={e => handleMenuClick(e, params.row.Id)}
-          >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl) && selectedRow === params.row.Id}
-            onClose={handleMenuClose}
-            anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <MenuItem
-              onClick={() => {
-                handleMenuClose();
-                handleOpenDialog('Edit Team', 'edit_team', params.row);
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '32px' }}>{params.value}</Box>;
+      },
+    },
+    {
+      field: 'HRLevel',
+      headerName: 'HR Level',
+      headerAlign: 'left',
+      sortable :'false' ,
+      filterable :'false' ,
+      minWidth: 155,
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '42px' }}>{params.value}</Box>;
+      },
+    },
+    {
+      field: 'HourlyRate',
+      headerName: 'Rates/Hr',
+      width: 160,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '38px' }}>{params.value}</Box>;
+      },
+    },
+    {
+      field: 'HourlyRateCurrency',
+      headerName: 'Currency',
+      width: 160,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '35px' }}>{params.value}</Box>;
+      },
+    },
+    {
+      field: 'ValidityStartDate',
+      headerName: 'Valid From',
+      width: 170,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell : (params) => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          const formattedDate = `${month}/${day}/${year}`;
+      
+          return <Box sx={{ paddingLeft: '32px' }}>{formattedDate}</Box>;
+        }
+        return <Box sx={{ paddingLeft: '32px' }} />;
+      }
+    },
+    {
+      field: 'ValidityEndDate',
+      headerName: 'Valid To',
+      width: 170,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          const formattedDate = `${month}/${day}/${year}`;
+        return <Box sx={{ paddingLeft: '32px' }}>{formattedDate}</Box>;
+      }
+      return <Box sx={{ paddingLeft: '32px' }} /> 
+    }
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      width: 170,
+      flex: 1,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        const status = params.value;
+        return (
+          status && (
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
-              sx={menuItemStyle}
             >
-              <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-              Edit
-            </MenuItem>
+              <StatusPill status={status}>{status}</StatusPill>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
 
-            <MenuItem
-              onClick={() => {
-                setDeleteDialogOpen(true);
-                handleMenuClose();
-                setDeleteTarget({
-                  id: params.row.Id,
-                  name: params.row.Name,
-                });
-              }}
-              sx={menuItemStyle}
-            >
-              <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-              Delete
-            </MenuItem>
-          </Menu>
-        </Box>
-      ),
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   handleMenuClose();
+                    //   handleOpenDialog('Edit Team', 'edit_team', params.row);
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   setDeleteDialogOpen(true);
+                    //   handleMenuClose();
+                    //   setDeleteTarget({
+                    //     id: params.row.Id,
+                    //     name: params.row.Name,
+                    //   });
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </Box>
+            </Box>
+          )
+        );
+      },
     },
   ];
 
@@ -608,6 +767,12 @@ export default function Resources() {
         payload: {
           organisations: [],
         },
+      });
+    }
+    if (!employeeRates || employeeRates?.length === 0) {
+      dispatch({
+        type: FETCH_EMPLOYEE_RATES,
+        payload: {},
       });
     }
   }, []);
@@ -763,8 +928,24 @@ export default function Resources() {
             }}
           />
         );
+      case 'rates':
+        return (
+          <TeamsTable
+            loading={employeeRatesLoading}
+            columns={employeeRatesColumns}
+            rows={
+              employeeRates?.map((emp, index) => ({
+                ...emp,
+                id: index,
+              })) || []
+            }
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
+        );
       default:
-        return <>1</>;
+        return <></>;
     }
   };
 
