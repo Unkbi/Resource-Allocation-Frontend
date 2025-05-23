@@ -36,6 +36,10 @@ import {
   isMyTeamsValid,
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import {
+  DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+  DEFAULT_VISIBLE_TEAMS_COLUMNS,
+} from '@/app/redux/reducers/allocationViewReducer';
 
 const getColumnLabel = column => {
   const columnLabels = {
@@ -184,6 +188,20 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
 
   const handleColumnUpdate = value => {
     setFieldValue('showColumns', value);
+  };
+
+  const handleGroupByChange = e => {
+    const { value } = e.target;
+    setFieldValue('groupBy', value);
+
+    setFieldValue('showBy', value === 'Teams' ? 'AllTeams' : 'AllProject');
+    setFieldValue(
+      'showColumns',
+      value === 'Teams'
+        ? DEFAULT_VISIBLE_TEAMS_COLUMNS
+        : DEFAULT_VISIBLE_PROJECTS_COLUMNS
+    );
+    setFieldValue('filters', []);
   };
 
   const handleAddWeek = () => {
@@ -403,7 +421,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         <RadioGroup
           name="groupBy"
           value={values?.groupBy || 'Teams'}
-          onChange={handleChange}
+          onChange={handleGroupByChange}
           onBlur={handleBlur}
           row
           sx={{ gap: 2 }}
