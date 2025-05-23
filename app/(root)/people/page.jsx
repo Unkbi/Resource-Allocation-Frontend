@@ -162,7 +162,9 @@ export default function Resources() {
     organisationsResources,
     loading: organisationLoading,
   } = useSelector(state => state.organisations);
-  const { employeeRates } = useSelector(state => state.employeeRates);
+  const { employeeRates, loading: employeeRatesLoading } = useSelector(
+    state => state.employeeRates
+  );
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(resources?.result || null);
@@ -384,6 +386,9 @@ export default function Resources() {
             }}
           >
             <Box
+              /*
+               * To Be Implemented...
+               */
               // onClick={handleNameClick}
               sx={{
                 display: 'inline-block',
@@ -442,6 +447,7 @@ export default function Resources() {
       field: 'Status',
       headerName: 'Status',
       width: 170,
+      flex: 1,
       sortable: true,
       filterable: true,
       headerAlign: 'left',
@@ -449,75 +455,290 @@ export default function Resources() {
         const status = params.value;
         return (
           status && (
-            <Box sx={{ paddingLeft: '20px' }}>
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <StatusPill status={status}>{status}</StatusPill>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   handleMenuClose();
+                    //   handleOpenDialog('Edit Team', 'edit_team', params.row);
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   setDeleteDialogOpen(true);
+                    //   handleMenuClose();
+                    //   setDeleteTarget({
+                    //     id: params.row.Id,
+                    //     name: params.row.Name,
+                    //   });
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </Box>
             </Box>
           )
         );
       },
     },
+  ];
+
+  const employeeRatesColumns = [
     {
-      field: 'actions',
-      headerName: '',
-      flex: 1,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
+      field: 'WorkLocation',
+      headerName: 'Location',
+      minWidth: 290,
+      maxWidth: 500,
+      headerAlign: 'left',
       hideable: false,
-      headerAlign: 'center',
-      renderCell: params => (
-        <Box
-          sx={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            pr: 1,
-            pt: 1,
-          }}
-        >
-          <IconButton
-            size="small"
-            onClick={e => handleMenuClick(e, params.row.Id)}
-          >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
+      // renderCell: params => {
+      //   const handleNameClick = () => {
+      //     handleOpenDialog();
+      //   };
 
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl) && selectedRow === params.row.Id}
-            onClose={handleMenuClose}
-            anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <MenuItem
-              onClick={() => {
-                handleMenuClose();
-                handleOpenDialog('Edit Team', 'edit_team', params.row);
-              }}
-              sx={menuItemStyle}
-            >
-              <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-              Edit
-            </MenuItem>
+      //   return (
+      //     <Box
+      //       sx={{
+      //         display: 'flex',
+      //         alignItems: 'left',
+      //       }}
+      //     >
+      //       <Box
+      //         // onClick={handleNameClick}
+      //         sx={{
+      //           display: 'inline-block',
+      //           width: '100%',
+      //           color: '#152E75',
+      //           cursor: 'pointer',
+      //           overflow: 'hidden',
+      //           textOverflow: 'ellipsis',
+      //           whiteSpace: 'nowrap',
+      //           paddingLeft: '32px',
 
-            <MenuItem
-              onClick={() => {
-                setDeleteDialogOpen(true);
-                handleMenuClose();
-                setDeleteTarget({
-                  id: params.row.Id,
-                  name: params.row.Name,
-                });
+      //           '&:hover': {
+      //             textDecoration: 'underline',
+      //           },
+      //         }}
+      //       >
+      //         {params.value}
+      //       </Box>
+      //     </Box>
+      //   );
+      // },
+    },
+    {
+      field: 'HRLevel',
+      headerName: 'HR Level',
+      headerAlign: 'left',
+      minWidth: 290,
+      // renderCell: params => {
+      //   const manager =
+      //     resources &&
+      //     'result' in resources &&
+      //     getAllocationManagerFromPath(params.value, resources.result);
+
+      //   if (!manager?.FullName) return <span>N/A</span>;
+      //   return (
+      //     <Box
+      //       sx={{ display: 'flex', alignItems: 'center', paddingLeft: '30px' }}
+      //     >
+      //       <Box sx={{ mr: 0.5, flexShrink: 0 }}>
+      //         <CustomAvatar value={manager.FullName} showFullName={false} />
+      //       </Box>
+      //       <Box
+      //         sx={{
+      //           overflow: 'hidden',
+      //           textOverflow: 'ellipsis',
+      //           whiteSpace: 'nowrap',
+      //         }}
+      //       >
+      //         {manager.FullName}
+      //       </Box>
+      //     </Box>
+      //   );
+      // },
+    },
+    {
+      field: 'HourlyRate',
+      headerName: 'Rates/Hr',
+      width: 170,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      // renderCell: params => {
+      //   const status = params.value;
+      //   return (
+      //     status && (
+      //       <Box sx={{ paddingLeft: '20px' }}>
+      //         <StatusPill status={status}>{status}</StatusPill>
+      //       </Box>
+      //     )
+      //   );
+      // },
+    },
+    {
+      field: 'HourlyRateCurrency',
+      headerName: 'Currency',
+      width: 170,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      // renderCell: params => {
+      //   const status = params.value;
+      //   return (
+      //     status && (
+      //       <Box sx={{ paddingLeft: '20px' }}>
+      //         <StatusPill status={status}>{status}</StatusPill>
+      //       </Box>
+      //     )
+      //   );
+      // },
+    },
+    {
+      field: 'ValidityStartDate',
+      headerName: 'Valid From',
+      width: 170,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      // renderCell: params => {
+      //   const status = params.value;
+      //   return (
+      //     status && (
+      //       <Box sx={{ paddingLeft: '20px' }}>
+      //         <StatusPill status={status}>{status}</StatusPill>
+      //       </Box>
+      //     )
+      //   );
+      // },
+    },
+    {
+      field: 'ValidityEndDate',
+      headerName: 'Valid To',
+      width: 170,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      // renderCell: params => {
+      //   const status = params.value;
+      //   return (
+      //     status && (
+      //       <Box sx={{ paddingLeft: '20px' }}>
+      //         <StatusPill status={status}>{status}</StatusPill>
+      //       </Box>
+      //     )
+      //   );
+      // },
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      width: 170,
+      flex: 1,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        const status = params.value;
+        return (
+          status && (
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
-              sx={menuItemStyle}
             >
-              <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-              Delete
-            </MenuItem>
-          </Menu>
-        </Box>
-      ),
+              <StatusPill status={status}>{status}</StatusPill>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   handleMenuClose();
+                    //   handleOpenDialog('Edit Team', 'edit_team', params.row);
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  <MenuItem
+                    /*
+                     * To Be Implemented...
+                     */
+                    // onClick={() => {
+                    //   setDeleteDialogOpen(true);
+                    //   handleMenuClose();
+                    //   setDeleteTarget({
+                    //     id: params.row.Id,
+                    //     name: params.row.Name,
+                    //   });
+                    // }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </Box>
+            </Box>
+          )
+        );
+      },
     },
   ];
 
@@ -736,8 +957,24 @@ export default function Resources() {
             }}
           />
         );
+      case 'rates':
+        return (
+          <TeamsTable
+            loading={employeeRatesLoading}
+            columns={employeeRatesColumns}
+            rows={
+              employeeRates?.map((emp, index) => ({
+                ...emp,
+                id: index,
+              })) || []
+            }
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
+        );
       default:
-        return <>1</>;
+        return <></>;
     }
   };
 

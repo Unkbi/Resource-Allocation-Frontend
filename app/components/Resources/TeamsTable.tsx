@@ -65,7 +65,7 @@ const TeamsTable = ({
       }}
       slots={{
         toolbar:
-        ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
+          ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
         columnMenu: CustomColumnMenu,
       }}
       localeText={{
