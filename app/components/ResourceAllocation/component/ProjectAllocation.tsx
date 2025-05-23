@@ -436,7 +436,7 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectCost',
-      headerName: 'Project Cost',
+      headerName: 'Project Budget',
       width: 150,
       type: 'string ',
       headerClassName: 'secondary-header',
@@ -445,8 +445,9 @@ export default function ProjectAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
+        const cost = firstChild?.projectCost;
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCost ?? 'N/A'} />
+          <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />
         ) : null;
       },
     },

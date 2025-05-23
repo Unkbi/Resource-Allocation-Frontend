@@ -71,6 +71,7 @@ export const addProjectValidationSchema = (
         'End date must be after or equal to start date'
       ),
     Status: Yup.string().default('Active').required('Status is required'),
+    Budget: Yup.number().nullable().typeError('Must be a number'),
   });
 };
 
