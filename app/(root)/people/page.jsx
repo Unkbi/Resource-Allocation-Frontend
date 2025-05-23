@@ -176,6 +176,7 @@ export default function Resources() {
       headerName: 'Resource',
       flex: 1,
       minWidth: 200,
+      hideable: false,
       filterable: true,
       renderCell: params => {
         const handleNameClick = () => {
@@ -294,6 +295,7 @@ export default function Resources() {
       width: 170,
       sortable: false,
       filterable: true,
+      hideable: false,
       renderCell: params => {
         const status = params.value;
         return (
@@ -365,6 +367,7 @@ export default function Resources() {
       minWidth: 290,
       maxWidth: 500,
       headerAlign: 'left',
+      hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
           handleOpenDialog();
@@ -378,7 +381,7 @@ export default function Resources() {
             }}
           >
             <Box
-              onClick={handleNameClick}
+              // onClick={handleNameClick}
               sx={{
                 display: 'inline-block',
                 width: '100%',
@@ -467,6 +470,7 @@ export default function Resources() {
             justifyContent: 'flex-end',
             alignItems: 'center',
             pr: 1,
+            pt: 1,
           }}
         >
           <IconButton
