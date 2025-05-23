@@ -382,6 +382,11 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
               helperText={
                 touched.ContractorHourlyRate && errors.ContractorHourlyRate
               }
+              onKeyDown={e => {
+                if (['e', 'E', '+', '-'].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
               InputProps={{
                 startAdornment: <span>$&nbsp;</span>,
               }}

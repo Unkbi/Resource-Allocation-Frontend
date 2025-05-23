@@ -353,6 +353,18 @@ export default function Project() {
       minWidth: 150,
     },
     {
+      field: 'Budget',
+      headerName: 'Project Budget',
+      flex: 1,
+      minWidth: 130,
+    },
+    {
+      field: 'BudgetCurrency',
+      headerName: 'Budget Currency',
+      flex: 1,
+      minWidth: 130,
+    },
+    {
       field: 'Type',
       headerName: 'Type',
       flex: 1,
