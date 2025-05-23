@@ -174,7 +174,6 @@ export default function Resources() {
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const [value, setValue] = useState('resource');
 
-  console.log('employeeRates :', employeeRates);
   const columns = [
     {
       field: 'FullName',
