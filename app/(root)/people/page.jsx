@@ -147,7 +147,6 @@ const menuItemStyle = {
   lineHeight: '18px',
 };
 
-
 export default function Resources() {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
@@ -170,7 +169,7 @@ export default function Resources() {
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const [value, setValue] = useState('resource');
-  
+
   const columns = [
     {
       field: 'FullName',
@@ -358,7 +357,7 @@ export default function Resources() {
       },
     },
   ];
-  
+
   const teamColumns = [
     {
       field: 'Team',
@@ -414,7 +413,9 @@ export default function Resources() {
 
         if (!manager?.FullName) return <span>N/A</span>;
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center',  paddingLeft:'30px', }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', paddingLeft: '30px' }}
+          >
             <Box sx={{ mr: 0.5, flexShrink: 0 }}>
               <CustomAvatar value={manager.FullName} showFullName={false} />
             </Box>
@@ -452,10 +453,11 @@ export default function Resources() {
     {
       field: 'actions',
       headerName: '',
-      flex :1 ,
+      flex: 1,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
+      hideable: false,
       headerAlign: 'center',
       renderCell: params => (
         <Box
@@ -511,7 +513,7 @@ export default function Resources() {
       ),
     },
   ];
-  
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
     if (newValue === 'teams') {
@@ -602,15 +604,14 @@ export default function Resources() {
     }
     return [];
   };
-  
-  
+
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
 
     const sortedRowIds = apiRef.current.getSortedRowIds?.();
     const totalRows = sortedRowIds?.length ?? 0;
     const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
-    
+
     if (rowIndex === -1 || rowIndex === undefined) {
       dispatch(clearHighlightedRowId());
       return;
@@ -723,12 +724,9 @@ export default function Resources() {
           />
         );
       default:
-        return (
-         <>1</>
-        );
+        return <>1</>;
     }
   };
-  
 
   return (
     <Box
