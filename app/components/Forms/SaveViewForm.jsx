@@ -61,7 +61,7 @@ const getColumnLabel = column => {
     projectEndDate: 'Project End Date',
     Email: 'Email',
     PhoneNumber: 'Phone Number',
-    Department: 'Organisation',
+    Department: 'Organization',
     WorkLocation: 'Resource Work Location',
     LocationCategory: 'Resource Location Category',
     Type: 'Resource Type',

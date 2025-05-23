@@ -161,7 +161,7 @@ export default function ProjectAllocation({
     },
     {
       field: 'Department',
-      headerName: 'Organisation',
+      headerName: 'Organization',
       width: 170,
       isEditable: 'false',
       sortable: 'false',
