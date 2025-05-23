@@ -122,6 +122,18 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="Manager"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
+    [`& .${gridClasses.cell}[data-field="HourlyRate"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="HourlyRateCurrency"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="ValidityStartDate"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="ValidityEndDate"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
     [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },

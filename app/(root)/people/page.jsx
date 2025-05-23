@@ -523,112 +523,45 @@ export default function Resources() {
     {
       field: 'WorkLocation',
       headerName: 'Location',
-      minWidth: 290,
-      maxWidth: 500,
+      minWidth: 220,
       headerAlign: 'left',
       hideable: false,
-      // renderCell: params => {
-      //   const handleNameClick = () => {
-      //     handleOpenDialog();
-      //   };
-
-      //   return (
-      //     <Box
-      //       sx={{
-      //         display: 'flex',
-      //         alignItems: 'left',
-      //       }}
-      //     >
-      //       <Box
-      //         // onClick={handleNameClick}
-      //         sx={{
-      //           display: 'inline-block',
-      //           width: '100%',
-      //           color: '#152E75',
-      //           cursor: 'pointer',
-      //           overflow: 'hidden',
-      //           textOverflow: 'ellipsis',
-      //           whiteSpace: 'nowrap',
-      //           paddingLeft: '32px',
-
-      //           '&:hover': {
-      //             textDecoration: 'underline',
-      //           },
-      //         }}
-      //       >
-      //         {params.value}
-      //       </Box>
-      //     </Box>
-      //   );
-      // },
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '32px' }}>{params.value}</Box>;
+      },
     },
     {
       field: 'HRLevel',
       headerName: 'HR Level',
       headerAlign: 'left',
-      minWidth: 290,
-      // renderCell: params => {
-      //   const manager =
-      //     resources &&
-      //     'result' in resources &&
-      //     getAllocationManagerFromPath(params.value, resources.result);
-
-      //   if (!manager?.FullName) return <span>N/A</span>;
-      //   return (
-      //     <Box
-      //       sx={{ display: 'flex', alignItems: 'center', paddingLeft: '30px' }}
-      //     >
-      //       <Box sx={{ mr: 0.5, flexShrink: 0 }}>
-      //         <CustomAvatar value={manager.FullName} showFullName={false} />
-      //       </Box>
-      //       <Box
-      //         sx={{
-      //           overflow: 'hidden',
-      //           textOverflow: 'ellipsis',
-      //           whiteSpace: 'nowrap',
-      //         }}
-      //       >
-      //         {manager.FullName}
-      //       </Box>
-      //     </Box>
-      //   );
-      // },
+      sortable :'false' ,
+      filterable :'false' ,
+      minWidth: 155,
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '42px' }}>{params.value}</Box>;
+      },
     },
     {
       field: 'HourlyRate',
       headerName: 'Rates/Hr',
-      width: 170,
+      width: 160,
       sortable: true,
       filterable: true,
       headerAlign: 'left',
-      // renderCell: params => {
-      //   const status = params.value;
-      //   return (
-      //     status && (
-      //       <Box sx={{ paddingLeft: '20px' }}>
-      //         <StatusPill status={status}>{status}</StatusPill>
-      //       </Box>
-      //     )
-      //   );
-      // },
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '38px' }}>{params.value}</Box>;
+      },
     },
     {
       field: 'HourlyRateCurrency',
       headerName: 'Currency',
-      width: 170,
+      width: 160,
       sortable: true,
       filterable: true,
       headerAlign: 'left',
-      // renderCell: params => {
-      //   const status = params.value;
-      //   return (
-      //     status && (
-      //       <Box sx={{ paddingLeft: '20px' }}>
-      //         <StatusPill status={status}>{status}</StatusPill>
-      //       </Box>
-      //     )
-      //   );
-      // },
+      renderCell: params => {
+        return <Box sx={{ paddingLeft: '35px' }}>{params.value}</Box>;
+      },
     },
     {
       field: 'ValidityStartDate',
@@ -637,16 +570,18 @@ export default function Resources() {
       sortable: true,
       filterable: true,
       headerAlign: 'left',
-      // renderCell: params => {
-      //   const status = params.value;
-      //   return (
-      //     status && (
-      //       <Box sx={{ paddingLeft: '20px' }}>
-      //         <StatusPill status={status}>{status}</StatusPill>
-      //       </Box>
-      //     )
-      //   );
-      // },
+      renderCell : (params) => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          const formattedDate = `${month}/${day}/${year}`;
+      
+          return <Box sx={{ paddingLeft: '32px' }}>{formattedDate}</Box>;
+        }
+        return <Box sx={{ paddingLeft: '32px' }} />;
+      }
     },
     {
       field: 'ValidityEndDate',
@@ -655,16 +590,17 @@ export default function Resources() {
       sortable: true,
       filterable: true,
       headerAlign: 'left',
-      // renderCell: params => {
-      //   const status = params.value;
-      //   return (
-      //     status && (
-      //       <Box sx={{ paddingLeft: '20px' }}>
-      //         <StatusPill status={status}>{status}</StatusPill>
-      //       </Box>
-      //     )
-      //   );
-      // },
+      renderCell: params => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          const formattedDate = `${month}/${day}/${year}`;
+        return <Box sx={{ paddingLeft: '32px' }}>{formattedDate}</Box>;
+      }
+      return <Box sx={{ paddingLeft: '32px' }} /> 
+    }
     },
     {
       field: 'Status',
