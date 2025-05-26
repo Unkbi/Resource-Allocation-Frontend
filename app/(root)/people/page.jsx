@@ -36,6 +36,7 @@ import {
 import TeamsTable from '@/app/components/Resources/TeamsTable';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
+import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 
 const demoResources = {
   result: [
@@ -207,7 +208,7 @@ export default function Resources() {
                 },
               }}
             >
-              {params.value}
+              <EllipsisNameCell value={params.value} showAvatar={false} />
             </Box>
           </Box>
         );
@@ -219,7 +220,9 @@ export default function Resources() {
       flex: 1,
       minWidth: 180,
       renderCell: params => {
-        params.value && <span>{params.value}</span>;
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
       },
     },
     {
@@ -228,7 +231,11 @@ export default function Resources() {
       flex: 2,
       minWidth: 210,
       renderCell: params => {
-        return params.value && <span>{params.value}</span>;
+        return (
+          params.value && (
+            <EllipsisNameCell value={params.value} showAvatar={false} />
+          )
+        );
       },
     },
     {
@@ -237,7 +244,9 @@ export default function Resources() {
       flex: 1,
       minWidth: 120,
       renderCell: params => {
-        params.value && <span>{params.value}</span>;
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
       },
     },
     {
@@ -246,7 +255,9 @@ export default function Resources() {
       flex: 1,
       minWidth: 200,
       renderCell: params => {
-        params.value && <span>{params.value}</span>;
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
       },
     },
     {
@@ -255,7 +266,9 @@ export default function Resources() {
       flex: 1,
       minWidth: 150,
       renderCell: params => {
-        params.value && <span>{params.value}</span>;
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
       },
     },
     {
@@ -264,7 +277,9 @@ export default function Resources() {
       flex: 1,
       minWidth: 150,
       renderCell: params => {
-        params.value && <span>{params.value}</span>;
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
       },
     },
     {
@@ -272,7 +287,10 @@ export default function Resources() {
       headerName: 'Role',
       flex: 1,
       minWidth: 150,
-      renderCell: params => params.value && <span>{params.value}</span>,
+      renderCell: params =>
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        ),
     },
     {
       field: 'HRLevel',
@@ -281,7 +299,11 @@ export default function Resources() {
       minWidth: 90,
       renderCell: params => {
         const HRLevel = params.row.HRLevel;
-        return HRLevel && <span>{HRLevel}</span>;
+        return (
+          HRLevel && (
+            <EllipsisNameCell value={params.value} showAvatar={false} />
+          )
+        );
       },
     },
     {
@@ -290,7 +312,11 @@ export default function Resources() {
       flex: 1,
       minWidth: 130,
       renderCell: params => {
-        return params.value && <span>{params.value}</span>;
+        return (
+          params.value && (
+            <EllipsisNameCell value={params.value} showAvatar={false} />
+          )
+        );
       },
     },
     {
@@ -299,7 +325,11 @@ export default function Resources() {
       flex: 1,
       minWidth: 180,
       renderCell: params => {
-        return params.value && <span>{params.value}</span>;
+        return (
+          params.value && (
+            <EllipsisNameCell value={params.value} showAvatar={false} />
+          )
+        );
       },
     },
     {
@@ -310,7 +340,12 @@ export default function Resources() {
       filterable: true,
       renderCell: params => {
         const managerId = params?.row?.Manager;
-        return <span>{managerMap?.[managerId] || managerId || ''}</span>;
+        return (
+          <EllipsisNameCell
+            value={managerMap?.[managerId] || managerId || ''}
+            showAvatar={false}
+          />
+        );
       },
     },
     {
