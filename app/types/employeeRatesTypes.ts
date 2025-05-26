@@ -8,6 +8,7 @@ export interface EmployeeRates {
   ValidityStartDate: string | null;
   __path__: string | null;
   __parent__: string | null;
+  Status: string | null;
 }
 
 export interface EmployeeRatesState {
