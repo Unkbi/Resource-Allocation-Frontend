@@ -32,6 +32,7 @@ import {
   getUserIdFromEmail,
   getWeekNumber,
   getTotalWeeklyAllocation,
+  generateDateWeekMath,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -206,11 +207,18 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
-  const { calendarDate: _calendarDate } = useSelector(
-    state => state.allAllocations
-  );
-  const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
   const newResourceId = useSelector(state => state.newResource?.id);
+
+  const _startDate = currentView?.isDynamicRange
+    ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+    : currentView?.isFixedRange
+      ? currentView?.StartDate
+      : startDate;
+  const _endDate = currentView?.isDynamicRange
+    ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+    : currentView?.isFixedRange
+      ? currentView?.EndDate
+      : endDate;
 
   const getValidationSchema = formType => {
     switch (formType) {
