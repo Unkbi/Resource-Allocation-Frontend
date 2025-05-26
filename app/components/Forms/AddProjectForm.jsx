@@ -63,7 +63,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
 
   const projectTypeOptions = [
     { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB (Run-th-business)' },
+    { value: 'RTB', label: 'RTB' }, //(Run-th-business) 
     { value: 'CTB', label: 'CTB' },
     { value: 'STB', label: 'STB' },
     { value: 'Ongoing', label: 'Ongoing' },
