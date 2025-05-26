@@ -2,14 +2,12 @@ import { call, put, takeEvery } from 'redux-saga/effects';
 import { FETCH_EMPLOYEE_RATES } from '../actions/employeeRatesActions';
 import { setEmployeeRates, setLoading } from '../reducers/employeeRatesReducer';
 import { fetchEmployeeRates } from '@/app/services/employeeRatesServices';
-import { mockEmployeeRates } from '@/app/constants/mockEmployeeRates';
 
 function* fetchEmployeeRatesSaga(): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
 
-    // const responses = yield call(fetchEmployeeRates);
-    const responses = yield mockEmployeeRates;
+    const responses = yield call(fetchEmployeeRates);
 
     yield put(setEmployeeRates(responses?.result));
   } catch (error) {
