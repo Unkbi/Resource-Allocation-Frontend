@@ -295,18 +295,24 @@ export default function Project() {
           handleOpenDialog('Edit Project', 'edit_project', params.row);
         };
         return (
-          <EllipsisNameCell
-            value={params.value}
-            onClick={handleNameClick}
-            showAvatar={false}
+          <Box
             sx={{
+              display: 'inline-block',
+              maxWidth: '100%',
               color: '#152E75',
               cursor: 'pointer',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minWidth: 0,
               '&:hover': {
                 textDecoration: 'underline',
               },
             }}
-          />
+            onClick={handleNameClick}
+          >
+            <EllipsisNameCell value={params.value} showAvatar={false} />
+          </Box>
         );
       },
     },
