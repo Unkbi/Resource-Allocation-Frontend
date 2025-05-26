@@ -15,6 +15,7 @@ import allocationsCostReducer from './reducers/AllocationsCostReducer';
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from './sagas';
 import highlightedRowReducer from './reducers/highlightedRowReducer';
+import dashboardReducer from './reducers/dashboardReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -35,6 +36,7 @@ export const makeStore = () => {
       actualAllocations: actualAllocationReducer,
       highlightedRow: highlightedRowReducer,
       allocationsCost: allocationsCostReducer,
+      dashboard: dashboardReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({

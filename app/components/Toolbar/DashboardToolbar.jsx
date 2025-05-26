@@ -11,7 +11,11 @@ import {
   Grid,
 } from '@mui/material';
 
-const DashboardToolbar = ({ onFilterChange, teamNames = [] }) => {
+const DashboardToolbar = ({
+  onFilterChange,
+  teamNames = [],
+  projectTypes = [],
+}) => {
   const [timeFilter, setTimeFilter] = useState('week');
   const [teamFilter, setTeamFilter] = useState('all');
   const [projectTypeFilter, setProjectTypeFilter] = useState('all');
@@ -158,10 +162,12 @@ const DashboardToolbar = ({ onFilterChange, teamNames = [] }) => {
               },
             }}
           >
-            <MenuItem value="all">All Project Types</MenuItem>
-            <MenuItem value="development">Development</MenuItem>
-            <MenuItem value="design">Design</MenuItem>
-            <MenuItem value="research">Research</MenuItem>
+            <MenuItem value="all">All</MenuItem>
+            {projectTypes.map(type => (
+              <MenuItem key={type} value={type}>
+                {type}
+              </MenuItem>
+            ))}
           </Select>
         </Grid>
       </Grid>
