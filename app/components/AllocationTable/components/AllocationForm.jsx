@@ -78,7 +78,7 @@ const initialValuesMap = {
     AllowOvertime: '',
     Location: '',
     ProjectManager: '',
-    Status: '',
+    Status: 'Active',
     Type: '',
     Budget: 0,
   },
@@ -335,6 +335,8 @@ const AllocationForm = () => {
             ...cleanedValues,
             Budget: cleanedValues.Budget || 0,
             Description: 'string',
+            EndDate:
+              cleanedValues.EndDate === '' ? null : cleanedValues.EndDate,
             ProjectSponsor:
               cleanedValues.ProjectSponsor === ''
                 ? null
