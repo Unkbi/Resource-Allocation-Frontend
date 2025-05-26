@@ -19,7 +19,10 @@ import {
   isCurrentWeek,
 } from '@/app/utils/common';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { setCalendarDate } from '@/app/redux/reducers/actualAllocationsReducer';
+import {
+  setActualAllocationsStatus,
+  setCalendarDate,
+} from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
 import { parseISO } from 'date-fns';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
@@ -134,6 +137,9 @@ export default function ActualsPage() {
       })
         .then((response: any) => {
           if (response?.status === 'ok') {
+            if (status !== 'Confirmed') {
+              dispatch(setActualAllocationsStatus('Confirmed'));
+            }
             dispatch(
               showToast({
                 open: true,
