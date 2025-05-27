@@ -29,14 +29,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
-import {
-  FETCH_ORGANISATIONS,
-  FETCH_ORGANISATIONS_RESOURCES,
-} from '@/app/redux/actions/organizationsAction';
 import TeamsTable from '@/app/components/Resources/TeamsTable';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const demoResources = {
   result: [
@@ -155,14 +152,9 @@ export default function Resources() {
   const { resources, updating, loading } = useSelector(
     state => state.resources
   );
-  const { teams, teamsResources, dataProcessing } = useSelector(
+  const { teams, dataProcessing } = useSelector(
     state => state.teams
   );
-  const {
-    organisations,
-    organisationsResources,
-    loading: organisationLoading,
-  } = useSelector(state => state.organisations);
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
@@ -174,6 +166,9 @@ export default function Resources() {
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const [value, setValue] = useState('resource');
+  const { allResourcesDetail, loading: allResourcesDetailLoading } = useSelector(
+    state => state.allResourcesDetail
+  );
 
   const columns = [
     {
@@ -764,13 +759,6 @@ export default function Resources() {
     },
   ];
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-    if (newValue === 'teams') {
-      dispatch(getAllTeams());
-    }
-  };
-
   const managerMap = useMemo(() => {
     const map = {};
     if (resources?.result) {
@@ -783,42 +771,26 @@ export default function Resources() {
 
   useEffect(() => {
     if (!updating) {
-      dispatch(fetchAllResources());
       dispatch(getAllTeams());
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
       dispatch(closeDialog());
     }
   }, [updating]);
 
   useEffect(() => {
-    setRows(resources?.result);
-  }, [resources]);
+    setRows(allResourcesDetail);
+  }, [allResourcesDetail]);
 
   useEffect(() => {
     setTeamRows(teams?.result);
   }, [teams]);
 
   useEffect(() => {
-    if (!teamsResources || Object.keys(teamsResources).length === 0) {
-      dispatch({
-        type: 'FETCH_TEAM_RESOURCES',
-        payload: {
-          teams: [],
-        },
-      });
-    }
     if (!teams || teams?.result?.length === 0) {
       dispatch(getAllTeams());
-    }
-    if (
-      !organisationsResources ||
-      Object.keys(organisationsResources).length === 0
-    ) {
-      dispatch({
-        type: FETCH_ORGANISATIONS_RESOURCES,
-        payload: {
-          organisations: [],
-        },
-      });
     }
     if (!employeeRates || employeeRates?.length === 0) {
       dispatch({
@@ -832,17 +804,10 @@ export default function Resources() {
     if (data) {
       return data.map(item => {
         return {
-          ...item,
-          id: item.Id,
-          Team:
-            getTeamForResource(item.Id, teams?.result, teamsResources)?.Name ||
-            '',
-          Organization:
-            getOrganisationForResource(
-              item.Id,
-              organisations,
-              organisationsResources
-            )?.Name || '',
+          ...item?.Resource,
+          id: item?.Resource?.Id,
+          Team: item?.Team?.Name || '',
+          Organization: item?.Organization?.Name || '',
         };
       });
     }
@@ -867,8 +832,8 @@ export default function Resources() {
       !apiRef?.current ||
       loading ||
       dataProcessing ||
-      organisationLoading ||
-      employeeRatesLoading
+      employeeRatesLoading ||
+      allResourcesDetailLoading
     )
       return;
     const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
@@ -906,8 +871,8 @@ export default function Resources() {
     highlightedRowId,
     loading,
     dataProcessing,
-    organisationLoading,
     employeeRatesLoading,
+    allResourcesDetailLoading,
   ]);
 
   const handleConfirmDelete = () => {
@@ -957,7 +922,7 @@ export default function Resources() {
       case 'resource':
         return (
           <ResourceTable
-            loading={loading || dataProcessing || organisationLoading}
+            loading={loading || dataProcessing || allResourcesDetailLoading}
             columns={columns}
             rows={modifyData(rows)}
             apiRef={apiRef}
