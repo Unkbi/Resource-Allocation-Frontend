@@ -485,7 +485,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
           label="End Date"
           placeholder="MM/DD/YYYY"
           title="End Date"
-          isRequired={true}
+          isRequired={false}
         />
       </Box>
       <Box sx={{ flex: 1 }}>
