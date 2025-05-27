@@ -1301,7 +1301,7 @@ const AllocationForm = () => {
   );
 
   const onCancel = () => {
-    setFormValue(initialValuesMap[formType]);
+    setFormValue({});
     dispatch(
       setCellSelectionData({
         restoreFocus: true,
