@@ -220,7 +220,7 @@ export default function Resources() {
       flex: 1,
       minWidth: 180,
       renderCell: params => {
-        params.value && (
+        return params.value && (
           <EllipsisNameCell value={params.value} showAvatar={false} />
         );
       },
@@ -340,12 +340,10 @@ export default function Resources() {
       filterable: true,
       renderCell: params => {
         const managerId = params?.row?.Manager;
-        return (
-          <EllipsisNameCell
-            value={managerMap?.[managerId] || managerId || ''}
-            showAvatar={false}
-          />
-        );
+        const managerName = managerMap?.[managerId] || managerId || '';
+        return managerName ? (
+          <EllipsisNameCell value={managerName} showAvatar={true} />
+        ) : null;
       },
     },
     {
