@@ -365,6 +365,22 @@ export default function Resources() {
       },
     },
     {
+      field: 'EndDate',
+      headerName: 'End Date',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
       field: 'Status',
       headerName: 'Status',
       width: 170,
