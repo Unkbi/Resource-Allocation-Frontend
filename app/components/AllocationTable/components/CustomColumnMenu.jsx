@@ -23,7 +23,7 @@ const StyledPopper = styled(GridColumnMenu)(({ theme }) => ({
   },
 }));
 
-const CustomUserMenuItems = ({ apiRef }) => {
+const CustomUserMenuItems = ({ apiRef, field }) => {
   const [teamsExpanded, setTeamsExpanded] = useState(true);
   const [resourcesExpanded, setResourcesExpanded] = useState(false);
   const view = useSelector(state => state.allocationView.view);
@@ -114,22 +114,39 @@ const CustomUserMenuItems = ({ apiRef }) => {
 
   return (
     <>
-      <MenuItem onClick={handleToggleTeams}>
-        <ListItemIcon>
-          <GroupIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText>
-          {teamsExpanded
-            ? view === 'Project'
-              ? 'Collapse All Projects'
-              : 'Collapse All Teams'
-            : view === 'Project'
-              ? 'Expand All Projects'
-              : 'Expand All Teams'}
-        </ListItemText>
-      </MenuItem>
+      {(field === '__row_group_by_columns_group_teams__' || field === '__row_group_by_columns_group__') && (
+        <>
+          <MenuItem onClick={handleToggleTeams}>
+            <ListItemIcon>
+              <GroupIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>
+              {teamsExpanded
+                ? view === 'Project'
+                  ? 'Collapse All Projects'
+                  : 'Collapse All Teams'
+                : view === 'Project'
+                  ? 'Expand All Projects'
+                  : 'Expand All Teams'}
+            </ListItemText>
+          </MenuItem>
 
-      {view !== 'Project' && (
+          {view !== 'Project' && (
+            <MenuItem onClick={handleToggleResources}>
+              <ListItemIcon>
+                <PersonIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>
+                {resourcesExpanded
+                  ? 'Collapse All Resources'
+                  : 'Expand All Resources'}
+              </ListItemText>
+            </MenuItem>
+          )}
+        </>
+      )}
+
+      {field === '__row_group_by_columns_group_resource__' && view !== 'Project' && (
         <MenuItem onClick={handleToggleResources}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />
@@ -147,21 +164,32 @@ const CustomUserMenuItems = ({ apiRef }) => {
 
 export const CustomColumnMenu = props => {
   const { apiRef, ...otherProps } = props;
+  const field = props.colDef?.field;
+  const showUserItem =
+    field === '__row_group_by_columns_group_teams__' ||
+    field === '__row_group_by_columns_group__' ||
+    field === '__row_group_by_columns_group_resource__';
 
   return (
     <StyledPopper
       {...otherProps}
       slots={{
         ...GRID_COLUMN_MENU_SLOTS,
-        columnMenuUserItem: () => <CustomUserMenuItems apiRef={apiRef} />,
+        ...(showUserItem && {
+          columnMenuUserItem: () => (
+            <CustomUserMenuItems apiRef={apiRef} field={field} />
+          ),
+        }),
         columnMenuSortItem: null,
         columnMenuAggregationItem: null,
         columnMenuGroupingItem: null,
       }}
       slotProps={{
-        columnMenuUserItem: {
-          displayOrder: 0,
-        },
+        ...(showUserItem && {
+          columnMenuUserItem: {
+            displayOrder: 0,
+          },
+        }),
         columnMenuColumnsItem: {
           displayOrder: 2,
         },
