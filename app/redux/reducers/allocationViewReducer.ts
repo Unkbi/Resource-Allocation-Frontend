@@ -16,20 +16,20 @@ import {
 } from '@/app/types';
 import { createSlice } from '@reduxjs/toolkit';
 
-const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
+export const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
   '__row_group_by_columns_group_teams__',
   '__row_group_by_columns_group_resource__',
   'project',
   'resourceType',
 ];
 
-const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
+export const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
   '__row_group_by_columns_group__',
   'resource',
   'totalEffort',
 ];
 
-const COMPANY_DEFAULT_VIEW: AllocationGridView = {
+export const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Id: '0',
   UserId: null,
   Name: 'Default View',
@@ -51,6 +51,8 @@ const COMPANY_DEFAULT_VIEW: AllocationGridView = {
 
 const initialState: AllocationGridViewState = {
   view: 'Teams',
+  splitView: false,
+  splitViewCurrentProject: null,
   loading: false,
   error: null,
   expandRowId: [],
@@ -63,6 +65,29 @@ const initialState: AllocationGridViewState = {
       'resourceType',
       'teamStatus',
       'teamAllocationManager',
+      'Email',
+      'PhoneNumber',
+      'Department',
+      'HRLevel',
+      'Role',
+      'WorkLocation',
+      'StartDate',
+      'EndDate',
+      'LocationCategory',
+      'AverageWeeklyHours',
+      'ContractorHourlyRate',
+      'ContractorHourlyRateCurrency',
+      'projectOvertimeAllowed',
+      'projectCost',
+      'projectCurrency',
+      'Description',
+      'projectLocation',
+      'ProjectManager',
+      'ProjectSponsor',
+      'projectEndDate',
+      'projectStartDate',
+      'Status',
+      'Type',
     ],
     project: [
       '__row_group_by_columns_group__',
@@ -79,6 +104,50 @@ const initialState: AllocationGridViewState = {
       'projectCurrency',
       'projectStartDate',
       'projectEndDate',
+      'Email',
+      'PhoneNumber',
+      'Department',
+      'WorkLocation',
+      'LocationCategory',
+      'Type',
+      'Status',
+      'HRLevel',
+      'Role',
+      'StartDate',
+      'EndDate',
+      'AverageWeeklyHours',
+      'ContractorHourlyRate',
+      'ContractorHourlyRateCurrency',
+    ],
+    project_cost: [
+      '__row_group_by_columns_group__',
+      'resource',
+      'totalCost',
+      'project',
+      'projectSponsor',
+      'projectManager',
+      'projectStatus',
+      'projectLocation',
+      'projectType',
+      'projectOvertimeAllowed',
+      'projectCost',
+      'projectCurrency',
+      'projectStartDate',
+      'projectEndDate',
+      'Email',
+      'PhoneNumber',
+      'Department',
+      'WorkLocation',
+      'LocationCategory',
+      'Type',
+      'Status',
+      'HRLevel',
+      'Role',
+      'StartDate',
+      'EndDate',
+      'AverageWeeklyHours',
+      'ContractorHourlyRate',
+      'ContractorHourlyRateCurrency',
     ],
   },
   currentView: COMPANY_DEFAULT_VIEW,
@@ -94,11 +163,16 @@ const viewSlice = createSlice({
       state.currentView = {
         ...state.currentView,
         GroupBy: action.payload,
-        ColumnsVisible:
-          action.payload === 'Teams'
-            ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-            : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+        ColumnsVisible: action.payload.includes('Teams')
+          ? DEFAULT_VISIBLE_TEAMS_COLUMNS
+          : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
       };
+    },
+    setSplitView: (state, action) => {
+      state.splitView = action.payload;
+    },
+    setSplitViewCurrentProject: (state, action) => {
+      state.splitViewCurrentProject = action.payload;
     },
     setExpandRowId: (state, action) => {
       state.expandRowId = action.payload;
@@ -299,6 +373,8 @@ const viewSlice = createSlice({
 
 export const {
   changeView,
+  setSplitView,
+  setSplitViewCurrentProject,
   setExpandRowId,
   setCellSelectionData,
   setInitialCurrentView,

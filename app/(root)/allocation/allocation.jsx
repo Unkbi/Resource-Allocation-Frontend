@@ -17,8 +17,10 @@ import { useSearchParams } from 'next/navigation';
 import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
+import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCost';
+import TeamsCost from '@/app/components/ResourceAllocation/component/TeamsCost';
 
-export default function Allocation() {
+export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
   const { view, savedViews, currentView } = useSelector(
     state => state.allocationView
@@ -27,7 +29,6 @@ export default function Allocation() {
   const { resources } = useSelector(state => state.resources);
   const searchParams = useSearchParams();
   const settingsParam = searchParams.get('settings');
-
   useEffect(() => {
     dispatch(fetchAllResources());
     dispatch(fetchAllProjects());
@@ -59,20 +60,26 @@ export default function Allocation() {
     if (currentView?.GroupBy) {
       switch (currentView.GroupBy) {
         case 'Project':
-          return <ProjectAllocation />;
+          return <ProjectAllocation startDate={startDate} endDate={endDate} />;
         case 'Teams':
-          return <TeamAllocation />;
+          return <TeamAllocation startDate={startDate} endDate={endDate} />;
+          case 'Project Cost':
+          return <ProjectCost startDate={startDate} endDate={endDate} />;
+          case 'Teams Cost':
+          return <TeamsCost startDate={startDate} endDate={endDate} />;
         default:
           return null;
       }
     } else {
       switch (view) {
         case 'Project':
-          return <ProjectAllocation />;
-        // case 'Organizations':
-        //   return <OrganizationAllocation />;
+          return <ProjectAllocation startDate={startDate} endDate={endDate} />;
         case 'Teams':
-          return <TeamAllocation />;
+          return <TeamAllocation startDate={startDate} endDate={endDate} />;
+          case 'Project Cost':
+          return <ProjectCost startDate={startDate} endDate={endDate} />;
+          case 'Teams Cost':
+          return <TeamsCost startDate={startDate} endDate={endDate} />;
         default:
           return null;
       }

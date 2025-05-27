@@ -3,9 +3,13 @@ import {
   getAllColumnsWithWeek,
 } from '@/app/components/AllocationTable/TableHeader';
 
-import { calculateTotalEffort } from '@/app/utils/common';
+import {
+  calculateTotalEffort,
+  getMondayOfISO,
+  getProjectBudgetCategory,
+} from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { CustomAddIcon } from './CustomAddIcon';
 import { useState } from 'react';
@@ -24,6 +28,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { styled } from '@mui/material/styles';
 import { Typography } from '@mui/material';
 import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
+import ConfirmDialog from '../Dialog/ConfirmDialog';
+import { removeResourceAllocation } from '@/app/redux/actions/resourceAllocationAction';
+import { setRowState } from '@/app/redux/reducers/dataGridReducer';
+import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
+import { showToast } from '@/app/redux/reducers/toastReducer';
+import { parseISO } from 'date-fns';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -57,9 +67,73 @@ const CellWithMenu = ({
   handleAddClick,
   handleCloneClick,
   handleTranferClick,
+  isFormatWithK,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const dispatch = useDispatch();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteParams, setDeleteParams] = useState(null);
+  const allTeams = useSelector(state => state.teams.teams?.result || []);
+  const allResources = useSelector(
+    state => state.resources.resources?.result || []
+  );
+  const rowState = useSelector(state => state.dataGrid.rowState);
+  const { view } = useSelector(state => state.allocationView);
+
+  const handleDeleteClick = params => {
+    setDeleteParams(params);
+    setShowDeleteDialog(true);
+    setAnchorEl(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    const row = deleteParams.row;
+    const resourceId = row?.resourceId;
+
+    const allocationIds = Object.values(row)
+      .filter(cell => cell?.allocationId)
+      .map(cell => cell.allocationId);
+
+    const deletePayloads = allocationIds.map(allocationId => ({
+      resourceId,
+      allocationId,
+    }));
+
+    await Promise.all(
+      deletePayloads.map(payload => dispatch(removeResourceAllocation(payload)))
+    );
+
+    const updatedRows = rowState.filter(r => r.id !== row.id);
+    dispatch(setRowState(updatedRows));
+
+    const fullResource = allResources.find(r => r.Id === resourceId);
+    const team = allTeams.find(team => team.Name === row.teams);
+
+    if (fullResource && team) {
+      const rowId = `auto-generated-row-teams/${team.Name}-resource/${fullResource.FullName}`;
+      dispatch(setExpandRowId([rowId]));
+    }
+
+    const itemName =
+      view === 'Project'
+        ? deleteParams?.row?.resource
+        : deleteParams?.row?.project;
+
+    dispatch(
+      showToast({
+        open: true,
+        message: `${itemName} has been successfully deleted.`,
+        type: 'success',
+        position: 'bottom-right',
+        autoHideTimer: 4000,
+      })
+    );
+
+    setShowDeleteDialog(false);
+    setDeleteParams(null);
+    setAnchorEl(null);
+  };
 
   const handleMenuOpen = event => {
     event.stopPropagation();
@@ -82,7 +156,11 @@ const CellWithMenu = ({
       func: () => handleTranferClick(params),
     },
     { label: 'History', icon: <HistoryIcon fontSize="small" /> },
-    { label: 'Delete', icon: <DeleteIcon fontSize="small" /> },
+    {
+      label: 'Delete',
+      icon: <DeleteIcon fontSize="small" />,
+      func: () => handleDeleteClick(params),
+    },
   ];
 
   const menu = (
@@ -143,19 +221,36 @@ const CellWithMenu = ({
   const columnType = params.colDef.field;
   const showAvatar = columnType !== 'project';
   return (
-    <CustomAddIcon
-      value={
-        <EllipsisNameCell
-          value={params.value}
-          showAddIcon={false}
-          showAvatar={showAvatar}
-        />
-      }
-      onClick={() => handleAddClick(params)}
-      menu={menu}
-    />
+    <>
+      <CustomAddIcon
+        value={
+          <EllipsisNameCell
+            value={params.value}
+            showAddIcon={false}
+            showAvatar={showAvatar}
+            isFormatWithK={isFormatWithK}
+          />
+        }
+        onClick={() => handleAddClick(params)}
+        menu={menu}
+        isFormatWithK={isFormatWithK}
+      />
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onCancel={() => setShowDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
+        title="Alert"
+      >
+        Are you sure you want to delete:{' '}
+        {view === 'Project'
+          ? deleteParams?.row?.resource
+          : deleteParams?.row?.project}
+        ?
+      </ConfirmDialog>
+    </>
   );
 };
+
 export const getInitialState = (
   groupBy,
   updatedRows,
@@ -180,34 +275,58 @@ export const getInitialState = (
 export const getFinalColumns = (
   columns,
   groupBy,
+  mode,
   setSelectedTeam,
   handleAddProject,
   setSelectedResourceId,
   dispatch,
   startDate,
-  endDate
+  endDate,
+  isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
+  const { splitViewCurrentProject } = useSelector(
+    state => state.allocationView
+  );
   const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
-    endDate
+    endDate,
+    isFormatWithK
   );
+
   const handleAddClick = params => {
-    dispatch(
-      openDialog({
-        title: 'Update Allocation',
-        submitButtonText: 'Update',
-        cancelButtonText: 'Cancel',
-        formType: 'add_allocation',
-        initialData: {
-          Resource: params.value,
-          Project: params.row.project,
-        },
-      })
-    );
+    if (mode === 'split' && splitViewCurrentProject) {
+      dispatch(
+        openDialog({
+          title: 'Add Allocation',
+          submitButtonText: 'Update',
+          cancelButtonText: 'Cancel',
+          formType: 'add_allocation',
+          initialData: {
+            Resource: params.value,
+            Project: [splitViewCurrentProject.Name],
+          },
+        })
+      );
+    } else {
+      dispatch(
+        openDialog({
+          title: 'Update Allocation',
+          submitButtonText: 'Update',
+          cancelButtonText: 'Cancel',
+          formType: 'add_allocation',
+          initialData: {
+            Resource: params.row.resource || params.value,
+            ResourceId: params.row.resourceId,
+            Project: [params.row.project || params.value],
+            Team: params.row.teams,
+          },
+        })
+      );
+    }
   };
 
   const handleCloneClick = params => {
@@ -260,6 +379,7 @@ export const getFinalColumns = (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
+              isFormatWithK={isFormatWithK}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
             />
@@ -313,11 +433,13 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                isFormatWithK={isFormatWithK}
               >
                 <EllipsisNameCell
                   value={params.value}
                   showAddIcon
                   onAddClick={() => handleAddClick(params)}
+                  isFormatWithK={isFormatWithK}
                 />
               </CellWithMenu>
             );
@@ -345,7 +467,11 @@ export const getFinalColumns = (
                 }}
               >
                 {!isGroupExpanded && (
-                  <EllipsisNameCell value={firstProject} showAddIcon={false} />
+                  <EllipsisNameCell
+                    value={firstProject}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                  />
                 )}
                 {!isGroupExpanded && (
                   <span
@@ -396,6 +522,7 @@ export const getFinalColumns = (
               handleAddClick={handleAddClick}
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
+              isFormatWithK={isFormatWithK}
             />
           ) : null;
         },
@@ -422,14 +549,36 @@ export const getGroupingColDef = groupBy => ({
   headerClassName: 'prime-header',
 });
 
-export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
+export const getCellClassName = (
+  params,
+  updatedRows,
+  allocationTheme = [],
+  type = 'allocation',
+  allProjects = []
+) => {
   if (params?.field === 'totalEffort') {
+    if (
+      type === 'cost' &&
+      params.rowNode?.type === 'group' &&
+      params.rowNode?.groupingField === 'project' &&
+      params?.field === 'totalEffort'
+    ) {
+      const project = allProjects.find(
+        row => row.Name === params.rowNode.groupingKey
+      );
+      const projectCategory = getProjectBudgetCategory(
+        project?.Budget || 0,
+        params?.value || 0
+      );
+      return `total-effort-cell project-budget-${projectCategory}`;
+    }
     return 'total-effort-cell';
   }
 
   if (params && params.field && typeof params.field === 'string') {
     if (
-      params.field.startsWith('W') &&
+      /^W\d+/.test(params.field) &&
+      type !== 'cost' &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
         params.rowNode?.groupingField === 'resource')
@@ -456,31 +605,32 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
         return sum + numericValue;
       }, 0);
 
-      let allocationValue;
-      if (params.rowNode?.groupingField === 'resource') {
-        allocationValue = Math.round(aggregatedValue * 100) / 100;
-      } else {
-        allocationValue = Math.round((aggregatedValue / totalRows) * 100) / 100;
-      }
+      const allocationValue =
+        params.rowNode?.groupingField === 'resource'
+          ? Math.round(aggregatedValue * 10) / 10
+          : Math.round((aggregatedValue / totalRows) * 10) / 10;
+
       const sortedTheme = [...allocationTheme].sort(
         (a, b) => parseFloat(a.From) - parseFloat(b.From)
       );
 
       // Find the matching range in the theme
-      let matchingRange = sortedTheme.find(range => {
-        const fromValue = parseFloat(range.From);
-        const toValue = parseFloat(range.To);
-        return allocationValue >= fromValue && allocationValue <= toValue;
-      });
+      let matchingRange;
+      for (const range of sortedTheme) {
+        const from = parseFloat(range.From);
+        const to = parseFloat(range.To);
+        if (allocationValue >= from && allocationValue <= to) {
+          matchingRange = range;
+          break;
+        }
+      }
 
       // If no matching range found and value exceeds max range, use the last theme
       if (!matchingRange && sortedTheme.length > 0) {
-        const maxRangeValue = parseFloat(
-          sortedTheme[sortedTheme.length - 1].To
-        );
-        if (allocationValue > maxRangeValue) {
-          matchingRange = sortedTheme[sortedTheme.length - 1];
-        }
+        const firstRange = sortedTheme[0];
+        const lastRange = sortedTheme[sortedTheme.length - 1];
+        matchingRange =
+          allocationValue < parseFloat(firstRange.From) ? lastRange : lastRange;
       }
 
       if (matchingRange) {
@@ -488,6 +638,29 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
           return `allocation-theme-${matchingRange.id}`;
         } else {
           return `allocation-theme-${matchingRange.id}-secondGroup`;
+        }
+      }
+    } else if (
+      params.rowNode?.type === 'group' &&
+      params.rowNode?.groupingField === 'project' &&
+      /^W\d+/.test(params.field)
+    ) {
+      const project = allProjects.find(
+        row => row.Name === params.rowNode.groupingKey
+      );
+
+      const currentWeekData = updatedRows.find(
+        row => row.projectId === project?.Id
+      )?.[params.field];
+      if (project && currentWeekData && currentWeekData?.period) {
+        const isWithinProjectDateRange =
+          project &&
+          project.StartDate &&
+          project.EndDate &&
+          parseISO(project.StartDate) <= parseISO(currentWeekData?.period) &&
+          parseISO(project.EndDate) >= parseISO(currentWeekData?.period);
+        if (isWithinProjectDateRange && project.Type) {
+          return `firstGroupsRow project-type-${project.Type.toLowerCase().split(' ').join('_')}`;
         }
       }
     }

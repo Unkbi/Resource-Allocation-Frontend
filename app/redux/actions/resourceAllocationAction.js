@@ -6,7 +6,8 @@ import {
 
 export const setResourceAllocation = allocationData => async dispatch => {
   try {
-    await dispatch(postResourceAllocations(allocationData));
+    const response = await dispatch(postResourceAllocations(allocationData));
+    return response;
   } catch (error) {
     console.error('Error setting resource allocation:', error);
   }
@@ -14,7 +15,8 @@ export const setResourceAllocation = allocationData => async dispatch => {
 
 export const updateResourceAllocation = allocationData => async dispatch => {
   try {
-    await dispatch(putResourceAllocations(allocationData));
+    const response = await dispatch(putResourceAllocations(allocationData));
+    return response;
   } catch (error) {
     console.error('Error updating resource allocation:', error);
   }
@@ -22,7 +24,8 @@ export const updateResourceAllocation = allocationData => async dispatch => {
 
 export const removeResourceAllocation = allocationData => async dispatch => {
   try {
-    await dispatch(deleteResourceAllocations(allocationData));
+    const response = await dispatch(deleteResourceAllocations(allocationData));
+    return response;
   } catch (error) {
     console.error('Error deleting resource allocation:', error);
   }

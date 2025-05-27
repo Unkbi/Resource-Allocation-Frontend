@@ -135,6 +135,9 @@ const SettingsPanel = () => {
   // Keep a backup of the original data for cancel functionality
   const [originalAllocationRanges, setOriginalAllocationRanges] =
     useState<AllocationRange[]>(allocationTheme);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
 
   useEffect(() => {
     dispatch(fetchAllocationTheme());
@@ -142,6 +145,7 @@ const SettingsPanel = () => {
 
   useEffect(() => {
     setAllocationRanges(allocationTheme);
+    setOriginalAllocationRanges(allocationTheme);
   }, [allocationTheme]);
   // Create menu items with dynamic content based on state
   const createMenuItems = () => {
@@ -188,6 +192,8 @@ const SettingsPanel = () => {
                 allocationRanges={allocationRanges}
                 onAllocationRangesChange={setAllocationRanges}
                 onDataChanged={() => setHasUnsavedChanges(true)}
+                validationErrors={validationErrors}
+                setValidationErrors={setValidationErrors}
               />
             ),
             description: 'It is a color theme for organization view',
@@ -282,9 +288,20 @@ const SettingsPanel = () => {
       if (itemsWithId.length > 0) {
         const payload = {
           postData: transformedAllocationRanges,
-          __Id__: allocationRanges[0]?.__Id__,
+          __Id__: itemsWithId[0]?.__Id__,
         };
-        dispatch(updateAllocationThemeAction(payload));
+        dispatch(updateAllocationThemeAction(payload)).then(response => {
+          if (response?.meta?.requestStatus === 'fulfilled') {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Allocation theme updated successfully',
+                type: 'success',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        });
       } else {
         const newItems = allocationRanges.filter(d => !d.__Id__);
         if (newItems.length > 0) {
@@ -298,6 +315,7 @@ const SettingsPanel = () => {
     // Restore original data
     if (activeItem.id === 'allocation-setting' || activeItem.id === 'theme') {
       setAllocationRanges([...originalAllocationRanges]);
+      setValidationErrors({});
     }
 
     setHasUnsavedChanges(false);

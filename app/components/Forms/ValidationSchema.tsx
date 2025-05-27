@@ -1,8 +1,30 @@
 import * as Yup from 'yup';
 
-export const addProjectValidationSchema = (projects = []) => {
+interface Project {
+  Id: string;
+  Name?: string;
+  StartDate?: string;
+  EndDate?: string;
+  [key: string]: any;
+}
+
+interface ProjectsPayload {
+  result?: Project[];
+}
+
+interface Values {
+  Project: string[];
+  StartDate: string;
+  EndDate: string;
+  [key: string]: any;
+}
+
+export const addProjectValidationSchema = (
+  projects: ProjectsPayload = {},
+  initialName = ''
+) => {
   const projectNames = Array.isArray(projects?.result)
-    ? projects?.result?.map(project => project.Name?.toLowerCase().trim())
+    ? projects.result.map(project => project.Name?.toLowerCase().trim())
     : [];
 
   return Yup.object({
@@ -14,6 +36,7 @@ export const addProjectValidationSchema = (projects = []) => {
         'Project Name already exists. Please choose another name.',
         value => {
           if (!value) return true;
+          if (initialName && value === initialName) return true; // Allow the same name if it's the initial value
           return !projectNames.includes(value.toLowerCase().trim());
         }
       ),
@@ -32,7 +55,6 @@ export const addProjectValidationSchema = (projects = []) => {
           return !EndDate || value !== null;
         }
       ),
-
     EndDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')
@@ -49,13 +71,93 @@ export const addProjectValidationSchema = (projects = []) => {
         'End date must be after or equal to start date'
       ),
     Status: Yup.string().default('Active').required('Status is required'),
+    Budget: Yup.number().nullable().typeError('Must be a number'),
   });
 };
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const addResourceValidationSchema = Yup.object({
-  Resource: Yup.string().required('Resource is required'),
-  Type: Yup.string().required('Type is required'),
-  Skills: Yup.string().required('Skills are required'),
+  FirstName: Yup.string().required('First Name is required'),
+  LastName: Yup.string().required('Last Name is required'),
+  Email: Yup.string()
+    .required('Email is required')
+    .matches(emailRegex, 'Enter a valid email address'),
+  Role: Yup.string().required('Role is required'),
+  Type: Yup.string().required('Resource type is required'),
+  Manager: Yup.string().required('Manager is required'),
+  Team: Yup.string().required('Team is required'),
+  ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
+  AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
+  Organisation: Yup.string().required('Organization is required'),
+  EndDate: Yup.string()
+    .nullable()
+    .when(['Status', 'StartDate'], {
+      is: (status: String) => status === 'Inactive',
+      then: schema =>
+        schema
+          .required('End Date is required')
+          .test(
+            'end-after-start',
+            'End Date cannot be before Start Date',
+            function (endDate) {
+              const { StartDate } = this.parent;
+              if (!endDate || !StartDate) return true;
+              return new Date(endDate) >= new Date(StartDate);
+            }
+          ),
+      otherwise: schema =>
+        schema.test(
+          'end-after-start',
+          'End Date cannot be before Start Date',
+          function (endDate) {
+            const { StartDate } = this.parent;
+            if (!endDate || !StartDate) return true;
+            return new Date(endDate) >= new Date(StartDate);
+          }
+        ),
+    }),
+});
+
+// Temporary fix till we have the new API for Resource Creation and Update. This will be removed.
+export const editResourceValidationSchema = Yup.object({
+  FirstName: Yup.string().required('First Name is required'),
+  LastName: Yup.string().required('Last Name is required'),
+  Email: Yup.string()
+    .required('Email is required')
+    .matches(emailRegex, 'Enter a valid email address'),
+  Role: Yup.string().required('Role is required'),
+  Type: Yup.string().required('Resource type is required'),
+  Manager: Yup.string().required('Manager is required'),
+  Team: Yup.string().required('Team is required'),
+  ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
+  AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
+  EndDate: Yup.string()
+    .nullable()
+    .when(['Status', 'StartDate'], {
+      is: (status: String) => status === 'Inactive',
+      then: schema =>
+        schema
+          .test(
+            'end-after-start',
+            'End Date cannot be before Start Date',
+            function (endDate) {
+              const { StartDate } = this.parent;
+              if (!endDate || !StartDate) return true;
+              return new Date(endDate) >= new Date(StartDate);
+            }
+          ),
+      otherwise: schema =>
+        schema.test(
+          'end-after-start',
+          'End Date cannot be before Start Date',
+          function (endDate) {
+            const { StartDate } = this.parent;
+            if (!endDate || !StartDate) return true;
+            return new Date(endDate) >= new Date(StartDate);
+          }
+        ),
+    }),
 });
 
 export const addAllocationValidationSchema = Yup.object({
@@ -76,11 +178,15 @@ export const addAllocationValidationSchema = Yup.object({
     .min(0, 'Allocation must be a positive number')
     .max(2, 'Allocation cannot exceed 2.0'),
 });
-const stripTime = date =>
+
+const stripTime = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-export function getProjectRangeWarnings(values, projects) {
-  const warnings = [];
+export function getProjectRangeWarnings(
+  values: Values,
+  projects: ProjectsPayload
+): string[] {
+  const warnings: string[] = [];
   const { Project: selectedIds, StartDate, EndDate } = values;
 
   if (
@@ -171,7 +277,13 @@ export const saveViewValidationSchema = Yup.object({
   calendarBy: Yup.string().required('Calendar By is required'),
 });
 
-export const nameViewValidationSchema = (savedViews = []) =>
+interface SavedView {
+  Id?: string;
+  Name?: string;
+  [key: string]: any;
+}
+
+export const nameViewValidationSchema = (savedViews: SavedView[] = []) =>
   Yup.object({
     name: Yup.string()
       .required('Name is required')

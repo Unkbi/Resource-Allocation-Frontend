@@ -1,19 +1,21 @@
 import React from "react";
 import { Avatar, Box } from "@mui/material";
 
-const CustomAvatar = ({ value, showFullName = false }) => {
-  const getInitials = (name) => {
-    return (
-      name &&
-      name
-        .split(" ")
-        .map((word) => word[0])
-        .join("")
-        .toUpperCase()
-    );
+interface CustomAvatarProps {
+  value: string;
+  showFullName?: boolean;
+}
+
+const CustomAvatar: React.FC<CustomAvatarProps> = ({ value, showFullName = false }) => {
+  const getInitials = (name: string): string => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase();
   };
 
-  const getInitialsColor = (name) => {
+  const getInitialsColor = (name: string): string => {
     const colors = [
       "#816CB3",
       "#B56A9B",
@@ -26,13 +28,15 @@ const CustomAvatar = ({ value, showFullName = false }) => {
       "#E59D6D",
     ];
 
-    // Generate a hash from the name to pick a color
-    const hash =
-      name && name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = name
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
     return colors[hash % colors.length];
   };
+
   return (
-    <Box sx={{ display: "flex", alignItems: "center", minWidth: 0, width: '100%' }}>
+    <Box sx={{ display: "flex", alignItems: "center", minWidth: 0 }}>
       <Avatar
         sx={{
           width: 20,
@@ -49,9 +53,9 @@ const CustomAvatar = ({ value, showFullName = false }) => {
         <Box
           component="span"
           sx={{
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
             minWidth: 0,
           }}
         >

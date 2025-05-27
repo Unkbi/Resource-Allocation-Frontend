@@ -36,29 +36,58 @@ import {
   isMyTeamsValid,
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import {
+  DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+  DEFAULT_VISIBLE_TEAMS_COLUMNS,
+} from '@/app/redux/reducers/allocationViewReducer';
 
 const getColumnLabel = column => {
   const columnLabels = {
-    __row_group_by_columns_group_teams__: 'Teams Name',
+    __row_group_by_columns_group_teams__: 'Team Name',
     __row_group_by_columns_group_resource__: 'Resource',
     __row_group_by_columns_group__: 'Project Name',
     totalEffort: 'Total Effort',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',
-    teamStatus: 'Status',
+    teamStatus: 'Team Status',
     teamAllocationManager: 'Allocation Manager',
     resourceType: 'Resource Type',
     projectSponsor: 'Project Sponsor',
     projectManager: 'Project Manager',
-    projectStatus: 'Status',
-    projectLocation: 'Location',
+    projectStatus: 'Project Status',
+    projectLocation: 'Project Location',
     projectType: 'Project Type',
     projectOvertimeAllowed: 'Overtime',
-    projectCost: 'Cost',
-    projectCurrency: 'Currency',
-    projectStartDate: 'Start Date',
-    projectEndDate: 'End Date',
+    projectCost: 'Project Budget',
+    projectCurrency: 'Project Currency',
+    projectStartDate: 'Project Start Date',
+    projectEndDate: 'Project End Date',
+    Email: 'Email',
+    PhoneNumber: 'Phone Number',
+    Department: 'Organization',
+    WorkLocation: 'Resource Work Location',
+    LocationCategory: 'Resource Location Category',
+    Type: 'Resource Type',
+    Status: 'Resource Status',
+    HRLevel: 'HR Level',
+    Role: 'Resource Role',
+    StartDate: 'Resource Start Date',
+    EndDate: 'Resource End Date',
+    AverageWeeklyHours: 'Average Weekly Hours',
+    ContractorHourlyRate: 'Contractor Hourly Rate',
+    ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
+    projectOvertimeAllowed: 'Allow Overtime',
+    projectCost: 'Project Budget',
+    projectCurrency: 'Project Currency',
+    Description: 'Project Description',
+    projectLocation: 'Project Location',
+    ProjectManager: 'Project Manager',
+    ProjectSponsor: 'Project Sponsor',
+    ProjectEndDate: 'Project End Date',
+    ProjectStartDate: 'Project Start Date',
+    Status: 'Project Status',
+    Type: 'Project Type',
   };
 
   return columnLabels[column];
@@ -159,6 +188,20 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
 
   const handleColumnUpdate = value => {
     setFieldValue('showColumns', value);
+  };
+
+  const handleGroupByChange = e => {
+    const { value } = e.target;
+    setFieldValue('groupBy', value);
+
+    setFieldValue('showBy', value === 'Teams' ? 'AllTeams' : 'AllProject');
+    setFieldValue(
+      'showColumns',
+      value === 'Teams'
+        ? DEFAULT_VISIBLE_TEAMS_COLUMNS
+        : DEFAULT_VISIBLE_PROJECTS_COLUMNS
+    );
+    setFieldValue('filters', []);
   };
 
   const handleAddWeek = () => {
@@ -378,7 +421,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         <RadioGroup
           name="groupBy"
           value={values?.groupBy || 'Teams'}
-          onChange={handleChange}
+          onChange={handleGroupByChange}
           onBlur={handleBlur}
           row
           sx={{ gap: 2 }}

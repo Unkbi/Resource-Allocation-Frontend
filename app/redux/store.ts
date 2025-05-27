@@ -4,13 +4,20 @@ import allocationViewReducer from './reducers/allocationViewReducer';
 import teamsReducer from './reducers/teamsReducer';
 import projectsReducer from './reducers/projectsReducer';
 import resourcesReducer from './reducers/resourcesReducer';
+import orgaisationsReducer from './reducers/oraganisationsReducer';
 import resourceAllocationReducer from './reducers/resourceAllocationReducer';
 import toastSlice from './reducers/toastReducer';
 import dialogReducer from './reducers/dialogReducer';
 import dataGridReducer from './reducers/dataGridReducer';
 import settingsReducer from './reducers/settingsReducer';
+import allAllocationReducer from './reducers/allAllocationsReducer';
+import actualAllocationReducer from './reducers/actualAllocationsReducer';
+import allocationsCostReducer from './reducers/AllocationsCostReducer';
 import createSagaMiddleware from 'redux-saga';
 import rootSaga from './sagas';
+import highlightedRowReducer from './reducers/highlightedRowReducer';
+import employeeRatesReducer from './reducers/employeeRatesReducer';
+import allResourcesDetailReducer from './reducers/allResourcesDetailReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -22,11 +29,18 @@ export const makeStore = () => {
       teams: teamsReducer,
       projects: projectsReducer,
       resources: resourcesReducer,
+      organisations: orgaisationsReducer,
       resourceAllocations: resourceAllocationReducer,
       toast: toastSlice,
       globalDialog: dialogReducer,
       dataGrid: dataGridReducer,
       settings: settingsReducer,
+      allAllocations: allAllocationReducer,
+      actualAllocations: actualAllocationReducer,
+      highlightedRow: highlightedRowReducer,
+      allocationsCost: allocationsCostReducer,
+      employeeRates: employeeRatesReducer,
+      allResourcesDetail:allResourcesDetailReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({

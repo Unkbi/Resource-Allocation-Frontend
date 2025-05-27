@@ -12,6 +12,8 @@ import {
   Typography,
   Popover,
   TextField,
+  Stack,
+  Switch,
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -47,6 +49,7 @@ import {
 import { parseISO } from 'date-fns';
 import FolderIcon from '@mui/icons-material/Folder';
 import PeopleIcon from '@mui/icons-material/People';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CheckIcon from '@mui/icons-material/Check';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -66,7 +69,7 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { set } from 'date-fns';
-import DeleteDialog from '../Dialog/DeleteDialog';
+import ConfirmDialog from '../Dialog/ConfirmDialog';
 import { compressToEncodedURIComponent } from 'lz-string';
 import CustomInput from '../Input/Input';
 import { showToastAction } from '@/app/redux/actions/toastAction';
@@ -135,6 +138,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '7px 14px 5px 14px',
+  borderRight: '#DDE1E4 solid 1px',
   '& .filterColBlock': {
     display: 'flex',
     alignItems: 'center',
@@ -509,6 +513,14 @@ const PreferencesIcon = () => (
   <img src="/images/icons/preferences.svg" alt="preferences" />
 );
 
+const ShareIcon = () => (
+  <img src="/images/icons/ShareRounded.svg" alt="share" />
+);
+
+const HistoryIcon = () => (
+  <img src="/images/icons/HistoryButton.svg" alt="share" />
+);
+
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
@@ -569,6 +581,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       name: 'Project',
       icon: <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
+    {
+      name: 'Project Cost',
+      icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    },
+    {
+      name: 'Teams Cost',
+      icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    },
     // 'Organizations'
   ];
   const [active, setActive] = useState(false);
@@ -623,7 +643,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       );
 
       const toShift = currentView.isFixedRange
-        ? totalWeeks
+        ? totalWeeks >= TOTAL_FUTURE_WEEKS_ARROW
+          ? TOTAL_FUTURE_WEEKS_ARROW
+          : totalWeeks
         : TOTAL_FUTURE_WEEKS_ARROW;
 
       const toNextWeekPlus =
@@ -778,33 +800,41 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         teams?.result || []
       );
 
-      if (view === 'Teams' && teamsIAmAllocationManager.length === 0) {
+      if (view.includes('Teams') && teamsIAmAllocationManager.length === 0) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
       }
 
       // Check if the user is a project manager in any of the projects
-      const fullName = user
-        ? `${user.FirstName} ${user.LastName}`.trim().toLowerCase()
-        : '';
+      const currentResource = resources?.result?.find(
+        r => r.Email === user?.Email
+      );
       const projectsIAmProjectManager = getProjectsIamProjectManager(
-        fullName,
+        currentResource?.Id,
         projects?.result || []
       );
 
-      if (view === 'Projects' && projectsIAmProjectManager.length === 0) {
+      if (view.includes('Project') && projectsIAmProjectManager.length === 0) {
         setPopOverAnchorEl(myProjectsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
       }
     }
 
-    if (view === 'Teams') {
+    if (view.includes('Teams')) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
-    } else if (view === 'Project') {
+    } else if (view.includes('Project')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
     }
+  };
+
+  const handleAllocationCostSwitch = () => {
+    const isCost = currentView?.GroupBy.includes('Cost');
+    const newGroupBy = isCost
+      ? currentView?.GroupBy.replace(' Cost', '')
+      : `${currentView?.GroupBy} Cost`;
+    dispatch(performChangeView(newGroupBy));
   };
 
   const open = Boolean(anchorEl);
@@ -814,6 +844,30 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     savedViews.find(view => view.Id === selectedView)?.Name || 'Default View';
 
   const handleDateField = (StartDate, EndDate) => {
+    const weeks = getTotalWeeks(StartDate, EndDate);
+    if (weeks > 51) {
+      dispatch(
+        showToastAction(true, 'Date range limited to 51 weeks', 'warning')
+      );
+      const adjustedEndDate = generateDateWeekMath(
+        'WEEK_PLUS',
+        51,
+        new Date(StartDate)
+      );
+      changeCalendarDate('isFixedRange', StartDate, adjustedEndDate);
+
+      const isTeams = view === 'Teams';
+      const action = isTeams
+        ? updateStartAndEndDate
+        : updateProjectStartAndEndDate;
+      dispatch(
+        action({
+          startDate: StartDate,
+          endDate: adjustedEndDate,
+        })
+      );
+      return;
+    }
     changeCalendarDate('isFixedRange', StartDate, EndDate);
     const isTeams = view === 'Teams';
     const action = isTeams
@@ -842,7 +896,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   return (
     <Box
       display={'flex'}
-      height={'60px'}
       boxShadow={'0 1px 0 0 #DDE1E4'}
       position={'relative'}
       zIndex={1}
@@ -850,7 +903,13 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <ToolBox1>
         <StyledFormControl size="small">
           <StyledSelect
-            value={currentView?.GroupBy || 'Teams'}
+            value={
+              currentView?.GroupBy === 'Project'
+                ? 'Projects'
+                : currentView?.GroupBy === 'Project Cost'
+                  ? 'Projects Cost'
+                  : currentView?.GroupBy || 'Teams'
+            }
             onChange={handleViewChange}
             className="projectDropdown"
             IconComponent={KeyboardArrowDown}
@@ -865,10 +924,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             }}
             renderValue={selected => (
               <MenuItemContent>
-                {selected === 'Project' ? (
+                {selected === 'Projects' ? (
                   <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />
-                ) : (
+                ) : selected === 'Teams' ? (
                   <PeopleIcon sx={{ fontSize: 20, color: '#344665' }} />
+                ) : (
+                  <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />
                 )}
                 {selected}
               </MenuItemContent>
@@ -877,7 +938,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             {viewOptions.map(option => (
               <StyledMenuItem value={option.name}>
                 {option.icon}
-                {option.name}
+                {option.name === 'Project'
+                  ? 'Projects'
+                  : option.name === 'Project Cost'
+                    ? 'Projects Cost'
+                    : option.name}
               </StyledMenuItem>
             ))}
           </StyledSelect>
@@ -886,7 +951,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       <ToolBox2 flex={1} className="filterTopRow">
         <Box className="filterColBlock">
           <Box className="projectIcon">
-            {view === 'Project' ? (
+            {view.includes('Project') ? (
               <>
                 <TooltipButton
                   msg="My Project"
@@ -933,7 +998,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <Typography variant="body2">No projects found.</Typography>
                 </Popover>
               </>
-            ) : view === 'Teams' ? (
+            ) : view.includes('Teams') ? (
               <>
                 <TooltipButton
                   msg="My Teams"
@@ -1051,6 +1116,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               onClose={() => setIsRangePickerOpen(false)}
               showLabel={false}
               format="MMM YY"
+              maxWeeks={51}
               handleDateField={handleDateField}
             />
             <IconButton
@@ -1061,30 +1127,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
           </Box>
-          <StyledFormControlForWeek size="small">
-            <StyledSelectForWeek
-              disabled
-              size="small"
-              value={'Week'}
-              IconComponent={KeyboardArrowDown}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    backgroundColor: '#FFFFFF',
-                    boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.1)',
-                    marginTop: '4px',
-                  },
-                },
-              }}
-              renderValue={selected => (
-                <MenuItemContent>{selected}</MenuItemContent>
-              )}
-            >
-              <StyledMenuItem value="Week">
-                <Typography>Week</Typography>
-              </StyledMenuItem>
-            </StyledSelectForWeek>
-          </StyledFormControlForWeek>
           <Box>
             <ViewButton
               startIcon={<PreferencesIcon />}
@@ -1168,10 +1210,13 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Box>
           <Button
             startIcon={<AddIcon />}
-            disabled={isObjectEqual(
-              savedViews.find(view => view.Id === selectedView),
-              currentView
-            )}
+            disabled={
+              currentView.GroupBy.includes('Cost') ||
+              isObjectEqual(
+                savedViews.find(view => view.Id === selectedView),
+                currentView
+              )
+            }
             onClick={handleSaveView}
             sx={{
               border: 'none !important',
@@ -1186,24 +1231,60 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Button>
         </Box>
       </ToolBox2>
-      <ToolBox2>
+      <ToolBox2 sx={{ gap: 1 }}>
         <Box>
-          <StyledShareButton onClick={handleShareDeepLink} variant="outlined">
-            Share
-          </StyledShareButton>
+          <Stack direction="row" sx={{ alignItems: 'center' }}>
+            <Typography
+              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
+            >
+              Allocations
+            </Typography>
+            <Switch
+              size="small"
+              checked={currentView?.GroupBy.includes('Cost')}
+              onChange={handleAllocationCostSwitch}
+            />
+            <Typography
+              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
+            >
+              Costs
+            </Typography>
+          </Stack>
+        </Box>
+      </ToolBox2>
+      <ToolBox2 sx={{ gap: 1 }}>
+        <Box>
+          <IconButton
+            variant="outlined"
+            onClick={handleShareDeepLink}
+            size="small"
+            className="nextPrevIcon"
+          >
+            <ShareIcon />
+          </IconButton>
+        </Box>
+        <Box>
+          <IconButton
+            variant="outlined"
+            size="small"
+            disabled={true}
+            sx={{ width: '32px', height: '32px' }}
+          >
+            <HistoryIcon />
+          </IconButton>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <CustomExport />
         </Box>
       </ToolBox2>
-      <DeleteDialog
+      <ConfirmDialog
         open={deleteDialogOpen}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         title="Are you sure you want to delete this View?"
       >
         {`This will permanently delete the view : ${deleteView?.Name}`}
-      </DeleteDialog>
+      </ConfirmDialog>
       <ShareLinkDialog
         open={shareDialogOpen}
         title="Share this Allocation View"

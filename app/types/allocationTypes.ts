@@ -1,3 +1,5 @@
+import { ProjectsTableRow } from './component';
+
 export interface Allocation {
   ProjectName: string | null;
   Id: string;
@@ -83,10 +85,13 @@ export interface AllocationGridView {
 export interface AllColumns {
   team: string[];
   project: string[];
+  project_cost: string[];
 }
 
 export interface AllocationGridViewState {
   view: string | null;
+  splitView: boolean;
+  splitViewCurrentProject: ProjectsTableRow | null;
   loading: boolean;
   error: string | null;
   columns: AllColumns;
@@ -120,4 +125,95 @@ export interface GetUsersSavedViewsResponse {
   Filters: string[] | null;
   WeekMinus: number | null;
   __parent__: boolean | null;
+}
+
+export interface AllAllocations {
+  id: string;
+  resourceId: string | null;
+  project: string | null;
+  projectId: string | null;
+  projectSponsor: string | null;
+  projectManager: string | null;
+  projectStatus: string | null;
+  projectLocation: string | null;
+  projectType: string | null;
+  projectOvertimeAllowed: boolean | null;
+  projectCost: number | null;
+  projectCurrency: string | null;
+  projectStartDate: string | null;
+  projectEndDate: string | null;
+  resource: string | null;
+  totalEffort: number | null;
+  role: string | null;
+  teams: string | null;
+  resourceType: string | null;
+  teamStatus: string | null;
+  teamAllocationManager: string | null;
+  [key: string]:
+    | AllocationGridCellData
+    | string
+    | number
+    | boolean
+    | null
+    | undefined;
+}
+
+export interface AllAllocationsState {
+  allAllocations: AllAllocations[] | null;
+  dataProcessing: boolean | null;
+  loading: boolean | null;
+  calendarDate: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+}
+
+export interface ActualAllocationsForPeriodPayload {
+  'ResourceAllocation.Core/GetActualizedAllocationsByPeriod': {
+    Resource: string;
+    StartDate: string;
+    EndDate: string;
+  };
+}
+
+export interface ConfirmActuals {
+  Project: string;
+  ActualsEntered: number;
+}
+
+export interface ConfirmActualAllocationsForPeriodRequest {
+  'ResourceAllocation.Core/ConfirmActualsEntered': {
+    Resource: string;
+    Period: string;
+    Status: string;
+    Actuals: ConfirmActuals[];
+  };
+}
+
+export interface ActualAllocations {
+  ActualsEntered: number | null;
+  AllocationEntered: number | null;
+  Duration: string | null;
+  Id: string | null;
+  Notes: string | null;
+  Period: string | null;
+  Project: string | null;
+  ProjectName: string | null;
+  Resource: string | null;
+}
+
+export interface ActualAllocationsForPeriodResponse {
+  Allocs: ActualAllocations[];
+  Status: string | null;
+}
+
+export interface ActualAllocationsState {
+  actualAllocations: ActualAllocations[] | null;
+  status: string | null;
+  dataProcessing: boolean | null;
+  loading: boolean | null;
+  calendarDate: {
+    startDate: string | null;
+    endDate: string | null;
+  };
 }

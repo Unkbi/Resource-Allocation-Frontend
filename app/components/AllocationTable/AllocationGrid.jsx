@@ -56,8 +56,11 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
 import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
+import SplitTeamToolbar from '../Toolbar/SplitTeamToolbar';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
+import { showToastAction } from '@/app/redux/actions/toastAction';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 export default function AllocationGrid({
   groupBy,
@@ -69,6 +72,11 @@ export default function AllocationGrid({
   initialState: _initialState,
   startDate,
   endDate,
+  toolbarComponent,
+  NoRowsOverlay,
+  mode,
+  columnsFilterable = true,
+  type = '',
 }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
@@ -164,7 +172,7 @@ export default function AllocationGrid({
 
   const [aggregation, setAggregation] = useState({
     totalEffort: 'sum',
-    ...aggregationModel(startDate, endDate),
+    ...aggregationModel(startDate, endDate, type === 'cost'),
   });
 
   const normalizeRow = row => {
@@ -219,13 +227,26 @@ export default function AllocationGrid({
     try {
       if (groupBy === 'teams' && expandRowId?.length && rowState?.length) {
         expandRowId.forEach(rowId => {
-          apiRef.current.setRowChildrenExpansion(rowId, true);
+          const row = apiRef.current.getRow(rowId);
+          if (row) {
+            setTimeout(() => {
+              apiRef.current.setRowChildrenExpansion(rowId, true);
+            }, 50);
+          } else {
+            // Row not ready yet, retry after small delay
+            setTimeout(() => {
+              const delayedRow = apiRef.current.getRow(rowId);
+              if (delayedRow) {
+                apiRef.current.setRowChildrenExpansion(rowId, true);
+              }
+            }, 50);
+          }
         });
       }
     } catch (error) {
       console.warn('Error in setting row expansion', error);
     }
-  }, [expandRowId, rowState?.length]);
+  }, [expandRowId, rowState?.length, groupBy, apiRef, data]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -253,7 +274,7 @@ export default function AllocationGrid({
           ? Object.keys(cellSelectionModel)
           : Object.keys(cellSelectionData);
 
-      const [field] =
+      const field =
         Object.keys(cellSelectionModel).length > 0
           ? Object.keys(cellSelectionModel[rowId])
           : Object.keys(cellSelectionData[rowId]);
@@ -261,7 +282,9 @@ export default function AllocationGrid({
       const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
       const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
       const rowIndex = visibleRowIds.indexOf(rowId);
-      const colIndex = visibleColumns.findIndex(col => col.field === field);
+      const colIndex = visibleColumns.findIndex(col =>
+        field.includes(col.field)
+      );
 
       if (rowIndex === -1 || colIndex === -1) {
         return;
@@ -269,10 +292,10 @@ export default function AllocationGrid({
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
       setCellSelectionModel(cellSelectionData);
     };
-    const timeoutId = setTimeout(handleScrollAndFocus, 100);
+    const timeoutId = setTimeout(handleScrollAndFocus, 50);
     setExpandRowId(null);
     return () => clearTimeout(timeoutId);
-  }, [rowState, apiRef, cellSelectionData, view]);
+  }, [rowState, apiRef, cellSelectionData, view, data]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -290,13 +313,13 @@ export default function AllocationGrid({
     if (startDate && endDate) {
       setAggregation({
         totalEffort: 'sum',
-        ...aggregationModel(startDate, endDate),
+        ...aggregationModel(startDate, endDate, type === 'cost'),
       });
     }
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (currentView?.ColumnsVisible && groupBy) {
+    if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
       const updatedModel = {
         ...columnVisibilityModel,
         ..._columns[groupBy === 'teams' ? 'team' : groupBy].reduce(
@@ -553,6 +576,7 @@ export default function AllocationGrid({
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
+    mode,
     setSelectedTeam,
     handleAddProject,
     setSelectedResourceId,
@@ -562,7 +586,8 @@ export default function AllocationGrid({
       : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
     currentView?.isFixedRange
       ? currentView.endDate || endDate
-      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
+      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
+    type === 'cost'
   );
 
   const showField = [
@@ -641,76 +666,185 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = (newRow, oldRow) => {
-    Object.keys(newRow).forEach(key => {
-      if (key.startsWith('W')) {
-        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
-        if (
-          (newRow[key] === null || newRow[key] === undefined) &&
-          (formattedCellValue === 0 || isNaN(formattedCellValue)) &&
-          oldRow[key]?.allocationId
-        ) {
-          const deletePayload = {
-            resourceId: oldRow.resourceId,
-            allocationId: oldRow[key]?.allocationId,
-            period: oldRow[key]?.period,
-          };
-          dispatch(removeResourceAllocation(deletePayload)).then(() => {
+    setCellSelectionModel({});
+    // Find the changed week
+    const changedWeeks = Object.keys(newRow).filter(
+      key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
+    );
+
+    if (!changedWeeks) {
+      return { ...oldRow };
+    }
+    const keys = changedWeeks;
+    keys.forEach(key => {
+      let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+
+      const period = oldRow[key]?.period;
+      const value = formattedCellValue;
+      const resourceId = oldRow.resourceId;
+
+      // Calculate total allocation for the week across all rows for that resource
+      let totalForWeek = 0;
+      const allData = apiRef.current
+        .getAllRowIds()
+        .map(id => apiRef.current.getRow(id));
+
+      allData.forEach(row => {
+        if (row.resourceId === resourceId) {
+          const val = row[key]?.value || 0;
+          totalForWeek += parseFloat(val);
+        }
+      });
+
+      // Add new value (replace current row’s old value with new one)
+      const currentRowOldValue = oldRow[key]?.value || 0;
+      totalForWeek = totalForWeek - currentRowOldValue + value;
+
+      if (totalForWeek > 1.5 && totalForWeek <= 2) {
+        dispatch(
+          showToastAction(
+            true,
+            `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
+            'warning',
+            4000
+          )
+        );
+      } else if (totalForWeek > 2) {
+        newRow[key] = oldRow[key]?.value;
+        dispatch(
+          showToastAction(
+            true,
+            `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
+            'error',
+            4000
+          )
+        );
+        return;
+      }
+
+      if (
+        (newRow[key] === null || newRow[key] === undefined) &&
+        (formattedCellValue === 0 || isNaN(formattedCellValue)) &&
+        oldRow[key]?.allocationId
+      ) {
+        const deletePayload = {
+          resourceId: oldRow.resourceId,
+          allocationId: oldRow[key]?.allocationId,
+          period: oldRow[key]?.period,
+        };
+        dispatch(removeResourceAllocation(deletePayload))
+          .then(response => {
+            if (response.meta.requestStatus === 'rejected') {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Failed to delete allocation for ${key}.`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return;
+            }
             setUpdatedRows(prevRows =>
               prevRows.map(row => (row.id === newRow.id ? newRow : row))
             );
+          })
+          .catch(e => {
+            console.log('Error in removing allocation', e);
           });
-        }
+      }
 
-        // API call to update the data, if any changes are made.
-        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
-          if (oldRow[key]?.allocationId && newRow[key] !== null) {
-            const putPayload = {
-              resourceId: oldRow.resourceId,
-              allocationId: oldRow[key]?.allocationId,
-              putData: {
-                'ResourceAllocation.Core/Allocation': {
-                  AllocationEntered: formattedCellValue,
-                },
+      // API call to update the data, if any changes are made.
+      if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
+        if (oldRow[key]?.allocationId && newRow[key] !== null) {
+          const putPayload = {
+            resourceId: oldRow.resourceId,
+            allocationId: oldRow[key]?.allocationId,
+            putData: {
+              'ResourceAllocation.Core/Allocation': {
+                AllocationEntered: formattedCellValue,
               },
-            };
-            dispatch(updateResourceAllocation(putPayload)).then(() => {
+            },
+          };
+          dispatch(updateResourceAllocation(putPayload))
+            .then(response => {
+              if (response.meta.requestStatus === 'rejected') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Failed to update allocation for ${key}.`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
               setUpdatedRows(prevRows =>
                 prevRows.map(row => (row.id === newRow.id ? newRow : row))
               );
+            })
+            .catch(e => {
+              console.log('Error in updating allocation', e);
             });
-          } else if (formattedCellValue) {
-            const postPayload = {
-              resourceId: oldRow.resourceId,
-              postData: {
-                'ResourceAllocation.Core/Allocation': {
-                  Resource: oldRow.resourceId,
-                  Project: oldRow.projectId,
-                  ProjectName: oldRow.project,
-                  Period: getMondayOfWeek(key, oldRow[key]?.period),
-                  AllocationEntered: formattedCellValue,
-                },
+        } else if (formattedCellValue) {
+          const postPayload = {
+            resourceId: oldRow.resourceId,
+            postData: {
+              'ResourceAllocation.Core/Allocation': {
+                Resource: oldRow.resourceId,
+                Project: oldRow.projectId,
+                ProjectName: oldRow.project,
+                Period: getMondayOfWeek(key, oldRow[key]?.period),
+                AllocationEntered: formattedCellValue,
               },
-            };
-            dispatch(setResourceAllocation(postPayload)).then(() => {
+            },
+          };
+          dispatch(setResourceAllocation(postPayload))
+            .then(response => {
+              if (response.meta.requestStatus === 'rejected') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Failed to set allocation for ${key}.`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
               setUpdatedRows(prevRows =>
                 prevRows.map(row => (row.id === newRow.id ? newRow : row))
               );
+            })
+            .catch(e => {
+              console.log('Error in setting allocation', e);
             });
-          }
         }
-
-        newRow[key] = {
-          allocationId: oldRow[key]?.allocationId || null,
-          value:
-            formattedCellValue !== 0 && !isNaN(formattedCellValue)
-              ? formattedCellValue
-              : null,
-          period: oldRow[key]?.period,
-        };
       }
     });
 
-    return { ...newRow, totalEffort: calculateTotalEffort(newRow) };
+    Object.keys(oldRow)
+      .filter(key => /^W\d+/.test(key))
+      .forEach(key => {
+        if (keys.includes(key)) {
+          let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+          newRow[key] = {
+            allocationId: oldRow[key]?.allocationId || null,
+            value:
+              !isNaN(formattedCellValue) && formattedCellValue !== 0
+                ? formattedCellValue
+                : null,
+            period: oldRow[key]?.period,
+          };
+        } else {
+          newRow[key] = oldRow[key];
+        }
+      });
+    const updatedRow = { ...newRow, totalEffort: calculateTotalEffort(newRow) };
+    return updatedRow;
   };
 
   const onRowClick = useCallback(
@@ -739,6 +873,18 @@ export default function AllocationGrid({
   };
 
   const handleCellSelectionModelChange = useCallback(newModel => {
+    // Cell Selection Model should have a value only for minimum of 2 cells
+    // If only one cell is selected, then clear the selection
+    if (type === 'cost') return;
+    if (
+      Object.keys(newModel).length === 0 ||
+      (Object.keys(newModel).length === 1 &&
+        Object.keys(newModel[Object.keys(newModel)[0]]).length <= 1)
+    ) {
+      setCellSelectionModel({});
+      return;
+    }
+
     // Filter out Rows outside the current group boundary
     const isRowWithinGroup = row => {
       const selectedCells = apiRef.current.getSelectedCellsAsArray();
@@ -765,11 +911,11 @@ export default function AllocationGrid({
       return true;
     };
 
-    // Get Only Valid Fields, i.e. Fields starting with 'W'
+    // Get Only Valid Fields, i.e. Fields starting with 'W\d'
     const getNewModelWithValidFields = row => {
       const newModelWithValidFields = {};
       Object.keys(row).forEach(key => {
-        if (key.startsWith('W')) {
+        if (/^W\d+/.test(key)) {
           newModelWithValidFields[key] = row[key];
         }
       });
@@ -867,115 +1013,129 @@ export default function AllocationGrid({
     );
   };
 
-  return (
-    <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
-      <StyledDataGrid
-        cellSelection
-        allocationTheme={allocationTheme}
-        isCellEditable={params => !params.row.hasButton}
-        onCellKeyDown={handleCellKeyDown}
-        rowModesModel={rowModesModel}
-        onRowModesModelChange={handleRowModesModelChange}
-        processRowUpdate={handleCellUpdate}
-        onProcessRowUpdateError={err => {
-          console.error('Row update failed:', err);
-        }}
-        rows={rowState}
-        aggregationModel={aggregation}
-        columns={finalColumns}
-        rowSelection={true}
-        onRowClick={groupBy === 'teams' ? onRowClick : () => null}
-        apiRef={apiRef}
-        groupBy={groupBy}
-        loading={loading || !rowState.length}
-        disableRowSelectionOnClick
-        initialState={initialState}
-        rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
-        columnHeaderHeight={30}
-        columnGroupHeaderHeight={22}
-        columnGroupingModel={generateColumnGroupingModel(
-          startDate,
-          finalColumns
-        )}
-        defaultGroupingExpansionDepth={1}
-        disableAutosize
-        getCellClassName={params =>
-          getCellClassName(params, updatedRows, allocationTheme)
-        }
-        getRowClassName={params => getRowClassName(params)}
-        cellSelectionModel={cellSelectionModel}
-        onCellSelectionModelChange={handleCellSelectionModelChange}
-        filterModel={filterModel}
-        onFilterModelChange={handleFilterModelChange}
-        columnVisibilityModel={columnVisibilityModel}
-        onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
-        localeText={{
+  const toolBarBasedProperties = toolbarComponent
+    ? {
+        filterModel: filterModel,
+        onFilterModelChange: handleFilterModelChange,
+        columnVisibilityModel: columnVisibilityModel,
+        onColumnVisibilityModelChange: handleColumnVisibilityModelChange,
+        localeText: {
           toolbarFilters: '',
           toolbarColumns: '',
-        }}
-        slots={{
-          // toolbar: ToolbarMod,
-          toolbar: CustomToolbar,
-          // columnMenu: CustomColumnMenu
-          columnMenu: props => {
-            return <CustomColumnMenu {...props} apiRef={apiRef} />;
-          },
-        }}
-        slotProps={{
-          loadingOverlay: {
-            variant: 'skeleton',
-            noRowsVariant: 'skeleton',
-          },
-          panel: {
-            anchorEl: filterButtonEl,
-            className: 'parent-grid-panel',
-          },
-          columnsManagement: {
-            getTogglableColumns,
-          },
-          toolbar: {
-            setFilterButtonEl,
-          },
-          columnsPanel: {
-            className: 'styleColumnMenu',
-            sx: ColumnManagementStyles,
-          },
-          filterPanel: {
-            columnsSort: 'asc',
-            className: 'filterPopup',
-            filterFormProps: {
-              filterColumns,
-              columnInputProps: {
+          toolbarExport: '',
+        },
+      }
+    : {};
+
+  return (
+    <StyledDataGrid
+      cellSelection
+      allocationTheme={allocationTheme}
+      isCellEditable={params =>
+        type === 'cost' ? false : !params.row.hasButton
+      }
+      onCellKeyDown={handleCellKeyDown}
+      type={type}
+      rowModesModel={rowModesModel}
+      onRowModesModelChange={handleRowModesModelChange}
+      processRowUpdate={handleCellUpdate}
+      onProcessRowUpdateError={err => {
+        console.error('Row update failed:', err);
+      }}
+      rows={mode === 'split' ? data : rowState}
+      aggregationModel={aggregation}
+      columns={finalColumns}
+      rowSelection={true}
+      onRowClick={groupBy === 'teams' ? onRowClick : () => null}
+      apiRef={apiRef}
+      groupBy={groupBy}
+      loading={mode === 'split' ? loading : loading || !rowState.length}
+      disableRowSelectionOnClick
+      initialState={initialState}
+      rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
+      columnHeaderHeight={30}
+      columnGroupHeaderHeight={22}
+      columnGroupingModel={generateColumnGroupingModel(
+        startDate,
+        endDate,
+        finalColumns
+      )}
+      defaultGroupingExpansionDepth={1}
+      disableAutosize
+      getCellClassName={params =>
+        getCellClassName(
+          params,
+          updatedRows,
+          allocationTheme,
+          type,
+          projects?.result
+        )
+      }
+      getRowClassName={params => getRowClassName(params)}
+      cellSelectionModel={cellSelectionModel}
+      onCellSelectionModelChange={handleCellSelectionModelChange}
+      {...toolBarBasedProperties}
+      slots={{
+        noRowsOverlay: NoRowsOverlay,
+        toolbar: toolbarComponent,
+        columnMenu: props => {
+          return <CustomColumnMenu {...props} apiRef={apiRef} />;
+        },
+      }}
+      slotProps={{
+        loadingOverlay: {
+          variant: 'skeleton',
+          noRowsVariant: 'skeleton',
+        },
+        panel: {
+          anchorEl: filterButtonEl,
+          className: 'parent-grid-panel',
+        },
+        columnsManagement: {
+          getTogglableColumns,
+        },
+        toolbar: {
+          setFilterButtonEl,
+        },
+        columnsPanel: {
+          className: 'styleColumnMenu',
+          sx: ColumnManagementStyles,
+        },
+        filterPanel: {
+          columnsSort: 'asc',
+          className: 'filterPopup',
+          filterFormProps: {
+            filterColumns,
+            columnInputProps: {
+              size: 'small',
+              sx: { mt: 'auto' },
+            },
+            operatorInputProps: {
+              size: 'small',
+              sx: { mt: 'auto' },
+            },
+            valueInputProps: {
+              InputComponentProps: {
                 size: 'small',
-                sx: { mt: 'auto' },
-              },
-              operatorInputProps: {
-                size: 'small',
-                sx: { mt: 'auto' },
-              },
-              valueInputProps: {
-                InputComponentProps: {
-                  size: 'small',
-                },
-              },
-              deleteIconProps: {
-                sx: {
-                  '& .MuiSvgIcon-root': { color: '#d32f2f' },
-                },
               },
             },
-            sx: FilterPanelStyles,
+            deleteIconProps: {
+              sx: {
+                '& .MuiSvgIcon-root': { color: '#d32f2f' },
+              },
+            },
           },
-        }}
-        getAggregationPosition={groupNode =>
-          groupNode.depth === -1 ? null : 'inline'
-        }
-        hideFooter
-        editMode="row"
-        aggregationRowsCount={params => {
-          return params.rowNode.children?.length || 1;
-        }}
-      />
-    </Box>
+          sx: FilterPanelStyles,
+        },
+      }}
+      getAggregationPosition={groupNode =>
+        groupNode.depth === -1 ? null : 'inline'
+      }
+      hideFooter
+      editMode="row"
+      aggregationRowsCount={params => {
+        return params.rowNode.children?.length || 1;
+      }}
+    />
   );
 }

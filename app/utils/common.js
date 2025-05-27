@@ -15,11 +15,13 @@ import {
   isSameWeek,
   differenceInCalendarWeeks,
   endOfWeek,
+  endOfISOWeek,
 } from 'date-fns';
 import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PROJECT_TOTAL_COST_CATEGORIES,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
@@ -27,7 +29,7 @@ import {
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
   return Object.keys(row)
-    .filter(key => key.startsWith('W')) // Filter weekly columns
+    .filter(key => /^W\d+/.test(key)) // Filter weekly columns
     .reduce((sum, weekKey) => {
       const weekValue = row[weekKey];
       const numericValue =
@@ -288,8 +290,13 @@ export const getMondayOfISO = date => {
   return format(startOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
 };
 
+export const getSundayOfISO = date => {
+  const isoDate = parseISO(date);
+  return format(endOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
+};
+
 export const generateTMinusOneStartEndDate = isStartDate => {
-  let today = new Date();
+  let today = parseISO(new Date().toISOString());
   const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
   if (isStartDate) {
     return format(lastWeeksMonday, DATE_FORMAT);
@@ -301,21 +308,21 @@ export const generateTMinusOneStartEndDate = isStartDate => {
   }
 };
 
-export const generateDateWeekMath = (operation, weeks) => {
+export const generateDateWeekMath = (operation, weeks, date = new Date()) => {
   if (weeks === undefined || weeks === null) return null;
-  let today = new Date();
-  today = parseISO(today.toISOString());
+  // let today = new Date();
+  const isoDate = parseISO(date.toISOString());
 
   let weeksMonday;
   switch (operation) {
     case 'WEEK_MINUS':
-      weeksMonday = startOfWeek(subWeeks(today, weeks), { weekStartsOn: 1 });
+      weeksMonday = startOfWeek(subWeeks(isoDate, weeks), { weekStartsOn: 1 });
       break;
     case 'WEEK_PLUS':
-      weeksMonday = startOfWeek(addWeeks(today, weeks), { weekStartsOn: 1 });
+      weeksMonday = startOfWeek(addWeeks(isoDate, weeks), { weekStartsOn: 1 });
       break;
     default:
-      weeksMonday = startOfWeek(today, { weekStartsOn: 1 });
+      weeksMonday = startOfWeek(isoDate, { weekStartsOn: 1 });
   }
   return format(weeksMonday, DATE_FORMAT);
 };
@@ -373,8 +380,6 @@ export const getStartAndEndDateForView = (
 };
 
 export const getUserIdFromEmail = (users, email) => {
-  // Returning a hardcoded value for testing
-  return '1513e847-8abe-42b6-8743-497d9b8e0e17';
   const userObj = users.find(user => user.Email === email);
   return userObj ? userObj.Id : null;
 };
@@ -432,6 +437,10 @@ export const getResourceFromEmail = (userEmail, resources) => {
   return null;
 };
 
+export const getResourceFromUid = (uid, resources) => {
+  return resources.find(resource => resource.Id === uid);
+};
+
 export const getAllocationManagerFromPath = (
   allocationManager_Path,
   resources
@@ -441,9 +450,9 @@ export const getAllocationManagerFromPath = (
   );
 };
 
-export const getProjectsIamProjectManager = (fullName, projects) => {
+export const getProjectsIamProjectManager = (uid, projects) => {
   return projects.filter(
-    project => project.ProjectManager?.toLowerCase() === fullName
+    project => project.ProjectManager?.toLowerCase() === uid
   );
 };
 
@@ -561,3 +570,107 @@ export const getOnlyFilterSettings = view => {
     Filters: view.Filters ?? [],
   };
 };
+
+export const getTotalWeeklyAllocation = (rowState, resourceId, weekKey) => {
+  let total = 0;
+  const allRows = rowState;
+  allRows.forEach(row => {
+    if (row.resourceId === resourceId && row[weekKey]?.value) {
+      total += parseFloat(row[weekKey]?.value || 0);
+    }
+  });
+  return total;
+};
+
+export function formatStringToFloat(value, decimalPlaces = 1) {
+  const num = parseFloat(value);
+  if (isNaN(num)) return '0.0'; // fallback for invalid inputs
+  return num.toFixed(decimalPlaces);
+}
+
+export function isCurrentWeek(date) {
+  const today = new Date();
+  const startOfCurrentWeek = startOfISOWeek(today, { weekStartsOn: 1 });
+  const startOfDateWeek = startOfISOWeek(date, { weekStartsOn: 1 });
+  return isSameWeek(startOfCurrentWeek, startOfDateWeek, { weekStartsOn: 1 });
+}
+
+export function formateToFloat(value) {
+  if (value === undefined || value === null) return 0.0;
+  const parsedValue = parseFloat(value);
+  if (isNaN(parsedValue)) return 0.0;
+  return Math.round(value * 10) / 10;
+}
+
+export function getProjectTypeColorLine(projectType) {
+  const projectTypeColors = {
+    'key initiative': '#3730A3',
+    rtb: '#A3A2A4',
+    ctb: '#5080DA',
+    stb: '#F5B544',
+    ongoing: '#4B9F47',
+  };
+  return projectTypeColors[projectType.toLowerCase()] || '#FF0000';
+}
+
+export function getProjectBudgetColor(budgetCategory = 'onBudget') {
+  const projectBudgetColors = {
+    onBudget: '#1565C0',
+    overBudget: '#B91C1C',
+    underBudget: '#4B9F47',
+  };
+
+  return projectBudgetColors[budgetCategory];
+}
+
+export function getProjectBudgetCategory(projectBudget, currentBudget) {
+  const projectBudgetCategories = {
+    onBudget: 'onBudget',
+    overBudget: 'overBudget',
+    underBudget: 'underBudget',
+  };
+  if (currentBudget < projectBudget - projectBudget * 0.1) {
+    return projectBudgetCategories['underBudget'];
+  }
+  if (currentBudget > projectBudget + projectBudget * 0.1) {
+    return projectBudgetCategories['overBudget'];
+  }
+  return projectBudgetCategories['onBudget'];
+}
+
+export function getProjectBudgetCategoryDisplayName(budgetCategory) {
+  const projectBudgetCategories = {
+    onBudget: 'On-Budget',
+    overBudget: 'Over-Budget',
+    underBudget: 'Under-Budget',
+  };
+  return projectBudgetCategories[budgetCategory];
+}
+
+export function getTeamForResource(resourceId, teams, teamsResources) {
+  const team = Object.keys(teamsResources).find(teamId => {
+    const teamResources = teamsResources[teamId];
+    return teamResources.some(resource => resource.Id === resourceId);
+  });
+  if (team) {
+    return teams.find(t => t.Id === team);
+  }
+  return null;
+}
+
+export function getOrganisationForResource(
+  resourceId,
+  organisations,
+  organisationsResources
+) {
+  const organisation = Object.keys(organisationsResources).find(
+    organisationId => {
+      const organisationResources = organisationsResources[organisationId];
+      return organisationResources.some(resource => resource.Id === resourceId);
+    }
+  );
+  if (organisation) {
+    return organisations.find(o => o.Id === organisation);
+  }
+  return null;
+}

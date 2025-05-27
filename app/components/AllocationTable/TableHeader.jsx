@@ -45,7 +45,7 @@ const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
     params.value == null ? 'weeklyCell' : clsx('super-app', 'weeklyCell'),
 });
 
-const createValueHandlers = dispatch => ({
+const createValueHandlers = (dispatch, isFormatWithK) => ({
   valueParser: value => {
     const parsed = parseFloat(
       value.replace(/[^0-9.]/g, '').replace(/(?<=\..*)\./g, '')
@@ -54,13 +54,13 @@ const createValueHandlers = dispatch => ({
   },
 
   valueFormatter: value => {
-    if (!value) {
-      return value;
-    }
-    if (typeof value === 'number') {
-      return value.toFixed(1);
-    }
-    return value;
+    if (value == null || value === '') return '';
+    const num = typeof value === 'number' ? value : parseFloat(value);
+    return isNaN(num)
+      ? ''
+      : isFormatWithK
+      ? `${num.toFixed(1)}k`
+      : num.toFixed(1);
   },
   valueGetter: params => {
     return params?.value ?? null;
@@ -98,7 +98,8 @@ const createValueHandlers = dispatch => ({
   },
 });
 
-export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
+
+export const generateWeeklyColumns = (startDate, endDate, dispatch, isFormatWithK) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
   const currentDate = new Date();
@@ -123,12 +124,12 @@ export const generateWeeklyColumns = (startDate, endDate, dispatch) => {
 
     return {
       ...createBaseColumnConfig(weekStartDate, isCurrentWeek),
-      ...(dispatch ? createValueHandlers(dispatch) : {}),
+      ...(dispatch ? createValueHandlers(dispatch, isFormatWithK) : {}),
     };
   });
 };
 
-export const generateColumnGroupingModel = (startDate, allColumns) => {
+export const generateColumnGroupingModel = (startDate, endDate, allColumns) => {
   const nonWeeklyColumns = allColumns.filter(column => column.primaryColumn);
   const groups = [];
   let currentGroup = null;
@@ -141,8 +142,24 @@ export const generateColumnGroupingModel = (startDate, allColumns) => {
     });
   });
 
-  for (let i = 0; i < WEEK_CONFIG.TOTAL_WEEKS; i++) {
-    const weekDate = addWeeks(startDate, i);
+  // Caculate the weeks difference between start and end dates. For column header grouping ("Apr 2023", "May 2023", etc.)
+  const isoStart = parseISO(startDate);
+  const isoEnd = parseISO(endDate);
+
+  // calculate start date to the Monday
+  const adjustedStart = startOfWeek(isoStart, { weekStartsOn: 1 });
+  // calculate end date to the following Sunday
+  const adjustedEnd = endOfWeek(isoEnd, { weekStartsOn: 1 });
+
+  // Calculate total weeks between start and end dates
+  const totalWeeks = isSameWeek(adjustedEnd, adjustedStart, { weekStartsOn: 1 })
+    ? 1
+    : differenceInCalendarWeeks(adjustedEnd, adjustedStart, {
+        weekStartsOn: 1,
+      }) + 1;
+
+  for (let i = 0; i < totalWeeks; i++) {
+    const weekDate = addWeeks(isoStart, i);
     const monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
 
     if (!currentGroup || currentGroup.groupId !== monthYear) {
@@ -165,16 +182,17 @@ export const getAllColumnsWithWeek = (
   existingColumns = [],
   dispatch,
   startDate,
-  endDate
+  endDate,
+  isFormatWithK
 ) => {
   return [
     ...existingColumns,
-    ...generateWeeklyColumns(startDate, endDate, dispatch),
+    ...generateWeeklyColumns(startDate, endDate, dispatch, isFormatWithK),
   ];
 };
 
-export const aggregationModel = (startDate, endDate) => {
-  return generateWeeklyColumns(startDate, endDate)
-    .filter(column => column.field.startsWith('W'))
+export const aggregationModel = (startDate, endDate, isFormatWithK) => {
+  return generateWeeklyColumns(startDate, endDate, undefined, isFormatWithK)
+    .filter(column => /^W\d+/.test(column.field))
     .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
 };
