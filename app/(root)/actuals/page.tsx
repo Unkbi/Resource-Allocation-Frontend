@@ -19,7 +19,10 @@ import {
   isCurrentWeek,
 } from '@/app/utils/common';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { setCalendarDate } from '@/app/redux/reducers/actualAllocationsReducer';
+import {
+  setActualAllocationsStatus,
+  setCalendarDate,
+} from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
 import { parseISO } from 'date-fns';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
@@ -45,6 +48,7 @@ export default function ActualsPage() {
   const [isModified, setIsModified] = useState(false);
 
   const handleModificationChange = (modified: boolean) => {
+    setShow(false);
     setIsModified(modified);
   };
 
@@ -76,17 +80,54 @@ export default function ActualsPage() {
         .map(id => apiRef.current.getRow(id))
         .filter(row => row.id !== 'total' && row.project);
 
+      // Set deleted rows, actualAllocations to 0.
+      const modifiedDate = actualAllocations?.map(
+        (allocations: ActualAllocations) => {
+          const row = allData.find(
+            tabData => tabData.project === allocations.ProjectName
+          );
+          if (row) {
+            return {
+              ...allocations,
+              ActualsEntered: row.actuals,
+              Notes: row.comments || '',
+            };
+          }
+          return {
+            ...allocations,
+            ActualsEntered: 0,
+            Notes: '',
+          };
+        }
+      );
+
+      const newData = allData
+        .filter(
+          tabData =>
+            !modifiedDate?.find(
+              allocations => tabData.project === allocations.ProjectName
+            )
+        )
+        .map(tabData => ({
+          Project: projects?.result?.find(
+            (project: any) => project.Name === tabData.project
+          )?.Id,
+          ActualsEntered: formateToFloat(tabData.actuals),
+          Notes: tabData.comments || '',
+        }));
+
       const payload = {
         resource: userId,
         period: startDate,
         status: 'Confirmed',
-        actuals: allData.map((row: any) => ({
-          Project: projects?.result?.find(
-            (project: any) => project.Name === row.project
-          )?.Id,
-          ActualsEntered: formateToFloat(row.actuals),
-          Notes: row.comments || '',
-        })),
+        actuals: [
+          ...newData,
+          ...(modifiedDate?.map((row: ActualAllocations) => ({
+            Project: row.Project,
+            ActualsEntered: formateToFloat(row.ActualsEntered),
+            Notes: row.Notes || '',
+          })) || []),
+        ],
       };
       new Promise((resolve, reject) => {
         dispatch({
@@ -96,6 +137,9 @@ export default function ActualsPage() {
       })
         .then((response: any) => {
           if (response?.status === 'ok') {
+            if (status !== 'Confirmed') {
+              dispatch(setActualAllocationsStatus('Confirmed'));
+            }
             dispatch(
               showToast({
                 open: true,
@@ -182,8 +226,13 @@ export default function ActualsPage() {
 
   useEffect(() => {
     if (actualAllocations) {
-      const formattedData: ActualAllocationTableRow[] = actualAllocations.map(
-        (allocation: ActualAllocations, index: number) => ({
+      const formattedData: ActualAllocationTableRow[] = actualAllocations
+        .filter(
+          (alloc: ActualAllocations) =>
+            (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
+            (alloc.ActualsEntered && alloc.ActualsEntered > 0)
+        )
+        .map((allocation: ActualAllocations, index: number) => ({
           id:
             allocation.Id ||
             `${allocation.Resource}${allocation.Project}${index}`,
@@ -191,8 +240,7 @@ export default function ActualsPage() {
           planned: allocation.AllocationEntered,
           actuals: allocation.ActualsEntered,
           comments: allocation.Notes,
-        })
-      );
+        }));
       setFormattedActualAllocations(formattedData);
     }
   }, [actualAllocations]);

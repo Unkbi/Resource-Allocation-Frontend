@@ -69,19 +69,6 @@ export const actualsTableStyles = {
     {
       display: 'none',
     },
-  '.divider-row': {
-    height: '2px !important',
-    minHeight: '2px !important',
-    maxHeight: '2px !important',
-    '& .MuiDataGrid-cell': {
-      padding: 0,
-      border: 'none',
-      backgroundColor: '#C4CAD4',
-      height: '2px',
-      minHeight: '2px',
-      maxHeight: '2px',
-    },
-  },
   '& .MuiDataGrid-virtualScrollerContent': {
     flexBasis: '0 !important',
     flexGrow: 1,
@@ -100,4 +87,8 @@ export const actualsTableStyles = {
   '.disabled-cell': {
     backgroundColor: '#F8F9FA',
   },
+/* You can adjust the color and thickness as needed */
+'.section-end-planned .MuiDataGrid-cell, .section-end-unplanned .MuiDataGrid-cell, .section-end-other .MuiDataGrid-cell': {
+  borderBottom: '2px solid #C3C3C3 !important',
+},
 };

@@ -28,8 +28,10 @@ import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import Skeleton from '@mui/material/Skeleton';
 import {
+  COMPANY_DEFAULT_VIEW,
   setSplitView,
   setSplitViewCurrentProject,
+  updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 
 const MainAppBar = styled(AppBar, {
@@ -161,6 +163,7 @@ const Header = ({ sidebarExpanded }) => {
     setTimeout(() => {
       dispatch(setSplitView(false));
       dispatch(setSplitViewCurrentProject(null));
+      dispatch(updateCurrentView(COMPANY_DEFAULT_VIEW));
     }, 1000);
   }
   // return focus to the button when we transitioned from !open -> open

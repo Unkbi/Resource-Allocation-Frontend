@@ -875,6 +875,7 @@ export default function AllocationGrid({
   const handleCellSelectionModelChange = useCallback(newModel => {
     // Cell Selection Model should have a value only for minimum of 2 cells
     // If only one cell is selected, then clear the selection
+    if (type === 'cost') return;
     if (
       Object.keys(newModel).length === 0 ||
       (Object.keys(newModel).length === 1 &&
@@ -1062,7 +1063,13 @@ export default function AllocationGrid({
       defaultGroupingExpansionDepth={1}
       disableAutosize
       getCellClassName={params =>
-        getCellClassName(params, updatedRows, allocationTheme)
+        getCellClassName(
+          params,
+          updatedRows,
+          allocationTheme,
+          type,
+          projects?.result
+        )
       }
       getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}

@@ -43,7 +43,7 @@ export default function TopProjectsView({
       resourceId: null,
       project: project.Name,
       projectId: project.Id,
-      projectSponsor: project.Owner.name,
+      projectSponsor: project.ProjectSponsor,
       projectManager: project.ProjectManager,
       projectStatus: project.Status,
       projectLocation: project.Location,

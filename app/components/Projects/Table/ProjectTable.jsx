@@ -34,9 +34,11 @@ const ProjectTable = ({columns, rows, loading, apiRef}) => {
                 },
                 columns: {
                   columnVisibilityModel: {
-                    Owner: false, 
+                    ProjectSponsor: false, 
                     ProjectManager: false, 
-                    Location: false, 
+                    Location: false,
+                    Budget: false,
+                    BudgetCurrency:false,
                   },
                 },
               }}

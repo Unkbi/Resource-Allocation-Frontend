@@ -1,5 +1,13 @@
-import { getInitialsColor } from '@/app/utils/common';
-import { styled } from '@mui/material';
+import {
+  PROJECT_TOTAL_COST_CATEGORIES,
+  PROJECT_TYPES,
+} from '@/app/constants/constants';
+import {
+  getInitialsColor,
+  getProjectBudgetColor,
+  getProjectTypeColorLine,
+} from '@/app/utils/common';
+import { colors, styled } from '@mui/material';
 import { DataGridPremium, gridClasses } from '@mui/x-data-grid-premium';
 
 export const StyledDataGrid = styled(DataGridPremium)(({
@@ -10,6 +18,25 @@ export const StyledDataGrid = styled(DataGridPremium)(({
   allocationTheme = [],
 }) => {
   const allocationRangeStyles = {};
+  const projectTypeColors = {};
+  const projectBudgetCategoryColors = {};
+
+  PROJECT_TYPES.forEach(projectType => {
+    projectTypeColors[
+      `& .project-type-${projectType.toLowerCase().split(' ').join('_')}`
+    ] = {
+      borderBottom: `3px solid ${getProjectTypeColorLine(projectType)}`,
+      // borderRight: 'none !important',
+      // boxShadow: '1px 0 0 0 #DDE1E4 inset',
+    };
+  });
+
+  PROJECT_TOTAL_COST_CATEGORIES.forEach(projectBudgetCategory => {
+    projectBudgetCategoryColors[`& .project-budget-${projectBudgetCategory}`] =
+      {
+        color: `${getProjectBudgetColor(projectBudgetCategory)} !important`,
+      };
+  });
 
   if (Array.isArray(allocationTheme) && allocationTheme.length > 0) {
     allocationTheme.forEach(range => {
@@ -29,7 +56,8 @@ export const StyledDataGrid = styled(DataGridPremium)(({
 
   return {
     ...allocationRangeStyles,
-
+    ...projectTypeColors,
+    ...projectBudgetCategoryColors,
     [`& .${gridClasses.columnHeader}[data-field="__row_group_by_columns_group__"]`]:
       {
         fontSize: '14px',
@@ -82,7 +110,34 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="organization"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
+    [`& .${gridClasses.cell}[data-field="Team"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="AllocationManager"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="Budget"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="BudgetCurrency"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="Organization"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
     [`& .${gridClasses.cell}[data-field="Manager"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="HourlyRate"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="HourlyRateCurrency"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="ValidityStartDate"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="ValidityEndDate"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
     [`& .${gridClasses.cell}[data-field="teamStatus"]`]: {
@@ -274,11 +329,11 @@ export const StyledDataGrid = styled(DataGridPremium)(({
         !loading &&
         (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),
     },
-    [`& .${gridClasses.cell}[data-field="Owner"]`]: {
+    [`& .${gridClasses.cell}[data-field="ProjectSponsor"]`]: {
       backgroundColor:
         !loading && (groupBy === 'project' ? '#F1F6FF' : '#F7FBFF '),
     },
-    [`& .${gridClasses.cell}[data-field="Owner"].secondGroupsRow`]: {
+    [`& .${gridClasses.cell}[data-field="ProjectSponsor"].secondGroupsRow`]: {
       backgroundColor:
         !loading &&
         (groupBy === 'project' ? '#F1F6FF !important' : '#F0F7FF !important'),

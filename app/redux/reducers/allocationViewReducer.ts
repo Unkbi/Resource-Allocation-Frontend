@@ -16,20 +16,20 @@ import {
 } from '@/app/types';
 import { createSlice } from '@reduxjs/toolkit';
 
-const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
+export const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
   '__row_group_by_columns_group_teams__',
   '__row_group_by_columns_group_resource__',
   'project',
   'resourceType',
 ];
 
-const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
+export const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
   '__row_group_by_columns_group__',
   'resource',
   'totalEffort',
 ];
 
-const COMPANY_DEFAULT_VIEW: AllocationGridView = {
+export const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Id: '0',
   UserId: null,
   Name: 'Default View',
@@ -83,7 +83,7 @@ const initialState: AllocationGridViewState = {
       'Description',
       'projectLocation',
       'ProjectManager',
-      'Owner',
+      'ProjectSponsor',
       'projectEndDate',
       'projectStartDate',
       'Status',

@@ -33,7 +33,7 @@ export interface Project {
   Description: string;
   EndDate: string;
   Location: string;
-  Owner: string;
+  ProjectSponsor: string;
   ProjectManager: string;
   StartDate: string;
   Status: string;
@@ -160,7 +160,7 @@ export default function TeamAllocation({
     },
     {
       field: 'Department',
-      headerName: 'Organisation',
+      headerName: 'Organization',
       width: 180,
       type: 'string',
       isEditable: 'false',
@@ -205,6 +205,10 @@ export default function TeamAllocation({
       isEditable: 'false',
       sortable: 'false',
       primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+      },
     },
     {
       field: 'StartDate',
@@ -341,15 +345,16 @@ export default function TeamAllocation({
     },
     {
       field: 'projectCost',
-      headerName: 'Project Cost',
-      width: 120,
+      headerName: 'Project Budget',
+      width: 140,
       type: 'string',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectCost || ''} />;
+        const cost = allocation?.projectCost;
+        return <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />;
       },
     },
     {
@@ -418,7 +423,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Owner',
+      field: 'ProjectSponsor',
       headerName: 'Project Sponsor',
       width: 160,
       type: 'string',
@@ -539,7 +544,7 @@ export default function TeamAllocation({
                 Description: false,
                 projectLocation: false,
                 ProjectManager: false,
-                Owner: false,
+                projectSponsor: false,
                 projectEndDate: false,
                 projectStartDate: false,
                 Status: false,

@@ -23,15 +23,15 @@ interface Resource {
   [key: string]: any;
 }
 
-const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
+const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
-    // @ts-ignore
-    const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
-      (state: RootState) => state.resources
-    );
+  // @ts-ignore
+  const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
+    (state: RootState) => state.resources
+  );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   ) as {
@@ -42,66 +42,65 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
-   const { costs: teamsCost, loading} = useSelector(
+  const { costs: teamsCost, loading } = useSelector(
     (state: RootState) => state.allocationsCost
   );
 
-   useEffect(() => {
-      dispatch({
-        type: 'FETCH_ALLOCATIONS_COST',
-        payload: {
-          teams: teams?.result,
-          projects: projects?.result,
-          resources: resources?.result,
-          startDate: startDate,
-          endDate: endDate,
+  useEffect(() => {
+    dispatch({
+      type: 'FETCH_ALLOCATIONS_COST',
+      payload: {
+        teams: teams?.result,
+        projects: projects?.result,
+        resources: resources?.result,
+        startDate: startDate,
+        endDate: endDate,
+      },
+    });
+  }, [startDate, endDate, teams, projects, resources]);
+
+  const handleAddClick = (params: GridCellParams) => {
+    dispatch(
+      openDialog({
+        title: 'Add Allocation',
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: 'add_allocation',
+        initialData: {
+          Project: params.value,
         },
-      });
-    }, [startDate, endDate, teams, projects, resources]);
+      })
+    );
+  };
 
-    const handleAddClick = (params: GridCellParams) => {
-        dispatch(
-          openDialog({
-            title: 'Add Allocation',
-            submitButtonText: 'Add',
-            cancelButtonText: 'Cancel',
-            formType: 'add_allocation',
-            initialData: {
-              Project: params.value,
-            },
-          })
-        );
-      };
-    
-      const getTeam = (params: GridCellParams) => {
-        if (
-          params.rowNode.type === 'group' &&
-          params.rowNode.groupingField === 'teams'
-        ) {
-          // Find the team by name in the teams array
-          const teamName = params.rowNode.groupingKey;
-          const team = teams?.result?.find(t => t.Name === teamName);
-          return team;
-        }
-        return null;
-      };
-    
-      const getResource = (params: GridCellParams): Resource | null => {
-        if (
-          params.rowNode.type === 'group' &&
-          params.rowNode.groupingField === 'resource'
-        ) {
-          const resourceName = params.rowNode.groupingKey;
-          const resource = _resources?.result?.find(
-            r => r.FullName === resourceName
-          );
-          return resource || null;
-        }
-        return null;
-      };
-    
+  const getTeam = (params: GridCellParams) => {
+    if (
+      params.rowNode.type === 'group' &&
+      params.rowNode.groupingField === 'teams'
+    ) {
+      // Find the team by name in the teams array
+      const teamName = params.rowNode.groupingKey;
+      const team = teams?.result?.find(t => t.Name === teamName);
+      return team;
+    }
+    return null;
+  };
 
-     const teamsColumnConfig = [
+  const getResource = (params: GridCellParams): Resource | null => {
+    if (
+      params.rowNode.type === 'group' &&
+      params.rowNode.groupingField === 'resource'
+    ) {
+      const resourceName = params.rowNode.groupingKey;
+      const resource = _resources?.result?.find(
+        r => r.FullName === resourceName
+      );
+      return resource || null;
+    }
+    return null;
+  };
+
+  const teamsColumnConfig = [
     {
       field: 'teams',
       headerName: 'Team Name',
@@ -159,7 +158,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     },
     {
       field: 'Department',
-      headerName: 'Organisation',
+      headerName: 'Organization',
       width: 180,
       type: 'string',
       isEditable: 'false',
@@ -173,7 +172,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     {
       field: 'HRLevel',
       headerName: 'HR Level',
-      width: 180,
+      width: 100,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -238,7 +237,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     {
       field: 'LocationCategory',
       headerName: 'Location Category',
-      width: 180,
+      width: 160,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -251,7 +250,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     {
       field: 'AverageWeeklyHours',
       headerName: 'Average Weekly Hours',
-      width: 180,
+      width: 190,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -264,7 +263,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     {
       field: 'ContractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
-      width: 180,
+      width: 195,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -279,7 +278,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     {
       field: 'ContractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
-      width: 180,
+      width: 260,
       type: 'string',
       isEditable: 'false',
       sortable: 'false',
@@ -320,9 +319,163 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
       },
     },
     {
+      field: 'projectOvertimeAllowed',
+      headerName: 'Allow Overtime',
+      width: 140,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return (
+          <EllipsisNameCell
+            value={
+              allocation?.projectOvertimeAllowed === true
+                ? 'True'
+                : allocation?.projectOvertimeAllowed === false
+                  ? 'False'
+                  : ''
+            }
+          />
+        );
+      },
+    },
+    {
+      field: 'projectCost',
+      headerName: 'Project Budget',
+      width: 140,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        const cost = allocation?.projectCost;
+        return <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />;
+      },
+    },
+    {
+      field: 'projectCurrency',
+      headerName: 'Project Currency',
+      width: 150,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectCurrency || ''} />;
+      },
+    },
+    {
+      field: 'Description',
+      headerName: 'Project Description',
+      width: 180,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.Description || ''} />;
+      },
+    },
+    {
+      field: 'projectLocation',
+      headerName: 'Project Location',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectLocation || ''} />;
+      },
+    },
+    {
+      field: 'projectStartDate',
+      headerName: 'Project Start Date',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectStartDate || ''} />;
+      },
+    },
+    {
+      field: 'projectEndDate',
+      headerName: 'Project End Date',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectEndDate || ''} />;
+      },
+    },
+    {
+      field: 'ProjectSponsor',
+      headerName: 'Project Sponsor',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectSponsor || ''} />;
+      },
+    },
+    {
+      field: 'ProjectManager',
+      headerName: 'Project Manager',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectManager || ''} />;
+      },
+    },
+    {
+      field: 'Status',
+      headerName: 'Project Status',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectStatus || ''} />;
+      },
+    },
+    {
+      field: 'Type',
+      headerName: 'Project Type',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectType || ''} />;
+      },
+    },
+    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
-      width: 180,
+      width: 170,
       type: 'string',
       isEditable: false,
       sortable: false,
@@ -347,7 +500,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
     return allocations.filter(allocation => allocation.teams);
   };
   return (
-     <>
+    <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
         <AllocationGrid
           loading={loading}
@@ -383,6 +536,17 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
                 AverageWeeklyHours: false,
                 ContractorHourlyRate: false,
                 ContractorHourlyRateCurrency: false,
+                projectOvertimeAllowed: false,
+                projectCost: false,
+                projectCurrency: false,
+                Description: false,
+                projectLocation: false,
+                ProjectManager: false,
+                projectSponsor: false,
+                projectEndDate: false,
+                projectStartDate: false,
+                Status: false,
+                Type: false,
               },
             },
           }}
@@ -403,7 +567,7 @@ const TeamsCost = ({ startDate, endDate} : TeamAllocationProps) => {
         )}
       </Box>
     </>
-  )
-}
+  );
+};
 
-export default TeamsCost
+export default TeamsCost;

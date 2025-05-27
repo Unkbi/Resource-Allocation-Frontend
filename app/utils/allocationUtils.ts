@@ -17,7 +17,7 @@ import {
   Resource,
   Team,
 } from '../types';
-import { generateAllWeeks, getWeekNumber } from './common';
+import { generateAllWeeks, getResourceFromUid, getWeekNumber } from './common';
 import { DATE_FORMAT } from '../constants/constants';
 
 export const formatAllocations = (
@@ -43,13 +43,13 @@ export const formatAllocations = (
           allocationId: allocation.Id,
           value: allocation.AllocationEntered || null,
           projectStatus: project?.Status ?? 'Status',
-          projectSponsor: project?.Owner,
+          projectSponsor: project?.ProjectSponsor,
           projectManager: project?.ProjectManager,
           projectLocation: project?.Location,
           projectType: project?.Type,
           projectOvertimeAllowed: project?.AllowOvertime,
-          projectCost: project?.Cost,
-          projectCurrency: project?.CostCurrency,
+          projectCost: project?.Budget,
+          projectCurrency: project?.BudgetCurrency,
           projectStartDate: project?.StartDate,
           projectEndDate: project?.EndDate,
           period: formattedDate,
@@ -62,14 +62,14 @@ export const formatAllocations = (
         resourceId: allocation.Resource,
         project: allocation.ProjectName,
         projectId: allocation.Project,
-        projectSponsor: project?.Owner,
+        projectSponsor: project?.ProjectSponsor,
         projectManager: project?.ProjectManager,
         projectStatus: project?.Status ?? 'Status',
         projectLocation: project?.Location,
         projectType: project?.Type,
         projectOvertimeAllowed: project?.AllowOvertime,
-        projectCost: project?.Cost,
-        projectCurrency: project?.CostCurrency,
+        projectCost: project?.Budget,
+        projectCurrency: project?.BudgetCurrency,
         projectStartDate: project?.StartDate,
         projectEndDate: project?.EndDate,
         resource: allocation.ResourceName,
@@ -155,6 +155,9 @@ export function formatAllAllocations(
   startDate: string,
   endDate: string
 ) {
+  if (!allocations || allocations.length === 0) {
+    return [];
+  }
   const weeks = getWeeksInRange(startDate, endDate);
 
   // Build a lookup map from resource ID to team
@@ -191,14 +194,18 @@ export function formatAllAllocations(
 
         project: project?.Name || alloc.ProjectName || null,
         projectId: project?.Id || alloc.Project || null,
-        projectSponsor: project?.Owner || null,
-        projectManager: project?.ProjectManager || null,
+        projectSponsor:
+          getResourceFromUid(project?.ProjectSponsor, resources)?.FullName ||
+          null,
+        projectManager:
+          getResourceFromUid(project?.ProjectManager, resources)?.FullName ||
+          null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
         projectType: project?.Type || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
-        projectCost: project?.Cost ?? null,
-        projectCurrency: project?.CostCurrency || null,
+        projectCost: project?.Budget ?? null,
+        projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
         projectEndDate: project?.EndDate || null,
 
@@ -227,7 +234,11 @@ export function formatAllAllocations(
     entry.totalEffort += alloc.AllocationEntered;
   }
 
-  return sortAllAllocations(Array.from(grouped.values()));
+  return sortAllAllocations(
+    Array.from(grouped.values()).filter(allocation =>
+      hasAllocations(allocation)
+    )
+  );
 }
 
 export function injectBlankRows(
@@ -287,10 +298,13 @@ export function formatCostAllocations(
   startDate: string,
   endDate: string
 ) {
+  if (!allocations || allocations.length === 0) {
+    return [];
+  }
   const weeks = getWeeksInRange(startDate, endDate);
 
   // Divide all allocationCosts by 1000
-  allocations = allocations.map(alloc => ({
+  allocations = allocations?.map(alloc => ({
     ...alloc,
     Cost: alloc.Cost / 1000,
   }));
@@ -329,14 +343,18 @@ export function formatCostAllocations(
 
         project: project?.Name || alloc.ProjectName || null,
         projectId: project?.Id || alloc.Project || null,
-        projectSponsor: project?.Owner || null,
-        projectManager: project?.ProjectManager || null,
+        projectSponsor:
+          getResourceFromUid(project?.ProjectSponsor, resources)?.FullName ||
+          null,
+        projectManager:
+          getResourceFromUid(project?.ProjectManager, resources)?.FullName ||
+          null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
         projectType: project?.Type || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
-        projectCost: project?.Cost ?? null,
-        projectCurrency: project?.CostCurrency || null,
+        projectCost: project?.Budget ?? null,
+        projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
         projectEndDate: project?.EndDate || null,
 
@@ -366,3 +384,22 @@ export function formatCostAllocations(
 
   return Array.from(grouped.values());
 }
+
+export const hasAllocations = (allocation: AllAllocations) => {
+  // No Projects, only when the empty row, which is needed. So even though it has no allocation, we need to show it.
+  if (allocation.project === '') {
+    return true;
+  }
+  for (const key in allocation) {
+    if (
+      /^W\d+/.test(key) &&
+      allocation[key] &&
+      (allocation[key] as AllocationGridCellData).value &&
+      // @ts-ignore
+      (allocation[key] as AllocationGridCellData).value > 0
+    ) {
+      return true;
+    }
+  }
+  return false;
+};

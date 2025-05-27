@@ -39,9 +39,12 @@ import {
 
 export const fetchAllTeams = () => async (dispatch: AppDispatch) => {
   try {
+    await dispatch(setTeamsDataProcessing(true));
     await dispatch(getAllTeams());
   } catch (error) {
     console.error('Error fetching teams data:', error);
+  } finally {
+    await dispatch(setTeamsDataProcessing(false));
   }
 };
 
