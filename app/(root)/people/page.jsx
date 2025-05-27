@@ -166,6 +166,8 @@ export default function Resources() {
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const [value, setValue] = useState('resource');
+  const { allResourcesDetail, loading: allResourcesDetailLoading } =
+    useSelector(state => state.allResourcesDetail);
 
   const columns = [
     {
