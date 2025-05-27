@@ -59,13 +59,11 @@ const ActionButton = ({ src, alt, onClick }) => (
   </button>
 );
 
-const ResourceToolbar = ({ setFilterButtonEl }) => {
-  const [value, setValue] = useState('resource');
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
-
+const ResourceToolbar = ({
+  setFilterButtonEl,
+  value,
+  onChange = () => {},
+}) => {
   const clickHandler = () => {
    console.log("clicked")
   }
@@ -74,13 +72,14 @@ const ResourceToolbar = ({ setFilterButtonEl }) => {
     <Box style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
       <Tabs
         value={value}
-        onChange={handleChange}
+        onChange={onChange}
         textColor="primary"
         indicatorColor="primary"
         aria-label="secondary tabs example"
       >
         <Tab value="resource" label="Resources" />
         <Tab value="teams" label="Teams" />
+        <Tab value="rates" label="Rates" />
       </Tabs>
       <Box>
         <Box className="filterColBlock">

@@ -10,6 +10,8 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
+import { AllAllocations } from '@/app/types';
+import { getProjectTypeColorLine } from '@/app/utils/common';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -39,6 +41,7 @@ export default function ProjectAllocation({
     error?: string;
   };
   const dispatch: AppDispatch = useDispatch();
+  const { projects } = useSelector((state: RootState) => state.projects);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -90,6 +93,10 @@ export default function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+        const row = api.getRow(rowNode.id);
+        const projectType = projects?.result?.find(
+          project => project.Name === value
+        )?.Type;
         if (isGridTreeNode && rowNode.children) {
           const resource_count = rowNode?.children?.length || null;
           return (
@@ -98,6 +105,7 @@ export default function ProjectAllocation({
               resourceCount={resource_count}
               onAddClick={() => handleAddClick(params)}
               showAddIcon={true}
+              leftBorderColor={getProjectTypeColorLine(projectType || '')}
             />
           );
         }
@@ -153,7 +161,7 @@ export default function ProjectAllocation({
     },
     {
       field: 'Department',
-      headerName: 'Organisation',
+      headerName: 'Organization',
       width: 170,
       isEditable: 'false',
       sortable: 'false',
@@ -428,7 +436,7 @@ export default function ProjectAllocation({
     },
     {
       field: 'projectCost',
-      headerName: 'Project Cost',
+      headerName: 'Project Budget',
       width: 150,
       type: 'string ',
       headerClassName: 'secondary-header',
@@ -437,8 +445,9 @@ export default function ProjectAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
+        const cost = firstChild?.projectCost;
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCost ?? 'N/A'} />
+          <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />
         ) : null;
       },
     },
@@ -512,6 +521,10 @@ export default function ProjectAllocation({
     },
   ];
 
+  const removeResourcesWithNoProjects = (allocations: AllAllocations[]) => {
+    return allocations.filter(allocation => allocation.project);
+  };
+
   return (
     <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
@@ -559,7 +572,7 @@ export default function ProjectAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={allAllocations}
+          data={removeResourcesWithNoProjects(allAllocations || [])}
           loading={loading || dataProcessing}
         />
       </Box>

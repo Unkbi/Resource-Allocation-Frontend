@@ -207,7 +207,6 @@ const ColorPickerRow = styled('div')({
   flexWrap: 'wrap',
   gap: '8px',
   padding: '12px',
-  maxWidth: '480px',
   justifyContent: 'center',
 });
 

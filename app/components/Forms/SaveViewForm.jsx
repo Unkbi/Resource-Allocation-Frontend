@@ -36,6 +36,10 @@ import {
   isMyTeamsValid,
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import {
+  DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+  DEFAULT_VISIBLE_TEAMS_COLUMNS,
+} from '@/app/redux/reducers/allocationViewReducer';
 
 const getColumnLabel = column => {
   const columnLabels = {
@@ -55,13 +59,13 @@ const getColumnLabel = column => {
     projectLocation: 'Project Location',
     projectType: 'Project Type',
     projectOvertimeAllowed: 'Overtime',
-    projectCost: 'Project Cost',
+    projectCost: 'Project Budget',
     projectCurrency: 'Project Currency',
     projectStartDate: 'Project Start Date',
     projectEndDate: 'Project End Date',
     Email: 'Email',
     PhoneNumber: 'Phone Number',
-    Department: 'Organisation',
+    Department: 'Organization',
     WorkLocation: 'Resource Work Location',
     LocationCategory: 'Resource Location Category',
     Type: 'Resource Type',
@@ -74,12 +78,12 @@ const getColumnLabel = column => {
     ContractorHourlyRate: 'Contractor Hourly Rate',
     ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
     projectOvertimeAllowed: 'Allow Overtime',
-    projectCost: 'Project Cost',
+    projectCost: 'Project Budget',
     projectCurrency: 'Project Currency',
     Description: 'Project Description',
     projectLocation: 'Project Location',
     ProjectManager: 'Project Manager',
-    Owner: 'Project Sponsor',
+    ProjectSponsor: 'Project Sponsor',
     ProjectEndDate: 'Project End Date',
     ProjectStartDate: 'Project Start Date',
     Status: 'Project Status',
@@ -184,6 +188,20 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
 
   const handleColumnUpdate = value => {
     setFieldValue('showColumns', value);
+  };
+
+  const handleGroupByChange = e => {
+    const { value } = e.target;
+    setFieldValue('groupBy', value);
+
+    setFieldValue('showBy', value === 'Teams' ? 'AllTeams' : 'AllProject');
+    setFieldValue(
+      'showColumns',
+      value === 'Teams'
+        ? DEFAULT_VISIBLE_TEAMS_COLUMNS
+        : DEFAULT_VISIBLE_PROJECTS_COLUMNS
+    );
+    setFieldValue('filters', []);
   };
 
   const handleAddWeek = () => {
@@ -403,7 +421,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         <RadioGroup
           name="groupBy"
           value={values?.groupBy || 'Teams'}
-          onChange={handleChange}
+          onChange={handleGroupByChange}
           onBlur={handleBlur}
           row
           sx={{ gap: 2 }}

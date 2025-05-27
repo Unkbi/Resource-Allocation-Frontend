@@ -41,11 +41,11 @@ const colorPairs: ColorPair[] = [
   { pastel: '#D9F1B7', dark: '#93CB41' },
   { pastel: '#B2D0FF', dark: '#2772F0' },
   { pastel: '#FBB7AE', dark: '#C55858' },
-  { pastel: '#45C0CD', dark: '#45COCD' },
-  { pastel: '#FFE685', dark: '#FFE685' },
-  { pastel: '#FFA8DE', dark: '#FFA8DE' },
-  // { pastel: '#847ODE', dark: '#8470DE' },
-  { pastel: '#959AA3', dark: '#959AA3' },
+  { pastel: '#C1F0F5', dark: '#45C0CD' },
+  { pastel: '#F8E6A0', dark: '#D1BB67' },
+  { pastel: '#FDD0EC', dark: '#FFA8DE' },
+  { pastel: '#DFD8FD', dark: '#8470DE' },
+  { pastel: '#D5DBE5', dark: '#959AA3' },
   { pastel: '#FFFFFF', dark: '#FFFFFF' },
 ];
 
@@ -53,6 +53,8 @@ interface AllocationThemeProps {
   allocationRanges: AllocationRange[];
   onAllocationRangesChange: (ranges: AllocationRange[]) => void;
   onDataChanged: () => void;
+  validationErrors: ValidationErrors;
+  setValidationErrors: (errors: ValidationErrors) => void;
 }
 
 // Interface for validation errors
@@ -68,14 +70,14 @@ export default function AllocationTheme({
   allocationRanges,
   onAllocationRangesChange,
   onDataChanged,
+  validationErrors,
+  setValidationErrors,
 }: AllocationThemeProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
   );
   const dispatch: AppDispatch = useDispatch();
-  const [validationErrors, setValidationErrors] =
-    React.useState<ValidationErrors>({});
 
   // Get currently used colors
   const usedColors = React.useMemo(() => {
@@ -139,6 +141,11 @@ export default function AllocationTheme({
         return regex.test(value);
       }
 
+      function isDecimalDots(value: string) {
+        const regex = /^\s*\.+$/;
+        return regex.test(value);
+      }
+
       let updatedRanges = allocationRanges.map(row =>
         row.id === id ? { ...row, [field]: value } : row
       );
@@ -146,7 +153,9 @@ export default function AllocationTheme({
       if (field === 'To') {
         const currentRow = updatedRanges.find(row => row.id === id);
         if (currentRow && currentRow.To !== '2.0') {
-          let currentTo = parseFloat(value);
+          let currentTo = isDecimalDots(value)
+            ? parseFloat('0.0')
+            : parseFloat(value);
           if (!isNaN(currentTo)) {
             // Check if the value is a valid decimal number
             if (isInvalidInput(value) || isFloatLike(value) === false) {
@@ -166,6 +175,7 @@ export default function AllocationTheme({
               value !== '0.' &&
               value !== '1' &&
               value !== '1.' &&
+              value !== '.' &&
               currentTo < parseFloat(currentRow.From)
             ) {
               dispatch(

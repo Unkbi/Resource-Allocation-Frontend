@@ -235,3 +235,10 @@ export const DEFAULT_LOCALE = 'en-gb';
 
 export const DEFAULT_PROJECT_WEEK_PLUS = 19;
 export const DEFAULT_PROJECT_WEEK_MINUS = 1;
+
+export const PROJECT_TYPES = ['Key Initiative', 'RTB', 'CTB', 'STB', 'Ongoing'];
+export const PROJECT_TOTAL_COST_CATEGORIES = [
+  'onBudget',
+  'overBudget',
+  'underBudget',
+];

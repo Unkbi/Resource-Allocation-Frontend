@@ -76,6 +76,7 @@ export default function AllocationGrid({
   NoRowsOverlay,
   mode,
   columnsFilterable = true,
+  type = '',
 }) {
   const apiRef = useGridApiRef();
   const [filterButtonEl, setFilterButtonEl] = useState(null);
@@ -171,7 +172,7 @@ export default function AllocationGrid({
 
   const [aggregation, setAggregation] = useState({
     totalEffort: 'sum',
-    ...aggregationModel(startDate, endDate),
+    ...aggregationModel(startDate, endDate, type === 'cost'),
   });
 
   const normalizeRow = row => {
@@ -291,7 +292,7 @@ export default function AllocationGrid({
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
       setCellSelectionModel(cellSelectionData);
     };
-    const timeoutId = setTimeout(handleScrollAndFocus, 1000);
+    const timeoutId = setTimeout(handleScrollAndFocus, 50);
     setExpandRowId(null);
     return () => clearTimeout(timeoutId);
   }, [rowState, apiRef, cellSelectionData, view, data]);
@@ -312,7 +313,7 @@ export default function AllocationGrid({
     if (startDate && endDate) {
       setAggregation({
         totalEffort: 'sum',
-        ...aggregationModel(startDate, endDate),
+        ...aggregationModel(startDate, endDate, type === 'cost'),
       });
     }
   }, [startDate, endDate]);
@@ -585,7 +586,8 @@ export default function AllocationGrid({
       : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
     currentView?.isFixedRange
       ? currentView.endDate || endDate
-      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate
+      : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
+    type === 'cost'
   );
 
   const showField = [
@@ -1019,6 +1021,7 @@ export default function AllocationGrid({
         localeText: {
           toolbarFilters: '',
           toolbarColumns: '',
+          toolbarExport: '',
         },
       }
     : {};
@@ -1027,8 +1030,11 @@ export default function AllocationGrid({
     <StyledDataGrid
       cellSelection
       allocationTheme={allocationTheme}
-      isCellEditable={params => !params.row.hasButton}
+      isCellEditable={params =>
+        type === 'cost' ? false : !params.row.hasButton
+      }
       onCellKeyDown={handleCellKeyDown}
+      type={type}
       rowModesModel={rowModesModel}
       onRowModesModelChange={handleRowModesModelChange}
       processRowUpdate={handleCellUpdate}
@@ -1056,7 +1062,13 @@ export default function AllocationGrid({
       defaultGroupingExpansionDepth={1}
       disableAutosize
       getCellClassName={params =>
-        getCellClassName(params, updatedRows, allocationTheme)
+        getCellClassName(
+          params,
+          updatedRows,
+          allocationTheme,
+          type,
+          projects?.result
+        )
       }
       getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}

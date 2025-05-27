@@ -20,6 +20,7 @@ import {
   saveViewValidationSchema,
   cloneResourceValidationSchema,
   transferResourceValidationSchema,
+  editResourceValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -31,6 +32,7 @@ import {
   getUserIdFromEmail,
   getWeekNumber,
   getTotalWeeklyAllocation,
+  generateDateWeekMath,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -45,7 +47,10 @@ import {
   setSplitViewCurrentProject,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { Box, Typography } from '@mui/material';
-import { fetchAllProjectAllocations } from '@/app/redux/actions/fetchProjectsAction';
+import {
+  fetchAllProjectAllocations,
+  fetchAllProjects,
+} from '@/app/redux/actions/fetchProjectsAction';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   addUsersSavedViewAction,
@@ -57,23 +62,26 @@ import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
 import { format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
-import { addResource, updateResource } from '@/app/services/resourceServices';
+import { addResource, createResourceWithTeamAndOrg, updateResource } from '@/app/services/resourceServices';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
+import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
+import { addResourceToTeam } from '@/app/services/teamServices';
 
 const initialValuesMap = {
   add_project: {
     StartDate: '',
     EndDate: '',
     Name: '',
-    Owner: '',
+    ProjectSponsor: '',
     AllowOvertime: '',
     Location: '',
     ProjectManager: '',
-    Status: '',
+    Status: 'Active',
     Type: '',
+    Budget: 0,
   },
   add_resource: {
     FirstName: '',
@@ -82,11 +90,33 @@ const initialValuesMap = {
     Email: '',
     PhoneNumber: '',
     Department: '',
+    Organisation: '',
     Role: '',
     HRLevel: '',
-    Type: 'Contractor',
+    Type: 'Contractor - FT',
     ContractorHourlyRate: null,
     AverageWeeklyHours: null,
+    Team: '',
+    Manager: '',
+    StartDate: new Date().toISOString().split('T')[0],
+    EndDate: '',
+    WorkLocation: '',
+    Status: '',
+  },
+  edit_resource: {
+    FirstName: '',
+    LastName: '',
+    FullName: '',
+    Email: '',
+    PhoneNumber: '',
+    Department: '',
+    Organisation: '',
+    Role: '',
+    HRLevel: '',
+    Type: 'Contractor - FT',
+    ContractorHourlyRate: null,
+    AverageWeeklyHours: null,
+    Team: '',
     Manager: '',
     StartDate: '',
     EndDate: '',
@@ -177,17 +207,29 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
-  const { calendarDate: _calendarDate } = useSelector(
-    state => state.allAllocations
-  );
-  const { startDate: _startDate, endDate: _endDate } = _calendarDate || {};
+  const newResourceId = useSelector(state => state.newResource?.id);
+
+  const _startDate = currentView?.isDynamicRange
+    ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+    : currentView?.isFixedRange
+      ? currentView?.StartDate
+      : startDate;
+  const _endDate = currentView?.isDynamicRange
+    ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+    : currentView?.isFixedRange
+      ? currentView?.EndDate
+      : endDate;
 
   const getValidationSchema = formType => {
     switch (formType) {
       case 'add_project':
         return addProjectValidationSchema(projects);
+      case 'edit_project':
+        return addProjectValidationSchema(projects, initialData?.Name || '');
       case 'add_resource':
         return addResourceValidationSchema;
+      case 'edit_resource': // Temporary later on this will be same as add_resource
+        return editResourceValidationSchema;
       case 'add_allocation':
         return addAllocationValidationSchema;
       case 'assign_allocation':
@@ -206,6 +248,11 @@ const AllocationForm = () => {
         return null;
     }
   };
+  useEffect(() => {
+    if (formType && formType !== 'name_view') {
+      setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
+    }
+  }, [formType]);
 
   const handleScrollAndFocus = (resources, period, projects) => {
     const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
@@ -220,10 +267,7 @@ const AllocationForm = () => {
     resources?.forEach(resource => {
       projects?.forEach(project => {
         const [{ Id }] = Array.isArray(project) ? project : [project];
-        const key =
-          view === 'Teams'
-            ? `${resource.Id}-${resource.teamId}-${Id}`
-            : `${resource.Id}-${Id}`;
+        const key = `${resource.Id}-${resource.teamId}-${Id}`;
 
         cellData[key] = weeksObject;
       });
@@ -286,7 +330,7 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { submitType, ...cleanedValues } = values;
+    const { Organisation, submitType, Team, ...cleanedValues } = values;
 
     switch (formType) {
       case 'add_project':
@@ -297,12 +341,23 @@ const AllocationForm = () => {
         postData = {
           'ResourceAllocation.Core/Project': {
             ...cleanedValues,
+            Budget: cleanedValues.Budget || 0,
             Description: 'string',
+            EndDate:
+              cleanedValues.EndDate === '' ? null : cleanedValues.EndDate,
+            ProjectSponsor:
+              cleanedValues.ProjectSponsor === ''
+                ? null
+                : cleanedValues.ProjectSponsor,
+            ProjectManager:
+              cleanedValues.ProjectManager === ''
+                ? null
+                : cleanedValues.ProjectManager,
           },
         };
         try {
           dispatch(addProject(postData))
-            .then(response => {
+            .then(async response => {
               if (response.meta.requestStatus === 'rejected') {
                 dispatch(
                   showToast({
@@ -314,6 +369,12 @@ const AllocationForm = () => {
                   })
                 );
                 return;
+              }
+
+              const newProjectId = response.payload?.result?.Id;
+              if (newProjectId) {
+                await dispatch(fetchAllProjects());
+                dispatch(setHighlightedRowId(newProjectId));
               }
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
@@ -344,7 +405,7 @@ const AllocationForm = () => {
             router.replace('/project');
           }
         } catch (e) {
-          console.log(e);
+          console.error('Failed to add project:', e);
         }
         break;
 
@@ -352,28 +413,103 @@ const AllocationForm = () => {
         postData = {
           'ResourceAllocation.Core/Project': {
             ...cleanedValues,
+            Budget: cleanedValues.Budget || 0,
             Description: 'string',
+            ProjectSponsor:
+              cleanedValues.ProjectSponsor === ''
+                ? null
+                : cleanedValues.ProjectSponsor,
+            ProjectManager:
+              cleanedValues.ProjectManager === ''
+                ? null
+                : cleanedValues.ProjectManager,
           },
         };
         try {
           dispatch(updateProject({ postData, projectId: initialData.Id }));
+          await dispatch(fetchAllProjects());
+          dispatch(setHighlightedRowId(initialData.Id));
         } catch (e) {
-          console.log(e);
+          console.error('Failed to edit project:', e);
         }
         break;
 
       case 'add_resource':
-        if (!cleanedValues.StartDate) {
-          const today = new Date().toISOString().split('T')[0]; // default to today
-          cleanedValues.StartDate = today;
-        }
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
         postData = {
-          'ResourceAllocation.Core/Resource': cleanedValues,
+          'ResourceAllocation.Core/Resource': {
+            FirstName: cleanedValues.FirstName,
+            StartDate: cleanedValues.StartDate,
+            LocationCategory: cleanedValues.LocationCategory,
+            Email: cleanedValues.Email,
+            Manager: cleanedValues.Manager,
+            LastName: cleanedValues.LastName,
+            ContractorHourlyRateCurrency:
+              cleanedValues.ContractorHourlyRateCurrency,
+            AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
+            Department: cleanedValues.Department,
+            Type: cleanedValues.Type,
+            EndDate: cleanedValues.EndDate,
+            Role: cleanedValues.Role,
+            FullName:
+              cleanedValues.FirstName?.trim() +
+              ' ' +
+              cleanedValues.LastName?.trim(),
+            Status: cleanedValues.Status,
+            ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
+            HRLevel: cleanedValues.HRLevel,
+            PhoneNumber: cleanedValues.PhoneNumber,
+            WorkLocation: cleanedValues.WorkLocation,
+            ...(cleanedValues.PreferredFirstName
+              ? { PreferredFirstName: cleanedValues.PreferredFirstName }
+              : {}),
+          },
         };
-
         try {
-          await dispatch(addResource(postData));
-          await dispatch(fetchAllResources());
+          const result = await dispatch(
+            createResourceWithTeamAndOrg({
+              resourceData: postData,
+              teamId: values.Team,
+              organizationId: values.Organisation,
+            })
+          );
+          if (result.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to add resource`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
+          const newResource = result?.payload?.result;
+          const newResourceId = newResource?.Id ?? null;
+
+          if (newResourceId) {
+            await dispatch(fetchAllResources());
+            dispatch({
+              type: 'FETCH_TEAM_RESOURCES',
+              payload: {
+                teams: [], 
+              },
+            });
+
+            dispatch({
+              type: 'FETCH_ORGANISATIONS_RESOURCES',
+              payload: {
+                organisations: [], 
+              },
+            });
+            dispatch(setHighlightedRowId(newResourceId));
+          }
+
           if (pathname !== '/people') {
             router.replace('/people');
           }
@@ -384,6 +520,11 @@ const AllocationForm = () => {
         break;
 
       case 'edit_resource':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
         postData = {
           'ResourceAllocation.Core/Resource': cleanedValues,
         };
@@ -396,6 +537,8 @@ const AllocationForm = () => {
             })
           );
           await dispatch(fetchAllResources());
+          dispatch(setHighlightedRowId(initialData.Id));
+
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);

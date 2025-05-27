@@ -429,5 +429,3 @@ const menuItems = [
 };
 
 export default Sidebar;
-
-

@@ -5,7 +5,7 @@ import HorizontalSplitView from '@/app/components/Shared/SplitView';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import TopProjectsView from '@/app/components/ResourceAllocation/component/TopProjectsView';
 import BottomTeamsView from '@/app/components/ResourceAllocation/component/BottomTeamsView';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
@@ -51,19 +51,21 @@ export default function AllocationInit() {
   );
   const { startDate, endDate } = calendarDate || {};
   const dispatch: AppDispatch = useDispatch();
+  const [currentViewStartDate, setCurrentViewStartDate] = useState(
+    currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+      : currentView?.isFixedRange
+        ? currentView?.StartDate
+        : startDate
+  );
 
-  const currentViewStartDate = currentView?.isDynamicRange
-    ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
-    : currentView?.isFixedRange
-      ? currentView?.StartDate
-      : startDate;
-
-  const currentViewEndDate = currentView?.isDynamicRange
-    ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-    : currentView?.isFixedRange
-      ? currentView?.EndDate
-      : endDate;
-
+  const [currentViewEndDate, setCurrentViewEndDate] = useState(
+    currentView?.isDynamicRange
+      ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+      : currentView?.isFixedRange
+        ? currentView?.EndDate
+        : endDate
+  );
   useEffect(() => {
     if (!teams?.result?.length) {
       dispatch(fetchAllTeams());
@@ -113,10 +115,33 @@ export default function AllocationInit() {
           teams: teams?.result,
           projects: projects?.result,
           resources: resources?.result,
-          startDate: currentViewStartDate,
-          endDate: currentViewEndDate,
+          startDate: currentView?.isDynamicRange
+            ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+            : currentView?.isFixedRange
+              ? currentView?.StartDate
+              : startDate,
+          endDate: currentView?.isDynamicRange
+            ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+            : currentView?.isFixedRange
+              ? currentView?.EndDate
+              : endDate,
         },
       });
+
+      setCurrentViewStartDate(
+        currentView?.isDynamicRange
+          ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+          : currentView?.isFixedRange
+            ? currentView?.StartDate
+            : startDate
+      );
+      setCurrentViewEndDate(
+        currentView?.isDynamicRange
+          ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+          : currentView?.isFixedRange
+            ? currentView?.EndDate
+            : endDate
+      );
     }
   }, [
     currentView?.isDynamicRange,

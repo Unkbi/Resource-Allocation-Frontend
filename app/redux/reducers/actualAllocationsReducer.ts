@@ -21,6 +21,9 @@ const actualAllocationsSlice = createSlice({
       state.actualAllocations = action.payload.Allocs;
       state.status = action.payload.Status;
     },
+    setActualAllocationsStatus: (state, action) => {
+      state.status = action.payload;
+    },
     resetActualAllocations: state => {
       state.actualAllocations = [];
     },
@@ -41,6 +44,7 @@ const actualAllocationsSlice = createSlice({
 export const {
   setActualAllocations,
   resetActualAllocations,
+  setActualAllocationsStatus,
   setDataProcessing,
   setCalendarDate,
 } = actualAllocationsSlice.actions;

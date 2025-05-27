@@ -120,7 +120,7 @@ const ProjectMenu = ({
 
   const handleDone = () => {
     const newRows = selectedProjects.map((project, index) => ({
-      id: `${Date.now()}_${index}`,
+      id: `${Date.now()}_project_${index}`,
       project: project.Name,
       planned: 0,
       actuals: 0,

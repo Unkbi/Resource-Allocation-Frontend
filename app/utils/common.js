@@ -21,6 +21,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PROJECT_TOTAL_COST_CATEGORIES,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
@@ -436,6 +437,10 @@ export const getResourceFromEmail = (userEmail, resources) => {
   return null;
 };
 
+export const getResourceFromUid = (uid, resources) => {
+  return resources.find(resource => resource.Id === uid);
+};
+
 export const getAllocationManagerFromPath = (
   allocationManager_Path,
   resources
@@ -445,9 +450,9 @@ export const getAllocationManagerFromPath = (
   );
 };
 
-export const getProjectsIamProjectManager = (fullName, projects) => {
+export const getProjectsIamProjectManager = (uid, projects) => {
   return projects.filter(
-    project => project.ProjectManager?.toLowerCase() === fullName
+    project => project.ProjectManager?.toLowerCase() === uid
   );
 };
 
@@ -595,4 +600,77 @@ export function formateToFloat(value) {
   const parsedValue = parseFloat(value);
   if (isNaN(parsedValue)) return 0.0;
   return Math.round(value * 10) / 10;
+}
+
+export function getProjectTypeColorLine(projectType) {
+  const projectTypeColors = {
+    'key initiative': '#3730A3',
+    rtb: '#A3A2A4',
+    ctb: '#5080DA',
+    stb: '#F5B544',
+    ongoing: '#4B9F47',
+  };
+  return projectTypeColors[projectType.toLowerCase()] || '#FF0000';
+}
+
+export function getProjectBudgetColor(budgetCategory = 'onBudget') {
+  const projectBudgetColors = {
+    onBudget: '#1565C0',
+    overBudget: '#B91C1C',
+    underBudget: '#4B9F47',
+  };
+
+  return projectBudgetColors[budgetCategory];
+}
+
+export function getProjectBudgetCategory(projectBudget, currentBudget) {
+  const projectBudgetCategories = {
+    onBudget: 'onBudget',
+    overBudget: 'overBudget',
+    underBudget: 'underBudget',
+  };
+  if (currentBudget < projectBudget - projectBudget * 0.1) {
+    return projectBudgetCategories['underBudget'];
+  }
+  if (currentBudget > projectBudget + projectBudget * 0.1) {
+    return projectBudgetCategories['overBudget'];
+  }
+  return projectBudgetCategories['onBudget'];
+}
+
+export function getProjectBudgetCategoryDisplayName(budgetCategory) {
+  const projectBudgetCategories = {
+    onBudget: 'On-Budget',
+    overBudget: 'Over-Budget',
+    underBudget: 'Under-Budget',
+  };
+  return projectBudgetCategories[budgetCategory];
+}
+
+export function getTeamForResource(resourceId, teams, teamsResources) {
+  const team = Object.keys(teamsResources).find(teamId => {
+    const teamResources = teamsResources[teamId];
+    return teamResources.some(resource => resource.Id === resourceId);
+  });
+  if (team) {
+    return teams.find(t => t.Id === team);
+  }
+  return null;
+}
+
+export function getOrganisationForResource(
+  resourceId,
+  organisations,
+  organisationsResources
+) {
+  const organisation = Object.keys(organisationsResources).find(
+    organisationId => {
+      const organisationResources = organisationsResources[organisationId];
+      return organisationResources.some(resource => resource.Id === resourceId);
+    }
+  );
+  if (organisation) {
+    return organisations.find(o => o.Id === organisation);
+  }
+  return null;
 }

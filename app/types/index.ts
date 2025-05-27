@@ -26,6 +26,8 @@ export * from './settingTypes';
 // Components related Types
 export * from './component';
 
+export * from './allocationTypesCost';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;

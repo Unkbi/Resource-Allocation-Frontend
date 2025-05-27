@@ -27,7 +27,7 @@ const TopPanel = styled('div')<{ height: string | number }>(({ height }) => ({
   height,
   overflow: 'auto',
   flexShrink: 0,
-  position: 'relative',
+  background: '#fff',
 }));
 
 const Resizer = styled('div')(({ theme }) => ({
@@ -79,9 +79,10 @@ const HorizontalSplitView: React.FC<HorizontalSplitViewProps> = ({
   const [bottomScroll, setBottomScroll] = useState<HTMLElement | null>(null);
 
   // Handle dragging
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     isDraggingRef.current = true;
     document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none'; // 👈 prevent text selection
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -97,6 +98,7 @@ const HorizontalSplitView: React.FC<HorizontalSplitViewProps> = ({
     if (isDraggingRef.current) {
       isDraggingRef.current = false;
       document.body.style.cursor = 'default';
+      document.body.style.userSelect = ''; // 👈 re-enable text selection
     }
   };
 

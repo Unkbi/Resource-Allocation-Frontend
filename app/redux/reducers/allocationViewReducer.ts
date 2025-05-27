@@ -16,14 +16,14 @@ import {
 } from '@/app/types';
 import { createSlice } from '@reduxjs/toolkit';
 
-const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
+export const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
   '__row_group_by_columns_group_teams__',
   '__row_group_by_columns_group_resource__',
   'project',
   'resourceType',
 ];
 
-const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
+export const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
   '__row_group_by_columns_group__',
   'resource',
   'totalEffort',
@@ -83,7 +83,7 @@ const initialState: AllocationGridViewState = {
       'Description',
       'projectLocation',
       'ProjectManager',
-      'Owner',
+      'ProjectSponsor',
       'projectEndDate',
       'projectStartDate',
       'Status',
@@ -93,6 +93,36 @@ const initialState: AllocationGridViewState = {
       '__row_group_by_columns_group__',
       'resource',
       'totalEffort',
+      'project',
+      'projectSponsor',
+      'projectManager',
+      'projectStatus',
+      'projectLocation',
+      'projectType',
+      'projectOvertimeAllowed',
+      'projectCost',
+      'projectCurrency',
+      'projectStartDate',
+      'projectEndDate',
+      'Email',
+      'PhoneNumber',
+      'Department',
+      'WorkLocation',
+      'LocationCategory',
+      'Type',
+      'Status',
+      'HRLevel',
+      'Role',
+      'StartDate',
+      'EndDate',
+      'AverageWeeklyHours',
+      'ContractorHourlyRate',
+      'ContractorHourlyRateCurrency',
+    ],
+    project_cost: [
+      '__row_group_by_columns_group__',
+      'resource',
+      'totalCost',
       'project',
       'projectSponsor',
       'projectManager',
@@ -133,10 +163,9 @@ const viewSlice = createSlice({
       state.currentView = {
         ...state.currentView,
         GroupBy: action.payload,
-        ColumnsVisible:
-          action.payload === 'Teams'
-            ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-            : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+        ColumnsVisible: action.payload.includes('Teams')
+          ? DEFAULT_VISIBLE_TEAMS_COLUMNS
+          : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
       };
     },
     setSplitView: (state, action) => {

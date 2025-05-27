@@ -16,7 +16,7 @@ import {
   GridRowsProp,
   GridValidRowModel,
 } from '@mui/x-data-grid-premium';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
@@ -31,6 +31,7 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ActualAllocationTableRow } from '@/app/types';
+import { isCurrentWeek } from '@/app/utils/common';
 //@ts-ignore
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
@@ -80,6 +81,10 @@ interface ActualTableProps {
   startDate: string | null;
   endDate: string | null;
   apiRef: React.RefObject<GridApi>;
+  disableView?: boolean;
+  onValidationChange?: (hasInvalidRows: boolean) => void;
+  setShow?: (val: boolean) => void;
+  onModificationChange?: (isModified: boolean) => void;
 }
 
 export default function ActualTable({
@@ -88,6 +93,10 @@ export default function ActualTable({
   startDate,
   endDate,
   apiRef,
+  disableView = false,
+  setShow,
+  onValidationChange,
+  onModificationChange,
 }: ActualTableProps) {
   const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
@@ -99,6 +108,7 @@ export default function ActualTable({
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
+  const { status } = useSelector((state: RootState) => state.actualAllocations);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -127,6 +137,9 @@ export default function ActualTable({
   }, [allocationTheme]);
 
   useEffect(() => {
+    setHasOtherWork(false);
+    setHasPersonalTime(false);
+
     if (data) {
       setRows(data);
       if (data.length > 0 && data.find(row => row.project === 'Other Work')) {
@@ -139,7 +152,71 @@ export default function ActualTable({
         setHasPersonalTime(true);
       }
     }
-  }, [data]);
+  }, [startDate, endDate, data]);
+
+  useEffect(() => {
+    if (onValidationChange) {
+      const hasInvalidRows = Object.keys(rowValidationErrors).length > 0;
+      onValidationChange(hasInvalidRows);
+      if (hasInvalidRows) {
+        setShow && setShow(false);
+      }
+    }
+  }, [rowValidationErrors, onValidationChange]);
+
+  useEffect(() => {
+    if (onModificationChange) {
+      const isModified =
+        rows.length !== data.length || // Check if rows were added or deleted
+        rows.some(
+          (row, index) => JSON.stringify(row) !== JSON.stringify(data[index])
+        ); // Check if rows were modified
+      onModificationChange(isModified);
+    }
+  }, [rows, data, onModificationChange]);
+
+  // Organize rows into sections
+  const getOrganizedRows = () => {
+    const plannedRows = rows.filter(
+      row =>
+        row.planned !== 0 &&
+        row.project !== 'Other Work' &&
+        row.project !== 'Personal Time'
+    );
+    const unplannedRows = rows.filter(
+      row =>
+        row.planned === 0 &&
+        row.project !== 'Other Work' &&
+        row.project !== 'Personal Time'
+    );
+    const otherRows = rows.filter(
+      row => row.project === 'Other Work' || row.project === 'Personal Time'
+    );
+
+    // Mark last row of each section
+    if (plannedRows.length > 0) {
+      plannedRows[plannedRows.length - 1] = {
+        ...plannedRows[plannedRows.length - 1],
+        sectionEnd: 'planned',
+      };
+    }
+    if (unplannedRows.length > 0) {
+      unplannedRows[unplannedRows.length - 1] = {
+        ...unplannedRows[unplannedRows.length - 1],
+        sectionEnd: 'unplanned',
+      };
+    }
+    if (otherRows.length > 0) {
+      otherRows[otherRows.length - 1] = {
+        ...otherRows[otherRows.length - 1],
+        sectionEnd: 'other',
+      };
+    }
+
+    const organizedRows = [...plannedRows, ...unplannedRows, ...otherRows];
+
+    return organizedRows;
+  };
 
   const handleProcessRowUpdate = (
     newRow: GridValidRowModel,
@@ -158,7 +235,13 @@ export default function ActualTable({
           return sum + newActual;
         }
         if (row.id !== 'total' && row.id !== 'second-total') {
-          return sum + (parseFloat(`${row.actuals}`) || 0);
+          return (
+            Math.round(
+              (sum +
+                (row?.actuals ? parseFloat(row?.actuals?.toFixed(1)) : 0)) *
+                10
+            ) / 10
+          );
         }
         return sum;
       }, 0);
@@ -197,19 +280,20 @@ export default function ActualTable({
       );
     });
 
+    const actualsInvalid = !newRow.actuals || newRow.actuals === 0;
+    const commentsInvalid = !newRow.comments || !newRow.comments.trim();
+
     setRowValidationErrors(prev => {
       const updated = { ...prev };
 
-      const actualsInvalid = !newRow.actuals || newRow.actuals === 0;
-      const commentsInvalid = !newRow.comments || !newRow.comments.trim();
-
-      updated[newRow.id] = {
-        actuals: actualsInvalid,
-        comments: commentsInvalid,
-      };
-
-      // Remove from map if both are valid
-      if (!actualsInvalid && !commentsInvalid) {
+      if (actualsInvalid || commentsInvalid) {
+        // Only update if there are errors
+        updated[newRow.id] = {
+          actuals: actualsInvalid,
+          comments: commentsInvalid,
+        };
+      } else {
+        // Remove the row from validation errors if both fields are valid
         delete updated[newRow.id];
       }
 
@@ -276,6 +360,11 @@ export default function ActualTable({
     return roundToOneDecimal(value);
   };
 
+  const isUnplannedRow = (row: any) => {
+    if (!row || typeof row !== 'object') return false;
+    return row.planned === 0;
+  };
+
   const columns: GridColDef[] = [
     {
       field: 'project',
@@ -289,7 +378,8 @@ export default function ActualTable({
         if (
           params.row.id === 'total' ||
           params.row.type === 'divider' ||
-          typeof params.row.id === 'number'
+          !isUnplannedRow(params.row) ||
+          (status === 'confirmed' && !isCurrentWeek(startDate))
         ) {
           return params.value;
         }
@@ -306,10 +396,11 @@ export default function ActualTable({
               fontWeight: 400,
             }}
           >
-            {params.value}
+            {params.value ?? ''}
             <IconButton
               size="small"
               onClick={e => handleActionMenuOpen(e, params.row.id)}
+              disabled={disableView}
               sx={{
                 padding: '0px',
                 position: 'absolute',
@@ -346,29 +437,31 @@ export default function ActualTable({
       field: 'actuals',
       headerName: 'Actuals',
       type: 'number',
-      editable: true,
+      editable: !disableView,
       width: 68,
       align: 'center',
       headerAlign: 'center',
       headerClassName: 'header-actuals',
       cellClassName: params =>
-        rowValidationErrors[params.id as string]?.actuals
-          ? 'error-cell'
-          : 'col-cell-actuals',
+        `col-cell-actuals ${disableView ? 'disabled-cell' : ''} ${
+          rowValidationErrors[params.id as string]?.actuals ? 'error-cell' : ''
+        }`,
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
       field: 'comments',
       headerName: 'Comments',
-      editable: true,
+      editable: !disableView,
       flex: 1,
       minWidth: 158,
       headerClassName: 'header-comments',
       cellClassName: params =>
-        rowValidationErrors[params.id as string]?.comments &&
-        (!params.row.comments || !params.row.comments.trim())
-          ? 'comment-error-cell'
-          : 'col-cell-comments',
+        `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
+          rowValidationErrors[params.id as string]?.comments &&
+          (!params.row.comments || !params.row.comments.trim())
+            ? 'comment-error-cell'
+            : ''
+        }`,
       renderEditCell: params => (
         <CommentCell
           {...params}
@@ -434,11 +527,7 @@ export default function ActualTable({
   const addNewRow = (newRow: GridValidRowModel) => {
     setRows(prevRows => {
       const updatedRows = [...prevRows];
-      const hasDivider = updatedRows.some(row => row.id === 'divider');
 
-      if (!hasDivider) {
-        updatedRows.push({ id: 'divider', type: 'divider' });
-      }
 
       updatedRows.push(newRow as ActualAllocationTableRow);
       return updatedRows;
@@ -452,6 +541,9 @@ export default function ActualTable({
         ...prev,
         [newRow.id]: { actuals: true, comments: true },
       }));
+      if (onValidationChange) {
+        onValidationChange(true);
+      }
     } else {
       setRowValidationErrors(prev => ({
         ...prev,
@@ -490,6 +582,13 @@ export default function ActualTable({
         }
 
         const updatedRows = prevRows.filter(row => row.id !== selectedRowId);
+
+        // Remove validation errors for the deleted row
+        setRowValidationErrors(prev => {
+          const updatedErrors = { ...prev };
+          delete updatedErrors[selectedRowId];
+          return updatedErrors;
+        });
 
         // Check if we still have any unplanned rows
         const dividerIndex = updatedRows.findIndex(row => row.id === 'divider');
@@ -563,20 +662,7 @@ export default function ActualTable({
         <Box sx={{ height: 350 }}>
           <DataGridPremium
             apiRef={apiRef}
-            rows={
-              rows?.length > 0
-                ? [
-                    {
-                      id: 'total',
-                      project: 'Total',
-                      planned: totalPlanned,
-                      actuals: totalActuals,
-                      comments: '',
-                    },
-                    ...rows,
-                  ]
-                : []
-            }
+            rows={getOrganizedRows()}
             columns={columns}
             loading={dataProcessing}
             disableColumnMenu
@@ -586,6 +672,7 @@ export default function ActualTable({
               params.row.id !== 'second-total-row'
             }
             isCellEditable={params => {
+              if (disableView) return false;
               if (params.id === 'total' || params.row.id === 'divider')
                 return false;
               return true;
@@ -595,10 +682,16 @@ export default function ActualTable({
             onCellKeyDown={handleCellKeyDown}
             processRowUpdate={handleProcessRowUpdate}
             getRowClassName={params => {
-              if (params.id === 'total') return 'second-total-row';
-              if (params.id === 'divider') return 'divider-row';
-              if (params?.row?.id === rows[rows.length - 1]?.id)
-                return 'last-row';
+              const isLastRow =
+                params?.row?.id ===
+                getOrganizedRows()[getOrganizedRows().length - 1]?.id;
+              if (!isLastRow && params.row.sectionEnd === 'planned')
+                return 'section-end-planned';
+              if (!isLastRow && params.row.sectionEnd === 'unplanned')
+                return 'section-end-unplanned';
+              if (!isLastRow && params.row.sectionEnd === 'other')
+                return 'section-end-other';
+              if (isLastRow) return 'last-row';
               return 'first-header-row';
             }}
             sx={{
@@ -615,14 +708,33 @@ export default function ActualTable({
                 noRowsVariant: 'skeleton',
               },
             }}
+            pinnedRows={{
+              top: [
+                {
+                  id: 'total',
+                  project: 'Total',
+                  planned: totalPlanned,
+                  actuals: totalActuals,
+                  comments: '',
+                },
+              ],
+            }}
           />
         </Box>
       </Box>
 
-      <Box px={2} py={1} sx={{ paddingBottom: '0', paddingLeft: '0' }}>
+      <Box
+        px={2}
+        py={1}
+        sx={{
+          paddingBottom: '0',
+          paddingLeft: '0',
+        }}
+      >
         <Button
           variant="text"
           size="small"
+          disabled={disableView}
           sx={{
             color: '#0D1F52',
             textTransform: 'none',
