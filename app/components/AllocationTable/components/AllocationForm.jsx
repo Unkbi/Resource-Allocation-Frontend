@@ -62,13 +62,19 @@ import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
 import { format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
-import { addResource, createResourceWithTeamAndOrg, updateResource } from '@/app/services/resourceServices';
+import {
+  addResource,
+  createResourceWithTeamAndOrg,
+  updateResource,
+} from '@/app/services/resourceServices';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { addResourceToTeam } from '@/app/services/teamServices';
+import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const initialValuesMap = {
   add_project: {
@@ -493,19 +499,9 @@ const AllocationForm = () => {
           const newResourceId = newResource?.Id ?? null;
 
           if (newResourceId) {
-            await dispatch(fetchAllResources());
-            dispatch({
-              type: 'FETCH_TEAM_RESOURCES',
-              payload: {
-                teams: [], 
-              },
-            });
-
-            dispatch({
-              type: 'FETCH_ORGANISATIONS_RESOURCES',
-              payload: {
-                organisations: [], 
-              },
+            await dispatch({
+              type: FETCH_ALL_RESOURCES_DETAIL,
+              payload: {},
             });
             dispatch(setHighlightedRowId(newResourceId));
           }
@@ -536,7 +532,10 @@ const AllocationForm = () => {
               resourceId: initialData.Id,
             })
           );
-          await dispatch(fetchAllResources());
+          await dispatch({
+            type: FETCH_ALL_RESOURCES_DETAIL,
+            payload: {},
+          });
           dispatch(setHighlightedRowId(initialData.Id));
 
           dispatch(closeDialog());

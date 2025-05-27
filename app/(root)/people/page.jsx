@@ -23,7 +23,6 @@ import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { getAllTeams } from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
@@ -34,6 +33,7 @@ import { getAllocationManagerFromPath } from '@/app/utils/common';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 
 const demoResources = {
   result: [
@@ -152,23 +152,20 @@ export default function Resources() {
   const { resources, updating, loading } = useSelector(
     state => state.resources
   );
-  const { teams, dataProcessing } = useSelector(
-    state => state.teams
-  );
+  const { allResourcesDetail, loading: allResourcesDetailLoading } =
+    useSelector(state => state.allResourcesDetail);
+  const { teams, dataProcessing } = useSelector(state => state.teams);
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [rows, setRows] = useState(resources?.result || null);
+  const [rows, setRows] = useState(allResourcesDetail || null);
   const [teamRows, setTeamRows] = useState(teams?.result || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const [value, setValue] = useState('resource');
-  const { allResourcesDetail, loading: allResourcesDetailLoading } = useSelector(
-    state => state.allResourcesDetail
-  );
 
   const columns = [
     {
@@ -771,7 +768,8 @@ export default function Resources() {
 
   useEffect(() => {
     if (!updating) {
-      dispatch(getAllTeams());
+      dispatch(fetchAllResources());
+      dispatch(fetchAllTeams());
       dispatch({
         type: FETCH_ALL_RESOURCES_DETAIL,
         payload: {},
@@ -790,7 +788,7 @@ export default function Resources() {
 
   useEffect(() => {
     if (!teams || teams?.result?.length === 0) {
-      dispatch(getAllTeams());
+      dispatch(fetchAllTeams());
     }
     if (!employeeRates || employeeRates?.length === 0) {
       dispatch({
@@ -836,38 +834,45 @@ export default function Resources() {
       allResourcesDetailLoading
     )
       return;
-    const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
-    const totalRows = sortedRowIds?.length ?? 0;
-    const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
 
-    if (rowIndex === -1 || rowIndex === undefined) {
-      dispatch(clearHighlightedRowId());
-      return;
-    }
+    const timeout = setTimeout(() => {
+      const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
+      const totalRows = sortedRowIds?.length ?? 0;
+      const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
 
-    const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
-
-    requestAnimationFrame(() => {
-      try {
-        apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-        apiRef.current.setCellFocus(highlightedRowId, 'FullName');
-        apiRef.current.selectRow?.(highlightedRowId, true);
-
-        const scroller = document.querySelector('.MuiDataGrid-virtualScroller');
-        if (scroller) {
-          const original = scroller.scrollTop;
-          scroller.scrollTop = original + 1;
-          scroller.scrollTop = original;
-        }
-
+      if (rowIndex === -1 || rowIndex === undefined) {
         dispatch(clearHighlightedRowId());
-      } catch (err) {
-        console.error('Scroll error:', err);
-        dispatch(clearHighlightedRowId());
+        return;
       }
-    });
+
+      const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
+
+      requestAnimationFrame(() => {
+        try {
+          apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
+          apiRef.current.setCellFocus(highlightedRowId, 'FullName');
+          apiRef.current.selectRow?.(highlightedRowId, true);
+
+          const scroller = document.querySelector(
+            '.MuiDataGrid-virtualScroller'
+          );
+          if (scroller) {
+            const original = scroller.scrollTop;
+            scroller.scrollTop = original + 1;
+            scroller.scrollTop = original;
+          }
+
+          dispatch(clearHighlightedRowId());
+        } catch (err) {
+          console.error('Scroll error:', err);
+          dispatch(clearHighlightedRowId());
+        }
+      });
+    }, 100);
+
+    return () => clearTimeout(timeout);
   }, [
-    resources,
+    allResourcesDetail,
     highlightedRowId,
     loading,
     dataProcessing,
@@ -933,7 +938,7 @@ export default function Resources() {
       case 'teams':
         return (
           <TeamsTable
-            loading={dataProcessing}
+            loading={loading || dataProcessing}
             columns={teamColumns}
             rows={modifyTeamData(teamRows) || []}
             value={value}
