@@ -846,9 +846,17 @@ export default function Resources() {
   };
 
   useEffect(() => {
-    if (!highlightedRowId || !apiRef?.current) return;
+    if (
+      !highlightedRowId ||
+      !apiRef?.current ||
+      loading ||
+      dataProcessing ||
+      organisationLoading ||
+      employeeRatesLoading
+    )
+      return;
 
-    const sortedRowIds = apiRef.current.getSortedRowIds?.();
+    const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
     const totalRows = sortedRowIds?.length ?? 0;
     const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
 
@@ -859,32 +867,33 @@ export default function Resources() {
 
     const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
 
-    const timeout = setTimeout(() => {
-      requestAnimationFrame(() => {
-        try {
-          apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          apiRef.current.setCellFocus(highlightedRowId, 'FullName');
-          apiRef.current.selectRow?.(highlightedRowId, true);
+    requestAnimationFrame(() => {
+      try {
+        apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
+        apiRef.current.setCellFocus(highlightedRowId, 'FullName');
+        apiRef.current.selectRow?.(highlightedRowId, true);
 
-          const scroller = document.querySelector(
-            '.MuiDataGrid-virtualScroller'
-          );
-          if (scroller) {
-            const original = scroller.scrollTop;
-            scroller.scrollTop = original + 1;
-            scroller.scrollTop = original;
-          }
-
-          dispatch(clearHighlightedRowId());
-        } catch (err) {
-          console.error('Scroll error:', err);
-          dispatch(clearHighlightedRowId());
+        const scroller = document.querySelector('.MuiDataGrid-virtualScroller');
+        if (scroller) {
+          const original = scroller.scrollTop;
+          scroller.scrollTop = original + 1;
+          scroller.scrollTop = original;
         }
-      });
-    }, 300);
 
-    return () => clearTimeout(timeout);
-  }, [resources, highlightedRowId]);
+        dispatch(clearHighlightedRowId());
+      } catch (err) {
+        console.error('Scroll error:', err);
+        dispatch(clearHighlightedRowId());
+      }
+    });
+  }, [
+    resources,
+    highlightedRowId,
+    loading,
+    dataProcessing,
+    organisationLoading,
+    employeeRatesLoading,
+  ]);
 
   const handleConfirmDelete = () => {
     if (!deleteTarget.id) return;
