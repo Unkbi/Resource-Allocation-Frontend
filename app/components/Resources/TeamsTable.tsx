@@ -55,7 +55,9 @@ const TeamsTable = ({
       loading={loading}
       initialState={{
         sorting: {
-          sortModel: [{ field: 'Team', sort: 'asc' }],
+          sortModel: [
+            { field: 'Team', sort: 'asc' },
+          ],
         },
         columns: {
           columnVisibilityModel: {

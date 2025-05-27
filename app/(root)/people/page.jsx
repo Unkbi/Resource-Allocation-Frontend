@@ -445,7 +445,7 @@ export default function Resources() {
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog();
+          handleOpenDialog('Edit Team', 'edit_team', params.row);
         };
 
         return (
@@ -456,10 +456,7 @@ export default function Resources() {
             }}
           >
             <Box
-              /*
-               * To Be Implemented...
-               */
-              // onClick={handleNameClick}
+              onClick={handleNameClick}
               sx={{
                 display: 'inline-block',
                 width: '100%',
@@ -550,13 +547,10 @@ export default function Resources() {
                   transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
                   <MenuItem
-                    /*
-                     * To Be Implemented...
-                     */
-                    // onClick={() => {
-                    //   handleMenuClose();
-                    //   handleOpenDialog('Edit Team', 'edit_team', params.row);
-                    // }}
+                    onClick={() => {
+                       handleMenuClose();
+                       handleOpenDialog('Edit Team', 'edit_team', params.row);
+                    }}
                     sx={menuItemStyle}
                   >
                     <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
@@ -837,6 +831,7 @@ export default function Resources() {
     if (data) {
       return data.map(item => ({
         id: item.Id,
+        Id: item.Id,
         Team: item.Name,
         AllocationManager: item.AllocationManager,
         Status: item.Status,

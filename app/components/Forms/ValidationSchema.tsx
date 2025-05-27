@@ -75,6 +75,17 @@ export const addProjectValidationSchema = (
   });
 };
 
+export const addTeamValidationSchema = Yup.object().shape({
+  Name: Yup.string()
+    .trim()
+    .required('Team Name is required'),
+  AllocationManager: Yup.string()
+    .required('Team Allocation Manager is required'),
+  Status: Yup.string()
+    .oneOf(['Active', 'Inactive'], 'Invalid status')
+    .required('Status is required'),
+});
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const addResourceValidationSchema = Yup.object({
