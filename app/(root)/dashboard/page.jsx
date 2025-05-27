@@ -1,5 +1,10 @@
 'use client';
 
+import Overview from "../../components/Dashboard/OverviewCards"; 
+import { fetchOverviewData } from "../../services/overviewService"; 
+
+
+
 import { useEffect, useState } from 'react';
 import {
   Box,
@@ -98,6 +103,15 @@ export default function ExecutiveDashboardPage() {
   const [filteredCapacityData, setFilteredCapacityData] = useState([]);
   const [filteredUnderAllocated, setFilteredUnderAllocated] = useState([]);
   const [filteredOverAllocated, setFilteredOverAllocated] = useState([]);
+
+
+
+  const [overview, setOverview] = useState([]);
+
+  useEffect(() => {
+    fetchOverviewData().then(setOverview);
+  }, []);
+
 
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
@@ -869,7 +883,7 @@ export default function ExecutiveDashboardPage() {
               </DemoContainer>
             </LocalizationProvider>
           </Box>
-
+          <Overview data={overview} />
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}
