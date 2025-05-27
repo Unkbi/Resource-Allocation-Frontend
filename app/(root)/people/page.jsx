@@ -342,7 +342,7 @@ export default function Resources() {
       filterable: true,
       renderCell: params => {
         const managerId = params?.row?.Manager;
-        const managerName = managerMap?.[managerId] || managerId || '';
+        const managerName = managerMap?.[managerId];
         return managerName ? (
           <EllipsisNameCell value={managerName} showAvatar={true} />
         ) : null;
