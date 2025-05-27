@@ -67,3 +67,20 @@ export interface AllocationsCostState {
   error: string | null;
   dataProcessing: boolean;
 }
+
+export interface GetAllCostForPeriodResponse {
+  ActualsCost: number | null;
+  AllocationRef: string | null;
+  CostCurrency: string | null;
+  Duration: string | null;
+  EmployeeRateRef: string | null;
+  Period: string | null;
+  PlannedCost: number | null;
+  Project: string | null;
+  ProjectName: string | null;
+  ResourceName: string | null;
+  ResourceRef: string | null;
+  __Id__: string;
+  __parent__: string | null;
+  __path__: string | null;
+}
