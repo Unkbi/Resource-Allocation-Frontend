@@ -220,8 +220,10 @@ export default function Resources() {
       flex: 1,
       minWidth: 180,
       renderCell: params => {
-        return params.value && (
-          <EllipsisNameCell value={params.value} showAvatar={false} />
+        return (
+          params.value && (
+            <EllipsisNameCell value={params.value} showAvatar={false} />
+          )
         );
       },
     },
@@ -845,12 +847,15 @@ export default function Resources() {
 
   useEffect(() => {
     if (
-      (!highlightedRowId || !apiRef?.current || loading,
-      dataProcessing || organisationLoading)
+      !highlightedRowId ||
+      !apiRef?.current ||
+      loading ||
+      dataProcessing ||
+      organisationLoading ||
+      employeeRatesLoading
     )
       return;
-
-    const sortedRowIds = apiRef.current.getSortedRowIds?.();
+    const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
     const totalRows = sortedRowIds?.length ?? 0;
     const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
 
@@ -886,6 +891,7 @@ export default function Resources() {
     loading,
     dataProcessing,
     organisationLoading,
+    employeeRatesLoading,
   ]);
 
   const handleConfirmDelete = () => {
