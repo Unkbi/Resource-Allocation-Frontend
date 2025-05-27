@@ -9,7 +9,7 @@ const DashboardWidget = ({ children, onClick }) => {
   };
 
   const handleMouseUp = (event) => {
-    console.log('Mouse up detected', event);
+    // console.log('Mouse up detected', event);
     // if (!mouseDownPosition.current) return;
     // const dx = Math.abs(event.clientX - mouseDownPosition.current.x);
     // const dy = Math.abs(event.clientY - mouseDownPosition.current.y);
@@ -23,10 +23,10 @@ const DashboardWidget = ({ children, onClick }) => {
   };
 
   const handleMouseClick = (event) => {
-    console.log('Mouse click detected', event);
+    // console.log('Mouse click detected', event);
     if ( event.type === 'click') {
-      console.log('Click detected');
-      onClick();
+      // console.log('Click detected');
+      // onClick();
     }
   }
 
