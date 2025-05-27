@@ -61,7 +61,7 @@ import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
 import { format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
-import { addResource, updateResource } from '@/app/services/resourceServices';
+import { addResource, createResourceWithTeamAndOrg, updateResource } from '@/app/services/resourceServices';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
@@ -460,7 +460,13 @@ const AllocationForm = () => {
           },
         };
         try {
-          const result = await dispatch(addResource(postData));
+          const result = await dispatch(
+            createResourceWithTeamAndOrg({
+              resourceData: postData,
+              teamId: values.Team,
+              organizationId: values.Organisation,
+            })
+          );
           if (result.meta.requestStatus === 'rejected') {
             dispatch(
               showToast({
@@ -475,25 +481,22 @@ const AllocationForm = () => {
           }
           const newResource = result?.payload?.result;
           const newResourceId = newResource?.Id ?? null;
-          const resourcePath = newResource?.__path__;
-          const teamPath = values.Team;
-
-          if (resourcePath && teamPath) {
-            await dispatch(addResourceToTeam({ teamPath, resourcePath }));
-            await dispatch({
-              type: 'FETCH_TEAM_RESOURCES',
-              payload: {
-                teams: [
-                  {
-                    Id: teamPath.split(',')[1],
-                  },
-                ],
-              },
-            });
-          }
 
           if (newResourceId) {
             await dispatch(fetchAllResources());
+            dispatch({
+              type: 'FETCH_TEAM_RESOURCES',
+              payload: {
+                teams: [], 
+              },
+            });
+
+            dispatch({
+              type: 'FETCH_ORGANISATIONS_RESOURCES',
+              payload: {
+                organisations: [], 
+              },
+            });
             dispatch(setHighlightedRowId(newResourceId));
           }
 

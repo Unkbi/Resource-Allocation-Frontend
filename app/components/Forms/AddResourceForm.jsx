@@ -46,12 +46,12 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     });
   const organisationListOptions =
     organisations?.map(org => ({
-      value: org.Name,
+      value: org.Id,
       label: org.Name,
     })) || [];
   const teamListOptions =
     teams?.result?.map(team => ({
-      value: team.__path__,
+      value: team.Id,
       label: team.Name,
     })) || [];
   const dispatch = useDispatch();
@@ -71,6 +71,9 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
 
+      const matchedTeam = teams?.result?.find(team => team.Name === initialData.Team);
+      const matchedOrg = organisations?.find(org => org.Name === initialData.Organization);
+      
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
@@ -89,8 +92,8 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         Role: initialData.Role || '',
         PhoneNumber: initialData.PhoneNumber || '',
         LocationCategory: initialData.LocationCategory || '',
-        Team: teams?.result?.find(team => team.Name === initialData.Team)?.__path__ || '',
-        Organisation: initialData.Organization || '',
+        Team: matchedTeam?.Id || '',
+        Organisation: matchedOrg?.Id || '',
       };
 
       setFormValue(rowData);

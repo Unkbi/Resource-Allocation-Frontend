@@ -846,7 +846,7 @@ export default function Resources() {
           dispatch(clearHighlightedRowId());
         }
       });
-    }, 300);
+    }, 600);
 
     return () => clearTimeout(timeout);
   }, [resources, highlightedRowId]);

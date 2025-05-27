@@ -94,33 +94,6 @@ export const fetchTeamAllocationsForSaga = async (
   return response.data;
 };
 
-export const addResourceToTeam = createAsyncThunk(
-  'team/addResourceToTeam',
-  async (
-    { teamPath, resourcePath }: { teamPath: string; resourcePath: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const payload = {
-        'ResourceAllocation.Core/TeamResource': {
-          Team: teamPath,
-          Resource: resourcePath,
-        },
-      };
-
-      const response = await axiosInstance.post(
-        `${API_PROJECT_PORTFOLIO}/TeamResource`,
-        payload
-      );
-
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(
-        error?.response?.data || 'Failed to assign resource to team.'
-      );
-    }
-  }
-);
 
 export const getResourceDetail = createAsyncThunk(
   'resource/getResourceDetail',
