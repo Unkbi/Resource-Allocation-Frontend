@@ -15,6 +15,7 @@ import {
   getProjectBudgetColor,
 } from '@/app/utils/common';
 import ProjectTotalCustomToolTip from '../../AllocationTable/components/ProjectTotalCustomToolTip';
+import { getProjectTypeColorLine } from '@/app/utils/common';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -113,6 +114,9 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+        const projectType = projects?.result?.find(
+          project => project.Name === value
+        )?.Type;
         if (isGridTreeNode && rowNode.children) {
           const resource_count = rowNode?.children?.length || null;
           return (
@@ -121,6 +125,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
               resourceCount={resource_count}
               onAddClick={() => handleAddClick(params)}
               showAddIcon={true}
+              leftBorderColor={getProjectTypeColorLine(projectType || '')}
             />
           );
         }
