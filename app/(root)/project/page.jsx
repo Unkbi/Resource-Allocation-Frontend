@@ -28,6 +28,7 @@ import { deleteProject, getAllProjects } from '@/app/services/projectServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
+  COMPANY_DEFAULT_VIEW,
   setSplitView,
   setSplitViewCurrentProject,
   updateCurrentView,
@@ -272,6 +273,7 @@ export default function Project() {
       );
       dispatch(
         updateCurrentView({
+          ...COMPANY_DEFAULT_VIEW,
           isDynamicRange: false,
           isFixedRange: true,
           StartDate: startRange,
