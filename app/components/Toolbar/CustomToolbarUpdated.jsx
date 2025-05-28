@@ -1048,7 +1048,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </>
             ) : null}
           </Box>
-          <GridToolbarContainer ref={setFilterButtonEl} sx={{ padding: 0 ,flexWrap:'nowrap'}}>
+          <GridToolbarContainer
+            ref={setFilterButtonEl}
+            sx={{ padding: 0, flexWrap: 'nowrap' }}
+          >
             <GridToolbarFilterButton
               slotProps={{
                 tooltip: { title: 'Filters' },
@@ -1127,7 +1130,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
           </Box>
-          <Box className="view-btn" sx={{display:'flex' ,gap:0}}>
+          <Box className="view-btn" sx={{ display: 'flex', gap: 0 }}>
             <Box>
               <ViewButton
                 startIcon={<PreferencesIcon />}
