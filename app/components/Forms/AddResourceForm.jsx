@@ -71,9 +71,13 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
 
-      const matchedTeam = teams?.result?.find(team => team.Name === initialData.Team);
-      const matchedOrg = organisations?.find(org => org.Name === initialData.Organization);
-      
+      const matchedTeam = teams?.result?.find(
+        team => team.Name === initialData.Team
+      );
+      const matchedOrg = organisations?.find(
+        org => org.Name === initialData.Organization
+      );
+
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
@@ -313,7 +317,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         sx={{
           pb: 2,
           display: 'flex',
-          alignItems: 'flex-end',
+          alignItems: 'flex-start',
           width: '100%',
           gap: 1,
         }}
