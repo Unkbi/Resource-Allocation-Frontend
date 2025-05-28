@@ -9,7 +9,13 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Project } from '@/app/types';
+import {
+  getProjectBudgetCategory,
+  getProjectBudgetColor,
+} from '@/app/utils/common';
+import ProjectTotalCustomToolTip from '../../AllocationTable/components/ProjectTotalCustomToolTip';
+import { getProjectTypeColorLine } from '@/app/utils/common';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -108,6 +114,9 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+        const projectType = projects?.result?.find(
+          project => project.Name === value
+        )?.Type;
         if (isGridTreeNode && rowNode.children) {
           const resource_count = rowNode?.children?.length || null;
           return (
@@ -116,6 +125,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
               resourceCount={resource_count}
               onAddClick={() => handleAddClick(params)}
               showAddIcon={true}
+              leftBorderColor={getProjectTypeColorLine(projectType || '')}
             />
           );
         }
@@ -139,7 +149,34 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
           !isNaN(value) && value !== null
             ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
             : null;
-        return <EllipsisNameCell value={`${formattedValue}k`} />;
+        const project: Project | undefined = projects?.result?.find(
+          // @ts-ignore
+          (project: Project) => project.Name === params?.rowNode?.groupingKey
+        );
+        const projectCategory = getProjectBudgetCategory(
+          project?.Budget || 0,
+          params?.value || 0
+        );
+        const projectBudgetColor = getProjectBudgetColor(projectCategory);
+        return (
+          <EllipsisNameCell
+            value={`${formattedValue}k`}
+            // @ts-ignore
+            {...(params?.rowNode?.groupingField === 'project'
+              ? {
+                  CustomTooptip: (
+                    <ProjectTotalCustomToolTip
+                      params={params}
+                      projectCategory={projectCategory}
+                      projectBudgetColor={projectBudgetColor}
+                      formattedValue={formattedValue || ''}
+                      project={project}
+                    />
+                  ),
+                }
+              : {})}
+          />
+        );
       },
     },
     {
@@ -192,7 +229,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     },
     {
       field: 'Department',
-      headerName: 'Organisation',
+      headerName: 'Organization',
       width: 170,
       isEditable: 'false',
       sortable: 'false',
@@ -467,7 +504,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     },
     {
       field: 'projectCost',
-      headerName: 'Project Cost',
+      headerName: 'Project Budget',
       width: 150,
       type: 'string ',
       headerClassName: 'secondary-header',
@@ -476,8 +513,9 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
+        const cost = firstChild?.projectCost;
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCost ?? 'N/A'} />
+          <EllipsisNameCell value={cost ? `$ ${cost}` : ''} />
         ) : null;
       },
     },

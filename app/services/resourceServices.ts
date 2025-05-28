@@ -73,3 +73,40 @@ export const deleteResource = createAsyncThunk<
     }
   }
 );
+
+export const createResourceWithTeamAndOrg = createAsyncThunk(
+  'resource/createResourceWithTeamAndOrg',
+  async (
+    {
+      resourceData,
+      teamId,
+      organizationId,
+    }: {
+      resourceData: any;
+      teamId: string;
+      organizationId: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const payload = {
+        'ResourceAllocation.Core/CreateResource': {
+          Resource: resourceData,
+          Team: teamId,
+          Organization: organizationId,
+        },
+      };
+
+      const response = await axiosInstance.post(
+        `/api/ResourceAllocation.Core/CreateResource`,
+        payload
+      );
+
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || 'Failed to create resource with team and org.'
+      );
+    }
+  }
+);

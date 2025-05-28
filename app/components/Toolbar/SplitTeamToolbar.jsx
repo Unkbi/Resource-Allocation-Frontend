@@ -520,6 +520,30 @@ const SplitTeamToolbar = memo(
     };
 
     const handleDateField = (StartDate, EndDate) => {
+      const weeks = getTotalWeeks(StartDate, EndDate);
+      if (weeks > 51) {
+        dispatch(
+          showToastAction(true, 'Date range limited to 51 weeks', 'warning')
+        );
+        const adjustedEndDate = generateDateWeekMath(
+          'WEEK_PLUS',
+          51,
+          new Date(StartDate)
+        );
+        changeCalendarDate('isFixedRange', StartDate, adjustedEndDate);
+
+        const isTeams = view === 'Teams';
+        const action = isTeams
+          ? updateStartAndEndDate
+          : updateProjectStartAndEndDate;
+        dispatch(
+          action({
+            startDate: StartDate,
+            endDate: adjustedEndDate,
+          })
+        );
+        return;
+      }
       changeCalendarDate('isFixedRange', StartDate, EndDate);
       const isTeams = view === 'Teams';
       const action = isTeams

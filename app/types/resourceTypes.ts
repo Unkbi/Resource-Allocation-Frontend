@@ -1,3 +1,6 @@
+import { Organisation } from './organisationTypes';
+import { Team } from './teamTypes';
+
 export interface Resource {
   FirstName: string | null;
   LastName: string | null;
@@ -20,4 +23,17 @@ export interface Resource {
   __path__: string | null;
   __parent__: string | null;
   Status: string | null;
+}
+
+export interface AllResourceDetail {
+  Resource: Resource | null;
+  Team: Team | null;
+  Organisation: Organisation | null;
+}
+
+export interface AllResourcesDetailState {
+  allResourcesDetail: AllResourceDetail[] | null;
+  loading: boolean;
+  error: string | null;
+  dataProcessing: boolean;
 }

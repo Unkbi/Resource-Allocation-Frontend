@@ -5,11 +5,7 @@ export interface ProjectsTableRow {
   CostCurrency: string | null;
   StartDate: string | null;
   Id: string;
-  Owner: {
-    name: string | null;
-    bgColor: string | null;
-    initials: string | null;
-  };
+  ProjectSponsor: string | null;
   AllowOvertime: boolean | null;
   Name: string | null;
   __path__: string | null;
@@ -30,4 +26,5 @@ export interface ActualAllocationTableRow {
   actuals?: number | null;
   comments?: string | null;
   type?: string | null;
+  sectionEnd?: string;
 }

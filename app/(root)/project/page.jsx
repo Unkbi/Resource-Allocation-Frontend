@@ -15,6 +15,7 @@ import {
   generateDateWeekMath,
   generateRandomColor,
   getInitials,
+  getResourceFromUid,
   getTotalWeeks,
 } from '@/app/utils/common';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -27,6 +28,7 @@ import { deleteProject, getAllProjects } from '@/app/services/projectServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
+  COMPANY_DEFAULT_VIEW,
   setSplitView,
   setSplitViewCurrentProject,
   updateCurrentView,
@@ -35,6 +37,7 @@ import { useRouter } from 'next/navigation';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
+import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -124,13 +127,16 @@ export default function Project() {
   const apiRef = useGridApiRef();
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
-  const { resources } = useSelector(state => state.resources);
+  const { resources, loading: resourceLoading } = useSelector(
+    state => state.resources
+  );
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(projects?.result || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
+  const allResources = resources.result || [];
 
   useEffect(() => {
     if (!updating) {
@@ -155,11 +161,10 @@ export default function Project() {
         return {
           ...item,
           id: item.Id,
-          Owner: {
-            name: item.Owner,
-            bgColor: '#fff',
-            initials: getInitials(item.Owner),
-          },
+          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+            ?.FullName,
+          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+            ?.FullName,
         };
       });
     }
@@ -268,6 +273,7 @@ export default function Project() {
       );
       dispatch(
         updateCurrentView({
+          ...COMPANY_DEFAULT_VIEW,
           isDynamicRange: false,
           isFixedRange: true,
           StartDate: startRange,
@@ -291,38 +297,38 @@ export default function Project() {
           handleOpenDialog('Edit Project', 'edit_project', params.row);
         };
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box
-              onClick={handleNameClick}
-              sx={{
-                display: 'inline-block',
-                maxWidth: '100%',
-                color: '#152E75',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                minWidth: 0,
-                '&:hover': {
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              {params.value}
-            </Box>
+          <Box
+            sx={{
+              display: 'inline-block',
+              maxWidth: '100%',
+              color: '#152E75',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              minWidth: 0,
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+            onClick={handleNameClick}
+          >
+            <EllipsisNameCell value={params.value} showAvatar={false} />
           </Box>
         );
       },
     },
     {
-      field: 'Owner',
+      field: 'ProjectSponsor',
       headerName: 'Project Sponsor',
       flex: 2,
       minWidth: 180,
       renderCell: params => {
-        const owner = params.value;
-        return (
-          owner.name && <CustomAvatar value={owner.name} showFullName={true} />
+        const fullName = params.value;
+        return fullName ? (
+          <EllipsisNameCell showAvatar={true} value={fullName} />
+        ) : (
+          ''
         );
       },
     },
@@ -332,10 +338,10 @@ export default function Project() {
       flex: 2,
       minWidth: 180,
       renderCell: params => {
-        const projectManager = params.value;
+        const fullName = params.value;
         return (
-          projectManager && (
-            <CustomAvatar value={projectManager} showFullName={true} />
+          fullName && (
+            <EllipsisNameCell showAvatar={!!fullName} value={fullName} />
           )
         );
       },
@@ -345,6 +351,18 @@ export default function Project() {
       headerName: 'Location',
       flex: 1,
       minWidth: 150,
+    },
+    {
+      field: 'Budget',
+      headerName: 'Project Budget',
+      flex: 1,
+      minWidth: 130,
+    },
+    {
+      field: 'BudgetCurrency',
+      headerName: 'Budget Currency',
+      flex: 1,
+      minWidth: 130,
     },
     {
       field: 'Type',
@@ -506,7 +524,7 @@ export default function Project() {
       }}
     >
       <ProjectTable
-        loading={loading}
+        loading={loading || resourceLoading}
         columns={columns}
         rows={modifyData(rows)}
         apiRef={apiRef}
