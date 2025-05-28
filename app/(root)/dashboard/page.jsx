@@ -148,15 +148,13 @@ export default function ExecutiveDashboardPage() {
     return date.subtract(day === 0 ? 6 : day - 1, 'day'); // Adjust for Sunday (day 0)
   };
 
-  // Filter data based on the selected date
-  useEffect(() => {
-    const monday = getMonday(selectedDate).format('YYYY-MM-DD');
-    const filteredData = capacityAvailability.filter(
+  // Function to filter data based on the selected date
+  const filterDataByDate = date => {
+    const monday = getMonday(date).format('YYYY-MM-DD');
+
+    const capacityData = capacityAvailability.filter(
       d => dayjs(d.period_start).format('YYYY-MM-DD') === monday
     );
-    setFilteredCapacityData(filteredData);
-
-    // Filter under-allocated and over-allocated data
     const underAllocated = resourceUtilization.filter(
       d =>
         d.allocation_status === 'under-allocated' &&
@@ -168,10 +166,20 @@ export default function ExecutiveDashboardPage() {
         d.allocation_status === 'over-allocated' &&
         dayjs(d.period_start).format('YYYY-MM-DD') === monday
     );
-
+    setFilteredCapacityData(capacityData);
     setFilteredUnderAllocated(underAllocated);
     setFilteredOverAllocated(overAllocated);
-  }, [selectedDate]);
+  };
+
+  useEffect(() => {
+    filterDataByDate(selectedDate);
+  }, []);
+
+ useEffect(() => {
+    if (capacityAvailability.length > 0 && resourceUtilization.length > 0) {
+      filterDataByDate(selectedDate);
+    }
+  }, [capacityAvailability, resourceUtilization, selectedDate]);
 
   const handleFilterChange = filter => {
     if (filter.type === 'time') setBucket(filter.value);
@@ -656,7 +664,7 @@ export default function ExecutiveDashboardPage() {
                 data: resourceFTEContractorRatio.map(d =>
                   parseFloat(d.fte_cnt)
                 ),
-                label: 'FTE Count',
+                label: 'FTE',
                 id: 'fteCount',
                 color: '#4CAF50',
                 stack: 'total', // Green for FTE
@@ -665,7 +673,7 @@ export default function ExecutiveDashboardPage() {
                 data: resourceFTEContractorRatio.map(d =>
                   parseFloat(d.contractor_cnt)
                 ),
-                label: 'Contractor Count',
+                label: 'Contractor',
                 id: 'contractorCount',
                 color: '#FF5722',
                 stack: 'total', // Orange for Contractors
@@ -674,12 +682,12 @@ export default function ExecutiveDashboardPage() {
             xAxis={[
               {
                 data: resourceFTEContractorRatio.map(d => d.shore_flag), // Onshore/Offshore as x-axis labels
-                label: 'Location',
+                label: 'Workforce Distribution',
               },
             ]}
             yAxis={[
               {
-                label: 'Employee Count',
+                label: 'No. of Resources',
                 min: 0,
                 width: 50, // Adjust width for better alignment
               },
