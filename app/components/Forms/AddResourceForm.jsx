@@ -349,7 +349,16 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
             options={typeOptions}
             width={'100%'}
             value={values.Type || ''}
-            onChange={handleChange}
+            onChange={e => {
+              if (
+                e.target.value !== 'Contractor - FT' ||
+                e.target.value !== 'Contractor - PT'
+              ) {
+                formikProps.setFieldValue('ContractorHourlyRate', null);
+                formikProps.setFieldValue('AverageWeeklyHours', null);
+              }
+              handleChange(e);
+            }}
             onBlur={handleBlur}
             error={touched.Type && Boolean(errors.Type)}
             helperText={formikProps.errors.Type}
