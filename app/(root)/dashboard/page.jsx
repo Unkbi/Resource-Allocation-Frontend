@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Global, css } from '@emotion/react';
 import {
   Box,
   Typography,
@@ -70,6 +71,7 @@ export default function ExecutiveDashboardPage() {
   );
   const projectFTEData = useSelector(state => state.dashboard.projectFTE || []);
   const {
+    budgetVsPlanVsActual = [],
     resourceUtilization = [],
     resourceActualsDeviation = [],
     resourceFTEContractorRatio = [],
@@ -95,9 +97,14 @@ export default function ExecutiveDashboardPage() {
     const day = today.day();
     return today.subtract(day === 0 ? 6 : day - 1, 'day'); // Adjust for Sunday (day 0)
   }); // Default to Monday of the current week
+  const [overAllocated, setOverAllocated] = useState([]);
+  const [underAllocated, setUnderAllocated] = useState([]);
   const [filteredCapacityData, setFilteredCapacityData] = useState([]);
   const [filteredUnderAllocated, setFilteredUnderAllocated] = useState([]);
   const [filteredOverAllocated, setFilteredOverAllocated] = useState([]);
+  const [filteredActiveProjectsByType, setFilteredActiveProjectsByType] =
+    useState([]);
+  const [originalCapacityData, setOriginalCapacityData] = useState([]);
 
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
@@ -131,6 +138,37 @@ export default function ExecutiveDashboardPage() {
   }, [coverageData, teamFilter]);
 
   useEffect(() => {
+    if (overAllocated.length > 0) {
+      let filteredCoverage = overAllocated;
+      if (teamFilter !== 'all') {
+        filteredCoverage = filteredCoverage.filter(
+          d => d.team_name === teamFilter
+        );
+      }
+      setFilteredOverAllocated(filteredCoverage);
+    }
+    if (underAllocated.length > 0) {
+      let filteredCoverage = underAllocated;
+      if (teamFilter !== 'all') {
+        filteredCoverage = filteredCoverage.filter(
+          d => d.team_name === teamFilter
+        );
+      }
+      setFilteredUnderAllocated(filteredCoverage);
+    }
+
+    if (originalCapacityData.length > 0) {
+      let filteredCapacity = originalCapacityData;
+      if (teamFilter !== 'all') {
+        filteredCapacity = filteredCapacity.filter(
+          d => d.team_name === teamFilter
+        );
+      }
+      setFilteredCapacityData(filteredCapacity);
+    }
+  }, [teamFilter]);
+
+  useEffect(() => {
     if (projectFTEData.length > 0) {
       let filteredFTE = projectFTEData;
       if (selectedProjectType !== 'all') {
@@ -141,6 +179,18 @@ export default function ExecutiveDashboardPage() {
       setFilteredProjectFTEData(filteredFTE);
     }
   }, [projectFTEData, selectedProjectType]);
+
+  useEffect(() => {
+    if (activeProjectsByType.length > 0) {
+      let filteredProjects = activeProjectsByType;
+      if (selectedProjectType !== 'all') {
+        filteredProjects = activeProjectsByType.filter(
+          d => d._type === selectedProjectType
+        );
+      }
+      setFilteredActiveProjectsByType(filteredProjects);
+    }
+  }, [activeProjectsByType, selectedProjectType]);
 
   // Calculate the Monday of the selected week
   const getMonday = date => {
@@ -166,7 +216,11 @@ export default function ExecutiveDashboardPage() {
         d.allocation_status === 'over-allocated' &&
         dayjs(d.period_start).format('YYYY-MM-DD') === monday
     );
+
+    setOverAllocated(overAllocated);
+    setUnderAllocated(underAllocated);
     setFilteredCapacityData(capacityData);
+    setOriginalCapacityData(capacityData);
     setFilteredUnderAllocated(underAllocated);
     setFilteredOverAllocated(overAllocated);
   };
@@ -175,7 +229,7 @@ export default function ExecutiveDashboardPage() {
     filterDataByDate(selectedDate);
   }, []);
 
- useEffect(() => {
+  useEffect(() => {
     if (capacityAvailability.length > 0 && resourceUtilization.length > 0) {
       filterDataByDate(selectedDate);
     }
@@ -251,68 +305,9 @@ export default function ExecutiveDashboardPage() {
     }));
 
   const overviewcharts = {
-    resourceCoverage: (
+    resourceActualsDeviation: (
       <DashboardWidget
-        onClick={() => handleChartClick('Resource Allocation Coverage')}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography variant="subtitle1">
-            Resource Coverage by Teams
-          </Typography>
-        </Box>
-        <LineChart
-          xAxis={[
-            {
-              scaleType: 'point',
-              data: periods.map(p => {
-                const date = new Date(p);
-                const tempDate = new Date(date.getTime());
-                tempDate.setHours(0, 0, 0, 0);
-                // Thursday in current week decides the year
-                tempDate.setDate(
-                  tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7)
-                );
-                const week1 = new Date(tempDate.getFullYear(), 0, 4);
-                // Calculate full weeks to nearest Thursday
-                const weekNo =
-                  1 +
-                  Math.round(
-                    ((tempDate.getTime() - week1.getTime()) / 86400000 -
-                      3 +
-                      ((week1.getDay() + 6) % 7)) /
-                      7
-                  );
-                return `W${weekNo}`;
-              }),
-              label: 'Week',
-            },
-          ]}
-          yAxis={[{ min: 0, max: 150, label: 'Coverage %' }]}
-          series={coverageSeries}
-          height={300}
-          grid={{ vertical: true, horizontal: true }}
-          slotProps={{
-            line: {
-              // Make the line thicker and semi-transparent
-              strokeWidth: 3,
-              strokeOpacity: 0.8,
-              // Make the marker small and solid
-              markersize: 6,
-              markerstyle: { fill: '#666', stroke: '#fff', strokeWidth: 1 },
-            },
-          }}
-        />
-      </DashboardWidget>
-    ),
-    unapprovedProjectAllocation: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Unplanned Allocation Units')}
+        onClick={() => handleChartClick('Actual Vs Plan Deviation')}
       >
         <Box
           sx={{
@@ -322,41 +317,33 @@ export default function ExecutiveDashboardPage() {
             width: '100%',
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            Unplanned Allocation Units
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Actual Vs Plan Deviation
           </Typography>
           <PieChart
             series={[
               {
-                data: [
-                  {
-                    id: 0,
-                    value: unapprovedProjectAllocation?.otherProjects ?? 0.5,
-                    label: 'Other Projects',
-                    color: '#0080FF',
-                  },
-                  {
-                    id: 1,
-                    value: unapprovedProjectAllocation?.units_unapproved ?? 0.5,
-                    label: 'Unplanned Work',
-                    color: '#00C9A7',
-                  },
-                  {
-                    id: 2,
-                    value: unapprovedProjectAllocation?.personalTime ?? 0,
-                    label: 'Personal Time',
-                    color: '#FFC233',
-                  },
-                  {
-                    id: 3,
-                    value: unapprovedProjectAllocation?.approvedWork ?? 0,
-                    label: 'Approved Work',
-                    color: '#FF884D',
-                  },
-                ],
-                innerRadius: 0, // full pie
+                data: resourceActualsDeviation.length > 0
+                  ? [
+                      {
+                        id: 0,
+                        value: parseFloat(resourceActualsDeviation[0].deviation_pct),
+                        label: 'Deviation',
+                        color: '#FF7043', // Orange for deviation
+                      },
+                      {
+                        id: 1,
+                        value: parseFloat(resourceActualsDeviation[0].in_plan_pct),
+                        label: 'In Plan',
+                        color: '#80CBC4', // Green for in-plan
+                      },
+                    ]
+                  : [],
+                innerRadius: 0, // Full pie chart
                 outerRadius: 120,
-                paddingAngle: 2,
                 cornerRadius: 3,
                 highlightScope: { faded: 'global', highlighted: 'item' },
                 faded: { additionalRadius: -10, color: 'gray' },
@@ -394,13 +381,16 @@ export default function ExecutiveDashboardPage() {
             width: '100%',
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
             Active Projects by Type
           </Typography>
           <PieChart
             series={[
               {
-                data: (activeProjectsByType || []).map((item, idx) => ({
+                data: (filteredActiveProjectsByType || []).map((item, idx) => ({
                   id: idx,
                   value: Number(item.count),
                   label: item._type,
@@ -420,7 +410,6 @@ export default function ExecutiveDashboardPage() {
                 })),
                 innerRadius: 0,
                 outerRadius: 120,
-                paddingAngle: 2,
                 cornerRadius: 3,
                 highlightScope: { faded: 'global', highlighted: 'item' },
                 faded: { additionalRadius: -10, color: 'gray' },
@@ -458,7 +447,10 @@ export default function ExecutiveDashboardPage() {
             width: '100%',
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
             Total Headcount Breakdown
           </Typography>
           <PieChart
@@ -473,11 +465,14 @@ export default function ExecutiveDashboardPage() {
                       ? '#0080FF'
                       : item._type === 'Contractor - FT'
                         ? '#00C9A7'
-                        : undefined,
+                        : item._type === 'Intern'
+                          ? '#FF884D'
+                          : item._type === 'Contractor - PT'
+                            ? '#FFB6B6'
+                            : undefined,
                 })),
                 innerRadius: 0,
                 outerRadius: 120,
-                paddingAngle: 2,
                 cornerRadius: 3,
                 highlightScope: { faded: 'global', highlighted: 'item' },
                 faded: { additionalRadius: -10, color: 'gray' },
@@ -503,6 +498,144 @@ export default function ExecutiveDashboardPage() {
         </Box>
       </DashboardWidget>
     ),
+    unapprovedProjectAllocation: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Unplanned Allocation Units')}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            width: '100%',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Unplanned Allocation Units
+          </Typography>
+          <PieChart
+            series={[
+              {
+                data: [
+                  {
+                    id: 0,
+                    value: unapprovedProjectAllocation?.otherProjects ?? 0.5,
+                    label: 'Other Projects',
+                    color: '#0080FF',
+                  },
+                  {
+                    id: 1,
+                    value: unapprovedProjectAllocation?.units_unapproved ?? 0.5,
+                    label: 'Unplanned Work',
+                    color: '#00C9A7',
+                  },
+                  {
+                    id: 2,
+                    value: unapprovedProjectAllocation?.personalTime ?? 1,
+                    label: 'Personal Time',
+                    color: '#FFC233',
+                  },
+                  {
+                    id: 3,
+                    value: unapprovedProjectAllocation?.approvedWork ?? 1,
+                    label: 'Approved Work',
+                    color: '#FF884D',
+                  },
+                ],
+                innerRadius: 0, // full pie
+                outerRadius: 120,
+                // paddingAngle: 2,
+                cornerRadius: 3,
+                highlightScope: { faded: 'global', highlighted: 'item' },
+                faded: { additionalRadius: -10, color: 'gray' },
+              },
+            ]}
+            width={350}
+            height={300}
+            legend={{
+              direction: 'column',
+              position: { vertical: 'bottom', horizontal: 'middle' },
+              itemmarkwidth: 24,
+              itemmarkheight: 8,
+              labelstyle: { fontSize: 16 },
+            }}
+            slotProps={{
+              legend: {
+                itemmarkwidth: 24,
+                itemmarkheight: 8,
+                labelstyle: { fontSize: 16 },
+              },
+            }}
+          />
+        </Box>
+      </DashboardWidget>
+    ),
+    resourceCoverage: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Resource Allocation Coverage')}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Resource Coverage by Teams
+          </Typography>
+        </Box>
+        <LineChart
+          xAxis={[
+            {
+              scaleType: 'point',
+              data: periods.map(p => {
+                const date = new Date(p);
+                const tempDate = new Date(date.getTime());
+                tempDate.setHours(0, 0, 0, 0);
+                // Thursday in current week decides the year
+                tempDate.setDate(
+                  tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7)
+                );
+                const week1 = new Date(tempDate.getFullYear(), 0, 4);
+                // Calculate full weeks to nearest Thursday
+                const weekNo =
+                  1 +
+                  Math.round(
+                    ((tempDate.getTime() - week1.getTime()) / 86400000 -
+                      3 +
+                      ((week1.getDay() + 6) % 7)) /
+                      7
+                  );
+                return `W${weekNo}`;
+              }),
+              label: 'Week',
+            },
+          ]}
+          yAxis={[{ min: 0, label: 'Coverage %' }]}
+          series={coverageSeries}
+          height={300}
+          grid={{ vertical: true, horizontal: true }}
+          slotProps={{
+            line: {
+              strokeWidth: 3,
+              strokeOpacity: 0.8,
+              markersize: 2, // Reduced marker size
+              markerstyle: { fill: '#666', stroke: '#fff', strokeWidth: 1 },
+            },
+            marker: {
+              size: 2, // Reduced marker size
+            },
+          }}
+        />
+      </DashboardWidget>
+    ),
   };
   const projectCharts = {
     projectFTE: (
@@ -516,7 +649,10 @@ export default function ExecutiveDashboardPage() {
             alignItems: 'center',
           }}
         >
-          <Typography variant="subtitle1">
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
             Allocation by Project Type Over Time
           </Typography>
         </Box>
@@ -579,7 +715,10 @@ export default function ExecutiveDashboardPage() {
             alignItems: 'center',
           }}
         >
-          <Typography variant="subtitle1">
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
             Capacity vs Utilization by Team
           </Typography>
         </Box>
@@ -654,7 +793,12 @@ export default function ExecutiveDashboardPage() {
             alignItems: 'center',
           }}
         >
-          <Typography variant="subtitle1">FTE vs Contractor Ratio</Typography>
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            FTE vs Contractor Ratio
+          </Typography>
         </Box>
         <Box sx={{ mt: 2 }}>
           <BarChart
@@ -707,6 +851,82 @@ export default function ExecutiveDashboardPage() {
         </Box>
       </DashboardWidget>
     ),
+    budgetVsPlanVsActual: (
+      <DashboardWidget
+        onClick={() =>
+          handleChartClick('Budget vs Planned vs Actual by Project')
+        }
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Budget vs Planned vs Actual by Project
+          </Typography>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <BarChart
+            height={300}
+            series={[
+              {
+                data: budgetVsPlanVsActual.map(d => parseFloat(d.budget_total)),
+                label: 'Budget',
+                id: 'budget',
+                color: '#9FA8DA', // Light purple
+              },
+              {
+                data: budgetVsPlanVsActual.map(d =>
+                  parseFloat(d.planned_to_date)
+                ),
+                label: 'Planned',
+                id: 'planned',
+                color: '#80CBC4', // Light green
+              },
+              {
+                data: budgetVsPlanVsActual.map(d =>
+                  parseFloat(d.actuals_to_date)
+                ),
+                label: 'Actual',
+                id: 'actual',
+                color: '#FFB74D', // Light orange
+              },
+            ]}
+            xAxis={[
+              {
+                data: budgetVsPlanVsActual.map(d => d.project_name), // Project names as x-axis labels
+                label: 'Project',
+              },
+            ]}
+            yAxis={[
+              {
+                // label: 'Amount (USD)',
+                min: 0,
+                width: 80, // Adjust width for better alignment
+                valueFormatter: value => `$ ${value}`,
+              },
+            ]}
+            slotProps={{
+              bar: {
+                borderradius: 2, // Add rounded corners to bars
+                barwidthratio: 0.6, // Adjust bar width
+              },
+              legend: {
+                direction: 'row',
+                position: { vertical: 'bottom', horizontal: 'middle' },
+                padding: 8,
+              },
+            }}
+          />
+        </Box>
+      </DashboardWidget>
+    ),
   };
 
   const teamCharts = {
@@ -719,7 +939,12 @@ export default function ExecutiveDashboardPage() {
             alignItems: 'center',
           }}
         >
-          <Typography variant="subtitle1">Under-Allocated Teams</Typography>
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Under-Allocated Teams
+          </Typography>
         </Box>
         <Box sx={{ mt: 2 }}>
           <BarChart
@@ -772,7 +997,12 @@ export default function ExecutiveDashboardPage() {
             alignItems: 'center',
           }}
         >
-          <Typography variant="subtitle1">Over-Allocated Teams</Typography>
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Over-Allocated Teams
+          </Typography>
         </Box>
         <Box sx={{ mt: 2 }}>
           <BarChart
@@ -824,6 +1054,15 @@ export default function ExecutiveDashboardPage() {
   ];
 
   return (
+     <>
+      {/* Global styles for reducing circle size */}
+      <Global
+        styles={css`
+          circle.MuiMarkElement-root {
+            r: 3 !important; /* Set the radius to a smaller value */
+          }
+        `}
+      />
     <Box sx={{ p: 2 }}>
       <Tabs
         value={activeTab}
@@ -848,27 +1087,18 @@ export default function ExecutiveDashboardPage() {
 
       {activeTab === 'overview' && (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 2, pl: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb:1, mt: 2, pl: 2, justifyContent: 'space-between' }}>
             <Typography
               variant="h2"
               sx={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}
             >
               Overview
             </Typography>
-          </Box>
-          {/* Add Date Picker below the toolbar */}
-          <Box
-            sx={{
-              mt: -3,
-              mb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}
-          >
+            <Box>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={['DatePicker']}>
                 <DatePicker
+                  displayWeekNumber
                   label="Select a Date"
                   value={selectedDate}
                   onChange={newValue => setSelectedDate(newValue)}
@@ -877,7 +1107,7 @@ export default function ExecutiveDashboardPage() {
               </DemoContainer>
             </LocalizationProvider>
           </Box>
-
+          </Box>
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}
@@ -897,27 +1127,18 @@ export default function ExecutiveDashboardPage() {
 
       {activeTab === 'teams' && (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 3, pl: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb:1, mt: 2, pl: 2, justifyContent: 'space-between' }}>
             <Typography
               variant="h2"
               sx={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}
             >
               Teams Overview
             </Typography>
-          </Box>
-          {/* Add Date Picker below the toolbar */}
-          <Box
-            sx={{
-              mt: -3,
-              mb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}
-          >
+            <Box>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={['DatePicker']}>
                 <DatePicker
+                  displayWeekNumber
                   label="Select a Date"
                   value={selectedDate}
                   onChange={newValue => setSelectedDate(newValue)}
@@ -925,6 +1146,7 @@ export default function ExecutiveDashboardPage() {
                 />
               </DemoContainer>
             </LocalizationProvider>
+          </Box>
           </Box>
 
           <ResponsiveGridLayout
@@ -946,27 +1168,18 @@ export default function ExecutiveDashboardPage() {
 
       {activeTab === 'projects' && (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 3, pl: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb:1, mt: 2, pl: 2, justifyContent: 'space-between' }}>
             <Typography
               variant="h2"
               sx={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}
             >
               Project Tracking
             </Typography>
-          </Box>
-          {/* Add Date Picker below the toolbar */}
-          <Box
-            sx={{
-              mt: -3,
-              mb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}
-          >
+            <Box>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={['DatePicker']}>
                 <DatePicker
+                  displayWeekNumber
                   label="Select a Date"
                   value={selectedDate}
                   onChange={newValue => setSelectedDate(newValue)}
@@ -975,7 +1188,7 @@ export default function ExecutiveDashboardPage() {
               </DemoContainer>
             </LocalizationProvider>
           </Box>
-
+          </Box>
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}
@@ -1011,5 +1224,6 @@ export default function ExecutiveDashboardPage() {
         </DialogActions>
       </Dialog>
     </Box>
+    </>
   );
 }

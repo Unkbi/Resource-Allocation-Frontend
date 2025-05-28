@@ -49,11 +49,9 @@ const DashboardToolbar = ({
         borderRadius: 2,
         width: '100%',
         position: 'relative',
-        left: '20vw',
-        // Add padding-left to shift the component to the right
       }}
     >
-      <Grid container spacing={4} alignItems="center">
+      <Grid container spacing={4} alignItems="center" justifyContent='end'>
         {/* Teams */}
         <Grid item xs={12} md={4}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

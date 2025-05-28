@@ -1,99 +1,5 @@
 export const allowedQueries: Record<string, string> = {
-  //001 - Percentage of coverage of resource allocation by teams by duration trend (duration trend is always weeks/months/quarters). Exclude PT contractor allocation
-  resourceCoverage: `
-    WITH params AS (
-        SELECT
-            DATE '2025-01-01'  AS start_date,
-            DATE '2025-06-30'  AS end_date,
-            'week'::text       AS bucket,
-            'Contractor - PT'  AS excluded_type
-    ),
-    calendar AS (
-        SELECT
-            gs AS period_start,
-            CASE p.bucket
-                 WHEN 'week' THEN gs + INTERVAL '1 week' - INTERVAL '1 day'
-                 WHEN 'month' THEN gs + INTERVAL '1 month' - INTERVAL '1 day'
-                 WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
-            END AS period_end,
-            CEIL( (DATE_PART('day',
-                 CASE p.bucket
-                      WHEN 'week' THEN gs + INTERVAL '1 week' - INTERVAL '1 day'
-                      WHEN 'month' THEN gs + INTERVAL '1 month' - INTERVAL '1 day'
-                      WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
-                 END
-                 - gs) + 1) / 7.0 )::int AS weeks_in_bucket
-        FROM params p
-        JOIN LATERAL generate_series(
-                date_trunc(p.bucket, p.start_date),
-                date_trunc(p.bucket, p.end_date),
-                CASE p.bucket
-                     WHEN 'week' THEN INTERVAL '1 week'
-                     WHEN 'month' THEN INTERVAL '1 month'
-                     WHEN 'quarter' THEN INTERVAL '3 months'
-                END
-             ) AS gs ON TRUE
-    ),
-    allocations AS (
-        SELECT
-            a.___parent__ AS resource_id,
-            to_date(a._period, 'YYYY-MM-DD') AS period_date,
-            a._allocationentered AS alloc_fte
-        FROM resourceallocation_core__allocation_0_0_1 a
-        JOIN params p
-          ON to_date(a._period, 'YYYY-MM-DD')
-             BETWEEN p.start_date AND p.end_date
-    ),
-    eligible_resources AS (
-        SELECT
-            r.___path__ AS resource_id,
-            to_date(r._startdate, 'YYYY-MM-DD') AS start_date
-        FROM resourceallocation_core__resource_0_0_1 r
-        JOIN params p ON r._type <> p.excluded_type
-    ),
-    team_map AS (
-        SELECT
-            tr._resource AS resource_id,
-            tr._team AS team_id
-        FROM resourceallocation_core__teamresource_0_0_1 tr
-    ),
-    team_capacity AS (
-        SELECT
-            cal.period_start,
-            cal.weeks_in_bucket,
-            tm.team_id,
-            COUNT(DISTINCT tm.resource_id) AS headcount
-        FROM calendar cal
-        JOIN team_map tm ON TRUE
-        JOIN eligible_resources er ON er.resource_id = tm.resource_id AND er.start_date <= cal.period_end
-        GROUP BY cal.period_start, cal.weeks_in_bucket, tm.team_id
-    ),
-    alloc_by_team_period AS (
-        SELECT
-            tm.team_id,
-            date_trunc(p.bucket, alloc.period_date) AS period_start,
-            SUM(alloc.alloc_fte) AS sum_alloc_fte
-        FROM allocations alloc
-        JOIN params p ON TRUE
-        JOIN team_map tm ON tm.resource_id = alloc.resource_id
-        JOIN eligible_resources er ON er.resource_id = alloc.resource_id
-        GROUP BY tm.team_id, date_trunc(p.bucket, alloc.period_date)
-    )
-    SELECT
-        t._name AS team_name,
-        cal.period_start,
-        ROUND(
-            (COALESCE(abp.sum_alloc_fte, 0)
-             / NULLIF(tc.headcount * cal.weeks_in_bucket, 0) * 100
-            )::numeric, 2
-        ) AS coverage_pct
-    FROM calendar cal
-    JOIN team_capacity tc ON tc.period_start = cal.period_start
-    LEFT JOIN alloc_by_team_period abp
-           ON abp.period_start = cal.period_start AND abp.team_id = tc.team_id
-    JOIN resourceallocation_core__team_0_0_1 t ON t.___path__ = tc.team_id
-    ORDER BY t._name, cal.period_start;
-  `,
+  
   //002 - Fractional units breakdown of resources allocation by duration trend based on project types.
   projectFTE: `
     /* ========= 1. Parameter block (extended) ========== */
@@ -448,27 +354,82 @@ SELECT
 FROM baseline b
 CROSS JOIN limits l;          -- gives you access to the thresholds
 `,
-  //006 -
-
-  //(007) Teams whose Actuals are most deviating from the Planned by duration trend?
-  resourceActualsDeviation: `/* ========= 1. Parameters you can tweak ========== */
+  //006 -Projects budget vs Planned vs Actuals to date
+budgetVsPlanVsActual: `/* ======== 1.  Parameters you can tweak ============================= */
 WITH params AS (
     SELECT
-        DATE '2025-01-01'                   AS start_date,          -- window start
-        DATE '2025-06-30'                   AS end_date,            -- window end
-        'week'::text                      AS bucket,              -- 'week' | 'month' | 'quarter'
-        ''                  AS excluded_resource_type
+        DATE '2025-01-01'  AS start_date,     -- ← reporting window
+        DATE '2025-05-28'  AS end_date
 ),
 
-/* ========= 2. Time buckets (unchanged) ========== */
+/* ======== 2.  Allocation-cost rows inside the window =============== */
+alloc_cost AS (
+    SELECT
+        ac._project ::uuid                       AS project_id,
+        ac._costcurrency                         AS currency,
+        COALESCE(ac._plannedcost , 0)            AS planned_cost,
+        COALESCE(ac._actualscost, 0)             AS actual_cost
+    FROM public.resourceallocation_core__allocationcost_0_0_1 ac
+    JOIN params p
+      ON to_date(ac._period, 'YYYY-MM-DD')
+         BETWEEN p.start_date AND p.end_date
+	where ac._agentlang__is_deleted is false
+),
+
+/* ======== 3.  Sum plan / actual to-date per project ================ */
+cost_by_project AS (
+    SELECT
+        project_id,
+        currency,
+        SUM(planned_cost)  AS planned_to_date,
+        SUM(actual_cost)   AS actual_to_date
+    FROM alloc_cost
+    GROUP BY project_id, currency
+),
+
+/* ======== 4.  Project master with budget =========================== */
+project_budget AS (
+    SELECT
+        pr._id          AS project_id,
+        pr._name        AS project_name,
+        pr._budget      AS budget,     -- assumed same currency as allocation rows
+		pr._budgetcurrency AS currency
+    FROM public.resourceallocation_core__project_0_0_1 pr
+	where _agentlang__is_deleted is false
+)
+
+/* ======== 5.  Final report ========================================= */
+SELECT
+    pb.project_id,
+    pb.project_name,
+    pb.currency,
+    pb.budget                                        AS budget_total,
+    cbp.planned_to_date                              AS planned_to_date,
+    cbp.actual_to_date                               AS actuals_to_date
+FROM project_budget pb
+LEFT JOIN cost_by_project cbp
+       ON cbp.project_id = pb.project_id
+where cbp.planned_to_date is not null;
+`,
+  //(007) Teams whose Actuals are most deviating from the Planned by duration trend?
+  resourceActualsDeviation: `/* ========= 1. Parameters ========================================== */
+WITH params AS (
+    SELECT
+        DATE '2025-05-26' AS start_date,
+        DATE '2025-06-01' AS end_date,
+        'week'::text      AS bucket,      -- 'week' | 'month' | 'quarter'
+        ''                AS excluded_resource_type
+),
+
+/* ========= 2. Calendar buckets ==================================== */
 calendar AS (
     SELECT
-        gs                                   AS period_start,
+        gs AS period_start,
         CASE p.bucket
              WHEN 'week'    THEN gs + INTERVAL '1 week'   - INTERVAL '1 day'
              WHEN 'month'   THEN gs + INTERVAL '1 month'  - INTERVAL '1 day'
              WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
-        END                                  AS period_end
+        END AS period_end
     FROM params p
     JOIN LATERAL generate_series(
             date_trunc(p.bucket, p.start_date),
@@ -481,63 +442,59 @@ calendar AS (
         ) AS gs ON TRUE
 ),
 
-/* ========= 3. Weekly rows with both plan & actual ========= */
+/* ========= 3. Weekly rows with plan & actual ====================== */
 alloc AS (
     SELECT
-        a.___parent__                        AS resource_id,
-        to_date(a._period, 'YYYY-MM-DD')     AS period_date,
-        COALESCE(a._allocationentered, 0)    AS plan_fte,
-        COALESCE(a._actualsentered,   0)     AS actual_fte
+        a.___parent__                    AS resource_id,
+        to_date(a._period, 'YYYY-MM-DD') AS period_date,
+        COALESCE(a._allocationentered, 0) AS plan_fte,
+        COALESCE(a._actualsentered, 0)    AS actual_fte
     FROM public.resourceallocation_core__allocation_0_0_1 a
-    JOIN params           p  ON to_date(a._period, 'YYYY-MM-DD')
-                               BETWEEN p.start_date AND p.end_date
+    JOIN params p
+      ON to_date(a._period, 'YYYY-MM-DD')
+         BETWEEN p.start_date AND p.end_date
 ),
 
-/* ========= 4. Keep only eligible resources ========= */
+/* ========= 4. Eligible resources ================================== */
 eligible_resources AS (
     SELECT
-        r.___path__                          AS resource_id,
-        to_date(r._startdate, 'YYYY-MM-DD')  AS start_date
+        r.___path__                        AS resource_id,
+        to_date(r._startdate, 'YYYY-MM-DD') AS start_date
     FROM public.resourceallocation_core__resource_0_0_1 r
     JOIN params p
       ON r._type <> p.excluded_resource_type
+     AND to_date(r._startdate, 'YYYY-MM-DD') <= p.end_date
 ),
 
-/* ========= 5. Resource → Team mapping ========= */
-team_map AS (
+/* ========= 5. Company-wide plan / delta per bucket ================ */
+company_dev AS (
     SELECT
-        tr._resource AS resource_id,
-        tr._team     AS team_id
-    FROM public.resourceallocation_core__teamresource_0_0_1 tr
-),
-
-/* ========= 6.  Team-bucket totals of plan, delta ========= */
-team_dev AS (
-    SELECT
-        tm.team_id,
-        date_trunc(p.bucket, a.period_date)              AS period_start,
-        SUM(a.plan_fte)                                  AS planned_fte,
-        SUM( GREATEST(a.plan_fte - a.actual_fte, 0) )    AS delta_fte
+        date_trunc(p.bucket, a.period_date)           AS period_start,
+        SUM(a.plan_fte)                               AS planned_fte,
+        SUM(GREATEST(a.plan_fte - a.actual_fte, 0))   AS delta_fte
     FROM alloc a
-    JOIN team_map            tm ON tm.resource_id = a.resource_id
-    JOIN params              p  ON TRUE
-    JOIN eligible_resources  er ON er.resource_id = a.resource_id
-                                AND er.start_date <= date_trunc(p.bucket, a.period_date)
-    GROUP BY tm.team_id, date_trunc(p.bucket, a.period_date)
+    JOIN params p                ON TRUE
+    JOIN eligible_resources er   ON er.resource_id = a.resource_id
+    GROUP BY date_trunc(p.bucket, a.period_date)
 )
 
-/* ========= 7.  Final deviation % per team & bucket ========= */
+/* ========= 6. Final overall metrics =============================== */
 SELECT
-    t._name                                                                        AS team_name,
     cal.period_start,
+
+    /* deviation = % of planned hours that did NOT occur */
     ROUND(
-        (td.delta_fte / NULLIF(td.planned_fte, 0))::numeric * 100
-      , 2
-    )                                                                              AS deviation_pct
-FROM calendar            cal
-JOIN team_dev            td  ON td.period_start = cal.period_start
-JOIN resourceallocation_core__team_0_0_1 t ON t.___path__ = td.team_id
-ORDER BY deviation_pct DESC, t._name, cal.period_start;
+        (cd.delta_fte / NULLIF(cd.planned_fte, 0))::numeric * 100
+    , 2)  AS deviation_pct,
+
+    /* in-plan = 100 − deviation */
+    ROUND(
+        (100::numeric - (cd.delta_fte / NULLIF(cd.planned_fte, 0))::numeric * 100)
+    , 2)  AS in_plan_pct
+FROM calendar  cal
+JOIN company_dev cd
+  ON cd.period_start = cal.period_start
+ORDER BY cal.period_start;
 `,
 
   //(008) How much units is being allocated on unapproved projects by team?
@@ -648,4 +605,100 @@ group by _type`,
 where _status = 'Active'
 and _agentlang__is_deleted is false
 group by _type`,
+
+//001 - Percentage of coverage of resource allocation by teams by duration trend (duration trend is always weeks/months/quarters). Exclude PT contractor allocation
+  resourceCoverage: `
+    WITH params AS (
+        SELECT
+            DATE '2025-01-01'  AS start_date,
+            DATE '2025-06-30'  AS end_date,
+            'week'::text       AS bucket,
+            'Contractor - PT'  AS excluded_type
+    ),
+    calendar AS (
+        SELECT
+            gs AS period_start,
+            CASE p.bucket
+                 WHEN 'week' THEN gs + INTERVAL '1 week' - INTERVAL '1 day'
+                 WHEN 'month' THEN gs + INTERVAL '1 month' - INTERVAL '1 day'
+                 WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
+            END AS period_end,
+            CEIL( (DATE_PART('day',
+                 CASE p.bucket
+                      WHEN 'week' THEN gs + INTERVAL '1 week' - INTERVAL '1 day'
+                      WHEN 'month' THEN gs + INTERVAL '1 month' - INTERVAL '1 day'
+                      WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
+                 END
+                 - gs) + 1) / 7.0 )::int AS weeks_in_bucket
+        FROM params p
+        JOIN LATERAL generate_series(
+                date_trunc(p.bucket, p.start_date),
+                date_trunc(p.bucket, p.end_date),
+                CASE p.bucket
+                     WHEN 'week' THEN INTERVAL '1 week'
+                     WHEN 'month' THEN INTERVAL '1 month'
+                     WHEN 'quarter' THEN INTERVAL '3 months'
+                END
+             ) AS gs ON TRUE
+    ),
+    allocations AS (
+        SELECT
+            a.___parent__ AS resource_id,
+            to_date(a._period, 'YYYY-MM-DD') AS period_date,
+            a._allocationentered AS alloc_fte
+        FROM resourceallocation_core__allocation_0_0_1 a
+        JOIN params p
+          ON to_date(a._period, 'YYYY-MM-DD')
+             BETWEEN p.start_date AND p.end_date
+    ),
+    eligible_resources AS (
+        SELECT
+            r.___path__ AS resource_id,
+            to_date(r._startdate, 'YYYY-MM-DD') AS start_date
+        FROM resourceallocation_core__resource_0_0_1 r
+        JOIN params p ON r._type <> p.excluded_type
+    ),
+    team_map AS (
+        SELECT
+            tr._resource AS resource_id,
+            tr._team AS team_id
+        FROM resourceallocation_core__teamresource_0_0_1 tr
+    ),
+    team_capacity AS (
+        SELECT
+            cal.period_start,
+            cal.weeks_in_bucket,
+            tm.team_id,
+            COUNT(DISTINCT tm.resource_id) AS headcount
+        FROM calendar cal
+        JOIN team_map tm ON TRUE
+        JOIN eligible_resources er ON er.resource_id = tm.resource_id AND er.start_date <= cal.period_end
+        GROUP BY cal.period_start, cal.weeks_in_bucket, tm.team_id
+    ),
+    alloc_by_team_period AS (
+        SELECT
+            tm.team_id,
+            date_trunc(p.bucket, alloc.period_date) AS period_start,
+            SUM(alloc.alloc_fte) AS sum_alloc_fte
+        FROM allocations alloc
+        JOIN params p ON TRUE
+        JOIN team_map tm ON tm.resource_id = alloc.resource_id
+        JOIN eligible_resources er ON er.resource_id = alloc.resource_id
+        GROUP BY tm.team_id, date_trunc(p.bucket, alloc.period_date)
+    )
+    SELECT
+        t._name AS team_name,
+        cal.period_start,
+        ROUND(
+            (COALESCE(abp.sum_alloc_fte, 0)
+             / NULLIF(tc.headcount * cal.weeks_in_bucket, 0) * 100
+            )::numeric, 2
+        ) AS coverage_pct
+    FROM calendar cal
+    JOIN team_capacity tc ON tc.period_start = cal.period_start
+    LEFT JOIN alloc_by_team_period abp
+           ON abp.period_start = cal.period_start AND abp.team_id = tc.team_id
+    JOIN resourceallocation_core__team_0_0_1 t ON t.___path__ = tc.team_id
+    ORDER BY t._name, cal.period_start;
+  `,
 };
