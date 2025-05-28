@@ -1,10 +1,7 @@
 'use client';
 
 import Overview from "../../components/Dashboard/OverviewCards"; 
-import { fetchOverviewData } from "../../services/overviewService"; 
-
-
-
+//import { fetchOverviewData } from "../../services/overviewService";
 import { useEffect, useState } from 'react';
 import {
   Box,
@@ -81,6 +78,9 @@ export default function ExecutiveDashboardPage() {
     unapprovedProjectAllocation = [],
     activeProjectsByType = [],
     totalHeadcount = [],
+    activeProjects = [],
+    activeResources = [],
+    actualsConfirmed = []
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -105,19 +105,13 @@ export default function ExecutiveDashboardPage() {
   const [filteredOverAllocated, setFilteredOverAllocated] = useState([]);
 
 
-
-  const [overview, setOverview] = useState([]);
-
-  useEffect(() => {
-    fetchOverviewData().then(setOverview);
-  }, []);
-
-
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
     const parsed = saved ? JSON.parse(saved) : layouts.md;
     setLayout(parsed);
   }, []);
+
+
 
   useEffect(() => {
     try {
@@ -883,7 +877,7 @@ export default function ExecutiveDashboardPage() {
               </DemoContainer>
             </LocalizationProvider>
           </Box>
-          <Overview data={overview} />
+          <Overview  activeProjects = {activeProjects}  activeResources = {activeResources} actualsConfirmed = {actualsConfirmed} />
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}

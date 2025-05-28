@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import * as React from "react";
 import { Grid, Paper, Box, Typography, Avatar } from "@mui/material";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
@@ -22,11 +23,23 @@ const iconLabels = [
   "Actuals Confirmed"
 ];
 
-export default function Overview({ data }) {
+export default function Overview({activeProjects, activeResources, actualsConfirmed }) {
+  const [overview, setOverview] = useState([]);
+
+  useEffect(() => {
+    const data = [
+      { label: "Active Projects", value: activeProjects[0]?.active_project || 0 },
+      { label: "Active Resources", value: activeResources[0]?.active_resource || 0 },
+      { label: "Total Resource Cost", value: "$125,000" },
+      { label: "Allocation %", value: "87%" },
+      { label: "Actuals Confirmed", value: "92%" },
+    ];
+    setOverview(data);
+  }, [activeProjects, activeResources]);
   return (
     <Box mb={3}>
       <Grid container spacing={3}>
-        {data.map((item, idx) => (
+        {overview.map((item, idx) => (
           <Grid item xs={12} sm={6} md={2.4} key={item.label || idx}>
             <Paper
               elevation={3}
