@@ -127,7 +127,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           error={touched.Budget && Boolean(errors.Budget)}
           helperText={touched.Budget && formikProps.errors.Budget}
           onKeyDown={e => {
-            if (['e', 'E', '+', '-'].includes(e.key)) {
+            if (['e', 'E', '+', '-', '.', ','].includes(e.key)) {
               e.preventDefault();
             }
           }}
