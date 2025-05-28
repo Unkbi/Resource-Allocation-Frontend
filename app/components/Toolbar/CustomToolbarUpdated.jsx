@@ -1048,7 +1048,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </>
             ) : null}
           </Box>
-          <GridToolbarContainer ref={setFilterButtonEl} sx={{ padding: 0 }}>
+          <GridToolbarContainer ref={setFilterButtonEl} sx={{ padding: 0 ,flexWrap:'nowrap'}}>
             <GridToolbarFilterButton
               slotProps={{
                 tooltip: { title: 'Filters' },
@@ -1209,7 +1209,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             </StyledMenu>
           </Box>
           <Button
-            startIcon={<AddIcon />}
             disabled={
               currentView.GroupBy.includes('Cost') ||
               isObjectEqual(
@@ -1263,7 +1262,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             <ShareIcon />
           </IconButton>
         </Box>
-        <Box>
+        {/* History button on the toolbar */}
+        {/* <Box>
           <IconButton
             variant="outlined"
             size="small"
@@ -1272,7 +1272,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           >
             <HistoryIcon />
           </IconButton>
-        </Box>
+        </Box> */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <CustomExport />
         </Box>
