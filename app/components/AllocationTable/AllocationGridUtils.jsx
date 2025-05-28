@@ -3,7 +3,11 @@ import {
   getAllColumnsWithWeek,
 } from '@/app/components/AllocationTable/TableHeader';
 
-import { calculateTotalEffort } from '@/app/utils/common';
+import {
+  calculateTotalEffort,
+  getMondayOfISO,
+  getProjectBudgetCategory,
+} from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
@@ -29,6 +33,7 @@ import { removeResourceAllocation } from '@/app/redux/actions/resourceAllocation
 import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { parseISO } from 'date-fns';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -62,6 +67,7 @@ const CellWithMenu = ({
   handleAddClick,
   handleCloneClick,
   handleTranferClick,
+  isFormatWithK,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -221,11 +227,13 @@ const CellWithMenu = ({
           <EllipsisNameCell
             value={params.value}
             showAddIcon={false}
-            showAvatar={true}
+            showAvatar={showAvatar}
+            isFormatWithK={isFormatWithK}
           />
         }
         onClick={() => handleAddClick(params)}
         menu={menu}
+        isFormatWithK={isFormatWithK}
       />
       <ConfirmDialog
         open={showDeleteDialog}
@@ -273,7 +281,8 @@ export const getFinalColumns = (
   setSelectedResourceId,
   dispatch,
   startDate,
-  endDate
+  endDate,
+  isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
@@ -284,7 +293,8 @@ export const getFinalColumns = (
     columns,
     dispatch,
     startDate,
-    endDate
+    endDate,
+    isFormatWithK
   );
 
   const handleAddClick = params => {
@@ -297,7 +307,7 @@ export const getFinalColumns = (
           formType: 'add_allocation',
           initialData: {
             Resource: params.value,
-            Project: splitViewCurrentProject.Name,
+            Project: [splitViewCurrentProject.Name],
           },
         })
       );
@@ -311,7 +321,7 @@ export const getFinalColumns = (
           initialData: {
             Resource: params.row.resource || params.value,
             ResourceId: params.row.resourceId,
-            Project: params.row.project || params.value,
+            Project: [params.row.project || params.value],
             Team: params.row.teams,
           },
         })
@@ -369,6 +379,7 @@ export const getFinalColumns = (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
+              isFormatWithK={isFormatWithK}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
             />
@@ -422,11 +433,13 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                isFormatWithK={isFormatWithK}
               >
                 <EllipsisNameCell
                   value={params.value}
                   showAddIcon
                   onAddClick={() => handleAddClick(params)}
+                  isFormatWithK={isFormatWithK}
                 />
               </CellWithMenu>
             );
@@ -454,7 +467,11 @@ export const getFinalColumns = (
                 }}
               >
                 {!isGroupExpanded && (
-                  <EllipsisNameCell value={firstProject} showAddIcon={false} />
+                  <EllipsisNameCell
+                    value={firstProject}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                  />
                 )}
                 {!isGroupExpanded && (
                   <span
@@ -505,6 +522,7 @@ export const getFinalColumns = (
               handleAddClick={handleAddClick}
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
+              isFormatWithK={isFormatWithK}
             />
           ) : null;
         },
@@ -531,14 +549,36 @@ export const getGroupingColDef = groupBy => ({
   headerClassName: 'prime-header',
 });
 
-export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
+export const getCellClassName = (
+  params,
+  updatedRows,
+  allocationTheme = [],
+  type = 'allocation',
+  allProjects = []
+) => {
   if (params?.field === 'totalEffort') {
+    if (
+      type === 'cost' &&
+      params.rowNode?.type === 'group' &&
+      params.rowNode?.groupingField === 'project' &&
+      params?.field === 'totalEffort'
+    ) {
+      const project = allProjects.find(
+        row => row.Name === params.rowNode.groupingKey
+      );
+      const projectCategory = getProjectBudgetCategory(
+        project?.Budget || 0,
+        params?.value || 0
+      );
+      return `total-effort-cell project-budget-${projectCategory}`;
+    }
     return 'total-effort-cell';
   }
 
   if (params && params.field && typeof params.field === 'string') {
     if (
       /^W\d+/.test(params.field) &&
+      type !== 'cost' &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
         params.rowNode?.groupingField === 'resource')
@@ -598,6 +638,29 @@ export const getCellClassName = (params, updatedRows, allocationTheme = []) => {
           return `allocation-theme-${matchingRange.id}`;
         } else {
           return `allocation-theme-${matchingRange.id}-secondGroup`;
+        }
+      }
+    } else if (
+      params.rowNode?.type === 'group' &&
+      params.rowNode?.groupingField === 'project' &&
+      /^W\d+/.test(params.field)
+    ) {
+      const project = allProjects.find(
+        row => row.Name === params.rowNode.groupingKey
+      );
+
+      const currentWeekData = updatedRows.find(
+        row => row.projectId === project?.Id
+      )?.[params.field];
+      if (project && currentWeekData && currentWeekData?.period) {
+        const isWithinProjectDateRange =
+          project &&
+          project.StartDate &&
+          project.EndDate &&
+          parseISO(project.StartDate) <= parseISO(currentWeekData?.period) &&
+          parseISO(project.EndDate) >= parseISO(currentWeekData?.period);
+        if (isWithinProjectDateRange && project.Type) {
+          return `firstGroupsRow project-type-${project.Type.toLowerCase().split(' ').join('_')}`;
         }
       }
     }

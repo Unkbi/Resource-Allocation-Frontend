@@ -4,11 +4,11 @@ import {
   StyledDataGrid,
 } from '../AllocationTable/styles/StyledDataGrid';
 import {
+  GridApi,
   GridColDef,
   GridColumnMenu,
   GridColumnMenuProps,
   GridToolbarProps,
-  useGridApiRef,
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
@@ -18,6 +18,9 @@ interface ResourceTableProps {
   columns: GridColDef[];
   rows: Resource[];
   loading: boolean;
+  apiRef: React.RefObject<GridApi>;
+  value: String;
+  onChange: any;
 }
 
 function CustomColumnMenu(props: GridColumnMenuProps) {
@@ -32,10 +35,15 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
   );
 }
 
-const ResourceTable = ({ columns, rows, loading }: ResourceTableProps) => {
-  const apiRef = useGridApiRef();
+const ResourceTable = ({
+  columns,
+  rows,
+  loading,
+  apiRef,
+  value,
+  onChange = () => {},
+}: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
-
   return (
     <StyledDataGrid
       apiRef={apiRef}
@@ -45,17 +53,24 @@ const ResourceTable = ({ columns, rows, loading }: ResourceTableProps) => {
       hideFooterSelectedRowCount={true}
       loading={loading}
       initialState={{
+        sorting: {
+          sortModel: [{ field: 'FullName', sort: 'asc' }],
+        },
         columns: {
           columnVisibilityModel: {
             team: false,
             organization: false,
+            WorkLocation: false,
+            AverageWeeklyHours: false,
+            ContractorHourlyRate:false,
+            PhoneNumber:false,
           },
         },
       }}
       slots={{
         toolbar:
           ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
-        columnMenu: CustomColumnMenu,
+          columnMenu: CustomColumnMenu,
       }}
       localeText={{
         toolbarFilters: '',
@@ -83,6 +98,8 @@ const ResourceTable = ({ columns, rows, loading }: ResourceTableProps) => {
         toolbar: {
           //@ts-ignore
           setFilterButtonEl,
+          value: value,
+          onChange: onChange,
         },
         columnsPanel: {
           className: 'styleColumnMenu',

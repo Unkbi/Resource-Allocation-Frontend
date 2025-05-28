@@ -32,6 +32,11 @@ export const getResourcesAgainstTeams = createAsyncThunk(
   }
 );
 
+export const fetchAllTeamsForSaga = async () => {
+  const response = await axiosInstance.get(`${API_PROJECT_PORTFOLIO}/Team`);
+  return response.data;
+};
+
 export const fetchResourcesAgainstTeamsForSaga = async (
   postData: GetTeamResourcesPayload
 ) => {
@@ -88,6 +93,31 @@ export const fetchTeamAllocationsForSaga = async (
   );
   return response.data;
 };
+
+
+export const getResourceDetail = createAsyncThunk(
+  'resource/getResourceDetail',
+  async (resourceId: string, { rejectWithValue }) => {
+    try {
+      const payload = {
+        'ResourceAllocation.Core/GetResourceDetail': {
+          Id: resourceId,
+        },
+      };
+
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/GetResourceDetail`,
+        payload
+      );
+
+      return response.data?.result;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || 'Failed to fetch resource detail.'
+      );
+    }
+  }
+);
 
 /*
  * Not being used currently in application

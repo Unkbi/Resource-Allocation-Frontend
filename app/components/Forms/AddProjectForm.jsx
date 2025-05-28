@@ -6,6 +6,8 @@ import { StyledInput } from '../Input/StyledInput';
 import { useSelector } from 'react-redux';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
+import { useDispatch } from 'react-redux';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -19,25 +21,39 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   } = formikProps;
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
+  const dispatch = useDispatch();
 
   const resourceTypeOptions =
-    resources &&
-    resources?.result?.map(resource => {
-      return { value: resource.FullName, label: resource.FullName };
-    });
+    resources?.result?.map(resource => ({
+      value: resource.Id,
+      label: resource.FullName,
+    })) || [];
+
+  useEffect(() => {
+    if (!resources || !resources?.result) {
+      dispatch(fetchAllResources());
+    }
+  }, []);
 
   useEffect(() => {
     if (initialData) {
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
-        Owner: initialData.Owner?.name || '',
+        ProjectSponsor:
+          resources?.result?.find(
+            res => res.FullName === initialData.ProjectSponsor
+          )?.Id || '',
         AllowOvertime: initialData.AllowOvertime ?? '',
         Location: initialData.Location || '',
-        ProjectManager: initialData.ProjectManager || '',
+        ProjectManager:
+          resources?.result?.find(
+            res => res.FullName === initialData.ProjectManager
+          )?.Id || '',
         Name: initialData.Name || '',
         Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
+        Budget: initialData.Budget || 0,
       };
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
@@ -47,7 +63,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
 
   const projectTypeOptions = [
     { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB (Run-th-business)' },
+    { value: 'RTB', label: 'RTB' }, //(Run-th-business) 
     { value: 'CTB', label: 'CTB' },
     { value: 'STB', label: 'STB' },
     { value: 'Ongoing', label: 'Ongoing' },
@@ -82,16 +98,42 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Sponsor</StyledLabel>
+        <StyledLabel>Project Sponsor</StyledLabel>
         <CustomSelect
-          name="Owner"
+          name="ProjectSponsor"
           options={resourceTypeOptions}
-          value={values.Owner || ''}
+          value={values.ProjectSponsor || ''}
           onChange={handleChange}
           onBlur={handleBlur}
           width={'100%'}
-          error={touched.Owner && Boolean(errors.Owner)}
-          helperText={touched.Owner && formikProps.errors.Owner}
+          error={touched.ProjectSponsor && Boolean(errors.ProjectSponsor)}
+          helperText={
+            touched.ProjectSponsor && formikProps.errors.ProjectSponsor
+          }
+        />
+      </Box>
+      <Box sx={{ pb: 2 }}>
+        <StyledLabel>Project Budget</StyledLabel>
+        <StyledInput
+          type="number"
+          name="Budget"
+          value={values.Budget || ''}
+          onChange={e => {
+            const input = e.target.value;
+            const parsed = input === '' ? null : Number(input);
+            formikProps.setFieldValue('Budget', parsed);
+          }}
+          onBlur={handleBlur}
+          error={touched.Budget && Boolean(errors.Budget)}
+          helperText={touched.Budget && formikProps.errors.Budget}
+          onKeyDown={e => {
+            if (['e', 'E', '+', '-', '.', ','].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
+          InputProps={{
+            startAdornment: <span>$&nbsp;</span>,
+          }}
         />
       </Box>
       <Box sx={{ pb: 2 }}>
@@ -178,11 +220,13 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           startDateLabel="Start Date"
           formikProps={formikProps}
           error={
-            formikProps.touched.StartDate &&
-            Boolean(formikProps.errors.StartDate)
+            (formikProps.touched.StartDate &&
+              Boolean(formikProps.errors.StartDate)) ||
+            (formikProps.touched.EndDate && Boolean(formikProps.errors.EndDate))
           }
           helperText={
-            formikProps.touched.StartDate && formikProps.errors.StartDate
+            (formikProps.touched.StartDate && formikProps.errors.StartDate) ||
+            (formikProps.touched.EndDate && formikProps.errors.EndDate)
           }
           customStyles={true}
           isProjectForm={true}

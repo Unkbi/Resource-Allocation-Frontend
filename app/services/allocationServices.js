@@ -36,12 +36,34 @@ export const putResourceAllocations = createAsyncThunk(
   }
 );
 
+// export const deleteResourceAllocations = createAsyncThunk(
+//   '/allocations/delete',
+//   async (params, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstance.delete(
+//         `${API_PROJECT_PORTFOLIO}/Resource/${params.resourceId}/ResourceAllocation/Allocation/${params.allocationId}`
+//       );
+//       return response.data;
+//     } catch (error) {
+//       return rejectWithValue(
+//         error.response?.data || 'Failed to delete resource allocation'
+//       );
+//     }
+//   }
+// );
+
+// Updated deleteResourceAllocations to permanently remove the allocation.
 export const deleteResourceAllocations = createAsyncThunk(
   '/allocations/delete',
   async (params, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(
-        `${API_PROJECT_PORTFOLIO}/Resource/${params.resourceId}/ResourceAllocation/Allocation/${params.allocationId}`
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/DeleteAllocation`,
+        {
+          'ResourceAllocation.Core/DeleteAllocation': {
+            Id: params.allocationId,
+          },
+        }
       );
       return response.data;
     } catch (error) {
@@ -66,9 +88,10 @@ export const getUsersSavedViews = createAsyncThunk(
   '/views/getUsersSavedViews',
   async (payload, { rejectWithValue }) => {
     try {
-      const userid = payload["ResourceAllocation.Core/UserAllocationView"].UserId;
+      const userid =
+        payload['ResourceAllocation.Core/UserAllocationView'].UserId;
       const response = await axiosInstance.get(
-        `${API_PROJECT_PORTFOLIO}/UserAllocationView?UserId="${userid}"`,
+        `${API_PROJECT_PORTFOLIO}/UserAllocationView?UserId="${userid}"`
       );
       return response.data;
     } catch (error) {
