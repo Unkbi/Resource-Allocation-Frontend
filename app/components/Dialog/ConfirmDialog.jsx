@@ -9,7 +9,7 @@ const ConfirmDialog = ({ open, onCancel, onConfirm, title, children }) => {
         <Box
           sx={{
             backgroundColor: "#1C2D5F",
-            padding: "10px 20px 10px 24px",
+            padding: "10px 14px 10px 14px",
             color: "#ffffff",
             borderTopLeftRadius: "4px",
           }}

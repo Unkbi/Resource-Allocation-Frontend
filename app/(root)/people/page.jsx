@@ -894,11 +894,11 @@ export default function Resources() {
 
     dispatch(action)
       .then(() => {
-        if (deleteTarget.type === 'Team') {
-          dispatch(fetchAllTeams());
-        } else {
-          dispatch(fetchAllResources());
-        }
+        dispatch(fetchAllResources());
+        dispatch({
+          type: FETCH_ALL_RESOURCES_DETAIL,
+          payload: {},
+        });
       })
       .catch(error => {
         console.error(`Error deleting ${deleteTarget.type || 'resource'}:`, error);
