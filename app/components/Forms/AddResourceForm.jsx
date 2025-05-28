@@ -71,9 +71,13 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
 
-      const matchedTeam = teams?.result?.find(team => team.Name === initialData.Team);
-      const matchedOrg = organisations?.find(org => org.Name === initialData.Organization);
-      
+      const matchedTeam = teams?.result?.find(
+        team => team.Name === initialData.Team
+      );
+      const matchedOrg = organisations?.find(
+        org => org.Name === initialData.Organization
+      );
+
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
@@ -82,7 +86,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         FirstName: initialData.FirstName || '',
         LastName: initialData.LastName || '',
         PreferredFirstName: initialData.PreferredFirstName || '',
-        Type: initialData.Type || 'Contractor - FT',
+        Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
         Email: initialData.Email || '',
         HRLevel: initialData.HRLevel || '',
@@ -313,7 +317,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         sx={{
           pb: 2,
           display: 'flex',
-          alignItems: 'flex-end',
+          alignItems: 'flex-start',
           width: '100%',
           gap: 1,
         }}
@@ -345,7 +349,16 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
             options={typeOptions}
             width={'100%'}
             value={values.Type || ''}
-            onChange={handleChange}
+            onChange={e => {
+              if (
+                e.target.value !== 'Contractor - FT' ||
+                e.target.value !== 'Contractor - PT'
+              ) {
+                formikProps.setFieldValue('ContractorHourlyRate', null);
+                formikProps.setFieldValue('AverageWeeklyHours', null);
+              }
+              handleChange(e);
+            }}
             onBlur={handleBlur}
             error={touched.Type && Boolean(errors.Type)}
             helperText={formikProps.errors.Type}
