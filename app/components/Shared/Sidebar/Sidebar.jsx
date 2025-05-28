@@ -362,7 +362,6 @@ const menuItems = [
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      ml: 1,
     }}
   >
     <img
