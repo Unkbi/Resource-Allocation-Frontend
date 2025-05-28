@@ -38,6 +38,8 @@ import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
+import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -212,15 +214,63 @@ export default function Project() {
     return () => clearTimeout(timeout);
   }, [projects, highlightedRowId]);
 
-  const handleConfirmDelete = () => {
-    if (!projectToDelete?.Id) return;
-    dispatch(deleteProject(projectToDelete.Id)).then(() =>
-      dispatch(getAllProjects())
+  const handleConfirmDelete = async projectId => {
+    dispatch(
+      showToast({
+        open: true,
+        message: 'Checking for active allocations',
+        type: 'info',
+        position: 'bottom-left',
+        autoHideTimer: 1000,
+      })
     );
-    setDeleteDialogOpen(false);
-    setProjectToDelete(null);
+    try {
+      const postData = {
+        'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
+          Project: projectId,
+          StartDate: '2000-01-01',
+          EndDate: '2032-01-01',
+        },
+      };
+      const response = await fetchProjectAllocationsForSaga(postData);
+      if (!response.result || response.result.length === 0) {
+        await dispatch(deleteProject(projectId)).unwrap();
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Project deleted successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+        dispatch(fetchAllProjects());
+      } else {
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Cannot delete project with active allocations',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+      }
+    } catch (error) {
+      dispatch(
+        showToast({
+          open: true,
+          message: 'Failed to delete project',
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 1000,
+        })
+      );
+    } finally {
+      setDeleteDialogOpen(false); 
+      setProjectToDelete(null);
+    }
   };
-
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setProjectToDelete(null);
@@ -531,7 +581,7 @@ export default function Project() {
       />
       <ConfirmDialog
         open={deleteDialogOpen}
-        onConfirm={handleConfirmDelete}
+        onConfirm={() => handleConfirmDelete(projectToDelete.Id)}
         onCancel={handleCancelDelete}
         title="Are you sure you want to delete this project?"
       >
