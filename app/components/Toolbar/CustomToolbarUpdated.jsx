@@ -1127,107 +1127,111 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
           </Box>
-          <Box>
-            <ViewButton
-              startIcon={<PreferencesIcon />}
-              endIcon={<KeyboardArrowDownIcon />}
-              onClick={handleViewClick}
-              aria-controls={open ? 'view-menu' : undefined}
-              aria-haspopup="true"
-              aria-expanded={open ? 'true' : undefined}
-            >
-              {currentViewName}
-            </ViewButton>
+          <Box className="view-btn" sx={{display:'flex' ,gap:0}}>
+            <Box>
+              <ViewButton
+                startIcon={<PreferencesIcon />}
+                endIcon={<KeyboardArrowDownIcon />}
+                onClick={handleViewClick}
+                aria-controls={open ? 'view-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={open ? 'true' : undefined}
+              >
+                {currentViewName}
+              </ViewButton>
 
-            <StyledMenu
-              id="group-menu"
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
-              MenuListProps={{
-                'aria-labelledby': 'view-button',
-              }}
-              PaperProps={{
-                style: {
-                  minWidth: 'auto',
-                  width: 'auto',
-                  left: 0,
-                  right: 'auto',
-                  position: 'absolute',
+              <StyledMenu
+                id="group-menu"
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                MenuListProps={{
+                  'aria-labelledby': 'view-button',
+                }}
+                PaperProps={{
+                  style: {
+                    minWidth: 'auto',
+                    width: 'auto',
+                    left: 0,
+                    right: 'auto',
+                    position: 'absolute',
+                  },
+                }}
+              >
+                {savedViews.map(option => (
+                  <StyledViewMenuItem
+                    key={option.Id}
+                    onClick={() => handleMenuItemClick(option.Id)}
+                    className={selectedView === option.Id ? 'selected' : ''}
+                    sx={
+                      option.Id === '0'
+                        ? {
+                            borderTop: '1px solid #DDE1E4',
+                          }
+                        : {}
+                    }
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        minWidth: '180px',
+                      }}
+                    >
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        {getIcon(option.Id)}
+
+                        <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
+                      </Box>
+
+                      {option.isDefault && option.Id !== '0' && (
+                        <Typography className="tag">default</Typography>
+                      )}
+                      {option.Id !== '0' && (
+                        <Box className="action-buttons">
+                          <ActionIconButton
+                            size="small"
+                            onClick={e => handleEditView(e, option)}
+                          >
+                            <EditActionIcon />
+                          </ActionIconButton>
+                          <ActionIconButton
+                            size="small"
+                            onClick={e => handleDeleteView(e, option)}
+                          >
+                            <DeleteActionIcon />
+                          </ActionIconButton>
+                        </Box>
+                      )}
+                    </Box>
+                  </StyledViewMenuItem>
+                ))}
+              </StyledMenu>
+            </Box>
+            <Button
+              disabled={
+                currentView.GroupBy.includes('Cost') ||
+                isObjectEqual(
+                  savedViews.find(view => view.Id === selectedView),
+                  currentView
+                )
+              }
+              onClick={handleSaveView}
+              sx={{
+                border: 'none !important',
+                color: '#344665 !important',
+                backgroundColor: '#ffffff !important',
+                '&.Mui-disabled': {
+                  color: '#9F9F9F !important', // Change disabled text color
                 },
               }}
             >
-              {savedViews.map(option => (
-                <StyledViewMenuItem
-                  key={option.Id}
-                  onClick={() => handleMenuItemClick(option.Id)}
-                  className={selectedView === option.Id ? 'selected' : ''}
-                  sx={
-                    option.Id === '0'
-                      ? {
-                          borderTop: '1px solid #DDE1E4',
-                        }
-                      : {}
-                  }
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 3,
-                      minWidth: '180px',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {getIcon(option.Id)}
-
-                      <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
-                    </Box>
-
-                    {option.isDefault && option.Id !== '0' && (
-                      <Typography className="tag">default</Typography>
-                    )}
-                    {option.Id !== '0' && (
-                      <Box className="action-buttons">
-                        <ActionIconButton
-                          size="small"
-                          onClick={e => handleEditView(e, option)}
-                        >
-                          <EditActionIcon />
-                        </ActionIconButton>
-                        <ActionIconButton
-                          size="small"
-                          onClick={e => handleDeleteView(e, option)}
-                        >
-                          <DeleteActionIcon />
-                        </ActionIconButton>
-                      </Box>
-                    )}
-                  </Box>
-                </StyledViewMenuItem>
-              ))}
-            </StyledMenu>
+              Save View
+            </Button>
           </Box>
-          <Button
-            disabled={
-              currentView.GroupBy.includes('Cost') ||
-              isObjectEqual(
-                savedViews.find(view => view.Id === selectedView),
-                currentView
-              )
-            }
-            onClick={handleSaveView}
-            sx={{
-              border: 'none !important',
-              color: '#344665 !important',
-              backgroundColor: '#ffffff !important',
-              '&.Mui-disabled': {
-                color: '#9F9F9F !important', // Change disabled text color
-              },
-            }}
-          >
-            Save View
-          </Button>
         </Box>
       </ToolBox2>
       <ToolBox2 sx={{ gap: 1 }}>
