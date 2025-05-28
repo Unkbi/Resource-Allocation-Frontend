@@ -109,7 +109,7 @@ export default function ExecutiveDashboardPage() {
   const [filteredActiveProjectsByType, setFilteredActiveProjectsByType] =
     useState([]);
   const [originalCapacityData, setOriginalCapacityData] = useState([]);
-const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const [selectedOption, setSelectedOption] = useState('Weekly'); // Default option
 
   const handleMenuOpen = event => {
@@ -220,18 +220,28 @@ const [anchorEl, setAnchorEl] = useState(null);
     const monday = getMonday(date).format('YYYY-MM-DD');
 
     const capacityData = capacityAvailability.filter(
-      d => dayjs(d.period_start).format('YYYY-MM-DD') === monday
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
     );
     const underAllocated = resourceUtilization.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
       d =>
         d.allocation_status === 'under-allocated' &&
-        dayjs(d.period_start).format('YYYY-MM-DD') === monday
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+          monday
     );
 
     const overAllocated = resourceUtilization.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
       d =>
         d.allocation_status === 'over-allocated' &&
-        dayjs(d.period_start).format('YYYY-MM-DD') === monday
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+          monday
     );
 
     setOverAllocated(overAllocated);
@@ -343,22 +353,27 @@ const [anchorEl, setAnchorEl] = useState(null);
           <PieChart
             series={[
               {
-                data: resourceActualsDeviation.length > 0
-                  ? [
-                      {
-                        id: 0,
-                        value: parseFloat(resourceActualsDeviation[0].deviation_pct),
-                        label: 'Deviation',
-                        color: '#FF7043', // Orange for deviation
-                      },
-                      {
-                        id: 1,
-                        value: parseFloat(resourceActualsDeviation[0].in_plan_pct),
-                        label: 'In Plan',
-                        color: '#80CBC4', // Green for in-plan
-                      },
-                    ]
-                  : [],
+                data:
+                  resourceActualsDeviation.length > 0
+                    ? [
+                        {
+                          id: 0,
+                          value: parseFloat(
+                            resourceActualsDeviation[0].deviation_pct
+                          ),
+                          label: 'Deviation',
+                          color: '#FF7043', // Orange for deviation
+                        },
+                        {
+                          id: 1,
+                          value: parseFloat(
+                            resourceActualsDeviation[0].in_plan_pct
+                          ),
+                          label: 'In Plan',
+                          color: '#80CBC4', // Green for in-plan
+                        },
+                      ]
+                    : [],
                 innerRadius: 0, // Full pie chart
                 outerRadius: 120,
                 cornerRadius: 3,
@@ -1071,7 +1086,7 @@ const [anchorEl, setAnchorEl] = useState(null);
   ];
 
   return (
-     <>
+    <>
       <Global
         styles={css`
           circle.MuiMarkElement-root {
@@ -1079,131 +1094,135 @@ const [anchorEl, setAnchorEl] = useState(null);
           }
         `}
       />
-    <Box sx={{ p: 2 }}>
-      <Tabs
-        value={activeTab}
-        onChange={(e, val) => setActiveTab(val)}
-        sx={{ mt: 1, mb: 1, borderBottom: '1px solid #ddd' }}
-      >
-        <Tab
-          value="overview"
-          label="Overview"
-          sx={{ textTransform: 'none', fontWeight: 600 }}
-        />
-        <Tab value="teams" label="Teams" sx={{ textTransform: 'none' }} />
-        <Tab value="projects" label="Projects" sx={{ textTransform: 'none' }} />
-        <DashboardToolbar
-          onFilterChange={handleFilterChange}
-          timeFilter={bucket}
-          teamFilter={teamFilter}
-          projectTypes={projectTypeNames}
-          teamNames={teamNames}
-        />
-      </Tabs>
+      <Box sx={{ p: 2 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(e, val) => setActiveTab(val)}
+          sx={{ mt: 1, mb: 1, borderBottom: '1px solid #ddd' }}
+        >
+          <Tab
+            value="overview"
+            label="Overview"
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          />
+          <Tab value="teams" label="Teams" sx={{ textTransform: 'none' }} />
+          <Tab
+            value="projects"
+            label="Projects"
+            sx={{ textTransform: 'none' }}
+          />
+          <DashboardToolbar
+            onFilterChange={handleFilterChange}
+            timeFilter={bucket}
+            teamFilter={teamFilter}
+            projectTypes={projectTypeNames}
+            teamNames={teamNames}
+          />
+        </Tabs>
 
-      {activeTab === 'overview' && (
-        <>
-          <Topbar
-          text="Overview"
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          selectedOption={selectedOption}
-          setSelectedOption={setSelectedOption}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
-        />
-          <ResponsiveGridLayout
-            className="layout"
-            layouts={layouts}
-            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-            cols={{ lg: 12, md: 12, sm: 12 }}
-            rowHeight={130}
-            onLayoutChange={handleLayoutChange}
-            isDraggable
-            isResizable
-          >
-            {Object.entries(overviewcharts).map(([key, component]) => (
-              <div key={key}>{component}</div>
-            ))}
-          </ResponsiveGridLayout>
-        </>
-      )}
+        {activeTab === 'overview' && (
+          <>
+            <Topbar
+              text="Overview"
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              anchorEl={anchorEl}
+              setAnchorEl={setAnchorEl}
+            />
+            <ResponsiveGridLayout
+              className="layout"
+              layouts={layouts}
+              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+              cols={{ lg: 12, md: 12, sm: 12 }}
+              rowHeight={130}
+              onLayoutChange={handleLayoutChange}
+              isDraggable
+              isResizable
+            >
+              {Object.entries(overviewcharts).map(([key, component]) => (
+                <div key={key}>{component}</div>
+              ))}
+            </ResponsiveGridLayout>
+          </>
+        )}
 
-      {activeTab === 'teams' && (
-        <>
-          <Topbar
-          text="Teams Overview"
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          selectedOption={selectedOption}
-          setSelectedOption={setSelectedOption}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
-        />
+        {activeTab === 'teams' && (
+          <>
+            <Topbar
+              text="Teams Overview"
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              anchorEl={anchorEl}
+              setAnchorEl={setAnchorEl}
+            />
 
-          <ResponsiveGridLayout
-            className="layout"
-            layouts={layouts}
-            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-            cols={{ lg: 12, md: 12, sm: 12 }}
-            rowHeight={130}
-            onLayoutChange={handleLayoutChange}
-            isDraggable
-            isResizable
-          >
-            {Object.entries(teamCharts).map(([key, component]) => (
-              <div key={key}>{component}</div>
-            ))}
-          </ResponsiveGridLayout>
-        </>
-      )}
+            <ResponsiveGridLayout
+              className="layout"
+              layouts={layouts}
+              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+              cols={{ lg: 12, md: 12, sm: 12 }}
+              rowHeight={130}
+              onLayoutChange={handleLayoutChange}
+              isDraggable
+              isResizable
+            >
+              {Object.entries(teamCharts).map(([key, component]) => (
+                <div key={key}>{component}</div>
+              ))}
+            </ResponsiveGridLayout>
+          </>
+        )}
 
-      {activeTab === 'projects' && (
-        <>
-          <Topbar
-          text="Project Tracking"
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          selectedOption={selectedOption}
-          setSelectedOption={setSelectedOption}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
-        />
-          <ResponsiveGridLayout
-            className="layout"
-            layouts={layouts}
-            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-            cols={{ lg: 12, md: 12, sm: 12 }}
-            rowHeight={130}
-            onLayoutChange={handleLayoutChange}
-            isDraggable
-            isResizable
-          >
-            {Object.entries(projectCharts).map(([key, component]) => (
-              <div key={key}>{component}</div>
-            ))}
-          </ResponsiveGridLayout>
-        </>
-      )}
-      <Dialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>{selectedChart}</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Drilldown details for "{selectedChart}" will appear here.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} color="primary">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {activeTab === 'projects' && (
+          <>
+            <Topbar
+              text="Project Tracking"
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              anchorEl={anchorEl}
+              setAnchorEl={setAnchorEl}
+            />
+            <ResponsiveGridLayout
+              className="layout"
+              layouts={layouts}
+              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+              cols={{ lg: 12, md: 12, sm: 12 }}
+              rowHeight={130}
+              onLayoutChange={handleLayoutChange}
+              isDraggable
+              isResizable
+            >
+              {Object.entries(projectCharts).map(([key, component]) => (
+                <div key={key}>{component}</div>
+              ))}
+            </ResponsiveGridLayout>
+          </>
+        )}
+        <Dialog
+          open={dialogOpen}
+          onClose={handleDialogClose}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>{selectedChart}</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Drilldown details for "{selectedChart}" will appear here.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogClose} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
     </>
   );
 }
