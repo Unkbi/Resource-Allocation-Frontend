@@ -11,6 +11,7 @@ import Popper from '@mui/material/Popper';
 import MenuList from '@mui/material/MenuList';
 import { performLogout } from '@/app/redux/actions/authActions';
 import { Button } from '@mui/material';
+import EllipsisNameCell from "../../ResourceAllocation/component/EllipsisNameCell";
 
 
 const MainBox = styled(Box, {
@@ -272,7 +273,7 @@ const menuItems = [
       marginTop: '15px', 
     }}>  
   <Box className ="profile-section">
-          <Box lineHeight={'10px'}
+          <Box 
             onClick={handleToggle}
             ref={anchorRef}
             id="composition-button"
@@ -300,25 +301,77 @@ const menuItems = [
               <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'30px'}}>
             {sidebarExpanded && (
               <>
-        <Typography 
-        sx={{ 
-          fontSize: '14px', 
-          fontWeight: '500', 
-          color: '#95979E',
-          padding :'2px',
-          textAlign: 'left',
-          display: 'block',
-          width: '100%',
-           }}>
-      {user && user.FirstName && user.LastName 
-      ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
-       : ''}   {user?.Email}
-    </Typography>
-    <img 
-    src={open ? "/images/icons/iconUp.svg" : "/images/icons/icon.svg"}
-    className="down-img"
-    alt=""
+  
+  <Box
+  sx={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    overflow: 'hidden',
+  }}
+>
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      width: '160px', 
+    }}
+  >  
+  <Box
+  sx={{
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#95979E',
+    padding: '2px 0',
+    textAlign: 'left',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    width: '100%',
+  }}
+>
+    <EllipsisNameCell
+      value={
+        user && user.FirstName && user.LastName
+          ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
+          : ''
+      }
     />
+   </Box>
+   <Box
+  sx={{
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#95979E',
+    padding: '2px 0',
+    textAlign: 'left',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    width: '100%',
+  }}
+>
+    <EllipsisNameCell value={user?.Email || ''} />
+    </Box>
+  </Box>
+
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ml: 1,
+    }}
+  >
+    <img
+      src={open ? '/images/icons/iconUp.svg' : '/images/icons/icon.svg'}
+      className="down-img"
+      alt="Toggle"
+    />
+  </Box>
+</Box>
   </>  
   )}
   </Box>
