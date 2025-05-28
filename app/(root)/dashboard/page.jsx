@@ -10,6 +10,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Menu,
+  MenuItem,
   IconButton,
   Tabs,
   Tab,
@@ -31,6 +33,8 @@ import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import Topbar from '@/app/components/Dashboard/TabTopbar';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -105,6 +109,19 @@ export default function ExecutiveDashboardPage() {
   const [filteredActiveProjectsByType, setFilteredActiveProjectsByType] =
     useState([]);
   const [originalCapacityData, setOriginalCapacityData] = useState([]);
+const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedOption, setSelectedOption] = useState('Weekly'); // Default option
+
+  const handleMenuOpen = event => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = option => {
+    setAnchorEl(null);
+    if (option) {
+      setSelectedOption(option); // Update the selected option
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
@@ -1055,7 +1072,6 @@ export default function ExecutiveDashboardPage() {
 
   return (
      <>
-      {/* Global styles for reducing circle size */}
       <Global
         styles={css`
           circle.MuiMarkElement-root {
@@ -1087,27 +1103,15 @@ export default function ExecutiveDashboardPage() {
 
       {activeTab === 'overview' && (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb:1, mt: 2, pl: 2, justifyContent: 'space-between' }}>
-            <Typography
-              variant="h2"
-              sx={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}
-            >
-              Overview
-            </Typography>
-            <Box>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DemoContainer components={['DatePicker']}>
-                <DatePicker
-                  displayWeekNumber
-                  label="Select a Date"
-                  value={selectedDate}
-                  onChange={newValue => setSelectedDate(newValue)}
-                  renderInput={params => <TextField {...params} />}
-                />
-              </DemoContainer>
-            </LocalizationProvider>
-          </Box>
-          </Box>
+          <Topbar
+          text="Overview"
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+        />
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}
@@ -1127,27 +1131,15 @@ export default function ExecutiveDashboardPage() {
 
       {activeTab === 'teams' && (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb:1, mt: 2, pl: 2, justifyContent: 'space-between' }}>
-            <Typography
-              variant="h2"
-              sx={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}
-            >
-              Teams Overview
-            </Typography>
-            <Box>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DemoContainer components={['DatePicker']}>
-                <DatePicker
-                  displayWeekNumber
-                  label="Select a Date"
-                  value={selectedDate}
-                  onChange={newValue => setSelectedDate(newValue)}
-                  renderInput={params => <TextField {...params} />}
-                />
-              </DemoContainer>
-            </LocalizationProvider>
-          </Box>
-          </Box>
+          <Topbar
+          text="Teams Overview"
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+        />
 
           <ResponsiveGridLayout
             className="layout"
@@ -1168,27 +1160,15 @@ export default function ExecutiveDashboardPage() {
 
       {activeTab === 'projects' && (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb:1, mt: 2, pl: 2, justifyContent: 'space-between' }}>
-            <Typography
-              variant="h2"
-              sx={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}
-            >
-              Project Tracking
-            </Typography>
-            <Box>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DemoContainer components={['DatePicker']}>
-                <DatePicker
-                  displayWeekNumber
-                  label="Select a Date"
-                  value={selectedDate}
-                  onChange={newValue => setSelectedDate(newValue)}
-                  renderInput={params => <TextField {...params} />}
-                />
-              </DemoContainer>
-            </LocalizationProvider>
-          </Box>
-          </Box>
+          <Topbar
+          text="Project Tracking"
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+        />
           <ResponsiveGridLayout
             className="layout"
             layouts={layouts}
