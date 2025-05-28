@@ -485,8 +485,10 @@ const AllocationForm = () => {
                 dispatch(setHighlightedRowId(newTeamId));
               }
 
-              if (pathname !== '/people') {
-                router.replace('/people');
+              if (pathname !== '/people?tab=teams') {
+                router.replace('/people?tab=teams');
+              } else {
+                dispatch(closeDialog());
               }
             })
             .catch(error => {
@@ -504,6 +506,7 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add team:', e);
         }
+        dispatch(closeDialog());
         break;
 
     case 'edit_team':

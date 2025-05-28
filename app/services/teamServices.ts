@@ -174,6 +174,21 @@ export const updateTeam = createAsyncThunk<
   }
 });
 
+export const deleteTeam = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: string }
+>(
+  '/team/delete',
+  async (teamId, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`);
+      return teamId;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Failed to delete team');
+    }
+  }
+);
 
 /*
  * Not being used currently in application

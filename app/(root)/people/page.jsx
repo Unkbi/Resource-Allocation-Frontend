@@ -23,6 +23,7 @@ import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { deleteTeam, getAllTeams } from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
@@ -34,6 +35,8 @@ import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const demoResources = {
   result: [
@@ -165,8 +168,17 @@ export default function Resources() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
-  const [value, setValue] = useState('resource');
-
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [value, setValue] = useState(initialTab || 'resource');
+  useEffect(() => {
+    const newTab = searchParams.get('tab');
+    if (newTab && newTab !== value) {
+      setValue(newTab);
+    }
+  }, [searchParams]);
+  
   const columns = [
     {
       field: 'FullName',
@@ -566,17 +578,15 @@ export default function Resources() {
                   </MenuItem>
 
                   <MenuItem
-                    /*
-                     * To Be Implemented...
-                     */
-                    // onClick={() => {
-                    //   setDeleteDialogOpen(true);
-                    //   handleMenuClose();
-                    //   setDeleteTarget({
-                    //     id: params.row.Id,
-                    //     name: params.row.Name,
-                    //   });
-                    // }}
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setDeleteTarget({
+                        id: params.row.Id,
+                        name: params.row.Team,
+                        type: 'Team'
+                      });
+                    }}
                     sx={menuItemStyle}
                   >
                     <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
@@ -826,7 +836,8 @@ export default function Resources() {
       loading ||
       dataProcessing ||
       employeeRatesLoading ||
-      allResourcesDetailLoading
+      allResourcesDetailLoading ||
+      !(value === 'teams' || value === 'resource')
     )
       return;
 
@@ -835,17 +846,15 @@ export default function Resources() {
       const totalRows = sortedRowIds?.length ?? 0;
       const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
 
-      if (rowIndex === -1 || rowIndex === undefined) {
-        dispatch(clearHighlightedRowId());
-        return;
-      }
+      if (rowIndex === -1 || rowIndex === undefined) return;
 
       const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
 
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          apiRef.current.setCellFocus(highlightedRowId, 'FullName');
+          const focusColumn = value === 'teams' ? 'Team' : 'FullName';
+          apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
 
           const scroller = document.querySelector(
@@ -873,17 +882,28 @@ export default function Resources() {
     dataProcessing,
     employeeRatesLoading,
     allResourcesDetailLoading,
+    value
   ]);
 
   const handleConfirmDelete = () => {
     if (!deleteTarget.id) return;
-    dispatch(deleteResource(deleteTarget.id))
+
+    const action = deleteTarget.type === 'Team'
+      ? deleteTeam(deleteTarget.id)
+      : deleteResource(deleteTarget.id);
+
+    dispatch(action)
       .then(() => {
-        dispatch(fetchAllResources());
+        if (deleteTarget.type === 'Team') {
+          dispatch(fetchAllTeams());
+        } else {
+          dispatch(fetchAllResources());
+        }
       })
       .catch(error => {
-        console.error('Error deleting resource:', error);
+        console.error(`Error deleting ${deleteTarget.type || 'resource'}:`, error);
       });
+      
     setDeleteDialogOpen(false);
     setDeleteTarget({ id: '', name: '' });
   };
@@ -915,6 +935,10 @@ export default function Resources() {
 
   const onChange = (event, newValue) => {
     setValue(newValue);
+
+    const tabParam = newValue === 'resource' ? '' : `?tab=${newValue}`;
+    const newUrl = `/people${tabParam}`;
+    router.replace(newUrl, { scroll: false });
   };
 
   const renderTable = () => {
@@ -936,6 +960,7 @@ export default function Resources() {
             loading={loading || dataProcessing}
             columns={teamColumns}
             rows={modifyTeamData(teamRows) || []}
+            apiRef={apiRef}
             value={value}
             onChange={onChange}
             componentsProps={{
@@ -992,7 +1017,7 @@ export default function Resources() {
           </>
         }
       >
-        This will permanently delete the Resource.
+        This will permanently delete the {deleteTarget.type ?? 'Resource'}.
       </ConfirmDialog>
     </Box>
   );
