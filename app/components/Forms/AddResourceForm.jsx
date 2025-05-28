@@ -82,7 +82,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
         FirstName: initialData.FirstName || '',
         LastName: initialData.LastName || '',
         PreferredFirstName: initialData.PreferredFirstName || '',
-        Type: initialData.Type || 'Contractor - FT',
+        Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
         Email: initialData.Email || '',
         HRLevel: initialData.HRLevel || '',
