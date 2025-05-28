@@ -124,14 +124,18 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
               {teamsExpanded
                 ? view === 'Project'
                   ? 'Collapse All Projects'
-                  : 'Collapse All Teams'
+                  : view === 'Project Cost'
+                    ? 'Collapse All Projects'
+                    : 'Collapse All Teams'
                 : view === 'Project'
                   ? 'Expand All Projects'
-                  : 'Expand All Teams'}
+                  : view === 'Project Cost'
+                    ? 'Expand All Projects'
+                    : 'Expand All Teams'}
             </ListItemText>
           </MenuItem>
 
-          {view !== 'Project' && (
+          {(view === 'Teams' || view === 'Teams Cost') && field === '__row_group_by_columns_group_teams__' && (
             <MenuItem onClick={handleToggleResources}>
               <ListItemIcon>
                 <PersonIcon fontSize="small" />
@@ -146,7 +150,7 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
         </>
       )}
 
-      {field === '__row_group_by_columns_group_resource__' && view !== 'Project' && (
+      {field === '__row_group_by_columns_group_resource__' && (view === 'Teams' || view === 'Teams Cost') && (
         <MenuItem onClick={handleToggleResources}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />
@@ -160,8 +164,7 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
       )}
     </>
   );
-};
-
+}
 export const CustomColumnMenu = props => {
   const { apiRef, ...otherProps } = props;
   const field = props.colDef?.field;
