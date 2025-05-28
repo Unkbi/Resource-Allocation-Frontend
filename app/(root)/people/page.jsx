@@ -23,20 +23,17 @@ import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { getAllTeams } from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
-import {
-  FETCH_ORGANISATIONS,
-  FETCH_ORGANISATIONS_RESOURCES,
-} from '@/app/redux/actions/organizationsAction';
 import TeamsTable from '@/app/components/Resources/TeamsTable';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 
 const demoResources = {
   result: [
@@ -155,20 +152,15 @@ export default function Resources() {
   const { resources, updating, loading } = useSelector(
     state => state.resources
   );
-  const { teams, teamsResources, dataProcessing } = useSelector(
-    state => state.teams
-  );
-  const {
-    organisations,
-    organisationsResources,
-    loading: organisationLoading,
-  } = useSelector(state => state.organisations);
+  const { allResourcesDetail, loading: allResourcesDetailLoading } =
+    useSelector(state => state.allResourcesDetail);
+  const { teams, dataProcessing } = useSelector(state => state.teams);
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [rows, setRows] = useState(resources?.result || null);
+  const [rows, setRows] = useState(allResourcesDetail || null);
   const [teamRows, setTeamRows] = useState(teams?.result || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
@@ -220,8 +212,10 @@ export default function Resources() {
       flex: 1,
       minWidth: 180,
       renderCell: params => {
-        params.value && (
-          <EllipsisNameCell value={params.value} showAvatar={false} />
+        return (
+          params.value && (
+            <EllipsisNameCell value={params.value} showAvatar={false} />
+          )
         );
       },
     },
@@ -340,17 +334,31 @@ export default function Resources() {
       filterable: true,
       renderCell: params => {
         const managerId = params?.row?.Manager;
-        return (
-          <EllipsisNameCell
-            value={managerMap?.[managerId] || managerId || ''}
-            showAvatar={false}
-          />
-        );
+        const managerName = managerMap?.[managerId];
+        return managerName ? (
+          <EllipsisNameCell value={managerName} showAvatar={true} />
+        ) : null;
       },
     },
     {
       field: 'StartDate',
       headerName: 'Start Date',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = new Date(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: 'EndDate',
+      headerName: 'End Date',
       flex: 1,
       minWidth: 120,
       renderCell: params => {
@@ -742,13 +750,6 @@ export default function Resources() {
     },
   ];
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-    if (newValue === 'teams') {
-      dispatch(getAllTeams());
-    }
-  };
-
   const managerMap = useMemo(() => {
     const map = {};
     if (resources?.result) {
@@ -762,41 +763,26 @@ export default function Resources() {
   useEffect(() => {
     if (!updating) {
       dispatch(fetchAllResources());
-      dispatch(getAllTeams());
+      dispatch(fetchAllTeams());
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
       dispatch(closeDialog());
     }
   }, [updating]);
 
   useEffect(() => {
-    setRows(resources?.result);
-  }, [resources]);
+    setRows(allResourcesDetail);
+  }, [allResourcesDetail]);
 
   useEffect(() => {
     setTeamRows(teams?.result);
   }, [teams]);
 
   useEffect(() => {
-    if (!teamsResources || Object.keys(teamsResources).length === 0) {
-      dispatch({
-        type: 'FETCH_TEAM_RESOURCES',
-        payload: {
-          teams: [],
-        },
-      });
-    }
     if (!teams || teams?.result?.length === 0) {
-      dispatch(getAllTeams());
-    }
-    if (
-      !organisationsResources ||
-      Object.keys(organisationsResources).length === 0
-    ) {
-      dispatch({
-        type: FETCH_ORGANISATIONS_RESOURCES,
-        payload: {
-          organisations: [],
-        },
-      });
+      dispatch(fetchAllTeams());
     }
     if (!employeeRates || employeeRates?.length === 0) {
       dispatch({
@@ -810,17 +796,10 @@ export default function Resources() {
     if (data) {
       return data.map(item => {
         return {
-          ...item,
-          id: item.Id,
-          Team:
-            getTeamForResource(item.Id, teams?.result, teamsResources)?.Name ||
-            '',
-          Organization:
-            getOrganisationForResource(
-              item.Id,
-              organisations,
-              organisationsResources
-            )?.Name || '',
+          ...item?.Resource,
+          id: item?.Resource?.Id,
+          Team: item?.Team?.Name || '',
+          Organization: item?.Organization?.Name || '',
         };
       });
     }
@@ -841,20 +820,28 @@ export default function Resources() {
   };
 
   useEffect(() => {
-    if (!highlightedRowId || !apiRef?.current) return;
-
-    const sortedRowIds = apiRef.current.getSortedRowIds?.();
-    const totalRows = sortedRowIds?.length ?? 0;
-    const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
-
-    if (rowIndex === -1 || rowIndex === undefined) {
-      dispatch(clearHighlightedRowId());
+    if (
+      !highlightedRowId ||
+      !apiRef?.current ||
+      loading ||
+      dataProcessing ||
+      employeeRatesLoading ||
+      allResourcesDetailLoading
+    )
       return;
-    }
-
-    const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
 
     const timeout = setTimeout(() => {
+      const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
+      const totalRows = sortedRowIds?.length ?? 0;
+      const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
+
+      if (rowIndex === -1 || rowIndex === undefined) {
+        dispatch(clearHighlightedRowId());
+        return;
+      }
+
+      const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
+
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
@@ -876,10 +863,17 @@ export default function Resources() {
           dispatch(clearHighlightedRowId());
         }
       });
-    }, 300);
+    }, 100);
 
     return () => clearTimeout(timeout);
-  }, [resources, highlightedRowId]);
+  }, [
+    allResourcesDetail,
+    highlightedRowId,
+    loading,
+    dataProcessing,
+    employeeRatesLoading,
+    allResourcesDetailLoading,
+  ]);
 
   const handleConfirmDelete = () => {
     if (!deleteTarget.id) return;
@@ -928,7 +922,7 @@ export default function Resources() {
       case 'resource':
         return (
           <ResourceTable
-            loading={loading || dataProcessing || organisationLoading}
+            loading={loading || dataProcessing || allResourcesDetailLoading}
             columns={columns}
             rows={modifyData(rows)}
             apiRef={apiRef}
@@ -939,7 +933,7 @@ export default function Resources() {
       case 'teams':
         return (
           <TeamsTable
-            loading={dataProcessing}
+            loading={loading || dataProcessing}
             columns={teamColumns}
             rows={modifyTeamData(teamRows) || []}
             value={value}

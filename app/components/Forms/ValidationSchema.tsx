@@ -149,7 +149,6 @@ export const editResourceValidationSchema = Yup.object({
       is: (status: String) => status === 'Inactive',
       then: schema =>
         schema
-          .required('End Date is required')
           .test(
             'end-after-start',
             'End Date cannot be before Start Date',

@@ -17,7 +17,7 @@ import {
 } from '@/app/services/teamServices';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
-import { Allocation, Resource } from '@/app/types';
+import { Allocation, GetAllCostForPeriodResponse, Resource } from '@/app/types';
 import {
   setCost,
   setDataProcessing as setCostDataProcessing,
@@ -155,8 +155,20 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       yield put(setAllTeamsResources(formatedTeamResults));
     }
 
+    const formatResponses =
+      responses?.result.map((res: GetAllCostForPeriodResponse) => ({
+        ProjectName: res.ProjectName || null,
+        Id: res.__Id__,
+        Period: res.Period,
+        Resource: res.ResourceRef?.split(',')[1] || null,
+        Duration: res.Duration || null,
+        ResourceName: res.ResourceName || null,
+        Cost: res.PlannedCost || 0,
+        Project: res.Project || null,
+      })) || [];
+
     const formattedAllocations = formatCostAllocations(
-      responses.result,
+      formatResponses,
       teams,
       projects,
       resources,

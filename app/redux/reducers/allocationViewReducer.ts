@@ -29,7 +29,7 @@ export const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
   'totalEffort',
 ];
 
-const COMPANY_DEFAULT_VIEW: AllocationGridView = {
+export const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Id: '0',
   UserId: null,
   Name: 'Default View',
