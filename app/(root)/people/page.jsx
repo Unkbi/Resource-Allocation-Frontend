@@ -885,6 +885,10 @@ export default function Resources() {
     dispatch(deleteResource(deleteTarget.id))
       .then(() => {
         dispatch(fetchAllResources());
+        dispatch({
+          type: FETCH_ALL_RESOURCES_DETAIL,
+          payload: {},
+        });
       })
       .catch(error => {
         console.error('Error deleting resource:', error);
