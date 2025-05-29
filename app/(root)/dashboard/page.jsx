@@ -1,5 +1,7 @@
 'use client';
 
+import Overview from '../../components/Dashboard/OverviewCards';
+//import { fetchOverviewData } from "../../services/overviewService";
 import { useEffect, useState } from 'react';
 import { Global, css } from '@emotion/react';
 import {
@@ -80,8 +82,13 @@ export default function ExecutiveDashboardPage() {
     resourceActualsDeviation = [],
     resourceFTEContractorRatio = [],
     unapprovedProjectAllocation = [],
+    unapprovedProjectActualsByTeam = [],
     activeProjectsByType = [],
     totalHeadcount = [],
+    activeProjects = [],
+    activeResources = [],
+    actualsConfirmed = [],
+    totalResourceCost = [],
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -111,6 +118,15 @@ export default function ExecutiveDashboardPage() {
   const [originalCapacityData, setOriginalCapacityData] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedOption, setSelectedOption] = useState('Weekly'); // Default option
+  const [
+    filteredUnapprovedProjectAllocation,
+    setFilteredUnapprovedProjectAllocation,
+  ] = useState([]);
+  const [filteredActualsConfirmed, setFilteredActualsConfirmed] = useState([]);
+  const [filteredUnapprovedActualsByTeam, setFilteredUnapprovedActualsByTeam] =
+    useState([]);
+  const [originalUnapprovedActualsByTeam, setOriginalUnapprovedActualsByTeam] =
+    useState([]);
 
   const handleMenuOpen = event => {
     setAnchorEl(event.currentTarget);
@@ -183,6 +199,16 @@ export default function ExecutiveDashboardPage() {
       }
       setFilteredCapacityData(filteredCapacity);
     }
+
+    if (originalUnapprovedActualsByTeam.length > 0) {
+      let filteredCapacity = originalUnapprovedActualsByTeam;
+      if (teamFilter !== 'all') {
+        filteredCapacity = filteredCapacity.filter(
+          d => d.team_name === teamFilter
+        );
+      }
+      setFilteredUnapprovedActualsByTeam(filteredCapacity);
+    }
   }, [teamFilter]);
 
   useEffect(() => {
@@ -244,12 +270,40 @@ export default function ExecutiveDashboardPage() {
           monday
     );
 
+    const unapprovedAllocation = unapprovedProjectAllocation.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
+    );
+
+    const actualsconfirmed = actualsConfirmed.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
+    );
+
+    const unapprovedActualsByTeam = unapprovedProjectActualsByTeam.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
+    );
+
     setOverAllocated(overAllocated);
     setUnderAllocated(underAllocated);
     setFilteredCapacityData(capacityData);
     setOriginalCapacityData(capacityData);
     setFilteredUnderAllocated(underAllocated);
     setFilteredOverAllocated(overAllocated);
+    setFilteredUnapprovedProjectAllocation(unapprovedAllocation);
+    setFilteredActualsConfirmed(actualsconfirmed);
+    setFilteredUnapprovedActualsByTeam(unapprovedActualsByTeam);
+    setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
   };
 
   useEffect(() => {
@@ -257,10 +311,23 @@ export default function ExecutiveDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (capacityAvailability.length > 0 && resourceUtilization.length > 0) {
+    if (
+      capacityAvailability.length > 0 &&
+      resourceUtilization.length > 0 &&
+      unapprovedProjectAllocation.length > 0 &&
+      actualsConfirmed.length > 0 &&
+      unapprovedProjectActualsByTeam.length > 0
+    ) {
       filterDataByDate(selectedDate);
     }
-  }, [capacityAvailability, resourceUtilization, selectedDate]);
+  }, [
+    capacityAvailability,
+    resourceUtilization,
+    actualsConfirmed,
+    unapprovedProjectAllocation,
+    unapprovedProjectActualsByTeam,
+    selectedDate,
+  ]);
 
   const handleFilterChange = filter => {
     if (filter.type === 'time') setBucket(filter.value);
@@ -330,6 +397,26 @@ export default function ExecutiveDashboardPage() {
       }),
       area: true, // <-- Enable area shading
     }));
+
+  const transformDataForPieChart = data => {
+    const colors = {
+      'Approved Work': '#00C9A7', // Green
+      'Unplanned Projects': '#FF884D', // Orange
+      'Other Work': '#FFC233', // Yellow
+      'Personal Time': '#0080FF', // Blue
+    };
+
+    return data.map((item, index) => ({
+      id: index,
+      value: parseFloat(item.pct_of_actuals),
+      label: item.category,
+      color: colors[item.category] || '#CCCCCC',
+    }));
+  };
+
+  const unapprovedProjectAllocationData = transformDataForPieChart(
+    filteredUnapprovedProjectAllocation
+  );
 
   const overviewcharts = {
     resourceActualsDeviation: (
@@ -551,32 +638,33 @@ export default function ExecutiveDashboardPage() {
           <PieChart
             series={[
               {
-                data: [
-                  {
-                    id: 0,
-                    value: unapprovedProjectAllocation?.otherProjects ?? 0.5,
-                    label: 'Other Projects',
-                    color: '#0080FF',
-                  },
-                  {
-                    id: 1,
-                    value: unapprovedProjectAllocation?.units_unapproved ?? 0.5,
-                    label: 'Unplanned Work',
-                    color: '#00C9A7',
-                  },
-                  {
-                    id: 2,
-                    value: unapprovedProjectAllocation?.personalTime ?? 1,
-                    label: 'Personal Time',
-                    color: '#FFC233',
-                  },
-                  {
-                    id: 3,
-                    value: unapprovedProjectAllocation?.approvedWork ?? 1,
-                    label: 'Approved Work',
-                    color: '#FF884D',
-                  },
-                ],
+                data: unapprovedProjectAllocationData,
+                // data: [
+                //   {
+                //     id: 0,
+                //     value: unapprovedProjectAllocation?.otherProjects ?? 0.5,
+                //     label: 'Other Projects',
+                //     color: '#0080FF',
+                //   },
+                //   {
+                //     id: 1,
+                //     value: unapprovedProjectAllocation?.units_unapproved ?? 0.5,
+                //     label: 'Unplanned Work',
+                //     color: '#00C9A7',
+                //   },
+                //   {
+                //     id: 2,
+                //     value: unapprovedProjectAllocation?.personalTime ?? 1,
+                //     label: 'Personal Time',
+                //     color: '#FFC233',
+                //   },
+                //   {
+                //     id: 3,
+                //     value: unapprovedProjectAllocation?.approvedWork ?? 1,
+                //     label: 'Approved Work',
+                //     color: '#FF884D',
+                //   },
+                // ],
                 innerRadius: 0, // full pie
                 outerRadius: 120,
                 // paddingAngle: 2,
@@ -1078,6 +1166,87 @@ export default function ExecutiveDashboardPage() {
         </Box>
       </DashboardWidget>
     ),
+    unapprovedProjectActualsByTeam: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Project Actuals Breakdown by Team')}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Project Actuals Breakdown by Team
+          </Typography>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <BarChart
+            height={300}
+            series={[
+              ...new Set(filteredUnapprovedActualsByTeam.map(d => d.category)),
+            ].map(category => ({
+              label: category,
+              id: category,
+              stack: 'total',
+              data: [
+                ...new Set(
+                  filteredUnapprovedActualsByTeam.map(d => d.team_name)
+                ),
+              ].map(team => {
+                const match = filteredUnapprovedActualsByTeam.find(
+                  d => d.category === category && d.team_name === team
+                );
+                return match ? parseFloat(match.pct_of_actuals) : 0;
+              }),
+              color:
+                category === 'Approved Work'
+                  ? '#00C9A7'
+                  : category === 'Unplanned Projects'
+                    ? '#FF884D'
+                    : category === 'Other Work'
+                      ? '#FFC233'
+                      : category === 'Personal Time'
+                        ? '#0080FF'
+                        : '#CCCCCC',
+            }))}
+            xAxis={[
+              {
+                data: [
+                  ...new Set(
+                    filteredUnapprovedActualsByTeam.map(d => d.team_name)
+                  ),
+                ],
+                label: 'Team',
+              },
+            ]}
+            yAxis={[
+              {
+                label: '% of Actuals',
+                min: 0,
+                max: 100,
+                valueFormatter: value => `${value}%`,
+              },
+            ]}
+            slotProps={{
+              bar: {
+                borderradius: 2,
+                barwidthratio: 0.5,
+              },
+              legend: {
+                direction: 'row',
+                position: { vertical: 'bottom', horizontal: 'middle' },
+                padding: 8,
+              },
+            }}
+          />
+        </Box>
+      </DashboardWidget>
+    ),
   };
 
   const teamNames = [...new Set(coverageData.map(d => d.team_name))];
@@ -1130,6 +1299,12 @@ export default function ExecutiveDashboardPage() {
               setSelectedOption={setSelectedOption}
               anchorEl={anchorEl}
               setAnchorEl={setAnchorEl}
+            />
+            <Overview
+              activeProjects={activeProjects}
+              activeResources={activeResources}
+              actualsConfirmed={filteredActualsConfirmed}
+              totalResourceCost={totalResourceCost}
             />
             <ResponsiveGridLayout
               className="layout"
