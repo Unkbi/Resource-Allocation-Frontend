@@ -34,6 +34,8 @@ import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
+import { showToast } from '@/app/redux/reducers/toastReducer';
+import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 
 const demoResources = {
   result: [
@@ -880,21 +882,77 @@ export default function Resources() {
     allResourcesDetailLoading,
   ]);
 
-  const handleConfirmDelete = () => {
-    if (!deleteTarget.id) return;
-    dispatch(deleteResource(deleteTarget.id))
-      .then(() => {
-        dispatch(fetchAllResources());
-        dispatch({
-          type: FETCH_ALL_RESOURCES_DETAIL,
-          payload: {},
-        });
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget.id) {
+      setDeleteDialogOpen(false);
+      setDeleteTarget({ id: '', name: '' });
+      return;
+    }
+
+    dispatch(
+      showToast({
+        open: true,
+        message: 'Checking for active allocations',
+        type: 'info',
+        position: 'bottom-left',
+        autoHideTimer: 1000,
       })
-      .catch(error => {
-        console.error('Error deleting resource:', error);
-      });
-    setDeleteDialogOpen(false);
-    setDeleteTarget({ id: '', name: '' });
+    );
+
+    try {
+      const postData = {
+        'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+          TeamId: deleteTarget.Id,
+          StartDate: '2000-01-01',
+          EndDate: '2032-01-01',
+        },
+      };
+ 
+      const response = await fetchTeamAllocationsForSaga(postData);
+
+      const activeAllocations = (response.result || []).filter(
+        allocation => allocation.Resource === deleteTarget.Id
+      );
+      
+      if (activeAllocations.length === 0) {
+        await dispatch(deleteResource(deleteTarget.id));
+        dispatch(fetchAllResources());
+        dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Resource deleted successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+      } else {
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Cannot delete resource with active allocations',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+      }
+    } catch (error) {
+      dispatch(
+        showToast({
+          open: true,
+          message: 'Failed to delete resource',
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 1000,
+        })
+      );
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteTarget({ id: '', name: '' });
+    }
   };
 
   const handleCancelDelete = () => {
