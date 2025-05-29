@@ -5,7 +5,7 @@ export const allowedQueries: Record<string, string> = {
 WITH params AS (
     SELECT
         DATE '2025-01-01'                   AS start_date,             -- ← window start
-        DATE '2025-06-30'                   AS end_date,               -- ← window end
+        DATE '2025-12-31'                   AS end_date,               -- ← window end
         'week'::text                      AS bucket,                 -- 'week' | 'month' | 'quarter'
         'Contractor - PT'                  AS excluded_resource_type,
         /* optional: list of project types to ignore                         */
@@ -109,7 +109,7 @@ ORDER BY abpp.project_type, cal.period_start;
 WITH params AS (
     SELECT
         DATE '2025-01-01'  AS start_date,            -- ← reporting window start
-        DATE '2025-06-30'  AS end_date,              -- ← reporting window end
+        DATE '2025-12-31'  AS end_date,              -- ← reporting window end
         'week'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
         'Contractor - PT'    AS excluded_type
 ),
@@ -235,7 +235,7 @@ WITH limits AS (
 params AS (
     SELECT
         DATE '2025-01-01'  AS start_date,            -- ← reporting window start
-        DATE '2025-06-30'  AS end_date,              -- ← reporting window end
+        DATE '2025-12-31'  AS end_date,              -- ← reporting window end
         'week'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
         'Contractor - PT'    AS excluded_type
 ),
@@ -358,7 +358,7 @@ CROSS JOIN limits l;          -- gives you access to the thresholds
 WITH params AS (
     SELECT
         DATE '2025-01-01'  AS start_date,     -- ← reporting window
-        DATE '2025-05-28'  AS end_date
+        DATE '2025-12-31'  AS end_date
 ),
 
 /* ======== 2.  Allocation-cost rows inside the window =============== */
@@ -414,7 +414,7 @@ where cbp.planned_to_date is not null;
   resourceActualsDeviation: `/* ========= 1. Parameters ========================================== */
 WITH params AS (
     SELECT
-        DATE '2025-05-26' AS start_date,
+        DATE '2025-01-01' AS start_date,
         DATE '2025-06-01' AS end_date,
         'week'::text      AS bucket,      -- 'week' | 'month' | 'quarter'
         ''                AS excluded_resource_type
@@ -500,8 +500,8 @@ ORDER BY cal.period_start;
   unapprovedProjectActualsByTeam: `/* ========= 1. PARAMETERS ========================================== */
 WITH params AS (
     SELECT
-        DATE '2025-05-05' AS start_date,
-        DATE '2025-05-30' AS end_date,
+        DATE '2025-01-01' AS start_date,
+        DATE '2025-12-31' AS end_date,
         'week'::text      AS bucket          -- 'week' | 'month' | 'quarter'
 ),
 
@@ -658,8 +658,8 @@ group by _type`,
   unapprovedProjectAllocation: `/* ========= 1. PARAMETERS ========================================== */
 WITH params AS (
     SELECT
-        DATE '2025-05-05' AS start_date,      -- window start
-        DATE '2025-05-30' AS end_date,        -- window end
+        DATE '2025-01-01' AS start_date,      -- window start
+        DATE '2025-12-31' AS end_date,        -- window end
         'week'::text      AS bucket           -- 'week' | 'month' | 'quarter'
 ),
 
@@ -769,7 +769,7 @@ ORDER BY cal.period_start,
     WITH params AS (
         SELECT
             DATE '2025-01-01'  AS start_date,
-            DATE '2025-06-30'  AS end_date,
+            DATE '2025-07-31'  AS end_date,
             'week'::text       AS bucket,
             'Contractor - PT'  AS excluded_type
     ),
@@ -869,8 +869,8 @@ ORDER BY cal.period_start,
     AND _status = 'Active'`,
   actualsConfirmed: `WITH params AS (
     SELECT
-        DATE '2025-04-01'  AS start_date,   -- window start
-        DATE '2025-06-30'  AS end_date,     -- window end
+        DATE '2025-01-01'  AS start_date,   -- window start
+        DATE '2025-12-31'  AS end_date,     -- window end
         'week'::text       AS bucket        -- 'week' | 'month' | 'quarter'
 ),
 /* ========= 2. Calendar buckets ==================================== */

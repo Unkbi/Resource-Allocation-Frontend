@@ -127,6 +127,7 @@ export default function ExecutiveDashboardPage() {
     useState([]);
   const [originalUnapprovedActualsByTeam, setOriginalUnapprovedActualsByTeam] =
     useState([]);
+  const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
 
   const handleMenuOpen = event => {
     setAnchorEl(event.currentTarget);
@@ -296,6 +297,14 @@ export default function ExecutiveDashboardPage() {
         monday
     );
 
+  const actualdeviation = resourceActualsDeviation.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
+    );   
+
     setOverAllocated(overAllocated);
     setUnderAllocated(underAllocated);
     setFilteredCapacityData(capacityData);
@@ -306,6 +315,7 @@ export default function ExecutiveDashboardPage() {
     setFilteredActualsConfirmed(actualsconfirmed);
     setFilteredUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
+    setFilteredActualDeviation(actualdeviation);
   };
 
   useEffect(() => {
@@ -318,7 +328,8 @@ export default function ExecutiveDashboardPage() {
       resourceUtilization.length > 0 &&
       unapprovedProjectAllocation.length > 0 &&
       actualsConfirmed.length > 0 &&
-      unapprovedProjectActualsByTeam.length > 0
+      unapprovedProjectActualsByTeam.length > 0 &&
+      resourceActualsDeviation.length > 0
     ) {
       filterDataByDate(selectedDate);
     }
@@ -443,12 +454,12 @@ export default function ExecutiveDashboardPage() {
             series={[
               {
                 data:
-                  resourceActualsDeviation.length > 0
+                  filteredActualDeviation.length > 0
                     ? [
                         {
                           id: 0,
                           value: parseFloat(
-                            resourceActualsDeviation[0].deviation_pct
+                            filteredActualDeviation[0].deviation_pct
                           ),
                           label: 'Deviation',
                           color: '#FF7043', // Orange for deviation
@@ -456,7 +467,7 @@ export default function ExecutiveDashboardPage() {
                         {
                           id: 1,
                           value: parseFloat(
-                            resourceActualsDeviation[0].in_plan_pct
+                            filteredActualDeviation[0].in_plan_pct
                           ),
                           label: 'In Plan',
                           color: '#80CBC4', // Green for in-plan
