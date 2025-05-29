@@ -875,7 +875,7 @@ export default function ExecutiveDashboardPage() {
                 data: filteredCapacityData.map(d => {
                   const teamName = d.team_name;
                   const maxLength = 10; // Set a maximum length for team names
-                  return teamName.length > maxLength
+                  return teamName.length > maxLength && filteredCapacityData.length > 3
                     ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
                     : teamName; // Wrap text if it exceeds maxLength
                 }), // Team names as x-axis labels
@@ -1083,7 +1083,13 @@ export default function ExecutiveDashboardPage() {
             ]}
             xAxis={[
               {
-                data: filteredUnderAllocated.map(d => d.team_name), // Team names as x-axis labels
+                data: filteredUnderAllocated.map(d => {
+                  const teamName = d.team_name;
+                  const maxLength = 10; // Set a maximum length for team names
+                  return teamName.length > maxLength && filteredUnderAllocated.length > 3
+                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                    : teamName; // Wrap text if it exceeds maxLength
+                }), // Team names as x-axis labels
                 label: 'Team',
               },
             ]}
@@ -1141,7 +1147,13 @@ export default function ExecutiveDashboardPage() {
             ]}
             xAxis={[
               {
-                data: filteredOverAllocated.map(d => d.team_name), // Team names as x-axis labels
+                data: filteredOverAllocated.map(d => {
+                  const teamName = d.team_name;
+                  const maxLength = 10; // Set a maximum length for team names
+                  return teamName.length > maxLength && filteredOverAllocated.length > 3
+                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                    : teamName; // Wrap text if it exceeds maxLength
+                }), // Team names as x-axis labels
                 label: 'Team',
               },
             ]}
@@ -1220,7 +1232,13 @@ export default function ExecutiveDashboardPage() {
               {
                 data: [
                   ...new Set(
-                    filteredUnapprovedActualsByTeam.map(d => d.team_name)
+                    filteredUnapprovedActualsByTeam.map(d => {
+                  const teamName = d.team_name;
+                  const maxLength = 10; // Set a maximum length for team names
+                  return teamName.length > maxLength && filteredUnapprovedActualsByTeam.length > 4
+                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                    : teamName; // Wrap text if it exceeds maxLength
+                }),
                   ),
                 ],
                 label: 'Team',
