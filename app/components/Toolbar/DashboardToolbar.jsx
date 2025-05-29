@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -15,10 +15,15 @@ const DashboardToolbar = ({
   onFilterChange,
   teamNames = [],
   projectTypes = [],
+  teamfilter : externalTeamFilter = 'all',
 }) => {
   const [timeFilter, setTimeFilter] = useState('week');
-  const [teamFilter, setTeamFilter] = useState('all');
+  const [teamFilter, setTeamFilter] = useState(externalTeamFilter);
   const [projectTypeFilter, setProjectTypeFilter] = useState('all');
+
+  useEffect(() => {
+    setTeamFilter(externalTeamFilter);
+  }, [externalTeamFilter]);
 
   const handleTimeFilterChange = filter => {
     setTimeFilter(filter);
@@ -51,44 +56,44 @@ const DashboardToolbar = ({
         position: 'relative',
       }}
     >
-      <Grid container spacing={4} alignItems="center" justifyContent='end'>
+      <Grid container spacing={4} alignItems="center" justifyContent="end">
         {/* Teams */}
         <Grid item xs={12} md={4}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography
-            variant="subtitle2"
-            sx={{  fontSize: '14px' }} // Font size 14px
-          >
-            Teams
-          </Typography>
-          <Select
-            value={teamFilter}
-            onChange={handleTeamFilterChange}
-            displayEmpty
-            size="small"
-            fullWidth
-            sx={{
-              borderRadius: 1,
-              bgcolor: 'white',
-              fontSize: '14px',
-            }}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  '& .MuiMenuItem-root': {
-                    fontSize: '16px',
+            <Typography
+              variant="subtitle2"
+              sx={{ fontSize: '14px' }} // Font size 14px
+            >
+              Teams
+            </Typography>
+            <Select
+              value={teamFilter}
+              onChange={handleTeamFilterChange}
+              displayEmpty
+              size="small"
+              fullWidth
+              sx={{
+                borderRadius: 1,
+                bgcolor: 'white',
+                fontSize: '14px',
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    '& .MuiMenuItem-root': {
+                      fontSize: '16px',
+                    },
                   },
                 },
-              },
-            }}
-          >
-            <MenuItem value="all">All Teams</MenuItem>
-            {teamNames.map(team => (
-              <MenuItem key={team} value={team}>
-                {team}
-              </MenuItem>
-            ))}
-          </Select>
+              }}
+            >
+              <MenuItem value="all">All Teams</MenuItem>
+              {teamNames.map(team => (
+                <MenuItem key={team} value={team}>
+                  {team}
+                </MenuItem>
+              ))}
+            </Select>
           </Box>
         </Grid>
 

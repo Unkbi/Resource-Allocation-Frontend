@@ -74,6 +74,11 @@ const Topbar = ({
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={() => handleMenuClose(null)}
+            PaperProps={{
+              sx: {
+                width: '150px',
+              },
+            }}
           >
             <MenuItem onClick={() => handleMenuClose('Weekly')}>
               Weekly

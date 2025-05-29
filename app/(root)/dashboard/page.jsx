@@ -245,6 +245,8 @@ export default function ExecutiveDashboardPage() {
   const filterDataByDate = date => {
     const monday = getMonday(date).format('YYYY-MM-DD');
 
+    setTeamFilter('all');
+
     const capacityData = capacityAvailability.filter(
       // This is a patch to handle the timezone issue
       // To Be Implemented: Fix the timezone issue in the backend
@@ -1283,7 +1285,7 @@ export default function ExecutiveDashboardPage() {
           <DashboardToolbar
             onFilterChange={handleFilterChange}
             timeFilter={bucket}
-            teamFilter={teamFilter}
+            teamfilter={teamFilter}
             projectTypes={projectTypeNames}
             teamNames={teamNames}
           />
