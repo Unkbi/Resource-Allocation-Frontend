@@ -136,10 +136,10 @@ export default function ActualsPage() {
         });
       })
         .then((response: any) => {
+          if (status !== 'Confirmed') {
+            dispatch(setActualAllocationsStatus('Confirmed'));
+          }
           if (response?.status === 'ok') {
-            if (status !== 'Confirmed') {
-              dispatch(setActualAllocationsStatus('Confirmed'));
-            }
             dispatch(
               showToast({
                 open: true,
@@ -357,7 +357,11 @@ export default function ActualsPage() {
                 height: '36px',
                 borderRadius: '5px',
               }}
-              disabled={!isModified || show || hasInvalidRows}
+              disabled={
+                status !== null &&
+                status !== 'Proposed' &&
+                (!isModified || show || hasInvalidRows)
+              }
               onClick={handleConfirmed}
             >
               <Typography
