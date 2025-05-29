@@ -245,15 +245,15 @@ const CellWithMenu = ({
         {view === 'Project' ? (
           <>
             {deleteParams?.row?.project} Allocations for{' '}
-           {deleteParams?.row?.resource}?
+           {deleteParams?.row?.resource}
           </>
         ) : (
           <>
           {deleteParams?.row?.project} Allocations for{' '}
-          {deleteParams?.row?.resource}?" 
+          {deleteParams?.row?.resource} 
           </>
         )}
-        ?
+        ?"
       </ConfirmDialog>
     </>
   );
