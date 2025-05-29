@@ -23,7 +23,7 @@ import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { deleteTeam, getAllTeams } from '@/app/services/teamServices';
+import { deleteTeam, getAllTeams, getResourcesAgainstTeams } from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
@@ -37,6 +37,7 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const demoResources = {
   result: [
@@ -885,27 +886,71 @@ export default function Resources() {
     value
   ]);
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteTarget.id) return;
 
-    const action = deleteTarget.type === 'Team'
-      ? deleteTeam(deleteTarget.id)
-      : deleteResource(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    const teamId = deleteTarget.id;
+
+    if (deleteTarget.type === 'Team') {
+      try {
+        const response = await dispatch(
+          getResourcesAgainstTeams({
+            'ResourceAllocation.Core/GetTeamResources': {
+              TeamId: teamId
+            }
+          })
+        ).unwrap();
+
+        if (response?.result?.length > 0) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete a team with resources, please reassign and try again.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to fetch team resources before deletion:', error);
+        dispatch(
+          showToast({
+            open: true,
+            message: `Failed to check team resources before deletion.`,
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+        return;
+      }
+    }
+
+    const action =
+      deleteTarget.type === 'Team'
+        ? deleteTeam(teamId)
+        : deleteResource(teamId);
 
     dispatch(action)
       .then(() => {
-        dispatch(fetchAllResources());
-        dispatch({
-          type: FETCH_ALL_RESOURCES_DETAIL,
-          payload: {},
-        });
+        if (deleteTarget.type === 'Team') {
+          dispatch(fetchAllTeams());
+        } else {
+          dispatch(fetchAllResources());
+          dispatch({
+            type: FETCH_ALL_RESOURCES_DETAIL,
+            payload: {},
+          });
+        }
       })
       .catch(error => {
         console.error(`Error deleting ${deleteTarget.type || 'resource'}:`, error);
       });
-      
-    setDeleteDialogOpen(false);
-    setDeleteTarget({ id: '', name: '' });
+
+    setDeleteTarget({ id: '', name: '', type: '' });
   };
 
   const handleCancelDelete = () => {
