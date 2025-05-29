@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
-import * as React from 'react';
-import { Grid, Paper, Box, Typography, Avatar } from '@mui/material';
+import React from 'react';
+import {
+  Grid,
+  Paper,
+  Box,
+  Typography,
+  Avatar,
+} from '@mui/material';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import GroupIcon from '@mui/icons-material/Group';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PercentIcon from '@mui/icons-material/Percent';
 
-// Icon/label map to match your layout
 const iconMap = [
   <ShowChartIcon fontSize="inherit" />,
   <GroupIcon fontSize="inherit" />,
@@ -15,6 +20,21 @@ const iconMap = [
   <PercentIcon fontSize="inherit" />,
 ];
 
+// Helper to format currency without decimals
+const formatCurrency = (amount, currency = 'USD', locale = 'en-US') => {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch (err) {
+    console.error('Currency formatting error:', err);
+    return '$0';
+  }
+};
+
 export default function Overview({
   activeProjects,
   activeResources,
@@ -22,32 +42,30 @@ export default function Overview({
   totalResourceCost,
 }) {
   const [overview, setOverview] = useState([]);
-  console.log(totalResourceCost, 'totalResourceCost');
 
   useEffect(() => {
+    const cost = parseInt(totalResourceCost?.[0]?.total_cost) || 0;
+    const currency = totalResourceCost?.[0]?.currency || 'USD';
+
+    const confirmedPct = parseInt(actualsConfirmed?.[0]?.pct_confirmed);
+    const confirmedDisplay = isNaN(confirmedPct) ? '0%' : `${confirmedPct}%`;
+
     const data = [
       {
         label: 'Active Projects',
-        value: activeProjects[0]?.active_project || 0,
+        value: activeProjects?.[0]?.active_project ?? 0,
       },
       {
         label: 'Active Resources',
-        value: activeResources[0]?.active_resource || 0,
+        value: activeResources?.[0]?.active_resource ?? 0,
       },
       {
         label: 'Total Resource Cost',
-        value:
-          new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-            currency: totalResourceCost[0]?.currency,
-          }).format(parseInt(totalResourceCost[0]?.total_cost)) || '$0',
+        value: formatCurrency(cost, currency),
       },
-      // { label: 'Allocation %', value: '87%' },
       {
         label: 'Actuals Confirmed',
-        value: `${parseInt(actualsConfirmed[0]?.pct_confirmed)}%` || '0%',
+        value: confirmedDisplay,
       },
     ];
     setOverview(data);
@@ -59,10 +77,10 @@ export default function Overview({
         {overview.map((item, idx) => (
           <Grid
             item
-            xs={12} // Full width on extra small screens
-            sm={6} // Two cards per row on small screens
-            md={4} // Three cards per row on medium screens
-            lg={2.4} // Five cards per row on large screens
+            xs={12}
+            sm={6}
+            md={4}
+            lg={2.4}
             key={item.label || idx}
           >
             <Paper
