@@ -572,6 +572,22 @@ const AllocationForm = () => {
                   resource,
                   weekKey
                 );
+
+                // Perform Delete if AllocationEntered is 0
+                // Patch to fix the bulk delete Issue.
+                if (
+                  allocation &&
+                  allocation?.allocationId &&
+                  values?.AllocationEntered === 0
+                ) {
+                  const deletePayload = {
+                    resourceId: resource,
+                    allocationId: allocation?.allocationId,
+                    period: allocation?.period,
+                  };
+                  return dispatch(removeResourceAllocation(deletePayload));
+                }
+
                 const finalTotal =
                   existingTotal -
                   (allocation?.value || 0) +
@@ -668,7 +684,21 @@ const AllocationForm = () => {
             ];
             dispatch(closeDialog());
             new Promise((resolve, reject) => {
-              if (currentView?.GroupBy === 'Teams') {
+              // Patch to fix the bulk delete Issue.
+              if (values?.AllocationEntered === 0) {
+                dispatch({
+                  type: 'FETCH_ALL_ALLOCATIONS',
+                  payload: {
+                    teams: teams?.result,
+                    projects: projects?.result,
+                    resources: resources?.result,
+                    startDate: _startDate,
+                    endDate: _endDate,
+                    resolve,
+                    reject,
+                  },
+                });
+              } else if (currentView?.GroupBy === 'Teams') {
                 dispatch({
                   type: 'UPDATE_TEAM_ALLOCATIONS',
                   payload: {
