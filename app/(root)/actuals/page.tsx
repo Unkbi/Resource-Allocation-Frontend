@@ -358,7 +358,9 @@ export default function ActualsPage() {
                 borderRadius: '5px',
               }}
               disabled={
-                status !== 'Proposed' && (!isModified || show || hasInvalidRows)
+                status !== null &&
+                status !== 'Proposed' &&
+                (!isModified || show || hasInvalidRows)
               }
               onClick={handleConfirmed}
             >
