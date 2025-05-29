@@ -575,17 +575,16 @@ const AllocationForm = () => {
 
                 // Perform Delete if AllocationEntered is 0
                 // Patch to fix the bulk delete Issue.
-                if (
-                  allocation &&
-                  allocation?.allocationId &&
-                  values?.AllocationEntered === 0
-                ) {
-                  const deletePayload = {
-                    resourceId: resource,
-                    allocationId: allocation?.allocationId,
-                    period: allocation?.period,
-                  };
-                  return dispatch(removeResourceAllocation(deletePayload));
+                if (values?.AllocationEntered === 0) {
+                  if (allocation && allocation?.allocationId) {
+                    const deletePayload = {
+                      resourceId: resource,
+                      allocationId: allocation?.allocationId,
+                      period: allocation?.period,
+                    };
+                    return dispatch(removeResourceAllocation(deletePayload));
+                  }
+                  return null;
                 }
 
                 const finalTotal =
