@@ -900,34 +900,56 @@ export default function Resources() {
     );
 
     try {
-      const postData = {
-        'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-          TeamId: deleteTarget.Id,
-          StartDate: '2000-01-01',
-          EndDate: '2032-01-01',
-        },
-      };
- 
-      const response = await fetchTeamAllocationsForSaga(postData);
-
-      const activeAllocations = (response.result || []).filter(
-        allocation => allocation.Resource === deleteTarget.Id
+      const resourceToDelete = allResourcesDetail.find(
+        resource => resource.Resource.Id === deleteTarget.id
       );
-      
-      if (activeAllocations.length === 0) {
-        await dispatch(deleteResource(deleteTarget.id));
-        dispatch(fetchAllResources());
-        dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+      if (!resourceToDelete) {
+        throw new Error('Resource not found');
+      }
+      const teamId = resourceToDelete.Team?.Id;
 
+      if (!teamId) {
+        await dispatch(deleteResource(deleteTarget.id)).unwrap();
         dispatch(
           showToast({
             open: true,
             message: 'Resource deleted successfully',
             type: 'success',
             position: 'bottom-left',
-            autoHideTimer: 4000,
+            autoHideTimer: 2000,
           })
         );
+        dispatch(fetchAllResources());
+        dispatch({
+          type: FETCH_ALL_RESOURCES_DETAIL,
+          payload: {},
+        });
+        return;
+      }
+      const postData = {
+        'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+          TeamId: teamId,
+          StartDate: '2000-01-01',
+          EndDate: '2032-01-01',
+        },
+      };
+      const response = await fetchTeamAllocationsForSaga(postData);
+      const resourceAllocations = (response.result || []).filter(
+        allocation => allocation.Resource === deleteTarget.id
+      );
+      if (resourceAllocations.length === 0) {
+        await dispatch(deleteResource(deleteTarget.id)).unwrap();
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Resource deleted successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 2000,
+          })
+        );
+        dispatch(fetchAllResources())
+        dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
       } else {
         dispatch(
           showToast({
@@ -943,10 +965,10 @@ export default function Resources() {
       dispatch(
         showToast({
           open: true,
-          message: 'Failed to delete resource',
+          message:'Failed to delete resource',
           type: 'error',
           position: 'bottom-left',
-          autoHideTimer: 1000,
+          autoHideTimer: 4000,
         })
       );
     } finally {
