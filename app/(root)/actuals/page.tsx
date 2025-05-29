@@ -136,10 +136,10 @@ export default function ActualsPage() {
         });
       })
         .then((response: any) => {
+          if (status !== 'Confirmed') {
+            dispatch(setActualAllocationsStatus('Confirmed'));
+          }
           if (response?.status === 'ok') {
-            if (status !== 'Confirmed') {
-              dispatch(setActualAllocationsStatus('Confirmed'));
-            }
             dispatch(
               showToast({
                 open: true,
