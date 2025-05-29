@@ -1,5 +1,4 @@
 export const allowedQueries: Record<string, string> = {
-  
   //002 - Fractional units breakdown of resources allocation by duration trend based on project types.
   projectFTE: `
     /* ========= 1. Parameter block (extended) ========== */
@@ -355,7 +354,7 @@ FROM baseline b
 CROSS JOIN limits l;          -- gives you access to the thresholds
 `,
   //006 -Projects budget vs Planned vs Actuals to date
-budgetVsPlanVsActual: `/* ======== 1.  Parameters you can tweak ============================= */
+  budgetVsPlanVsActual: `/* ======== 1.  Parameters you can tweak ============================= */
 WITH params AS (
     SELECT
         DATE '2025-01-01'  AS start_date,     -- ← reporting window
@@ -497,25 +496,24 @@ JOIN company_dev cd
 ORDER BY cal.period_start;
 `,
 
-  //(008) How much units is being allocated on unapproved projects by team?
-  unapprovedProjectAllocation: `/* ========= 1.  Parameters  ========================================= */
+  //(008) How much units is being actuals on unapproved projects by team?
+  unapprovedProjectActualsByTeam: `/* ========= 1. PARAMETERS ========================================== */
 WITH params AS (
     SELECT
-        DATE '2025-01-01'              AS start_date,      -- reporting window
-        DATE '2025-06-30'              AS end_date,
-        'month'::text                 AS bucket,          -- 'week' | 'month' | 'quarter'
-        'Contractor - PT'             AS excluded_resource_type
+        DATE '2025-05-05' AS start_date,
+        DATE '2025-05-30' AS end_date,
+        'week'::text      AS bucket          -- 'week' | 'month' | 'quarter'
 ),
 
-/* ========= 2.  Time buckets (only if you want a trend) ============= */
+/* ========= 2. CALENDAR BUCKETS ==================================== */
 calendar AS (
     SELECT
-        gs                                   AS period_start,
+        gs::date AS period_start,
         CASE p.bucket
-             WHEN 'week'    THEN gs + INTERVAL '1 week'   - INTERVAL '1 day'
-             WHEN 'month'   THEN gs + INTERVAL '1 month'  - INTERVAL '1 day'
-             WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
-        END                                  AS period_end
+             WHEN 'week'    THEN (gs + INTERVAL '6 days')::date
+             WHEN 'month'   THEN (gs + INTERVAL '1 month'  - INTERVAL '1 day')::date
+             WHEN 'quarter' THEN (gs + INTERVAL '3 months' - INTERVAL '1 day')::date
+        END AS period_end
     FROM params p
     JOIN LATERAL generate_series(
             date_trunc(p.bucket, p.start_date),
@@ -525,64 +523,114 @@ calendar AS (
                  WHEN 'month'   THEN INTERVAL '1 month'
                  WHEN 'quarter' THEN INTERVAL '3 months'
             END
-        ) AS gs ON TRUE
+         ) AS gs ON TRUE
 ),
 
-/* ========= 3.  Grab the two "unapproved" project IDs =============== */
-unapproved_projects AS (
-    SELECT _id
-    FROM public.resourceallocation_core__project_0_0_1
-    WHERE _name IN ('Other Work', 'Personal Time')
-),
-
-/* ========= 4.  Raw allocation rows for those projects ============== */
-alloc_up AS (
-    SELECT
-        a.___parent__                    AS resource_id,
-        to_date(a._period, 'YYYY-MM-DD') AS period_date,
-        a._allocationentered             AS alloc_fte
-    FROM public.resourceallocation_core__allocation_0_0_1 a
-    JOIN unapproved_projects up ON up._id = a._project
-    JOIN params p
-      ON to_date(a._period, 'YYYY-MM-DD')
-         BETWEEN p.start_date AND p.end_date
-),
-
-/* ========= 5.  Keep only eligible resources  ======================= */
-eligible_resources AS (
-    SELECT ___path__ AS resource_id
-    FROM public.resourceallocation_core__resource_0_0_1 r
-    JOIN params p ON r._type <> p.excluded_resource_type
-),
-
-/* ========= 6.  Resource → Team link  =============================== */
+/* ========= 3. TEAM MAP  (resource ➜ team) ========================= */
 team_map AS (
-    SELECT _resource AS resource_id, _team AS team_id
-    FROM public.resourceallocation_core__teamresource_0_0_1
+    SELECT
+        tr._resource AS resource_id,
+        tr._team     AS team_id
+    FROM public.resourceallocation_core__teamresource_0_0_1 tr
 ),
 
-/* ========= 7.  Sum unapproved allocations by team & bucket ========= */
-unapproved_by_team AS (
+/* ========= 4. ALLOCATION ROWS  (add team_id) ====================== */
+alloc AS (
     SELECT
+        date_trunc(p.bucket, to_date(a._period,'YYYY-MM-DD'))::date AS period_start,
+        pr._name                                                    AS project_name,
         tm.team_id,
-        date_trunc(p.bucket, au.period_date) AS period_start,
-        SUM(au.alloc_fte)                    AS unapproved_fte
-    FROM alloc_up              au
-    JOIN team_map              tm ON tm.resource_id = au.resource_id
-    JOIN params                p  ON TRUE
-    JOIN eligible_resources    er ON er.resource_id = au.resource_id
-    GROUP BY tm.team_id, date_trunc(p.bucket, au.period_date)
+        COALESCE(a._allocationentered, 0)                           AS plan_units,
+        COALESCE(a._actualsentered , 0)                             AS actual_units
+    FROM public.resourceallocation_core__allocation_0_0_1 a
+    JOIN params  p  ON to_date(a._period,'YYYY-MM-DD')
+                      BETWEEN p.start_date AND p.end_date
+    JOIN team_map tm ON tm.resource_id = a.___parent__
+    JOIN public.resourceallocation_core__project_0_0_1 pr
+      ON pr._id = a._project::uuid
+),
+
+/* ========= 5. BUCKET TOTALS BY CATEGORY & TEAM ==================== */
+bucket_totals AS (
+    SELECT
+        period_start,
+        team_id,
+
+        /* denominator --------------------------------------------- */
+        SUM(actual_units)                                            AS total_actuals,
+
+        /* Personal Time ------------------------------------------- */
+        SUM(CASE WHEN project_name = 'Personal Time'
+                 THEN actual_units ELSE 0 END)                       AS personal_units,
+
+        /* Other Work ---------------------------------------------- */
+        SUM(CASE WHEN project_name = 'Other Work'
+                 THEN actual_units ELSE 0 END)                       AS other_units,
+
+        /* Approved Work ------------------------------------------- */
+        SUM(CASE
+                WHEN project_name NOT IN ('Personal Time','Other Work')
+                THEN LEAST(plan_units, actual_units)
+                ELSE 0
+            END)                                                     AS approved_units,
+
+        /* Unplanned Projects -------------------------------------- */
+        SUM(CASE
+                WHEN project_name NOT IN ('Personal Time','Other Work')
+                THEN GREATEST(actual_units - plan_units, 0)
+                ELSE 0
+            END)                                                     AS unplanned_units
+    FROM alloc
+    GROUP BY period_start, team_id
+),
+
+/* ========= 6. TEAM NAME LOOKUP ==================================== */
+teams AS (
+    SELECT
+        t.___path__ AS team_id,
+        t._name     AS team_name
+    FROM public.resourceallocation_core__team_0_0_1 t
 )
 
-/* ========= 8.  Final output ======================================== */
+/* ========= 7. UNPIVOT & % SHARE  ================================== */
 SELECT
-    t._name                 AS team_name,
-    ut.period_start,
-    ut.unapproved_fte       AS units_unapproved
-FROM unapproved_by_team ut
-JOIN public.resourceallocation_core__team_0_0_1 t
-     ON t.___path__ = ut.team_id
-ORDER BY ut.unapproved_fte DESC, t._name, ut.period_start;
+    tm.team_name,
+    cal.period_start,
+    cat.category,
+    cat.units,
+    ROUND(
+        CASE
+            WHEN bt.total_actuals = 0 THEN 0
+            ELSE (cat.units::numeric / bt.total_actuals)::numeric * 100
+        END
+    , 2) AS pct_of_actuals
+FROM calendar cal
+JOIN bucket_totals bt
+      ON bt.period_start = cal.period_start
+JOIN teams tm
+      ON tm.team_id      = bt.team_id
+/* unpivot four category columns into rows */
+CROSS JOIN LATERAL (
+    VALUES
+        ('Approved Work'     , COALESCE(bt.approved_units , 0)),
+        ('Unplanned Projects', COALESCE(bt.unplanned_units, 0)),
+        ('Other Work'        , COALESCE(bt.other_units    , 0)),
+        ('Personal Time'     , COALESCE(bt.personal_units , 0))
+) AS cat(category, units)
+ORDER BY tm.team_name,
+         cal.period_start,
+         CASE cat.category
+              WHEN 'Approved Work'      THEN 1
+              WHEN 'Unplanned Projects' THEN 2
+              WHEN 'Other Work'         THEN 3
+              WHEN 'Personal Time'      THEN 4
+         END;
+
+
+
+
+
+
 `,
 
   //(009)Ratio of employees (FTE) to contractors stacked by onshore and offshore resources
@@ -606,7 +654,117 @@ where _status = 'Active'
 and _agentlang__is_deleted is false
 group by _type`,
 
-//001 - Percentage of coverage of resource allocation by teams by duration trend (duration trend is always weeks/months/quarters). Exclude PT contractor allocation
+  //(0011) - Unplanned Allocation Units
+  unapprovedProjectAllocation: `/* ========= 1. PARAMETERS ========================================== */
+WITH params AS (
+    SELECT
+        DATE '2025-05-05' AS start_date,      -- window start
+        DATE '2025-05-30' AS end_date,        -- window end
+        'week'::text      AS bucket           -- 'week' | 'month' | 'quarter'
+),
+
+/* ========= 2. CALENDAR BUCKETS ==================================== */
+calendar AS (
+    SELECT
+        gs::date AS period_start,
+        CASE p.bucket
+             WHEN 'week'    THEN (gs + INTERVAL '6 days')::date
+             WHEN 'month'   THEN (gs + INTERVAL '1 month'  - INTERVAL '1 day')::date
+             WHEN 'quarter' THEN (gs + INTERVAL '3 months' - INTERVAL '1 day')::date
+        END AS period_end
+    FROM params p
+    JOIN LATERAL generate_series(
+            date_trunc(p.bucket, p.start_date),
+            date_trunc(p.bucket, p.end_date),
+            CASE p.bucket
+                 WHEN 'week'    THEN INTERVAL '1 week'
+                 WHEN 'month'   THEN INTERVAL '1 month'
+                 WHEN 'quarter' THEN INTERVAL '3 months'
+            END
+         ) AS gs ON TRUE
+),
+
+/* ========= 3. ALLOCATION ROWS ===================================== */
+alloc AS (
+    SELECT
+        date_trunc(p.bucket, to_date(a._period,'YYYY-MM-DD'))::date AS period_start,
+        pr._name                                                    AS project_name,
+        COALESCE(a._allocationentered, 0)                           AS plan_units,
+        COALESCE(a._actualsentered , 0)                             AS actual_units
+    FROM public.resourceallocation_core__allocation_0_0_1 a
+    JOIN params p
+      ON to_date(a._period,'YYYY-MM-DD')
+         BETWEEN p.start_date AND p.end_date
+    JOIN public.resourceallocation_core__project_0_0_1 pr
+      ON pr._id = a._project::uuid
+)
+--select sum(actual_units) from alloc group by period_start
+,
+
+/* ========= 4. BUCKET TOTALS BY CATEGORY =========================== */
+bucket_totals AS (
+    SELECT
+        period_start,
+
+        /* ---- total actuals (denominator) ------------------------ */
+        SUM(actual_units)                                            AS total_actuals,
+
+        /* ---- Personal Time ------------------------------------- */
+        SUM(CASE WHEN project_name = 'Personal Time'
+                 THEN actual_units ELSE 0 END)                       AS personal_units,
+
+        /* ---- Other Work ---------------------------------------- */
+        SUM(CASE WHEN project_name = 'Other Work'
+                 THEN actual_units ELSE 0 END)                       AS other_units,
+
+        /* ---- Approved Work  (min(plan,actual)) ----------------- */
+        SUM(CASE
+                WHEN project_name NOT IN ('Personal Time','Other Work')
+                THEN LEAST(plan_units, actual_units)
+                ELSE 0
+            END)                                                     AS approved_units,
+
+        /* ---- Unplanned Projects  (excess actual) --------------- */
+        SUM(CASE
+                WHEN project_name NOT IN ('Personal Time','Other Work')
+                THEN GREATEST(actual_units - plan_units, 0)
+                ELSE 0
+            END)                                                     AS unplanned_units
+    FROM alloc
+    GROUP BY period_start
+)
+--select * from bucket_totals
+/* ========= 5. UNPIVOT & % SHARE =================================== */
+SELECT
+    cal.period_start,
+    cat.category,
+    cat.units,
+    ROUND(
+        CASE
+            WHEN bt.total_actuals = 0 THEN 0
+            ELSE (cat.units::numeric / bt.total_actuals)::numeric * 100
+        END
+    , 2) AS pct_of_actuals
+FROM calendar cal
+LEFT JOIN bucket_totals bt
+  ON bt.period_start = cal.period_start
+CROSS JOIN LATERAL (
+    VALUES
+        ('Approved Work'     , COALESCE(bt.approved_units , 0)),
+        ('Unplanned Projects', COALESCE(bt.unplanned_units, 0)),
+        ('Other Work'        , COALESCE(bt.other_units    , 0)),
+        ('Personal Time'     , COALESCE(bt.personal_units , 0))
+) AS cat(category, units)
+ORDER BY cal.period_start,
+         CASE cat.category
+              WHEN 'Approved Work'      THEN 1
+              WHEN 'Unplanned Projects' THEN 2
+              WHEN 'Other Work'         THEN 3
+              WHEN 'Personal Time'      THEN 4
+         END;
+         `,
+
+  //001 - Percentage of coverage of resource allocation by teams by duration trend (duration trend is always weeks/months/quarters). Exclude PT contractor allocation
   resourceCoverage: `
     WITH params AS (
         SELECT
@@ -701,4 +859,76 @@ group by _type`,
     JOIN resourceallocation_core__team_0_0_1 t ON t.___path__ = tc.team_id
     ORDER BY t._name, cal.period_start;
   `,
+  activeProjects: `SELECT count(*) as Active_project
+  FROM public.resourceallocation_core__project_0_0_1
+  WHERE _agentlang__is_deleted is false
+    AND _status = 'Active'`,
+  activeResources: `SELECT count(*) as Active_Resource
+  FROM public.resourceallocation_core__resource_0_0_1
+  WHERE _agentlang__is_deleted is false
+    AND _status = 'Active'`,
+  actualsConfirmed: `WITH params AS (
+    SELECT
+        DATE '2025-04-01'  AS start_date,   -- window start
+        DATE '2025-06-30'  AS end_date,     -- window end
+        'week'::text       AS bucket        -- 'week' | 'month' | 'quarter'
+),
+/* ========= 2. Calendar buckets ==================================== */
+calendar AS (
+    SELECT
+        gs::date AS period_start,
+        CASE p.bucket
+             WHEN 'week'    THEN (gs + INTERVAL '6 days')::date
+             WHEN 'month'   THEN (gs + INTERVAL '1 month'  - INTERVAL '1 day')::date
+             WHEN 'quarter' THEN (gs + INTERVAL '3 months' - INTERVAL '1 day')::date
+        END      AS period_end
+    FROM params p
+    JOIN LATERAL generate_series(
+           date_trunc(p.bucket, p.start_date),
+           date_trunc(p.bucket, p.end_date),
+           CASE p.bucket
+                WHEN 'week'    THEN INTERVAL '1 week'
+                WHEN 'month'   THEN INTERVAL '1 month'
+                WHEN 'quarter' THEN INTERVAL '3 months'
+           END
+         ) AS gs ON TRUE
+),
+/* ========= 3. Bucketed actual-status rows ========================= */
+bucket_actuals AS (
+    SELECT
+        date_trunc(p.bucket, to_date(a._period, 'YYYY-MM-DD'))::date AS period_start,
+        COUNT(*)                                                     AS total_rows,
+        COUNT(*) FILTER (WHERE a._status = 'Confirmed')              AS confirmed_rows
+    FROM public.resourceallocation_core__actualsstatus_0_0_1 a
+    JOIN params p
+      ON to_date(a._period, 'YYYY-MM-DD')
+         BETWEEN p.start_date AND p.end_date
+    GROUP BY date_trunc(p.bucket, to_date(a._period, 'YYYY-MM-DD'))
+)
+/* ========= 4. Final report ======================================== */
+SELECT
+    cal.period_start,
+    cal.period_end,
+    COALESCE(ba.total_rows, 0)      AS total_rows,
+    COALESCE(ba.confirmed_rows, 0)  AS confirmed_rows,
+    ROUND(
+        CASE
+            WHEN COALESCE(ba.total_rows, 0) = 0 THEN 0
+            ELSE (ba.confirmed_rows::numeric / ba.total_rows) * 100
+        END
+    , 2)                            AS pct_confirmed
+FROM calendar cal
+LEFT JOIN bucket_actuals ba
+       ON ba.period_start = cal.period_start
+ORDER BY cal.period_start;`,
+
+  totalResourceCost: `with active_resource as (
+    select ___path__ as resource_id
+        FROM public.resourceallocation_core__resource_0_0_1
+            where _agentlang__is_deleted is false
+            and _type <> 'Contractor - PT'
+)
+select sum(rcu._cost) as total_cost,rcu._costcurrency as Currency  from public.resourceallocation_core__resourceunitcost_0_0_1 rcu
+join active_resource ar on ar.resource_id = rcu._resourceref
+group by rcu._costcurrency`,
 };
