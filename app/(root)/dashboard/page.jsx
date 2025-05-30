@@ -89,6 +89,7 @@ export default function ExecutiveDashboardPage() {
     activeResources = [],
     actualsConfirmed = [],
     totalResourceCost = [],
+    allocationPercentage = [],
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -128,6 +129,7 @@ export default function ExecutiveDashboardPage() {
   const [originalUnapprovedActualsByTeam, setOriginalUnapprovedActualsByTeam] =
     useState([]);
   const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
+  const [filteredAllocationPercentage, setFilteredAllocationPercentage] = useState([]);
 
   const handleMenuOpen = event => {
     setAnchorEl(event.currentTarget);
@@ -140,6 +142,7 @@ export default function ExecutiveDashboardPage() {
     }
   };
 
+  console.log(allocationPercentage,"allocationPercentage");
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
     const parsed = saved ? JSON.parse(saved) : layouts.md;
@@ -303,7 +306,15 @@ export default function ExecutiveDashboardPage() {
       d =>
         getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
         monday
-    );   
+    );
+    
+    const filterallocationpercentage = allocationPercentage.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
+    );
 
     setOverAllocated(overAllocated);
     setUnderAllocated(underAllocated);
@@ -316,6 +327,7 @@ export default function ExecutiveDashboardPage() {
     setFilteredUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setFilteredActualDeviation(actualdeviation);
+    setFilteredAllocationPercentage(filterallocationpercentage);
   };
 
   useEffect(() => {
@@ -329,7 +341,8 @@ export default function ExecutiveDashboardPage() {
       unapprovedProjectAllocation.length > 0 &&
       actualsConfirmed.length > 0 &&
       unapprovedProjectActualsByTeam.length > 0 &&
-      resourceActualsDeviation.length > 0
+      resourceActualsDeviation.length > 0 &&
+      allocationPercentage.length > 0
     ) {
       filterDataByDate(selectedDate);
     }
@@ -340,6 +353,7 @@ export default function ExecutiveDashboardPage() {
     unapprovedProjectAllocation,
     unapprovedProjectActualsByTeam,
     resourceActualsDeviation,
+    allocationPercentage,
     selectedDate,
   ]);
 
@@ -1339,6 +1353,7 @@ export default function ExecutiveDashboardPage() {
               activeResources={activeResources}
               actualsConfirmed={filteredActualsConfirmed}
               totalResourceCost={totalResourceCost}
+              allocationPercentage = {filteredAllocationPercentage}
             />
             <ResponsiveGridLayout
               className="layout"
