@@ -25,7 +25,8 @@ import {
 import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
-  const { projects, teams, resources, startDate, endDate } = action.payload;
+  const { projects, teams, resources, startDate, endDate, resolve, reject } =
+    action.payload;
   try {
     yield put(setDataProcessing(true));
 
@@ -94,11 +95,13 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     if (fullAllocations.length) {
       yield put(setAllAllocations(fullAllocations));
     }
+    if (resolve) resolve();
   } catch (error) {
     console.error(
       'Saga error, Failed to fetch team project/allocations : ',
       error
     );
+    if (reject) reject(error);
   } finally {
     yield put(setDataProcessing(false));
   }
