@@ -339,6 +339,7 @@ export default function ExecutiveDashboardPage() {
     actualsConfirmed,
     unapprovedProjectAllocation,
     unapprovedProjectActualsByTeam,
+    resourceActualsDeviation,
     selectedDate,
   ]);
 
