@@ -95,7 +95,7 @@ export default function Overview({
                 alignItems: 'flex-start',
                 justifyContent: 'center',
                 minWidth: 180,
-                width: '230px',
+                width: '250px',
               }}
             >
               <Avatar
