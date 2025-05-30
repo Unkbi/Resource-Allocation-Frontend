@@ -54,8 +54,23 @@ function LayoutContent({ children }) {
           return 'Reports';
         case '/actuals':
           return 'Actuals';
-        default:
+        case '/settings':
+          return 'Settings';
+        case '/':
+        case '/dashboard':
           return 'Dashboard';
+        case '/login':
+          return 'Login';
+        case '/signup':
+          return 'SignUp';
+        case '/signup-otp':
+          return 'SignUp OTP';
+        case '/forgot-password':
+          return 'Forgot Password';
+        case '/reset-password':
+          return 'Reset Password';
+        default:
+          return 'CIOptimize';
       }
     };
     document.title = getTitleByPath(pathname);
