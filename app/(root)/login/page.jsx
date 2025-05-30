@@ -15,6 +15,8 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
+import { useSearchParams } from 'next/navigation';
+
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -179,6 +181,8 @@ export default function LoginPage() {
     const router = useRouter();
     const [showPassword, setShowPassword] = React.useState(false);
     const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
+    const searchParams = useSearchParams();
+    const redirectPath = searchParams.get('redirect');
     const handleLogin = (e) => {
         e.preventDefault();
         dispatch(performLogin(
@@ -192,9 +196,11 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (user) {
-            router.push('/dashboard');
+            // Use redirect path if present, otherwise go to dashboard
+            router.replace(redirectPath || '/dashboard');
         }
-    }, [user, router]);
+    }, [user, router, redirectPath]);
+    
 
     const handleTogglePassword = () => {
         setShowPassword((prev) => !prev);
