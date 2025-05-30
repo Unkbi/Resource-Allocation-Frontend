@@ -89,6 +89,7 @@ export default function ExecutiveDashboardPage() {
     activeResources = [],
     actualsConfirmed = [],
     totalResourceCost = [],
+    allocationPercentage = [],
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -128,6 +129,8 @@ export default function ExecutiveDashboardPage() {
   const [originalUnapprovedActualsByTeam, setOriginalUnapprovedActualsByTeam] =
     useState([]);
   const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
+  const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
+    useState([]);
 
   const handleMenuOpen = event => {
     setAnchorEl(event.currentTarget);
@@ -297,13 +300,21 @@ export default function ExecutiveDashboardPage() {
         monday
     );
 
-  const actualdeviation = resourceActualsDeviation.filter(
+    const actualdeviation = resourceActualsDeviation.filter(
       // This is a patch to handle the timezone issue
       // To Be Implemented: Fix the timezone issue in the backend
       d =>
         getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
         monday
-    );   
+    );
+
+    const filterallocationpercentage = allocationPercentage.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
+    );
 
     setOverAllocated(overAllocated);
     setUnderAllocated(underAllocated);
@@ -316,6 +327,7 @@ export default function ExecutiveDashboardPage() {
     setFilteredUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setFilteredActualDeviation(actualdeviation);
+    setFilteredAllocationPercentage(filterallocationpercentage);
   };
 
   useEffect(() => {
@@ -329,7 +341,8 @@ export default function ExecutiveDashboardPage() {
       unapprovedProjectAllocation.length > 0 &&
       actualsConfirmed.length > 0 &&
       unapprovedProjectActualsByTeam.length > 0 &&
-      resourceActualsDeviation.length > 0
+      resourceActualsDeviation.length > 0 &&
+      allocationPercentage.length > 0
     ) {
       filterDataByDate(selectedDate);
     }
@@ -340,6 +353,7 @@ export default function ExecutiveDashboardPage() {
     unapprovedProjectAllocation,
     unapprovedProjectActualsByTeam,
     resourceActualsDeviation,
+    allocationPercentage,
     selectedDate,
   ]);
 
@@ -430,6 +444,10 @@ export default function ExecutiveDashboardPage() {
 
   const unapprovedProjectAllocationData = transformDataForPieChart(
     filteredUnapprovedProjectAllocation
+  );
+
+  const filteredbudgetVsPlanVsActual = budgetVsPlanVsActual.filter(
+    b => b.budget_total !== 0
   );
 
   const overviewcharts = {
@@ -653,32 +671,6 @@ export default function ExecutiveDashboardPage() {
             series={[
               {
                 data: unapprovedProjectAllocationData,
-                // data: [
-                //   {
-                //     id: 0,
-                //     value: unapprovedProjectAllocation?.otherProjects ?? 0.5,
-                //     label: 'Other Projects',
-                //     color: '#0080FF',
-                //   },
-                //   {
-                //     id: 1,
-                //     value: unapprovedProjectAllocation?.units_unapproved ?? 0.5,
-                //     label: 'Unplanned Work',
-                //     color: '#00C9A7',
-                //   },
-                //   {
-                //     id: 2,
-                //     value: unapprovedProjectAllocation?.personalTime ?? 1,
-                //     label: 'Personal Time',
-                //     color: '#FFC233',
-                //   },
-                //   {
-                //     id: 3,
-                //     value: unapprovedProjectAllocation?.approvedWork ?? 1,
-                //     label: 'Approved Work',
-                //     color: '#FF884D',
-                //   },
-                // ],
                 innerRadius: 0, // full pie
                 outerRadius: 120,
                 // paddingAngle: 2,
@@ -702,75 +694,6 @@ export default function ExecutiveDashboardPage() {
                 itemmarkheight: 8,
                 labelstyle: { fontSize: 16 },
               },
-            }}
-          />
-        </Box>
-      </DashboardWidget>
-    ),
-    
-  };
-  const projectCharts = {
-    projectFTE: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Allocation by Project Type Over Time')}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
-          >
-            Allocation by Project Type Over Time
-          </Typography>
-        </Box>
-        <Box sx={{ mt: 2 }}>
-          <BarChart
-            height={300}
-            series={projectSeries.map(series => ({
-              data: series.data,
-              label: series.label,
-              id: series.label, // Use the label as the ID
-              stack: 'total', // Enable stacking
-              color:
-                series.label === 'RTB'
-                  ? '#0080FF'
-                  : series.label === 'Key Initiative'
-                    ? '#00C9A7'
-                    : series.label === 'Ongoing'
-                      ? '#FFC233'
-                      : series.label === 'STB'
-                        ? '#FF884D'
-                        : '#FFB6B6',
-            }))}
-            xAxis={[
-              {
-                data: projectPeriods.map((p, idx) => `W${idx + 1}`), // Use week labels
-                label: 'Week',
-              },
-            ]}
-            yAxis={[
-              {
-                label: 'FTE',
-                min: 0,
-                width: 50, // Adjust width for better alignment
-              },
-            ]}
-            slotProps={{
-              bar: {
-                borderradius: 2,
-                barwidthratio: 0.4, // Adjust bar width
-              },
-              legend: {
-                direction: 'row',
-                position: { vertical: 'bottom', horizontal: 'left' },
-                padding: 8,
-              },
-              highlightScope: 'none',
             }}
           />
         </Box>
@@ -845,6 +768,74 @@ export default function ExecutiveDashboardPage() {
         </Box>
       </DashboardWidget>
     ),
+  };
+  const projectCharts = {
+    projectFTE: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Allocation by Project Type Over Time')}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Allocation by Project Type Over Time
+          </Typography>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <BarChart
+            height={300}
+            series={projectSeries.map(series => ({
+              data: series.data,
+              label: series.label,
+              id: series.label, // Use the label as the ID
+              stack: 'total', // Enable stacking
+              color:
+                series.label === 'RTB'
+                  ? '#0080FF'
+                  : series.label === 'Key Initiative'
+                    ? '#00C9A7'
+                    : series.label === 'Ongoing'
+                      ? '#FFC233'
+                      : series.label === 'STB'
+                        ? '#FF884D'
+                        : '#FFB6B6',
+            }))}
+            xAxis={[
+              {
+                data: projectPeriods.map((p, idx) => `W${idx + 1}`), // Use week labels
+                label: 'Week',
+              },
+            ]}
+            yAxis={[
+              {
+                label: 'FTE',
+                min: 0,
+                width: 50, // Adjust width for better alignment
+              },
+            ]}
+            slotProps={{
+              bar: {
+                borderradius: 2,
+                barwidthratio: 0.4, // Adjust bar width
+              },
+              legend: {
+                direction: 'row',
+                position: { vertical: 'bottom', horizontal: 'left' },
+                padding: 8,
+              },
+              highlightScope: 'none',
+            }}
+          />
+        </Box>
+      </DashboardWidget>
+    ),
     budgetVsPlanVsActual: (
       <DashboardWidget
         onClick={() =>
@@ -870,13 +861,15 @@ export default function ExecutiveDashboardPage() {
             height={300}
             series={[
               {
-                data: budgetVsPlanVsActual.map(d => parseFloat(d.budget_total)),
+                data: filteredbudgetVsPlanVsActual.map(d =>
+                  parseFloat(d.budget_total)
+                ),
                 label: 'Budget',
                 id: 'budget',
                 color: '#9FA8DA', // Light purple
               },
               {
-                data: budgetVsPlanVsActual.map(d =>
+                data: filteredbudgetVsPlanVsActual.map(d =>
                   parseFloat(d.planned_to_date)
                 ),
                 label: 'Planned',
@@ -884,17 +877,17 @@ export default function ExecutiveDashboardPage() {
                 color: '#80CBC4', // Light green
               },
               {
-                data: budgetVsPlanVsActual.map(d =>
+                data: filteredbudgetVsPlanVsActual.map(d =>
                   parseFloat(d.actuals_to_date)
                 ),
-                label: 'Actual',
+                label: 'Actuals',
                 id: 'actual',
                 color: '#FFB74D', // Light orange
               },
             ]}
             xAxis={[
               {
-                data: budgetVsPlanVsActual.map(d => d.project_name), // Project names as x-axis labels
+                data: filteredbudgetVsPlanVsActual.map(d => d.project_name), // Project names as x-axis labels
                 label: 'Project',
               },
             ]}
@@ -978,12 +971,13 @@ export default function ExecutiveDashboardPage() {
                 data: [
                   ...new Set(
                     filteredUnapprovedActualsByTeam.map(d => {
-                  const teamName = d.team_name;
-                  const maxLength = 10; // Set a maximum length for team names
-                  return teamName.length > maxLength && filteredUnapprovedActualsByTeam.length > 4
-                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
-                    : teamName; // Wrap text if it exceeds maxLength
-                }),
+                      const teamName = d.team_name;
+                      const maxLength = 10; // Set a maximum length for team names
+                      return teamName.length > maxLength &&
+                        filteredUnapprovedActualsByTeam.length > 4
+                        ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                        : teamName; // Wrap text if it exceeds maxLength
+                    })
                   ),
                 ],
                 label: 'Team',
@@ -1012,7 +1006,7 @@ export default function ExecutiveDashboardPage() {
         </Box>
       </DashboardWidget>
     ),
-     capacityAvailability: (
+    capacityAvailability: (
       <DashboardWidget
         onClick={() => handleChartClick('Capacity vs Utilization by Team')}
       >
@@ -1061,7 +1055,8 @@ export default function ExecutiveDashboardPage() {
                 data: filteredCapacityData.map(d => {
                   const teamName = d.team_name;
                   const maxLength = 10; // Set a maximum length for team names
-                  return teamName.length > maxLength && filteredCapacityData.length > 3
+                  return teamName.length > maxLength &&
+                    filteredCapacityData.length > 3
                     ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
                     : teamName; // Wrap text if it exceeds maxLength
                 }), // Team names as x-axis labels
@@ -1187,7 +1182,8 @@ export default function ExecutiveDashboardPage() {
                 data: filteredUnderAllocated.map(d => {
                   const teamName = d.team_name;
                   const maxLength = 10; // Set a maximum length for team names
-                  return teamName.length > maxLength && filteredUnderAllocated.length > 3
+                  return teamName.length > maxLength &&
+                    filteredUnderAllocated.length > 3
                     ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
                     : teamName; // Wrap text if it exceeds maxLength
                 }), // Team names as x-axis labels
@@ -1251,7 +1247,8 @@ export default function ExecutiveDashboardPage() {
                 data: filteredOverAllocated.map(d => {
                   const teamName = d.team_name;
                   const maxLength = 10; // Set a maximum length for team names
-                  return teamName.length > maxLength && filteredOverAllocated.length > 3
+                  return teamName.length > maxLength &&
+                    filteredOverAllocated.length > 3
                     ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
                     : teamName; // Wrap text if it exceeds maxLength
                 }), // Team names as x-axis labels
@@ -1339,6 +1336,7 @@ export default function ExecutiveDashboardPage() {
               activeResources={activeResources}
               actualsConfirmed={filteredActualsConfirmed}
               totalResourceCost={totalResourceCost}
+              allocationPercentage={filteredAllocationPercentage}
             />
             <ResponsiveGridLayout
               className="layout"
