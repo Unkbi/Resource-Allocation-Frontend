@@ -250,8 +250,11 @@ const Header = ({ sidebarExpanded }) => {
         return;
       case '/actuals':
         return 'Actuals';
-      default:
+      case '/':
+      case '/dashboard':
         return 'Executive Dashboard';
+      default:
+        return '';
     }
   };
   return (

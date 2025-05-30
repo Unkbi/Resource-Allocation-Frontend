@@ -6,7 +6,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import ThemeRegistry from './theme/ThemeRegistry';
 import SideBar from './components/Shared/Sidebar/Sidebar';
 import Header from './components/Shared/Header/Header';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Box, styled } from '@mui/material';
 import { getToken } from './utils/authUtils';
 import { PUBLIC_ROUTES } from './constants/constants';
@@ -30,6 +30,7 @@ function LayoutContent({ children }) {
   const isLoggedIn = getToken();
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isUserLoginIn, setIsUserLoginIn] = useState(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const router = useRouter();
@@ -42,7 +43,7 @@ function LayoutContent({ children }) {
   }, []);
 
   useEffect(() => {
-    const getTitleByPath = (pathname) => {
+    const getTitleByPath = pathname => {
       switch (pathname) {
         case '/allocation':
           return 'Allocation';
@@ -54,8 +55,23 @@ function LayoutContent({ children }) {
           return 'Reports';
         case '/actuals':
           return 'Actuals';
-        default:
+        case '/settings':
+          return 'Settings';
+        case '/':
+        case '/dashboard':
           return 'Dashboard';
+        case '/login':
+          return 'Login';
+        case '/signup':
+          return 'SignUp';
+        case '/signup-otp':
+          return 'SignUp OTP';
+        case '/forgot-password':
+          return 'Forgot Password';
+        case '/reset-password':
+          return 'Reset Password';
+        default:
+          return 'CIOptimize';
       }
     };
     document.title = getTitleByPath(pathname);
@@ -64,9 +80,15 @@ function LayoutContent({ children }) {
   useEffect(() => {
     if (!isClient) return;
     if (isLoggedIn && isPublicRoute) {
-      router.replace('/allocation');
-    } else if (!isLoggedIn && !isPublicRoute) {
-      router.replace('/login');
+      router.replace('/dashboard');
+    } else if (
+      !isLoggedIn &&
+      !isPublicRoute &&
+      !pathname.startsWith('/login')
+    ) {
+      const fullUrl = `${pathname}?${searchParams.toString()}`;
+      const encodedUrl = encodeURIComponent(fullUrl);
+      router.replace(`/login?redirect=${encodedUrl}`);
     }
   }, [isLoggedIn, isPublicRoute, router, isClient]);
 

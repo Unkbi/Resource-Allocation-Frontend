@@ -13,7 +13,7 @@ export default function CallbackContent() {
         if (idToken && refreshToken) {
             saveToken(idToken);
             saveRefreshToken(refreshToken);
-            route.push("/allocation")
+            route.push("/dashboard")
         }
     }, [idToken, refreshToken])
 

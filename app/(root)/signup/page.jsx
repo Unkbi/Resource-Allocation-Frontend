@@ -209,7 +209,7 @@ export default function SingupPage() {
 
     useEffect(() => {
         if (user) {
-            router.push('/allocation');
+            router.push('/dashboard');
         }
     }, [user, router]);
 
