@@ -127,6 +127,7 @@ export default function ExecutiveDashboardPage() {
     useState([]);
   const [originalUnapprovedActualsByTeam, setOriginalUnapprovedActualsByTeam] =
     useState([]);
+  const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
 
   const handleMenuOpen = event => {
     setAnchorEl(event.currentTarget);
@@ -296,6 +297,14 @@ export default function ExecutiveDashboardPage() {
         monday
     );
 
+  const actualdeviation = resourceActualsDeviation.filter(
+      // This is a patch to handle the timezone issue
+      // To Be Implemented: Fix the timezone issue in the backend
+      d =>
+        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
+        monday
+    );   
+
     setOverAllocated(overAllocated);
     setUnderAllocated(underAllocated);
     setFilteredCapacityData(capacityData);
@@ -306,6 +315,7 @@ export default function ExecutiveDashboardPage() {
     setFilteredActualsConfirmed(actualsconfirmed);
     setFilteredUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
+    setFilteredActualDeviation(actualdeviation);
   };
 
   useEffect(() => {
@@ -318,7 +328,8 @@ export default function ExecutiveDashboardPage() {
       resourceUtilization.length > 0 &&
       unapprovedProjectAllocation.length > 0 &&
       actualsConfirmed.length > 0 &&
-      unapprovedProjectActualsByTeam.length > 0
+      unapprovedProjectActualsByTeam.length > 0 &&
+      resourceActualsDeviation.length > 0
     ) {
       filterDataByDate(selectedDate);
     }
@@ -328,6 +339,7 @@ export default function ExecutiveDashboardPage() {
     actualsConfirmed,
     unapprovedProjectAllocation,
     unapprovedProjectActualsByTeam,
+    resourceActualsDeviation,
     selectedDate,
   ]);
 
@@ -443,12 +455,12 @@ export default function ExecutiveDashboardPage() {
             series={[
               {
                 data:
-                  resourceActualsDeviation.length > 0
+                  filteredActualDeviation.length > 0
                     ? [
                         {
                           id: 0,
                           value: parseFloat(
-                            resourceActualsDeviation[0].deviation_pct
+                            filteredActualDeviation[0].deviation_pct
                           ),
                           label: 'Deviation',
                           color: '#FF7043', // Orange for deviation
@@ -456,7 +468,7 @@ export default function ExecutiveDashboardPage() {
                         {
                           id: 1,
                           value: parseFloat(
-                            resourceActualsDeviation[0].in_plan_pct
+                            filteredActualDeviation[0].in_plan_pct
                           ),
                           label: 'In Plan',
                           color: '#80CBC4', // Green for in-plan
@@ -695,69 +707,7 @@ export default function ExecutiveDashboardPage() {
         </Box>
       </DashboardWidget>
     ),
-    resourceCoverage: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Resource Allocation Coverage')}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
-          >
-            Resource Coverage by Teams
-          </Typography>
-        </Box>
-        <LineChart
-          xAxis={[
-            {
-              scaleType: 'point',
-              data: periods.map(p => {
-                const date = new Date(p);
-                const tempDate = new Date(date.getTime());
-                tempDate.setHours(0, 0, 0, 0);
-                // Thursday in current week decides the year
-                tempDate.setDate(
-                  tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7)
-                );
-                const week1 = new Date(tempDate.getFullYear(), 0, 4);
-                // Calculate full weeks to nearest Thursday
-                const weekNo =
-                  1 +
-                  Math.round(
-                    ((tempDate.getTime() - week1.getTime()) / 86400000 -
-                      3 +
-                      ((week1.getDay() + 6) % 7)) /
-                      7
-                  );
-                return `W${weekNo}`;
-              }),
-              label: 'Week',
-            },
-          ]}
-          yAxis={[{ min: 0, label: 'Coverage %' }]}
-          series={coverageSeries}
-          height={300}
-          grid={{ vertical: true, horizontal: true }}
-          slotProps={{
-            line: {
-              strokeWidth: 3,
-              strokeOpacity: 0.8,
-              markersize: 2, // Reduced marker size
-              markerstyle: { fill: '#666', stroke: '#fff', strokeWidth: 1 },
-            },
-            marker: {
-              size: 2, // Reduced marker size
-            },
-          }}
-        />
-      </DashboardWidget>
-    ),
+    
   };
   const projectCharts = {
     projectFTE: (
@@ -821,84 +771,6 @@ export default function ExecutiveDashboardPage() {
                 padding: 8,
               },
               highlightScope: 'none',
-            }}
-          />
-        </Box>
-      </DashboardWidget>
-    ),
-    capacityAvailability: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Capacity vs Utilization by Team')}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
-          >
-            Capacity vs Utilization by Team
-          </Typography>
-        </Box>
-        <Box sx={{ mt: 2 }}>
-          <BarChart
-            height={300}
-            series={[
-              {
-                data: filteredCapacityData.map(d =>
-                  parseFloat(d.capacity_available_fte)
-                ),
-                label: 'Available Capacity',
-                id: 'availableCapacity',
-                color: '#9FA8DA', // Light purple
-              },
-              {
-                data: filteredCapacityData.map(d =>
-                  parseFloat(d.capacity_allocated_fte)
-                ),
-                label: 'Utilized Capacity',
-                id: 'utilizedCapacity',
-                color: '#80CBC4', // Light green
-                tooltip: ({ index }) => {
-                  const utilization =
-                    filteredCapacityData[index]?.utilization_pct || '0';
-                  return `Utilization: ${utilization}%`;
-                },
-              },
-            ]}
-            xAxis={[
-              {
-                data: filteredCapacityData.map(d => {
-                  const teamName = d.team_name;
-                  const maxLength = 10; // Set a maximum length for team names
-                  return teamName.length > maxLength
-                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
-                    : teamName; // Wrap text if it exceeds maxLength
-                }), // Team names as x-axis labels
-                label: 'Team',
-              },
-            ]}
-            yAxis={[
-              {
-                label: 'Capacity',
-                min: 0,
-                width: 50, // Adjust width for better alignment
-              },
-            ]}
-            slotProps={{
-              bar: {
-                borderradius: 2,
-                barwidthratio: 0.4, // Adjust bar width
-              },
-              legend: {
-                direction: 'row',
-                position: { vertical: 'bottom', horizontal: 'middle' },
-                padding: 8,
-              },
             }}
           />
         </Box>
@@ -1052,6 +924,235 @@ export default function ExecutiveDashboardPage() {
   };
 
   const teamCharts = {
+    
+    unapprovedProjectActualsByTeam: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Project Actuals Breakdown by Team')}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Project Actuals Breakdown by Team
+          </Typography>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <BarChart
+            height={300}
+            series={[
+              ...new Set(filteredUnapprovedActualsByTeam.map(d => d.category)),
+            ].map(category => ({
+              label: category,
+              id: category,
+              stack: 'total',
+              data: [
+                ...new Set(
+                  filteredUnapprovedActualsByTeam.map(d => d.team_name)
+                ),
+              ].map(team => {
+                const match = filteredUnapprovedActualsByTeam.find(
+                  d => d.category === category && d.team_name === team
+                );
+                return match ? parseFloat(match.pct_of_actuals) : 0;
+              }),
+              color:
+                category === 'Approved Work'
+                  ? '#00C9A7'
+                  : category === 'Unplanned Projects'
+                    ? '#FF884D'
+                    : category === 'Other Work'
+                      ? '#FFC233'
+                      : category === 'Personal Time'
+                        ? '#0080FF'
+                        : '#CCCCCC',
+            }))}
+            xAxis={[
+              {
+                data: [
+                  ...new Set(
+                    filteredUnapprovedActualsByTeam.map(d => {
+                  const teamName = d.team_name;
+                  const maxLength = 10; // Set a maximum length for team names
+                  return teamName.length > maxLength && filteredUnapprovedActualsByTeam.length > 4
+                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                    : teamName; // Wrap text if it exceeds maxLength
+                }),
+                  ),
+                ],
+                label: 'Team',
+              },
+            ]}
+            yAxis={[
+              {
+                label: '% of Actuals',
+                min: 0,
+                max: 100,
+                valueFormatter: value => `${value}%`,
+              },
+            ]}
+            slotProps={{
+              bar: {
+                borderradius: 2,
+                barwidthratio: 0.5,
+              },
+              legend: {
+                direction: 'row',
+                position: { vertical: 'bottom', horizontal: 'middle' },
+                padding: 8,
+              },
+            }}
+          />
+        </Box>
+      </DashboardWidget>
+    ),
+     capacityAvailability: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Capacity vs Utilization by Team')}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Capacity vs Utilization by Team
+          </Typography>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <BarChart
+            height={300}
+            series={[
+              {
+                data: filteredCapacityData.map(d =>
+                  parseFloat(d.capacity_available_fte)
+                ),
+                label: 'Available Capacity',
+                id: 'availableCapacity',
+                color: '#9FA8DA', // Light purple
+              },
+              {
+                data: filteredCapacityData.map(d =>
+                  parseFloat(d.capacity_allocated_fte)
+                ),
+                label: 'Utilized Capacity',
+                id: 'utilizedCapacity',
+                color: '#80CBC4', // Light green
+                tooltip: ({ index }) => {
+                  const utilization =
+                    filteredCapacityData[index]?.utilization_pct || '0';
+                  return `Utilization: ${utilization}%`;
+                },
+              },
+            ]}
+            xAxis={[
+              {
+                data: filteredCapacityData.map(d => {
+                  const teamName = d.team_name;
+                  const maxLength = 10; // Set a maximum length for team names
+                  return teamName.length > maxLength && filteredCapacityData.length > 3
+                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                    : teamName; // Wrap text if it exceeds maxLength
+                }), // Team names as x-axis labels
+                label: 'Team',
+              },
+            ]}
+            yAxis={[
+              {
+                label: 'Capacity',
+                min: 0,
+                width: 50, // Adjust width for better alignment
+              },
+            ]}
+            slotProps={{
+              bar: {
+                borderradius: 2,
+                barwidthratio: 0.4, // Adjust bar width
+              },
+              legend: {
+                direction: 'row',
+                position: { vertical: 'bottom', horizontal: 'middle' },
+                padding: 8,
+              },
+            }}
+          />
+        </Box>
+      </DashboardWidget>
+    ),
+    resourceCoverage: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Resource Allocation Coverage')}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
+          >
+            Resource Coverage by Teams
+          </Typography>
+        </Box>
+        <LineChart
+          xAxis={[
+            {
+              scaleType: 'point',
+              data: periods.map(p => {
+                const date = new Date(p);
+                const tempDate = new Date(date.getTime());
+                tempDate.setHours(0, 0, 0, 0);
+                // Thursday in current week decides the year
+                tempDate.setDate(
+                  tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7)
+                );
+                const week1 = new Date(tempDate.getFullYear(), 0, 4);
+                // Calculate full weeks to nearest Thursday
+                const weekNo =
+                  1 +
+                  Math.round(
+                    ((tempDate.getTime() - week1.getTime()) / 86400000 -
+                      3 +
+                      ((week1.getDay() + 6) % 7)) /
+                      7
+                  );
+                return `W${weekNo}`;
+              }),
+              label: 'Week',
+            },
+          ]}
+          yAxis={[{ min: 0, label: 'Coverage %' }]}
+          series={coverageSeries}
+          height={300}
+          grid={{ vertical: true, horizontal: true }}
+          slotProps={{
+            line: {
+              strokeWidth: 3,
+              strokeOpacity: 0.8,
+              markersize: 2, // Reduced marker size
+              markerstyle: { fill: '#666', stroke: '#fff', strokeWidth: 1 },
+            },
+            marker: {
+              size: 2, // Reduced marker size
+            },
+          }}
+        />
+      </DashboardWidget>
+    ),
     underAllocated: (
       <DashboardWidget>
         <Box
@@ -1083,7 +1184,13 @@ export default function ExecutiveDashboardPage() {
             ]}
             xAxis={[
               {
-                data: filteredUnderAllocated.map(d => d.team_name), // Team names as x-axis labels
+                data: filteredUnderAllocated.map(d => {
+                  const teamName = d.team_name;
+                  const maxLength = 10; // Set a maximum length for team names
+                  return teamName.length > maxLength && filteredUnderAllocated.length > 3
+                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                    : teamName; // Wrap text if it exceeds maxLength
+                }), // Team names as x-axis labels
                 label: 'Team',
               },
             ]}
@@ -1141,7 +1248,13 @@ export default function ExecutiveDashboardPage() {
             ]}
             xAxis={[
               {
-                data: filteredOverAllocated.map(d => d.team_name), // Team names as x-axis labels
+                data: filteredOverAllocated.map(d => {
+                  const teamName = d.team_name;
+                  const maxLength = 10; // Set a maximum length for team names
+                  return teamName.length > maxLength && filteredOverAllocated.length > 3
+                    ? `${teamName.slice(0, maxLength)}\n${teamName.slice(maxLength)}`
+                    : teamName; // Wrap text if it exceeds maxLength
+                }), // Team names as x-axis labels
                 label: 'Team',
               },
             ]}
@@ -1157,87 +1270,6 @@ export default function ExecutiveDashboardPage() {
               bar: {
                 borderradius: 2,
                 barwidthratio: 0.4, // Adjust bar width
-              },
-              legend: {
-                direction: 'row',
-                position: { vertical: 'bottom', horizontal: 'middle' },
-                padding: 8,
-              },
-            }}
-          />
-        </Box>
-      </DashboardWidget>
-    ),
-    unapprovedProjectActualsByTeam: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Project Actuals Breakdown by Team')}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ mb: 1, fontSize: '18px', fontWeight: 600 }}
-          >
-            Project Actuals Breakdown by Team
-          </Typography>
-        </Box>
-        <Box sx={{ mt: 2 }}>
-          <BarChart
-            height={300}
-            series={[
-              ...new Set(filteredUnapprovedActualsByTeam.map(d => d.category)),
-            ].map(category => ({
-              label: category,
-              id: category,
-              stack: 'total',
-              data: [
-                ...new Set(
-                  filteredUnapprovedActualsByTeam.map(d => d.team_name)
-                ),
-              ].map(team => {
-                const match = filteredUnapprovedActualsByTeam.find(
-                  d => d.category === category && d.team_name === team
-                );
-                return match ? parseFloat(match.pct_of_actuals) : 0;
-              }),
-              color:
-                category === 'Approved Work'
-                  ? '#00C9A7'
-                  : category === 'Unplanned Projects'
-                    ? '#FF884D'
-                    : category === 'Other Work'
-                      ? '#FFC233'
-                      : category === 'Personal Time'
-                        ? '#0080FF'
-                        : '#CCCCCC',
-            }))}
-            xAxis={[
-              {
-                data: [
-                  ...new Set(
-                    filteredUnapprovedActualsByTeam.map(d => d.team_name)
-                  ),
-                ],
-                label: 'Team',
-              },
-            ]}
-            yAxis={[
-              {
-                label: '% of Actuals',
-                min: 0,
-                max: 100,
-                valueFormatter: value => `${value}%`,
-              },
-            ]}
-            slotProps={{
-              bar: {
-                borderradius: 2,
-                barwidthratio: 0.5,
               },
               legend: {
                 direction: 'row',
