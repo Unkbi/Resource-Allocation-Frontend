@@ -17,6 +17,19 @@ const employeeRatesSlice = createSlice({
     clearEmployeeRates: state => {
       state.employeeRates = [];
     },
+    updateEmployeeRate: (state, action) => {
+      const updatedRate = action.payload;
+      if (!state.employeeRates) return; 
+      const index = state.employeeRates.findIndex(
+        rate => rate.__Id__ === updatedRate.__Id__
+      );
+      if (index !== -1) {
+        state.employeeRates[index] = {
+          ...state.employeeRates[index],
+          ...updatedRate,
+        };
+      }
+    },
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
@@ -26,6 +39,11 @@ const employeeRatesSlice = createSlice({
   },
 });
 
-export const { setEmployeeRates, clearEmployeeRates, setLoading, setError } =
-  employeeRatesSlice.actions;
+export const {
+  setEmployeeRates,
+  clearEmployeeRates,
+  setLoading,
+  setError,
+  updateEmployeeRate,
+} = employeeRatesSlice.actions;
 export default employeeRatesSlice.reducer;
