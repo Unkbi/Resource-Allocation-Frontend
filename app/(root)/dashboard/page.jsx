@@ -35,10 +35,18 @@ import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
+import quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import Topbar from '@/app/components/Dashboard/TabTopbar';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import weekday from 'dayjs/plugin/weekday';
+
+dayjs.extend(isoWeek);
+dayjs.extend(weekday);
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
+
+dayjs.extend(quarterOfYear);
 
 // Dynamically generate layouts for all charts in allowedQueries
 const chartKeys = [...Object.keys(queries), 'underAllocated', 'overAllocated'];
@@ -118,7 +126,7 @@ export default function ExecutiveDashboardPage() {
     useState([]);
   const [originalCapacityData, setOriginalCapacityData] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedOption, setSelectedOption] = useState('Weekly'); // Default option
+  const [selectedOption, setSelectedOption] = useState('week'); // Default option
   const [
     filteredUnapprovedProjectAllocation,
     setFilteredUnapprovedProjectAllocation,
@@ -132,16 +140,16 @@ export default function ExecutiveDashboardPage() {
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
 
-  const handleMenuOpen = event => {
-    setAnchorEl(event.currentTarget);
-  };
+  // const handleMenuOpen = event => {
+  //   setAnchorEl(event.currentTarget);
+  // };
 
-  const handleMenuClose = option => {
-    setAnchorEl(null);
-    if (option) {
-      setSelectedOption(option); // Update the selected option
-    }
-  };
+  // const handleMenuClose = option => {
+  //   setAnchorEl(null);
+  //   if (option) {
+  //     setSelectedOption(option); // Update the selected option
+  //   }
+  // };
 
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
@@ -149,20 +157,68 @@ export default function ExecutiveDashboardPage() {
     setLayout(parsed);
   }, []);
 
+  // useEffect(() => {
+  //   try {
+  //     Object.keys(queries).forEach(queryKey => {
+  //       console.log(selectedDate,selectedDate.startOf('month').format('YYYY-MM-DD'), selectedDate.startOf('week').format('YYYY-MM-DD'),"ddd")
+  //       dispatch(
+  //         fetchDashboardChart({
+  //           chartKey: queryKey,
+  //           queryKey: queryKey,
+  //           startDate: selectedDate.startOf(selectedOption).add(1, 'day').format('YYYY-MM-DD'),
+  //           endDate: selectedDate.endOf(selectedOption).add(1, 'day').format('YYYY-MM-DD'),
+  //           bucket: selectedOption,
+  //         })
+  //       );
+  //     });
+  //   } catch {
+  //     console.error('Error fetching dashboard data. Please try again later.');
+  //   }
+  // }, [dispatch, selectedDate, selectedOption]);
+
   useEffect(() => {
-    try {
-      Object.keys(queries).forEach(queryKey => {
-        dispatch(
-          fetchDashboardChart({
-            chartKey: queryKey,
-            queryKey: queryKey,
-          })
-        );
-      });
-    } catch {
-      console.error('Error fetching dashboard data. Please try again later.');
-    }
-  }, [dispatch]);
+  try {
+    // 🧠 Utility to calculate date range based on selectedOption
+    const getCustomStartAndEndDate = (unit, date) => {
+      let startRef = date.startOf(unit);
+      let endRef = date.endOf(unit);
+
+      // First Monday of the unit
+      const startDate = startRef.day() === 1
+        ? startRef
+        : startRef.add((8 - startRef.day()) % 7, 'day');
+
+      // Last Sunday of the unit
+      const endDate = endRef.day() === 0
+        ? endRef
+        : endRef.subtract(endRef.day(), 'day');
+
+      return {
+        startDate: startDate.format('YYYY-MM-DD'),
+        endDate: endDate.format('YYYY-MM-DD'),
+      };
+    };
+
+    const { startDate, endDate } = getCustomStartAndEndDate(
+      selectedOption,
+      selectedDate
+    );
+
+    Object.keys(queries).forEach(queryKey => {
+      dispatch(
+        fetchDashboardChart({
+          chartKey: queryKey,
+          queryKey: queryKey,
+          startDate,
+          endDate,
+          bucket: selectedOption,
+        })
+      );
+    });
+  } catch (err) {
+    console.error('Error fetching dashboard data. Please try again later.', err);
+  }
+}, [dispatch, selectedDate, selectedOption]);
 
   useEffect(() => {
     if (coverageData.length > 0) {
@@ -917,7 +973,6 @@ export default function ExecutiveDashboardPage() {
   };
 
   const teamCharts = {
-    
     unapprovedProjectActualsByTeam: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Actuals Breakdown by Team')}

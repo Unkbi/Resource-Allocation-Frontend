@@ -1,12 +1,15 @@
-export const allowedQueries: Record<string, string> = {
+export const allowedQueries: Record<
+  string,
+  (startDate: string, endDate: string, bucket: string) => string
+> = {
   //002 - Fractional units breakdown of resources allocation by duration trend based on project types.
-  projectFTE: `
+  projectFTE: (startDate, endDate, bucket) => `
     /* ========= 1. Parameter block (extended) ========== */
 WITH params AS (
     SELECT
-        DATE '2024-12-30'                   AS start_date,             -- ← window start
-        DATE '2025-12-31'                   AS end_date,               -- ← window end
-        'week'::text                      AS bucket,                 -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text                      AS bucket,                 -- 'week' | 'month' | 'quarter'
         'Contractor - PT'                  AS excluded_resource_type,
         /* optional: list of project types to ignore                         */
         /* supply '{}' to include all                                        */
@@ -105,12 +108,16 @@ LEFT JOIN alloc_by_proj_period abpp
 ORDER BY abpp.project_type, cal.period_start;
   `,
   //003 - What is my capacity available by Teams vs the Capacity allocated by duration trend?
-  capacityAvailability: `/* ========= 1. Parameter block ========== */
+  capacityAvailability: (
+    startDate,
+    endDate,
+    bucket
+  ) => `/* ========= 1. Parameter block ========== */
 WITH params AS (
     SELECT
-        DATE '2024-12-30'  AS start_date,            -- ← reporting window start
-        DATE '2025-12-31'  AS end_date,              -- ← reporting window end
-        'week'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
         'Contractor - PT'    AS excluded_type
 ),
 
@@ -225,7 +232,11 @@ ORDER BY t._name, cal.period_start;
 
 `,
   //004/005 - Which teams are over-allocated and under-allocated? (2 separate reporting charts over a period of time)
-  resourceUtilization: `/* ========= Thresholds you can tweak ========== */
+  resourceUtilization: (
+    startDate,
+    endDate,
+    bucket
+  ) => `/* ========= Thresholds you can tweak ========== */
 WITH limits AS (
     SELECT
         100::numeric AS over_pct,
@@ -234,9 +245,9 @@ WITH limits AS (
 /* ========= 1. Parameter block ========== */
 params AS (
     SELECT
-        DATE '2024-12-30'  AS start_date,            -- ← reporting window start
-        DATE '2025-12-31'  AS end_date,              -- ← reporting window end
-        'week'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
         'Contractor - PT'    AS excluded_type
 ),
 
@@ -354,11 +365,15 @@ FROM baseline b
 CROSS JOIN limits l;          -- gives you access to the thresholds
 `,
   //006 -Projects budget vs Planned vs Actuals to date
-  budgetVsPlanVsActual: `/* ======== 1.  Parameters you can tweak ============================= */
+  budgetVsPlanVsActual: (
+    startDate,
+    endDate,
+    bucket
+  ) => `/* ======== 1.  Parameters you can tweak ============================= */
 WITH params AS (
     SELECT
-        DATE '2024-12-30'  AS start_date,     -- ← reporting window
-        DATE '2025-12-31'  AS end_date
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                     AS end_date
 ),
 
 /* ======== 2.  Allocation-cost rows inside the window =============== */
@@ -411,12 +426,16 @@ LEFT JOIN cost_by_project cbp
 where cbp.planned_to_date is not null;
 `,
   //(007) Teams whose Actuals are most deviating from the Planned by duration trend?
-  resourceActualsDeviation: `/* ========= 1. Parameters ========================================== */
+  resourceActualsDeviation: (
+    startDate,
+    endDate,
+    bucket
+  ) => `/* ========= 1. Parameters ========================================== */
 WITH params AS (
     SELECT
-        DATE '2024-12-30' AS start_date,
-        DATE '2025-06-01' AS end_date,
-        'week'::text      AS bucket,      -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text      AS bucket,      -- 'week' | 'month' | 'quarter'
         ''                AS excluded_resource_type
 ),
 
@@ -497,12 +516,16 @@ ORDER BY cal.period_start;
 `,
 
   //(008) How much units is being actuals on unapproved projects by team?
-  unapprovedProjectActualsByTeam: `/* ========= 1. PARAMETERS ========================================== */
+  unapprovedProjectActualsByTeam: (
+    startDate,
+    endDate,
+    bucket
+  ) => `/* ========= 1. PARAMETERS ========================================== */
 WITH params AS (
     SELECT
-        DATE '2024-12-30' AS start_date,
-        DATE '2025-12-31' AS end_date,
-        'week'::text      AS bucket          -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text      AS bucket          -- 'week' | 'month' | 'quarter'
 ),
 
 /* ========= 2. CALENDAR BUCKETS ==================================== */
@@ -634,7 +657,7 @@ ORDER BY tm.team_name,
 `,
 
   //(009)Ratio of employees (FTE) to contractors stacked by onshore and offshore resources
-  resourceFTEContractorRatio: `SELECT
+  resourceFTEContractorRatio: (startDate, endDate, bucket) => `SELECT
     _locationcategory                  AS shore_flag,
     COUNT(DISTINCT ___path__) FILTER (WHERE _type = 'FTE')   AS fte_cnt,
     COUNT(DISTINCT ___path__) FILTER (WHERE _type <> 'FTE')  AS contractor_cnt
@@ -644,23 +667,35 @@ and _status = 'Active'
 GROUP BY shore_flag
 `,
   //(010) Total active projects breakdown by project type
-  activeProjectsByType: `select _type,count(*) from public.resourceallocation_core__project_0_0_1
+  activeProjectsByType: (
+    startDate,
+    endDate,
+    bucket
+  ) => `select _type,count(*) from public.resourceallocation_core__project_0_0_1
 where _status = 'Active'
 group by _type`,
 
   //(011) Total headcount breakdown by FTE vs contractors
-  totalHeadcount: `select _type,count(*) from public.resourceallocation_core__resource_0_0_1
+  totalHeadcount: (
+    startDate,
+    endDate,
+    bucket
+  ) => `select _type,count(*) from public.resourceallocation_core__resource_0_0_1
 where _status = 'Active'
 and _agentlang__is_deleted is false
 group by _type`,
 
   //(0011) - Unplanned Allocation Units
-  unapprovedProjectAllocation: `/* ========= 1. PARAMETERS ========================================== */
+  unapprovedProjectAllocation: (
+    startDate,
+    endDate,
+    bucket
+  ) => `/* ========= 1. PARAMETERS ========================================== */
 WITH params AS (
     SELECT
-        DATE '2024-12-30' AS start_date,      -- window start
-        DATE '2025-12-31' AS end_date,        -- window end
-        'week'::text      AS bucket           -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text      AS bucket           -- 'week' | 'month' | 'quarter'
 ),
 
 /* ========= 2. CALENDAR BUCKETS ==================================== */
@@ -765,12 +800,12 @@ ORDER BY cal.period_start,
          `,
 
   //001 - Percentage of coverage of resource allocation by teams by duration trend (duration trend is always weeks/months/quarters). Exclude PT contractor allocation
-  resourceCoverage: `
+  resourceCoverage: (startDate, endDate, bucket) => `
     WITH params AS (
         SELECT
-            DATE '2024-12-30'  AS start_date,
-            DATE '2025-07-31'  AS end_date,
-            'week'::text       AS bucket,
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text       AS bucket,
             'Contractor - PT'  AS excluded_type
     ),
     calendar AS (
@@ -859,19 +894,27 @@ ORDER BY cal.period_start,
     JOIN resourceallocation_core__team_0_0_1 t ON t.___path__ = tc.team_id
     ORDER BY t._name, cal.period_start;
   `,
-  activeProjects: `SELECT count(*) as Active_project
+  activeProjects: (
+    startDate,
+    endDate,
+    bucket
+  ) => `SELECT count(*) as Active_project
   FROM public.resourceallocation_core__project_0_0_1
   WHERE _agentlang__is_deleted is false
     AND _status = 'Active'`,
-  activeResources: `SELECT count(*) as Active_Resource
+  activeResources: (
+    startDate,
+    endDate,
+    bucket
+  ) => `SELECT count(*) as Active_Resource
   FROM public.resourceallocation_core__resource_0_0_1
   WHERE _agentlang__is_deleted is false
     AND _status = 'Active'`,
-  actualsConfirmed: `WITH params AS (
+  actualsConfirmed: (startDate, endDate, bucket) => `WITH params AS (
     SELECT
-        DATE '2024-12-30'  AS start_date,   -- window start
-        DATE '2025-12-31'  AS end_date,     -- window end
-        'week'::text       AS bucket        -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text       AS bucket        -- 'week' | 'month' | 'quarter'
 ),
 /* ========= 2. Calendar buckets ==================================== */
 calendar AS (
@@ -922,7 +965,7 @@ LEFT JOIN bucket_actuals ba
        ON ba.period_start = cal.period_start
 ORDER BY cal.period_start;`,
 
-  totalResourceCost: `with active_resource as (
+  totalResourceCost: (startDate, endDate, bucket) => `with active_resource as (
     select ___path__ as resource_id
         FROM public.resourceallocation_core__resource_0_0_1
             where _agentlang__is_deleted is false
@@ -932,12 +975,16 @@ select sum(rcu._cost) as total_cost,rcu._costcurrency as Currency  from public.r
 join active_resource ar on ar.resource_id = rcu._resourceref
 group by rcu._costcurrency`,
 
-allocationPercentage: `/* ========= 1. PARAMETERS  ========================================= */
+  allocationPercentage: (
+    startDate,
+    endDate,
+    bucket
+  ) => `/* ========= 1. PARAMETERS  ========================================= */
 WITH params AS (
     SELECT
-        DATE '2024-12-30'  AS start_date,   -- ← change window start here
-        DATE '2025-12-31'  AS end_date,     -- ← change window end   here
-        'week'::text       AS bucket        -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}'                   AS start_date,             -- ← window start
+        DATE '${endDate}'                   AS end_date,               -- ← window end
+        '${bucket}'::text       AS bucket        -- 'week' | 'month' | 'quarter'
 ),
 
 /* ========= 2. CALENDAR BUCKETS ==================================== */
