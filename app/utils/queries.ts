@@ -96,7 +96,7 @@ alloc_by_proj_period AS (
 /* ========= 7. Final — fractional (avg-weekly) FTE per bucket ========= */
 SELECT
     abpp.project_type,
-    cal.period_start,
+    cal.period_start::text,
     ROUND(
     (abpp.sum_alloc_fte            -- double precision
      / NULLIF(cal.weeks_in_bucket, 0)
@@ -208,7 +208,7 @@ alloc_by_team_period AS (
 /* ========= 8. Capacity vs Allocation trend ========= */
 SELECT
     t._name                                                AS team_name,
-    cal.period_start,
+    cal.period_start::text,
     /* ── capacity ───────────────────────────────────── */
     (tc.headcount * cal.weeks_in_bucket)::numeric          AS capacity_available_fte,
     /* ── allocation ─────────────────────────────────── */
@@ -338,7 +338,7 @@ alloc_by_team_period AS (
 , baseline AS (
     SELECT
         t._name                                                AS team_name,
-        cal.period_start,
+        cal.period_start::text,
         (tc.headcount * cal.weeks_in_bucket)::numeric          AS capacity_available_fte,
         COALESCE(abp.sum_alloc_fte, 0)::numeric                AS capacity_allocated_fte,
         COALESCE(abp.sum_alloc_fte, 0)
@@ -498,7 +498,7 @@ company_dev AS (
 
 /* ========= 6. Final overall metrics =============================== */
 SELECT
-    cal.period_start,
+    cal.period_start::text,
 
     /* deviation = % of planned hours that did NOT occur */
     ROUND(
@@ -618,7 +618,7 @@ teams AS (
 /* ========= 7. UNPIVOT & % SHARE  ================================== */
 SELECT
     tm.team_name,
-    cal.period_start,
+    cal.period_start::text,
     cat.category,
     cat.units,
     ROUND(
@@ -648,12 +648,6 @@ ORDER BY tm.team_name,
               WHEN 'Other Work'         THEN 3
               WHEN 'Personal Time'      THEN 4
          END;
-
-
-
-
-
-
 `,
 
   //(009)Ratio of employees (FTE) to contractors stacked by onshore and offshore resources
@@ -771,7 +765,7 @@ bucket_totals AS (
 --select * from bucket_totals
 /* ========= 5. UNPIVOT & % SHARE =================================== */
 SELECT
-    cal.period_start,
+    cal.period_start::text,
     cat.category,
     cat.units,
     ROUND(
@@ -881,7 +875,7 @@ ORDER BY cal.period_start,
     )
     SELECT
         t._name AS team_name,
-        cal.period_start,
+        cal.period_start::text,
         ROUND(
             (COALESCE(abp.sum_alloc_fte, 0)
              / NULLIF(tc.headcount * cal.weeks_in_bucket, 0) * 100
@@ -950,8 +944,8 @@ bucket_actuals AS (
 )
 /* ========= 4. Final report ======================================== */
 SELECT
-    cal.period_start,
-    cal.period_end,
+    cal.period_start::text,
+    cal.period_end::text,
     COALESCE(ba.total_rows, 0)      AS total_rows,
     COALESCE(ba.confirmed_rows, 0)  AS confirmed_rows,
     ROUND(
@@ -1046,7 +1040,7 @@ alloc_units AS (
 
 /* ========= 6. FINAL PERCENT ALLOCATED ============================ */
 SELECT
-    cal.period_start,
+    cal.period_start::text,
     COALESCE(hc.headcount, 0)              AS headcount,
     COALESCE(au.allocated_units, 0)        AS allocated_units,
     ROUND(
