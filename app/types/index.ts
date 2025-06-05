@@ -28,6 +28,9 @@ export * from './component';
 
 export * from './allocationTypesCost';
 
+// Dashboard-related Types
+export * from './dashboardTypes';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;

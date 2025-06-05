@@ -115,15 +115,15 @@ const CellWithMenu = ({
       dispatch(setExpandRowId([rowId]));
     }
 
-    const itemName =
-      view === 'Project'
-        ? deleteParams?.row?.resource
-        : deleteParams?.row?.project;
+    const resourceName = deleteParams?.row?.resource;
+    const projectName = deleteParams?.row?.project;
+
+    const itemName = view === 'Project' ? resourceName : projectName;
 
     dispatch(
       showToast({
         open: true,
-        message: `${itemName} has been successfully deleted.`,
+        message: `Allocation for ${resourceName} in ${projectName} has successfully been deleted.`,
         type: 'success',
         position: 'bottom-right',
         autoHideTimer: 4000,
@@ -241,11 +241,19 @@ const CellWithMenu = ({
         onConfirm={handleConfirmDelete}
         title="Alert"
       >
-        Are you sure you want to delete:{' '}
-        {view === 'Project'
-          ? deleteParams?.row?.resource
-          : deleteParams?.row?.project}
-        ?
+        " Are you sure you want to delete{' '}
+        {view === 'Project' ? (
+          <>
+            {deleteParams?.row?.project} Allocations for{' '}
+           {deleteParams?.row?.resource}
+          </>
+        ) : (
+          <>
+          {deleteParams?.row?.project} Allocations for{' '}
+          {deleteParams?.row?.resource} 
+          </>
+        )}
+        ?"
       </ConfirmDialog>
     </>
   );

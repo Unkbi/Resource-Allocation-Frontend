@@ -346,3 +346,21 @@ export const transferResourceValidationSchema = Yup.object({
     .required('End date is required')
     .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
 });
+
+export const addRatesValidationSchema = Yup.object({
+  WorkLocation: Yup.string().required('Location is required'),
+  HRLevel: Yup.string().required('HRLevel is required'),
+  HourlyRate: Yup.number().required('HourlyRate is required'),
+  HourlyRateCurrency: Yup.string().required('Currency is required'),
+  ValidityStartDate: Yup.date()
+    .required('Start Date is required')
+    .typeError('Start Date must be a valid date'),
+  ValidityEndDate: Yup.date()
+    .required('End Date is required')
+    .typeError('End Date must be a valid date')
+    .min(
+      Yup.ref('ValidityStartDate'),
+      'End Date must be after or the same as Start Date'
+    ),
+  Status: Yup.string().required('Status is required'),
+});

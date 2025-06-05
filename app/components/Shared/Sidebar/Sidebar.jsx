@@ -141,11 +141,11 @@ const Sidebar = ({  toggleSidebar,sidebarExpanded }) => {
       }
 
 const menuItems = [
-    {icon: "/images/icons/DashboardRounded.svg",text :"Dashboard" , url: "/", disabled: false },
+    {icon: "/images/icons/DashboardRounded.svg",text :"Dashboard" , url: "/dashboard", disabled: false },
     {icon: "/images/icons/WatchLaterRoundedd.svg",text :"Allocation", url: "/allocation", disabled: false },
     {icon: "/images/icons/FolderFileOpen.svg",text :"Projects", url: "/project", disabled: false },
     {icon: "/images/icons/SupervisedUserCircleRounded.svg",text :"People", url: "/people", disabled: false },
-    {icon: "/images/icons/PollRounded.svg", url: "/report",text :"Reports", disabled: true },
+    // {icon: "/images/icons/PollRounded.svg", url: "/report",text :"Reports", disabled: true },
     {icon: "/images/icons/actual_icon.svg", url: "/actuals",text :"Actuals", disabled: false },
   ];
 

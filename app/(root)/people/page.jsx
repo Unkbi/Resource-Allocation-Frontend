@@ -23,7 +23,11 @@ import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { deleteTeam, getAllTeams, getResourcesAgainstTeams } from '@/app/services/teamServices';
+import {
+  deleteTeam,
+  getAllTeams,
+  getResourcesAgainstTeams,
+} from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
@@ -31,13 +35,17 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import TeamsTable from '@/app/components/Resources/TeamsTable';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
-import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
+import {
+  DELETE_EMPLOYEE_RATES,
+  FETCH_EMPLOYEE_RATES,
+} from '@/app/redux/actions/employeeRatesActions';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 
 const demoResources = {
   result: [
@@ -167,7 +175,16 @@ export default function Resources() {
   const [rows, setRows] = useState(allResourcesDetail || null);
   const [teamRows, setTeamRows] = useState(teams?.result || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
+  const [deleteTarget, setDeleteTarget] = useState({
+    id: '',
+    name: '',
+    type: '',
+  });
+  const [ratesDelete, setRatesDelete] = useState({
+    id: '',
+    WorkLocation: '',
+    HRLevel: '',
+  });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -179,7 +196,7 @@ export default function Resources() {
       setValue(newTab);
     }
   }, [searchParams]);
-  
+
   const columns = [
     {
       field: 'FullName',
@@ -569,8 +586,8 @@ export default function Resources() {
                 >
                   <MenuItem
                     onClick={() => {
-                       handleMenuClose();
-                       handleOpenDialog('Edit Team', 'edit_team', params.row);
+                      handleMenuClose();
+                      handleOpenDialog('Edit Team', 'edit_team', params.row);
                     }}
                     sx={menuItemStyle}
                   >
@@ -585,7 +602,7 @@ export default function Resources() {
                       setDeleteTarget({
                         id: params.row.Id,
                         name: params.row.Team,
-                        type: 'Team'
+                        type: 'Team',
                       });
                     }}
                     sx={menuItemStyle}
@@ -610,7 +627,29 @@ export default function Resources() {
       headerAlign: 'left',
       hideable: false,
       renderCell: params => {
-        return <Box sx={{ paddingLeft: '32px' }}>{params.value}</Box>;
+        const handleNameClick = () => {
+          handleOpenDialog('Edit Rate', 'edit_rates', params.row);
+        };
+        return (
+          <Box
+            onClick={handleNameClick}
+            sx={{
+              display: 'inline-block',
+              paddingLeft: '32px',
+              maxWidth: '100%',
+              color: '#152E75',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            {params.value}
+          </Box>
+        );
       },
     },
     {
@@ -626,7 +665,7 @@ export default function Resources() {
     },
     {
       field: 'HourlyRate',
-      headerName: 'Rates/Hr',
+      headerName: 'Rate/Hr',
       width: 160,
       sortable: true,
       filterable: true,
@@ -722,13 +761,10 @@ export default function Resources() {
                   transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
                   <MenuItem
-                    /*
-                     * To Be Implemented...
-                     */
-                    // onClick={() => {
-                    //   handleMenuClose();
-                    //   handleOpenDialog('Edit Team', 'edit_team', params.row);
-                    // }}
+                    onClick={() => {
+                      handleMenuClose();
+                      handleOpenDialog('Edit Rate', 'edit_rates', params.row);
+                    }}
                     sx={menuItemStyle}
                   >
                     <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
@@ -736,17 +772,15 @@ export default function Resources() {
                   </MenuItem>
 
                   <MenuItem
-                    /*
-                     * To Be Implemented...
-                     */
-                    // onClick={() => {
-                    //   setDeleteDialogOpen(true);
-                    //   handleMenuClose();
-                    //   setDeleteTarget({
-                    //     id: params.row.Id,
-                    //     name: params.row.Name,
-                    //   });
-                    // }}
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setRatesDelete({
+                        id: params.row.__Id__,
+                        WorkLocation: params.row.WorkLocation,
+                        HRLevel: params.row.HRLevel,
+                      });
+                    }}
                     sx={menuItemStyle}
                   >
                     <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
@@ -842,19 +876,24 @@ export default function Resources() {
     )
       return;
 
+    if (value !== 'resource' && value !== 'rates') return;
+
     const timeout = setTimeout(() => {
       const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
       const totalRows = sortedRowIds?.length ?? 0;
       const rowIndex = sortedRowIds?.findIndex(id => id === highlightedRowId);
 
-      if (rowIndex === -1 || rowIndex === undefined) return;
-
+      if (rowIndex === -1 || rowIndex === undefined) {
+        dispatch(clearHighlightedRowId());
+        return;
+      }
       const offsetRowIndex = Math.min(Math.max(0, rowIndex + 6), totalRows - 1);
 
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          const focusColumn = value === 'teams' ? 'Team' : 'FullName';
+          focusColumn =
+            value === 'rates' ? 'WorkLocation' : 'teams' ? 'Team' : 'FullName';
           apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
 
@@ -877,85 +916,191 @@ export default function Resources() {
 
     return () => clearTimeout(timeout);
   }, [
+    value,
     allResourcesDetail,
     highlightedRowId,
     loading,
     dataProcessing,
     employeeRatesLoading,
     allResourcesDetailLoading,
-    value
+    value,
   ]);
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget.id) return;
+    if (!deleteTarget.id) {
+      setDeleteDialogOpen(false);
+      setDeleteTarget({ id: '', name: '' });
+      return;
+    }
 
-    setDeleteDialogOpen(false);
-    const teamId = deleteTarget.id;
-
-    if (deleteTarget.type === 'Team') {
-      try {
-        const response = await dispatch(
-          getResourcesAgainstTeams({
-            'ResourceAllocation.Core/GetTeamResources': {
-              TeamId: teamId
-            }
-          })
-        ).unwrap();
-
-        if (response?.result?.length > 0) {
+    switch (value) {
+      case 'rates':
+        try {
+          dispatch({
+            type: DELETE_EMPLOYEE_RATES,
+            payload: ratesDelete.id,
+          });
           dispatch(
             showToast({
               open: true,
-              message: `Cannot delete a team with resources, please reassign and try again.`,
+              message: 'Rates deleted successfully',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          setDeleteDialogOpen(false);
+          setRatesDelete({ id: '', WorkLocation: '', HRLevel: '' });
+        } catch (error) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete rates',
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
             })
           );
-          return;
+          console.error('Error deleting rates:', error);
         }
-      } catch (error) {
-        console.error('Failed to fetch team resources before deletion:', error);
+        break;
+
+      case 'teams':
+        const teamId = deleteTarget.id;
+        return;
+        // Look through AllResourceDetails
+        // if (teamId is found) {
+        // dispatch(
+        //   showToast({
+        //     open: true,
+        //     message: `Cannot delete a team with resources, please reassign and try again.`,
+        //     type: 'error',
+        //     position: 'bottom-left',
+        //     autoHideTimer: 4000,
+        //   })
+        // );
+        // }
+        //
+        // else {
+        // deleteTeam(teamId)
+        // }
+        break;
+      case 'resource':
         dispatch(
           showToast({
             open: true,
-            message: `Failed to check team resources before deletion.`,
-            type: 'error',
+            message: 'Checking for active allocations',
+            type: 'info',
             position: 'bottom-left',
-            autoHideTimer: 4000,
+            autoHideTimer: 1000,
           })
         );
-        return;
-      }
-    }
 
-    const action =
-      deleteTarget.type === 'Team'
-        ? deleteTeam(teamId)
-        : deleteResource(teamId);
+        try {
+          const resourceToDelete = allResourcesDetail.find(
+            resource => resource.Resource.Id === deleteTarget.id
+          );
+          if (!resourceToDelete) {
+            throw new Error('Resource not found');
+          }
+          const teamId = resourceToDelete.Team?.Id;
 
-    dispatch(action)
-      .then(() => {
-        if (deleteTarget.type === 'Team') {
-          dispatch(fetchAllTeams());
-        } else {
-          dispatch(fetchAllResources());
-          dispatch({
-            type: FETCH_ALL_RESOURCES_DETAIL,
-            payload: {},
-          });
+          if (!teamId) {
+            await dispatch(deleteResource(deleteTarget.id)).unwrap();
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Resource deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 2000,
+              })
+            );
+            dispatch(fetchAllResources());
+            dispatch({
+              type: FETCH_ALL_RESOURCES_DETAIL,
+              payload: {},
+            });
+            return;
+          }
+          const postData = {
+            'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+              TeamId: teamId,
+              StartDate: '2000-01-01',
+              EndDate: '2032-01-01',
+            },
+          };
+          const response = await fetchTeamAllocationsForSaga(postData);
+          const resourceAllocations = (response.result || []).filter(
+            allocation => allocation.Resource === deleteTarget.id
+          );
+          if (resourceAllocations.length === 0) {
+            await dispatch(deleteResource(deleteTarget.id)).unwrap();
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Resource deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 2000,
+              })
+            );
+            dispatch(fetchAllResources());
+            dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+          } else {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Cannot delete resource with active allocations',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        } catch (error) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete resource',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } finally {
+          setDeleteDialogOpen(false);
+          setDeleteTarget({ id: '', name: '' });
         }
-      })
-      .catch(error => {
-        console.error(`Error deleting ${deleteTarget.type || 'resource'}:`, error);
-      });
+        break;
 
-    setDeleteTarget({ id: '', name: '', type: '' });
+      default:
+        alert(`unhandled delete for ${value}`);
+        break;
+    }
   };
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
   };
+
+  const handleTitle = value => {
+    if (value === 'rates') {
+      return (
+        <>
+          Are you sure you want to delete Rate for Location{' '}
+          <em>{ratesDelete.WorkLocation}</em> at HR Level{' '}
+          <em>{ratesDelete.HRLevel}</em> ?
+        </>
+      );
+    }
+    return (
+      <>
+        Are you sure you want to delete <em>{deleteTarget.name}</em>?
+      </>
+    );
+  };
+
   const handleOpenDialog = (title, formType, row) => {
     dispatch(
       openDialog({
@@ -1028,9 +1173,9 @@ export default function Resources() {
             loading={employeeRatesLoading}
             columns={employeeRatesColumns}
             rows={
-              employeeRates?.map((emp, index) => ({
+              employeeRates?.map(emp => ({
                 ...emp,
-                id: index,
+                id: emp.__Id__,
               })) || []
             }
             apiRef={apiRef}
@@ -1056,13 +1201,15 @@ export default function Resources() {
         open={deleteDialogOpen}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
-        title={
-          <>
-            Are you sure you want to delete <em>{deleteTarget.name}</em>?
-          </>
-        }
+        title={handleTitle(value)}
       >
-        This will permanently delete the {deleteTarget.type ?? 'Resource'}.
+        This will permanently delete the{' '}
+        {value === 'rates'
+          ? 'Rate'
+          : value === 'teams'
+            ? 'Team'
+            : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
+        .
       </ConfirmDialog>
     </Box>
   );
