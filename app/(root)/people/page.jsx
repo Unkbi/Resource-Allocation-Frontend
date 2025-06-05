@@ -910,7 +910,7 @@ export default function Resources() {
     allResourcesDetailLoading,
   ]);
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteTarget.id) {
       setDeleteDialogOpen(false);
       setDeleteTarget({ id: '', name: '' });
@@ -950,93 +950,92 @@ export default function Resources() {
         break;
 
       case 'resource':
-        if (!deleteTarget.id) return;
         dispatch(
-      showToast({
-        open: true,
-        message: 'Checking for active allocations',
-        type: 'info',
-        position: 'bottom-left',
-        autoHideTimer: 1000,
-      })
-    );
+          showToast({
+            open: true,
+            message: 'Checking for active allocations',
+            type: 'info',
+            position: 'bottom-left',
+            autoHideTimer: 1000,
+          })
+        );
 
-    try {
-      const resourceToDelete = allResourcesDetail.find(
-        resource => resource.Resource.Id === deleteTarget.id
-      );
-      if (!resourceToDelete) {
-        throw new Error('Resource not found');
-      }
-      const teamId = resourceToDelete.Team?.Id;
+        try {
+          const resourceToDelete = allResourcesDetail.find(
+            resource => resource.Resource.Id === deleteTarget.id
+          );
+          if (!resourceToDelete) {
+            throw new Error('Resource not found');
+          }
+          const teamId = resourceToDelete.Team?.Id;
 
-      if (!teamId) {
-        await dispatch(deleteResource(deleteTarget.id)).unwrap();
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Resource deleted successfully',
-            type: 'success',
-            position: 'bottom-left',
-            autoHideTimer: 2000,
-          })
-        );
-        dispatch(fetchAllResources());
-        dispatch({
-          type: FETCH_ALL_RESOURCES_DETAIL,
-          payload: {},
-        });
-        return;
-      }
-      const postData = {
-        'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-          TeamId: teamId,
-          StartDate: '2000-01-01',
-          EndDate: '2032-01-01',
-        },
-      };
-      const response = await fetchTeamAllocationsForSaga(postData);
-      const resourceAllocations = (response.result || []).filter(
-        allocation => allocation.Resource === deleteTarget.id
-      );
-      if (resourceAllocations.length === 0) {
-        await dispatch(deleteResource(deleteTarget.id)).unwrap();
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Resource deleted successfully',
-            type: 'success',
-            position: 'bottom-left',
-            autoHideTimer: 2000,
-          })
-        );
-        dispatch(fetchAllResources())
-        dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
-      } else {
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Cannot delete resource with active allocations',
-            type: 'error',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-      }
-    } catch (error) {
-      dispatch(
-        showToast({
-          open: true,
-          message:'Failed to delete resource',
-          type: 'error',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-    } finally {
-      setDeleteDialogOpen(false);
-      setDeleteTarget({ id: '', name: '' });
-    }
+          if (!teamId) {
+            await dispatch(deleteResource(deleteTarget.id)).unwrap();
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Resource deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 2000,
+              })
+            );
+            dispatch(fetchAllResources());
+            dispatch({
+              type: FETCH_ALL_RESOURCES_DETAIL,
+              payload: {},
+            });
+            return;
+          }
+          const postData = {
+            'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+              TeamId: teamId,
+              StartDate: '2000-01-01',
+              EndDate: '2032-01-01',
+            },
+          };
+          const response = await fetchTeamAllocationsForSaga(postData);
+          const resourceAllocations = (response.result || []).filter(
+            allocation => allocation.Resource === deleteTarget.id
+          );
+          if (resourceAllocations.length === 0) {
+            await dispatch(deleteResource(deleteTarget.id)).unwrap();
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Resource deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 2000,
+              })
+            );
+            dispatch(fetchAllResources());
+            dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+          } else {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Cannot delete resource with active allocations',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        } catch (error) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete resource',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } finally {
+          setDeleteDialogOpen(false);
+          setDeleteTarget({ id: '', name: '' });
+        }
         break;
 
       default:
@@ -1163,10 +1162,11 @@ export default function Resources() {
         onCancel={handleCancelDelete}
         title={handleTitle(value)}
       >
-        This will permanently delete the {' '}
+        This will permanently delete the{' '}
         {value === 'rates'
           ? 'Rate'
-          : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}.
+          : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
+        .
       </ConfirmDialog>
     </Box>
   );
