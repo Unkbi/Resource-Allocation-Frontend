@@ -40,9 +40,11 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import Topbar from '@/app/components/Dashboard/TabTopbar';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import weekday from 'dayjs/plugin/weekday';
+import utc from 'dayjs/plugin/utc';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
+dayjs.extend(utc);
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -140,85 +142,39 @@ export default function ExecutiveDashboardPage() {
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
 
-  // const handleMenuOpen = event => {
-  //   setAnchorEl(event.currentTarget);
-  // };
-
-  // const handleMenuClose = option => {
-  //   setAnchorEl(null);
-  //   if (option) {
-  //     setSelectedOption(option); // Update the selected option
-  //   }
-  // };
-
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
     const parsed = saved ? JSON.parse(saved) : layouts.md;
     setLayout(parsed);
   }, []);
 
-  // useEffect(() => {
-  //   try {
-  //     Object.keys(queries).forEach(queryKey => {
-  //       console.log(selectedDate,selectedDate.startOf('month').format('YYYY-MM-DD'), selectedDate.startOf('week').format('YYYY-MM-DD'),"ddd")
-  //       dispatch(
-  //         fetchDashboardChart({
-  //           chartKey: queryKey,
-  //           queryKey: queryKey,
-  //           startDate: selectedDate.startOf(selectedOption).add(1, 'day').format('YYYY-MM-DD'),
-  //           endDate: selectedDate.endOf(selectedOption).add(1, 'day').format('YYYY-MM-DD'),
-  //           bucket: selectedOption,
-  //         })
-  //       );
-  //     });
-  //   } catch {
-  //     console.error('Error fetching dashboard data. Please try again later.');
-  //   }
-  // }, [dispatch, selectedDate, selectedOption]);
-
   useEffect(() => {
-  try {
-    // 🧠 Utility to calculate date range based on selectedOption
-    const getCustomStartAndEndDate = (unit, date) => {
-      let startRef = date.startOf(unit);
-      let endRef = date.endOf(unit);
-
-      // First Monday of the unit
-      const startDate = startRef.day() === 1
-        ? startRef
-        : startRef.add((8 - startRef.day()) % 7, 'day');
-
-      // Last Sunday of the unit
-      const endDate = endRef.day() === 0
-        ? endRef
-        : endRef.subtract(endRef.day(), 'day');
-
-      return {
-        startDate: startDate.format('YYYY-MM-DD'),
-        endDate: endDate.format('YYYY-MM-DD'),
-      };
-    };
-
-    const { startDate, endDate } = getCustomStartAndEndDate(
-      selectedOption,
-      selectedDate
-    );
-
-    Object.keys(queries).forEach(queryKey => {
-      dispatch(
-        fetchDashboardChart({
-          chartKey: queryKey,
-          queryKey: queryKey,
-          startDate,
-          endDate,
-          bucket: selectedOption,
-        })
-      );
-    });
-  } catch (err) {
-    console.error('Error fetching dashboard data. Please try again later.', err);
-  }
-}, [dispatch, selectedDate, selectedOption]);
+    try {
+      let startDate, endDate;
+      if(selectedOption == 'week')
+      {
+        startDate = getMonday(selectedDate).format('YYYY-MM-DD');
+        endDate = dayjs(selectedDate).isoWeekday(7).format('YYYY-MM-DD');
+      }
+      else {
+        startDate = selectedDate.startOf(selectedOption).format('YYYY-MM-DD');
+            endDate = selectedDate.endOf(selectedOption).format('YYYY-MM-DD');
+      }
+      Object.keys(queries).forEach(queryKey => {
+        dispatch(
+          fetchDashboardChart({
+            chartKey: queryKey,
+            queryKey: queryKey,
+            startDate,
+            endDate,
+            bucket: selectedOption,
+          })
+        );
+      });
+    } catch {
+      console.error('Error fetching dashboard data. Please try again later.');
+    }
+  }, [dispatch, selectedDate, selectedOption]);
 
   useEffect(() => {
     if (coverageData.length > 0) {
@@ -306,71 +262,29 @@ export default function ExecutiveDashboardPage() {
     const monday = getMonday(date).format('YYYY-MM-DD');
 
     setTeamFilter('all');
+    
 
-    const capacityData = capacityAvailability.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
-    const underAllocated = resourceUtilization.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        d.allocation_status === 'under-allocated' &&
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-          monday
+    const capacityData = capacityAvailability
+    const underAllocated = resourceUtilization
+    .filter(
+      d => d.allocation_status === 'under-allocated'
     );
 
-    const overAllocated = resourceUtilization.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
+    const overAllocated = resourceUtilization
+    .filter(
       d =>
-        d.allocation_status === 'over-allocated' &&
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-          monday
+        d.allocation_status === 'over-allocated' 
     );
 
-    const unapprovedAllocation = unapprovedProjectAllocation.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const unapprovedAllocation = unapprovedProjectAllocation
 
-    const actualsconfirmed = actualsConfirmed.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const actualsconfirmed = actualsConfirmed
 
-    const unapprovedActualsByTeam = unapprovedProjectActualsByTeam.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const unapprovedActualsByTeam = unapprovedProjectActualsByTeam
 
-    const actualdeviation = resourceActualsDeviation.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const actualdeviation = resourceActualsDeviation
 
-    const filterallocationpercentage = allocationPercentage.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const filterallocationpercentage = allocationPercentage
 
     setOverAllocated(overAllocated);
     setUnderAllocated(underAllocated);
@@ -971,7 +885,7 @@ export default function ExecutiveDashboardPage() {
       </DashboardWidget>
     ),
   };
-
+  
   const teamCharts = {
     unapprovedProjectActualsByTeam: (
       <DashboardWidget
