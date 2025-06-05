@@ -11,8 +11,21 @@ export async function GET(
     return new Response(JSON.stringify({ error: 'Invalid query key' }), { status: 400 });
   }
 
+  // Parse query parameters
+  const searchParams = req.nextUrl.searchParams;
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+  const bucket = searchParams.get('bucket');
+
+  // Validate required params
+  if (!startDate || !endDate || !bucket) {
+    return new Response(JSON.stringify({ error: 'Missing startDate, endDate, or bucket' }), {
+      status: 400,
+    });
+  }
+
   try {
-    const rawSQL = allowedQueries[queryKey]
+    const rawSQL = allowedQueries[queryKey](startDate, endDate, bucket);
     const result = await pool.query(rawSQL);
     let filteredRows = result.rows;
   

@@ -35,10 +35,20 @@ import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
+import quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import Topbar from '@/app/components/Dashboard/TabTopbar';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import weekday from 'dayjs/plugin/weekday';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(isoWeek);
+dayjs.extend(weekday);
+dayjs.extend(utc);
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
+
+dayjs.extend(quarterOfYear);
 
 // Dynamically generate layouts for all charts in allowedQueries
 const chartKeys = [...Object.keys(queries), 'underAllocated', 'overAllocated'];
@@ -118,7 +128,7 @@ export default function ExecutiveDashboardPage() {
     useState([]);
   const [originalCapacityData, setOriginalCapacityData] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedOption, setSelectedOption] = useState('Weekly'); // Default option
+  const [selectedOption, setSelectedOption] = useState('week'); // Default option
   const [
     filteredUnapprovedProjectAllocation,
     setFilteredUnapprovedProjectAllocation,
@@ -132,17 +142,6 @@ export default function ExecutiveDashboardPage() {
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
 
-  const handleMenuOpen = event => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = option => {
-    setAnchorEl(null);
-    if (option) {
-      setSelectedOption(option); // Update the selected option
-    }
-  };
-
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
     const parsed = saved ? JSON.parse(saved) : layouts.md;
@@ -151,18 +150,31 @@ export default function ExecutiveDashboardPage() {
 
   useEffect(() => {
     try {
+      let startDate, endDate;
+      if(selectedOption == 'week')
+      {
+        startDate = getMonday(selectedDate).format('YYYY-MM-DD');
+        endDate = dayjs(selectedDate).isoWeekday(7).format('YYYY-MM-DD');
+      }
+      else {
+        startDate = selectedDate.startOf(selectedOption).format('YYYY-MM-DD');
+            endDate = selectedDate.endOf(selectedOption).format('YYYY-MM-DD');
+      }
       Object.keys(queries).forEach(queryKey => {
         dispatch(
           fetchDashboardChart({
             chartKey: queryKey,
             queryKey: queryKey,
+            startDate,
+            endDate,
+            bucket: selectedOption,
           })
         );
       });
     } catch {
       console.error('Error fetching dashboard data. Please try again later.');
     }
-  }, [dispatch]);
+  }, [dispatch, selectedDate, selectedOption]);
 
   useEffect(() => {
     if (coverageData.length > 0) {
@@ -250,71 +262,29 @@ export default function ExecutiveDashboardPage() {
     const monday = getMonday(date).format('YYYY-MM-DD');
 
     setTeamFilter('all');
+    
 
-    const capacityData = capacityAvailability.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
-    const underAllocated = resourceUtilization.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        d.allocation_status === 'under-allocated' &&
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-          monday
+    const capacityData = capacityAvailability
+    const underAllocated = resourceUtilization
+    .filter(
+      d => d.allocation_status === 'under-allocated'
     );
 
-    const overAllocated = resourceUtilization.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
+    const overAllocated = resourceUtilization
+    .filter(
       d =>
-        d.allocation_status === 'over-allocated' &&
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-          monday
+        d.allocation_status === 'over-allocated' 
     );
 
-    const unapprovedAllocation = unapprovedProjectAllocation.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const unapprovedAllocation = unapprovedProjectAllocation
 
-    const actualsconfirmed = actualsConfirmed.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const actualsconfirmed = actualsConfirmed
 
-    const unapprovedActualsByTeam = unapprovedProjectActualsByTeam.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const unapprovedActualsByTeam = unapprovedProjectActualsByTeam
 
-    const actualdeviation = resourceActualsDeviation.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const actualdeviation = resourceActualsDeviation
 
-    const filterallocationpercentage = allocationPercentage.filter(
-      // This is a patch to handle the timezone issue
-      // To Be Implemented: Fix the timezone issue in the backend
-      d =>
-        getMonday(dayjs(d.period_start).add(3, 'day')).format('YYYY-MM-DD') ===
-        monday
-    );
+    const filterallocationpercentage = allocationPercentage
 
     setOverAllocated(overAllocated);
     setUnderAllocated(underAllocated);
@@ -915,9 +885,8 @@ export default function ExecutiveDashboardPage() {
       </DashboardWidget>
     ),
   };
-
+  
   const teamCharts = {
-    
     unapprovedProjectActualsByTeam: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Actuals Breakdown by Team')}
