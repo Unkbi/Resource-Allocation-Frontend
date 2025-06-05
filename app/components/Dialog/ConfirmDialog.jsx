@@ -14,9 +14,10 @@ const ConfirmDialog = ({ open, onCancel, onConfirm, title, children }) => {
             borderTopLeftRadius: "4px",
           }}
         >
+           {typeof title === "function" ? title(value) : (
           <Typography>
             {title || "Insert dialog title here?"}
-          </Typography>
+          </Typography>)}
         </Box>
         <DialogContent>
           <Typography sx={{ color: "#000", fontSize: "1rem", marginTop: "8px", textAlign: "center" }}>
