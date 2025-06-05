@@ -119,6 +119,77 @@ export const getResourceDetail = createAsyncThunk(
   }
 );
 
+export const createTeam = createAsyncThunk(
+  'team/createTeam',
+  async (
+    {
+      Name,
+      AllocationManager,
+      Status,
+    }: {
+      Name: string;
+      AllocationManager: string;
+      Status: 'Active' | 'Inactive';
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const payload = {
+        'ResourceAllocation.Core/Team': {
+          Name,
+          AllocationManager,
+          Status,
+        },
+      };
+
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/Team`,
+        payload
+      );
+
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || 'Failed to create team.'
+      );
+    }
+  }
+);
+
+export const updateTeam = createAsyncThunk<
+  any,
+  { postData: any; teamId: string },
+  { rejectValue: string }
+>('team/updateTeam', async ({ postData, teamId }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.put(
+      `${API_PROJECT_PORTFOLIO}/Team/${teamId}`,
+      postData
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(
+      error?.response?.data || 'Failed to update team.'
+    );
+  }
+});
+
+export const deleteTeam = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: string }
+>(
+  '/team/delete',
+  async (teamId, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`);
+      return teamId;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Failed to delete team');
+    }
+  }
+);
+
 /*
  * Not being used currently in application
  * Uncomment the following code if you want to handle postTeamResource API call

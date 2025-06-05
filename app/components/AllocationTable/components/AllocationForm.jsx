@@ -21,6 +21,7 @@ import {
   cloneResourceValidationSchema,
   transferResourceValidationSchema,
   editResourceValidationSchema,
+  addTeamValidationSchema,
   addRatesValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
@@ -40,7 +41,10 @@ import {
   updateResourceAllocation,
   removeResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
-import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
+import {
+  fetchAllTeams,
+  fetchResourcesAgainstTeams,
+} from '@/app/redux/actions/fetchTeamsAction';
 import {
   setCellSelectionData,
   setExpandRowId,
@@ -73,9 +77,14 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
-import { addResourceToTeam } from '@/app/services/teamServices';
+import {
+  addResourceToTeam,
+  createTeam,
+  updateTeam,
+} from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import AddTeamForm from '../../Forms/AddTeamForm';
 import AddRatesForm from '../../Forms/AddRatesForm';
 import {
   FETCH_EMPLOYEE_RATES,
@@ -95,6 +104,16 @@ const initialValuesMap = {
     Status: 'Active',
     Type: '',
     Budget: 0,
+  },
+  add_team: {
+    Name: '',
+    AllocationManager: '',
+    Status: 'Active',
+  },
+  edit_team: {
+    Name: '',
+    AllocationManager: '',
+    Status: 'Active',
   },
   add_resource: {
     FirstName: '',
@@ -248,6 +267,10 @@ const AllocationForm = () => {
         return addProjectValidationSchema(projects);
       case 'edit_project':
         return addProjectValidationSchema(projects, initialData?.Name || '');
+      case 'add_team':
+        return addTeamValidationSchema;
+      case 'edit_team':
+        return addTeamValidationSchema;
       case 'add_resource':
         return addResourceValidationSchema;
       case 'edit_resource': // Temporary later on this will be same as add_resource
@@ -458,6 +481,90 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(initialData.Id));
         } catch (e) {
           console.error('Failed to edit project:', e);
+        }
+        break;
+
+      case 'add_team':
+        postData = {
+          Name: cleanedValues.Name?.trim(),
+          AllocationManager: cleanedValues.AllocationManager,
+          Status: cleanedValues.Status,
+        };
+
+        try {
+          dispatch(createTeam(postData))
+            .then(async response => {
+              if (response.meta.requestStatus === 'rejected') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Failed to add team`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
+
+              const newTeamId = response.payload?.result?.Id;
+              if (newTeamId) {
+                await dispatch(fetchAllTeams());
+                dispatch(setHighlightedRowId(newTeamId));
+              }
+
+              if (pathname !== '/people?tab=teams') {
+                router.replace('/people?tab=teams');
+              } else {
+                dispatch(closeDialog());
+              }
+            })
+            .catch(error => {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Failed to add team`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              console.error('Failed to add team:', error);
+            });
+        } catch (e) {
+          console.error('Failed to add team:', e);
+        }
+        dispatch(closeDialog());
+        break;
+
+      case 'edit_team':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        postData = {
+          'ResourceAllocation.Core/Team': {
+            Name: cleanedValues.Name?.trim(),
+            AllocationManager: cleanedValues.AllocationManager,
+            Status: cleanedValues.Status,
+          },
+        };
+
+        try {
+          await dispatch(
+            updateTeam({
+              postData,
+              teamId: initialData.Id,
+            })
+          );
+
+          await dispatch(fetchAllTeams());
+          dispatch(setHighlightedRowId(initialData.Id));
+          dispatch(closeDialog());
+        } catch (e) {
+          console.error('Failed to update team:', e);
         }
         break;
 
@@ -1382,6 +1489,14 @@ const AllocationForm = () => {
             formikProps={formikProps}
             setFormValue={setFormValue}
           />
+        );
+      case 'add_team':
+        return (
+          <AddTeamForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_team':
+        return (
+          <AddTeamForm formikProps={formikProps} setFormValue={setFormValue} />
         );
       case 'add_resource':
         return (

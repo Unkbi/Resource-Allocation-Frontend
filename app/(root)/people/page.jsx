@@ -23,6 +23,11 @@ import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import {
+  deleteTeam,
+  getAllTeams,
+  getResourcesAgainstTeams,
+} from '@/app/services/teamServices';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { deleteResource } from '@/app/services/resourceServices';
@@ -37,6 +42,8 @@ import {
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 
@@ -168,14 +175,27 @@ export default function Resources() {
   const [rows, setRows] = useState(allResourcesDetail || null);
   const [teamRows, setTeamRows] = useState(teams?.result || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
+  const [deleteTarget, setDeleteTarget] = useState({
+    id: '',
+    name: '',
+    type: '',
+  });
   const [ratesDelete, setRatesDelete] = useState({
     id: '',
     WorkLocation: '',
     HRLevel: '',
   });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
-  const [value, setValue] = useState('resource');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [value, setValue] = useState(initialTab || 'resource');
+  useEffect(() => {
+    const newTab = searchParams.get('tab');
+    if (newTab && newTab !== value) {
+      setValue(newTab);
+    }
+  }, [searchParams]);
 
   const columns = [
     {
@@ -463,7 +483,7 @@ export default function Resources() {
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog();
+          handleOpenDialog('Edit Team', 'edit_team', params.row);
         };
 
         return (
@@ -474,10 +494,7 @@ export default function Resources() {
             }}
           >
             <Box
-              /*
-               * To Be Implemented...
-               */
-              // onClick={handleNameClick}
+              onClick={handleNameClick}
               sx={{
                 display: 'inline-block',
                 width: '100%',
@@ -568,13 +585,10 @@ export default function Resources() {
                   transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
                   <MenuItem
-                    /*
-                     * To Be Implemented...
-                     */
-                    // onClick={() => {
-                    //   handleMenuClose();
-                    //   handleOpenDialog('Edit Team', 'edit_team', params.row);
-                    // }}
+                    onClick={() => {
+                      handleMenuClose();
+                      handleOpenDialog('Edit Team', 'edit_team', params.row);
+                    }}
                     sx={menuItemStyle}
                   >
                     <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
@@ -582,17 +596,15 @@ export default function Resources() {
                   </MenuItem>
 
                   <MenuItem
-                    /*
-                     * To Be Implemented...
-                     */
-                    // onClick={() => {
-                    //   setDeleteDialogOpen(true);
-                    //   handleMenuClose();
-                    //   setDeleteTarget({
-                    //     id: params.row.Id,
-                    //     name: params.row.Name,
-                    //   });
-                    // }}
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setDeleteTarget({
+                        id: params.row.Id,
+                        name: params.row.Team,
+                        type: 'Team',
+                      });
+                    }}
                     sx={menuItemStyle}
                   >
                     <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
@@ -843,6 +855,7 @@ export default function Resources() {
     if (data) {
       return data.map(item => ({
         id: item.Id,
+        Id: item.Id,
         Team: item.Name,
         AllocationManager: item.AllocationManager,
         Status: item.Status,
@@ -858,7 +871,8 @@ export default function Resources() {
       loading ||
       dataProcessing ||
       employeeRatesLoading ||
-      allResourcesDetailLoading
+      allResourcesDetailLoading ||
+      !(value === 'teams' || value === 'resource')
     )
       return;
 
@@ -878,8 +892,9 @@ export default function Resources() {
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          const focusCol = value === 'rates' ? 'WorkLocation' : 'FullName';
-          apiRef.current.setCellFocus(highlightedRowId, focusCol);
+          const focusColumn =
+            value === 'rates' ? 'WorkLocation' : 'teams' ? 'Team' : 'FullName';
+          apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
 
           const scroller = document.querySelector(
@@ -908,6 +923,7 @@ export default function Resources() {
     dataProcessing,
     employeeRatesLoading,
     allResourcesDetailLoading,
+    value,
   ]);
 
   const handleConfirmDelete = async () => {
@@ -949,6 +965,41 @@ export default function Resources() {
         }
         break;
 
+      case 'teams':
+        const teamId = deleteTarget.id;
+        // Look through AllResourceDetails
+        try {
+          if (
+            allResourcesDetail.find(resource => resource?.Team?.Id === teamId)
+          ) {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Cannot delete a team with resources, please reassign and try again.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            dispatch(deleteTeam(teamId));
+            dispatch(fetchAllTeams());
+          }
+        } catch (error) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete resource',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } finally {
+          setDeleteDialogOpen(false);
+          setDeleteTarget({ id: '', name: '', type: '' });
+        }
+        break;
       case 'resource':
         dispatch(
           showToast({
@@ -1089,6 +1140,10 @@ export default function Resources() {
 
   const onChange = (event, newValue) => {
     setValue(newValue);
+
+    const tabParam = newValue === 'resource' ? '' : `?tab=${newValue}`;
+    const newUrl = `/people${tabParam}`;
+    router.replace(newUrl, { scroll: false });
   };
 
   const renderTable = () => {
@@ -1110,6 +1165,7 @@ export default function Resources() {
             loading={loading || dataProcessing}
             columns={teamColumns}
             rows={modifyTeamData(teamRows) || []}
+            apiRef={apiRef}
             value={value}
             onChange={onChange}
             componentsProps={{
@@ -1165,7 +1221,9 @@ export default function Resources() {
         This will permanently delete the{' '}
         {value === 'rates'
           ? 'Rate'
-          : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
+          : value === 'teams'
+            ? 'Team'
+            : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
         .
       </ConfirmDialog>
     </Box>
