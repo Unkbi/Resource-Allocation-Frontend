@@ -1,10 +1,12 @@
-import { Box, Tabs, Tab, styled } from '@mui/material';
-import { useState } from 'react';
+import { Box, Tabs, Tab, styled, Button } from '@mui/material';
+import { useState,dispatch } from 'react';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { useDispatch } from 'react-redux';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -59,17 +61,53 @@ const ActionButton = ({ src, alt, onClick }) => (
   </button>
 );
 
+const ratesButtonStyle = {
+  width: 90,
+  height: 36,
+  flexShrink: 0,
+  backgroundColor: '#1C2D5F', 
+  color: '#FFF',
+  textAlign: 'center',
+  fontFamily: '"Open Sans", sans-serif',
+  fontSize: 12,
+  fontStyle: 'normal',
+  fontWeight: 700,
+  lineHeight: 'normal',
+  textTransform: 'none', 
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 1,
+  '&:hover': {
+    backgroundColor: '#16305a',
+  },
+};
+
 const ResourceToolbar = ({
   setFilterButtonEl,
   value,
   onChange = () => {},
 }) => {
-  const clickHandler = () => {
-   console.log("clicked")
-  }
-
+  const dispatch = useDispatch();
+ const handleAddRate =() =>{
+  dispatch(
+    openDialog({
+      title: 'Add Rate',
+      submitButtonText: 'Add',
+      cancelButtonText: 'Cancel',
+      formType: 'add_rates',
+      initialData: '',
+    })
+  );
+ } 
   return (
-    <Box style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
+    <Box
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginTop: '12px',
+      }}
+    >
       <Tabs
         value={value}
         onChange={onChange}
@@ -90,7 +128,11 @@ const ResourceToolbar = ({
                 button: {
                   variant: 'outlined',
                   startIcon: (
-                    <img src="/images/icons/columns.svg" alt="columns" style={{ marginLeft: '8px' }} />
+                    <img
+                      src="/images/icons/columns.svg"
+                      alt="columns"
+                      style={{ marginLeft: '8px' }}
+                    />
                   ),
                   className: 'columns-button',
                   sx: commonButtonStyles,
@@ -104,21 +146,29 @@ const ResourceToolbar = ({
                   variant: 'outlined',
                   sx: { color: '#555', borderColor: '#ddd' },
                   startIcon: (
-                    <img src="/images/icons/filter.svg" alt="filter" style={{ marginLeft: '8px' }} />
+                    <img
+                      src="/images/icons/filter.svg"
+                      alt="filter"
+                      style={{ marginLeft: '8px' }}
+                    />
                   ),
                   className: 'columns-button',
                   sx: commonButtonStyles,
                 },
               }}
             />
-            <ActionButton
-              src="/images/icons/download.svg"
-              alt="download"
-            />
-            <ActionButton
-              src="/images/icons/upload.svg"
-              alt="upload"
-            />
+            <ActionButton src="/images/icons/download.svg" alt="download" />
+            <ActionButton src="/images/icons/upload.svg" alt="upload" />
+            {value === 'rates' && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAddRate}
+                sx={ratesButtonStyle}
+              >
+                Add Rate
+              </Button>
+            )}
           </GridToolbarContainer>
         </Box>
       </Box>

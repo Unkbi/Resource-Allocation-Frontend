@@ -21,6 +21,7 @@ import {
   cloneResourceValidationSchema,
   transferResourceValidationSchema,
   editResourceValidationSchema,
+  addRatesValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -75,6 +76,12 @@ import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer'
 import { addResourceToTeam } from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import AddRatesForm from '../../Forms/AddRatesForm';
+import {
+  FETCH_EMPLOYEE_RATES,
+  CREATE_EMPLOYEE_RATES,
+  UPDATE_EMPLOYEE_RATES,
+} from '@/app/redux/actions/employeeRatesActions';
 
 const initialValuesMap = {
   add_project: {
@@ -188,6 +195,15 @@ const initialValuesMap = {
     StartDate: '',
     EndDate: '',
   },
+  add_rates: {
+    WorkLocation: '',
+    HRLevel: '',
+    HourlyRate: 0,
+    HourlyRateCurrency: 'USD',
+    ValidityStartDate: '',
+    ValidityEndDate: '',
+    Status: 'Active',
+  },
 };
 
 const AllocationForm = () => {
@@ -250,6 +266,11 @@ const AllocationForm = () => {
         return cloneResourceValidationSchema;
       case 'transfer_resource':
         return transferResourceValidationSchema;
+      case 'add_rates':
+        return addRatesValidationSchema;
+      case 'edit_rates':
+        return addRatesValidationSchema;
+
       default:
         return null;
     }
@@ -1071,6 +1092,113 @@ const AllocationForm = () => {
         setShowTransferConfirm(true);
         break;
 
+      case 'add_rates':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = {
+          ...cleanedValues,
+        };
+
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'CREATE_EMPLOYEE_RATES',
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Rate added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to add rate:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add rate.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+
+        break;
+
+      case 'edit_rates':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const updatedFields = {
+          ...cleanedValues,
+          WorkLocation: cleanedValues.WorkLocation,
+          HRLevel: cleanedValues.HRLevel,
+          ValidityStartDate: cleanedValues.ValidityStartDate,
+          ValidityEndDate: cleanedValues.ValidityEndDate,
+          HourlyRate: cleanedValues.HourlyRate || 0,
+          HourlyRateCurrency: cleanedValues.HourlyRateCurrency,
+          Status: cleanedValues.Status,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'UPDATE_EMPLOYEE_RATES',
+            payload: {
+              id: initialData.__Id__,
+              updatedFields,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Rate updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(closeDialog());
+            if (response?.result?.__Id__) {
+              dispatch(setHighlightedRowId(response.result.__Id__));
+            }
+          })
+          .catch(error => {
+            console.error('Failed to update rate:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to update rate.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          });
+
+        break;
+
       default:
         return;
     }
@@ -1305,6 +1433,14 @@ const AllocationForm = () => {
             formikProps={formikProps}
             setFormValue={setFormValue}
           />
+        );
+      case 'add_rates':
+        return (
+          <AddRatesForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_rates':
+        return (
+          <AddRatesForm formikProps={formikProps} setFormValue={setFormValue} />
         );
       default:
         return <div>No form selected</div>;

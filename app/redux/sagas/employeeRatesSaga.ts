@@ -23,25 +23,30 @@ function* fetchEmployeeRatesSaga(): Generator<any, void, any> {
 }
 
 function* createEmployeeRatesSaga(action: any): Generator<any, void, any> {
+  const { postData, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    yield call(createEmployeeRates, action.payload);
+    const response = yield call(createEmployeeRates, postData);
     yield call(fetchEmployeeRatesSaga);
+    if (resolve) resolve(response); 
   } catch (error) {
     console.error('Saga error, Failed to create Employee Rate : ', error);
+    if (reject) reject(error); 
   } finally {
     yield put(setLoading(false));
   }
 }
 
 function* updateEmployeeRatesSaga(action: any): Generator<any, void, any> {
+  const { id, updatedFields, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    const { id, updatedFields } = action.payload;
-    yield call(updateEmployeeRates, id, updatedFields);
+    const response = yield call(updateEmployeeRates, id, updatedFields);
     yield call(fetchEmployeeRatesSaga);
+    if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to update Employee Rate : ', error);
+    if (reject) reject(error);
   } finally {
     yield put(setLoading(false));
   }
