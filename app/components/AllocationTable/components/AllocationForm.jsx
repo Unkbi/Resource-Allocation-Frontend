@@ -1180,9 +1180,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            if (response?.result?.__Id__) {
-              dispatch(setHighlightedRowId(response.result.__Id__));
-            }
+            dispatch(setHighlightedRowId(response.result[0].__Id__));
           })
           .catch(error => {
             console.error('Failed to update rate:', error);

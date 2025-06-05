@@ -168,7 +168,11 @@ export default function Resources() {
   const [teamRows, setTeamRows] = useState(teams?.result || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState({ id: '', name: '' });
-  const [ratesDelete, setRatesDelete] = useState({ id: '' });
+  const [ratesDelete, setRatesDelete] = useState({
+    id: '',
+    WorkLocation: '',
+    HRLevel: '',
+  });
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const [value, setValue] = useState('resource');
 
@@ -760,6 +764,8 @@ export default function Resources() {
                       handleMenuClose();
                       setRatesDelete({
                         id: params.row.__Id__,
+                        WorkLocation: params.row.WorkLocation,
+                        HRLevel: params.row.HRLevel,
                       });
                     }}
                     sx={menuItemStyle}
@@ -902,7 +908,6 @@ export default function Resources() {
     employeeRatesLoading,
     allResourcesDetailLoading,
   ]);
-  
 
   const handleConfirmDelete = () => {
     switch (value) {
@@ -922,7 +927,7 @@ export default function Resources() {
             })
           );
           setDeleteDialogOpen(false);
-          setRatesDelete({ id: '' });
+          setRatesDelete({ id: '', WorkLocation: '', HRLevel: '' });
         } catch (error) {
           dispatch(
             showToast({
@@ -965,8 +970,14 @@ export default function Resources() {
   };
 
   const handleTitle = value => {
-    if (value ==='rates') {
-      return <>Are you sure you want to delete this rate?</>;
+    if (value === 'rates') {
+      return (
+        <>
+          Are you sure you want to delete Rate for Location{' '}
+          <em>{ratesDelete.WorkLocation}</em> at HR Level{' '}
+          <em>{ratesDelete.HRLevel}</em> ?
+        </>
+      );
     }
     return (
       <>
@@ -974,7 +985,7 @@ export default function Resources() {
       </>
     );
   };
-  
+
   const handleOpenDialog = (title, formType, row) => {
     dispatch(
       openDialog({
@@ -1042,7 +1053,7 @@ export default function Resources() {
             loading={employeeRatesLoading}
             columns={employeeRatesColumns}
             rows={
-              employeeRates?.map((emp) => ({
+              employeeRates?.map(emp => ({
                 ...emp,
                 id: emp.__Id__,
               })) || []
@@ -1072,7 +1083,10 @@ export default function Resources() {
         onCancel={handleCancelDelete}
         title={handleTitle(value)}
       >
-        This will permanently delete the {value.toLocaleUpperCase()}.
+        This will permanently delete the {' '}
+        {value === 'rates'
+          ? 'Rate'
+          : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}.
       </ConfirmDialog>
     </Box>
   );
