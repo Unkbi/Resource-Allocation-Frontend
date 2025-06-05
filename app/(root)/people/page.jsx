@@ -891,12 +891,16 @@ export default function Resources() {
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          const focusColumn =
-            value === 'rates'
-              ? 'WorkLocation'
-              : value === 'teams'
-                ? 'Team'
-                : 'FullName';
+          let focusColumn;
+
+          if (value === 'rates') {
+            focusColumn = 'WorkLocation';
+          } else if (value === 'teams') {
+            focusColumn = 'Team';
+          } else {
+            focusColumn = 'FullName';
+          }
+
 
           apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
