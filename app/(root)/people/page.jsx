@@ -876,7 +876,6 @@ export default function Resources() {
     )
       return;
 
-    if (value !== 'resource' && value !== 'rates') return;
 
     const timeout = setTimeout(() => {
       const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
@@ -893,7 +892,12 @@ export default function Resources() {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
           const focusColumn =
-            value === 'rates' ? 'WorkLocation' : 'teams' ? 'Team' : 'FullName';
+            value === 'rates'
+              ? 'WorkLocation'
+              : value === 'teams'
+                ? 'Team'
+                : 'FullName';
+
           apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
 
