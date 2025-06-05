@@ -892,7 +892,7 @@ export default function Resources() {
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          focusColumn =
+          const focusColumn =
             value === 'rates' ? 'WorkLocation' : 'teams' ? 'Team' : 'FullName';
           apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
@@ -967,23 +967,38 @@ export default function Resources() {
 
       case 'teams':
         const teamId = deleteTarget.id;
-        return;
         // Look through AllResourceDetails
-        // if (teamId is found) {
-        // dispatch(
-        //   showToast({
-        //     open: true,
-        //     message: `Cannot delete a team with resources, please reassign and try again.`,
-        //     type: 'error',
-        //     position: 'bottom-left',
-        //     autoHideTimer: 4000,
-        //   })
-        // );
-        // }
-        //
-        // else {
-        // deleteTeam(teamId)
-        // }
+        try {
+          if (
+            allResourcesDetail.find(resource => resource?.Team?.Id === teamId)
+          ) {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Cannot delete a team with resources, please reassign and try again.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } else {
+            dispatch(deleteTeam(teamId));
+            dispatch(fetchAllTeams());
+          }
+        } catch (error) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete resource',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } finally {
+          setDeleteDialogOpen(false);
+          setDeleteTarget({ id: '', name: '', type: '' });
+        }
         break;
       case 'resource':
         dispatch(
