@@ -80,20 +80,21 @@ const Topbar = ({
               },
             }}
           >
-            <MenuItem onClick={() => handleMenuClose('Weekly')}>
-              Weekly
+            <MenuItem onClick={() => handleMenuClose('week')}>
+              Week
             </MenuItem>
-            {/* <MenuItem onClick={() => handleMenuClose('Monthly')}>
-            Monthly
+            <MenuItem onClick={() => handleMenuClose('month')}>
+            Month
           </MenuItem>
-          <MenuItem onClick={() => handleMenuClose('Quarterly')}>
-            Quarterly
-          </MenuItem> */}
+          <MenuItem onClick={() => handleMenuClose('quarter')}>
+            Quarter
+          </MenuItem>
           </Menu>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DemoContainer components={['DatePicker']}>
               <DatePicker
                 displayWeekNumber
+                // views={['']}
                 label="Select a Date"
                 value={selectedDate}
                 sx={{
