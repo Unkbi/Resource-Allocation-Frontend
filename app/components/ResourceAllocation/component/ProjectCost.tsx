@@ -16,6 +16,7 @@ import {
 } from '@/app/utils/common';
 import ProjectTotalCustomToolTip from '../../AllocationTable/components/ProjectTotalCustomToolTip';
 import { getProjectTypeColorLine } from '@/app/utils/common';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -42,6 +43,13 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
     (state: RootState) => state.resources
   );
+  const { setRows, ready } = useAllocationGrid('main');
+
+  useEffect(() => {
+    if (ready && projectCosts) {
+      setRows(removeResourcesWithNoProjects(projectCosts));
+    }
+  }, [ready, projectCosts]);
 
   useEffect(() => {
     dispatch({
@@ -622,7 +630,6 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoProjects(projectCosts)}
           loading={dataProcessing}
         />
       </Box>

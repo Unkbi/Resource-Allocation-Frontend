@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { Box } from '@mui/material';
@@ -12,6 +12,7 @@ import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
 import { getProjectTypeColorLine } from '@/app/utils/common';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -42,6 +43,22 @@ export default function ProjectAllocation({
   };
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { setRows, ready } = useAllocationGrid('projectAllocation');
+  const { getAllRows } = useAllocationGrid('teamAllocation');
+
+  useEffect(() => {
+    if (ready) {
+      if (getAllRows().length > 0) {
+        setRows(
+          removeResourcesWithNoProjects(
+            (getAllRows() as AllAllocations[]) || []
+          )
+        );
+      } else if (allAllocations) {
+        setRows(removeResourcesWithNoProjects(allAllocations || []));
+      }
+    }
+  }, [ready && allAllocations]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -572,8 +589,8 @@ export default function ProjectAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoProjects(allAllocations || [])}
           loading={loading || dataProcessing}
+          viewId="projectAllocation"
         />
       </Box>
     </>

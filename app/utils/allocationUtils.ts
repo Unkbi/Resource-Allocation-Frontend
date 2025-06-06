@@ -17,8 +17,14 @@ import {
   Resource,
   Team,
 } from '../types';
-import { generateAllWeeks, getResourceFromUid, getWeekNumber } from './common';
+import {
+  generateAllWeeks,
+  getResourceFromUid,
+  getTeamForResource,
+  getWeekNumber,
+} from './common';
 import { DATE_FORMAT } from '../constants/constants';
+import { GridApi } from '@mui/x-data-grid-premium';
 
 export const formatAllocations = (
   allocationsData: ApiResponse<Allocation[]>,
@@ -402,4 +408,180 @@ export const hasAllocations = (allocation: AllAllocations) => {
     }
   }
   return false;
+};
+
+export const generateEmptyRow = (
+  startDate: string,
+  endDate: string,
+  teams: Team[],
+  teamResources: Record<string, Resource[]>,
+  projects: Project[],
+  resources: Resource[],
+  allocation: Allocation
+): AllocationGridCell => {
+  const weeks = getWeeksInRange(startDate, endDate);
+  // Build a lookup map from resource ID to team
+  const resourceIdToTeam = new Map<string, Team>();
+
+  for (const [teamId, teamResourceList] of Object.entries(teamResources)) {
+    const team = teams.find(t => t.Id === teamId); // find the team based on teamId
+    if (!team) continue; // skip if team not found
+
+    for (const res of teamResourceList) {
+      resourceIdToTeam.set(res.Id, team);
+    }
+  }
+
+  const team = resourceIdToTeam.get(allocation.Resource);
+  const project = projects.find(p => p.Id === allocation.Project);
+  const resource = resources.find(r => r.Id === allocation.Resource);
+  const key = `${allocation.Resource}-${team?.Id}-${allocation.Project}`;
+
+  const emptyRow: AllocationGridCell = {
+    id: key,
+    resourceId: resource?.Id || null,
+    resource: resource?.FullName || allocation.ResourceName || null,
+    role: resource?.Role || null,
+    resourceType: resource?.Type || null,
+    teams: team?.Name || null,
+    teamStatus: team?.Status || null,
+    teamAllocationManager: team?.AllocationManager || null,
+    project: project?.Name || allocation.ProjectName || null,
+    projectId: project?.Id || allocation.Project || null,
+    projectSponsor: project?.ProjectSponsor || null,
+    projectManager: project?.ProjectManager || null,
+    projectStatus: project?.Status || null,
+    projectLocation: project?.Location || null,
+    projectType: project?.Type || null,
+    projectOvertimeAllowed: project?.AllowOvertime ?? null,
+    projectCost: project?.Budget ?? null,
+    projectCurrency: project?.BudgetCurrency || null,
+    projectStartDate: project?.StartDate || null,
+    projectEndDate: project?.EndDate || null,
+    totalEffort: 0,
+  };
+
+  weeks.forEach(week => {
+    emptyRow[week.key] = {
+      allocationId: null,
+      value: null,
+      period: week.period,
+    };
+  });
+
+  return emptyRow;
+};
+
+export const getCombinedAllocation = (
+  allocationsA: AllAllocations[],
+  allocationsB: AllAllocations[]
+): AllAllocations[] => {
+  const combined: Record<string, AllAllocations> = {};
+
+  allocationsA.forEach(allocation => {
+    combined[allocation.id] = { ...allocation };
+  });
+
+  allocationsB.forEach(allocation => {
+    if (!combined[allocation.id]) {
+      combined[allocation.id] = { ...allocation };
+    }
+  });
+  return Object.values(combined);
+};
+
+export const getFormattedAllocationsForUpdate = (
+  allocationsUpdated: Allocation[],
+  teams: ApiResponse<Team[]>,
+  teamsResources: Record<string, Resource[]>,
+  projects: ApiResponse<Project[]>,
+  resources: ApiResponse<Resource[]>,
+  splitView: boolean,
+  bottomTeamAllocationGrid: GridApi,
+  teamAllocationGrid: GridApi,
+  startDate: string,
+  endDate: string
+) => {
+  return allocationsUpdated?.reduce((acc: Record<string, any>, allocation) => {
+    const team = getTeamForResource(
+      allocation?.Resource,
+      teams?.result,
+      teamsResources
+    );
+    const weekKey = getWeekNumber(parseISO(allocation?.Period));
+    const id = `${allocation?.Resource}-${team?.Id}-${allocation?.Project}`;
+    const currentRow = splitView
+      ? bottomTeamAllocationGrid.getRow(id)
+      : teamAllocationGrid.getRow(id);
+
+    if (acc[id]) {
+      if (allocation?.AllocationEntered > 0) {
+        acc[id] = {
+          ...acc[id],
+          [weekKey]: {
+            ...acc[id][weekKey],
+            value: allocation?.AllocationEntered,
+            allocationId: allocation?.Id,
+          },
+        };
+      } else {
+        acc[id] = {
+          ...acc[id],
+          [weekKey]: {
+            ...acc[id][weekKey],
+            value: null,
+            allocationId: null,
+          },
+        };
+      }
+    } else if (currentRow) {
+      if (allocation?.AllocationEntered > 0) {
+        acc = {
+          ...acc,
+          [id]: {
+            ...currentRow,
+            [weekKey]: {
+              ...currentRow[weekKey],
+              value: allocation?.AllocationEntered,
+              allocationId: allocation?.Id,
+            },
+          },
+        };
+      } else {
+        acc = {
+          ...acc,
+          [id]: {
+            ...currentRow,
+            [weekKey]: {
+              ...currentRow[weekKey],
+              value: null,
+              allocationId: null,
+            },
+          },
+        };
+      }
+    } else {
+      const emptyRow = generateEmptyRow(
+        startDate,
+        endDate,
+        teams?.result || [],
+        teamsResources,
+        projects?.result || [],
+        resources?.result || [],
+        allocation
+      );
+      acc = {
+        ...acc,
+        [id]: {
+          ...emptyRow,
+          [weekKey]: {
+            ...(typeof emptyRow[weekKey] === 'object' ? emptyRow[weekKey] : {}),
+            value: allocation?.AllocationEntered,
+            allocationId: allocation?.Id,
+          },
+        },
+      };
+    }
+    return acc;
+  }, {});
 };

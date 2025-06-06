@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { RootState } from '@/app/redux/store';
@@ -14,6 +14,7 @@ import {
 import AllocationGrid from '../../AllocationTable/AllocationGrid';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 
 interface TopProjectsViewProps {
   startDate: string | null;
@@ -31,7 +32,13 @@ export default function TopProjectsView({
   const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  // const { startDate, endDate } = calendarDate || {};
+  const { setRows, ready } = useAllocationGrid('topProject');
+
+  useEffect(() => {
+    if (ready && allAllocations) {
+      setRows(filterAllocationsForSelectedProject(allAllocations || []) || []);
+    }
+  }, [ready, allAllocations]);
 
   const generateEmptyAllocation = (
     id: string,
@@ -305,10 +312,10 @@ export default function TopProjectsView({
               ],
             },
           }}
-          data={filterAllocationsForSelectedProject(allAllocations || []) || []}
           loading={loading || dataProcessing}
           NoRowsOverlay={NoRowsOverlay}
           toolbarComponent={''}
+          viewId="topProject"
         />
       </Box>
     </>

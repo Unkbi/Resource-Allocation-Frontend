@@ -15,6 +15,7 @@ import SplitTeamToolbar from '../../Toolbar/SplitTeamToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 
 interface BottomTeamsViewProps {
   startDate: string | null;
@@ -35,6 +36,13 @@ export default function BottomTeamsView({
   );
   // const { startDate, endDate } = calendarDate || {};
 
+  const { setRows, ready } = useAllocationGrid('bottomTeam');
+
+  useEffect(() => {
+    if (ready && allAllocations) {
+      setRows(filteredResources);
+    }
+  }, [ready, allAllocations]);
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
       openDialog({
@@ -128,19 +136,19 @@ export default function BottomTeamsView({
     removeResourcesWithNoTeams(allAllocations || []) ?? []
   );
 
-   const hasZeroAllocation = (row: AllAllocations) => {
-     if (row._avgPeriodAllocation === 0) return true;
-     return Object.keys(row).every(key => {
-       if (/^W\d+/.test(key)) {
-         const value = row[key];
-         if (value && typeof value === 'object' && 'value' in value) {
-           return value.value === 0 || value.value === undefined;
-         }
-         return true; 
-       }
-       return true; 
-     });
-   };
+  const hasZeroAllocation = (row: AllAllocations) => {
+    if (row._avgPeriodAllocation === 0) return true;
+    return Object.keys(row).every(key => {
+      if (/^W\d+/.test(key)) {
+        const value = row[key];
+        if (value && typeof value === 'object' && 'value' in value) {
+          return value.value === 0 || value.value === undefined;
+        }
+        return true;
+      }
+      return true;
+    });
+  };
 
   const filteredResources = useMemo(() => {
     return enrichedResources.filter(row => {
@@ -150,8 +158,8 @@ export default function BottomTeamsView({
 
       const avgWeekly = row._avgPeriodAllocation ?? 0;
       if (allocationThreshold === 0) {
-      return teamMatch && hasZeroAllocation(row);
-    }
+        return teamMatch && hasZeroAllocation(row);
+      }
       if (allocationThreshold > 1) {
         return teamMatch;
       }
@@ -206,7 +214,7 @@ export default function BottomTeamsView({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={filteredResources || []}
+          viewId="bottomTeam"
         />
       </Box>
     </>

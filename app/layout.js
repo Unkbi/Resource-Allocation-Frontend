@@ -14,6 +14,7 @@ import { getUserData } from './redux/actions/authActions';
 import { useDispatch, useSelector } from 'react-redux';
 import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
 import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
+import { DataGridProvider } from './context/dataGridContext';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -42,7 +43,7 @@ function LayoutContent({ children }) {
   }, []);
 
   useEffect(() => {
-    const getTitleByPath = (pathname) => {
+    const getTitleByPath = pathname => {
       switch (pathname) {
         case '/allocation':
           return 'Allocation';
@@ -109,7 +110,9 @@ export default function CommonLayout({ children }) {
         <StoreProvider>
           <AppRouterCacheProvider>
             <ThemeRegistry>
-              <LayoutContent>{children}</LayoutContent>
+              <DataGridProvider>
+                <LayoutContent>{children}</LayoutContent>
+              </DataGridProvider>
             </ThemeRegistry>
           </AppRouterCacheProvider>
         </StoreProvider>

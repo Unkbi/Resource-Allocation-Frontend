@@ -1,6 +1,6 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
@@ -11,6 +11,7 @@ import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -60,6 +61,20 @@ export default function TeamAllocation({
   const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
+  const { setRows, ready } = useAllocationGrid('teamAllocation');
+  const { getAllRows } = useAllocationGrid('projectAllocation');
+
+  useEffect(() => {
+    if (ready) {
+      if (getAllRows().length > 0) {
+        setRows(
+          removeResourcesWithNoTeams((getAllRows() as AllAllocations[]) || [])
+        );
+      } else if (allAllocations) {
+        setRows(removeResourcesWithNoTeams(allAllocations || []));
+      }
+    }
+  }, [ready, allAllocations]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -553,7 +568,7 @@ export default function TeamAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoTeams(allAllocations || []) ?? []}
+          viewId="teamAllocation"
         />
         {!allAllocations && !loading && (
           <div

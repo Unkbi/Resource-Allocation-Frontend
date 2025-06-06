@@ -1,64 +1,72 @@
 'use client';
 
 import { useDataGrid } from '@/app/context/dataGridContext';
+import { useEffect, useState } from 'react';
 import { AllocationGridCell } from '../types';
 
-export function useAllocationGrid() {
-  const { apiRef } = useDataGrid();
+export function useAllocationGrid(gridId: string = 'main') {
+  const { getApiRef } = useDataGrid();
+  const apiRef = getApiRef(gridId);
 
-  // Get all rows
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // Reset ready when apiRef changes
+    setReady(false);
+
+    if (!apiRef || typeof apiRef.subscribeEvent !== 'function') return;
+
+    const unsubscribe = apiRef.subscribeEvent('rowsSet', () => {
+      setReady(true);
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [apiRef]);
+
   const getAllRows = () => {
-    if (!apiRef.current) return [];
-
+    if (!apiRef) return [];
     try {
-      const rows = apiRef.current.getRowModels();
-      return Array.from(rows.values());
+      return Array.from(apiRef.getRowModels().values());
     } catch (error) {
       console.error('Error getting rows:', error);
       return [];
     }
   };
 
-  // Get a specific row
   const getRow = (id: string) => {
-    if (!apiRef.current) return null;
-
+    if (!apiRef) return null;
     try {
-      return apiRef.current.getRow(id);
+      return apiRef.getRow(id);
     } catch (error) {
       console.error(`Error getting row ${id}:`, error);
       return null;
     }
   };
 
-  // Update rows
   const updateRows = (rowUpdates: AllocationGridCell[]) => {
-    if (!apiRef.current) return;
-
+    if (!apiRef) return;
     try {
-      apiRef.current.updateRows(rowUpdates);
+      apiRef.updateRows(rowUpdates);
     } catch (error) {
       console.error('Error updating rows:', error);
     }
   };
 
-  // Set all rows
   const setRows = (rows: AllocationGridCell[]) => {
-    if (!apiRef.current) return;
-
+    if (!apiRef) return;
     try {
-      apiRef.current.setRows(rows);
+      apiRef.setRows(rows);
     } catch (error) {
       console.error('Error setting rows:', error);
     }
   };
 
-  // Get selected rows
   const getSelectedRows = () => {
-    if (!apiRef.current) return [];
-
+    if (!apiRef) return [];
     try {
-      return Array.from(apiRef.current.getSelectedRows().keys());
+      return Array.from(apiRef.getSelectedRows().keys());
     } catch (error) {
       console.error('Error getting selected rows:', error);
       return [];
@@ -66,11 +74,12 @@ export function useAllocationGrid() {
   };
 
   return {
-    apiRef: apiRef.current,
+    apiRef,
     getAllRows,
     getRow,
     updateRows,
     setRows,
     getSelectedRows,
+    ready,
   };
 }

@@ -10,6 +10,7 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -45,6 +46,13 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const { costs: teamsCost, loading } = useSelector(
     (state: RootState) => state.allocationsCost
   );
+  const { setRows, ready } = useAllocationGrid('main');
+
+  useEffect(() => {
+    if (ready && teamsCost) {
+      setRows(removeResourcesWithNoTeams(teamsCost || []));
+    }
+  }, [ready, teamsCost]);
 
   useEffect(() => {
     dispatch({
@@ -551,7 +559,6 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoTeams(teamsCost || []) ?? []}
         />
         {!teamsCost && !loading && (
           <div

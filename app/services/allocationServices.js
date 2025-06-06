@@ -160,3 +160,19 @@ export const fetchAllAllocations = async postData => {
   );
   return response.data;
 };
+
+export const bulkUpdateAllocations = async postData => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/RangeAllocationUpsert`,
+    postData
+  );
+  return response.data;
+};
+
+export const bulkDeleteAllocations = async postData => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/RangeAllocationDelete`,
+    postData
+  );
+  return response.data;
+};
