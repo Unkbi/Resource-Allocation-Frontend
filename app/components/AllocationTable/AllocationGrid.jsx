@@ -61,6 +61,8 @@ import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { startOfWeek, addDays, isValid } from 'date-fns';
+
 
 export default function AllocationGrid({
   groupBy,
@@ -1016,7 +1018,42 @@ export default function AllocationGrid({
       })
     );
   };
+  
+  const isCellEditable = params => {
+    if (type === 'cost') return false;
+    if (params.row.hasButton) return false;
 
+    const cellData = params.row[params.field];
+    const cellPeriod = cellData?.period;
+    if (!cellPeriod) return false;
+
+    const parsedCellPeriod = parseISO(cellPeriod);
+    if (!isValid(parsedCellPeriod)) return false;
+
+    const cellPeriodStart = startOfWeek(parsedCellPeriod, { weekStartsOn: 1 }); // Monday start
+    const cellPeriodEnd = addDays(cellPeriodStart, 6);
+
+    const matchingResource = resources?.result?.find(
+      resource => resource.Id === params.row.resourceId
+    );
+    if (!matchingResource) return false;
+
+    const resourceStart = parseISO(matchingResource.StartDate);
+    const resourceEnd = matchingResource.EndDate
+      ? parseISO(matchingResource.EndDate)
+      : new Date();
+
+    if (!isValid(resourceStart)) return false;
+    const effectiveResourceEnd = isValid(resourceEnd)
+      ? resourceEnd
+      : new Date();
+
+    const isOverlap =
+      resourceStart <= cellPeriodEnd && effectiveResourceEnd >= cellPeriodStart;
+
+    return isOverlap;
+  };
+  
   const toolBarBasedProperties = toolbarComponent
     ? {
         filterModel: filterModel,
@@ -1035,9 +1072,7 @@ export default function AllocationGrid({
     <StyledDataGrid
       cellSelection
       allocationTheme={allocationTheme}
-      isCellEditable={params =>
-        type === 'cost' ? false : !params.row.hasButton
-      }
+      isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
       rowModesModel={rowModesModel}
@@ -1066,15 +1101,21 @@ export default function AllocationGrid({
       )}
       defaultGroupingExpansionDepth={1}
       disableAutosize
-      getCellClassName={params =>
-        getCellClassName(
+      getCellClassName={params => {
+        const originalClass = getCellClassName(
           params,
           updatedRows,
           allocationTheme,
           type,
           projects?.result
-        )
-      }
+        );
+        const editable = isCellEditable(params);
+        if (!editable) {
+          return originalClass
+            ? `${originalClass}` : 'non-editable-cell';
+        }
+        return originalClass;
+      }}
       getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}
       onCellSelectionModelChange={handleCellSelectionModelChange}
