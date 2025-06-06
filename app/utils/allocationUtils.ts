@@ -19,6 +19,7 @@ import {
 } from '../types';
 import {
   generateAllWeeks,
+  getMondayOfWeek,
   getResourceFromUid,
   getTeamForResource,
   getWeekNumber,
@@ -584,4 +585,36 @@ export const getFormattedAllocationsForUpdate = (
     }
     return acc;
   }, {});
+};
+
+export const normalizeRow = (row: AllocationGridCell) => {
+  const allWeeks = generateAllWeeks();
+  const normalized = { ...row };
+
+  allWeeks.forEach(weekKey => {
+    const period = getMondayOfWeek(weekKey, new Date());
+    const value = row[weekKey];
+
+    if (value && typeof value === 'object' && 'value' in value) {
+      normalized[weekKey] = {
+        allocationId: value.allocationId || null,
+        value: value.value,
+        period: period,
+      };
+    } else if (value !== undefined) {
+      normalized[weekKey] = {
+        allocationId: null,
+        value: value as number | null,
+        period,
+      };
+    } else {
+      normalized[weekKey] = {
+        allocationId: null,
+        value: null,
+        period,
+      };
+    }
+  });
+
+  return normalized;
 };

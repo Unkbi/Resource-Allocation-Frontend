@@ -11,8 +11,16 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
-import { getProjectTypeColorLine } from '@/app/utils/common';
+import {
+  calculateTotalEffort,
+  getAllocationManagerFromPath,
+  getProjectTypeColorLine,
+} from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import {
+  getCombinedAllocation,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -48,15 +56,34 @@ export default function ProjectAllocation({
 
   useEffect(() => {
     if (ready) {
+      let filteredResources;
       if (getAllRows().length > 0) {
+        filteredResources = removeResourcesWithNoProjects(
+          (getAllRows() as AllAllocations[]) || []
+        );
         setRows(
           removeResourcesWithNoProjects(
-            (getAllRows() as AllAllocations[]) || []
+            getCombinedAllocation(
+              getAllRows() as AllAllocations[],
+              allAllocations || []
+            ) || []
           )
         );
       } else if (allAllocations) {
-        setRows(removeResourcesWithNoProjects(allAllocations || []));
+        filteredResources = removeResourcesWithNoProjects(allAllocations || []);
       }
+
+      const formattedResources = filteredResources?.map(allocation => ({
+        ...allocation,
+        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources?.result || []
+        )?.FullName,
+      }));
+
+      setRows(formattedResources || []);
     }
   }, [ready && allAllocations]);
 
