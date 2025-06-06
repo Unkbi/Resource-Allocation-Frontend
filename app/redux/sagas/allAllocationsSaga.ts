@@ -1,5 +1,9 @@
 import { call, put, takeLatest, all, takeLeading } from 'redux-saga/effects';
-import { fetchAllAllocations } from '@/app/services/allocationServices';
+import {
+  bulkDeleteAllocations,
+  bulkUpdateAllocations,
+  fetchAllAllocations,
+} from '@/app/services/allocationServices';
 import { getMondayOfISO } from '@/app/utils/common';
 import {
   setAllAllocations,
@@ -330,10 +334,48 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
   }
 }
 
+function* updatedBulkAllocationSaga(action: any): Generator<any, void, any> {
+  const { resourceId, allocList, resolve, reject } = action.payload;
+  try {
+    const postData = {
+      'ResourceAllocation.Core/RangeAllocationUpsert': {
+        Resource: resourceId,
+        AllocsList: allocList,
+      },
+    };
+
+    const response = yield call(bulkUpdateAllocations, postData);
+    if (resolve) resolve(response);
+  } catch (error) {
+    console.error('Saga error: Failed to update bulk allocations:', error);
+    if (reject) reject(error);
+  }
+}
+
+function* deleteBulkAllocationSaga(action: any): Generator<any, void, any> {
+  const { resourceId, allocList, resolve, reject } = action.payload;
+  try {
+    const postData = {
+      'ResourceAllocation.Core/RangeAllocationDelete': {
+        Resource: resourceId,
+        AllocsList: allocList,
+      },
+    };
+
+    const response = yield call(bulkDeleteAllocations, postData);
+    if (resolve) resolve(response);
+  } catch (error) {
+    console.error('Saga error: Failed to delete bulk allocations:', error);
+    if (reject) reject(error);
+  }
+}
+
 export function* allAllocationsSaga() {
   yield takeLeading('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
   yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga); // This is for subsequent fetch. Ex : Date Shift.
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
   yield takeLatest('FETCH_ALLOCATIONS_COST', fetchAllocationsCostSaga);
+  yield takeLatest('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
+  yield takeLatest('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
 }

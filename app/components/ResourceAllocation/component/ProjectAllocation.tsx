@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { Box } from '@mui/material';
@@ -11,7 +11,16 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
-import { getProjectTypeColorLine } from '@/app/utils/common';
+import {
+  calculateTotalEffort,
+  getAllocationManagerFromPath,
+  getProjectTypeColorLine,
+} from '@/app/utils/common';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import {
+  getCombinedAllocation,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -42,6 +51,41 @@ export default function ProjectAllocation({
   };
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { setRows, ready } = useAllocationGrid('projectAllocation');
+  const { getAllRows } = useAllocationGrid('teamAllocation');
+
+  useEffect(() => {
+    if (ready) {
+      let filteredResources;
+      if (getAllRows().length > 0) {
+        filteredResources = removeResourcesWithNoProjects(
+          (getAllRows() as AllAllocations[]) || []
+        );
+        setRows(
+          removeResourcesWithNoProjects(
+            getCombinedAllocation(
+              getAllRows() as AllAllocations[],
+              allAllocations || []
+            ) || []
+          )
+        );
+      } else if (allAllocations) {
+        filteredResources = removeResourcesWithNoProjects(allAllocations || []);
+      }
+
+      const formattedResources = filteredResources?.map(allocation => ({
+        ...allocation,
+        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources?.result || []
+        )?.FullName,
+      }));
+
+      setRows(formattedResources || []);
+    }
+  }, [ready && allAllocations]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -572,8 +616,8 @@ export default function ProjectAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoProjects(allAllocations || [])}
           loading={loading || dataProcessing}
+          viewId="projectAllocation"
         />
       </Box>
     </>

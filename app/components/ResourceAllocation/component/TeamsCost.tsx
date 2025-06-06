@@ -5,11 +5,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import { getAllocationManagerFromPath } from '@/app/utils/common';
+import {
+  calculateTotalEffort,
+  getAllocationManagerFromPath,
+} from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { normalizeRow } from '@/app/utils/allocationUtils';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -45,6 +50,23 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const { costs: teamsCost, loading } = useSelector(
     (state: RootState) => state.allocationsCost
   );
+  const { setRows, ready } = useAllocationGrid('main');
+
+  useEffect(() => {
+    if (ready && teamsCost) {
+      const filteredResources = removeResourcesWithNoTeams(teamsCost || []);
+      const formattedResources = filteredResources?.map(allocation => ({
+        ...allocation,
+        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources?.result || []
+        )?.FullName,
+      }));
+      setRows(formattedResources);
+    }
+  }, [ready, teamsCost]);
 
   useEffect(() => {
     dispatch({
@@ -551,7 +573,6 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoTeams(teamsCost || []) ?? []}
         />
         {!teamsCost && !loading && (
           <div
