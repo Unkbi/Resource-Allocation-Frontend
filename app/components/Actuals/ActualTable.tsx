@@ -280,8 +280,16 @@ export default function ActualTable({
       );
     });
 
+    // Validation logic for comments
+  const isUnplannedProject =
+    newRow.planned === 0 &&
+    newRow.project !== 'Other Work' &&
+    newRow.project !== 'Personal Time';
+
     const actualsInvalid = !newRow.actuals || newRow.actuals === 0;
-    const commentsInvalid = !newRow.comments || !newRow.comments.trim();
+    const commentsInvalid =
+    (isUnplannedProject || newRow.project === 'Other Work' || newRow.project === 'Personal Time') &&
+    (!newRow.comments || !newRow.comments.trim());
 
     setRowValidationErrors(prev => {
       const updated = { ...prev };
