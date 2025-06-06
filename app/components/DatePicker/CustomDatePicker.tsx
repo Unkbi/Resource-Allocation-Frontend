@@ -25,30 +25,32 @@ const StyledPickersLayout = styled(PickersLayout)({
 });
 
 const CustomTextField = styled(TextField, {
-  shouldForwardProp: (prop) => prop !== 'error'
+  shouldForwardProp: prop => prop !== 'error',
 })<{
   error?: boolean;
 }>(({ theme, error }) => ({
   height: '36px',
   width: '160px',
-  '& .MuiInputBase-root': {
+  '& .MuiOutlinedInput-root': {
     height: '36px',
     fontFamily: theme.typography.fontFamily,
     fontSize: '12px',
     fontWeight: 500,
-    border: error ? theme.palette.error.main : undefined,
-    '&:hover': {
-      border: error ? theme.palette.error.main : undefined,
+    '& fieldset': {
+      borderColor: error ? theme.palette.error.main : undefined,
+      borderWidth: error ? '1px' : undefined, 
     },
-    '&.Mui-focused': {
-      border: error ? theme.palette.error.main : undefined,
+    '&:hover fieldset': {
+      borderColor: error ? theme.palette.error.main : undefined,
+      borderWidth: error ? '1px' : undefined,
     },
-    '&::placeholder': {
+    '&.Mui-focused fieldset': {
+      borderColor: error ? theme.palette.error.main : undefined,
+      borderWidth: error ? '1px' : undefined,
+    },
+    '& input::placeholder': {
       color: '#757575',
       opacity: 1,
-    },
-    '& input': {
-      cursor: 'pointer',
     },
   },
   '& .MuiIconButton-root': {
@@ -58,6 +60,7 @@ const CustomTextField = styled(TextField, {
     },
   },
 }));
+
 
 interface CustomDatePickerProps {
   name: string;

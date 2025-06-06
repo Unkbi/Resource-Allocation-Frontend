@@ -75,6 +75,17 @@ export const addProjectValidationSchema = (
   });
 };
 
+export const addTeamValidationSchema = Yup.object().shape({
+  Name: Yup.string()
+    .trim()
+    .required('Team Name is required'),
+  AllocationManager: Yup.string()
+    .required('Team Allocation Manager is required'),
+  Status: Yup.string()
+    .oneOf(['Active', 'Inactive'], 'Invalid status')
+    .required('Status is required'),
+});
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const addResourceValidationSchema = Yup.object({
@@ -334,4 +345,22 @@ export const transferResourceValidationSchema = Yup.object({
   EndDate: Yup.date()
     .required('End date is required')
     .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
+});
+
+export const addRatesValidationSchema = Yup.object({
+  WorkLocation: Yup.string().required('Location is required'),
+  HRLevel: Yup.string().required('HRLevel is required'),
+  HourlyRate: Yup.number().required('HourlyRate is required'),
+  HourlyRateCurrency: Yup.string().required('Currency is required'),
+  ValidityStartDate: Yup.date()
+    .required('Start Date is required')
+    .typeError('Start Date must be a valid date'),
+  ValidityEndDate: Yup.date()
+    .required('End Date is required')
+    .typeError('End Date must be a valid date')
+    .min(
+      Yup.ref('ValidityStartDate'),
+      'End Date must be after or the same as Start Date'
+    ),
+  Status: Yup.string().required('Status is required'),
 });

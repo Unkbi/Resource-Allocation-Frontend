@@ -40,6 +40,7 @@ export default function Overview({
   activeResources,
   actualsConfirmed,
   totalResourceCost,
+  allocationPercentage,
 }) {
   const [overview, setOverview] = useState([]);
 
@@ -49,6 +50,7 @@ export default function Overview({
 
     const confirmedPct = parseInt(actualsConfirmed?.[0]?.pct_confirmed);
     const confirmedDisplay = isNaN(confirmedPct) ? '0%' : `${confirmedPct}%`;
+    const confirmedallocationPct = parseInt(allocationPercentage?.[0]?.pct_allocated);
 
     const data = [
       {
@@ -64,12 +66,16 @@ export default function Overview({
         value: formatCurrency(cost, currency),
       },
       {
+        label: 'Allocation %',
+        value: isNaN(confirmedallocationPct) ? '0%' : `${confirmedallocationPct}%`,
+      },
+      {
         label: 'Actuals Confirmed',
         value: confirmedDisplay,
       },
     ];
     setOverview(data);
-  }, [activeProjects, activeResources, actualsConfirmed, totalResourceCost]);
+  }, [activeProjects, activeResources, actualsConfirmed, totalResourceCost,allocationPercentage]);
 
   return (
     <Box mb={3} mt={3}>

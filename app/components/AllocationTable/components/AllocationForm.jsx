@@ -21,6 +21,8 @@ import {
   cloneResourceValidationSchema,
   transferResourceValidationSchema,
   editResourceValidationSchema,
+  addTeamValidationSchema,
+  addRatesValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -40,7 +42,10 @@ import {
   updateResourceAllocation,
   removeResourceAllocation,
 } from '@/app/redux/actions/resourceAllocationAction';
-import { fetchResourcesAgainstTeams } from '@/app/redux/actions/fetchTeamsAction';
+import {
+  fetchAllTeams,
+  fetchResourcesAgainstTeams,
+} from '@/app/redux/actions/fetchTeamsAction';
 import {
   setCellSelectionData,
   setExpandRowId,
@@ -72,9 +77,20 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
-import { addResourceToTeam } from '@/app/services/teamServices';
+import {
+  addResourceToTeam,
+  createTeam,
+  updateTeam,
+} from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import AddTeamForm from '../../Forms/AddTeamForm';
+import AddRatesForm from '../../Forms/AddRatesForm';
+import {
+  FETCH_EMPLOYEE_RATES,
+  CREATE_EMPLOYEE_RATES,
+  UPDATE_EMPLOYEE_RATES,
+} from '@/app/redux/actions/employeeRatesActions';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
   generateEmptyRow,
@@ -94,6 +110,16 @@ const initialValuesMap = {
     Status: 'Active',
     Type: '',
     Budget: 0,
+  },
+  add_team: {
+    Name: '',
+    AllocationManager: '',
+    Status: 'Active',
+  },
+  edit_team: {
+    Name: '',
+    AllocationManager: '',
+    Status: 'Active',
   },
   add_resource: {
     FirstName: '',
@@ -194,6 +220,15 @@ const initialValuesMap = {
     StartDate: '',
     EndDate: '',
   },
+  add_rates: {
+    WorkLocation: '',
+    HRLevel: '',
+    HourlyRate: 0,
+    HourlyRateCurrency: 'USD',
+    ValidityStartDate: '',
+    ValidityEndDate: '',
+    Status: 'Active',
+  },
 };
 
 const AllocationForm = () => {
@@ -245,6 +280,10 @@ const AllocationForm = () => {
         return addProjectValidationSchema(projects);
       case 'edit_project':
         return addProjectValidationSchema(projects, initialData?.Name || '');
+      case 'add_team':
+        return addTeamValidationSchema;
+      case 'edit_team':
+        return addTeamValidationSchema;
       case 'add_resource':
         return addResourceValidationSchema;
       case 'edit_resource': // Temporary later on this will be same as add_resource
@@ -263,6 +302,11 @@ const AllocationForm = () => {
         return cloneResourceValidationSchema;
       case 'transfer_resource':
         return transferResourceValidationSchema;
+      case 'add_rates':
+        return addRatesValidationSchema;
+      case 'edit_rates':
+        return addRatesValidationSchema;
+
       default:
         return null;
     }
@@ -458,6 +502,90 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(initialData.Id));
         } catch (e) {
           console.error('Failed to edit project:', e);
+        }
+        break;
+
+      case 'add_team':
+        postData = {
+          Name: cleanedValues.Name?.trim(),
+          AllocationManager: cleanedValues.AllocationManager,
+          Status: cleanedValues.Status,
+        };
+
+        try {
+          dispatch(createTeam(postData))
+            .then(async response => {
+              if (response.meta.requestStatus === 'rejected') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Failed to add team`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
+
+              const newTeamId = response.payload?.result?.Id;
+              if (newTeamId) {
+                await dispatch(fetchAllTeams());
+                dispatch(setHighlightedRowId(newTeamId));
+              }
+
+              if (pathname !== '/people?tab=teams') {
+                router.replace('/people?tab=teams');
+              } else {
+                dispatch(closeDialog());
+              }
+            })
+            .catch(error => {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Failed to add team`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              console.error('Failed to add team:', error);
+            });
+        } catch (e) {
+          console.error('Failed to add team:', e);
+        }
+        dispatch(closeDialog());
+        break;
+
+      case 'edit_team':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        postData = {
+          'ResourceAllocation.Core/Team': {
+            Name: cleanedValues.Name?.trim(),
+            AllocationManager: cleanedValues.AllocationManager,
+            Status: cleanedValues.Status,
+          },
+        };
+
+        try {
+          await dispatch(
+            updateTeam({
+              postData,
+              teamId: initialData.Id,
+            })
+          );
+
+          await dispatch(fetchAllTeams());
+          dispatch(setHighlightedRowId(initialData.Id));
+          dispatch(closeDialog());
+        } catch (e) {
+          console.error('Failed to update team:', e);
         }
         break;
 
@@ -1205,6 +1333,111 @@ const AllocationForm = () => {
         setShowTransferConfirm(true);
         break;
 
+      case 'add_rates':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = {
+          ...cleanedValues,
+        };
+
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'CREATE_EMPLOYEE_RATES',
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Rate added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to add rate:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add rate.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+
+        break;
+
+      case 'edit_rates':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const updatedFields = {
+          ...cleanedValues,
+          WorkLocation: cleanedValues.WorkLocation,
+          HRLevel: cleanedValues.HRLevel,
+          ValidityStartDate: cleanedValues.ValidityStartDate,
+          ValidityEndDate: cleanedValues.ValidityEndDate,
+          HourlyRate: cleanedValues.HourlyRate || 0,
+          HourlyRateCurrency: cleanedValues.HourlyRateCurrency,
+          Status: cleanedValues.Status,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'UPDATE_EMPLOYEE_RATES',
+            payload: {
+              id: initialData.__Id__,
+              updatedFields,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Rate updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(closeDialog());
+            dispatch(setHighlightedRowId(response.result[0].__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to update rate:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to update rate.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          });
+
+        break;
+
       default:
         return;
     }
@@ -1391,6 +1624,14 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+      case 'add_team':
+        return (
+          <AddTeamForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_team':
+        return (
+          <AddTeamForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
       case 'add_resource':
         return (
           <AddResourceForm
@@ -1439,6 +1680,14 @@ const AllocationForm = () => {
             formikProps={formikProps}
             setFormValue={setFormValue}
           />
+        );
+      case 'add_rates':
+        return (
+          <AddRatesForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_rates':
+        return (
+          <AddRatesForm formikProps={formikProps} setFormValue={setFormValue} />
         );
       default:
         return <div>No form selected</div>;

@@ -49,7 +49,9 @@ export default function Allocation({ startDate, endDate }) {
           decompressFromEncodedURIComponent(settingsParam)
         );
 
-        dispatch(updateCurrentView(parsedSettings));
+        setTimeout(() => {
+          dispatch(updateCurrentView(parsedSettings));
+        }, 2000);
       } catch (e) {
         console.error('Failed to parse settings:', e);
       }
@@ -63,9 +65,9 @@ export default function Allocation({ startDate, endDate }) {
           return <ProjectAllocation startDate={startDate} endDate={endDate} />;
         case 'Teams':
           return <TeamAllocation startDate={startDate} endDate={endDate} />;
-          case 'Project Cost':
+        case 'Project Cost':
           return <ProjectCost startDate={startDate} endDate={endDate} />;
-          case 'Teams Cost':
+        case 'Teams Cost':
           return <TeamsCost startDate={startDate} endDate={endDate} />;
         default:
           return null;
@@ -76,9 +78,9 @@ export default function Allocation({ startDate, endDate }) {
           return <ProjectAllocation startDate={startDate} endDate={endDate} />;
         case 'Teams':
           return <TeamAllocation startDate={startDate} endDate={endDate} />;
-          case 'Project Cost':
+        case 'Project Cost':
           return <ProjectCost startDate={startDate} endDate={endDate} />;
-          case 'Teams Cost':
+        case 'Teams Cost':
           return <TeamsCost startDate={startDate} endDate={endDate} />;
         default:
           return null;
