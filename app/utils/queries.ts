@@ -4,8 +4,8 @@ export const allowedQueries: Record<string, string> = {
     /* ========= 1. Parameter block (extended) ========== */
 WITH params AS (
     SELECT
-        DATE '2025-01-01'                   AS start_date,             -- ← window start
-        DATE '2025-06-30'                   AS end_date,               -- ← window end
+        DATE '2024-12-30'                   AS start_date,             -- ← window start
+        DATE '2025-12-31'                   AS end_date,               -- ← window end
         'week'::text                      AS bucket,                 -- 'week' | 'month' | 'quarter'
         'Contractor - PT'                  AS excluded_resource_type,
         /* optional: list of project types to ignore                         */
@@ -108,8 +108,8 @@ ORDER BY abpp.project_type, cal.period_start;
   capacityAvailability: `/* ========= 1. Parameter block ========== */
 WITH params AS (
     SELECT
-        DATE '2025-01-01'  AS start_date,            -- ← reporting window start
-        DATE '2025-06-30'  AS end_date,              -- ← reporting window end
+        DATE '2024-12-30'  AS start_date,            -- ← reporting window start
+        DATE '2025-12-31'  AS end_date,              -- ← reporting window end
         'week'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
         'Contractor - PT'    AS excluded_type
 ),
@@ -234,8 +234,8 @@ WITH limits AS (
 /* ========= 1. Parameter block ========== */
 params AS (
     SELECT
-        DATE '2025-01-01'  AS start_date,            -- ← reporting window start
-        DATE '2025-06-30'  AS end_date,              -- ← reporting window end
+        DATE '2024-12-30'  AS start_date,            -- ← reporting window start
+        DATE '2025-12-31'  AS end_date,              -- ← reporting window end
         'week'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
         'Contractor - PT'    AS excluded_type
 ),
@@ -357,8 +357,8 @@ CROSS JOIN limits l;          -- gives you access to the thresholds
   budgetVsPlanVsActual: `/* ======== 1.  Parameters you can tweak ============================= */
 WITH params AS (
     SELECT
-        DATE '2025-01-01'  AS start_date,     -- ← reporting window
-        DATE '2025-05-28'  AS end_date
+        DATE '2024-12-30'  AS start_date,     -- ← reporting window
+        DATE '2025-12-31'  AS end_date
 ),
 
 /* ======== 2.  Allocation-cost rows inside the window =============== */
@@ -414,7 +414,7 @@ where cbp.planned_to_date is not null;
   resourceActualsDeviation: `/* ========= 1. Parameters ========================================== */
 WITH params AS (
     SELECT
-        DATE '2025-05-26' AS start_date,
+        DATE '2024-12-30' AS start_date,
         DATE '2025-06-01' AS end_date,
         'week'::text      AS bucket,      -- 'week' | 'month' | 'quarter'
         ''                AS excluded_resource_type
@@ -500,8 +500,8 @@ ORDER BY cal.period_start;
   unapprovedProjectActualsByTeam: `/* ========= 1. PARAMETERS ========================================== */
 WITH params AS (
     SELECT
-        DATE '2025-05-05' AS start_date,
-        DATE '2025-05-30' AS end_date,
+        DATE '2024-12-30' AS start_date,
+        DATE '2025-12-31' AS end_date,
         'week'::text      AS bucket          -- 'week' | 'month' | 'quarter'
 ),
 
@@ -658,8 +658,8 @@ group by _type`,
   unapprovedProjectAllocation: `/* ========= 1. PARAMETERS ========================================== */
 WITH params AS (
     SELECT
-        DATE '2025-05-05' AS start_date,      -- window start
-        DATE '2025-05-30' AS end_date,        -- window end
+        DATE '2024-12-30' AS start_date,      -- window start
+        DATE '2025-12-31' AS end_date,        -- window end
         'week'::text      AS bucket           -- 'week' | 'month' | 'quarter'
 ),
 
@@ -768,8 +768,8 @@ ORDER BY cal.period_start,
   resourceCoverage: `
     WITH params AS (
         SELECT
-            DATE '2025-01-01'  AS start_date,
-            DATE '2025-06-30'  AS end_date,
+            DATE '2024-12-30'  AS start_date,
+            DATE '2025-07-31'  AS end_date,
             'week'::text       AS bucket,
             'Contractor - PT'  AS excluded_type
     ),
@@ -869,8 +869,8 @@ ORDER BY cal.period_start,
     AND _status = 'Active'`,
   actualsConfirmed: `WITH params AS (
     SELECT
-        DATE '2025-04-01'  AS start_date,   -- window start
-        DATE '2025-06-30'  AS end_date,     -- window end
+        DATE '2024-12-30'  AS start_date,   -- window start
+        DATE '2025-12-31'  AS end_date,     -- window end
         'week'::text       AS bucket        -- 'week' | 'month' | 'quarter'
 ),
 /* ========= 2. Calendar buckets ==================================== */
@@ -931,4 +931,87 @@ ORDER BY cal.period_start;`,
 select sum(rcu._cost) as total_cost,rcu._costcurrency as Currency  from public.resourceallocation_core__resourceunitcost_0_0_1 rcu
 join active_resource ar on ar.resource_id = rcu._resourceref
 group by rcu._costcurrency`,
+
+allocationPercentage: `/* ========= 1. PARAMETERS  ========================================= */
+WITH params AS (
+    SELECT
+        DATE '2024-12-30'  AS start_date,   -- ← change window start here
+        DATE '2025-12-31'  AS end_date,     -- ← change window end   here
+        'week'::text       AS bucket        -- 'week' | 'month' | 'quarter'
+),
+
+/* ========= 2. CALENDAR BUCKETS ==================================== */
+calendar AS (
+    SELECT
+        gs::date AS period_start,
+        CASE p.bucket
+             WHEN 'week'    THEN (gs + INTERVAL '6 days')::date
+             WHEN 'month'   THEN (gs + INTERVAL '1 month'  - INTERVAL '1 day')::date
+             WHEN 'quarter' THEN (gs + INTERVAL '3 months' - INTERVAL '1 day')::date
+        END AS period_end
+    FROM params p
+    JOIN LATERAL generate_series(
+            date_trunc(p.bucket, p.start_date),   -- anchor on bucket start
+            date_trunc(p.bucket, p.end_date),
+            CASE p.bucket
+                 WHEN 'week'    THEN INTERVAL '1 week'
+                 WHEN 'month'   THEN INTERVAL '1 month'
+                 WHEN 'quarter' THEN INTERVAL '3 months'
+            END
+         ) AS gs ON TRUE
+),
+
+/* ========= 3. ACTIVE FTE RESOURCE MASTER ========================== */
+fte_resources AS (
+    SELECT
+        ___path__                        AS resource_id,
+        to_date(_startdate,'YYYY-MM-DD') AS start_date,
+        to_date(_enddate  ,'YYYY-MM-DD') AS end_date
+    FROM public.resourceallocation_core__resource_0_0_1
+    WHERE _type <> 'Contractor - PT'       -- only full-timers
+	and _agentlang__is_deleted is false
+),
+
+/* ========= 4. HEAD-COUNT PER BUCKET =============================== */
+headcount AS (
+    SELECT
+        cal.period_start,
+        COUNT(DISTINCT fr.resource_id) AS headcount
+    FROM calendar cal
+    JOIN fte_resources fr
+      ON fr.start_date <= cal.period_end                 -- joined by bucket end
+     AND (fr.end_date IS NULL OR fr.end_date >= cal.period_start)
+    GROUP BY cal.period_start
+),
+
+/* ========= 5. ALLOCATED UNITS PER BUCKET ========================= */
+alloc_units AS (
+    SELECT
+        date_trunc(p.bucket, to_date(a._period,'YYYY-MM-DD'))::date AS period_start,
+        SUM(COALESCE(a._allocationentered,0))                       AS allocated_units
+    FROM public.resourceallocation_core__allocation_0_0_1 a
+    JOIN params p  ON to_date(a._period,'YYYY-MM-DD')
+                     BETWEEN date_trunc(p.bucket, p.start_date)     -- ← fixed filter
+                         AND p.end_date
+    JOIN fte_resources fr ON fr.resource_id = a.___parent__
+    GROUP BY date_trunc(p.bucket, to_date(a._period,'YYYY-MM-DD'))
+)
+
+/* ========= 6. FINAL PERCENT ALLOCATED ============================ */
+SELECT
+    cal.period_start,
+    COALESCE(hc.headcount, 0)              AS headcount,
+    COALESCE(au.allocated_units, 0)        AS allocated_units,
+    ROUND(
+        CASE
+            WHEN COALESCE(hc.headcount,0) = 0
+                 THEN 0
+            ELSE (COALESCE(au.allocated_units,0)::numeric
+                  / hc.headcount) * 100
+        END
+    , 2)                                   AS pct_allocated
+FROM calendar  cal
+LEFT JOIN headcount   hc ON hc.period_start = cal.period_start
+LEFT JOIN alloc_units au ON au.period_start = cal.period_start
+ORDER BY cal.period_start;`,
 };
