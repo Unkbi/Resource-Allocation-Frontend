@@ -8,33 +8,10 @@ const DashboardWidget = ({ children, onClick }) => {
     mouseDownPosition.current = { x: event.clientX, y: event.clientY };
   };
 
-  const handleMouseUp = (event) => {
-    // console.log('Mouse up detected', event);
-    // if (!mouseDownPosition.current) return;
-    // const dx = Math.abs(event.clientX - mouseDownPosition.current.x);
-    // const dy = Math.abs(event.clientY - mouseDownPosition.current.y);
-    // console.log('Mouse up detected', { dx, dy },typeof onClick);
-    // // Only treat as click if movement is minimal (e.g., < 5px)
-    // if (dx < 5 && dy < 5 && typeof onClick === 'function') {
-    //   console.log('Click detected');
-    //   onClick();
-    // }
-    // mouseDownPosition.current = null;
-  };
-
-  const handleMouseClick = (event) => {
-    // console.log('Mouse click detected', event);
-    if ( event.type === 'click') {
-      // console.log('Click detected');
-      // onClick();
-    }
-  }
 
   return (
     <Box
       onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onClick={handleMouseClick}
       sx={{
         cursor: 'pointer',
         height: '100%',
@@ -49,6 +26,8 @@ const DashboardWidget = ({ children, onClick }) => {
           height: '100%',
           boxSizing: 'border-box',
           width: '100%',
+          minWidth: 350, // Prevents the chart from shrinking below 350px
+          minHeight: 250,
         }}
       >
         {children}

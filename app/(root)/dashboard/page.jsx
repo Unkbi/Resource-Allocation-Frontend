@@ -60,6 +60,8 @@ const layouts = {
     y: Math.floor(idx / 2) * 3,
     w: 6,
     h: 3,
+    minW: 4, // Minimum width in grid units (adjust as needed)
+    minH: 3,
   })),
   md: chartKeys.map((key, idx) => ({
     i: key,
@@ -67,6 +69,8 @@ const layouts = {
     y: idx * 3,
     w: 12,
     h: 3,
+    minW: 6, // Minimum width for medium screens
+    minH: 3,
   })),
   sm: chartKeys.map((key, idx) => ({
     i: key,
@@ -74,6 +78,8 @@ const layouts = {
     y: idx * 3,
     w: 12,
     h: 3,
+    minW: 12, // Minimum width for small screens
+    minH: 3,
   })),
 };
 
@@ -479,13 +485,7 @@ export default function ExecutiveDashboardPage() {
               itemmarkheight: 8,
               labelstyle: { fontSize: 16 },
             }}
-            slotProps={{
-              legend: {
-                itemmarkwidth: 24,
-                itemmarkheight: 8,
-                labelstyle: { fontSize: 16 },
-              },
-            }}
+            
           />
         </Box>
       </DashboardWidget>
@@ -690,6 +690,7 @@ export default function ExecutiveDashboardPage() {
         <Box sx={{ mt: 2 }}>
           <BarChart
             height={300}
+            className='no-hover'
             series={[
               {
                 data: resourceFTEContractorRatio.map(d =>
@@ -699,6 +700,8 @@ export default function ExecutiveDashboardPage() {
                 id: 'fteCount',
                 color: '#4CAF50',
                 stack: 'total', // Green for FTE
+                highlightScope: 'none', // 💥 Disable hover highlight
+                faded: { color: 'none', additionalRadius: 0 },
               },
               {
                 data: resourceFTEContractorRatio.map(d =>
@@ -708,6 +711,8 @@ export default function ExecutiveDashboardPage() {
                 id: 'contractorCount',
                 color: '#FF5722',
                 stack: 'total', // Orange for Contractors
+                highlightScope: 'none', // 💥 Disable hover highlight
+                faded: { color: 'none', additionalRadius: 0 },
               },
             ]}
             xAxis={[
@@ -724,9 +729,14 @@ export default function ExecutiveDashboardPage() {
               },
             ]}
             slotProps={{
+              canvas: {
+      style: {
+        backgroundColor: 'transparent', // 🔥 Removes gray background
+      },
+    },
               bar: {
                 borderradius: 2,
-                barwidthratio: 0.4, // Adjust bar width
+                barwidthratio: 0.4,
               },
               legend: {
                 direction: 'row',
