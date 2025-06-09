@@ -5,6 +5,7 @@ import {
 
 import {
   calculateTotalEffort,
+  generateDateWeekMath,
   getMondayOfISO,
   getProjectBudgetCategory,
 } from '@/app/utils/common';
@@ -34,6 +35,8 @@ import { setRowState } from '@/app/redux/reducers/dataGridReducer';
 import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
+import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { generateEmptyRow } from '@/app/utils/allocationUtils';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -78,8 +81,15 @@ const CellWithMenu = ({
   const allResources = useSelector(
     state => state.resources.resources?.result || []
   );
+  const allProjects = useSelector(
+    state => state.projects.projects?.result || []
+  );
+  const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
+  const { currentView } = useSelector(state => state.allocationView);
+  const { getAllRowsForView, setRowsForView, updateRowsForView } =
+    useAllGridRowsByView();
 
   const handleDeleteClick = params => {
     setDeleteParams(params);
@@ -88,47 +98,154 @@ const CellWithMenu = ({
   };
 
   const handleConfirmDelete = async () => {
-    const row = deleteParams.row;
-    const resourceId = row?.resourceId;
+    let row;
+    let allocationIds;
+    let childrenRows;
 
-    const allocationIds = Object.values(row)
-      .filter(cell => cell?.allocationId)
-      .map(cell => cell.allocationId);
+    // Check if its an aggregation row, if so, get all children rows allocationIds
+    if (
+      deleteParams.rowNode?.type === 'group' &&
+      deleteParams.rowNode?.children
+    ) {
+      childrenRows = deleteParams.rowNode.children.map(child =>
+        params.api.getRow(child)
+      );
+      row = childrenRows[0];
 
-    const deletePayloads = allocationIds.map(allocationId => ({
-      resourceId,
-      allocationId,
-    }));
+      allocationIds = childrenRows.reduce(
+        (allAllocationId, childRow) => [
+          ...allAllocationId,
+          ...Object.values(row)
+            .filter(cell => cell?.allocationId)
+            .map(cell => cell.allocationId),
+        ],
+        []
+      );
+    } else {
+      row = deleteParams.row;
 
-    await Promise.all(
-      deletePayloads.map(payload => dispatch(removeResourceAllocation(payload)))
-    );
-
-    const updatedRows = rowState.filter(r => r.id !== row.id);
-    dispatch(setRowState(updatedRows));
-
-    const fullResource = allResources.find(r => r.Id === resourceId);
-    const team = allTeams.find(team => team.Name === row.teams);
-
-    if (fullResource && team) {
-      const rowId = `auto-generated-row-teams/${team.Name}-resource/${fullResource.FullName}`;
-      dispatch(setExpandRowId([rowId]));
+      allocationIds = Object.values(row)
+        .filter(cell => cell?.allocationId)
+        .map(cell => cell.allocationId);
     }
 
-    const resourceName = deleteParams?.row?.resource;
-    const projectName = deleteParams?.row?.project;
-
-    const itemName = view === 'Project' ? resourceName : projectName;
-
-    dispatch(
-      showToast({
-        open: true,
-        message: `Allocation for ${resourceName} in ${projectName} has successfully been deleted.`,
-        type: 'success',
-        position: 'bottom-right',
-        autoHideTimer: 4000,
+    // Perform delete.
+    new Promise((resolve, reject) =>
+      dispatch({
+        type: 'DELETE_BULK_ALLOCATIONS',
+        payload: {
+          resourceId: row.resourceId,
+          allocList: allocationIds,
+          resolve,
+          reject,
+        },
       })
-    );
+    )
+      .then(response => {
+        if (childrenRows) {
+          // Update rows for view to delete all children rows
+          updateRowsForView(
+            'teamAllocation',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'projectAllocation',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
+
+          dispatch(
+            showToast({
+              open: true,
+              message: `Allocation for ${row?.resource} has successfully been deleted.`,
+              type: 'success',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          // Update rows for view to delete the specific row
+          updateRowsForView(
+            'teamAllocation',
+            getAllRowsForView('teamAllocation')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'projectAllocation',
+            getAllRowsForView('projectAllocation')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+
+          dispatch(
+            showToast({
+              open: true,
+              message: `Allocation for ${deleteParams?.row?.resource} in ${deleteParams?.row?.project} has successfully been deleted.`,
+              type: 'success',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+
+        const resourceExistsOnAllicationTable = getAllRowsForView(
+          'teamAllocation'
+        ).find(r => r.resourceId === row.resourceId);
+
+        // If resource does not exist on allocation table, add empty row for resource, for Team Allocation view
+        if (!resourceExistsOnAllicationTable) {
+          // Add empty for resource
+          const emptyRow = generateEmptyRow(
+            currentView?.isDynamicRange
+              ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+              : currentView?.isFixedRange
+                ? currentView?.StartDate
+                : '',
+            currentView?.isDynamicRange
+              ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+              : currentView?.isFixedRange
+                ? currentView?.EndDate
+                : '',
+            allTeams,
+            teamsResources,
+            null,
+            allResources.filter(resource => resource.Id === row.resourceId),
+            {
+              ProjectName: row?.project || '',
+              Id: '',
+              ProjectManager: row?.projectManager || '',
+              Period: '',
+              Resource: row?.resourceId || '',
+              Duration: '',
+              ResourceName: row?.resource || '',
+              AllocationEntered: null,
+              Project: row?.projectId || '',
+            }
+          );
+
+          updateRowsForView(
+            'teamAllocation',
+            [emptyRow].map(r => ({
+              ...r,
+              project: null,
+              projectId: null,
+              hasAllocation: false,
+            }))
+          );
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting allocations:', error);
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to delete allocation.',
+            type: 'error',
+            position: 'bottom-right',
+            autoHideTimer: 4000,
+          })
+        );
+      });
 
     setShowDeleteDialog(false);
     setDeleteParams(null);
@@ -241,19 +358,20 @@ const CellWithMenu = ({
         onConfirm={handleConfirmDelete}
         title="Alert"
       >
-        " Are you sure you want to delete{' '}
-        {view === 'Project' ? (
+        Are you sure you want to delete{' '}
+        {deleteParams?.rowNode?.type === 'group' &&
+        deleteParams?.rowNode?.children ? (
           <>
-            {deleteParams?.row?.project} Allocations for{' '}
-           {deleteParams?.row?.resource}
+            All Allocations for{' '}
+            {params.api.getRow(deleteParams?.rowNode?.children[0]).resource}
           </>
         ) : (
           <>
-          {deleteParams?.row?.project} Allocations for{' '}
-          {deleteParams?.row?.resource} 
+            {deleteParams?.row?.project} Allocations for{' '}
+            {deleteParams?.row?.resource}
           </>
         )}
-        ?"
+        ?
       </ConfirmDialog>
     </>
   );

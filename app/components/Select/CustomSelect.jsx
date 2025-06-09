@@ -1,8 +1,14 @@
 import React from 'react';
-import { Select, MenuItem, styled, Typography, FormHelperText } from '@mui/material';
-import {FormControl} from '@mui/material';
+import {
+  Select,
+  MenuItem,
+  styled,
+  Typography,
+  FormHelperText,
+  FormControl,
+} from '@mui/material';
 
-const StyledSelect = styled(Select)(({ theme, width }) => ({
+const StyledSelect = styled(Select)(({ width }) => ({
   height: '36px',
   width: width || '340px',
   fontSize: '12px',
@@ -35,8 +41,8 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   fontSize: '12px',
   height: '32px',
   padding: '8px 12px',
-  width: '100%',      
-  margin: 0,          
+  width: '100%',
+  margin: 0,
   boxSizing: 'border-box',
 }));
 
@@ -50,8 +56,8 @@ const CustomSelect = ({
   error,
   helperText,
   multiple = false,
-  forceClose = false, // close if more than one item selected
-  isResourceForm = false
+  forceClose = false,
+  isResourceForm = false,
 }) => {
   const [open, setOpen] = React.useState(false);
 
@@ -59,13 +65,10 @@ const CustomSelect = ({
     if (forceClose) setOpen(false);
   }, [forceClose]);
 
-  
-  
-  const renderValue = (selected) => {
-    // Handle case where selected is boolean or not an array
-    let selectedLabels;
+  const renderValue = selected => {
     if (!Array.isArray(selected)) {
-      selectedLabels = options?.filter(option => selected === option.value).map(option => option.label);
+      const label =
+        options?.find(option => option.value === selected)?.label || '';
       return (
         <Typography
           component="span"
@@ -76,15 +79,16 @@ const CustomSelect = ({
             fontSize: '12px',
           }}
         >
-          {selectedLabels}
+          {label}
         </Typography>
       );
     }
-  
-     selectedLabels = options?.filter(option => selected.includes(option.value))
-      .map(option => option.label);
-     const joined = selectedLabels?.join(', ');
-    
+
+    const selectedLabels = options
+      ?.filter(option => selected.includes(option.value))
+      .map(option => option.label)
+      .join(', ');
+
     return (
       <Typography
         component="span"
@@ -94,22 +98,43 @@ const CustomSelect = ({
           textOverflow: 'ellipsis',
           fontSize: '12px',
         }}
-        title={joined}
+        title={selectedLabels}
       >
-        {joined}
+        {selectedLabels}
       </Typography>
     );
   };
 
   return (
-    <FormControl
-      style={{ width: width || '340px' }}
-      error={error}
-    >
+    <FormControl style={{ width: width || '340px' }} error={error}>
       <StyledSelect
         name={name}
         value={value}
-        onChange={onChange}
+        onChange={e => {
+          const selectedValue = e.target.value;
+
+          if (multiple) {
+            const newValue = Array.isArray(value) ? [...value] : [];
+
+            if (newValue.includes(selectedValue)) {
+              onChange({
+                target: {
+                  name,
+                  value: newValue.filter(v => v !== selectedValue),
+                },
+              });
+            } else {
+              onChange({
+                target: {
+                  name,
+                  value: [...newValue, selectedValue],
+                },
+              });
+            }
+          } else {
+            // Handled by onClick below to allow deselection
+          }
+        }}
         onBlur={onBlur}
         open={open}
         width={width}
@@ -121,36 +146,16 @@ const CustomSelect = ({
         MenuProps={
           isResourceForm
             ? {
-                anchorOrigin: {
-                  vertical: 'top',
-                  horizontal: 'left',
-                },
-                transformOrigin: {
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                },
-                PaperProps: {
-                  style: {
-                    maxHeight: 200,
-                    maxWidth: 340,
-                  },
-                },
-                MenuListProps: {
-                  disablePadding: true,
-                },
+                anchorOrigin: { vertical: 'top', horizontal: 'left' },
+                transformOrigin: { vertical: 'bottom', horizontal: 'left' },
+                PaperProps: { style: { maxHeight: 200, maxWidth: 340 } },
+                MenuListProps: { disablePadding: true },
               }
             : {
-                PaperProps: {
-                  style: {
-                    maxHeight: 200,
-                    maxWidth: 340,
-                  },
-                },
-                MenuListProps: {
-                  disablePadding: true,
-                },
+                PaperProps: { style: { maxHeight: 200, maxWidth: 340 } },
+                MenuListProps: { disablePadding: true },
               }
-        }        
+        }
         IconComponent={() => (
           <img
             src="/images/icons/dropdown-icon.svg"
@@ -163,31 +168,62 @@ const CustomSelect = ({
           />
         )}
       >
-        {options?.map(option => (
-          <StyledMenuItem
-            key={option.value}
-            value={option.value}
-            title={option.label}
-            sx={{
-              width: '100%',
-              padding: '8px 12px',
-              margin: 0,
-              boxSizing: 'border-box',
-            }}
-          >
-            <Typography
+        {options?.map(option => {
+          const isSelected = multiple
+            ? Array.isArray(value) && value.includes(option.value)
+            : value === option.value;
+
+          return (
+            <StyledMenuItem
+              key={option.value}
+              value={option.value}
+              title={option.label}
+              selected={isSelected}
+              onClick={() => {
+                if (multiple) {
+                  const newValue = Array.isArray(value) ? [...value] : [];
+                  const updatedValue = newValue.includes(option.value)
+                    ? newValue.filter(v => v !== option.value)
+                    : [...newValue, option.value];
+
+                  onChange({
+                    target: {
+                      name,
+                      value: updatedValue,
+                    },
+                  });
+                } else {
+                  const newValue = value === option.value ? '' : option.value;
+                  onChange({
+                    target: {
+                      name,
+                      value: newValue,
+                    },
+                  });
+                  setOpen(false); // Close dropdown manually
+                }
+              }}
               sx={{
-                flexGrow: 1,
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-                fontSize: '12px',
+                width: '100%',
+                padding: '8px 12px',
+                margin: 0,
+                boxSizing: 'border-box',
               }}
             >
-              {option.label}
-            </Typography>
-          </StyledMenuItem>
-        ))}
+              <Typography
+                sx={{
+                  flexGrow: 1,
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  textOverflow: 'ellipsis',
+                  fontSize: '12px',
+                }}
+              >
+                {option.label}
+              </Typography>
+            </StyledMenuItem>
+          );
+        })}
       </StyledSelect>
       {error && (
         <FormHelperText
