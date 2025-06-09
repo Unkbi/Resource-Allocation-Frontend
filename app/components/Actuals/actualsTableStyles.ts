@@ -16,12 +16,10 @@ export const actualsTableStyles = {
     padding: 0,
   },
   '.error-cell': {
-    border: '1px solid red !important',
-    borderRadius: '4px',
+    border: '2px solid #D24546 !important',
   },
   '.comment-error-cell': {
-    border: '1px solid red',
-    borderRadius: '4px',
+    border: '2px solid #D24546',
     boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
@@ -78,6 +76,10 @@ export const actualsTableStyles = {
     paddingBottom: '0',
   },
   '.comment-error-cell .MuiDataGrid-cell:focus-within': {
+    outline: 'none !important',
+    boxShadow: 'none !important',
+  },
+  '.MuiDataGrid-cell.MuiDataGrid-cell--editing:focus-within': {
     outline: 'none !important',
     boxShadow: 'none !important',
   },
