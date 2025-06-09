@@ -582,6 +582,31 @@ export const getTotalWeeklyAllocation = (rowState, resourceId, weekKey) => {
   return total;
 };
 
+export const getUpdatedTotalWeeklyAllocation = (
+  rowState,
+  resourceId,
+  weekKey,
+  newValue,
+  projects
+) => {
+  let total = 0;
+  let projectsIds = projects.map(project => project.Id);
+  const allRows = rowState;
+  allRows.forEach(row => {
+    if (row.resourceId === resourceId && row[weekKey]?.value) {
+      if (projectsIds.includes(row.projectId)) {
+        total += parseFloat(newValue || 0);
+        projectsIds = projectsIds.filter(
+          projectsId => projectsId !== row.projectId
+        );
+      } else {
+        total += parseFloat(row[weekKey]?.value || 0);
+      }
+    }
+  });
+  return total + parseFloat(newValue || 0) * projectsIds.length;
+};
+
 export function formatStringToFloat(value, decimalPlaces = 1) {
   const num = parseFloat(value);
   if (isNaN(num)) return '0.0'; // fallback for invalid inputs

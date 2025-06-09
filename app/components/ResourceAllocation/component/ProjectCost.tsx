@@ -11,11 +11,15 @@ import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Project } from '@/app/types';
 import {
+  calculateTotalEffort,
+  getAllocationManagerFromPath,
   getProjectBudgetCategory,
   getProjectBudgetColor,
 } from '@/app/utils/common';
 import ProjectTotalCustomToolTip from '../../AllocationTable/components/ProjectTotalCustomToolTip';
 import { getProjectTypeColorLine } from '@/app/utils/common';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { normalizeRow } from '@/app/utils/allocationUtils';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -42,6 +46,24 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
     (state: RootState) => state.resources
   );
+  const { setRows, ready } = useAllocationGrid('main');
+
+  useEffect(() => {
+    if (ready && projectCosts) {
+      const filteredResources = removeResourcesWithNoProjects(projectCosts);
+
+      const formattedResources = filteredResources?.map(allocation => ({
+        ...allocation,
+        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources?.result || []
+        )?.FullName,
+      }));
+      setRows(formattedResources || []);
+    }
+  }, [ready, projectCosts]);
 
   useEffect(() => {
     dispatch({
@@ -622,7 +644,6 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoProjects(projectCosts)}
           loading={dataProcessing}
         />
       </Box>

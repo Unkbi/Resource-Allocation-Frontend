@@ -1,16 +1,24 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
-import { getAllocationManagerFromPath } from '@/app/utils/common';
+import {
+  calculateTotalEffort,
+  getAllocationManagerFromPath,
+} from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import {
+  getCombinedAllocation,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -60,6 +68,36 @@ export default function TeamAllocation({
   const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
+  const { setRows, ready } = useAllocationGrid('teamAllocation');
+  const { getAllRows } = useAllocationGrid('projectAllocation');
+
+  useEffect(() => {
+    if (ready) {
+      let filteredResources;
+      if (getAllRows().length > 0) {
+        filteredResources = removeResourcesWithNoTeams(
+          getCombinedAllocation(
+            getAllRows() as AllAllocations[],
+            allAllocations || []
+          ) || []
+        );
+      } else if (allAllocations) {
+        filteredResources = removeResourcesWithNoTeams(allAllocations || []);
+      }
+
+      const formattedResources = filteredResources?.map(allocation => ({
+        ...allocation,
+        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+        teamAllocationManager: getAllocationManagerFromPath(
+          allocation?.teamAllocationManager,
+          _resources?.result || []
+        )?.FullName,
+      }));
+
+      setRows(formattedResources || []);
+    }
+  }, [ready, allAllocations]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -553,7 +591,7 @@ export default function TeamAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          data={removeResourcesWithNoTeams(allAllocations || []) ?? []}
+          viewId="teamAllocation"
         />
         {!allAllocations && !loading && (
           <div

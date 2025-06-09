@@ -3,6 +3,7 @@ import './styles/globals.css';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import StoreProvider from './StoreProvider';
 import ThemeRegistry from './theme/ThemeRegistry';
+import { DataGridProvider } from './context/dataGridContext';
 import { Suspense } from 'react';
 import LayoutClient from './layoutClient';
 
@@ -14,7 +15,9 @@ export default function CommonLayout({ children }) {
           <AppRouterCacheProvider>
             <ThemeRegistry>
               <Suspense fallback={null}>
-                <LayoutClient>{children}</LayoutClient>
+                <DataGridProvider>
+                  <LayoutClient>{children}</LayoutClient>
+                </DataGridProvider>
               </Suspense>
             </ThemeRegistry>
           </AppRouterCacheProvider>

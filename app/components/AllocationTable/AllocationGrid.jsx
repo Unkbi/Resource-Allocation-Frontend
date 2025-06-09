@@ -19,6 +19,7 @@ import {
   getWeekNumber,
   isMyProjectsValid,
   isMyTeamsValid,
+  getTeamForResource,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -56,16 +57,18 @@ import {
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
 import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
-import SplitTeamToolbar from '../Toolbar/SplitTeamToolbar';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { useDataGrid } from '@/app/context/dataGridContext';
+import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
+import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
 export default function AllocationGrid({
   groupBy,
   columns,
-  data,
   loading,
   selectedTeam,
   setSelectedTeam,
@@ -77,8 +80,16 @@ export default function AllocationGrid({
   mode,
   columnsFilterable = true,
   type = '',
+  viewId = 'main',
 }) {
   const apiRef = useGridApiRef();
+  const { setApiRef } = useDataGrid();
+  const mainAllocationGrid = useAllocationGrid('main');
+  const teamAllocationGrid = useAllocationGrid('teamAllocation');
+  const projectAllocationGrid = useAllocationGrid('projectAllocation');
+  const topProjectAllocationGrid = useAllocationGrid('topProject');
+  const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
+
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState('');
   const [updatedRows, setUpdatedRows] = useState([]);
@@ -93,7 +104,9 @@ export default function AllocationGrid({
   } = useSelector(state => state.allocationView);
 
   const dispatch = useDispatch();
-  const { teams, teamAllocations } = useSelector(state => state.teams);
+  const { teams, teamsResources, teamAllocations } = useSelector(
+    state => state.teams
+  );
   const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const [rowModesModel, setRowModesModel] = useState({});
   const [cellSelectionModel, setCellSelectionModel] = useState({});
@@ -105,11 +118,13 @@ export default function AllocationGrid({
       ..._initialState?.columns?.columnVisibilityModel, // Initial state
     } ?? {}
   );
-  const { isOpen } = useSelector(state => state.globalDialog);
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
-
+  const { splitView, splitViewCurrentProject } = useSelector(
+    state => state.allocationView
+  );
+  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
   const handleKeyUp = e => {
     if (
       cellSelectionModel &&
@@ -153,6 +168,7 @@ export default function AllocationGrid({
         ),
       ];
 
+      setCellSelectionModel({ ...cellSelectionModel, restoreFocus: true });
       dispatch(
         openDialog({
           title: 'Update Allocation',
@@ -207,8 +223,15 @@ export default function AllocationGrid({
     return normalized;
   };
 
+  // Set the apiRef in the context when it's available
   useEffect(() => {
-    const mapData = groupBy === 'project' || 'teams' ? data : demoRows;
+    if (apiRef.current) {
+      setApiRef(viewId || 'main', apiRef.current);
+    }
+  }, [apiRef, setApiRef, viewId]);
+
+  useEffect(() => {
+    const mapData = getAllRowsForView(viewId);
     const updatedRows = mapData.map(row => ({
       ...normalizeRow(row),
       totalEffort: calculateTotalEffort(normalizeRow(row)),
@@ -220,12 +243,12 @@ export default function AllocationGrid({
     }));
     setUpdatedRows(updatedRows);
     let new_row_state = getInitialRowsState(updatedRows, groupBy, teams);
-    dispatch(setRowState(new_row_state));
-  }, [data, groupBy, teams]);
+    setRowsForView(viewId, new_row_state);
+  }, [apiRef.current, groupBy, teams]);
 
   useEffect(() => {
     try {
-      if (groupBy === 'teams' && expandRowId?.length && rowState?.length) {
+      if (groupBy === 'teams' && expandRowId?.length) {
         expandRowId.forEach(rowId => {
           const row = apiRef.current.getRow(rowId);
           if (row) {
@@ -246,7 +269,7 @@ export default function AllocationGrid({
     } catch (error) {
       console.warn('Error in setting row expansion', error);
     }
-  }, [expandRowId, rowState?.length, groupBy, apiRef, data]);
+  }, [expandRowId, groupBy, apiRef]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -295,7 +318,7 @@ export default function AllocationGrid({
     const timeoutId = setTimeout(handleScrollAndFocus, 50);
     setExpandRowId(null);
     return () => clearTimeout(timeoutId);
-  }, [rowState, apiRef, cellSelectionData, view, data]);
+  }, [apiRef, cellSelectionData]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -669,186 +692,236 @@ export default function AllocationGrid({
     }
   };
 
-  const handleCellUpdate = (newRow, oldRow) => {
-    setCellSelectionModel({});
-    // Find the changed week
-    const changedWeeks = Object.keys(newRow).filter(
-      key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
+  const handleCellUpdate = async (newRow, oldRow) => {
+    dispatch(
+      showToastAction(
+        true,
+        `Updating allocation for ${newRow.resource}...`,
+        'info'
+      )
     );
+    try {
+      setCellSelectionModel({});
+      // Find the changed week
+      const changedWeeks = Object.keys(newRow).filter(
+        key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
+      );
 
-    if (!changedWeeks) {
-      return { ...oldRow };
-    }
-    const keys = changedWeeks;
-    keys.forEach(key => {
-      let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+      if (!changedWeeks || changedWeeks.length === 0) {
+        return { ...oldRow };
+      }
+      const keys = changedWeeks;
+      const deleteList = [];
+      const updateList = [];
+      let allUpdatedRows = [];
+      keys.map(key => {
+        // Handle Delete Case
+        if (
+          (newRow[key] === null ||
+            newRow[key] === undefined ||
+            newRow[key] === 0 ||
+            isNaN(newRow[key])) &&
+          oldRow[key]?.allocationId
+        ) {
+          deleteList.push({
+            Id: oldRow[key]?.allocationId,
+            Resource: oldRow.resourceId,
+            Project: oldRow.projectId,
+            ProjectName: oldRow.project,
+            Period: oldRow[key]?.period,
+            AllocationEntered: null,
+          });
+        }
 
-      const period = oldRow[key]?.period;
-      const value = formattedCellValue;
-      const resourceId = oldRow.resourceId;
+        // Verify Updated Values total allocation for resource is not greater than 2.0
+        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
 
-      // Calculate total allocation for the week across all rows for that resource
-      let totalForWeek = 0;
-      const allData = apiRef.current
-        .getAllRowIds()
-        .map(id => apiRef.current.getRow(id));
+        const period = oldRow[key]?.period;
+        const value = formattedCellValue;
+        const resourceId = oldRow.resourceId;
 
-      allData.forEach(row => {
-        if (row.resourceId === resourceId) {
-          const val = row[key]?.value || 0;
-          totalForWeek += parseFloat(val);
+        // Calculate total allocation for the week across all rows for that resource
+        let totalForWeek = 0;
+
+        const allData = getAllRowsForView(viewId);
+
+        allData.forEach(row => {
+          if (row.resourceId === resourceId) {
+            const val = row[key]?.value || 0;
+            totalForWeek += parseFloat(val);
+          }
+        });
+
+        // Add new value (replace current row’s old value with new one)
+        const currentRowOldValue = oldRow[key]?.value || 0;
+        totalForWeek = totalForWeek - currentRowOldValue + value;
+
+        if (totalForWeek > 1.5 && totalForWeek <= 2) {
+          dispatch(
+            showToastAction(
+              true,
+              `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
+              'warning',
+              4000
+            )
+          );
+        } else if (totalForWeek > 2) {
+          newRow[key] = oldRow[key]?.value;
+          dispatch(
+            showToastAction(
+              true,
+              `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
+              'error',
+              4000
+            )
+          );
+          return;
+        }
+
+        // API call to update the data, if any changes are made.
+        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
+          if (oldRow[key]?.allocationId && newRow[key] !== null) {
+            // Add to update list
+            updateList.push({
+              Id: oldRow[key]?.allocationId,
+              Resource: oldRow.resourceId,
+              Project: oldRow.projectId,
+              ProjectName: oldRow.project,
+              Period: oldRow[key]?.period,
+              AllocationEntered: formattedCellValue,
+              // Notes: 'This is an allocation 1', // To Be Impemented
+            });
+          } else if (formattedCellValue) {
+            updateList.push({
+              Resource: oldRow.resourceId,
+              Project: oldRow.projectId,
+              ProjectName: oldRow.project,
+              Period: oldRow[key]?.period,
+              AllocationEntered: formattedCellValue,
+              // Notes: 'This is an allocation 1', // To Be Impemented
+            });
+          }
         }
       });
 
-      // Add new value (replace current row’s old value with new one)
-      const currentRowOldValue = oldRow[key]?.value || 0;
-      totalForWeek = totalForWeek - currentRowOldValue + value;
-
-      if (totalForWeek > 1.5 && totalForWeek <= 2) {
-        dispatch(
-          showToastAction(
-            true,
-            `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
-            'warning',
-            4000
-          )
-        );
-      } else if (totalForWeek > 2) {
-        newRow[key] = oldRow[key]?.value;
-        dispatch(
-          showToastAction(
-            true,
-            `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
-            'error',
-            4000
-          )
-        );
+      if (deleteList.length === 0 && updateList.length === 0) {
         return;
       }
 
-      if (
-        (newRow[key] === null || newRow[key] === undefined) &&
-        (formattedCellValue === 0 || isNaN(formattedCellValue)) &&
-        oldRow[key]?.allocationId
-      ) {
-        const deletePayload = {
-          resourceId: oldRow.resourceId,
-          allocationId: oldRow[key]?.allocationId,
-          period: oldRow[key]?.period,
-        };
-        dispatch(removeResourceAllocation(deletePayload))
-          .then(response => {
-            if (response.meta.requestStatus === 'rejected') {
-              dispatch(
-                showToast({
-                  open: true,
-                  message: `Failed to delete allocation for ${key}.`,
-                  type: 'error',
-                  position: 'bottom-left',
-                  autoHideTimer: 4000,
-                })
-              );
-              return;
-            }
-            setUpdatedRows(prevRows =>
-              prevRows.map(row => (row.id === newRow.id ? newRow : row))
-            );
-          })
-          .catch(e => {
-            console.log('Error in removing allocation', e);
-          });
-      }
-
-      // API call to update the data, if any changes are made.
-      if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
-        if (oldRow[key]?.allocationId && newRow[key] !== null) {
-          const putPayload = {
-            resourceId: oldRow.resourceId,
-            allocationId: oldRow[key]?.allocationId,
-            putData: {
-              'ResourceAllocation.Core/Allocation': {
-                AllocationEntered: formattedCellValue,
-              },
-            },
-          };
-          dispatch(updateResourceAllocation(putPayload))
-            .then(response => {
-              if (response.meta.requestStatus === 'rejected') {
-                dispatch(
-                  showToast({
-                    open: true,
-                    message: `Failed to update allocation for ${key}.`,
-                    type: 'error',
-                    position: 'bottom-left',
-                    autoHideTimer: 4000,
-                  })
-                );
-                return;
-              }
-              setUpdatedRows(prevRows =>
-                prevRows.map(row => (row.id === newRow.id ? newRow : row))
-              );
-            })
-            .catch(e => {
-              console.log('Error in updating allocation', e);
-            });
-        } else if (formattedCellValue) {
-          const postPayload = {
-            resourceId: oldRow.resourceId,
-            postData: {
-              'ResourceAllocation.Core/Allocation': {
-                Resource: oldRow.resourceId,
-                Project: oldRow.projectId,
-                ProjectName: oldRow.project,
-                Period: getMondayOfWeek(key, oldRow[key]?.period),
-                AllocationEntered: formattedCellValue,
-              },
-            },
-          };
-          dispatch(setResourceAllocation(postPayload))
-            .then(response => {
-              if (response.meta.requestStatus === 'rejected') {
-                dispatch(
-                  showToast({
-                    open: true,
-                    message: `Failed to set allocation for ${key}.`,
-                    type: 'error',
-                    position: 'bottom-left',
-                    autoHideTimer: 4000,
-                  })
-                );
-                return;
-              }
-              setUpdatedRows(prevRows =>
-                prevRows.map(row => (row.id === newRow.id ? newRow : row))
-              );
-            })
-            .catch(e => {
-              console.log('Error in setting allocation', e);
-            });
-        }
-      }
-    });
-
-    Object.keys(oldRow)
-      .filter(key => /^W\d+/.test(key))
-      .forEach(key => {
-        if (keys.includes(key)) {
-          let formattedCellValue = Math.round(newRow[key] * 10) / 10;
-          newRow[key] = {
-            allocationId: oldRow[key]?.allocationId || null,
-            value:
-              !isNaN(formattedCellValue) && formattedCellValue !== 0
-                ? formattedCellValue
-                : null,
-            period: oldRow[key]?.period,
-          };
+      const formatedDeleteList = deleteList.reduce((acc, allocation) => {
+        if (acc[allocation.Resource]) {
+          acc[allocation.Resource] = [
+            ...acc[allocation.Resource],
+            allocation.Id,
+          ];
         } else {
-          newRow[key] = oldRow[key];
+          acc[allocation.Resource] = [allocation.Id];
         }
+        return acc;
+      }, {});
+
+      const formatedUpdate = updateList.reduce((acc, allocation) => {
+        if (acc[allocation.Resource]) {
+          acc[allocation.Resource] = [...acc[allocation.Resource], allocation];
+        } else {
+          acc[allocation.Resource] = [allocation];
+        }
+        return acc;
+      }, {});
+
+      const deletePromises = Object.keys(formatedDeleteList).map(resourceId => {
+        return new Promise((resolve, reject) =>
+          dispatch({
+            type: 'DELETE_BULK_ALLOCATIONS',
+            payload: {
+              resourceId,
+              allocList: formatedDeleteList[resourceId],
+              resolve,
+              reject,
+            },
+          })
+        );
       });
-    const updatedRow = { ...newRow, totalEffort: calculateTotalEffort(newRow) };
-    return updatedRow;
+
+      const allocationPromises = Object.keys(formatedUpdate).map(resourceId => {
+        return new Promise((resolve, reject) =>
+          dispatch({
+            type: 'UPDATE_BULK_ALLOCATIONS',
+            payload: {
+              resourceId,
+              allocList: formatedUpdate[resourceId],
+              resolve,
+              reject,
+            },
+          })
+        );
+      });
+
+      await Promise.all([...allocationPromises, ...deletePromises]).then(
+        async response => {
+          if (response && response.length > 0) {
+            let allocationsUpdated = [];
+            // handle for bulk Delete different responce
+            if (deleteList.length > 0) {
+              allocationsUpdated = deleteList;
+            } else {
+              allocationsUpdated = response.reduce((arr, res) => {
+                // Check if result exists and is an array before spreading
+                if (res?.result && Array.isArray(res.result)) {
+                  return [...arr, ...res.result];
+                }
+                // If it's not an array but has a value you want to include
+                else if (res?.result !== undefined) {
+                  return [...arr, res.result];
+                }
+                // Otherwise just return the accumulator unchanged
+                return arr;
+              }, []);
+            }
+
+            const formateUpdate = getFormattedAllocationsForUpdate(
+              allocationsUpdated,
+              teams,
+              teamsResources,
+              projects,
+              resources,
+              splitView,
+              bottomTeamAllocationGrid,
+              teamAllocationGrid,
+              startDate,
+              endDate
+            );
+            allUpdatedRows = Object.values(formateUpdate);
+          }
+        }
+      );
+
+      dispatch(
+        showToastAction(
+          true,
+          `Successfully updated allocation for ${newRow.resource}...`,
+          'success'
+        )
+      );
+
+      if (allUpdatedRows?.length > 0) {
+        if (viewId === 'topProject') {
+          bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
+        } else if (viewId === 'bottomTeam') {
+          topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
+        }
+        return allUpdatedRows[0];
+      }
+    } catch (e) {
+      console.error('Error creating allocations:', e);
+    }
+
+    if (viewId === 'topProject') {
+      bottomTeamAllocationGrid.updateRows([oldRow]);
+    } else if (viewId === 'bottomTeam') {
+      topProjectAllocationGrid.updateRows([oldRow]);
+    }
+    return oldRow;
   };
 
   const onRowClick = useCallback(
@@ -907,7 +980,7 @@ export default function AllocationGrid({
           const currentResourceSelected = apiRef.current.getRow(
             selectedCells[0].id
           )?.resourceId;
-          if (row.resourceId !== currentResourceSelected) {
+          if (row?.resourceId !== currentResourceSelected) {
             return false;
           }
         }
@@ -1046,14 +1119,13 @@ export default function AllocationGrid({
       onProcessRowUpdateError={err => {
         console.error('Row update failed:', err);
       }}
-      rows={mode === 'split' ? data : rowState}
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}
       onRowClick={groupBy === 'teams' ? onRowClick : () => null}
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={mode === 'split' ? loading : loading || !rowState.length}
+      loading={loading}
       disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
@@ -1066,15 +1138,23 @@ export default function AllocationGrid({
       )}
       defaultGroupingExpansionDepth={1}
       disableAutosize
-      getCellClassName={params =>
-        getCellClassName(
+      getCellClassName={params => {
+        if (
+          (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
+          (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
+          (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
+          (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
+          (viewId === 'main' && !mainAllocationGrid.ready)
+        )
+          return '';
+        return getCellClassName(
           params,
-          updatedRows,
+          getAllRowsForView(viewId),
           allocationTheme,
           type,
           projects?.result
-        )
-      }
+        );
+      }}
       getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}
       onCellSelectionModelChange={handleCellSelectionModelChange}

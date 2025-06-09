@@ -4,7 +4,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 const initialState: AllAllocationsState = {
   allAllocations: [],
-  dataProcessing: false,
+  dataProcessing: true,
   loading: false,
   calendarDate: {
     startDate: generateTMinusOneStartEndDate(true),
