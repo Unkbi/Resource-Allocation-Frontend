@@ -51,21 +51,26 @@ export default function ProjectAllocation({
   };
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { setRows, ready } = useAllocationGrid('projectAllocation');
-  const { getAllRows } = useAllocationGrid('teamAllocation');
+  const {
+    setRows,
+    ready,
+    getAllRows: getAllProjectViewRows,
+  } = useAllocationGrid('projectAllocation');
+  const { getAllRows: getAllTeamViewRows } =
+    useAllocationGrid('teamAllocation');
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (getAllRows().length > 0) {
+      if (getAllTeamViewRows().length > 0) {
         filteredResources = removeResourcesWithNoProjects(
-          (getAllRows() as AllAllocations[]) || []
+          (getAllTeamViewRows() as AllAllocations[]) || []
         );
         setRows(
           removeResourcesWithNoProjects(
             getCombinedAllocation(
-              getAllRows() as AllAllocations[],
-              allAllocations || []
+              getAllTeamViewRows() as AllAllocations[],
+              (getAllProjectViewRows() as AllAllocations[]) || []
             ) || []
           )
         );
