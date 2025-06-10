@@ -915,8 +915,16 @@ const AllocationForm = () => {
                   splitView,
                   bottomTeamAllocationGrid,
                   teamAllocationGrid,
-                  startDate,
-                  endDate
+                  currentView?.isDynamicRange
+                    ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+                    : currentView?.isFixedRange
+                      ? currentView?.StartDate
+                      : startDate,
+                  currentView?.isDynamicRange
+                    ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+                    : currentView?.isFixedRange
+                      ? currentView?.EndDate
+                      : endDate
                 );
 
                 allUpdatedRows = Object.values(formateUpdate);
