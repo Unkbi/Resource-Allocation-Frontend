@@ -70,6 +70,7 @@ const CellWithMenu = ({
   handleAddClick,
   handleCloneClick,
   handleTranferClick,
+  handleOpenHistory,
   isFormatWithK,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -272,7 +273,11 @@ const CellWithMenu = ({
       icon: <SwapHorizIcon fontSize="small" />,
       func: () => handleTranferClick(params),
     },
-    { label: 'History', icon: <HistoryIcon fontSize="small" /> },
+    {
+      label: 'History',
+      icon: <HistoryIcon fontSize="small" />,
+      func: () => handleOpenHistory(params),
+    },
     {
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
@@ -310,6 +315,7 @@ const CellWithMenu = ({
             key={item.label}
             onClick={() => {
               item.func && item.func(params);
+              handleMenuClose();
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
@@ -485,6 +491,20 @@ export const getFinalColumns = (
     );
   };
 
+  const handleOpenHistory = params => {
+    dispatch(
+      openDialog({
+        title: 'Allocation History',
+        cancelButtonText: 'View All History',
+        formType: 'open_history',
+        initialData: {
+          Resource: params.row.resource,
+          Project: params.row.project,
+        },
+      })
+    );
+  };
+
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -508,6 +528,7 @@ export const getFinalColumns = (
               isFormatWithK={isFormatWithK}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
@@ -559,6 +580,7 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                handleOpenHistory={handleOpenHistory}
                 isFormatWithK={isFormatWithK}
               >
                 <EllipsisNameCell
@@ -649,6 +671,7 @@ export const getFinalColumns = (
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
               isFormatWithK={isFormatWithK}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
