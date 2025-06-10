@@ -619,7 +619,18 @@ export default function AllocationGrid({
       ? currentView.endDate || endDate
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
-  );
+  ).map(column => {
+    if (column.field.startsWith('W')) {
+      return {
+        ...column,
+        renderCell: (params) => {
+          console.log(params ,"param")
+          return <span>{params.formattedValue}⋮</span>;
+      }
+    };
+  }
+  return column;
+  });
 
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -1109,6 +1120,7 @@ export default function AllocationGrid({
     : {};
     const handleContextMenu = event => {
       event.preventDefault();
+      event.stopPropagation();
       setContextMenu(
         contextMenu === null
           ? { mouseX: event.clientX, mouseY: event.clientY }
