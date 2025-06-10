@@ -35,6 +35,7 @@ import {
   Resource,
   Team,
   TeamResourceResponse,
+  TeamResourcePayload,
 } from '@/app/types';
 
 export const fetchAllTeams = () => async (dispatch: AppDispatch) => {
@@ -394,14 +395,9 @@ export const fetchAllAllocations = () => async (dispatch: AppDispatch) => {
  * Not being used currently in application
  * Uncomment the following code if you want to handle postTeamResource API call
  */
-// export const addResourceToTeam = (teamId, resourceId) => async dispatch => {
+
+// export const addResourceToTeam = (postData: TeamResourcePayload) => async (dispatch: AppDispatch) => {
 //   try {
-//     const postData = {
-//       'ResourceAllocation.Core/TeamResource': {
-//         Team: teamId,
-//         Resource: resourceId,
-//       },
-//     };
 //     await dispatch(postTeamResource(postData));
 //   } catch (error) {
 //     console.error('Error adding resource to team:', error);
