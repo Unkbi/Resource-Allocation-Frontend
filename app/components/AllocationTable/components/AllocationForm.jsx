@@ -694,30 +694,6 @@ const AllocationForm = () => {
         break;
 
       case 'add_allocation':
-        dispatch(
-          showToastAction(
-            true,
-            `Updating allocation for ${
-              Array.isArray(values.Resource)
-                ? values.Resource.reduce((acc, resourceId) => {
-                    const resource = resources?.result?.find(
-                      r => r.Id === resourceId
-                    );
-                    if (!resource) return acc;
-                    return (
-                      acc +
-                      resources?.result?.find(
-                        resource => resource.Id === resourceId
-                      )?.FullName +
-                      ', '
-                    );
-                  }, '').slice(0, -2)
-                : resources?.result?.find(r => r.Id === values.Resource)
-                    ?.FullName
-            }...`,
-            'info'
-          )
-        );
         try {
           const allMondays = generateAllMondays(
             values.StartDate || values.startDate,
@@ -817,8 +793,40 @@ const AllocationForm = () => {
           });
 
           if (deleteList.length === 0 && updateList.length === 0) {
+            dispatch(
+              showToastAction(
+                true,
+                `Allocations upto date. No changes made.`,
+                'info'
+              )
+            );
             return;
           }
+
+          dispatch(
+            showToastAction(
+              true,
+              `Updating allocation for ${
+                Array.isArray(values.Resource)
+                  ? values.Resource.reduce((acc, resourceId) => {
+                      const resource = resources?.result?.find(
+                        r => r.Id === resourceId
+                      );
+                      if (!resource) return acc;
+                      return (
+                        acc +
+                        resources?.result?.find(
+                          resource => resource.Id === resourceId
+                        )?.FullName +
+                        ', '
+                      );
+                    }, '').slice(0, -2)
+                  : resources?.result?.find(r => r.Id === values.Resource)
+                      ?.FullName
+              }...`,
+              'info'
+            )
+          );
 
           const formatedDeleteList = deleteList.reduce((acc, allocation) => {
             if (acc[allocation.Resource]) {
