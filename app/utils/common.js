@@ -16,6 +16,7 @@ import {
   differenceInCalendarWeeks,
   endOfWeek,
   endOfISOWeek,
+  isValid,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -698,4 +699,37 @@ export function getOrganisationForResource(
     return organisations.find(o => o.Id === organisation);
   }
   return null;
+}
+
+export function isCellEditable(params, type, resources) {
+  if (type === 'cost') return false;
+  if (params.row.hasButton) return false;
+
+  const cellData = params.row[params.field];
+  const cellPeriod = cellData?.period;
+  if (!cellPeriod) return false;
+
+  const parsedCellPeriod = parseISO(cellPeriod);
+  if (!isValid(parsedCellPeriod)) return false;
+
+  const cellPeriodStart = startOfWeek(parsedCellPeriod, { weekStartsOn: 1 }); // Monday start
+  const cellPeriodEnd = addDays(cellPeriodStart, 6);
+
+  const matchingResource = resources?.result?.find(
+    resource => resource.Id === params.row.resourceId
+  );
+  if (!matchingResource) return false;
+
+  const resourceStart = parseISO(matchingResource.StartDate);
+  const resourceEnd = matchingResource.EndDate
+    ? parseISO(matchingResource.EndDate)
+    : new Date();
+
+  if (!isValid(resourceStart)) return false;
+  const effectiveResourceEnd = isValid(resourceEnd) ? resourceEnd : new Date();
+
+  const isOverlap =
+    resourceStart <= cellPeriodEnd && effectiveResourceEnd >= cellPeriodStart;
+
+  return isOverlap;
 }

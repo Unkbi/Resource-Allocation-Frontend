@@ -633,6 +633,16 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       textAlign: 'center',
       fontWeight: 'bold',
     },
+    '& .non-editable-cell': {
+      backgroundColor: '#E9EFF8',
+    },
+    '& .group-row-non-editable': {
+      // backgroundColor: 'blue',
+    },
+
+    '&.MuiDataGrid-root .MuiDataGrid-row--editing .MuiDataGrid-cell': {
+      backgroundColor: '#E9EFF8 !important',
+    },
     '& .MuiDataGrid-row--editing .MuiDataGrid-cell.total-effort-cell': {
       backgroundColor: '#E9EFF8 !important',
     },

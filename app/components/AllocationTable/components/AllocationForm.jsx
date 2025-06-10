@@ -97,6 +97,7 @@ import {
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { isCellEditable } from '@/app/utils/common';
 
 const initialValuesMap = {
   add_project: {
@@ -733,6 +734,56 @@ const AllocationForm = () => {
           const deleteList = [];
           const updateList = [];
           let allUpdatedRows = [];
+
+          const nonEditableWeeks = [];
+
+          allMondays.forEach(monday => {
+            const weekKey = getWeekNumber(new Date(monday));
+            values.Resource.forEach(resource => {
+              filteredProjects.forEach(project => {
+                const row = splitView
+                  ? bottomTeamAllocationGrid.getRow(`${resource}-${project.Id}`)
+                  : getAllRowsForView(
+                      currentView?.GroupBy === 'Project'
+                        ? 'projectAllocation'
+                        : 'teamAllocation'
+                    ).find(
+                      r =>
+                        r.resourceId === resource && r.projectId === project.Id
+                    );
+
+                if (!row) return;
+
+                const isEditable = isCellEditable(
+                  {
+                    id: row.id || `${resource}-${project.Id}`,
+                    field: weekKey,
+                    row,
+                  },
+                  undefined,
+                  resources
+                );
+                if (!isEditable) {
+                  nonEditableWeeks.push(weekKey);
+                }
+              });
+            });
+          });
+
+          if (nonEditableWeeks.length > 0) {
+            dispatch(
+              showToastAction(
+                true,
+                `Update cancelled: You are editing non-editable week(s): ${[
+                  ...new Set(nonEditableWeeks),
+                ].join(', ')}`,
+                'error',
+                4000
+              )
+            );
+            dispatch(closeDialog());
+            return;
+          }
 
           allMondays.flatMap(monday => {
             return values.Resource.flatMap(resource => {
