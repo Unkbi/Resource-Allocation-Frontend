@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback,useRef } from 'react';
 import { Box } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -65,6 +65,7 @@ import { useDataGrid } from '@/app/context/dataGridContext';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { Menu, MenuItem } from '@mui/material';
 
 export default function AllocationGrid({
   groupBy,
@@ -102,6 +103,9 @@ export default function AllocationGrid({
     currentView,
     columns: _columns,
   } = useSelector(state => state.allocationView);
+
+  const [contextMenu, setContextMenu] = useState(null);
+  // const contextMenuRef = useRef(null);
 
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
@@ -1103,123 +1107,158 @@ export default function AllocationGrid({
         },
       }
     : {};
+    const handleContextMenu = event => {
+      event.preventDefault();
+      setContextMenu(
+        contextMenu === null
+          ? { mouseX: event.clientX, mouseY: event.clientY }
+          : null
+      );
+    };
+    
+    
+    const handleClose = () => {
+      setContextMenu(null);
+    };
+  
 
   return (
-    <StyledDataGrid
-      cellSelection
-      allocationTheme={allocationTheme}
-      isCellEditable={params =>
-        type === 'cost' ? false : !params.row.hasButton
-      }
-      onCellKeyDown={handleCellKeyDown}
-      type={type}
-      rowModesModel={rowModesModel}
-      onRowModesModelChange={handleRowModesModelChange}
-      processRowUpdate={handleCellUpdate}
-      onProcessRowUpdateError={err => {
-        console.error('Row update failed:', err);
-      }}
-      aggregationModel={aggregation}
-      columns={finalColumns}
-      rowSelection={true}
-      onRowClick={groupBy === 'teams' ? onRowClick : () => null}
-      apiRef={apiRef}
-      groupBy={groupBy}
-      loading={loading}
-      disableRowSelectionOnClick
-      initialState={initialState}
-      rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
-      columnHeaderHeight={30}
-      columnGroupHeaderHeight={22}
-      columnGroupingModel={generateColumnGroupingModel(
-        startDate,
-        endDate,
-        finalColumns
-      )}
-      defaultGroupingExpansionDepth={1}
-      disableAutosize
-      getCellClassName={params => {
-        if (
-          (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
-          (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
-          (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
-          (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
-          (viewId === 'main' && !mainAllocationGrid.ready)
-        )
-          return '';
-        return getCellClassName(
-          params,
-          getAllRowsForView(viewId),
-          allocationTheme,
-          type,
-          projects?.result
-        );
-      }}
-      getRowClassName={params => getRowClassName(params)}
-      cellSelectionModel={cellSelectionModel}
-      onCellSelectionModelChange={handleCellSelectionModelChange}
-      {...toolBarBasedProperties}
-      slots={{
-        noRowsOverlay: NoRowsOverlay,
-        toolbar: toolbarComponent,
-        columnMenu: props => {
-          return <CustomColumnMenu {...props} apiRef={apiRef} />;
-        },
-      }}
-      slotProps={{
-        loadingOverlay: {
-          variant: 'skeleton',
-          noRowsVariant: 'skeleton',
-        },
-        panel: {
-          anchorEl: filterButtonEl,
-          className: 'parent-grid-panel',
-        },
-        columnsManagement: {
-          getTogglableColumns,
-        },
-        toolbar: {
-          setFilterButtonEl,
-        },
-        columnsPanel: {
-          className: 'styleColumnMenu',
-          sx: ColumnManagementStyles,
-        },
-        filterPanel: {
-          columnsSort: 'asc',
-          className: 'filterPopup',
-          filterFormProps: {
-            filterColumns,
-            columnInputProps: {
-              size: 'small',
-              sx: { mt: 'auto' },
+    <>
+      <div onContextMenu={handleContextMenu}>
+        <StyledDataGrid
+          // onContextMenu={handleContextMenu}
+          cellSelection
+          allocationTheme={allocationTheme}
+          isCellEditable={params =>
+            type === 'cost' ? false : !params.row.hasButton
+          }
+          onCellKeyDown={handleCellKeyDown}
+          type={type}
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={handleRowModesModelChange}
+          processRowUpdate={handleCellUpdate}
+          onProcessRowUpdateError={err => {
+            console.error('Row update failed:', err);
+          }}
+          aggregationModel={aggregation}
+          columns={finalColumns}
+          rowSelection={true}
+          onRowClick={groupBy === 'teams' ? onRowClick : () => null}
+          apiRef={apiRef}
+          groupBy={groupBy}
+          loading={loading}
+          disableRowSelectionOnClick
+          initialState={initialState}
+          rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
+          columnHeaderHeight={30}
+          columnGroupHeaderHeight={22}
+          columnGroupingModel={generateColumnGroupingModel(
+            startDate,
+            endDate,
+            finalColumns
+          )}
+          defaultGroupingExpansionDepth={1}
+          disableAutosize
+          getCellClassName={params => {
+            if (
+              (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
+              (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
+              (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
+              (viewId === 'projectAllocation' &&
+                !projectAllocationGrid.ready) ||
+              (viewId === 'main' && !mainAllocationGrid.ready)
+            )
+              return '';
+            return getCellClassName(
+              params,
+              getAllRowsForView(viewId),
+              allocationTheme,
+              type,
+              projects?.result
+            );
+          }}
+          getRowClassName={params => getRowClassName(params)}
+          cellSelectionModel={cellSelectionModel}
+          onCellSelectionModelChange={handleCellSelectionModelChange}
+          {...toolBarBasedProperties}
+          slots={{
+            noRowsOverlay: NoRowsOverlay,
+            toolbar: toolbarComponent,
+            columnMenu: props => {
+              return <CustomColumnMenu {...props} apiRef={apiRef} />;
             },
-            operatorInputProps: {
-              size: 'small',
-              sx: { mt: 'auto' },
+          }}
+          slotProps={{
+            loadingOverlay: {
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
             },
-            valueInputProps: {
-              InputComponentProps: {
-                size: 'small',
+            panel: {
+              anchorEl: filterButtonEl,
+              className: 'parent-grid-panel',
+            },
+            columnsManagement: {
+              getTogglableColumns,
+            },
+            toolbar: {
+              setFilterButtonEl,
+            },
+            columnsPanel: {
+              className: 'styleColumnMenu',
+              sx: ColumnManagementStyles,
+            },
+            filterPanel: {
+              columnsSort: 'asc',
+              className: 'filterPopup',
+              filterFormProps: {
+                filterColumns,
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                operatorInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                valueInputProps: {
+                  InputComponentProps: {
+                    size: 'small',
+                  },
+                },
+                deleteIconProps: {
+                  sx: {
+                    '& .MuiSvgIcon-root': { color: '#d32f2f' },
+                  },
+                },
               },
+              sx: FilterPanelStyles,
             },
-            deleteIconProps: {
-              sx: {
-                '& .MuiSvgIcon-root': { color: '#d32f2f' },
-              },
-            },
-          },
-          sx: FilterPanelStyles,
-        },
-      }}
-      getAggregationPosition={groupNode =>
-        groupNode.depth === -1 ? null : 'inline'
-      }
-      hideFooter
-      editMode="row"
-      aggregationRowsCount={params => {
-        return params.rowNode.children?.length || 1;
-      }}
-    />
+          }}
+          getAggregationPosition={groupNode =>
+            groupNode.depth === -1 ? null : 'inline'
+          }
+          hideFooter
+          editMode="row"
+          aggregationRowsCount={params => {
+            return params.rowNode.children?.length || 1;
+          }}
+        />
+      </div>
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleClose}>Copy</MenuItem>
+        <MenuItem onClick={handleClose}>Print</MenuItem>
+        <MenuItem onClick={handleClose}>Highlight</MenuItem>
+        <MenuItem onClick={handleClose}>Email</MenuItem>
+      </Menu>
+    </>
   );
 }
