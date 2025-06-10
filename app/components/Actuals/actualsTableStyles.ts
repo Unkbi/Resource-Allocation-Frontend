@@ -1,3 +1,5 @@
+import { BorderLeft } from "@mui/icons-material";
+
 export const actualsTableStyles = {
   '& .MuiDataGrid-columnHeaders': {
     borderBottom: ' #EEEEEE',
@@ -16,10 +18,12 @@ export const actualsTableStyles = {
     padding: 0,
   },
   '.error-cell': {
-    border: '2px solid #D24546 !important',
+    border: '1px solid #D24546 !important',
+    borderRight: '0.5px solid #D24546 !important',
   },
   '.comment-error-cell': {
-    border: '2px solid #D24546',
+    border: '1px solid #D24546',
+    borderLeft: '0.5px solid #D24546 !important',
     boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
