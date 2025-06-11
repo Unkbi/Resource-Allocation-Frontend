@@ -6,7 +6,6 @@ import ThemeRegistry from './theme/ThemeRegistry';
 import { Suspense } from 'react';
 import LayoutClient from './layoutClient';
 
-// Test Comment to be deleted.
 export default function CommonLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
