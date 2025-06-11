@@ -927,7 +927,20 @@ const AllocationForm = () => {
                       : endDate
                 );
 
-                allUpdatedRows = Object.values(formateUpdate);
+                const blankRowsToBeRemoved = Object.values(formateUpdate).map(
+                  row =>
+                    getAllRowsForView('teamAllocation').find(r =>
+                      r.id.includes(row.teams)
+                    )
+                );
+
+                allUpdatedRows = [
+                  ...Object.values(formateUpdate),
+                  ...blankRowsToBeRemoved.map(row => ({
+                    ...row,
+                    _action: 'delete',
+                  })),
+                ];
               }
               if (errorMessages.length > 1) {
                 dispatch(
