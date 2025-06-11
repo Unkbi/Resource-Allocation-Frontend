@@ -17,6 +17,7 @@ import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
   getCombinedAllocation,
+  injectBlankRows,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
 
@@ -54,7 +55,9 @@ export default function TeamAllocation({
 }: TeamAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
-  const { teams } = useSelector((state: RootState) => state.teams);
+  const { teams, teamsResources } = useSelector(
+    (state: RootState) => state.teams
+  );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   ) as {
@@ -68,18 +71,28 @@ export default function TeamAllocation({
   const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
-  const { setRows, ready } = useAllocationGrid('teamAllocation');
-  const { getAllRows } = useAllocationGrid('projectAllocation');
+  const {
+    setRows,
+    ready,
+    getAllRows: getAllTeamViewRows,
+  } = useAllocationGrid('teamAllocation');
+  const { getAllRows: getAllProjectViewRows } =
+    useAllocationGrid('projectAllocation');
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (getAllRows().length > 0) {
+      if (getAllProjectViewRows().length > 0) {
         filteredResources = removeResourcesWithNoTeams(
-          getCombinedAllocation(
-            getAllRows() as AllAllocations[],
-            allAllocations || []
-          ) || []
+          injectBlankRows(
+            getCombinedAllocation(
+              getAllProjectViewRows() as AllAllocations[],
+              (getAllTeamViewRows() as AllAllocations[]) || []
+            ) || [],
+            teams?.result || [],
+            // @ts-ignore
+            teamsResources
+          )
         );
       } else if (allAllocations) {
         filteredResources = removeResourcesWithNoTeams(allAllocations || []);

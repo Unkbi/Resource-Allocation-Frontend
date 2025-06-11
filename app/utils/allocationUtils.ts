@@ -416,7 +416,7 @@ export const generateEmptyRow = (
   endDate: string,
   teams: Team[],
   teamResources: Record<string, Resource[]>,
-  projects: Project[],
+  projects: Project[] | null,
   resources: Resource[],
   allocation: Allocation
 ): AllocationGridCell => {
@@ -434,9 +434,14 @@ export const generateEmptyRow = (
   }
 
   const team = resourceIdToTeam.get(allocation.Resource);
-  const project = projects.find(p => p.Id === allocation.Project);
+  const project = projects?.find(p => p.Id === allocation.Project);
   const resource = resources.find(r => r.Id === allocation.Resource);
-  const key = `${allocation.Resource}-${team?.Id}-${allocation.Project}`;
+  let key;
+  if (project) {
+    key = `${allocation.Resource}-${team?.Id}-${allocation.Project}`;
+  } else {
+    key = `team/${team?.Name}-resource/${resource?.FullName}`;
+  }
 
   const emptyRow: AllocationGridCell = {
     id: key,
