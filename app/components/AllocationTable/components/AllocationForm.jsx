@@ -929,8 +929,9 @@ const AllocationForm = () => {
 
                 const blankRowsToBeRemoved = Object.values(formateUpdate).map(
                   row =>
-                    getAllRowsForView('teamAllocation').find(r =>
-                      r.id.includes(row.teams)
+                    getAllRowsForView('teamAllocation').find(
+                      r =>
+                        r.id.includes(row.teams) && r.id.includes(row.resource)
                     )
                 );
 
