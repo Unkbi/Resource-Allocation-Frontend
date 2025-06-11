@@ -66,6 +66,7 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { startOfWeek, addDays, isValid } from 'date-fns';
+import { isCellEditableUtils } from '@/app/utils/common';
 
 export default function AllocationGrid({
   groupBy,
@@ -950,46 +951,15 @@ export default function AllocationGrid({
     return getTogglableColumns(columns);
   };
 
- const isCellEditable = params => {
-    if (type === 'cost') return false;
-    if (params.row.hasButton) return false;
-
-    const cellData = params.row[params.field];
-    const cellPeriod = cellData?.period;
-    if (!cellPeriod) return false;
-
-    const parsedCellPeriod = parseISO(cellPeriod);
-    if (!isValid(parsedCellPeriod)) return false;
-
-    const cellPeriodStart = startOfWeek(parsedCellPeriod, { weekStartsOn: 1 }); // Monday start
-    const cellPeriodEnd = addDays(cellPeriodStart, 6);
-
-    const matchingResource = resources?.result?.find(
-      resource => resource.Id === params.row.resourceId
-    );
-    if (!matchingResource) return false;
-
-    const resourceStart = parseISO(matchingResource.StartDate);
-    const resourceEnd = matchingResource.EndDate
-      ? parseISO(matchingResource.EndDate)
-      : new Date();
-
-    if (!isValid(resourceStart)) return false;
-    const effectiveResourceEnd = isValid(resourceEnd)
-      ? resourceEnd
-      : new Date();
-
-    const isOverlap =
-      resourceStart <= cellPeriodEnd && effectiveResourceEnd >= cellPeriodStart;
-
-    return isOverlap;
-  };
-
+  const isCellEditable = useCallback(
+    params => isCellEditableUtils(params, type, resources),
+    [type, resources]
+  );
   const handleCellSelectionModelChange = useCallback(
     newModel => {
       // Cell Selection Model should have a value only for minimum of 2 cells
       // If only one cell is selected, then clear the selection
-    if (type === 'cost') return;
+      if (type === 'cost') return;
       const rowIds = Object.keys(newModel);
       if (
         Object.keys(newModel).length === 0 ||
@@ -1222,7 +1192,8 @@ export default function AllocationGrid({
           getAllRowsForView(viewId),
           allocationTheme,
           type,
-          projects?.result
+          projects?.result,
+          isCellEditable
         );
         const editable = isCellEditable(params);
         if (!editable) {

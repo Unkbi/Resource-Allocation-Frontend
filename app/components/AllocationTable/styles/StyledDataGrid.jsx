@@ -401,7 +401,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor: '#AAAFBC30 !important',
     },
     '& .common-NonEditableCells': {
-      backgroundColor: '#F1F6FF',
+      backgroundColor: '#F1F6FF !important',
     },
     '& .MuiDataGrid-row--editing .MuiDataGrid-cell.common-NonEditableCells': {
       backgroundColor: '#F1F6FF !important',
@@ -634,11 +634,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       fontWeight: 'bold',
     },
     '& .non-editable-cell': {
-      backgroundColor: '#E9EFF8',
+      backgroundColor: '#F5F5F5E5',
+      borderBottom: '#F5F5F5E5',
     },
-    '& .group-row-non-editable': {
-      // backgroundColor: 'blue',
+    '& .non-editable-darker': {
+      backgroundColor: '#EAEAEAE5',
+      borderBottom: '#EAEAEAE5',
     },
+
 
     '&.MuiDataGrid-root .MuiDataGrid-row--editing .MuiDataGrid-cell': {
       backgroundColor: '#E9EFF8 !important',

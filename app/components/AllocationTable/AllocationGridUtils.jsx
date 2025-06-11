@@ -245,12 +245,12 @@ const CellWithMenu = ({
         {view === 'Project' ? (
           <>
             {deleteParams?.row?.project} Allocations for{' '}
-           {deleteParams?.row?.resource}
+            {deleteParams?.row?.resource}
           </>
         ) : (
           <>
-          {deleteParams?.row?.project} Allocations for{' '}
-          {deleteParams?.row?.resource} 
+            {deleteParams?.row?.project} Allocations for{' '}
+            {deleteParams?.row?.resource}
           </>
         )}
         ?"
@@ -562,7 +562,8 @@ export const getCellClassName = (
   updatedRows,
   allocationTheme = [],
   type = 'allocation',
-  allProjects = []
+  allProjects = [],
+  isCellEditable
 ) => {
   if (params?.field === 'totalEffort') {
     if (
@@ -591,19 +592,23 @@ export const getCellClassName = (
       (params.rowNode?.groupingField === 'teams' ||
         params.rowNode?.groupingField === 'resource')
     ) {
-      const projectName = params.rowNode.groupingKey;
+      const groupKey = params.rowNode.groupingKey;
       let projectRows = [];
 
       if (params.rowNode?.groupingField === 'teams') {
-        projectRows = updatedRows.filter(row => row.teams === projectName);
+        projectRows = updatedRows.filter(row => row.teams === groupKey);
       } else if (params.rowNode?.groupingField === 'resource') {
-        projectRows = updatedRows.filter(row => row.resource === projectName);
+        projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
+      const hasNonEditableChild = projectRows.some(
+        row => !isCellEditable({ ...params, row })
+      );
 
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
       const totalRows = uniqueProjectRows.size;
+
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
@@ -635,18 +640,24 @@ export const getCellClassName = (
 
       // If no matching range found and value exceeds max range, use the last theme
       if (!matchingRange && sortedTheme.length > 0) {
-        const firstRange = sortedTheme[0];
-        const lastRange = sortedTheme[sortedTheme.length - 1];
-        matchingRange =
-          allocationValue < parseFloat(firstRange.From) ? lastRange : lastRange;
+        matchingRange = sortedTheme[sortedTheme.length - 1];
       }
 
       if (matchingRange) {
-        if (params.rowNode?.groupingField === 'teams') {
-          return `allocation-theme-${matchingRange.id}`;
-        } else {
-          return `allocation-theme-${matchingRange.id}-secondGroup`;
+        const base = `allocation-theme-${matchingRange.id}`;
+        const groupClass =
+          params.rowNode?.groupingField === 'teams'
+            ? base
+            : `${base}-secondGroup`;
+        let nonEditableClass = '';
+        if (
+          params.rowNode?.groupingField === 'resource' && // Only apply to resource group
+          projectRows.some(row => !isCellEditable({ ...params, row }))
+        ) {
+          nonEditableClass = 'non-editable-darker';
         }
+
+        return `${groupClass} ${nonEditableClass}`.trim();
       }
     } else if (
       params.rowNode?.type === 'group' &&

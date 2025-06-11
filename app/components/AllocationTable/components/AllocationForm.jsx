@@ -97,7 +97,7 @@ import {
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
-import { isCellEditable } from '@/app/utils/common';
+import { isCellEditableUtils } from '@/app/utils/common';
 
 const initialValuesMap = {
   add_project: {
@@ -741,22 +741,26 @@ const AllocationForm = () => {
             const weekKey = getWeekNumber(new Date(monday));
             values.Resource.forEach(resource => {
               filteredProjects.forEach(project => {
-                const row = splitView
-                  ? bottomTeamAllocationGrid.getRow(`${resource}-${project.Id}`)
-                  : getAllRowsForView(
-                      currentView?.GroupBy === 'Project'
-                        ? 'projectAllocation'
-                        : 'teamAllocation'
-                    ).find(
-                      r =>
-                        r.resourceId === resource && r.projectId === project.Id
-                    );
-
-                if (!row) return;
-
-                const isEditable = isCellEditable(
+               const rowId = `${resource}-${project.Id}` ;
+               let row;
+               if (splitView) {
+                 const bottomRow = bottomTeamAllocationGrid.getRow(rowId);
+                 const topRow = topProjectAllocationGrid.getRow(rowId);
+                 if (!bottomRow || !topRow) return;
+                 row = bottomRow; 
+               } else {
+                 row = getAllRowsForView(
+                   currentView?.GroupBy === 'Project'
+                     ? 'projectAllocation'
+                     : 'teamAllocation'
+                 ).find(
+                   r => r.resourceId === resource && r.projectId === project.Id
+                 );
+                 if (!row) return;
+               }
+                const isEditable = isCellEditableUtils(
                   {
-                    id: row.id || `${resource}-${project.Id}`,
+                    id: row.id || rowId,
                     field: weekKey,
                     row,
                   },

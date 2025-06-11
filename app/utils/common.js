@@ -701,7 +701,7 @@ export function getOrganisationForResource(
   return null;
 }
 
-export function isCellEditable(params, type, resources) {
+export function isCellEditableUtils(params, type, resources) {
   if (type === 'cost') return false;
   if (params.row.hasButton) return false;
 
