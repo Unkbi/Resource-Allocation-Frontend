@@ -724,9 +724,21 @@ export function isCellEditableUtils(params, type, resources) {
   const resourceEnd = matchingResource.EndDate
     ? parseISO(matchingResource.EndDate)
     : undefined;
-    
+
   const isOverlap =
     resourceStart <= cellPeriodEnd &&
     (!resourceEnd || resourceEnd >= cellPeriodStart);
   return isOverlap;
+}
+
+export function isResourceWithinDate(resource, monday) {
+  if (!resource || !resource.StartDate) return false;
+
+  const resourceStart = parseISO(getMondayOfISO(resource.StartDate));
+  const resourceEnd = resource.EndDate ? parseISO(resource.EndDate) : undefined;
+
+  if (resourceEnd) {
+    return resourceStart <= monday && resourceEnd >= monday;
+  }
+  return resourceStart <= monday;
 }
