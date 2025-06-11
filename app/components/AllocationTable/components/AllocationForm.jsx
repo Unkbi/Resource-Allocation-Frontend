@@ -11,6 +11,7 @@ import AssignAllocationForm from '../../Forms/AssignAllocationForm';
 import SaveViewForm from '../../Forms/SaveViewForm';
 import CloneResourceForm from '../../Forms/CloneResourceForm';
 import TransferResourceForm from '../../Forms/TransferResourceForm';
+import HistoryForm from '../../Forms/HistoryForm';
 import {
   addAllocationValidationSchema,
   addProjectValidationSchema,
@@ -229,7 +230,14 @@ const initialValuesMap = {
     ValidityEndDate: '',
     Status: 'Active',
   },
+  open_history: {
+    StartDate: '',
+    EndDate: '',
+    Resource: [],
+    Project: [],
+  },
 };
+
 
 const AllocationForm = () => {
   const { formType } = useSelector(state => state.globalDialog.formState);
@@ -274,6 +282,108 @@ const AllocationForm = () => {
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
+  const dummyHistoryData = [
+  {
+    id: "1",
+    userInitials: "AH",
+    userName: "Andrew Fard",
+    projectName: "Project Infinity",
+    weekNumber: 12,
+    date: "March 15, 2025",
+    timestamp: "15 minutes ago",
+    action: "Update",
+    fromVersion: "0.8",
+    toVersion: "0.5",
+    byUser: "Audrey Hepburn",
+  },
+  {
+    id: "2",
+    userInitials: "KR",
+    userName: "Bruno Mars",
+    projectName: "Project YML",
+    weekNumber: 13,
+    date: "March 15, 2025",
+    timestamp: "30 minutes ago",
+    action: "Deleted",
+    updatedTo: "0.8",
+    byUser: "Kacy Ryback",
+  },
+  {
+    id: "3",
+    userInitials: "TS",
+    userName: "Sheldon",
+    projectName: "Project Doom",
+    weekNumber: 13,
+    date: "March 15, 2025",
+    timestamp: "1 day ago",
+    action: "Created",
+    updatedTo: "0.5",
+    byUser: "Tom Sawyer",
+  },
+  {
+    id: "4",
+    userInitials: "JD",
+    userName: "John Doe",
+    projectName: "Project Alpha",
+    weekNumber: 11,
+    date: "March 14, 2025",
+    timestamp: "2 days ago",
+    action: "Update",
+    fromVersion: "1.0",
+    toVersion: "1.1",
+    byUser: "Jane Smith",
+  },
+  {
+    id: "5",
+    userInitials: "SM",
+    userName: "Sarah Miller",
+    projectName: "Project Beta",
+    weekNumber: 10,
+    date: "March 13, 2025",
+    timestamp: "3 days ago",
+    action: "Created",
+    updatedTo: "2.0",
+    byUser: "Mike Johnson",
+  },
+  {
+    id: "6",
+    userInitials: "AB",
+    userName: "Alex Brown",
+    projectName: "Project Gamma",
+    weekNumber: 9,
+    date: "March 12, 2025",
+    timestamp: "4 days ago",
+    action: "Deleted",
+    updatedTo: "1.5",
+    byUser: "Lisa Wilson",
+  },
+  {
+    id: "7",
+    userInitials: "MJ",
+    userName: "Mike Johnson",
+    projectName: "Project Delta",
+    weekNumber: 8,
+    date: "March 11, 2025",
+    timestamp: "5 days ago",
+    action: "Update",
+    fromVersion: "2.1",
+    toVersion: "2.2",
+    byUser: "Alex Brown",
+  },
+  {
+    id: "8",
+    userInitials: "LW",
+    userName: "Lisa Wilson",
+    projectName: "Project Epsilon",
+    weekNumber: 7,
+    date: "March 10, 2025",
+    timestamp: "6 days ago",
+    action: "Created",
+    updatedTo: "3.0",
+    byUser: "Sarah Miller",
+  },
+]
+
   const getValidationSchema = formType => {
     switch (formType) {
       case 'add_project':
@@ -306,7 +416,8 @@ const AllocationForm = () => {
         return addRatesValidationSchema;
       case 'edit_rates':
         return addRatesValidationSchema;
-
+      // case 'open_history':
+      //   return openHistoryValidationSchema;
       default:
         return null;
     }
@@ -1453,7 +1564,14 @@ const AllocationForm = () => {
           });
 
         break;
-
+      case 'open_history':
+        setFormValue({
+          StartDate: initialData.StartDate || '',
+          EndDate: initialData.EndDate || '',
+          Resource: initialData.Resource || [],
+          Project: initialData.Project || [],
+        });
+        break;
       default:
         return;
     }
@@ -1705,6 +1823,10 @@ const AllocationForm = () => {
         return (
           <AddRatesForm formikProps={formikProps} setFormValue={setFormValue} />
         );
+      case 'open_history':
+        return (
+          <HistoryForm formikProps={formikProps} setFormValue={setFormValue} historyData={dummyHistoryData} />
+        );
       default:
         return <div>No form selected</div>;
     }
@@ -1758,6 +1880,7 @@ const AllocationForm = () => {
           isSubmitting={formikProps.isSubmitting}
           isValid={formikProps.isValid}
           onCancel={onCancel}
+          viewOnly={formType === 'open_history'}
         >
           <Box>
             {getFormComponent(formType, {
