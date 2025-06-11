@@ -410,7 +410,6 @@ const AllocationForm = () => {
 
     let postData = {};
     const { Organisation, submitType, Team, ...cleanedValues } = values;
-    console.log(Team, Organisation, ' Team,Organisation');
     switch (formType) {
       case 'add_project':
         if (!cleanedValues.StartDate) {
@@ -691,7 +690,7 @@ const AllocationForm = () => {
           );
 
           // Check if team changed and update if needed
-          if (teamOrgData.teamId && teamOrgData.teamId !== initialData.Team) {
+          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
@@ -704,21 +703,20 @@ const AllocationForm = () => {
           }
 
           // Check if organization changed and update if needed
-
           if (
             teamOrgData.organisationId &&
-            teamOrgData.organisationId !== initialData.Organisation
+            teamOrgData.organisationName !== initialData.Organization
           ) {
-              await dispatch({
-                type: 'UPDATE_RESOURCE_ORGANISATION',
-                payload: {
+            await dispatch({
+              type: 'UPDATE_RESOURCE_ORGANISATION',
+              payload: {
                 'ResourceAllocation.Core/ChangeTeamOrganization': {
                   Resource: initialData.Id,
                   Organization: teamOrgData.organisationId,
                 },
               },
-              });
-            }
+            });
+          }
           await dispatch({
             type: FETCH_ALL_RESOURCES_DETAIL,
             payload: {},
