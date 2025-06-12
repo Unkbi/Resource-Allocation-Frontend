@@ -71,6 +71,7 @@ interface CustomDatePickerProps {
   error?: boolean;
   helperText?: string;
   customStyles?: boolean;
+  onChange?: (date: Dayjs | null) => void;
   formikProps: {
     setFieldValue: (field: string, value: any, shouldValidate?: boolean) => void;
     setFieldTouched: (field: string, touched: boolean, shouldValidate?: boolean) => void;
@@ -88,6 +89,7 @@ export default function CustomDatePicker({
   customStyles,
   title,
   isRequired = false,
+  onChange
 }: CustomDatePickerProps) {
   const { setFieldValue, values } = formikProps;
   const [open, setOpen] = React.useState(false);
@@ -95,6 +97,7 @@ export default function CustomDatePicker({
   const handleDateChange = (newValue: Dayjs | null) => {
     const formattedDate = newValue ? dayjs(newValue).format('YYYY-MM-DD') : null;
     setFieldValue(name, formattedDate);
+    onChange?.(newValue); 
     setOpen(false);
   };
 

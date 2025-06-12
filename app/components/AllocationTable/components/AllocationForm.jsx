@@ -162,6 +162,7 @@ const initialValuesMap = {
     EndDate: '',
     WorkLocation: '',
     Status: '',
+    ConfirmTransfer: false,
   },
   add_allocation: {
     Resource: [],
@@ -403,7 +404,13 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { Organisation, submitType, Team, ...cleanedValues } = values;
+    const {
+      Organisation,
+      submitType,
+      Team,
+      ConfirmTransfer,
+      ...cleanedValues
+    } = values;
 
     switch (formType) {
       case 'add_project':

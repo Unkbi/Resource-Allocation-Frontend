@@ -641,8 +641,6 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor: '#EAEAEAE5',
       borderBottom: '#EAEAEAE5',
     },
-
-
     '&.MuiDataGrid-root .MuiDataGrid-row--editing .MuiDataGrid-cell': {
       backgroundColor: '#E9EFF8 !important',
     },
