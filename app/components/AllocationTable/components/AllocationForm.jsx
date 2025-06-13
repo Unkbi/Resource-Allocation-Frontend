@@ -72,16 +72,13 @@ import {
   createResourceWithTeamAndOrg,
   updateResource,
 } from '@/app/services/resourceServices';
+import { postTeamResource } from '@/app/services/teamServices';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
-import {
-  addResourceToTeam,
-  createTeam,
-  updateTeam,
-} from '@/app/services/teamServices';
+import { createTeam, updateTeam } from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import AddTeamForm from '../../Forms/AddTeamForm';
@@ -97,7 +94,7 @@ import {
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
-
+import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 const initialValuesMap = {
   add_project: {
     StartDate: '',
@@ -274,6 +271,17 @@ const AllocationForm = () => {
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
+  const [teamOrgData, setTeamOrgData] = useState({
+    teamId: null,
+    organisationId: null,
+    teamName: '',
+    organisationName: '',
+  });
+
+  const handleResourceFormChange = data => {
+    setTeamOrgData(data);
+  };
+
   const getValidationSchema = formType => {
     switch (formType) {
       case 'add_project':
@@ -402,7 +410,6 @@ const AllocationForm = () => {
 
     let postData = {};
     const { Organisation, submitType, Team, ...cleanedValues } = values;
-
     switch (formType) {
       case 'add_project':
         if (!cleanedValues.StartDate) {
@@ -681,6 +688,35 @@ const AllocationForm = () => {
               resourceId: initialData.Id,
             })
           );
+
+          // Check if team changed and update if needed
+          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
+            await dispatch({
+              type: 'UPDATE_RESOURCE_TEAM',
+              payload: {
+                'ResourceAllocation.Core/ChangeTeamResource': {
+                  Resource: initialData.Id,
+                  Team: teamOrgData.teamId,
+                },
+              },
+            });
+          }
+
+          // Check if organization changed and update if needed
+          if (
+            teamOrgData.organisationId &&
+            teamOrgData.organisationName !== initialData.Organization
+          ) {
+            await dispatch({
+              type: 'UPDATE_RESOURCE_ORGANISATION',
+              payload: {
+                'ResourceAllocation.Core/ChangeTeamOrganization': {
+                  Resource: initialData.Id,
+                  Organization: teamOrgData.organisationId,
+                },
+              },
+            });
+          }
           await dispatch({
             type: FETCH_ALL_RESOURCES_DETAIL,
             payload: {},
@@ -1693,6 +1729,7 @@ const AllocationForm = () => {
           <AddResourceForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+            onValuesChange={handleResourceFormChange}
           />
         );
       case 'add_allocation':
