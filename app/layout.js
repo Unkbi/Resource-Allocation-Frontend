@@ -6,7 +6,6 @@ import ThemeRegistry from './theme/ThemeRegistry';
 import { Suspense } from 'react';
 import LayoutClient from './layoutClient';
 
-// This is a test for Deployment.
 export default function CommonLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
