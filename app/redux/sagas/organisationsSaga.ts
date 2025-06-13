@@ -1,4 +1,4 @@
-import { all, call, put, takeEvery } from 'redux-saga/effects';
+import { all, call, put, takeEvery,takeLatest } from 'redux-saga/effects';
 import {
   FETCH_ORGANISATIONS,
   FETCH_ORGANISATIONS_RESOURCES,
@@ -11,9 +11,11 @@ import {
 import {
   fetchAllOrganisations,
   fetchResourcesAgainstOrganisationsForSaga,
+  updateOrganizationForResourceSaga,
 } from '@/app/services/organisationServices';
 import { Organisation } from '@/app/types/organisationTypes';
 import { Resource } from '@/app/types';
+import { ResourceOrganizationPayload } from '@/app/types/organisationTypes';
 
 function* fetchOrganisationsSaga(): Generator<any, void, any> {
   try {
@@ -88,10 +90,30 @@ function* fetchOrganisationResourcesSaga(
   }
 }
 
+function* updateOrganisationForResourceSaga(
+  action: any
+): Generator<any, void, any> {
+  try {
+    yield put(setLoading(true));
+
+    const response = yield call(updateOrganizationForResourceSaga, action.payload);
+    // yield put(setOrganisations(response?.result));
+  } catch (error) {
+    console.error('Saga error, Failed to update organisation resources: ', error);
+  } finally {
+    yield put(setLoading(false));
+  }
+}
+
 export function* organisationsSaga() {
   yield takeEvery(FETCH_ORGANISATIONS, fetchOrganisationsSaga);
   yield takeEvery(
     FETCH_ORGANISATIONS_RESOURCES,
     fetchOrganisationResourcesSaga
   );
+  yield takeLatest(
+    'UPDATE_RESOURCE_ORGANISATION',
+    updateOrganisationForResourceSaga
+  );
 }
+

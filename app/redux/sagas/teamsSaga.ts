@@ -7,6 +7,7 @@ import {
 import {
   fetchAllTeamsForSaga,
   fetchResourcesAgainstTeamsForSaga,
+  postTeamResource,
 } from '@/app/services/teamServices';
 import { setAllocations } from '../reducers/dataGridReducer';
 import { Allocation, AllocationGridCell, Resource, Team } from '@/app/types';
@@ -372,6 +373,22 @@ function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
   }
 }
 
+function* updateResourceTeamSaga(action: any): Generator<any, void, any> {
+  try {
+    // action.payload should be the postData for postTeamResource
+    yield put(setTeamsDataProcessing(true));
+    const response = yield call(postTeamResource, action.payload);
+    // Optionally, you can dispatch a success action here
+    // yield put({ type: 'UPDATE_RESOURCE_TEAM_SUCCESS', payload: response });
+  } catch (err) {
+    console.error('Saga: Failed to update resource team', err);
+    // Optionally, you can dispatch a failure action here
+    // yield put({ type: 'UPDATE_RESOURCE_TEAM_FAILURE', error: err });
+  } finally {
+    yield put(setTeamsDataProcessing(false));
+  }
+}
+
 export default function* teamSaga() {
   yield takeLatest('FETCH_RESOURCES_AGAINST_TEAMS', function* (action) {
     // Cancel projects task if active
@@ -391,4 +408,5 @@ export default function* teamSaga() {
   });
 
   yield takeLatest('FETCH_TEAM_RESOURCES', fetchTeamsResourcesSaga);
+  yield takeLatest('UPDATE_RESOURCE_TEAM', updateResourceTeamSaga);
 }

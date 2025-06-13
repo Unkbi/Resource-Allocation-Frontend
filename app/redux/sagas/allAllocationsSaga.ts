@@ -1,4 +1,11 @@
-import { call, put, takeLatest, all, takeLeading } from 'redux-saga/effects';
+import {
+  call,
+  put,
+  takeLatest,
+  all,
+  takeLeading,
+  takeEvery,
+} from 'redux-saga/effects';
 import {
   bulkDeleteAllocations,
   bulkUpdateAllocations,
@@ -376,6 +383,6 @@ export function* allAllocationsSaga() {
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
   yield takeLatest('FETCH_ALLOCATIONS_COST', fetchAllocationsCostSaga);
-  yield takeLatest('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
-  yield takeLatest('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
+  yield takeEvery('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
+  yield takeEvery('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
 }
