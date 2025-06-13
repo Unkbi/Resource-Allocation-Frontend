@@ -38,11 +38,6 @@ export default function BottomTeamsView({
 
   const { setRows, ready } = useAllocationGrid('bottomTeam');
 
-  useEffect(() => {
-    if (ready && allAllocations) {
-      setRows(filteredResources);
-    }
-  }, [ready, allAllocations]);
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
       openDialog({
@@ -167,6 +162,12 @@ export default function BottomTeamsView({
       return teamMatch && avgWeekly <= allocationThreshold;
     });
   }, [enrichedResources, selectedTeam, allocationThreshold]);
+
+  useEffect(() => {
+    if (ready && allAllocations) {
+      setRows(filteredResources);
+    }
+  }, [ready, allAllocations, filteredResources]);
 
   return (
     <>
