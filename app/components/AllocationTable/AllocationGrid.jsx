@@ -693,13 +693,6 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = async (newRow, oldRow) => {
-    dispatch(
-      showToastAction(
-        true,
-        `Updating allocation for ${newRow.resource}...`,
-        'info'
-      )
-    );
     try {
       setCellSelectionModel({});
       // Find the changed week
@@ -805,7 +798,7 @@ export default function AllocationGrid({
       });
 
       if (deleteList.length === 0 && updateList.length === 0) {
-        return;
+        return oldRow;
       }
 
       const formatedDeleteList = deleteList.reduce((acc, allocation) => {
@@ -856,6 +849,14 @@ export default function AllocationGrid({
           })
         );
       });
+
+      dispatch(
+        showToastAction(
+          true,
+          `Updating allocation for ${newRow.resource}...`,
+          'info'
+        )
+      );
 
       await Promise.all([...allocationPromises, ...deletePromises]).then(
         async response => {
