@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   gridExpandedSortedRowIdsSelector,
@@ -617,7 +617,51 @@ export default function AllocationGrid({
       ? currentView.endDate || endDate
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
-  );
+  ).map(column => {
+    if (column.field.startsWith('W')) {
+      return {
+        ...column,
+        renderCell: params => {
+          const editable = isCellEditable(params); 
+          const cellClass = getCellClassName(
+            params,
+            getAllRowsForView(viewId),
+            allocationTheme,
+            type,
+            projects?.result,
+            isCellEditable
+          );
+          const showTooltip =
+            cellClass.includes('non-editable-cell') ||
+            cellClass.includes('non-editable-darker');
+
+          const value = params.formattedValue ?? '';
+
+          return showTooltip ? (
+            <Tooltip
+              title="This resource is inactive for this period. Allocation not allowed."
+              arrow
+              placement="top"
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '100%',
+                  cursor: 'not-allowed',
+                }}
+              >
+                {"" || <>&nbsp;</>}
+              </span>
+            </Tooltip>
+          ) : (
+            <span>{value}</span>
+          );
+        },
+      };
+    }
+    return column;
+  });
+  
 
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,

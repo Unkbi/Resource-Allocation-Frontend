@@ -809,6 +809,9 @@ export const getCellClassName = (
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
   }
+  if (!isCellEditable(params)) {
+  return 'non-editable-cell';
+}
 
   return '';
 };
