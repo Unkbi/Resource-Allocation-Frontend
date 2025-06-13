@@ -793,13 +793,30 @@ const AllocationForm = () => {
           });
 
           if (deleteList.length === 0 && updateList.length === 0) {
-            dispatch(
-              showToastAction(
-                true,
-                `Allocations upto date. No changes made.`,
-                'info'
-              )
-            );
+            if (errorMessages.length > 0) {
+              if (errorMessages.length > 1) {
+                dispatch(
+                  showToastAction(
+                    true,
+                    'Total allocation for the multiple selected weeks and/or projects and/or resources exceeds 2.0. Please check and try again.',
+                    'error',
+                    4000
+                  )
+                );
+              } else {
+                errorMessages.forEach(msg => {
+                  dispatch(showToastAction(true, msg, 'error', 4000));
+                });
+              }
+            } else {
+              dispatch(
+                showToastAction(
+                  true,
+                  `Allocations upto date. No changes made.`,
+                  'info'
+                )
+              );
+            }
             return;
           }
 
@@ -937,10 +954,12 @@ const AllocationForm = () => {
 
                 allUpdatedRows = [
                   ...Object.values(formateUpdate),
-                  ...blankRowsToBeRemoved.map(row => ({
-                    ...row,
-                    _action: 'delete',
-                  })),
+                  ...blankRowsToBeRemoved
+                    .filter(r => r)
+                    .map(row => ({
+                      ...row,
+                      _action: 'delete',
+                    })),
                 ];
               }
               if (errorMessages.length > 1) {
