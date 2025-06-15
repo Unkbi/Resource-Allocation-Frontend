@@ -32,6 +32,11 @@ import dayjs from 'dayjs';
 import { getOnlyFilterSettings } from '@/app/utils/common';
 import { compressToEncodedURIComponent } from 'lz-string';
 import { DATE_FORMAT } from '@/app/constants/constants';
+import {
+  fetchResourceAllocations,
+  getMaxAllocationDate,
+} from '@/app/utils/allocationUtils';
+import { addWeeks } from 'date-fns';
 
 const warningTextStyle = {
   color: '#B44536',
@@ -174,63 +179,114 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     }
   }, []);
 
+  // const handleEndDateChange = async newDate => {
+  //   formikProps.setFieldValue(
+  //     'EndDate',
+  //     newDate.format(DATE_FORMAT.toUpperCase())
+  //   );
+  //   if (!newDate || !values.Team) return;
+  //   const formattedStartDate = values.StartDate
+  //     ? dayjs(values.StartDate).format(DATE_FORMAT.toUpperCase())
+  //     : null;
+  //     const formattedEndDate = newDate.format(DATE_FORMAT.toUpperCase());
+  //     const maxDate = getMaxAllocationDate(allocations, resourceId);
+
+  //   const postData = {
+  //     'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+  //       TeamId: values.Team,
+  //       StartDate: formattedEndDate,
+  //       EndDate: '2099-08-31',
+  //     },
+  //   };
+
+  //   try {
+  //     const result = await fetchTeamAllocationsForSaga(postData);
+  //     const allocations = result?.result ?? [];
+  //     const matchedResource = resources.result.find(
+  //       resource => resource.Email === values.Email
+  //     );
+  //     const resourceId = matchedResource?.Id;
+  //     if (!resourceId) {
+  //       console.error('Resource ID not found for email:', values.Email);
+  //       return;
+  //     }
+  //     const resourceAllocations = allocations.filter(
+  //       alloc => alloc.Resource === resourceId
+  //     );
+
+  //     const hasFutureAllocations = resourceAllocations.some(allocation =>
+  //       dayjs(allocation.Period).isAfter(dayjs(newDate), 'day')
+  //     );
+  //     if (hasFutureAllocations) {
+  //       formikProps.setFieldValue('ConfirmTransfer', false);
+  //       setShowWarning(true);
+  //     } else {
+  //       formikProps.setFieldValue('ConfirmTransfer', true);
+  //       setShowWarning(false);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching allocations:', error);
+  //   }
+  // };
+
   const handleEndDateChange = async newDate => {
     formikProps.setFieldValue(
       'EndDate',
       newDate.format(DATE_FORMAT.toUpperCase())
     );
-    if (!newDate || !values.Team) return;
-    const formattedStartDate = values.StartDate
-      ? dayjs(values.StartDate).format(DATE_FORMAT.toUpperCase())
-      : null;
-    const formattedEndDate = newDate.format(DATE_FORMAT.toUpperCase());
 
-    const postData = {
-      'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-        TeamId: values.Team,
-        StartDate: formattedEndDate,
-        EndDate: '2099-08-31',
-      },
-    };
+    if (!newDate || !values.Team) return;
 
     try {
-      const result = await fetchTeamAllocationsForSaga(postData);
-      const allocations = result?.result ?? [];
-      const matchedResource = resources.result.find(
-        resource => resource.Email === values.Email
+      const { resourceAllocations } = await fetchResourceAllocations(
+        values.Team,
+        newDate.format(DATE_FORMAT.toUpperCase()),
+        values.Email,
+        resources.result
       );
-      const resourceId = matchedResource?.Id;
-      if (!resourceId) {
-        console.error('Resource ID not found for email:', values.Email);
-        return;
-      }
-      const resourceAllocations = allocations.filter(
-        alloc => alloc.Resource === resourceId
-      );
+
       const hasFutureAllocations = resourceAllocations.some(allocation =>
         dayjs(allocation.Period).isAfter(dayjs(newDate), 'day')
       );
-      if (hasFutureAllocations) {
-        formikProps.setFieldValue('ConfirmTransfer', false);
-        setShowWarning(true);
-      } else {
-        formikProps.setFieldValue('ConfirmTransfer', true);
-        setShowWarning(false);
-      }
+
+      formikProps.setFieldValue('ConfirmTransfer', !hasFutureAllocations);
+      setShowWarning(hasFutureAllocations);
     } catch (error) {
       console.error('Error fetching allocations:', error);
     }
   };
 
-  const handleShareDeepLink = () => {
+  const handleShareDeepLink = async () => {
+    // debugger;
     const resourceFullName =
       `${formikProps.values.FirstName} ${formikProps.values.LastName}`.trim();
+      const formattedEndDate = dayjs(formikProps.values.EndDate).format(
+        'YYYY-MM-DD'
+      );
+    const { resourceAllocations, resourceId } = await fetchResourceAllocations(
+      values.Team,
+      formattedEndDate,
+      values.Email,
+      resources.result
+    );
+    const actualMaxDate = getMaxAllocationDate(resourceAllocations, resourceId);
+
+    const fallbackDate = dayjs(addWeeks(new Date(formattedEndDate), 51)).format(
+      'YYYY-MM-DD'
+    );
+    const maxDate =
+      actualMaxDate && dayjs(actualMaxDate).isAfter(dayjs(fallbackDate))
+        ? actualMaxDate
+        : fallbackDate;
+
     const reviewLink = compressToEncodedURIComponent(
       JSON.stringify(
         getOnlyFilterSettings({
           GroupBy: 'Teams',
-          StartDate: dayjs(formikProps.values.EndDate).format('YYYY-MM-DD'),
-          EndDate: '2099-08-31',
+          StartDate: dayjs(formikProps.values.EndDate).format(
+            'YYYY-MM-DD'
+          ),
+          EndDate: maxDate,
           ColumnsVisible: [
             '__row_group_by_columns_group_teams__',
             '__row_group_by_columns_group_resource__',

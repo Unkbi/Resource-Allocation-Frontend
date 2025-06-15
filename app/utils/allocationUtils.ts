@@ -26,6 +26,8 @@ import {
 } from './common';
 import { DATE_FORMAT } from '../constants/constants';
 import { GridApi } from '@mui/x-data-grid-premium';
+import dayjs from 'dayjs';
+import { fetchTeamAllocationsForSaga } from '../services/teamServices';
 
 export const formatAllocations = (
   allocationsData: ApiResponse<Allocation[]>,
@@ -637,4 +639,54 @@ export const normalizeRow = (row: AllocationGridCell) => {
   });
 
   return normalized;
+};
+
+export const getMaxAllocationDate = (
+  allocations: Allocation[],
+  resourceId: string
+): string | null => {
+  if (!allocations || allocations.length === 0) return null;
+  const resourceAllocations = allocations.filter(
+    alloc => alloc.Resource === resourceId
+  );
+  if (resourceAllocations.length === 0) return null;
+  const period = resourceAllocations.map(d => d.Period);
+  if (period.length === 0) return null;
+  const maxPeriod = period.reduce((latest, current) =>
+    dayjs(current).isAfter(dayjs(latest)) ? current : latest
+  );
+  return maxPeriod;
+};
+
+export const fetchResourceAllocations = async (
+  teamId: string,
+  endDate: string,
+  email: string,
+  resources: Resource[],
+) => {
+  const postData = {
+    'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+      TeamId: teamId,
+      StartDate: endDate,
+      EndDate: '2099-08-31',
+    },
+  };
+
+  const result = await fetchTeamAllocationsForSaga(postData);
+  const allocations = (result?.result ?? []) as Allocation[];
+
+  const matchedResource = resources.find(resource => resource.Email === email);
+
+  const resourceId = matchedResource?.Id;
+
+  if (!resourceId) {
+    console.error('Resource ID not found for email:', email);
+    return { resourceAllocations: [], resourceId: null };
+  }
+
+  const resourceAllocations = allocations.filter(
+    alloc => alloc.Resource === resourceId
+  );
+
+  return { resourceAllocations, resourceId };
 };

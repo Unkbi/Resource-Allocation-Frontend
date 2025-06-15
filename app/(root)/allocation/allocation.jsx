@@ -19,6 +19,7 @@ import { decompressFromEncodedURIComponent } from 'lz-string';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCost';
 import TeamsCost from '@/app/components/ResourceAllocation/component/TeamsCost';
+import dayjs from 'dayjs';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -29,6 +30,13 @@ export default function Allocation({ startDate, endDate }) {
   const { resources } = useSelector(state => state.resources);
   const searchParams = useSearchParams();
   const settingsParam = searchParams.get('settings');
+  
+  const defaultStartDate = dayjs().format('YYYY-MM-DD');
+  const defaultEndDate = dayjs().add(51, 'week').format('YYYY-MM-DD');
+
+  const effectiveStartDate = currentView?.StartDate || defaultStartDate;
+  const effectiveEndDate = currentView?.EndDate || defaultEndDate;
+
   useEffect(() => {
     dispatch(fetchAllResources());
     dispatch(fetchAllProjects());
@@ -64,7 +72,12 @@ export default function Allocation({ startDate, endDate }) {
         case 'Project':
           return <ProjectAllocation startDate={startDate} endDate={endDate} />;
         case 'Teams':
-          return <TeamAllocation startDate={startDate} endDate={endDate} />;
+          return (
+            <TeamAllocation
+              startDate={effectiveStartDate}
+              endDate={effectiveEndDate}
+            />
+          );
         case 'Project Cost':
           return <ProjectCost startDate={startDate} endDate={endDate} />;
         case 'Teams Cost':
