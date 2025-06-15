@@ -84,6 +84,7 @@ import {
 } from '@mui/x-date-pickers-pro';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -329,6 +330,7 @@ const ViewButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
   fontWeight: 500,
   fontSize: '14px',
+  maxWidth: '160px',
   '&:hover': {
     backgroundColor: '#f9fcff',
   },
@@ -1137,7 +1139,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 aria-haspopup="true"
                 aria-expanded={open ? 'true' : undefined}
               >
-                {currentViewName}
+                <EllipsisNameCell value={currentViewName}></EllipsisNameCell>
               </ViewButton>
 
               <StyledMenu
@@ -1229,7 +1231,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 },
               }}
             >
-              Save View
+             <EllipsisNameCell value={'Save View'}/>
             </Button>
           </Box>
         </Box>
