@@ -81,6 +81,7 @@ export default function AllocationGrid({
   columnsFilterable = true,
   type = '',
   viewId = 'main',
+  showActuals = false,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef } = useDataGrid();
@@ -614,7 +615,8 @@ export default function AllocationGrid({
     currentView?.isFixedRange
       ? currentView.endDate || endDate
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
-    type === 'cost'
+    type === 'cost',
+    showActuals
   );
 
   const showField = [

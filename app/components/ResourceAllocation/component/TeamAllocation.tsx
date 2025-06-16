@@ -605,6 +605,7 @@ export default function TeamAllocation({
           }}
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
+          showActuals={true}
         />
         {!allAllocations && !loading && (
           <div
