@@ -88,7 +88,7 @@ import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
-  padding: '7px 14px 5px 14px',
+  padding :'7px 5px 7px 7px' ,
   justifyContent: 'space-between',
   alignItems: 'center',
   borderRight: '#DDE1E4 solid 1px',
