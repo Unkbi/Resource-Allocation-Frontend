@@ -79,19 +79,12 @@ export const truncateLabel = (label, maxLength = 20) => {
 }
 
 // Utility function to format team names for charts
-export const formatTeamName = (teamName, maxLength = 8, itemCount = 1) => {
+export const formatTeamName = (teamName, maxLength = 10, itemCount = 1) => {
   if (!teamName || typeof teamName !== "string") return teamName
 
   // Adjust max length based on number of items
-  const adjustedLength = itemCount > 5 ? Math.max(maxLength - 2, 6) : maxLength
+  const adjustedLength = itemCount > 4 ? Math.max(maxLength - 2, 10) : maxLength
 
-  if (teamName.length <= adjustedLength) return teamName
+  return teamName.length > adjustedLength && itemCount > 4 ? `${teamName.slice(0, adjustedLength)}${teamName.slice(adjustedLength)}` : teamName
 
-  // Try to break at word boundaries
-  const words = teamName.split(" ")
-  if (words.length > 1 && words[0].length <= adjustedLength) {
-    return words[0]
-  }
-
-  return `${teamName.slice(0, adjustedLength)}...`
 }
