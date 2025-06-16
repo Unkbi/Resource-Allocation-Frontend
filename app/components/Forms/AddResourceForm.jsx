@@ -230,12 +230,26 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
   // };
 
   const handleEndDateChange = async newDate => {
+    const currentEndDate = formikProps.values.EndDate;
+    const formattedNewDate = newDate
+      ? newDate.format(DATE_FORMAT.toUpperCase())
+      : null;
+    if (
+      currentEndDate &&
+      formattedNewDate &&
+      currentEndDate === formattedNewDate
+    ) {
+      formikProps.setFieldValue('EndDate', null);
+      formikProps.setFieldValue('ConfirmTransfer', false);
+      setShowWarning(false);
+      return;
+    }
     formikProps.setFieldValue(
       'EndDate',
       newDate.format(DATE_FORMAT.toUpperCase())
     );
 
-    if (!newDate || !values.Team) return;
+    if (!formattedNewDate || !values.Team) return;
 
     try {
       const { resourceAllocations } = await fetchResourceAllocations(
