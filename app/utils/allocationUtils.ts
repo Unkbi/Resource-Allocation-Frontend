@@ -14,6 +14,7 @@ import {
   ApiResponse,
   CostAllocation,
   Project,
+  ProjectsTableRow,
   Resource,
   Team,
 } from '../types';
@@ -622,4 +623,72 @@ export const normalizeRow = (row: AllocationGridCell) => {
   });
 
   return normalized;
+};
+
+export const generateEmptyAllocation = (
+  id: string,
+  template: AllocationGridCell,
+  project: ProjectsTableRow | null
+) => {
+  const empty: AllocationGridCell = {
+    id: id,
+    resourceId: null,
+    project: project?.Name || null,
+    projectId: project?.Id || null,
+    projectSponsor: project?.ProjectSponsor,
+    projectManager: project?.ProjectManager,
+    projectStatus: project?.Status,
+    projectLocation: project?.Location,
+    projectType: project?.Type,
+    projectOvertimeAllowed: project?.AllowOvertime,
+    projectCost: project?.Cost,
+    projectCurrency: project?.CostCurrency,
+    projectStartDate: project?.StartDate,
+    projectEndDate: project?.EndDate,
+    resource: null,
+    totalEffort: null,
+    role: null,
+    teams: null,
+    resourceType: null,
+  };
+
+  // Extract Wxx weeks and set them to empty values with preserved "period"
+  Object.entries(template).forEach(([key, value]) => {
+    if (/^W\d+$/.test(key)) {
+      empty[key] = {
+        allocationId: null,
+        value: null,
+        period: (value as AllocationGridCellData)?.period ?? null,
+      };
+    }
+  });
+
+  return empty;
+};
+
+export const filterAllocationsForSelectedProject = (
+  allocations: AllAllocations[],
+  splitViewCurrentProject: ProjectsTableRow | null
+) => {
+  if (allocations && allocations.length > 0 && splitViewCurrentProject) {
+    const selectedProjectAllocations = allocations.filter(
+      allocation => allocation.projectId === splitViewCurrentProject.Id
+    );
+
+    const filledAllocations = [
+      ...selectedProjectAllocations,
+      ...Array.from(
+        { length: 10 - selectedProjectAllocations.length },
+        (_, index) =>
+          generateEmptyAllocation(
+            `${splitViewCurrentProject.Id}_${index}`,
+            allocations[0],
+            splitViewCurrentProject
+          )
+      ),
+    ];
+
+    return filledAllocations;
+  }
+  return allocations;
 };

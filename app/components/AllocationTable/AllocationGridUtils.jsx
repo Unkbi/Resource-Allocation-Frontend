@@ -187,6 +187,14 @@ const CellWithMenu = ({
             'projectAllocation',
             childrenRows.map(r => ({ ...r, _action: 'delete' }))
           );
+          updateRowsForView(
+            'topProject',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'bottomTeam',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
 
           dispatch(
             showToast({
@@ -208,6 +216,18 @@ const CellWithMenu = ({
           updateRowsForView(
             'projectAllocation',
             getAllRowsForView('projectAllocation')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'topProject',
+            getAllRowsForView('topProject')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'bottomTeam',
+            getAllRowsForView('bottomTeam')
               .filter(r => r.id === row.id)
               .map(r => ({ ...r, _action: 'delete' }))
           );

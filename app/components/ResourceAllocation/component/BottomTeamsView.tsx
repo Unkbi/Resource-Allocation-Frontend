@@ -1,12 +1,7 @@
 'use client';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import { useEffect, useState, useMemo, use } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  fetchAllTeams,
-  fetchResourcesAgainstTeams,
-} from '@/app/redux/actions/fetchTeamsAction';
-import { resetResources } from '@/app/redux/reducers/teamsReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
@@ -16,6 +11,7 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { getCombinedAllocation } from '@/app/utils/allocationUtils';
 
 interface BottomTeamsViewProps {
   startDate: string | null;
@@ -36,7 +32,7 @@ export default function BottomTeamsView({
   );
   // const { startDate, endDate } = calendarDate || {};
 
-  const { setRows, ready } = useAllocationGrid('bottomTeam');
+  const { setRows, ready, getAllRows } = useAllocationGrid('bottomTeam');
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -127,10 +123,6 @@ export default function BottomTeamsView({
     return allocations.filter(allocation => allocation.teams);
   };
 
-  const enrichedResources = computeAverageAllocations(
-    removeResourcesWithNoTeams(allAllocations || []) ?? []
-  );
-
   const hasZeroAllocation = (row: AllAllocations) => {
     if (row._avgPeriodAllocation === 0) return true;
     return Object.keys(row).every(key => {
@@ -146,26 +138,37 @@ export default function BottomTeamsView({
   };
 
   const filteredResources = useMemo(() => {
-    return enrichedResources.filter(row => {
-      const teamMatch = selectedTeam.length
-        ? row.teams && selectedTeam.some(team => team.label === row.teams)
-        : true;
+    if (ready && (allAllocations || getAllRows())) {
+      // Combine to keep upto Date information.
+      const allRows = getCombinedAllocation(
+        getAllRows() as AllAllocations[],
+        allAllocations || []
+      );
+      const enrichedResources = computeAverageAllocations(
+        removeResourcesWithNoTeams(allRows) ?? []
+      );
 
-      const avgWeekly = row._avgPeriodAllocation ?? 0;
-      if (allocationThreshold === 0) {
-        return teamMatch && hasZeroAllocation(row);
-      }
-      if (allocationThreshold > 1) {
-        return teamMatch;
-      }
+      return enrichedResources.filter(row => {
+        const teamMatch = selectedTeam.length
+          ? row.teams && selectedTeam.some(team => team.label === row.teams)
+          : true;
 
-      return teamMatch && avgWeekly <= allocationThreshold;
-    });
-  }, [enrichedResources, selectedTeam, allocationThreshold]);
+        const avgWeekly = row._avgPeriodAllocation ?? 0;
+        if (allocationThreshold === 0) {
+          return teamMatch && hasZeroAllocation(row);
+        }
+        if (allocationThreshold > 1) {
+          return teamMatch;
+        }
+
+        return teamMatch && avgWeekly <= allocationThreshold;
+      });
+    }
+  }, [ready, allAllocations, selectedTeam, allocationThreshold]);
 
   useEffect(() => {
     if (ready && allAllocations) {
-      setRows(filteredResources);
+      setRows(filteredResources || []);
     }
   }, [ready, allAllocations, filteredResources]);
 
