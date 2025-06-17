@@ -182,7 +182,6 @@ export default function AllocationGrid({
           resourcesSelected.push(currentRowData.resource);
         }
 
-        debugger;
         // Append the project
         if (row.startsWith('auto-generated')) {
           if (
