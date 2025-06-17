@@ -252,8 +252,14 @@ export function formatAllAllocations(
 export function injectBlankRows(
   allocations: AllAllocations[],
   teams: Team[],
-  teamsResources: Record<string, Resource[]>
+  teamsResources: Record<string, Resource[]>,
+  StartDate?: string,
+  EndDate?: string
 ) {
+  let weeks = null;
+  if (StartDate && EndDate) {
+    weeks = getWeeksInRange(StartDate, EndDate);
+  }
   const existingKeys = new Set(
     allocations.map(a => `${a.teams}___${a.resourceId}`)
   );
@@ -290,6 +296,15 @@ export function injectBlankRows(
           teamId: team.Id,
           hasAllocation: false,
         });
+        if (weeks) {
+          weeks.forEach(week => {
+            extraRows[extraRows.length - 1][week.key] = {
+              allocationId: null,
+              value: null,
+              period: week.period,
+            };
+          });
+        }
       }
     });
   });
