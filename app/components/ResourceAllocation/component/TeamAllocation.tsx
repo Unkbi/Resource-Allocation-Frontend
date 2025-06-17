@@ -91,7 +91,9 @@ export default function TeamAllocation({
             ) || [],
             teams?.result || [],
             // @ts-ignore
-            teamsResources
+            teamsResources,
+            startDate,
+            endDate
           )
         );
       } else if (allAllocations) {

@@ -618,7 +618,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       borderBottom: '2px solid #FFCD9C',
     },
     '& .firstGroupsRow': {
-      backgroundColor: 'rgb(233, 239, 248) !important',
+      backgroundColor:
+        groupBy === 'project'
+          ? 'rgb(233, 239, 248)'
+          : 'rgb(233, 239, 248) !important',
       fontWeight: groupBy === 'project' ? 'bold' : '',
       color: groupBy === 'project' ? '#313F68' : '',
     },

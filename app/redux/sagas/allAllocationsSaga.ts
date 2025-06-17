@@ -100,7 +100,9 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     const fullAllocations = injectBlankRows(
       formattedAllocations,
       teams,
-      teamResourceObject
+      teamResourceObject,
+      startDate,
+      endDate
     );
 
     if (fullAllocations.length) {
@@ -194,7 +196,9 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
     const fullAllocations = injectBlankRows(
       formattedAllocations,
       teams,
-      teamResourceObject
+      teamResourceObject,
+      startDate,
+      endDate
     );
 
     if (fullAllocations.length) {
@@ -265,7 +269,9 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
     const fullAllocations = injectBlankRows(
       formattedAllocations,
       teams,
-      teamsResources
+      teamsResources,
+      startDate,
+      endDate
     );
 
     yield put(updateAllAllocations(fullAllocations));
