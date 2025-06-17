@@ -129,6 +129,8 @@ export default function ActualsPage() {
           })) || []),
         ],
       };
+
+      if(isModified && !hasInvalidRows) {
       new Promise((resolve, reject) => {
         dispatch({
           type: CONFIRM_ACTUAL_ALLOCATIONS,
@@ -163,6 +165,17 @@ export default function ActualsPage() {
             })
           );
         });
+      } else {
+      dispatch(
+        showToast({
+          open: true,
+          message: hasInvalidRows ? 'Must fill required fields.' : 'No changes present to confirm.',
+          type: hasInvalidRows ? 'error' : 'info',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    }
     } else {
       dispatch(
         showToast({
@@ -351,30 +364,33 @@ export default function ActualsPage() {
             <Button
               variant="contained"
               sx={{
-                bgcolor: '#1C2D5F',
-                px: 2,
-                width: '192px',
-                height: '36px',
-                borderRadius: '5px',
+              bgcolor: '#1C2D5F',
+              px: 2,
+              width: '192px',
+              height: '36px',
+              borderRadius: '5px',
               }}
               disabled={
-                status !== null &&
-                status !== 'Proposed' &&
-                (!isModified || show || hasInvalidRows)
+              status !== null &&
+              startDate !== null &&
+              status !== 'Proposed' &&
+              // Enable button if it's the current week even if status is 'Confirmed'
+              !isCurrentWeek(parseISO(startDate)) &&
+              (!isModified || show || hasInvalidRows)
               }
               onClick={handleConfirmed}
             >
               <Typography
-                sx={{
-                  color: '#FFF',
-                  textAlign: 'center',
-                  fontFamily: 'Open Sans',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  textTransform: 'none',
-                }}
+              sx={{
+                color: '#FFF',
+                textAlign: 'center',
+                fontFamily: 'Open Sans',
+                fontSize: 14,
+                fontWeight: 600,
+                textTransform: 'none',
+              }}
               >
-                {status === 'Confirmed' ? 'Modify' : 'Confirm'}
+              {status === 'Confirmed' ? 'Modify' : 'Confirm'}
               </Typography>
             </Button>
 
