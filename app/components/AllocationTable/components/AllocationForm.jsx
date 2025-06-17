@@ -695,7 +695,7 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
-
+          // await dispatch(fetchAllResources());
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);

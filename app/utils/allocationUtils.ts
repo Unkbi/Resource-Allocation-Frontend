@@ -15,6 +15,7 @@ import {
   CostAllocation,
   Project,
   Resource,
+  ResourceAllocation,
   Team,
 } from '../types';
 import {
@@ -27,7 +28,7 @@ import {
 import { DATE_FORMAT } from '../constants/constants';
 import { GridApi } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
-import { fetchTeamAllocationsForSaga } from '../services/teamServices';
+import { fetchResourceAllocationsForSaga, fetchTeamAllocationsForSaga } from '../services/teamServices';
 
 export const formatAllocations = (
   allocationsData: ApiResponse<Allocation[]>,
@@ -674,19 +675,50 @@ export const fetchResourceAllocations = async (
 
   const result = await fetchTeamAllocationsForSaga(postData);
   const allocations = (result?.result ?? []) as Allocation[];
-
   const matchedResource = resources.find(resource => resource.Email === email);
-
   const resourceId = matchedResource?.Id;
-
   if (!resourceId) {
     console.error('Resource ID not found for email:', email);
     return { resourceAllocations: [], resourceId: null };
   }
-
   const resourceAllocations = allocations.filter(
     alloc => alloc.Resource === resourceId
   );
 
   return { resourceAllocations, resourceId };
+};
+
+export const getResourceAllocationsForPeriod = async (
+  resourceId: string,
+  startDate: string
+): Promise<ResourceAllocation[]> => {
+  if (!resourceId || !startDate) {
+    return [];
+  }
+
+  const postData = {
+    'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
+      Resource: resourceId,
+      StartDate: startDate,
+      EndDate: '2099-08-31',
+    },
+  };
+
+  try {
+    const result = await fetchResourceAllocationsForSaga(postData);
+    return result?.result ?? [];
+  } catch (error) {
+    console.error('Error fetching resource allocations:', error);
+    return [];
+  }
+};
+
+export const getResourceIdByEmail = (
+  allResources: { Id: string; Email: string }[],
+  email: string
+): string | null => {
+  if (!Array.isArray(allResources) || !email) return null;
+
+  const matched = allResources.find(resource => resource.Email === email);
+  return matched?.Id ?? null;
 };

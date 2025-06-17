@@ -3,6 +3,7 @@ import axiosInstance from '../utils/apiClient';
 import { API_PROJECT_PORTFOLIO } from '../constants/constants';
 import {
   GetAllAllocationsForPeriodPayload,
+  GetResourceAllocationsForPeriodPayload,
   GetTeamAllocationsForPeriodPayload,
   GetTeamResourcesPayload,
 } from '../types';
@@ -93,6 +94,18 @@ export const fetchTeamAllocationsForSaga = async (
   );
   return response.data;
 };
+
+
+export const fetchResourceAllocationsForSaga = async (
+  postData: GetResourceAllocationsForPeriodPayload
+) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/GetResourceAllocationsForPeriod`,
+    postData
+  );
+  return response.data;
+};
+
 
 
 export const getResourceDetail = createAsyncThunk(
