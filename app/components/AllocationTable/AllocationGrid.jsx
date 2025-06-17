@@ -132,13 +132,27 @@ export default function AllocationGrid({
       apiRef.current.getSelectedCellsAsArray().length >= 2 &&
       !cellSelectionModel['restoreFocus']
     ) {
+      // handle key up event for cell selection
       const resourcesSelected = [];
+      const projectsSelected = [];
       let StartDate, EndDate;
+
       Object.entries(cellSelectionModel).forEach(([row, weeks]) => {
-        const currentRowData = apiRef.current.getRow(row);
+        let currentRowData = apiRef.current.getRow(row);
+        if (row.startsWith('auto-generated')) {
+          currentRowData = apiRef.current.getRowNode(row);
+        } else {
+          currentRowData = apiRef.current.getRow(row);
+        }
 
         Object.keys(weeks).forEach(weekN => {
-          const period = currentRowData?.[weekN]?.period;
+          let rowDetails = null;
+          if (row.startsWith('auto-generated')) {
+            rowDetails = apiRef.current.getRow(currentRowData?.children[0]);
+          } else {
+            rowDetails = currentRowData;
+          }
+          const period = rowDetails?.[weekN]?.period;
           if (period) {
             StartDate = StartDate
               ? isBefore(period, StartDate)
@@ -153,20 +167,41 @@ export default function AllocationGrid({
           }
         });
 
-        if (
+        // Append the resource
+        if (row.startsWith('auto-generated')) {
+          if (
+            currentRowData.groupingField === 'resource' &&
+            !resourcesSelected.includes(currentRowData.groupingKey) // groupingKey is the resource name.
+          ) {
+            resourcesSelected.push(currentRowData.groupingKey);
+          }
+        } else if (
           currentRowData?.resource &&
           !resourcesSelected.includes(currentRowData.resource)
         ) {
           resourcesSelected.push(currentRowData.resource);
         }
+
+        // Append the project
+        if (row.startsWith('auto-generated')) {
+          if (
+            currentRowData.groupingField === 'project' &&
+            !projectsSelected.includes(currentRowData.groupingKey) // groupingKey is the project name.
+          ) {
+            projectsSelected.push(currentRowData.groupingKey);
+          } else if (
+            currentRowData.groupingField === 'resource' &&
+            splitViewCurrentProject
+          ) {
+            projectsSelected.push(splitViewCurrentProject.Name);
+          }
+        } else if (
+          currentRowData?.project &&
+          !projectsSelected.includes(currentRowData.project)
+        ) {
+          projectsSelected.push(currentRowData.project);
+        }
       });
-      const projectsSelected = [
-        ...new Set(
-          Object.keys(cellSelectionModel).map(
-            row => apiRef.current.getRow(row)?.project
-          )
-        ),
-      ];
 
       setCellSelectionModel({ ...cellSelectionModel, restoreFocus: true });
       dispatch(
@@ -1005,6 +1040,27 @@ export default function AllocationGrid({
     };
 
     let filteredModel = {};
+    if (Object.keys(newModel)[0].startsWith('auto-generated')) {
+      if (
+        apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
+        'teams'
+      ) {
+        setCellSelectionModel({});
+        return;
+      }
+      if (Object.keys(newModel).length > 1) {
+        filteredModel = cellSelectionModel;
+      } else {
+        const key = Object.keys(newModel)[0];
+        const newModelWithValidFields = getNewModelWithValidFields(
+          newModel[key]
+        );
+        filteredModel = {
+          [key]: newModelWithValidFields,
+        };
+      }
+    }
+
     Object.keys(newModel).forEach(key => {
       if (!key.startsWith('auto-generated')) {
         // Filter out auto-generated rows

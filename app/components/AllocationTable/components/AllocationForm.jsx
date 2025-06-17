@@ -90,6 +90,7 @@ import {
 } from '@/app/redux/actions/employeeRatesActions';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
+  filterAllocationsForSelectedProject,
   generateEmptyRow,
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
@@ -236,7 +237,9 @@ const AllocationForm = () => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { projects } = useSelector(state => state.projects);
-  const { currentView, splitView } = useSelector(state => state.allocationView);
+  const { currentView, splitView, splitViewCurrentProject } = useSelector(
+    state => state.allocationView
+  );
   const { teams, teamsResources, calendarDate } = useSelector(
     state => state.teams
   );
@@ -982,7 +985,9 @@ const AllocationForm = () => {
 
                 const blankRowsToBeRemoved = Object.values(formateUpdate).map(
                   row =>
-                    getAllRowsForView('teamAllocation').find(
+                    getAllRowsForView(
+                      splitView ? 'bottomTeam' : 'teamAllocation'
+                    ).find(
                       r =>
                         r.id.includes(row.teams) && r.id.includes(row.resource)
                     )
@@ -1035,8 +1040,30 @@ const AllocationForm = () => {
               ];
               if (allUpdatedRows?.length > 0) {
                 if (splitView) {
-                  topProjectAllocationGrid.updateRows(allUpdatedRows);
-                  bottomTeamAllocationGrid.updateRows(allUpdatedRows);
+                  let allRowsForTopProjectAllocationGrid =
+                    topProjectAllocationGrid.getAllRows();
+                  // Update Allocation for Top Project Allocation Grid
+                  await updateRowsForView('topProject', [
+                    ...allUpdatedRows,
+                    ...allRowsForTopProjectAllocationGrid
+                      .filter(row => row.id.startsWith(row.projectId))
+                      .map(row => ({
+                        ...row,
+                        _action: 'delete',
+                      })),
+                  ]);
+                  // After completing filter to show only current selected Project
+                  allRowsForTopProjectAllocationGrid =
+                    topProjectAllocationGrid.getAllRows();
+                  topProjectAllocationGrid.setRows(
+                    filterAllocationsForSelectedProject(
+                      allRowsForTopProjectAllocationGrid,
+                      splitViewCurrentProject
+                    )
+                  );
+
+                  // Update Allocation for Bottom Team Allocation Grid
+                  updateRowsForView('bottomTeam', allUpdatedRows);
                 } else {
                   updateRowsForView('projectAllocation', allUpdatedRows);
                   updateRowsForView('teamAllocation', allUpdatedRows);
