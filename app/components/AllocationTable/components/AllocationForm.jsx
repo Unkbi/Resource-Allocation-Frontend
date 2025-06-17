@@ -482,9 +482,6 @@ const AllocationForm = () => {
               );
               console.error('Failed to add project:', error);
             });
-          if (pathname !== '/project') {
-            router.replace('/project');
-          }
         } catch (e) {
           console.error('Failed to add project:', e);
         }
@@ -565,7 +562,6 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add team:', e);
         }
-        dispatch(closeDialog());
         break;
 
       case 'edit_team':
@@ -685,16 +681,29 @@ const AllocationForm = () => {
         };
 
         try {
-          await dispatch(
+          const result = await dispatch(
             updateResource({
               postData,
               resourceId: initialData.Id,
             })
           );
 
+          if (result.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update resource`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
+
           // Check if team changed and update if needed
           if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
-            await dispatch({
+            const teamResult = await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
                 'ResourceAllocation.Core/ChangeTeamResource': {
@@ -703,6 +712,18 @@ const AllocationForm = () => {
                 },
               },
             });
+            if (teamResult.meta?.requestStatus === 'rejected') {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Failed to update team`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return;
+            }
           }
 
           // Check if organization changed and update if needed
@@ -710,7 +731,7 @@ const AllocationForm = () => {
             teamOrgData.organisationId &&
             teamOrgData.organisationName !== initialData.Organization
           ) {
-            await dispatch({
+            const orgResult = await dispatch({
               type: 'UPDATE_RESOURCE_ORGANISATION',
               payload: {
                 'ResourceAllocation.Core/ChangeTeamOrganization': {
@@ -719,6 +740,18 @@ const AllocationForm = () => {
                 },
               },
             });
+            if (orgResult.meta?.requestStatus === 'rejected') {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Failed to update organisation`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return;
+            }
           }
           await dispatch({
             type: FETCH_ALL_RESOURCES_DETAIL,
@@ -729,6 +762,15 @@ const AllocationForm = () => {
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to update resource`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
         }
         break;
 
@@ -1107,9 +1149,9 @@ const AllocationForm = () => {
               4000
             )
           );
-        } finally {
-          dispatch(closeDialog());
+          return;
         }
+        dispatch(closeDialog());
         break;
 
       case 'new_view':
