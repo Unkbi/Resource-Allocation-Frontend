@@ -184,61 +184,16 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     }
   }, []);
 
-  // const handleEndDateChange = async newDate => {
-  //   const formattedNewDate = newDate
-  //     ? newDate.format(DATE_FORMAT.toUpperCase())
-  //     : null;
-  //   formikProps.setFieldValue(
-  //     'EndDate',
-  //     newDate?.format(DATE_FORMAT.toUpperCase())
-  //   );
-  //   if (!formattedNewDate || !values.Team) return;
-  //   if (formType !== 'edit_resource') return;
-  //   try {
-  //     await dispatch(fetchAllResources());
-  //     const { resourceAllocations } = await fetchResourceAllocations(
-  //       values.Team,
-  //       newDate.format(DATE_FORMAT.toUpperCase()),
-  //       values.Email,
-  //       resources.result
-  //     );
-
-  //     const hasFutureAllocations = resourceAllocations.some(allocation =>
-  //       dayjs(allocation.Period).isAfter(dayjs(newDate), 'day')
-  //     );
-
-  //     formikProps.setFieldValue('ConfirmTransfer', !hasFutureAllocations);
-  //     setShowWarning(hasFutureAllocations);
-  //   } catch (error) {
-  //     console.error('Error fetching allocations:', error);
-  //   }
-  // };
-
   const handleEndDateChange = async newDate => {
     const formattedEndDate = newDate?.format(DATE_FORMAT.toUpperCase());
     formikProps.setFieldValue('EndDate', formattedEndDate);
     if (formType !== 'edit_resource') return;
-
-    // const matchedResource = resources.result.find(
-    //   resource => resource.Email === values.Email
-    // );
-    // const resourceId = matchedResource?.Id;
     try {
     const resourceId = getResourceIdByEmail(resources.result, values.Email);
     if (!resourceId) {
       console.error('Resource ID not found for email:', values.Email);
       return;
     }
-    // const postData = {
-    //   'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
-    //     Resource: resourceId, 
-    //     StartDate: formattedEndDate,
-    //     EndDate: '2099-08-31',
-    //   },
-    // };
-    // const result = await fetchResourceAllocationsForSaga(postData);
-    // console.log(result, 'res');
-    // const allocations = result?.result ?? [];
    
     const allocations = await getResourceAllocationsForPeriod(
       resourceId,
@@ -247,7 +202,6 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     const hasFutureAllocations = allocations.some(allocation =>
       dayjs(allocation.Period).isAfter(newDate, 'day')
     );
-    console.log(hasFutureAllocations , "future alocation")
     if (hasFutureAllocations) {
       formikProps.setFieldValue('ConfirmTransfer', !hasFutureAllocations);
       setShowWarning(true);
@@ -265,36 +219,18 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       const formattedEndDate = dayjs(formikProps.values.EndDate).format(
         'YYYY-MM-DD'
       );
-
-    // const matchedResource = resources.result.find(
-    //   resource => resource.Email === values.Email
-    // );
-    // const resourceId = matchedResource?.Id;
     const resourceId = getResourceIdByEmail(resources.result, values.Email);
     if (!resourceId) {
       console.error('Resource ID not found for email:', values.Email);
       return;
     }
-    // const postData = {
-    //   'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
-    //     Resource: resourceId,
-    //     StartDate: formattedEndDate,
-    //     EndDate: '2099-08-31',
-    //   },
-    // };
-    // const result = await fetchResourceAllocationsForSaga(postData);
-    // const allocations = result?.result ?? [];
-
     const allocations = await getResourceAllocationsForPeriod(
       resourceId,
       formattedEndDate
     );
-  
-
     const resourceAllocations = allocations.filter(
       alloc => alloc.Resource === resourceId
     );
-  
     const actualMaxDate = getMaxAllocationDate(resourceAllocations, resourceId);
 
     const fallbackDate = dayjs(addWeeks(new Date(formattedEndDate), 51)).format(
