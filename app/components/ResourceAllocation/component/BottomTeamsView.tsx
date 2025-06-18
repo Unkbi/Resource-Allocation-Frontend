@@ -27,7 +27,7 @@ export default function BottomTeamsView({
   >([]);
   const [allocationThreshold, setAllocationThreshold] = useState(1.2);
   const dispatch = useDispatch<AppDispatch>();
-  const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
+  const { allAllocations, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
   // const { startDate, endDate } = calendarDate || {};
@@ -200,12 +200,12 @@ export default function BottomTeamsView({
     <>
       <Box
         sx={{
-          height: loading || dataProcessing ? '100vh' : 'var(--height)',
+          height: dataProcessing ? '100vh' : 'var(--height)',
           width: '100%',
         }}
       >
         <AllocationGrid
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           groupBy="teams"
           mode="split"
           startDate={startDate}
