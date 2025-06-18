@@ -60,7 +60,7 @@ export default function CommentCell(props: CommentCellProps) {
               },
         },
         '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: showError ? '#d32f2f' : 'transparent',
+          borderColor: 'transparent',
         },
         '& input::placeholder': {
           color: showError ? '#d32f2f' : '#aaa',
@@ -69,6 +69,9 @@ export default function CommentCell(props: CommentCellProps) {
         '& .MuiFormHelperText-root': {
           marginLeft: '4px',
           fontSize: '11px',
+        },
+        '& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline': {
+          borderColor: 'transparent !important', // Remove the red border
         },
       }}
     />

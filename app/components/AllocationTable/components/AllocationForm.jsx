@@ -73,16 +73,13 @@ import {
   createResourceWithTeamAndOrg,
   updateResource,
 } from '@/app/services/resourceServices';
+import { postTeamResource } from '@/app/services/teamServices';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
-import {
-  addResourceToTeam,
-  createTeam,
-  updateTeam,
-} from '@/app/services/teamServices';
+import { createTeam, updateTeam } from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import AddTeamForm from '../../Forms/AddTeamForm';
@@ -94,12 +91,13 @@ import {
 } from '@/app/redux/actions/employeeRatesActions';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
+  filterAllocationsForSelectedProject,
   generateEmptyRow,
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { isCellEditableUtils } from '@/app/utils/common';
-
+import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 const initialValuesMap = {
   add_project: {
     StartDate: '',
@@ -242,7 +240,9 @@ const AllocationForm = () => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { projects } = useSelector(state => state.projects);
-  const { currentView, splitView } = useSelector(state => state.allocationView);
+  const { currentView, splitView, splitViewCurrentProject } = useSelector(
+    state => state.allocationView
+  );
   const { teams, teamsResources, calendarDate } = useSelector(
     state => state.teams
   );
@@ -276,6 +276,17 @@ const AllocationForm = () => {
   const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
+
+  const [teamOrgData, setTeamOrgData] = useState({
+    teamId: null,
+    organisationId: null,
+    teamName: '',
+    organisationName: '',
+  });
+
+  const handleResourceFormChange = data => {
+    setTeamOrgData(data);
+  };
 
   const getValidationSchema = formType => {
     switch (formType) {
@@ -690,6 +701,35 @@ const AllocationForm = () => {
               resourceId: initialData.Id,
             })
           );
+
+          // Check if team changed and update if needed
+          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
+            await dispatch({
+              type: 'UPDATE_RESOURCE_TEAM',
+              payload: {
+                'ResourceAllocation.Core/ChangeTeamResource': {
+                  Resource: initialData.Id,
+                  Team: teamOrgData.teamId,
+                },
+              },
+            });
+          }
+
+          // Check if organization changed and update if needed
+          if (
+            teamOrgData.organisationId &&
+            teamOrgData.organisationName !== initialData.Organization
+          ) {
+            await dispatch({
+              type: 'UPDATE_RESOURCE_ORGANISATION',
+              payload: {
+                'ResourceAllocation.Core/ChangeTeamOrganization': {
+                  Resource: initialData.Id,
+                  Organization: teamOrgData.organisationId,
+                },
+              },
+            });
+          }
           await dispatch({
             type: FETCH_ALL_RESOURCES_DETAIL,
             payload: {},
@@ -836,13 +876,30 @@ const AllocationForm = () => {
           }
 
           if (deleteList.length === 0 && updateList.length === 0) {
-            dispatch(
-              showToastAction(
-                true,
-                `Allocations upto date. No changes made.`,
-                'info'
-              )
-            );
+            if (errorMessages.length > 0) {
+              if (errorMessages.length > 1) {
+                dispatch(
+                  showToastAction(
+                    true,
+                    'Total allocation for the multiple selected weeks and/or projects and/or resources exceeds 2.0. Please check and try again.',
+                    'error',
+                    4000
+                  )
+                );
+              } else {
+                errorMessages.forEach(msg => {
+                  dispatch(showToastAction(true, msg, 'error', 4000));
+                });
+              }
+            } else {
+              dispatch(
+                showToastAction(
+                  true,
+                  `Allocations upto date. No changes made.`,
+                  'info'
+                )
+              );
+            }
             return;
           }
 
@@ -970,7 +1027,25 @@ const AllocationForm = () => {
                       : endDate
                 );
 
-                allUpdatedRows = Object.values(formateUpdate);
+                const blankRowsToBeRemoved = Object.values(formateUpdate).map(
+                  row =>
+                    getAllRowsForView(
+                      splitView ? 'bottomTeam' : 'teamAllocation'
+                    ).find(
+                      r =>
+                        r.id.includes(row.teams) && r.id.includes(row.resource)
+                    )
+                );
+
+                allUpdatedRows = [
+                  ...Object.values(formateUpdate),
+                  ...blankRowsToBeRemoved
+                    .filter(r => r)
+                    .map(row => ({
+                      ...row,
+                      _action: 'delete',
+                    })),
+                ];
               }
               if (errorMessages.length > 1) {
                 dispatch(
@@ -1009,8 +1084,30 @@ const AllocationForm = () => {
               ];
               if (allUpdatedRows?.length > 0) {
                 if (splitView) {
-                  topProjectAllocationGrid.updateRows(allUpdatedRows);
-                  bottomTeamAllocationGrid.updateRows(allUpdatedRows);
+                  let allRowsForTopProjectAllocationGrid =
+                    topProjectAllocationGrid.getAllRows();
+                  // Update Allocation for Top Project Allocation Grid
+                  await updateRowsForView('topProject', [
+                    ...allUpdatedRows,
+                    ...allRowsForTopProjectAllocationGrid
+                      .filter(row => row.id.startsWith(row.projectId))
+                      .map(row => ({
+                        ...row,
+                        _action: 'delete',
+                      })),
+                  ]);
+                  // After completing filter to show only current selected Project
+                  allRowsForTopProjectAllocationGrid =
+                    topProjectAllocationGrid.getAllRows();
+                  topProjectAllocationGrid.setRows(
+                    filterAllocationsForSelectedProject(
+                      allRowsForTopProjectAllocationGrid,
+                      splitViewCurrentProject
+                    )
+                  );
+
+                  // Update Allocation for Bottom Team Allocation Grid
+                  updateRowsForView('bottomTeam', allUpdatedRows);
                 } else {
                   updateRowsForView('projectAllocation', allUpdatedRows);
                   updateRowsForView('teamAllocation', allUpdatedRows);
@@ -1703,6 +1800,7 @@ const AllocationForm = () => {
           <AddResourceForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+            onValuesChange={handleResourceFormChange}
           />
         );
       case 'add_allocation':

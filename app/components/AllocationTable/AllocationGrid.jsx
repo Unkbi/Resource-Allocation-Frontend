@@ -134,13 +134,27 @@ export default function AllocationGrid({
       apiRef.current.getSelectedCellsAsArray().length >= 2 &&
       !cellSelectionModel['restoreFocus']
     ) {
+      // handle key up event for cell selection
       const resourcesSelected = [];
+      const projectsSelected = [];
       let StartDate, EndDate;
+
       Object.entries(cellSelectionModel).forEach(([row, weeks]) => {
-        const currentRowData = apiRef.current.getRow(row);
+        let currentRowData = apiRef.current.getRow(row);
+        if (row.startsWith('auto-generated')) {
+          currentRowData = apiRef.current.getRowNode(row);
+        } else {
+          currentRowData = apiRef.current.getRow(row);
+        }
 
         Object.keys(weeks).forEach(weekN => {
-          const period = currentRowData?.[weekN]?.period;
+          let rowDetails = null;
+          if (row.startsWith('auto-generated')) {
+            rowDetails = apiRef.current.getRow(currentRowData?.children[0]);
+          } else {
+            rowDetails = currentRowData;
+          }
+          const period = rowDetails?.[weekN]?.period;
           if (period) {
             StartDate = StartDate
               ? isBefore(period, StartDate)
@@ -155,20 +169,41 @@ export default function AllocationGrid({
           }
         });
 
-        if (
+        // Append the resource
+        if (row.startsWith('auto-generated')) {
+          if (
+            currentRowData.groupingField === 'resource' &&
+            !resourcesSelected.includes(currentRowData.groupingKey) // groupingKey is the resource name.
+          ) {
+            resourcesSelected.push(currentRowData.groupingKey);
+          }
+        } else if (
           currentRowData?.resource &&
           !resourcesSelected.includes(currentRowData.resource)
         ) {
           resourcesSelected.push(currentRowData.resource);
         }
+
+        // Append the project
+        if (row.startsWith('auto-generated')) {
+          if (
+            currentRowData.groupingField === 'project' &&
+            !projectsSelected.includes(currentRowData.groupingKey) // groupingKey is the project name.
+          ) {
+            projectsSelected.push(currentRowData.groupingKey);
+          } else if (
+            currentRowData.groupingField === 'resource' &&
+            splitViewCurrentProject
+          ) {
+            projectsSelected.push(splitViewCurrentProject.Name);
+          }
+        } else if (
+          currentRowData?.project &&
+          !projectsSelected.includes(currentRowData.project)
+        ) {
+          projectsSelected.push(currentRowData.project);
+        }
       });
-      const projectsSelected = [
-        ...new Set(
-          Object.keys(cellSelectionModel).map(
-            row => apiRef.current.getRow(row)?.project
-          )
-        ),
-      ];
 
       setCellSelectionModel({ ...cellSelectionModel, restoreFocus: true });
       dispatch(
@@ -622,7 +657,7 @@ export default function AllocationGrid({
       return {
         ...column,
         renderCell: params => {
-          const editable = isCellEditable(params); 
+          const editable = isCellEditable(params);
           const cellClass = getCellClassName(
             params,
             getAllRowsForView(viewId),
@@ -650,7 +685,7 @@ export default function AllocationGrid({
                   cursor: 'not-allowed',
                 }}
               >
-                {"" || <>&nbsp;</>}
+                {'' || <>&nbsp;</>}
               </span>
             </Tooltip>
           ) : (
@@ -661,7 +696,6 @@ export default function AllocationGrid({
     }
     return column;
   });
-  
 
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -739,13 +773,6 @@ export default function AllocationGrid({
   };
 
   const handleCellUpdate = async (newRow, oldRow) => {
-    dispatch(
-      showToastAction(
-        true,
-        `Updating allocation for ${newRow.resource}...`,
-        'info'
-      )
-    );
     try {
       setCellSelectionModel({});
       // Find the changed week
@@ -851,7 +878,7 @@ export default function AllocationGrid({
       });
 
       if (deleteList.length === 0 && updateList.length === 0) {
-        return;
+        return oldRow;
       }
 
       const formatedDeleteList = deleteList.reduce((acc, allocation) => {
@@ -902,6 +929,14 @@ export default function AllocationGrid({
           })
         );
       });
+
+      dispatch(
+        showToastAction(
+          true,
+          `Updating allocation for ${newRow.resource}...`,
+          'info'
+        )
+      );
 
       await Promise.all([...allocationPromises, ...deletePromises]).then(
         async response => {
@@ -955,6 +990,10 @@ export default function AllocationGrid({
           bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
         } else if (viewId === 'bottomTeam') {
           topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
+        } else if (viewId === 'teamAllocation') {
+          projectAllocationGrid.updateRows([allUpdatedRows[0]]);
+        } else if (viewId === 'projectAllocation') {
+          teamAllocationGrid.updateRows([allUpdatedRows[0]]);
         }
         return allUpdatedRows[0];
       }
@@ -1062,6 +1101,27 @@ export default function AllocationGrid({
       };
 
       let filteredModel = {};
+      if (Object.keys(newModel)[0].startsWith('auto-generated')) {
+        if (
+          apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
+          'teams'
+        ) {
+          setCellSelectionModel({});
+          return;
+        }
+        if (Object.keys(newModel).length > 1) {
+          filteredModel = cellSelectionModel;
+        } else {
+          const key = Object.keys(newModel)[0];
+          const newModelWithValidFields = getNewModelWithValidFields(
+            newModel[key]
+          );
+          filteredModel = {
+            [key]: newModelWithValidFields,
+          };
+        }
+      }
+
       rowIds.forEach(rowId => {
         if (!rowId.startsWith('auto-generated')) {
           const row = apiRef.current.getRow(rowId);

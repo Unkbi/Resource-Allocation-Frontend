@@ -56,7 +56,7 @@ const reviewLinkStyle = {
   textDecorationLine: 'underline',
 };
 
-const AddResourceForm = ({ formikProps, setFormValue }) => {
+const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   const {
     values,
     handleChange,
@@ -139,6 +139,16 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
       formikProps.setTouched({});
+
+      // Notify parent of initial values
+      if (onValuesChange) {
+        onValuesChange({
+          teamId: matchedTeam?.Id,
+          organisationId: matchedOrg?.Id,
+          teamName: matchedTeam?.Name,
+          organisationName: matchedOrg?.Name,
+        });
+      }
     };
 
     loadAndSetForm();
@@ -173,6 +183,20 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       });
     }
   }, []);
+
+  // Add effect to watch Team and Organisation changes
+  useEffect(() => {
+    if (onValuesChange && values.Team && values.Organisation) {
+      onValuesChange({
+        teamId: values.Team,
+        organisationId: values.Organisation,
+        teamName: teamListOptions.find(t => t.value === values.Team)?.label,
+        organisationName: organisationListOptions.find(
+          o => o.value === values.Organisation
+        )?.label,
+      });
+    }
+  }, [values.Team, values.Organisation]);
 
   const handleEndDateChange = async newDate => {
     formikProps.setFieldValue(

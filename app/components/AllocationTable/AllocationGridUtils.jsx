@@ -87,7 +87,7 @@ const CellWithMenu = ({
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
-  const { currentView } = useSelector(state => state.allocationView);
+  const { currentView, splitView } = useSelector(state => state.allocationView);
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
@@ -115,7 +115,7 @@ const CellWithMenu = ({
       allocationIds = childrenRows.reduce(
         (allAllocationId, childRow) => [
           ...allAllocationId,
-          ...Object.values(row)
+          ...Object.values(childRow)
             .filter(cell => cell?.allocationId)
             .map(cell => cell.allocationId),
         ],
@@ -128,6 +128,29 @@ const CellWithMenu = ({
         .filter(cell => cell?.allocationId)
         .map(cell => cell.allocationId);
     }
+
+    if (!allocationIds || allocationIds.length === 0) {
+      dispatch(
+        showToast({
+          open: true,
+          message: 'No allocations found to delete.',
+          type: 'error',
+          position: 'bottom-right',
+          autoHideTimer: 4000,
+        })
+      );
+      return;
+    }
+
+    dispatch(
+      showToast({
+        open: true,
+        message: 'Deleting allocations...',
+        type: 'info',
+        position: 'bottom-right',
+        autoHideTimer: 4000,
+      })
+    );
 
     // Perform delete.
     new Promise((resolve, reject) =>
@@ -142,6 +165,18 @@ const CellWithMenu = ({
       })
     )
       .then(response => {
+        if (!response?.result) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete allocation.',
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
         if (childrenRows) {
           // Update rows for view to delete all children rows
           updateRowsForView(
@@ -150,6 +185,14 @@ const CellWithMenu = ({
           );
           updateRowsForView(
             'projectAllocation',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'topProject',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'bottomTeam',
             childrenRows.map(r => ({ ...r, _action: 'delete' }))
           );
 
@@ -173,6 +216,18 @@ const CellWithMenu = ({
           updateRowsForView(
             'projectAllocation',
             getAllRowsForView('projectAllocation')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'topProject',
+            getAllRowsForView('topProject')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'bottomTeam',
+            getAllRowsForView('bottomTeam')
               .filter(r => r.id === row.id)
               .map(r => ({ ...r, _action: 'delete' }))
           );

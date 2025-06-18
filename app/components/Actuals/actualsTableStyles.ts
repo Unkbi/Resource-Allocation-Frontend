@@ -1,3 +1,5 @@
+import { BorderLeft } from "@mui/icons-material";
+
 export const actualsTableStyles = {
   '& .MuiDataGrid-columnHeaders': {
     borderBottom: ' #EEEEEE',
@@ -16,12 +18,12 @@ export const actualsTableStyles = {
     padding: 0,
   },
   '.error-cell': {
-    border: '1px solid red !important',
-    borderRadius: '4px',
+    border: '1px solid #D24546 !important',
+    borderRight: '0.5px solid #D24546 !important',
   },
   '.comment-error-cell': {
-    border: '1px solid red',
-    borderRadius: '4px',
+    border: '1px solid #D24546',
+    borderLeft: '0.5px solid #D24546 !important',
     boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
@@ -78,6 +80,10 @@ export const actualsTableStyles = {
     paddingBottom: '0',
   },
   '.comment-error-cell .MuiDataGrid-cell:focus-within': {
+    outline: 'none !important',
+    boxShadow: 'none !important',
+  },
+  '.MuiDataGrid-cell.MuiDataGrid-cell--editing:focus-within': {
     outline: 'none !important',
     boxShadow: 'none !important',
   },
