@@ -48,6 +48,9 @@ const allAllocationsSlice = createSlice({
     setDataProcessing: (state, action) => {
       state.dataProcessing = action.payload;
     },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
   },
   extraReducers: builder => {
     builder;
@@ -61,6 +64,7 @@ export const {
   resetAllocations,
   setDataProcessing,
   updateAllAllocations,
+  setLoading,
 } = allAllocationsSlice.actions;
 
 // Export the reducer

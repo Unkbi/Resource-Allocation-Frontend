@@ -1,4 +1,11 @@
-import { call, put, takeLatest, all, takeLeading } from 'redux-saga/effects';
+import {
+  call,
+  put,
+  takeLatest,
+  all,
+  takeLeading,
+  takeEvery,
+} from 'redux-saga/effects';
 import {
   bulkDeleteAllocations,
   bulkUpdateAllocations,
@@ -8,6 +15,7 @@ import { getMondayOfISO } from '@/app/utils/common';
 import {
   setAllAllocations,
   setDataProcessing,
+  setLoading,
   updateAllAllocations,
 } from '../reducers/allAllocationsReducer';
 import {
@@ -110,6 +118,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     if (reject) reject(error);
   } finally {
     yield put(setDataProcessing(false));
+    yield put(setLoading(true));
   }
 }
 
@@ -376,7 +385,9 @@ function* deleteBulkAllocationSaga(action: any): Generator<any, void, any> {
   }
 }
 
-function* updateResourceAllocationsSaga(action: any): Generator<any, void, any> {
+function* updateResourceAllocationsSaga(
+  action: any
+): Generator<any, void, any> {
   const {
     ResourceId,
     teams,
@@ -447,7 +458,6 @@ function* updateResourceAllocationsSaga(action: any): Generator<any, void, any> 
   }
 }
 
-
 export function* allAllocationsSaga() {
   yield takeLeading('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
   yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga); // This is for subsequent fetch. Ex : Date Shift.
@@ -456,5 +466,8 @@ export function* allAllocationsSaga() {
   yield takeLatest('FETCH_ALLOCATIONS_COST', fetchAllocationsCostSaga);
   yield takeLatest('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
   yield takeLatest('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
-  yield takeLatest('UPDATE_RESOURCE_ALLOCATIONS', updateResourceAllocationsSaga);
+  yield takeLatest(
+    'UPDATE_RESOURCE_ALLOCATIONS',
+    updateResourceAllocationsSaga
+  );
 }

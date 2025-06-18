@@ -1,60 +1,69 @@
-import { Paper, Box } from '@mui/material';
-import { useRef } from 'react';
+"use client"
 
-const DashboardWidget = ({ children, onClick }) => {
-  const mouseDownPosition = useRef(null);
+import { Paper, Box } from "@mui/material"
+import { useRef, useState, useEffect } from "react"
+
+const DashboardWidget = ({ children, onClick, minWidth = 300, minHeight = 300 }) => {
+  const mouseDownPosition = useRef(null)
+  const containerRef = useRef(null)
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { offsetWidth, offsetHeight } = containerRef.current
+        setDimensions({
+          width: Math.max(offsetWidth, minWidth),
+          height: Math.max(offsetHeight, minHeight),
+        })
+      }
+    }
+
+    updateDimensions()
+
+    const resizeObserver = new ResizeObserver(updateDimensions)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [minWidth, minHeight])
 
   const handleMouseDown = (event) => {
-    mouseDownPosition.current = { x: event.clientX, y: event.clientY };
-  };
-
-  const handleMouseUp = (event) => {
-    // console.log('Mouse up detected', event);
-    // if (!mouseDownPosition.current) return;
-    // const dx = Math.abs(event.clientX - mouseDownPosition.current.x);
-    // const dy = Math.abs(event.clientY - mouseDownPosition.current.y);
-    // console.log('Mouse up detected', { dx, dy },typeof onClick);
-    // // Only treat as click if movement is minimal (e.g., < 5px)
-    // if (dx < 5 && dy < 5 && typeof onClick === 'function') {
-    //   console.log('Click detected');
-    //   onClick();
-    // }
-    // mouseDownPosition.current = null;
-  };
-
-  const handleMouseClick = (event) => {
-    // console.log('Mouse click detected', event);
-    if ( event.type === 'click') {
-      // console.log('Click detected');
-      // onClick();
-    }
+    mouseDownPosition.current = { x: event.clientX, y: event.clientY }
   }
 
   return (
     <Box
+      ref={containerRef}
       onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onClick={handleMouseClick}
       sx={{
-        cursor: 'pointer',
-        height: '100%',
-        width: '100%',
-        userSelect: 'none',
+        cursor: "pointer",
+        height: "100%",
+        width: "100%",
+        userSelect: "none",
+        minWidth: `${minWidth}px`,
+        minHeight: `${minHeight}px`,
       }}
     >
       <Paper
         elevation={3}
         sx={{
           p: 2,
-          height: '100%',
-          boxSizing: 'border-box',
-          width: '100%',
+          height: "100%",
+          boxSizing: "border-box",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          // overflow: "hidden",
         }}
       >
-        {children}
+        {typeof children === "function" ? children(dimensions) : children}
       </Paper>
     </Box>
-  );
-};
+  )
+}
 
-export default DashboardWidget;
+export default DashboardWidget

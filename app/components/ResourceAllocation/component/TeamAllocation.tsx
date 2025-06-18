@@ -20,6 +20,7 @@ import {
   injectBlankRows,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
+import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -68,7 +69,7 @@ export default function TeamAllocation({
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
-  const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
+  const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
   const {
@@ -82,13 +83,10 @@ export default function TeamAllocation({
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (getAllProjectViewRows().length > 0) {
+      if (!loading && getAllProjectViewRows().length > 0) {
         filteredResources = removeResourcesWithNoTeams(
           injectBlankRows(
-            getCombinedAllocation(
-              getAllProjectViewRows() as AllAllocations[],
-              (getAllTeamViewRows() as AllAllocations[]) || []
-            ) || [],
+            getAllProjectViewRows() as AllAllocations[],
             teams?.result || [],
             // @ts-ignore
             teamsResources,
@@ -96,8 +94,9 @@ export default function TeamAllocation({
             endDate
           )
         );
-      } else if (allAllocations) {
+      } else if (loading && allAllocations) {
         filteredResources = removeResourcesWithNoTeams(allAllocations || []);
+        dispatch(setLoading(false));
       }
 
       const formattedResources = filteredResources?.map(allocation => ({
@@ -578,7 +577,7 @@ export default function TeamAllocation({
     <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
         <AllocationGrid
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           groupBy="teams"
           mode="team"
           startDate={startDate}
@@ -627,7 +626,7 @@ export default function TeamAllocation({
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
         />
-        {!allAllocations && !loading && (
+        {!allAllocations && !dataProcessing && (
           <div
             style={{
               display: 'flex',

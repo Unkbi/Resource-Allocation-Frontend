@@ -65,7 +65,7 @@ const reviewLinkStyle = {
   textDecorationLine: 'underline',
 };
 
-const AddResourceForm = ({ formikProps, setFormValue }) => {
+const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   const {
     values,
     handleChange,
@@ -149,6 +149,16 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
       formikProps.setTouched({});
+
+      // Notify parent of initial values
+      if (onValuesChange) {
+        onValuesChange({
+          teamId: matchedTeam?.Id,
+          organisationId: matchedOrg?.Id,
+          teamName: matchedTeam?.Name,
+          organisationName: matchedOrg?.Name,
+        });
+      }
     };
 
     loadAndSetForm();
@@ -184,41 +194,55 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
     }
   }, []);
 
+  // Add effect to watch Team and Organisation changes
+  useEffect(() => {
+    if (onValuesChange && values.Team && values.Organisation) {
+      onValuesChange({
+        teamId: values.Team,
+        organisationId: values.Organisation,
+        teamName: teamListOptions.find(t => t.value === values.Team)?.label,
+        organisationName: organisationListOptions.find(
+          o => o.value === values.Organisation
+        )?.label,
+      });
+    }
+  }, [values.Team, values.Organisation]);
+
   const handleEndDateChange = async newDate => {
     const formattedEndDate = newDate?.format(DATE_FORMAT.toUpperCase());
     formikProps.setFieldValue('EndDate', formattedEndDate);
     if (formType !== 'edit_resource') return;
     try {
-    const resourceId = getResourceIdByEmail(resources.result, values.Email);
-    if (!resourceId) {
-      console.error('Resource ID not found for email:', values.Email);
-      return;
-    }
-   
-    const allocations = await getResourceAllocationsForPeriod(
-      resourceId,
-      formattedEndDate
-    );  
-    const hasFutureAllocations = allocations.some(allocation =>
-      dayjs(allocation.Period).isAfter(newDate, 'day')
-    );
-    if (hasFutureAllocations) {
-      formikProps.setFieldValue('ConfirmTransfer', !hasFutureAllocations);
-      setShowWarning(true);
-    } else {
-      setShowWarning(false);
-    }
-  } catch (error) {
-        console.error('Error fetching allocations:', error);
+      const resourceId = getResourceIdByEmail(resources.result, values.Email);
+      if (!resourceId) {
+        console.error('Resource ID not found for email:', values.Email);
+        return;
       }
+
+      const allocations = await getResourceAllocationsForPeriod(
+        resourceId,
+        formattedEndDate
+      );
+      const hasFutureAllocations = allocations.some(allocation =>
+        dayjs(allocation.Period).isAfter(newDate, 'day')
+      );
+      if (hasFutureAllocations) {
+        formikProps.setFieldValue('ConfirmTransfer', !hasFutureAllocations);
+        setShowWarning(true);
+      } else {
+        setShowWarning(false);
+      }
+    } catch (error) {
+      console.error('Error fetching allocations:', error);
+    }
   };
-  
+
   const handleShareDeepLink = async () => {
     const resourceFullName =
       `${formikProps.values.FirstName} ${formikProps.values.LastName}`.trim();
-      const formattedEndDate = dayjs(formikProps.values.EndDate).format(
-        'YYYY-MM-DD'
-      );
+    const formattedEndDate = dayjs(formikProps.values.EndDate).format(
+      'YYYY-MM-DD'
+    );
     const resourceId = getResourceIdByEmail(resources.result, values.Email);
     if (!resourceId) {
       console.error('Resource ID not found for email:', values.Email);
@@ -245,9 +269,7 @@ const AddResourceForm = ({ formikProps, setFormValue }) => {
       JSON.stringify(
         getOnlyFilterSettings({
           GroupBy: 'Teams',
-          StartDate: dayjs(formikProps.values.EndDate).format(
-            'YYYY-MM-DD'
-          ),
+          StartDate: dayjs(formikProps.values.EndDate).format('YYYY-MM-DD'),
           EndDate: maxDate,
           ColumnsVisible: [
             '__row_group_by_columns_group_teams__',

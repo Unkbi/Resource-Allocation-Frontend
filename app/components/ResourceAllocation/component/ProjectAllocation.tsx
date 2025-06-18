@@ -21,6 +21,7 @@ import {
   getCombinedAllocation,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
+import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -62,20 +63,18 @@ export default function ProjectAllocation({
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (getAllTeamViewRows().length > 0) {
+      if (!loading && getAllTeamViewRows().length > 0) {
         filteredResources = removeResourcesWithNoProjects(
           (getAllTeamViewRows() as AllAllocations[]) || []
         );
         setRows(
           removeResourcesWithNoProjects(
-            getCombinedAllocation(
-              getAllTeamViewRows() as AllAllocations[],
-              (getAllProjectViewRows() as AllAllocations[]) || []
-            ) || []
+            getAllTeamViewRows() as AllAllocations[]
           )
         );
-      } else if (allAllocations) {
+      } else if (loading && allAllocations) {
         filteredResources = removeResourcesWithNoProjects(allAllocations || []);
+        dispatch(setLoading(false));
       }
 
       const formattedResources = filteredResources?.map(allocation => ({
@@ -621,7 +620,7 @@ export default function ProjectAllocation({
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           viewId="projectAllocation"
         />
       </Box>

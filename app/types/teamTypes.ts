@@ -59,3 +59,8 @@ export interface TeamResourceResponse {
   teamAllocationManager: string | null; // Team allocation manager (nullable)
   resource: Resource[]; // Array of resources
 }
+
+export interface TeamResourcePayload {
+  Team: string;
+  Resource: string;
+}
