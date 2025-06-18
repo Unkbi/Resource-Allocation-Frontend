@@ -15,6 +15,7 @@ import { getMondayOfISO } from '@/app/utils/common';
 import {
   setAllAllocations,
   setDataProcessing,
+  setLoading,
   updateAllAllocations,
 } from '../reducers/allAllocationsReducer';
 import {
@@ -117,6 +118,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     if (reject) reject(error);
   } finally {
     yield put(setDataProcessing(false));
+    yield put(setLoading(true));
   }
 }
 
