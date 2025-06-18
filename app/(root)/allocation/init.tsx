@@ -16,13 +16,13 @@ import { generateDateWeekMath } from '@/app/utils/common';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 
 interface TopContentProps {
-  startDate: string | null;
-  endDate: string | null;
+  startDate: string;
+  endDate: string;
 }
 
 interface BottomContentProps {
-  startDate: string | null;
-  endDate: string | null;
+  startDate: string;
+  endDate: string;
 }
 const TopContent = ({ startDate, endDate }: TopContentProps) => (
   <TopProjectsView startDate={startDate} endDate={endDate} />
@@ -156,14 +156,14 @@ export default function AllocationInit() {
     <HorizontalSplitView
       top={
         <TopContent
-          startDate={currentViewStartDate}
-          endDate={currentViewEndDate}
+          startDate={currentViewStartDate || ''}
+          endDate={currentViewEndDate || ''}
         />
       }
       bottom={
         <BottomContent
-          startDate={currentViewStartDate}
-          endDate={currentViewEndDate}
+          startDate={currentViewStartDate || ''}
+          endDate={currentViewEndDate || ''}
         />
       }
       initialTopHeight={300}
