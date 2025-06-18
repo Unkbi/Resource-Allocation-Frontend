@@ -29,6 +29,7 @@ export default function Allocation({ startDate, endDate }) {
   const { resources } = useSelector(state => state.resources);
   const searchParams = useSearchParams();
   const settingsParam = searchParams.get('settings');
+
   useEffect(() => {
     dispatch(fetchAllResources());
     dispatch(fetchAllProjects());
