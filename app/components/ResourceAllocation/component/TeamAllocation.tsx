@@ -552,7 +552,26 @@ export default function TeamAllocation({
   ];
 
   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
-    return allocations.filter(allocation => allocation.teams);
+    return allocations.filter(
+      allocation =>
+        allocation.teams &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.EndDate
+          ? new Date(
+              _resources?.result?.find(
+                res => res.Id === allocation.resourceId
+              )?.EndDate
+            ) >= new Date(startDate)
+          : true) &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.StartDate
+          ? new Date(
+              _resources?.result?.find(
+                res => res.Id === allocation.resourceId
+              )?.StartDate
+            ) <= new Date(endDate)
+          : true)
+    );
   };
 
   return (
