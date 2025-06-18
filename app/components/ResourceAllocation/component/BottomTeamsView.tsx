@@ -14,12 +14,12 @@ import EllipsisNameCell from './EllipsisNameCell';
 import SplitTeamToolbar from '../../Toolbar/SplitTeamToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Resource } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 
 interface BottomTeamsViewProps {
-  startDate: string | null;
-  endDate: string | null;
+  startDate: string;
+  endDate: string;
 }
 
 export default function BottomTeamsView({
@@ -35,7 +35,13 @@ export default function BottomTeamsView({
     (state: RootState) => state.allAllocations
   );
   // const { startDate, endDate } = calendarDate || {};
-
+  const _resources = useSelector(
+    (state: RootState) => state.resources.resources
+  ) as {
+    result?: Resource[];
+    loading?: boolean;
+    error?: string;
+  };
   const { setRows, ready } = useAllocationGrid('bottomTeam');
 
   useEffect(() => {
@@ -129,7 +135,24 @@ export default function BottomTeamsView({
   };
 
   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
-    return allocations.filter(allocation => allocation.teams);
+    return allocations.filter(
+      allocation =>
+        allocation.teams &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.EndDate
+          ? new Date(
+              _resources?.result?.find(res => res.Id === allocation.resourceId)
+                ?.EndDate ?? ''
+            ) >= new Date(startDate)
+          : true) &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.StartDate
+          ? new Date(
+              _resources?.result?.find(res => res.Id === allocation.resourceId)
+                ?.StartDate ?? ''
+            ) <= new Date(endDate)
+          : true)
+    );
   };
 
   const enrichedResources = computeAverageAllocations(
