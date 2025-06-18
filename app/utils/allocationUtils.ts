@@ -309,19 +309,6 @@ export function injectBlankRows(
     });
   });
 
-  extraRows.forEach(row => {
-    if (startDate && endDate) {
-      const weeks = getWeeksInRange(startDate, endDate);
-      weeks.forEach(week => {
-        row[week.key] = {
-          allocationId: null,
-          value: null,
-          period: week.period,
-        };
-      });
-    }
-  });
-
   return [...allocations, ...extraRows];
 }
 
