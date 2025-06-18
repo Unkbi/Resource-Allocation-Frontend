@@ -16,7 +16,7 @@ import {
   GridRowsProp,
   GridValidRowModel,
 } from '@mui/x-data-grid-premium';
-import { useState, useRef, act } from 'react';
+import { useState } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
@@ -478,10 +478,6 @@ export default function ActualTable({
           showInitialError={rowValidationErrors[params.id as string]?.comments}
         />
       ),
-    //   preProcessEditCellProps: params => {
-    //     const hasError = !params.props.value || !params.props.value.trim();
-    //     return { ...params.props, error: hasError };
-    //   },
     },
   ];
 
