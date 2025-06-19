@@ -176,3 +176,10 @@ export const bulkDeleteAllocations = async postData => {
   );
   return response.data;
 };
+
+export const fetchHistory = async() =>{
+  const response = await axiosInstance.get(
+    `${API_PROJECT_PORTFOLIO}/AllocationAudit`
+  );
+  return response.data;
+}
