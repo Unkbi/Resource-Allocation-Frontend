@@ -30,6 +30,7 @@ import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
@@ -44,6 +45,10 @@ export default function ActualsPage() {
   >([]);
   const apiRef = useGridApiRef();
   const [hasInvalidRows, setHasInvalidRows] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [dialogSource, setDialogSource] = useState<'prev' | 'next' | null>(
+    null
+  );
   const [show, setShow] = useState(true);
   const [isModified, setIsModified] = useState(false);
 
@@ -255,6 +260,21 @@ export default function ActualsPage() {
     }
   }, []);
 
+  const handleConfirm = () => {
+    setDeleteDialogOpen(false);
+    if (dialogSource === 'prev') {
+      handlePrev();
+    } else if (dialogSource === 'next') {
+      handleNext();
+    }
+    setDialogSource(null);
+  };
+
+  const handleCancel = () => {
+    setDeleteDialogOpen(false);
+    setDialogSource(null);
+  };
+
   return (
     <Box
       px={{ xs: 2, sm: 2 }}
@@ -331,7 +351,14 @@ export default function ActualsPage() {
           <Box display="flex" justifyContent="space-between" mt={4}>
             <Button
               startIcon={<ChevronLeftIcon />}
-              onClick={handlePrev}
+              onClick={() => {
+                if (isModified) {
+                  setDialogSource('prev');
+                  setDeleteDialogOpen(true);
+                } else {
+                  handlePrev();
+                }
+              }}
               sx={{
                 fontSize: '14px',
                 color: '#152e75',
@@ -380,7 +407,14 @@ export default function ActualsPage() {
 
             <Button
               endIcon={<ChevronRightIcon />}
-              onClick={handleNext}
+              onClick={() => {
+                if (isModified) {
+                  setDialogSource('next');
+                  setDeleteDialogOpen(true);
+                } else {
+                  handleNext();
+                }
+              }}
               disabled={startDate ? isCurrentWeek(parseISO(startDate)) : false}
               sx={{
                 color: '#152e75',
@@ -400,6 +434,14 @@ export default function ActualsPage() {
           </Box>
         </Box>
       </Box>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        title="Alert"
+      >
+        {"Are you sure you want to leave? Your actuals will not be saved."}
+      </ConfirmDialog>
     </Box>
   );
 }

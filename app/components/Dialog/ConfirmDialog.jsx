@@ -4,7 +4,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 // global confirm dialog with placeholders, pass title as prop and content as children prop
 const ConfirmDialog = ({ open, onCancel, onConfirm, title, children }) => {
   return (
-    <Dialog open={open} onCancel={onCancel}>
+    <Dialog open={open} onCancel={onCancel} maxWidth="sm" fullWidth>
       <Box sx={{ textAlign: "left", fontFamily: theme => theme.typography.fontFamily }}>
         <Box
           sx={{
