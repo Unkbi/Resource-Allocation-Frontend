@@ -38,7 +38,7 @@ const CustomTextField = styled(TextField, {
     fontWeight: 500,
     '& fieldset': {
       borderColor: error ? theme.palette.error.main : undefined,
-      borderWidth: error ? '1px' : undefined, 
+      borderWidth: error ? '1px' : undefined,
     },
     '&:hover fieldset': {
       borderColor: error ? theme.palette.error.main : undefined,
@@ -60,7 +60,6 @@ const CustomTextField = styled(TextField, {
     },
   },
 }));
-
 
 interface CustomDatePickerProps {
   name: string;
@@ -138,8 +137,8 @@ export default function CustomDatePicker({
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
-          minDate={minDate}
-          maxDate={maxDate}
+          minDate={undefined}
+          maxDate={undefined}
           slots={{
             textField: CustomTextField,
             openPickerIcon: () => (
