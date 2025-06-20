@@ -36,6 +36,7 @@ import {
   getTotalWeeklyAllocation,
   generateDateWeekMath,
   getUpdatedTotalWeeklyAllocation,
+  isResourceWithinDate,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -96,6 +97,8 @@ import {
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
+import { isCellEditableUtils } from '@/app/utils/common';
+
 const initialValuesMap = {
   add_project: {
     StartDate: '',
@@ -158,6 +161,7 @@ const initialValuesMap = {
     EndDate: '',
     WorkLocation: '',
     Status: '',
+    ConfirmTransfer: false,
   },
   add_allocation: {
     Resource: [],
@@ -412,7 +416,14 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { Organisation, submitType, Team, ...cleanedValues } = values;
+    const {
+      Organisation,
+      submitType,
+      Team,
+      ConfirmTransfer,
+      ...cleanedValues
+    } = values;
+
     switch (formType) {
       case 'add_project':
         if (!cleanedValues.StartDate) {
@@ -725,7 +736,7 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
-
+          // await dispatch(fetchAllResources());
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
@@ -749,6 +760,8 @@ const AllocationForm = () => {
           const updateList = [];
           let allUpdatedRows = [];
 
+          const nonEditableWeeks = [];
+
           allMondays.flatMap(monday => {
             return values.Resource.flatMap(resource => {
               return filteredProjects.map(project => {
@@ -758,7 +771,6 @@ const AllocationForm = () => {
                   monday
                 );
 
-                const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
                 // Perform Delete if AllocationEntered is 0
                 if (values?.AllocationEntered === 0) {
                   if (allocation && allocation?.allocationId) {
@@ -771,6 +783,24 @@ const AllocationForm = () => {
                       AllocationEntered: null,
                     });
                   }
+                  return;
+                }
+
+                //Check if Allocation is within the range of StartDate and EndDate of resource
+                const resourceDetails = resources?.result?.find(
+                  res => res.Id === resource
+                );
+                const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
+                if (
+                  resourceDetails &&
+                  !isResourceWithinDate(resourceDetails, new Date(monday))
+                ) {
+                  nonEditableWeeks.push(weekKey);
+                  return;
+                }
+
+                // If current week is editable, but their are weeks that are non editable, then skip the update.
+                if (nonEditableWeeks.length > 0) {
                   return;
                 }
 
@@ -830,6 +860,21 @@ const AllocationForm = () => {
               });
             });
           });
+
+          if (nonEditableWeeks.length > 0) {
+            dispatch(
+              showToastAction(
+                true,
+                `Update cancelled: You are editing non-editable week(s): ${[
+                  ...new Set(nonEditableWeeks),
+                ].join(', ')}`,
+                'error',
+                4000
+              )
+            );
+            dispatch(closeDialog());
+            return;
+          }
 
           if (deleteList.length === 0 && updateList.length === 0) {
             if (errorMessages.length > 0) {

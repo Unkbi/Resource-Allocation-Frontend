@@ -36,6 +36,7 @@ import { isCurrentWeek } from '@/app/utils/common';
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
 
+
 export function formatWeekRangeFromStrings(
   startDate: string | null,
   endDate: string | null

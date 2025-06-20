@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
   gridExpandedSortedRowIdsSelector,
@@ -65,6 +65,8 @@ import { useDataGrid } from '@/app/context/dataGridContext';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { startOfWeek, addDays, isValid } from 'date-fns';
+import { isCellEditableUtils } from '@/app/utils/common';
 
 export default function AllocationGrid({
   groupBy,
@@ -650,7 +652,50 @@ export default function AllocationGrid({
       ? currentView.endDate || endDate
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
-  );
+  ).map(column => {
+    if (column.field.startsWith('W')) {
+      return {
+        ...column,
+        renderCell: params => {
+          const editable = isCellEditable(params);
+          const cellClass = getCellClassName(
+            params,
+            getAllRowsForView(viewId),
+            allocationTheme,
+            type,
+            projects?.result,
+            isCellEditable
+          );
+          const showTooltip =
+            cellClass.includes('non-editable-cell') ||
+            cellClass.includes('non-editable-darker');
+
+          const value = params.formattedValue ?? '';
+
+          return showTooltip ? (
+            <Tooltip
+              title="This resource is inactive for this period. Allocation not allowed."
+              arrow
+              placement="top"
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '100%',
+                  cursor: 'not-allowed',
+                }}
+              >
+                {'' || <>&nbsp;</>}
+              </span>
+            </Tooltip>
+          ) : (
+            <span>{value}</span>
+          );
+        },
+      };
+    }
+    return column;
+  });
 
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -989,100 +1034,139 @@ export default function AllocationGrid({
     return getTogglableColumns(columns);
   };
 
-  const handleCellSelectionModelChange = useCallback(newModel => {
-    // Cell Selection Model should have a value only for minimum of 2 cells
-    // If only one cell is selected, then clear the selection
-    if (type === 'cost') return;
-    if (
-      Object.keys(newModel).length === 0 ||
-      (Object.keys(newModel).length === 1 &&
-        Object.keys(newModel[Object.keys(newModel)[0]]).length <= 1)
-    ) {
-      setCellSelectionModel({});
-      return;
-    }
-
-    // Filter out Rows outside the current group boundary
-    const isRowWithinGroup = row => {
-      const selectedCells = apiRef.current.getSelectedCellsAsArray();
-      if (selectedCells && selectedCells.length > 0) {
-        if (groupBy === 'project') {
-          // Previously selected project
-          const currentProjectSelected = apiRef.current.getRow(
-            selectedCells[0].id
-          )?.projectId;
-          if (row.projectId !== currentProjectSelected) {
-            return false;
-          }
-        }
-        if (groupBy === 'teams') {
-          // Previously selected team
-          const currentResourceSelected = apiRef.current.getRow(
-            selectedCells[0].id
-          )?.resourceId;
-          if (row?.resourceId !== currentResourceSelected) {
-            return false;
-          }
-        }
-      }
-      return true;
-    };
-
-    // Get Only Valid Fields, i.e. Fields starting with 'W\d'
-    const getNewModelWithValidFields = row => {
-      const newModelWithValidFields = {};
-      Object.keys(row).forEach(key => {
-        if (/^W\d+/.test(key)) {
-          newModelWithValidFields[key] = row[key];
-        }
-      });
-      return newModelWithValidFields;
-    };
-
-    let filteredModel = {};
-    if (Object.keys(newModel)[0].startsWith('auto-generated')) {
+  const isCellEditable = useCallback(
+    params => isCellEditableUtils(params, type, resources),
+    [type, resources]
+  );
+  const handleCellSelectionModelChange = useCallback(
+    newModel => {
+      // Cell Selection Model should have a value only for minimum of 2 cells
+      // If only one cell is selected, then clear the selection
+      if (type === 'cost') return;
+      const rowIds = Object.keys(newModel);
       if (
-        apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
-        'teams'
+        Object.keys(newModel).length === 0 ||
+        (Object.keys(newModel).length === 1 &&
+          Object.keys(newModel[Object.keys(newModel)[0]]).length <= 1)
       ) {
         setCellSelectionModel({});
         return;
       }
-      if (Object.keys(newModel).length > 1) {
-        filteredModel = cellSelectionModel;
-      } else {
-        const key = Object.keys(newModel)[0];
-        const newModelWithValidFields = getNewModelWithValidFields(
-          newModel[key]
-        );
-        filteredModel = {
-          [key]: newModelWithValidFields,
+      const isCellEditableInRow = (rowId, field) => {
+        const row = apiRef.current.getRow(rowId);
+        if (!row) return false;
+        const params = {
+          id: rowId,
+          field: field,
+          row: row,
         };
-      }
-    }
+        return isCellEditable(params);
+      };
 
-    Object.keys(newModel).forEach(key => {
-      if (!key.startsWith('auto-generated')) {
-        // Filter out auto-generated rows
-        if (isRowWithinGroup(apiRef.current.getRow(key))) {
+      // Filter out Rows outside the current group boundary
+      const isRowWithinGroup = row => {
+        const selectedCells = apiRef.current.getSelectedCellsAsArray();
+        if (selectedCells && selectedCells.length > 0) {
+          if (groupBy === 'project') {
+            // Previously selected project
+            const currentProjectSelected = apiRef.current.getRow(
+              selectedCells[0].id
+            )?.projectId;
+            if (row.projectId !== currentProjectSelected) {
+              return false;
+            }
+          }
+          if (groupBy === 'teams') {
+            // Previously selected team
+            const currentResourceSelected = apiRef.current.getRow(
+              selectedCells[0].id
+            )?.resourceId;
+            if (row?.resourceId !== currentResourceSelected) {
+              return false;
+            }
+          }
+        }
+        return true;
+      };
+
+      // Get Only Valid Fields, i.e. Fields starting with 'W\d'
+      const getNewModelWithValidFields = row => {
+        const newModelWithValidFields = {};
+        Object.keys(row).forEach(key => {
+          if (/^W\d+/.test(key)) {
+            newModelWithValidFields[key] = row[key];
+          }
+        });
+        return newModelWithValidFields;
+      };
+
+      let filteredModel = {};
+      if (Object.keys(newModel)[0].startsWith('auto-generated')) {
+        if (
+          apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
+          'teams'
+        ) {
+          setCellSelectionModel({});
+          return;
+        }
+        if (Object.keys(newModel).length > 1) {
+          filteredModel = cellSelectionModel;
+        } else {
+          const key = Object.keys(newModel)[0];
           const newModelWithValidFields = getNewModelWithValidFields(
             newModel[key]
           );
-          if (
-            newModelWithValidFields &&
-            Object.keys(newModelWithValidFields).length > 0
-          ) {
-            filteredModel[key] = newModelWithValidFields;
-          }
+          filteredModel = {
+            [key]: newModelWithValidFields,
+          };
         }
       }
-    });
-    setCellSelectionModel(filteredModel);
-  }, []);
+
+      rowIds.forEach(rowId => {
+        if (!rowId.startsWith('auto-generated')) {
+          const row = apiRef.current.getRow(rowId);
+          if (isRowWithinGroup(row)) {
+            const editableFields = Object.keys(newModel[rowId]).filter(
+              field => {
+                return /^W\d+/.test(field) && isCellEditableInRow(rowId, field);
+              }
+            );
+
+            if (editableFields.length > 0) {
+              filteredModel[rowId] = {};
+              editableFields.forEach(field => {
+                filteredModel[rowId][field] = true;
+              });
+            }
+          }
+        }
+      });
+      setCellSelectionModel(filteredModel);
+    },
+    [apiRef, type, isCellEditable, setCellSelectionModel, groupBy]
+  );
 
   const getRowClassName = params => {
     const rowNode = apiRef.current.getRowNode(params.id);
     const rowData = apiRef.current.getRow(params.id);
+    if (rowNode?.type === 'group') {
+      // Check if all children are non-editable for this week
+      const children = apiRef.current.getRowGroupChildren({
+        groupId: params.id,
+        applySorting: true,
+      });
+      const allChildrenNonEditable = children.every(childRow => {
+        const childParams = {
+          ...params,
+          row: childRow,
+          id: childRow.id,
+        };
+        return !isCellEditable(childParams);
+      });
+      if (allChildrenNonEditable) {
+        return 'group-row-non-editable';
+      }
+    }
     if (rowNode?.type === 'leaf' && rowData?.hasAllocation === false) {
       return 'child-of-zero-allocation-resource';
     }
@@ -1169,9 +1253,7 @@ export default function AllocationGrid({
     <StyledDataGrid
       cellSelection
       allocationTheme={allocationTheme}
-      isCellEditable={params =>
-        type === 'cost' ? false : !params.row.hasButton
-      }
+      isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
       rowModesModel={rowModesModel}
@@ -1206,15 +1288,22 @@ export default function AllocationGrid({
           (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
           (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
           (viewId === 'main' && !mainAllocationGrid.ready)
-        )
+        ) {
           return '';
-        return getCellClassName(
+        }
+        const originalClass = getCellClassName(
           params,
           getAllRowsForView(viewId),
           allocationTheme,
           type,
-          projects?.result
+          projects?.result,
+          isCellEditable
         );
+        const editable = isCellEditable(params);
+        if (!editable) {
+          return originalClass ? `${originalClass}` : 'non-editable-cell';
+        }
+        return originalClass || '';
       }}
       getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}

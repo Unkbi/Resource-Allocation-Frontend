@@ -70,6 +70,7 @@ interface CustomDatePickerProps {
   error?: boolean;
   helperText?: string;
   customStyles?: boolean;
+  onChange?: (date: Dayjs | null) => void;
   formikProps: {
     setFieldValue: (
       field: string,
@@ -95,6 +96,7 @@ export default function CustomDatePicker({
   customStyles,
   title,
   isRequired = false,
+  onChange,
 }: CustomDatePickerProps) {
   const { setFieldValue, values } = formikProps;
   const [open, setOpen] = React.useState(false);
@@ -104,6 +106,7 @@ export default function CustomDatePicker({
       ? dayjs(newValue).format('YYYY-MM-DD')
       : null;
     setFieldValue(name, formattedDate);
+    onChange?.(newValue); 
     setOpen(false);
   };
 
@@ -176,6 +179,19 @@ export default function CustomDatePicker({
                 readOnly: true,
               },
             },
+            day: ({ day }) => ({
+              onClick: event => {
+                if (value && day.isSame(dayjs(value), 'day')) {
+                  setFieldValue(name, null);
+                  onChange?.(null);
+                } else {
+                  const formattedDate = day.format('YYYY-MM-DD');
+                  setFieldValue(name, formattedDate);
+                  onChange?.(day);
+                }
+                setOpen(false);
+              },
+            }),
           }}
         />
       </LocalizationProvider>
