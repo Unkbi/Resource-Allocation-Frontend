@@ -205,7 +205,6 @@ export function formatAllAllocations(
         teams: team?.Name || null,
         teamStatus: team?.Status || null,
         teamAllocationManager: team?.AllocationManager || null,
-
         project: project?.Name || alloc.ProjectName || null,
         projectId: project?.Id || alloc.Project || null,
         projectSponsor:
@@ -222,7 +221,21 @@ export function formatAllAllocations(
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
         projectEndDate: project?.EndDate || null,
-
+        projectDescription: project?.Description || null,
+        email: resource?.Email || null,
+        phoneNumber: resource?.PhoneNumber || null,
+        resourceStartDate: resource?.StartDate || null,
+        resourceEndDate: resource?.EndDate || null,
+        resourceLocationCategory: resource?.LocationCategory || null,
+        workLocation: resource?.WorkLocation || null,
+        department: resource?.Department || null,
+        hrLevel: resource?.HRLevel || null,
+        manager: resource?.Manager || null,
+        contractorHourlyRate: resource?.ContractorHourlyRate || null,
+        contractorHourlyRateCurrency:
+          resource?.ContractorHourlyRateCurrency || null,
+        averageWeeklyHours: resource?.AverageWeeklyHours || null,
+        resourceStatus: resource?.Status || null,
         totalEffort: 0,
       };
 
@@ -292,6 +305,21 @@ export function injectBlankRows(
           projectCurrency: '',
           projectStartDate: '',
           projectEndDate: '',
+          projectDescription: '',
+          email: resource?.Email || null,
+          phoneNumber: resource?.PhoneNumber || null,
+          resourceStartDate: resource?.StartDate || null,
+          resourceEndDate: resource?.EndDate || null,
+          resourceLocationCategory: resource?.LocationCategory || null,
+          workLocation: resource?.WorkLocation || null,
+          department: resource?.Department || null,
+          hrLevel: resource?.HRLevel || null,
+          manager: resource?.Manager || null,
+          contractorHourlyRate: resource?.ContractorHourlyRate || null,
+          contractorHourlyRateCurrency:
+            resource?.ContractorHourlyRateCurrency || null,
+          averageWeeklyHours: resource?.AverageWeeklyHours || null,
+          resourceStatus: resource?.Status || null,
           resource: resource.FullName,
           totalEffort: 0,
           role: resource.Role || '',
@@ -386,7 +414,21 @@ export function formatCostAllocations(
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
         projectEndDate: project?.EndDate || null,
-
+        projectDescription: project?.Description || null,
+        email: resource?.Email || null,
+        phoneNumber: resource?.PhoneNumber || null,
+        resourceStartDate: resource?.StartDate || null,
+        resourceEndDate: resource?.EndDate || null,
+        resourceLocationCategory: resource?.LocationCategory || null,
+        workLocation: resource?.WorkLocation || null,
+        department: resource?.Department || null,
+        hrLevel: resource?.HRLevel || null,
+        manager: resource?.Manager || null,
+        contractorHourlyRate: resource?.ContractorHourlyRate || null,
+        contractorHourlyRateCurrency:
+          resource?.ContractorHourlyRateCurrency || null,
+        averageWeeklyHours: resource?.AverageWeeklyHours || null,
+        resourceStatus: resource?.Status || null,
         totalEffort: 0,
       };
 
@@ -486,6 +528,21 @@ export const generateEmptyRow = (
     projectCurrency: project?.BudgetCurrency || null,
     projectStartDate: project?.StartDate || null,
     projectEndDate: project?.EndDate || null,
+    projectDescription: project?.Description || null,
+    email: resource?.Email || null,
+    phoneNumber: resource?.PhoneNumber || null,
+    resourceStartDate: resource?.StartDate || null,
+    resourceEndDate: resource?.EndDate || null,
+    resourceLocationCategory: resource?.LocationCategory || null,
+    workLocation: resource?.WorkLocation || null,
+    department: resource?.Department || null,
+    hrLevel: resource?.HRLevel || null,
+    manager: resource?.Manager || null,
+    contractorHourlyRate: resource?.ContractorHourlyRate || null,
+    contractorHourlyRateCurrency:
+      resource?.ContractorHourlyRateCurrency || null,
+    averageWeeklyHours: resource?.AverageWeeklyHours || null,
+    resourceStatus: resource?.Status || null,
     totalEffort: 0,
   };
 
