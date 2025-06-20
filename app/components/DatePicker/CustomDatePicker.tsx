@@ -71,8 +71,16 @@ interface CustomDatePickerProps {
   helperText?: string;
   customStyles?: boolean;
   formikProps: {
-    setFieldValue: (field: string, value: any, shouldValidate?: boolean) => void;
-    setFieldTouched: (field: string, touched: boolean, shouldValidate?: boolean) => void;
+    setFieldValue: (
+      field: string,
+      value: any,
+      shouldValidate?: boolean
+    ) => void;
+    setFieldTouched: (
+      field: string,
+      touched: boolean,
+      shouldValidate?: boolean
+    ) => void;
     values: Record<string, any>;
   };
 }
@@ -92,7 +100,9 @@ export default function CustomDatePicker({
   const [open, setOpen] = React.useState(false);
 
   const handleDateChange = (newValue: Dayjs | null) => {
-    const formattedDate = newValue ? dayjs(newValue).format('YYYY-MM-DD') : null;
+    const formattedDate = newValue
+      ? dayjs(newValue).format('YYYY-MM-DD')
+      : null;
     setFieldValue(name, formattedDate);
     setOpen(false);
   };
@@ -116,15 +126,15 @@ export default function CustomDatePicker({
   }
 
   return (
-    <FormControl
-      style={{ width: '160px' }}
-      error={error}
-    >
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+    <FormControl style={{ width: '160px' }} error={error}>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale={DEFAULT_LOCALE}
+      >
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: '122px' }}>
           <StyledLabel>
             {title}{' '}
-            {(isRequired && formikProps.values.Status === 'Inactive') && (
+            {isRequired && formikProps.values.Status === 'Inactive' && (
               <span style={{ color: 'red' }}>*</span>
             )}
           </StyledLabel>
@@ -137,8 +147,6 @@ export default function CustomDatePicker({
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
-          minDate={undefined}
-          maxDate={undefined}
           slots={{
             textField: CustomTextField,
             openPickerIcon: () => (
