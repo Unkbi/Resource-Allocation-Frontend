@@ -97,7 +97,7 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
 
   const resourceTypeOptions =
     resources &&
-    resources.result.map(resource => {
+    resources?.result?.map(resource => {
       return { value: resource.Id, label: resource.FullName };
     });
 
