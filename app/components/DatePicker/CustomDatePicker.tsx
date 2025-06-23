@@ -38,7 +38,7 @@ const CustomTextField = styled(TextField, {
     fontWeight: 500,
     '& fieldset': {
       borderColor: error ? theme.palette.error.main : undefined,
-      borderWidth: error ? '1px' : undefined, 
+      borderWidth: error ? '1px' : undefined,
     },
     '&:hover fieldset': {
       borderColor: error ? theme.palette.error.main : undefined,
@@ -61,7 +61,6 @@ const CustomTextField = styled(TextField, {
   },
 }));
 
-
 interface CustomDatePickerProps {
   name: string;
   value: string | null;
@@ -73,8 +72,16 @@ interface CustomDatePickerProps {
   customStyles?: boolean;
   onChange?: (date: Dayjs | null) => void;
   formikProps: {
-    setFieldValue: (field: string, value: any, shouldValidate?: boolean) => void;
-    setFieldTouched: (field: string, touched: boolean, shouldValidate?: boolean) => void;
+    setFieldValue: (
+      field: string,
+      value: any,
+      shouldValidate?: boolean
+    ) => void;
+    setFieldTouched: (
+      field: string,
+      touched: boolean,
+      shouldValidate?: boolean
+    ) => void;
     values: Record<string, any>;
   };
 }
@@ -95,9 +102,11 @@ export default function CustomDatePicker({
   const [open, setOpen] = React.useState(false);
 
   const handleDateChange = (newValue: Dayjs | null) => {
-    const formattedDate = newValue ? dayjs(newValue).format('YYYY-MM-DD') : null;
+    const formattedDate = newValue
+      ? dayjs(newValue).format('YYYY-MM-DD')
+      : null;
     setFieldValue(name, formattedDate);
-    onChange?.(newValue); 
+    onChange?.(newValue);
     setOpen(false);
   };
 
@@ -120,11 +129,11 @@ export default function CustomDatePicker({
   }
 
   return (
-    <FormControl
-      style={{ width: '160px' }}
-      error={error}
-    >
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+    <FormControl style={{ width: '160px' }} error={error}>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale={DEFAULT_LOCALE}
+      >
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: '122px' }}>
           <StyledLabel>
             {title}{' '}
@@ -141,8 +150,6 @@ export default function CustomDatePicker({
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
-          minDate={minDate}
-          maxDate={maxDate}
           slots={{
             textField: CustomTextField,
             openPickerIcon: () => (
@@ -174,12 +181,13 @@ export default function CustomDatePicker({
             },
             day: ({ day }) => ({
               onClick: event => {
-                if (value && day.isSame(dayjs(value), 'day')) {
-                  setFieldValue(name, null);
+                const currentValue = value ? dayjs(value) : null;
+                if (currentValue && day.isSame(currentValue, 'day')) {
+                  setFieldValue(name, null, true);
                   onChange?.(null);
                 } else {
                   const formattedDate = day.format('YYYY-MM-DD');
-                  setFieldValue(name, formattedDate);
+                  setFieldValue(name, formattedDate, true);
                   onChange?.(day);
                 }
                 setOpen(false);

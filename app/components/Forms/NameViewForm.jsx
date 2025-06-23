@@ -16,7 +16,6 @@ import {
 import { X, Plus } from 'lucide-react';
 import StyledLabel from '../Label/StyledLabel';
 import CustomSelect from '../Select/CustomSelect';
-import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { useSelector } from 'react-redux';
 import { StyledInput } from '../Input/StyledInput';
