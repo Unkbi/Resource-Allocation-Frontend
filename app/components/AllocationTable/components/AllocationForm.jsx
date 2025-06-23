@@ -162,6 +162,7 @@ const initialValuesMap = {
     WorkLocation: '',
     Status: '',
     ConfirmTransfer: false,
+    shouldTransfer:false,
   },
   add_allocation: {
     Resource: [],
@@ -421,6 +422,7 @@ const AllocationForm = () => {
       submitType,
       Team,
       ConfirmTransfer,
+      shouldTransfer,
       ...cleanedValues
     } = values;
 
@@ -696,6 +698,57 @@ const AllocationForm = () => {
         };
 
         try {
+          const selectedTeam = teams.result.find(team => team.Id === values.Team);
+          let teamAllocationManagerId = null;
+          if (selectedTeam?.AllocationManager) {
+            const raw = selectedTeam.AllocationManager;
+            teamAllocationManagerId = raw.includes(',')
+              ? raw.split(',')[1]
+              : raw;
+          }
+          if (!teamAllocationManagerId) {
+            console.warn(
+              'No Allocation Manager found for selected team:',
+              values.Team
+            );
+          }
+          if (values.shouldTransfer === true) {
+            try {
+              await new Promise((resolve, reject) => {
+                dispatch({
+                  type: 'TRANSFER_ALLOCATIONS_RESOURCES',
+                  payload: {
+                    ResourceFrom: initialData.Id,
+                    ResourceTo: teamAllocationManagerId,
+                    StartDate: cleanedValues.EndDate,
+                    EndDate: '2099-06-30',
+                    resolve,
+                    reject,
+                  },
+                });
+              });
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Allocations transferred successfully!',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            } catch (error) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to transfer allocations. Please try again.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return; 
+            }
+          }
           await dispatch(
             updateResource({
               postData,
@@ -736,7 +789,6 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
-          // await dispatch(fetchAllResources());
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);

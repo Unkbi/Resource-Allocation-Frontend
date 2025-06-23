@@ -144,6 +144,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         Team: matchedTeam?.Id || '',
         Organisation: matchedOrg?.Id || '',
         ConfirmTransfer: initialData.ConfirmTransfer || true,
+        shouldTransfer: initialData.shouldTransfer ||false,
       };
 
       setFormValue(rowData);
@@ -227,9 +228,12 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         dayjs(allocation.Period).isAfter(newDate, 'day')
       );
       if (hasFutureAllocations) {
-        formikProps.setFieldValue('ConfirmTransfer', !hasFutureAllocations);
+        formikProps.setFieldValue('ConfirmTransfer', false);
+        formikProps.setFieldValue('shouldTransfer', true);
         setShowWarning(true);
       } else {
+        formikProps.setFieldValue('ConfirmTransfer', true);
+        formikProps.setFieldValue('shouldTransfer', false);
         setShowWarning(false);
       }
     } catch (error) {
