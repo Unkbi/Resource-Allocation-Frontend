@@ -695,7 +695,14 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': cleanedValues,
+          'ResourceAllocation.Core/Resource': {
+            ...cleanedValues,
+            EndDate:
+              cleanedValues.EndDate === undefined ||
+              cleanedValues.EndDate === ''
+                ? null
+                : cleanedValues.EndDate,
+          },
         };
 
         try {
