@@ -30,7 +30,7 @@ import {
   getResourceDetail,
 } from '@/app/services/teamServices';
 import dayjs from 'dayjs';
-import { getOnlyFilterSettings } from '@/app/utils/common';
+import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';
 import { compressToEncodedURIComponent } from 'lz-string';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import {
@@ -39,8 +39,9 @@ import {
   getResourceAllocationsForPeriod,
   getResourceIdByEmail,
 } from '@/app/utils/allocationUtils';
-import { addWeeks } from 'date-fns';
+import { addDays, addWeeks, format } from 'date-fns';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { parseISO } from 'date-fns';
 
 const warningTextStyle = {
   color: '#B44536',
@@ -144,7 +145,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         Team: matchedTeam?.Id || '',
         Organisation: matchedOrg?.Id || '',
         ConfirmTransfer: initialData.ConfirmTransfer || true,
-        shouldTransfer: initialData.shouldTransfer ||false,
+        shouldTransfer: initialData.shouldTransfer || false,
       };
 
       setFormValue(rowData);
@@ -265,7 +266,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       'YYYY-MM-DD'
     );
     const maxDate =
-      actualMaxDate && dayjs(actualMaxDate).isAfter(dayjs(fallbackDate))
+      actualMaxDate && dayjs(actualMaxDate).isBefore(dayjs(fallbackDate))
         ? actualMaxDate
         : fallbackDate;
 
@@ -273,7 +274,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       JSON.stringify(
         getOnlyFilterSettings({
           GroupBy: 'Teams',
-          StartDate: dayjs(formikProps.values.EndDate).format('YYYY-MM-DD'),
+          StartDate: format(
+            addDays(parseISO(getMondayOfISO(formikProps.values.EndDate)), 7),
+            DATE_FORMAT
+          ),
           EndDate: maxDate,
           ColumnsVisible: [
             '__row_group_by_columns_group_teams__',
