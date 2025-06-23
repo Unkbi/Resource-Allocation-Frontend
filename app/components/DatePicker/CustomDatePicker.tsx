@@ -106,7 +106,7 @@ export default function CustomDatePicker({
       ? dayjs(newValue).format('YYYY-MM-DD')
       : null;
     setFieldValue(name, formattedDate);
-    onChange?.(newValue); 
+    onChange?.(newValue);
     setOpen(false);
   };
 
