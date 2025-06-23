@@ -24,6 +24,14 @@ export interface GetTeamAllocationsForPeriodPayload {
   };
 }
 
+export interface TransferAllocationsPayload {
+  'ResourceAllocation.Core/TransferAllocations': {
+    ResourceFrom: string;
+    ResourceTo: string;
+    StartDate: string;
+    EndDate: string;
+  };
+}
 export interface GetResourceAllocationsForPeriodPayload {
   'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
     Resource: string;

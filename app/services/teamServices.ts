@@ -7,6 +7,7 @@ import {
   GetTeamAllocationsForPeriodPayload,
   GetTeamResourcesPayload,
   TeamResourcePayload,
+  TransferAllocationsPayload,
 } from '../types';
 import { AxiosError } from 'axios';
 
@@ -96,6 +97,16 @@ export const fetchTeamAllocationsForSaga = async (
   return response.data;
 };
 
+
+export const fetchTransferAllocationsForSaga = async (
+  postData: TransferAllocationsPayload
+) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/TransferAllocations`,
+    postData
+  );
+  return response.data;
+};
 
 export const fetchResourceAllocationsForSaga = async (
   postData: GetResourceAllocationsForPeriodPayload
