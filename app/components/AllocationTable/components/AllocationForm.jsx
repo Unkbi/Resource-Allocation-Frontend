@@ -37,6 +37,7 @@ import {
   generateDateWeekMath,
   getUpdatedTotalWeeklyAllocation,
   isResourceWithinDate,
+  getMondayOfISO,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -66,7 +67,7 @@ import {
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { format, getWeek, parseISO } from 'date-fns';
+import { addDays, format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import {
   addResource,
@@ -720,7 +721,13 @@ const AllocationForm = () => {
                   payload: {
                     ResourceFrom: initialData.Id,
                     ResourceTo: teamAllocationManagerId,
-                    StartDate: cleanedValues.EndDate,
+                    StartDate: format(
+                      addDays(
+                        parseISO(getMondayOfISO(cleanedValues.EndDate)),
+                        7
+                      ),
+                      DATE_FORMAT
+                    ),
                     EndDate: '2099-06-30',
                     resolve,
                     reject,
