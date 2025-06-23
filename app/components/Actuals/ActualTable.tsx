@@ -152,6 +152,8 @@ export default function ActualTable({
       ) {
         setHasPersonalTime(true);
       }
+      onValidationChange && onValidationChange(false);
+      setRowValidationErrors({});
     }
   }, [startDate, endDate, data]);
 

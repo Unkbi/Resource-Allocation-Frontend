@@ -51,6 +51,7 @@ export default function ActualsPage() {
   );
   const [show, setShow] = useState(true);
   const [isModified, setIsModified] = useState(false);
+  const [canNavigate, setCanNavigate] = useState(false);
 
   const handleModificationChange = (modified: boolean) => {
     setShow(false);
@@ -147,6 +148,9 @@ export default function ActualsPage() {
             dispatch(setActualAllocationsStatus('Confirmed'));
           }
           if (response?.status === 'ok') {
+             setIsModified(false);
+             setCanNavigate(true);
+             setHasInvalidRows(false);
             dispatch(
               showToast({
                 open: true,
@@ -281,6 +285,7 @@ export default function ActualsPage() {
       handleNext();
     }
     setDialogSource(null);
+     setCanNavigate(false);
   };
 
   const handleCancel = () => {
@@ -365,11 +370,12 @@ export default function ActualsPage() {
             <Button
               startIcon={<ChevronLeftIcon />}
               onClick={() => {
-                if (isModified) {
+                if (isModified && !canNavigate) {
                   setDialogSource('prev');
                   setDeleteDialogOpen(true);
                 } else {
                   handlePrev();
+                  setCanNavigate(false);
                 }
               }}
               sx={{
@@ -424,11 +430,12 @@ export default function ActualsPage() {
             <Button
               endIcon={<ChevronRightIcon />}
               onClick={() => {
-                if (isModified) {
+                if (isModified && !canNavigate) {
                   setDialogSource('next');
                   setDeleteDialogOpen(true);
                 } else {
                   handleNext();
+                  setCanNavigate(false);
                 }
               }}
               disabled={startDate ? isCurrentWeek(parseISO(startDate)) : false}
