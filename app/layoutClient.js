@@ -12,6 +12,9 @@ import { getUserData } from './redux/actions/authActions';
 import { useDispatch, useSelector } from 'react-redux';
 import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
 import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
+import { fetchAllTeams } from './redux/actions/fetchTeamsAction';
+import { fetchAllProjects } from './redux/actions/fetchProjectsAction';
+import { fetchAllResources } from './redux/actions/fetchResourcesAction';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -35,6 +38,9 @@ export default function LayoutClient({ children }) {
   const dispatch = useDispatch();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const { open } = useSelector(state => state.toast);
+  const { resources } = useSelector(state => state.resources);
+  const { projects } = useSelector(state => state.projects);
+  const { teams } = useSelector(state => state.teams);
 
   useEffect(() => {
     setIsClient(true);
@@ -95,6 +101,15 @@ export default function LayoutClient({ children }) {
     if (isLoggedIn) {
       setIsUserLoginIn(isLoggedIn);
       dispatch(getUserData());
+      if (!teams?.result?.length) {
+        dispatch(fetchAllTeams());
+      }
+      if (!projects?.result?.length) {
+        dispatch(fetchAllProjects());
+      }
+      if (!resources?.result?.length) {
+        dispatch(fetchAllResources());
+      }
     }
   }, [dispatch, isLoggedIn, isClient]);
 
