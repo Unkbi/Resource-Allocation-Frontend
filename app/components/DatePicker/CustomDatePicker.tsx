@@ -181,12 +181,13 @@ export default function CustomDatePicker({
             },
             day: ({ day }) => ({
               onClick: event => {
-                if (value && day.isSame(dayjs(value), 'day')) {
-                  setFieldValue(name, null);
+                const currentValue = value ? dayjs(value) : null;
+                if (currentValue && day.isSame(currentValue, 'day')) {
+                  setFieldValue(name, null, true);
                   onChange?.(null);
                 } else {
                   const formattedDate = day.format('YYYY-MM-DD');
-                  setFieldValue(name, formattedDate);
+                  setFieldValue(name, formattedDate, true);
                   onChange?.(day);
                 }
                 setOpen(false);

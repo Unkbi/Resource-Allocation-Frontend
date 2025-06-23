@@ -692,7 +692,14 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': cleanedValues,
+          'ResourceAllocation.Core/Resource': {
+            ...cleanedValues,
+            EndDate:
+              cleanedValues.EndDate === undefined ||
+              cleanedValues.EndDate === ''
+                ? null
+                : cleanedValues.EndDate,
+          },
         };
 
         try {
@@ -736,7 +743,6 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
-          // await dispatch(fetchAllResources());
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
