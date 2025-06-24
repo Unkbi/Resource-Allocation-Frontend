@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react"
+import { useSelector } from "react-redux"
 import {
   Box,
   Typography,
@@ -66,10 +67,9 @@ const getAvatarColorHSL = (initials: string) => {
 
 const INITIAL_ITEMS_COUNT = 5
 
-export default function HistoryForm({ historyData }: { historyData: ActivityItem[] }) {
+export default function HistoryForm({ historyData }: { historyData: ActivityItem[]}) {
   const [showAll, setShowAll] = useState(false)
   const [isExpanding, setIsExpanding] = useState(false)
-
   const displayedItems = useMemo(() => {
     if (showAll) return historyData
     return historyData.slice(0, INITIAL_ITEMS_COUNT)
@@ -94,7 +94,7 @@ export default function HistoryForm({ historyData }: { historyData: ActivityItem
   }
 
   const isLoading = historyData.length === 0
-  const skeletonCount = 3
+  const skeletonCount = 5
 
   return (
     <Box sx={{ width: "100%", maxWidth: 600, bgcolor: "background.paper" }}>

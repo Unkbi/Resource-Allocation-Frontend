@@ -417,6 +417,9 @@ export const getFinalColumns = (
   isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
+  const allResources = useSelector(
+    state => state.resources.resources?.result || []
+  );
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -497,9 +500,17 @@ export const getFinalColumns = (
         title: 'Allocation History',
         cancelButtonText: 'View All History',
         formType: 'open_history',
-        initialData: {
-          Resource: params.row.resource,
-          Project: params.row.project,
+        initialData: params.field === 'project' ? {
+          Resource: params.row.resourceId,
+          Project: params.row.projectId,
+          StartDate: startDate,
+          EndDate: endDate,
+        } : {
+          Resource: allResources.find(
+            resource => resource.FullName === params.value
+          )?.Id || '',
+          StartDate: startDate,
+          EndDate: endDate,
         },
       })
     );

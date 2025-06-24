@@ -24,6 +24,7 @@ import {
   editResourceValidationSchema,
   addTeamValidationSchema,
   addRatesValidationSchema,
+  openHistoryValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -98,7 +99,7 @@ import {
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
-import {fetchHistory} from '@/app/services/allocationServices';
+import { fetchHistory } from '@/app/services/allocationServices';
 
 const initialValuesMap = {
   add_project: {
@@ -234,11 +235,10 @@ const initialValuesMap = {
   open_history: {
     StartDate: '',
     EndDate: '',
-    Resource: [],
-    Project: [],
+    Resource: '',
+    Project: '',
   },
 };
-
 
 const AllocationForm = () => {
   const { formType } = useSelector(state => state.globalDialog.formState);
@@ -284,107 +284,107 @@ const AllocationForm = () => {
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
-//   const HistoryData = [
-//   {
-//     id: "1",
-//     userInitials: "AH",
-//     userName: "Andrew Fard",
-//     projectName: "Project Infinity",
-//     weekNumber: 12,
-//     date: "March 15, 2025",
-//     timestamp: "15 minutes ago",
-//     action: "Update",
-//     fromVersion: "0.8",
-//     toVersion: "0.5",
-//     byUser: "Audrey Hepburn",
-//   },
-//   {
-//     id: "2",
-//     userInitials: "KR",
-//     userName: "Bruno Mars",
-//     projectName: "Project YML",
-//     weekNumber: 13,
-//     date: "March 15, 2025",
-//     timestamp: "30 minutes ago",
-//     action: "Deleted",
-//     updatedTo: "0.8",
-//     byUser: "Kacy Ryback",
-//   },
-//   {
-//     id: "3",
-//     userInitials: "TS",
-//     userName: "Sheldon",
-//     projectName: "Project Doom",
-//     weekNumber: 13,
-//     date: "March 15, 2025",
-//     timestamp: "1 day ago",
-//     action: "Created",
-//     updatedTo: "0.5",
-//     byUser: "Tom Sawyer",
-//   },
-//   {
-//     id: "4",
-//     userInitials: "JD",
-//     userName: "John Doe",
-//     projectName: "Project Alpha",
-//     weekNumber: 11,
-//     date: "March 14, 2025",
-//     timestamp: "2 days ago",
-//     action: "Update",
-//     fromVersion: "1.0",
-//     toVersion: "1.1",
-//     byUser: "Jane Smith",
-//   },
-//   {
-//     id: "5",
-//     userInitials: "SM",
-//     userName: "Sarah Miller",
-//     projectName: "Project Beta",
-//     weekNumber: 10,
-//     date: "March 13, 2025",
-//     timestamp: "3 days ago",
-//     action: "Created",
-//     updatedTo: "2.0",
-//     byUser: "Mike Johnson",
-//   },
-//   {
-//     id: "6",
-//     userInitials: "AB",
-//     userName: "Alex Brown",
-//     projectName: "Project Gamma",
-//     weekNumber: 9,
-//     date: "March 12, 2025",
-//     timestamp: "4 days ago",
-//     action: "Deleted",
-//     updatedTo: "1.5",
-//     byUser: "Lisa Wilson",
-//   },
-//   {
-//     id: "7",
-//     userInitials: "MJ",
-//     userName: "Mike Johnson",
-//     projectName: "Project Delta",
-//     weekNumber: 8,
-//     date: "March 11, 2025",
-//     timestamp: "5 days ago",
-//     action: "Update",
-//     fromVersion: "2.1",
-//     toVersion: "2.2",
-//     byUser: "Alex Brown",
-//   },
-//   {
-//     id: "8",
-//     userInitials: "LW",
-//     userName: "Lisa Wilson",
-//     projectName: "Project Epsilon",
-//     weekNumber: 7,
-//     date: "March 10, 2025",
-//     timestamp: "6 days ago",
-//     action: "Created",
-//     updatedTo: "3.0",
-//     byUser: "Sarah Miller",
-//   },
-// ]
+  //   const HistoryData = [
+  //   {
+  //     id: "1",
+  //     userInitials: "AH",
+  //     userName: "Andrew Fard",
+  //     projectName: "Project Infinity",
+  //     weekNumber: 12,
+  //     date: "March 15, 2025",
+  //     timestamp: "15 minutes ago",
+  //     action: "Update",
+  //     fromVersion: "0.8",
+  //     toVersion: "0.5",
+  //     byUser: "Audrey Hepburn",
+  //   },
+  //   {
+  //     id: "2",
+  //     userInitials: "KR",
+  //     userName: "Bruno Mars",
+  //     projectName: "Project YML",
+  //     weekNumber: 13,
+  //     date: "March 15, 2025",
+  //     timestamp: "30 minutes ago",
+  //     action: "Deleted",
+  //     updatedTo: "0.8",
+  //     byUser: "Kacy Ryback",
+  //   },
+  //   {
+  //     id: "3",
+  //     userInitials: "TS",
+  //     userName: "Sheldon",
+  //     projectName: "Project Doom",
+  //     weekNumber: 13,
+  //     date: "March 15, 2025",
+  //     timestamp: "1 day ago",
+  //     action: "Created",
+  //     updatedTo: "0.5",
+  //     byUser: "Tom Sawyer",
+  //   },
+  //   {
+  //     id: "4",
+  //     userInitials: "JD",
+  //     userName: "John Doe",
+  //     projectName: "Project Alpha",
+  //     weekNumber: 11,
+  //     date: "March 14, 2025",
+  //     timestamp: "2 days ago",
+  //     action: "Update",
+  //     fromVersion: "1.0",
+  //     toVersion: "1.1",
+  //     byUser: "Jane Smith",
+  //   },
+  //   {
+  //     id: "5",
+  //     userInitials: "SM",
+  //     userName: "Sarah Miller",
+  //     projectName: "Project Beta",
+  //     weekNumber: 10,
+  //     date: "March 13, 2025",
+  //     timestamp: "3 days ago",
+  //     action: "Created",
+  //     updatedTo: "2.0",
+  //     byUser: "Mike Johnson",
+  //   },
+  //   {
+  //     id: "6",
+  //     userInitials: "AB",
+  //     userName: "Alex Brown",
+  //     projectName: "Project Gamma",
+  //     weekNumber: 9,
+  //     date: "March 12, 2025",
+  //     timestamp: "4 days ago",
+  //     action: "Deleted",
+  //     updatedTo: "1.5",
+  //     byUser: "Lisa Wilson",
+  //   },
+  //   {
+  //     id: "7",
+  //     userInitials: "MJ",
+  //     userName: "Mike Johnson",
+  //     projectName: "Project Delta",
+  //     weekNumber: 8,
+  //     date: "March 11, 2025",
+  //     timestamp: "5 days ago",
+  //     action: "Update",
+  //     fromVersion: "2.1",
+  //     toVersion: "2.2",
+  //     byUser: "Alex Brown",
+  //   },
+  //   {
+  //     id: "8",
+  //     userInitials: "LW",
+  //     userName: "Lisa Wilson",
+  //     projectName: "Project Epsilon",
+  //     weekNumber: 7,
+  //     date: "March 10, 2025",
+  //     timestamp: "6 days ago",
+  //     action: "Created",
+  //     updatedTo: "3.0",
+  //     byUser: "Sarah Miller",
+  //   },
+  // ]
 
   const getValidationSchema = formType => {
     switch (formType) {
@@ -418,8 +418,8 @@ const AllocationForm = () => {
         return addRatesValidationSchema;
       case 'edit_rates':
         return addRatesValidationSchema;
-      // case 'open_history':
-      //   return openHistoryValidationSchema;
+      case 'open_history':
+        return openHistoryValidationSchema;
       default:
         return null;
     }
@@ -1567,12 +1567,12 @@ const AllocationForm = () => {
 
         break;
       case 'open_history':
-        setFormValue({
-          StartDate: initialData.StartDate || '',
-          EndDate: initialData.EndDate || '',
-          Resource: initialData.Resource || [],
-          Project: initialData.Project || [],
-        });
+        // setFormValue({
+        //   StartDate: initialData.StartDate || '',
+        //   EndDate: initialData.EndDate || '',
+        //   Resource: initialData.Resource || [],
+        //   Project: initialData.Project || [],
+        // });
         break;
       default:
         return;
@@ -1750,146 +1750,162 @@ const AllocationForm = () => {
   };
 
   useEffect(() => {
-  if (formType === 'open_history') {
-    const BATCH_SIZE = 20;
-    const BATCH_DELAY = 100;
+    if (formType === 'open_history') {
+      const BATCH_SIZE = 20;
+      const BATCH_DELAY = 100;
 
-    const progressivelyLoadHistory = (fullData) => {
-      let index = 0;
-      setHistoryData([]); // Reset before appending
+      const progressivelyLoadHistory = fullData => {
+        let index = 0;
+        setHistoryData([]); // Reset before appending
 
-      const loadNextBatch = () => {
-        const nextBatch = fullData.slice(index, index + BATCH_SIZE);
-        setHistoryData(prev => [...prev, ...nextBatch]);
-        index += BATCH_SIZE;
+        const loadNextBatch = () => {
+          const nextBatch = fullData.slice(index, index + BATCH_SIZE);
+          setHistoryData(prev => [...prev, ...nextBatch]);
+          index += BATCH_SIZE;
 
-        if (index < fullData.length) {
-          setTimeout(loadNextBatch, BATCH_DELAY);
+          if (index < fullData.length) {
+            setTimeout(loadNextBatch, BATCH_DELAY);
+          }
+        };
+
+        loadNextBatch();
+      };
+
+      const fetchHistoryData = async () => {
+        try {
+          const response = await fetchHistory(initialData);
+          if (response?.error) {
+            console.error('Failed to fetch history:', response.error);
+            return;
+          }
+          
+          const formattedHistory = [];
+          (response.result || [])
+            .filter(
+              item =>
+                Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
+            )
+            .forEach((item, idx) => {
+              const {
+                ResourceName,
+                ProjectName,
+                Period,
+                AllocationEntered,
+                ChangesLog = [],
+                AllocationId,
+              } = item;
+
+              // Helper functions
+              const getUserInitials = email => {
+                if (!email) return '';
+                const [name] = email.split('@');
+                const parts = name.split(/[.\s_]/);
+                return parts
+                  .map(p => p[0]?.toUpperCase())
+                  .join('')
+                  .slice(0, 2);
+              };
+              const getUserName = email => {
+                if (!email) return '';
+                const [name] = email.split('@');
+                return name
+                  .split(/[.\s_]/)
+                  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+                  .join(' ');
+              };
+              const getDateString = ts => {
+                if (!ts) return '';
+                const date = new Date(ts);
+                return date
+                  .toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric',
+                  })
+                  .replace(/ /g, ' ');
+              };
+              const getRelativeTime = ts => {
+                if (!ts) return '';
+                const now = Date.now();
+                const diff = now - ts * 1000;
+                const min = Math.floor(diff / 60000);
+                if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+                const hr = Math.floor(min / 60);
+                if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+                const day = Math.floor(hr / 24);
+                return `${day} day${day === 1 ? '' : 's'} ago`;
+              };
+
+              // Calculate week number from Period
+              let weekNumber = '';
+              if (Period) {
+                const d = new Date(Period);
+                if (!isNaN(d)) {
+                  const temp = new Date(d.getTime());
+                  temp.setHours(0, 0, 0, 0);
+                  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+                  const yearStart = new Date(temp.getFullYear(), 0, 1);
+                  weekNumber = Math.ceil(
+                    ((temp - yearStart) / 86400000 + 1) / 7
+                  );
+                }
+              }
+
+              // For each change log, create a history entry
+              ChangesLog.forEach((log, logIdx) => {
+                let action = '';
+                let fromVersion = '';
+                let toVersion = '';
+
+                // Find the next log entry if it exists
+                const nextLog = ChangesLog[logIdx + 1];
+
+                if (log.Action?.toLowerCase() === 'create') {
+                  action = 'Created';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = nextLog
+                    ? (nextLog.AllocationEnteredLast ?? '')
+                    : (AllocationEntered ?? '');
+                } else if (log.Action?.toLowerCase() === 'update') {
+                  action = 'Update';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = nextLog
+                    ? (nextLog.AllocationEnteredLast ?? '')
+                    : (AllocationEntered ?? '');
+                } else if (log.Action?.toLowerCase() === 'delete') {
+                  action = 'Deleted';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = '';
+                } else {
+                  action = log.Action;
+                }
+
+                formattedHistory.push({
+                  id: `${AllocationId || idx + 1}-${logIdx + 1}`,
+                  userInitials: getUserInitials(ResourceName),
+                  userName: getUserName(ResourceName),
+                  projectName: ProjectName,
+                  weekNumber: weekNumber ? Number(weekNumber) : undefined,
+                  date: getDateString(Period),
+                  timestamp: getRelativeTime(log.Timestamp),
+                  action,
+                  fromVersion:
+                    fromVersion !== undefined ? String(fromVersion) : '',
+                  toVersion: toVersion !== undefined ? String(toVersion) : '',
+                  byUser: getUserName(log.User),
+                });
+              });
+            });
+
+          progressivelyLoadHistory(formattedHistory);
+        } catch (error) {
+          console.error('Error fetching history:', error);
         }
       };
 
-      loadNextBatch();
-    };
-
-    const fetchHistoryData = async () => {
-      try {
-        const response = await fetchHistory();
-        if (response?.error) {
-          console.error('Failed to fetch history:', response.error);
-          return;
-        }
-
-        const formattedHistory = (response.result || []).map((item, idx) => {
-          const getUserInitials = email => {
-            if (!email) return '';
-            const [name] = email.split('@');
-            const parts = name.split(/[.\s_]/);
-            return parts.map(p => p[0]?.toUpperCase()).join('').slice(0, 2);
-          };
-          const getUserName = email => {
-            if (!email) return '';
-            const [name] = email.split('@');
-            return name
-              .split(/[.\s_]/)
-              .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-              .join(' ');
-          };
-          const getDateString = ts => {
-            if (!ts) return '';
-            const date = new Date(ts * 1000);
-            return date.toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            });
-          };
-          const getRelativeTime = ts => {
-            if (!ts) return '';
-            const now = Date.now();
-            const diff = now - ts * 1000;
-            const min = Math.floor(diff / 60000);
-            if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
-            const hr = Math.floor(min / 60);
-            if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
-            const day = Math.floor(hr / 24);
-            return `${day} day${day === 1 ? '' : 's'} ago`;
-          };
-
-          let projectName = '';
-          let weekNumber = '';
-          let fromVersion = '';
-          let toVersion = '';
-          let action = '';
-          let period = '';
-          let byUser = '';
-
-          if (item.LastValues && typeof item.LastValues === 'object') {
-            projectName = item.LastValues.ProjectName || '';
-            period = item.LastValues.Period || '';
-            if (period) {
-              const d = new Date(period);
-              if (!isNaN(d)) {
-                const temp = new Date(d.getTime());
-                temp.setHours(0, 0, 0, 0);
-                temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                const yearStart = new Date(temp.getFullYear(), 0, 1);
-                weekNumber = Math.ceil(((temp - yearStart) / 86400000 + 1) / 7);
-              }
-            }
-            fromVersion = item.LastValues.fromVersion || '';
-            toVersion = item.LastValues.toVersion || '';
-            byUser = item.LastValues.byUser || '';
-          }
-
-          if (!projectName && item.ProjectName)
-            projectName = item.ProjectName;
-          if (!projectName && item.LastValues?.Project)
-            projectName = item.LastValues.Project;
-
-          action =
-            (item.Action || '').toLowerCase() === 'create'
-              ? 'Created'
-              : (item.Action || '').toLowerCase() === 'update'
-              ? 'Update'
-              : (item.Action || '').toLowerCase() === 'delete'
-              ? 'Deleted'
-              : item.Action;
-
-          if (action === 'Update') {
-            fromVersion = item.LastValues?.fromVersion || '';
-            toVersion = item.LastValues?.toVersion || '';
-          } else if (action === 'Created' || action === 'Deleted') {
-            toVersion = item.LastValues?.toVersion || item.LastValues?.updatedTo || '';
-          }
-
-          byUser = item.LastValues?.byUser || getUserName(item.User);
-
-          return {
-            id: item.__Id__ || idx + 1 + '',
-            userInitials: getUserInitials(item.User),
-            userName: getUserName(item.User),
-            projectName,
-            weekNumber: weekNumber ? Number(weekNumber) : undefined,
-            date: getDateString(item.Timestamp),
-            timestamp: getRelativeTime(item.Timestamp),
-            action,
-            fromVersion,
-            toVersion,
-            byUser,
-          };
-        });
-
-        // ✅ Progressive chunked loading
-        progressivelyLoadHistory(formattedHistory);
-      } catch (error) {
-        console.error('Error fetching history:', error);
-      }
-    };
-
-    fetchHistoryData();
-  }
-}, [formType]);
-
+      fetchHistoryData();
+    }
+  }, [formType]);
 
   const getFormComponent = (formType, formikProps) => {
     switch (formType) {
@@ -1969,7 +1985,11 @@ const AllocationForm = () => {
         );
       case 'open_history':
         return (
-          <HistoryForm formikProps={formikProps} setFormValue={setFormValue} historyData={HistoryData} />
+          <HistoryForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            historyData={HistoryData}
+          />
         );
       default:
         return <div>No form selected</div>;
