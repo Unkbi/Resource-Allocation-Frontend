@@ -518,8 +518,24 @@ const AllocationForm = () => {
           },
         };
         try {
-          dispatch(updateProject({ postData, projectId: initialData.Id }));
+          dispatch(updateProject({ postData, projectId: initialData.Id })).then(
+            async response => {
+             if (response.meta.requestStatus === 'fulfilled') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Project updated successfully`,
+                    type: 'success',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
+            }
+          );
           await dispatch(fetchAllProjects());
+          dispatch(closeDialog());
           dispatch(setHighlightedRowId(initialData.Id));
         } catch (e) {
           console.error('Failed to edit project:', e);

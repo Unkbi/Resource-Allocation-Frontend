@@ -16,6 +16,9 @@ import {
   getAllocationManagerFromPath,
   getProjectTypeColorLine,
   getResourceFromUid,
+  getTotalWeeks,
+  generateDateWeekMath,
+  calculateWeekRanges,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
@@ -27,8 +30,6 @@ import Typography from '@mui/material/Typography';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { showToast } from '@/app/redux/reducers/toastReducer';
 import { styled } from '@mui/material/styles';
 import {
   IconButton,
@@ -37,10 +38,13 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
-import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
-import { deleteProject, getAllProjects } from '@/app/services/projectServices';
+import {
+  COMPANY_DEFAULT_VIEW,
+  setSplitView,
+  setSplitViewCurrentProject,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
+import { useRouter } from 'next/navigation';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -73,7 +77,10 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
     },
   },
   '& .MuiTypography-root': {
-    color: '#424242',
+    color: '#1C2D5F',
+    fontSize: '12px',
+    fontWeight: '600',
+    lineHeight: ' 18px',
   },
   '& .MuiListItemIcon-root': {
     minWidth: 32,
@@ -81,16 +88,13 @@ const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-interface HandleConfirmDeleteProps {
-  (projectId: string): Promise<void>;
+interface SplitViewParams {
+  value: string;
 }
 
-interface ProjectAllocationsPostData {
-  'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-    Project: string;
-    StartDate: string;
-    EndDate: string;
-  };
+interface DateRange {
+  start?: any;
+  end?: any;
 }
 
 export default function ProjectAllocation({
@@ -98,6 +102,7 @@ export default function ProjectAllocation({
   endDate,
 }: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
+  const router = useRouter();
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
@@ -111,10 +116,7 @@ export default function ProjectAllocation({
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<{ Id: string } | null>(
-    null
-  );
+  const [menuProjectName, setMenuProjectName] = useState<string>('');
   const allResources = _resources.result || [];
   const {
     setRows,
@@ -169,78 +171,70 @@ export default function ProjectAllocation({
     );
   };
 
-  const handleAddResourceClick = (params: GridCellParams) => {
+  const handleEditProject = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
+    );
     dispatch(
       openDialog({
-        title: 'Add Resource',
-        submitButtonText: 'Add',
+        title: 'Edit Project',
+        submitButtonText: 'Update',
         cancelButtonText: 'Cancel',
-        formType: 'add_resource',
-        initialData: params.row,
+        formType: 'edit_project',
+        initialData: data?.[0] || {},
       })
     );
   };
 
-  const handleConfirmDelete: HandleConfirmDeleteProps = async projectId => {
-    dispatch(
-      showToast({
-        open: true,
-        message: 'Checking for active allocations',
-        type: 'info',
-        position: 'bottom-left',
-        autoHideTimer: 1000,
-      })
+  const handleOpenSplitView = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
     );
-    try {
-      const postData: ProjectAllocationsPostData = {
-        'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-          Project: projectId,
-          StartDate: '2000-01-01',
-          EndDate: '2032-01-01',
-        },
-      };
-      const response: any = await fetchProjectAllocationsForSaga(postData);
-      if (!response.result || response.result.length === 0) {
-        await dispatch(deleteProject(projectId)).unwrap();
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Project deleted successfully',
-            type: 'success',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-        dispatch(fetchAllProjects());
-      } else {
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Cannot delete project with active allocations',
-            type: 'error',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
+    dispatch(setSplitView(true));
+    dispatch(setSplitViewCurrentProject(data?.[0] || {}));
+    const { StartDate, EndDate } = data?.[0] || {};
+    const currentDate = new Date();
+
+    const getDateRange = (start?: any, end?: any): [any, any] => {
+      if (start && end) {
+        const weeks = getTotalWeeks(start, end);
+        return weeks > 52
+          ? [start, generateDateWeekMath('WEEK_PLUS', 51, new Date(start))]
+          : [start, end];
       }
-    } catch (error) {
+
+      if (!start && end)
+        return [generateDateWeekMath('WEEK_MINUS', 20, new Date(end)), end];
+      if (start && !end)
+        return [start, generateDateWeekMath('WEEK_PLUS', 20, new Date(start))];
+
+      return [
+        generateDateWeekMath('WEEK_MINUS', 1, currentDate),
+        generateDateWeekMath('WEEK_PLUS', 19, currentDate),
+      ];
+    };
+
+    const [startRange, endRange] = getDateRange(StartDate, EndDate);
+
+    if (startRange && endRange) {
+      const { weekMinus, weekPlus } = calculateWeekRanges(
+        startRange,
+        endRange,
+        currentDate
+      );
       dispatch(
-        showToast({
-          open: true,
-          message: 'Failed to delete project',
-          type: 'error',
-          position: 'bottom-left',
-          autoHideTimer: 1000,
+        updateCurrentView({
+          ...COMPANY_DEFAULT_VIEW,
+          isDynamicRange: false,
+          isFixedRange: true,
+          StartDate: startRange,
+          EndDate: endRange,
+          WeekPlus: weekPlus,
+          WeekMinus: weekMinus,
         })
       );
-    } finally {
-      setDeleteDialogOpen(false);
-      setProjectToDelete(null);
     }
-  };
-  const handleCancelDelete = () => {
-    setDeleteDialogOpen(false);
-    setProjectToDelete(null);
+    router.replace('/allocation');
   };
 
   const getFirstChild = (params: GridCellParams) => {
@@ -266,20 +260,20 @@ export default function ProjectAllocation({
   };
 
   const modifyData = (data: any[]) => {
-      if (data) {
-        return data.map(item => {
-          return {
-            ...item,
-            id: item.Id,
-            ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
-              ?.FullName,
-            ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
-              ?.FullName,
-          };
-        });
-      }
-      return [];
-    };
+    if (data) {
+      return data.map(item => {
+        return {
+          ...item,
+          id: item.Id,
+          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+            ?.FullName,
+          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+            ?.FullName,
+        };
+      });
+    }
+    return [];
+  };
 
   const projectColumnConfig = [
     {
@@ -311,47 +305,6 @@ export default function ProjectAllocation({
           setAnchorEl(null);
         };
 
-        const handleEditProject = (params: GridCellParams) => {
-          const data = modifyData((projects?.result ?? []).filter(project => project.Name === params.value));
-          dispatch(
-            openDialog({
-              title: 'Edit Project',
-              submitButtonText: 'Update',
-              cancelButtonText: 'Cancel',
-              formType: 'edit_project',
-              initialData: data?.[0] || {},
-            })
-          );
-          handleMenuClose();
-        };
-
-        const handleDeleteProject = (params: GridCellParams) => {
-          setProjectToDelete(params.row);
-          setDeleteDialogOpen(true);
-          handleMenuClose();
-        };
-
-        const menuItems = [
-          {
-            label: 'Add Resource',
-            icon: <PersonAddIcon fontSize="small" />,
-            func: () => {
-              handleAddResourceClick(params);
-              handleMenuClose();
-            },
-          },
-          {
-            label: 'Edit Project',
-            icon: <EditIcon fontSize="small" />,
-            func: () => handleEditProject(params),
-          },
-          {
-            label: 'Delete Project',
-            icon: <DeleteIcon fontSize="small" />,
-            func: () => handleDeleteProject(params),
-          },
-        ];
-
         if (isGridTreeNode && rowNode.children) {
           const resource_count = rowNode?.children?.length || null;
           return (
@@ -367,7 +320,11 @@ export default function ProjectAllocation({
                 size="small"
                 disableRipple
                 disableFocusRipple
-                onClick={handleMenuOpen}
+                onClick={e => {
+                  e.stopPropagation();
+                  setMenuProjectName(params.value as string);
+                  setAnchorEl(e.currentTarget);
+                }}
                 sx={{
                   mr: -1.5,
                   padding: '0px',
@@ -379,36 +336,6 @@ export default function ProjectAllocation({
               >
                 <MoreVertIcon sx={{ fontSize: 22 }} />
               </IconButton>
-              <StyledMenu
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-              >
-                {menuItems.map(item => (
-                  <StyledMenuItem key={item.label} onClick={item.func}>
-                    <ListItemIcon>{item.icon}</ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: ' #424242',
-                            fontFamily: 'Manrope',
-                            fontSize: '12px',
-                            fontStyle: 'normal',
-                            fontWeight: '600',
-                            lineHeight: ' 18px',
-                          }}
-                        >
-                          {item.label}
-                        </Typography>
-                      }
-                    />
-                  </StyledMenuItem>
-                ))}
-              </StyledMenu>
             </>
           );
         }
@@ -879,17 +806,38 @@ export default function ProjectAllocation({
           viewId="projectAllocation"
         />
       </Box>
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onConfirm={() =>
-          projectToDelete && handleConfirmDelete(projectToDelete.Id)
-        }
-        onCancel={handleCancelDelete}
-        title="Alert"
+      <StyledMenu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
       >
-        Are you sure you want to delete this project?
-        This will permanently delete the project.
-      </ConfirmDialog>
+        <StyledMenuItem
+          onClick={() => {
+            handleOpenSplitView({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <PersonAddIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={<Typography variant="body2">Add Resource</Typography>}
+          />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleEditProject({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={<Typography variant="body2">Edit Project</Typography>}
+          />
+        </StyledMenuItem>
+      </StyledMenu>
     </>
   );
 }
