@@ -243,8 +243,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   };
 
   const handleShareDeepLink = async () => {
-    const resourceFullName =
-      `${formikProps.values.FirstName} ${formikProps.values.LastName}`.trim();
+    const resourceFullName = `${formikProps.values.FullName}`.trim();
     const formattedEndDate = dayjs(formikProps.values.EndDate).format(
       'YYYY-MM-DD'
     );
