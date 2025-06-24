@@ -1,27 +1,27 @@
 import { call, put, takeEvery } from 'redux-saga/effects';
-import { setEmployeeRates, setLoading } from '../reducers/employeeRatesReducer';
-import {
-  fetchEmployeeRates,
-  createEmployeeRates,
-  updateEmployeeRates,
-  deleteEmployeeRates,
-} from '@/app/services/employeeRatesServices';
 import {
   CREATE_PORTFOLIOS,
   DELETE_PORTFOLIOS,
   FETCH_PORTFOLIOS,
   UPDATE_PORTFOLIOS,
 } from '../actions/portfolioActions';
+import {
+  createPortfolio,
+  deletePortfolio,
+  fetchPortfolios,
+  updatePortfolio,
+} from '@/app/services/prorfolioServices';
+import { setLoading, setPortfolios } from '../reducers/portfolioReducer';
 
 function* fetchPortfolioSaga(): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
 
-    const responses = yield call(fetchEmployeeRates);
+    const responses = yield call(fetchPortfolios);
 
-    yield put(setEmployeeRates(responses?.result));
+    yield put(setPortfolios(responses?.result));
   } catch (error) {
-    console.error('Saga error, Failed to fetch Employee Rates : ', error);
+    console.error('Saga error, Failed to fetch Portfolios : ', error);
   } finally {
     yield put(setLoading(false));
   }
@@ -31,11 +31,11 @@ function* createPortfolioSaga(action: any): Generator<any, void, any> {
   const { postData, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    const response = yield call(createEmployeeRates, postData);
+    const response = yield call(createPortfolio, postData);
     yield call(fetchPortfolioSaga);
     if (resolve) resolve(response);
   } catch (error) {
-    console.error('Saga error, Failed to create Employee Rate : ', error);
+    console.error('Saga error, Failed to create Portfolio : ', error);
     if (reject) reject(error);
   } finally {
     yield put(setLoading(false));
@@ -46,11 +46,11 @@ function* updatePortfolioSaga(action: any): Generator<any, void, any> {
   const { id, updatedFields, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    const response = yield call(updateEmployeeRates, id, updatedFields);
+    const response = yield call(updatePortfolio, id, updatedFields);
     yield call(fetchPortfolioSaga);
     if (resolve) resolve(response);
   } catch (error) {
-    console.error('Saga error, Failed to update Employee Rate : ', error);
+    console.error('Saga error, Failed to update Portfolio : ', error);
     if (reject) reject(error);
   } finally {
     yield put(setLoading(false));
@@ -61,10 +61,10 @@ function* deletePortfolioSaga(action: any): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     const id = action.payload;
-    yield call(deleteEmployeeRates, id);
+    yield call(deletePortfolio, id);
     yield call(fetchPortfolioSaga);
   } catch (error) {
-    console.error('Saga error, Failed to delete Employee Rate : ', error);
+    console.error('Saga error, Failed to delete Portfolio : ', error);
   } finally {
     yield put(setLoading(false));
   }

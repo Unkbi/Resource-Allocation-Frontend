@@ -7,6 +7,7 @@ import { dashboardSaga } from './dashboardSaga';
 import { organisationsSaga } from './organisationsSaga';
 import { employeeRatesSaga } from './employeeRatesSaga';
 import { AllResourcesDetailSaga } from './allResourcesDetailSaga';
+import { portfolioSaga } from './portfolioSaga';
 
 export default function* rootSaga() {
   yield all([
@@ -18,6 +19,7 @@ export default function* rootSaga() {
     organisationsSaga(),
     employeeRatesSaga(),
     AllResourcesDetailSaga(),
+    portfolioSaga(),
     // ...add more watchers here
   ]);
 }
