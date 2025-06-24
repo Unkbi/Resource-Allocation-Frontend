@@ -37,3 +37,14 @@ export interface AllResourcesDetailState {
   error: string | null;
   dataProcessing: boolean;
 }
+
+export interface ResourceAllocation {
+  Id: string;
+  Project: string;
+  ProjectName: string;
+  Resource: string;
+  ResourceName: string;
+  Period: string;
+  Duration: string;
+  AllocationEntered: number;
+}

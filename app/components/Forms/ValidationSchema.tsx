@@ -169,6 +169,9 @@ export const editResourceValidationSchema = Yup.object({
           }
         ),
     }),
+  ConfirmTransfer: Yup.boolean()
+    .oneOf([true], 'You must confirm before continuing.')
+    .required('You must confirm before continuing.'),
 });
 
 export const addAllocationValidationSchema = Yup.object({
