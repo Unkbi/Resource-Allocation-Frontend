@@ -26,6 +26,8 @@ export default function Allocation({ startDate, endDate }) {
     state => state.allocationView
   );
   const { user } = useSelector(state => state.user);
+  const { teams } = useSelector(state => state.teams);
+  const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
   const searchParams = useSearchParams();
   const settingsParam = searchParams.get('settings');
@@ -44,20 +46,24 @@ export default function Allocation({ startDate, endDate }) {
   }, [resources, user]);
 
   useEffect(() => {
-    if (settingsParam) {
+    // Only after fetching resources, projects, and teams should the deeplinked settings be processed.
+    if (
+      settingsParam &&
+      (teams?.result?.length ?? 0) > 0 &&
+      (projects?.result?.length ?? 0) > 0 &&
+      (resources?.result?.length ?? 0) > 0
+    ) {
       try {
         const parsedSettings = JSON.parse(
           decompressFromEncodedURIComponent(settingsParam)
         );
 
-        setTimeout(() => {
-          dispatch(updateCurrentView(parsedSettings));
-        }, 2000);
+        dispatch(updateCurrentView(parsedSettings));
       } catch (e) {
         console.error('Failed to parse settings:', e);
       }
     }
-  }, [settingsParam]);
+  }, [settingsParam, teams, projects, resources]);
 
   const getContentByRole = view => {
     if (currentView?.GroupBy) {
