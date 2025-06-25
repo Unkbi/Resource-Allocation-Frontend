@@ -58,14 +58,14 @@ export const addProjectValidationSchema = (
     EndDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')
-      .test(
-        'required-if-start-date',
-        'End date is required if start date is provided',
-        function (value) {
-          const { StartDate } = this.parent;
-          return !StartDate || value !== null;
-        }
-      )
+      // .test(
+      //   'required-if-start-date',
+      //   'End date is required if start date is provided',
+      //   function (value) {
+      //     const { StartDate } = this.parent;
+      //     return !StartDate || value !== null;
+      //   }
+      // )
       .min(
         Yup.ref('StartDate'),
         'End date must be after or equal to start date'
@@ -76,11 +76,10 @@ export const addProjectValidationSchema = (
 };
 
 export const addTeamValidationSchema = Yup.object().shape({
-  Name: Yup.string()
-    .trim()
-    .required('Team Name is required'),
-  AllocationManager: Yup.string()
-    .required('Team Allocation Manager is required'),
+  Name: Yup.string().trim().required('Team Name is required'),
+  AllocationManager: Yup.string().required(
+    'Team Allocation Manager is required'
+  ),
   Status: Yup.string()
     .oneOf(['Active', 'Inactive'], 'Invalid status')
     .required('Status is required'),
@@ -148,16 +147,15 @@ export const editResourceValidationSchema = Yup.object({
     .when(['Status', 'StartDate'], {
       is: (status: String) => status === 'Inactive',
       then: schema =>
-        schema
-          .test(
-            'end-after-start',
-            'End Date cannot be before Start Date',
-            function (endDate) {
-              const { StartDate } = this.parent;
-              if (!endDate || !StartDate) return true;
-              return new Date(endDate) >= new Date(StartDate);
-            }
-          ),
+        schema.test(
+          'end-after-start',
+          'End Date cannot be before Start Date',
+          function (endDate) {
+            const { StartDate } = this.parent;
+            if (!endDate || !StartDate) return true;
+            return new Date(endDate) >= new Date(StartDate);
+          }
+        ),
       otherwise: schema =>
         schema.test(
           'end-after-start',

@@ -163,7 +163,7 @@ const initialValuesMap = {
     WorkLocation: '',
     Status: '',
     ConfirmTransfer: false,
-    shouldTransfer:false,
+    shouldTransfer: false,
   },
   add_allocation: {
     Resource: [],
@@ -448,6 +448,10 @@ const AllocationForm = () => {
               cleanedValues.ProjectManager === ''
                 ? null
                 : cleanedValues.ProjectManager,
+            PortfolioId:
+              cleanedValues.PortfolioId === ''
+                ? null
+                : cleanedValues.PortfolioId,
           },
         };
         try {
@@ -706,7 +710,9 @@ const AllocationForm = () => {
         };
 
         try {
-          const selectedTeam = teams.result.find(team => team.Id === values.Team);
+          const selectedTeam = teams.result.find(
+            team => team.Id === values.Team
+          );
           let teamAllocationManagerId = null;
           if (selectedTeam?.AllocationManager) {
             const raw = selectedTeam.AllocationManager;
@@ -760,7 +766,7 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
-              return; 
+              return;
             }
           }
           await dispatch(
