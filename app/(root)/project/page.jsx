@@ -40,6 +40,8 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -139,6 +141,7 @@ export default function Project() {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
   const allResources = resources.result || [];
+  const { portfolios } = useSelector(state => state.portfolios);
 
   useEffect(() => {
     if (!updating) {
@@ -148,12 +151,31 @@ export default function Project() {
   }, [updating]);
 
   useEffect(() => {
-    setRows(projects?.result);
-  }, [projects]);
+    if (projects?.result?.length) {
+      if (portfolios?.length) {
+        setRows(
+          projects?.result?.map(project => ({
+            ...project,
+            Portfolio: project.PortfolioId
+              ? portfolios.find(p => p.Id === project.PortfolioId)?.Name || ''
+              : '',
+          }))
+        );
+      } else {
+        setRows(projects?.result);
+      }
+    }
+  }, [projects, portfolios]);
 
   useEffect(() => {
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
+    }
+    if (!portfolios?.length) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
     }
   }, []);
 
@@ -267,7 +289,7 @@ export default function Project() {
         })
       );
     } finally {
-      setDeleteDialogOpen(false); 
+      setDeleteDialogOpen(false);
       setProjectToDelete(null);
     }
   };
@@ -419,6 +441,20 @@ export default function Project() {
       headerName: 'Type',
       flex: 1,
       minWidth: 150,
+    },
+    {
+      field: 'Portfolio',
+      headerName: PORTFOLIO_DISPLAY_NAME,
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        return (
+          <EllipsisNameCell
+            showAvatar={false}
+            value={params?.row?.Portfolio || ''}
+          />
+        );
+      },
     },
     {
       field: 'AllowOvertime',

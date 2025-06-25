@@ -488,6 +488,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor:
         !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
     },
+    [`& .${gridClasses.cell}[data-field="Portfolio"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
     [`& .${gridClasses.cell}[data-field="Location"]`]: {
       backgroundColor:
         !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
