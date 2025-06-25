@@ -1,4 +1,4 @@
-export const generateWeekColumns = (startYear, endYear) => {
+export const generateWeekColumns = (startYear:number, endYear:number) => {
     const startDate = new Date(startYear, 0, 1); // Jan 1st
     const endDate = new Date(endYear, 11, 31); // Dec 31st
     const weeks = [];
@@ -19,9 +19,9 @@ export const generateWeekColumns = (startYear, endYear) => {
     return weeks;
   };
   
-  const getWeekNumber = (date) => {
+  const getWeekNumber = (date: Date) => {
     const start = new Date(date.getFullYear(), 0, 1);
-    const days = Math.floor((date - start) / (1000 * 60 * 60 * 24));
+    const days = Math.floor((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     return Math.ceil((days + 1) / 7);
   };
   

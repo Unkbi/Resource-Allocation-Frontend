@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import { performLogin } from '@/app/redux/actions/authActions';
+import type { RootState, AppDispatch } from '@/app/redux/store';
 import {
     Box,
     Typography,
@@ -14,9 +16,8 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import Image from 'next/image';
-import { confirmSignUpUser, performForgotPassword } from '@/app/redux/actions/authActions';
+import { useSearchParams } from 'next/navigation';
+
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -116,7 +117,6 @@ const MainBox = styled(Box)(({ theme }) => ({
         },
         "& .orText": {
             fontFamily: theme.typography.fontFamily,
-            fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
             fontWeight: "700",
@@ -129,7 +129,7 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#fff"
             },
             "&::before": {
-                background: "rgb(255,255,255)",
+                // background: "rgb(255,255,255)",
                 background: "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)",
                 width: "100%",
                 height: "1px",
@@ -173,49 +173,46 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function SignUpOtpPage() {
-    const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-    const dispatch = useDispatch();
-    const { loading, error, user, signupData } = useSelector((state) => state.user);
-    const inputRefs = useRef([]);
+export default function LoginPage() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const dispatch: AppDispatch = useDispatch();
+    const { loading, error, user } = useSelector((state: RootState) => state.user);
     const router = useRouter();
-
-    const handleVerifyOtp = (e) => {
+    const [showPassword, setShowPassword] = React.useState(false);
+    const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
+    const searchParams = useSearchParams();
+    const redirectPath = searchParams.get('redirect');
+    const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        dispatch(confirmSignUpUser({
-            'Agentlang.Kernel.Identity/ConfirmSignUp': {
-                Username: signupData,
-                ConfirmationCode: otp.join(""),
-            }
-        }));
-    };
+        dispatch(performLogin(
+            {
+                "Agentlang.Kernel.Identity/UserLogin": {
+                    "Username": email,
+                    "Password": password
+                }
+            }));
+    }
 
-    const handleChange = (index, event) => {
-        const value = event.target.value.replace(/\D/g, "").slice(0, 1);
-        const newOtp = [...otp];
-        newOtp[index] = value;
-        setOtp(newOtp);
-
-        if (value && index < 5) {
-            inputRefs.current[index + 1]?.focus();
+    useEffect(() => {
+        if (user) {
+            // Use redirect path if present, otherwise go to dashboard
+            router.replace(redirectPath || '/dashboard');
         }
+    }, [user, router, redirectPath]);
+    
+
+    const handleTogglePassword = () => {
+        setShowPassword((prev) => !prev);
     };
 
-    const handleKeyDown = (index, event) => {
-        if (event.key === "Backspace" && !otp[index] && index > 0) {
-            inputRefs.current[index - 1]?.focus();
+    const handleGoogleSignin = () => {
+        if (googleAuthUrl) {
+            window.location.href = googleAuthUrl;
+        } else {
+            console.error("Google Auth URL is not defined");
         }
-    };
-
-    const handleResendOtp = (e) => {
-        e.preventDefault();
-        dispatch(performForgotPassword({
-            'Agentlang.Kernel.Identity/ForgotPassword': {
-                Username: signupData
-            }
-        }));
-    };
-
+    }
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -232,32 +229,52 @@ export default function SignUpOtpPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Verify with OTP
+                            Welcome
                         </Typography>
                         <Typography className='subHeadingText'>
-                            We've sent a verification code to {signupData}
+                            Please enter your details
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleVerifyOtp}
+                            onSubmit={handleLogin}
                         >
-                            {otp.map((digit, index) => (
-                                <TextField
-                                    key={index}
-                                    variant="outlined"
-                                    value={digit}
-                                    onChange={(e) => handleChange(index, e)}
-                                    onKeyDown={(e) => handleKeyDown(index, e)}
-                                    inputProps={{
-                                        maxLength: 1,
-                                        pattern: "[0-9]*",
-                                        inputMode: "numeric",
-                                        style: { textAlign: "center", width: "40px" },
-                                    }}
-                                    inputRef={(el) => (inputRefs.current[index] = el)}
-                                />
-                            ))}
-
+                            <TextField
+                                className='textField'
+                                id="outlined-basic"
+                                placeholder="Email Id"
+                                InputLabelProps={{
+                                    shrink: false
+                                }}
+                                variant="outlined"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            <TextField
+                                className='textField'
+                                variant="outlined"
+                                placeholder="Password"
+                                type={showPassword ? "text" : "password"}
+                                InputLabelProps={{
+                                    shrink: false
+                                }}
+                                fullWidth
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={handleTogglePassword} edge="end">
+                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            <Box className='forgot'>
+                                <Link href="/forgot-password" underline="hover">
+                                    Forgot Password?
+                                </Link>
+                            </Box>
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -267,12 +284,33 @@ export default function SignUpOtpPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Verify'}
+                                {loading ? <CircularProgress size={24} /> : 'Sign in'}
+                            </Button>
+                            <Typography className='orText'>
+                                <span>OR</span>
+                            </Typography>
+                            <Button
+                                variant="outlined"
+                                fullWidth
+                                className='googleButton'
+                                onClick={handleGoogleSignin}
+                            >
+                                <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                fullWidth
+                                className='signWithSSO'
+                            >
+                                Sign in with SSO
                             </Button>
                         </Box>
-                        <Typography className='noAccount' onClick={handleResendOtp}>
-                            Resend OTP
-                        </Typography>
+                        {/* <Typography className='noAccount'>
+                            Don't have an account?{' '}
+                            <Link href="/signup" underline="hover" color="primary">
+                                Sign up
+                            </Link>
+                        </Typography> */}
                     </Box>
                 </Box>
             </Box>

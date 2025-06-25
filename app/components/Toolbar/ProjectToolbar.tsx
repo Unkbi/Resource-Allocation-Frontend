@@ -1,10 +1,13 @@
+'use client';
+
 import { Box, Tabs, Tab, styled } from '@mui/material';
-import { useState } from 'react';
+import { useState, MouseEvent } from 'react';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
+import type { MutableRefObject } from 'react';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -14,9 +17,9 @@ const commonButtonStyles = {
   padding: '5px 12px',
   fontSize: '13px',
   color: 'rgb(33, 33, 33)',
-  fontFamily: theme => theme.typography.fontFamily,
-  fontWeight: '600',
-  textTransform: 'none',
+  fontFamily: (theme: any) => theme.typography.fontFamily,
+  fontWeight: 600,
+  textTransform: 'none' as const,
 };
 
 const StyledGridToolbarColumnsButton = styled(GridToolbarColumnsButton)({
@@ -43,10 +46,17 @@ const StyledGridToolbarColumnsButton = styled(GridToolbarColumnsButton)({
   },
 });
 
-const ProjectToolbar = ({ setFilterButtonEl }) => {
-  const [value, setValue] = useState('project');
+import type { GridToolbarProps } from '@mui/x-data-grid-premium';
 
-  const handleChange = (event, newValue) => {
+
+interface ProjectToolbarProps extends Partial<GridToolbarProps> {
+  setFilterButtonEl: (instance: HTMLDivElement | null) => void;
+}
+
+const ProjectToolbar: React.FC<ProjectToolbarProps> = ({ setFilterButtonEl }) => {
+  const [value, setValue] = useState<'project' | 'businessImpact'>('project');
+
+  const handleChange = (_event: React.SyntheticEvent, newValue: 'project' | 'businessImpact') => {
     setValue(newValue);
   };
 
@@ -89,7 +99,6 @@ const ProjectToolbar = ({ setFilterButtonEl }) => {
                 tooltip: { title: 'Filter' },
                 button: {
                   variant: 'outlined',
-                  sx: { color: '#555', borderColor: '#ddd' },
                   startIcon: (
                     <img src="/images/icons/filter.svg" alt="filter" />
                   ),

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import type { RootState, AppDispatch } from '@/app/redux/store';
 import {
     Box,
     Typography,
@@ -14,7 +15,7 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
-import { signUp } from '@/app/redux/actions/authActions';
+import { performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -114,7 +115,6 @@ const MainBox = styled(Box)(({ theme }) => ({
         },
         "& .orText": {
             fontFamily: theme.typography.fontFamily,
-            fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
             fontWeight: "700",
@@ -127,7 +127,7 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#fff"
             },
             "&::before": {
-                background: "rgb(255,255,255)",
+                // background: "rgb(255,255,255)",
                 background: "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)",
                 width: "100%",
                 height: "1px",
@@ -171,55 +171,20 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function SingupPage() {
+export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [mobile, setMobile] = useState('');
+    const dispatch: AppDispatch = useDispatch();
+    const { loading, error, forgotPasswordMessage } = useSelector((state: RootState) => state.user);
 
-    const dispatch = useDispatch();
-    const { loading, user, signupData, error } = useSelector((state) => state.user);
-    const router = useRouter();
-
-    const [showPassword, setShowPassword] = React.useState(false);
-
-    const handleSignup = async (e) => {
+    const handleForgotPassword = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!firstName || !lastName || !email || !password || !mobile) {
-            return;
-        }
-        dispatch(signUp({
-            'Agentlang.Kernel.Identity/SignUp': {
-                'User': {
-                    'Agentlang.Kernel.Identity/User': {
-                        Name: `${firstName} ${lastName}`,
-                        FirstName: firstName,
-                        LastName: lastName,
-                        Email: email,
-                        UserData: {
-                            PhoneNumber: mobile
-                        },
-                        Password: password
-                    }
-                }
+        dispatch(performForgotPassword({
+            'Agentlang.Kernel.Identity/ForgotPassword': {
+                Username: email
             }
-        }, email));
+        }));
+        setEmail('');
     };
-
-    useEffect(() => {
-        if (user) {
-            router.push('/dashboard');
-        }
-    }, [user, router]);
-
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
-    };
-
-    if (signupData && !error) {
-        router.push('/signup-otp');
-    }
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -236,40 +201,15 @@ export default function SingupPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Create an Account
+                            Forgot Password
                         </Typography>
                         <Typography className='subHeadingText'>
-                            Please enter your details
+                            We will send you an link to reset your password
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleSignup}
+                            onSubmit={handleForgotPassword}
                         >
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="First Name"
-                                variant="outlined"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Last Name"
-                                variant="outlined"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Mobile Number"
-                                variant="outlined"
-                                type='tel'
-                                value={mobile}
-                                onChange={(e) => setMobile(e.target.value)}
-                            />
                             <TextField
                                 className='textField'
                                 id="outlined-basic"
@@ -281,35 +221,7 @@ export default function SingupPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Password"
-                                type={showPassword ? "text" : "password"}
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleTogglePassword} edge="end">
-                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            {error && (
-                                <Typography
-                                    variant="body2"
-                                    color="error"
-                                >
-                                    {error}
-                                </Typography>
-                            )}
+
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -319,11 +231,11 @@ export default function SingupPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign up'}
+                                {loading ? <CircularProgress size={24} /> : 'Submit'}
                             </Button>
                         </Box>
                         <Typography className='noAccount'>
-                            Already have an account?{' '}
+                            Back to {""}
                             <Link href="/login" underline="hover" color="primary">
                                 Sign in
                             </Link>
@@ -331,6 +243,24 @@ export default function SingupPage() {
                     </Box>
                 </Box>
             </Box>
+            {(forgotPasswordMessage && !error) && (
+                <Typography
+                    variant="body2"
+                    color="success"
+                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
+                >
+                    A password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.
+                </Typography>
+            )}
+            {error && (
+                <Typography
+                    variant="body2"
+                    color="error"
+                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
+                >
+                    {error}
+                </Typography>
+            )}
         </MainBox>
     );
 }

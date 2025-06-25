@@ -1,22 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { performLogin } from '@/app/redux/actions/authActions';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { RootState, AppDispatch } from '@/app/redux/store';
 import {
     Box,
     Typography,
     TextField,
     Button,
     Link,
-    InputAdornment,
-    IconButton,
     CircularProgress,
     styled,
+    InputAdornment,
+    IconButton
 } from '@mui/material';
-import { useSearchParams } from 'next/navigation';
-
+import { performResetPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -116,7 +115,6 @@ const MainBox = styled(Box)(({ theme }) => ({
         },
         "& .orText": {
             fontFamily: theme.typography.fontFamily,
-            fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
             fontWeight: "700",
@@ -129,7 +127,7 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#fff"
             },
             "&::before": {
-                background: "rgb(255,255,255)",
+                // background: "rgb(255,255,255)",
                 background: "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)",
                 width: "100%",
                 height: "1px",
@@ -173,45 +171,53 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const dispatch = useDispatch();
-    const { loading, error, user } = useSelector((state) => state.user);
+export default function ResetPasswordPageWrapper() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <RestPasswordPage />
+        </Suspense>
+    );
+}
+
+function RestPasswordPage() {
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const router = useRouter();
-    const [showPassword, setShowPassword] = React.useState(false);
-    const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
+    const dispatch: AppDispatch = useDispatch();
+    const { loading, error, resetPasswordMessage } = useSelector((state: RootState) => state.user);
     const searchParams = useSearchParams();
-    const redirectPath = searchParams.get('redirect');
-    const handleLogin = (e) => {
+    const username = searchParams.get('username');
+    const code = searchParams.get('code');
+
+    const handleResetPassword = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        dispatch(performLogin(
-            {
-                "Agentlang.Kernel.Identity/UserLogin": {
-                    "Username": email,
-                    "Password": password
-                }
-            }));
-    }
-
-    useEffect(() => {
-        if (user) {
-            // Use redirect path if present, otherwise go to dashboard
-            router.replace(redirectPath || '/dashboard');
+        if (newPassword !== confirmPassword) {
+            setErrorMessage('Passwords do not match');
+            return;
         }
-    }, [user, router, redirectPath]);
-    
+        dispatch(performResetPassword({
+            'Agentlang.Kernel.Identity/ConfirmForgotPassword': {
+                Password: newPassword,
+                Username: username,
+                ConfirmationCode: code
+            }
+        })).then((response) => {
+            console.log('Password reset successful:', response);
+        });
 
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
+        setNewPassword('');
+        setConfirmPassword('');
+        setErrorMessage('');
     };
 
-    const handleGoogleSignin = () => {
-        if (googleAuthUrl) {
-            window.location.href = googleAuthUrl;
-        } else {
-            console.error("Google Auth URL is not defined");
-        }
+    const handleToggleNewPassword = () => setShowNewPassword((prev) => !prev);
+    const handleToggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
+
+    if (resetPasswordMessage && !error) {
+        router.push('/login');
     }
 
     return (
@@ -229,52 +235,65 @@ export default function LoginPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Welcome
+                            Reset Password
                         </Typography>
-                        <Typography className='subHeadingText'>
-                            Please enter your details
+                        <Typography className='subHeadingText' whiteSpace={'nowrap'}>
+                            Your new password must be different from previous one
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleLogin}
+                            onSubmit={handleResetPassword}
                         >
                             <TextField
                                 className='textField'
-                                id="outlined-basic"
-                                placeholder="Email Id"
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
                                 variant="outlined"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Password"
-                                type={showPassword ? "text" : "password"}
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
+                                placeholder="New Password"
+                                type={showNewPassword ? "text" : "password"}
                                 fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton onClick={handleTogglePassword} edge="end">
-                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
+                                            <IconButton onClick={handleToggleNewPassword} edge="end">
+                                                {showNewPassword ? (
+                                                    <img src={"/images/icons/eye-on.svg"} alt='eye-on' />
+                                                ) : (
+                                                    <img src={"/images/icons/eye-off.svg"} alt='eye-off' />
+                                                )}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
                                 }}
                             />
-                            <Box className='forgot'>
-                                <Link href="/forgot-password" underline="hover">
-                                    Forgot Password?
-                                </Link>
-                            </Box>
+
+                            <TextField
+                                className='textField'
+                                variant="outlined"
+                                placeholder="Confirm Password"
+                                type={showConfirmPassword ? "text" : "password"}
+                                fullWidth
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={handleToggleConfirmPassword} edge="end">
+                                                {showConfirmPassword ? (
+                                                    <img src={"/images/icons/eye-on.svg"} alt='eye-on' />
+                                                ) : (
+                                                    <img src={"/images/icons/eye-off.svg"} alt='eye-off' />
+                                                )}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            {errorMessage && (
+                                <Typography variant="body2" color="error" sx={{ mb: 2 }}>
+                                    {errorMessage}
+                                </Typography>
+                            )}
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -284,41 +303,27 @@ export default function LoginPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign in'}
-                            </Button>
-                            <Typography className='orText'>
-                                <span>OR</span>
-                            </Typography>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='googleButton'
-                                onClick={handleGoogleSignin}
-                            >
-                                <img src={"/images/icons/google.svg"} alt='Google' /> Sign in with Google
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                fullWidth
-                                className='signWithSSO'
-                            >
-                                Sign in with SSO
+                                {loading ? <CircularProgress size={24} /> : 'Reset Password'}
                             </Button>
                         </Box>
-                        {/* <Typography className='noAccount'>
-                            Don't have an account?{' '}
-                            <Link href="/signup" underline="hover" color="primary">
-                                Sign up
-                            </Link>
-                        </Typography> */}
+
                     </Box>
                 </Box>
             </Box>
+            {resetPasswordMessage && !error && (
+                <Typography
+                    variant="body2"
+                    color="success"
+                    sx={{ position: 'absolute', bottom: '150px', left: '50%', transform: 'translateX(-50%)' }}
+                >
+                    Password reset successfully! You can now log in with your new password.
+                </Typography>
+            )}
             {error && (
                 <Typography
                     variant="body2"
                     color="error"
-                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
+                    sx={{ position: 'absolute', bottom: '150px', left: '50%', transform: 'translateX(-50%)' }}
                 >
                     {error}
                 </Typography>

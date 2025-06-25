@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import { RootState, AppDispatch } from '@/app/redux/store';
 import {
     Box,
     Typography,
@@ -14,7 +15,9 @@ import {
     CircularProgress,
     styled,
 } from '@mui/material';
-import { performForgotPassword } from '@/app/redux/actions/authActions';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import Image from 'next/image';
+import { confirmSignUpUser, performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -117,7 +120,6 @@ const MainBox = styled(Box)(({ theme }) => ({
             fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
-            fontWeight: "700",
             marginBottom: "20px",
             textAlign: "center",
             position: "relative",
@@ -127,7 +129,7 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#fff"
             },
             "&::before": {
-                background: "rgb(255,255,255)",
+                // background: "rgb(255,255,255)",
                 background: "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)",
                 width: "100%",
                 height: "1px",
@@ -171,20 +173,49 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function ForgotPasswordPage() {
-    const [email, setEmail] = useState('');
-    const dispatch = useDispatch();
-    const { loading, error, forgotPasswordMessage } = useSelector((state) => state.user);
+export default function SignUpOtpPage(){
+    const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
+    const dispatch = useDispatch<AppDispatch>();
+    const { loading, error, user, signupData } = useSelector((state: RootState) => state.user);
+    const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+    const router = useRouter();
 
-    const handleForgotPassword = (e) => {
+    const handleVerifyOtp = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        dispatch(confirmSignUpUser({
+            'Agentlang.Kernel.Identity/ConfirmSignUp': {
+                Username: signupData,
+                ConfirmationCode: otp.join(""),
+            }
+        }));
+    };
+
+    const handleChange = (index: number, event: React.ChangeEvent<any>) => {
+        const value = event.target.value.replace(/\D/g, "").slice(0, 1);
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (index: number, event: React.KeyboardEvent) => {
+        if (event.key === "Backspace" && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handleResendOtp = (e: React.MouseEvent<HTMLParagraphElement>) => {
         e.preventDefault();
         dispatch(performForgotPassword({
             'Agentlang.Kernel.Identity/ForgotPassword': {
-                Username: email
+                Username: signupData
             }
         }));
-        setEmail('');
     };
+
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -201,26 +232,31 @@ export default function ForgotPasswordPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Forgot Password
+                            Verify with OTP
                         </Typography>
                         <Typography className='subHeadingText'>
-                            We will send you an link to reset your password
+                            We've sent a verification code to {signupData}
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleForgotPassword}
+                            onSubmit={handleVerifyOtp}
                         >
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Email Id"
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                variant="outlined"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
+                            {otp.map((digit, index) => (
+                                <TextField
+                                    key={index}
+                                    variant="outlined"
+                                    value={digit}
+                                    onChange={(e) => handleChange(index, e)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    inputProps={{
+                                        maxLength: 1,
+                                        pattern: "[0-9]*",
+                                        inputMode: "numeric",
+                                        style: { textAlign: "center", width: "40px" },
+                                    }}
+                                    inputRef={(el) => (inputRefs.current[index] = el)}
+                                />
+                            ))}
 
                             <Button
                                 type="submit"
@@ -231,32 +267,20 @@ export default function ForgotPasswordPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Submit'}
+                                {loading ? <CircularProgress size={24} /> : 'Verify'}
                             </Button>
                         </Box>
-                        <Typography className='noAccount'>
-                            Back to {""}
-                            <Link href="/login" underline="hover" color="primary">
-                                Sign in
-                            </Link>
+                        <Typography className='noAccount' onClick={handleResendOtp}>
+                            Resend OTP
                         </Typography>
                     </Box>
                 </Box>
             </Box>
-            {(forgotPasswordMessage && !error) && (
-                <Typography
-                    variant="body2"
-                    color="success"
-                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
-                >
-                    A password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.
-                </Typography>
-            )}
             {error && (
                 <Typography
                     variant="body2"
                     color="error"
-                    sx={{ position: 'absolute', bottom: '150px', left: '75%', transform: 'translateX(-50%)' }}
+                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
                 >
                     {error}
                 </Typography>
