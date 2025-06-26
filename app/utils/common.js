@@ -446,9 +446,17 @@ export const getAllocationManagerFromPath = (
   allocationManager_Path,
   resources
 ) => {
-  return resources.find(
-    resource => resource.__path__ === allocationManager_Path
-  );
+  if (!allocationManager_Path || !Array.isArray(resources)) return null;
+  if (/^:[^/]+\/[^,]+,.+/.test(allocationManager_Path)) {
+    // Check if the path is a valid resource path
+    return resources.find(
+      resource => resource.__path__ === allocationManager_Path
+    );
+  }
+
+  return {
+    FullName: allocationManager_Path,
+  };
 };
 
 export const getProjectsIamProjectManager = (uid, projects) => {
@@ -704,6 +712,7 @@ export function getOrganisationForResource(
 export function isCellEditableUtils(params, type, resources) {
   if (type === 'cost') return false;
   if (params.row.hasButton) return false;
+  if (/\_(\d)+/.test(params.row.id)) return true; // Allow Editing for Split View Empty Rows
 
   const cellData = params.row[params.field];
   const cellPeriod = cellData?.period;

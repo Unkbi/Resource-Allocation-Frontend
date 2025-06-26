@@ -12,6 +12,7 @@ import { Box } from '@mui/material';
 import { AllAllocations, Resource } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getCombinedAllocation } from '@/app/utils/allocationUtils';
+import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface BottomTeamsViewProps {
   startDate: string;
@@ -27,7 +28,7 @@ export default function BottomTeamsView({
   >([]);
   const [allocationThreshold, setAllocationThreshold] = useState(1.2);
   const dispatch = useDispatch<AppDispatch>();
-  const { allAllocations, dataProcessing } = useSelector(
+  const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
   // const { startDate, endDate } = calendarDate || {};
@@ -161,18 +162,26 @@ export default function BottomTeamsView({
     });
   };
 
-  const filteredResources = useMemo(() => {
-    if (ready && (allAllocations || getAllRows())) {
+  useEffect(() => {
+    if (ready && (allAllocations?.length || getAllRows()?.length)) {
+      let filteredResources = [];
       // Combine to keep upto Date information.
-      const allRows = getCombinedAllocation(
-        getAllRows() as AllAllocations[],
-        allAllocations || []
-      );
+      let allRows = [];
+      if (!loading) {
+        allRows = getCombinedAllocation(
+          getAllRows() as AllAllocations[],
+          allAllocations || []
+        );
+      } else {
+        // Init or DateShift is performed so need latest information.
+        allRows = allAllocations as AllAllocations[];
+        dispatch(setLoading(false));
+      }
       const enrichedResources = computeAverageAllocations(
         removeResourcesWithNoTeams(allRows) ?? []
       );
 
-      return enrichedResources.filter(row => {
+      filteredResources = enrichedResources.filter(row => {
         const teamMatch = selectedTeam.length
           ? row.teams && selectedTeam.some(team => team.label === row.teams)
           : true;
@@ -187,14 +196,10 @@ export default function BottomTeamsView({
 
         return teamMatch && avgWeekly <= allocationThreshold;
       });
-    }
-  }, [ready, allAllocations, selectedTeam, allocationThreshold]);
 
-  useEffect(() => {
-    if (ready && allAllocations) {
       setRows(filteredResources || []);
     }
-  }, [ready, allAllocations, filteredResources]);
+  }, [ready, allAllocations, selectedTeam, allocationThreshold]);
 
   return (
     <>
