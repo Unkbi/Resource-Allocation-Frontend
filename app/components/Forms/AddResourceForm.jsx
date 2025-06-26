@@ -11,18 +11,60 @@ import {
   Radio,
   Button,
   Typography,
+  Link,
+  Checkbox,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import StyledLabel from '../Label/StyledLabel';
-import { StyledInput } from '../Input/StyledInput';
+import { StyledFormHelperText, StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { useSelector } from 'react-redux';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useDispatch } from 'react-redux';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
-import { getResourceDetail } from '@/app/services/teamServices';
+import {
+  fetchResourceAllocationsForSaga,
+  fetchTeamAllocationsForSaga,
+  getResourceDetail,
+} from '@/app/services/teamServices';
+import dayjs from 'dayjs';
+import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';
+import { compressToEncodedURIComponent } from 'lz-string';
+import { DATE_FORMAT } from '@/app/constants/constants';
+import {
+  fetchResourceAllocations,
+  getMaxAllocationDate,
+  getResourceAllocationsForPeriod,
+  getResourceIdByEmail,
+} from '@/app/utils/allocationUtils';
+import { addDays, addWeeks, format } from 'date-fns';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { parseISO } from 'date-fns';
+
+const warningTextStyle = {
+  color: '#B44536',
+  fontFamily: 'Open Sans',
+  fontSize: '12px',
+  fontStyle: 'normal',
+  fontWeight: 400,
+  lineHeight: '21px',
+  mt: 0.5,
+};
+
+const reviewLinkStyle = {
+  mt: '2px',
+  display: 'inline-block',
+  color: '#2563EB',
+  textAlign: 'center',
+  fontFamily: 'Open Sans',
+  fontSize: '14px',
+  fontStyle: 'normal',
+  fontWeight: 400,
+  lineHeight: '24px',
+  textDecorationLine: 'underline',
+};
 
 const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   const {
@@ -39,6 +81,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   const { resources } = useSelector(state => state.resources);
   const { teams } = useSelector(state => state.teams);
   const { organisations } = useSelector(state => state.organisations);
+  const { formType } = useSelector(state => state.globalDialog.formState);
+  const [showWarning, setShowWarning] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+
   const resourceListOptions =
     resources &&
     resources?.result?.map(resource => {
@@ -98,6 +144,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         LocationCategory: initialData.LocationCategory || '',
         Team: matchedTeam?.Id || '',
         Organisation: matchedOrg?.Id || '',
+        ConfirmTransfer: initialData.ConfirmTransfer || true,
+        shouldTransfer: initialData.shouldTransfer || false,
       };
 
       setFormValue(rowData);
@@ -110,7 +158,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           teamId: matchedTeam?.Id,
           organisationId: matchedOrg?.Id,
           teamName: matchedTeam?.Name,
-          organisationName: matchedOrg?.Name
+          organisationName: matchedOrg?.Name,
         });
       }
     };
@@ -155,10 +203,104 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         teamId: values.Team,
         organisationId: values.Organisation,
         teamName: teamListOptions.find(t => t.value === values.Team)?.label,
-        organisationName: organisationListOptions.find(o => o.value === values.Organisation)?.label
+        organisationName: organisationListOptions.find(
+          o => o.value === values.Organisation
+        )?.label,
       });
     }
   }, [values.Team, values.Organisation]);
+
+  const handleEndDateChange = async newDate => {
+    const formattedEndDate = newDate?.format(DATE_FORMAT.toUpperCase());
+    formikProps.setFieldValue('EndDate', formattedEndDate);
+    if (formType !== 'edit_resource') return;
+    try {
+      const resourceId = getResourceIdByEmail(resources.result, values.Email);
+      if (!resourceId) {
+        console.error('Resource ID not found for email:', values.Email);
+        return;
+      }
+
+      const allocations = await getResourceAllocationsForPeriod(
+        resourceId,
+        formattedEndDate
+      );
+      const hasFutureAllocations = allocations.some(allocation =>
+        dayjs(allocation.Period).isAfter(newDate, 'day')
+      );
+      if (hasFutureAllocations) {
+        formikProps.setFieldValue('ConfirmTransfer', false);
+        formikProps.setFieldValue('shouldTransfer', true);
+        setShowWarning(true);
+      } else {
+        formikProps.setFieldValue('ConfirmTransfer', true);
+        formikProps.setFieldValue('shouldTransfer', false);
+        setShowWarning(false);
+      }
+    } catch (error) {
+      console.error('Error fetching allocations:', error);
+    }
+  };
+
+  const handleShareDeepLink = async () => {
+    const resourceFullName = `${formikProps.values.FullName}`.trim();
+    const formattedEndDate = dayjs(formikProps.values.EndDate).format(
+      'YYYY-MM-DD'
+    );
+    const resourceId = getResourceIdByEmail(resources.result, values.Email);
+    if (!resourceId) {
+      console.error('Resource ID not found for email:', values.Email);
+      return;
+    }
+    const allocations = await getResourceAllocationsForPeriod(
+      resourceId,
+      formattedEndDate
+    );
+    const resourceAllocations = allocations.filter(
+      alloc => alloc.Resource === resourceId
+    );
+    const actualMaxDate = getMaxAllocationDate(resourceAllocations, resourceId);
+
+    const fallbackDate = dayjs(addWeeks(new Date(formattedEndDate), 51)).format(
+      'YYYY-MM-DD'
+    );
+    const maxDate =
+      actualMaxDate && dayjs(actualMaxDate).isBefore(dayjs(fallbackDate))
+        ? actualMaxDate
+        : fallbackDate;
+
+    const reviewLink = compressToEncodedURIComponent(
+      JSON.stringify(
+        getOnlyFilterSettings({
+          GroupBy: 'Teams',
+          StartDate: format(
+            addDays(parseISO(getMondayOfISO(formikProps.values.EndDate)), 7),
+            DATE_FORMAT
+          ),
+          EndDate: maxDate,
+          ColumnsVisible: [
+            '__row_group_by_columns_group_teams__',
+            '__row_group_by_columns_group_resource__',
+            'project',
+            'resourceType',
+          ],
+          isFixedRange: true,
+          isDynamicRange: false,
+          Filters: [
+            {
+              field: '__row_group_by_columns_group_resource__',
+              operator: 'equals',
+              value: resourceFullName,
+            },
+          ],
+        })
+      )
+    );
+
+    const link = `${window.location.origin}/allocation?settings=${reviewLink}`;
+    setShareLink(link);
+    window.open(link, '_blank');
+  };
 
   return (
     <Box>
@@ -488,7 +630,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
 
       <Box
         sx={{
-          pb: 2,
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
@@ -515,16 +656,38 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <CustomDatePicker
           name="EndDate"
           value={formikProps.values.EndDate || null}
+          onChange={handleEndDateChange}
           formikProps={formikProps}
           error={
             formikProps.touched.EndDate && Boolean(formikProps.errors.EndDate)
           }
-          helperText={formikProps.touched.EndDate && formikProps.errors.EndDate}
+          helperText={
+            formikProps.touched.EndDate && formikProps.errors.EndDate
+              ? formikProps.errors.EndDate
+              : ''
+          }
           label="End Date"
           placeholder="MM/DD/YYYY"
           title="End Date"
           isRequired={false}
         />
+      </Box>
+      <Box sx={{ pb: 2 }}>
+        {showWarning && (
+          <>
+            <Typography sx={warningTextStyle}>
+              This resource has existing allocations beyond the date range.
+            </Typography>
+            <Link
+              href="#"
+              underline="always"
+              sx={reviewLinkStyle}
+              onClick={handleShareDeepLink}
+            >
+              CLICK HERE to review allocations
+            </Link>
+          </>
+        )}
       </Box>
       <Box sx={{ flex: 1 }}>
         <StyledLabel>Work Location</StyledLabel>
@@ -541,6 +704,80 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           error={touched.WorkLocation && Boolean(errors.WorkLocation)}
           helperText={touched.WorkLocation && errors.WorkLocation}
         />
+      </Box>
+      <Box>
+        {showWarning && (
+          <Box sx={{ width: '329px', mt: 2 }}>
+            <Typography
+              sx={{
+                color: '#374151',
+                fontFamily: 'Open Sans',
+                fontSize: '14px',
+                fontWeight: 400,
+                lineHeight: '24px',
+                mb: 1,
+              }}
+            ></Typography>
+            <Box sx={{ mt: 2 }}>
+              <FormControlLabel
+                sx={{
+                  alignItems: 'flex-start',
+                }}
+                control={
+                  <Checkbox
+                    checked={values.ConfirmTransfer || false}
+                    onChange={e =>
+                      formikProps.setFieldValue(
+                        'ConfirmTransfer',
+                        e.target.checked
+                      )
+                    }
+                    error={
+                      formikProps.touched.ConfirmTransfer &&
+                      formikProps.errors.ConfirmTransfer
+                    }
+                    onBlur={formikProps.handleBlur}
+                    name="ConfirmTransfer"
+                    sx={{
+                      mt: '3px',
+                      color: formikProps.errors.ConfirmTransfer
+                        ? '#B44536'
+                        : undefined,
+                    }}
+                  />
+                }
+                label={
+                  <Typography
+                    sx={{
+                      color: '#374151',
+                      fontFamily: 'Open Sans',
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      lineHeight: '24px',
+                      whiteSpace: 'normal',
+                      overflowWrap: 'break-word',
+                    }}
+                  >
+                    Allocations beyond date range will be transferred to the
+                    Allocation Manager. Are you sure you want to continue?
+                  </Typography>
+                }
+              />
+              {formikProps.touched.ConfirmTransfer &&
+                formikProps.errors.ConfirmTransfer && (
+                  <StyledFormHelperText
+                    sx={{
+                      marginLeft: '36px',
+                      mt: 0.5,
+                    }}
+                    error
+                  >
+                    {formikProps.errors.ConfirmTransfer}
+                  </StyledFormHelperText>
+                )}
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );

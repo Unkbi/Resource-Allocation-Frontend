@@ -36,6 +36,8 @@ import {
   getTotalWeeklyAllocation,
   generateDateWeekMath,
   getUpdatedTotalWeeklyAllocation,
+  isResourceWithinDate,
+  getMondayOfISO,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -65,7 +67,7 @@ import {
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { format, getWeek, parseISO } from 'date-fns';
+import { addDays, format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import {
   addResource,
@@ -96,6 +98,8 @@ import {
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
+import { isCellEditableUtils } from '@/app/utils/common';
+
 const initialValuesMap = {
   add_project: {
     StartDate: '',
@@ -158,6 +162,8 @@ const initialValuesMap = {
     EndDate: '',
     WorkLocation: '',
     Status: '',
+    ConfirmTransfer: false,
+    shouldTransfer:false,
   },
   add_allocation: {
     Resource: [],
@@ -412,7 +418,15 @@ const AllocationForm = () => {
     }
 
     let postData = {};
-    const { Organisation, submitType, Team, ...cleanedValues } = values;
+    const {
+      Organisation,
+      submitType,
+      Team,
+      ConfirmTransfer,
+      shouldTransfer,
+      ...cleanedValues
+    } = values;
+
     switch (formType) {
       case 'add_project':
         if (!cleanedValues.StartDate) {
@@ -681,10 +695,74 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': cleanedValues,
+          'ResourceAllocation.Core/Resource': {
+            ...cleanedValues,
+            EndDate:
+              cleanedValues.EndDate === undefined ||
+              cleanedValues.EndDate === ''
+                ? null
+                : cleanedValues.EndDate,
+          },
         };
 
         try {
+          const selectedTeam = teams.result.find(team => team.Id === values.Team);
+          let teamAllocationManagerId = null;
+          if (selectedTeam?.AllocationManager) {
+            const raw = selectedTeam.AllocationManager;
+            teamAllocationManagerId = raw.includes(',')
+              ? raw.split(',')[1]
+              : raw;
+          }
+          if (!teamAllocationManagerId) {
+            console.warn(
+              'No Allocation Manager found for selected team:',
+              values.Team
+            );
+          }
+          if (values.shouldTransfer === true) {
+            try {
+              await new Promise((resolve, reject) => {
+                dispatch({
+                  type: 'TRANSFER_ALLOCATIONS_RESOURCES',
+                  payload: {
+                    ResourceFrom: initialData.Id,
+                    ResourceTo: teamAllocationManagerId,
+                    StartDate: format(
+                      addDays(
+                        parseISO(getMondayOfISO(cleanedValues.EndDate)),
+                        7
+                      ),
+                      DATE_FORMAT
+                    ),
+                    EndDate: '2099-06-30',
+                    resolve,
+                    reject,
+                  },
+                });
+              });
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Allocations transferred successfully!',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            } catch (error) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to transfer allocations. Please try again.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return; 
+            }
+          }
           await dispatch(
             updateResource({
               postData,
@@ -725,7 +803,6 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
-
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
@@ -749,6 +826,8 @@ const AllocationForm = () => {
           const updateList = [];
           let allUpdatedRows = [];
 
+          const nonEditableWeeks = [];
+
           allMondays.flatMap(monday => {
             return values.Resource.flatMap(resource => {
               return filteredProjects.map(project => {
@@ -758,7 +837,6 @@ const AllocationForm = () => {
                   monday
                 );
 
-                const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
                 // Perform Delete if AllocationEntered is 0
                 if (values?.AllocationEntered === 0) {
                   if (allocation && allocation?.allocationId) {
@@ -771,6 +849,24 @@ const AllocationForm = () => {
                       AllocationEntered: null,
                     });
                   }
+                  return;
+                }
+
+                //Check if Allocation is within the range of StartDate and EndDate of resource
+                const resourceDetails = resources?.result?.find(
+                  res => res.Id === resource
+                );
+                const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
+                if (
+                  resourceDetails &&
+                  !isResourceWithinDate(resourceDetails, new Date(monday))
+                ) {
+                  nonEditableWeeks.push(weekKey);
+                  return;
+                }
+
+                // If current week is editable, but their are weeks that are non editable, then skip the update.
+                if (nonEditableWeeks.length > 0) {
                   return;
                 }
 
@@ -830,6 +926,21 @@ const AllocationForm = () => {
               });
             });
           });
+
+          if (nonEditableWeeks.length > 0) {
+            dispatch(
+              showToastAction(
+                true,
+                `Update cancelled: You are editing non-editable week(s): ${[
+                  ...new Set(nonEditableWeeks),
+                ].join(', ')}`,
+                'error',
+                4000
+              )
+            );
+            dispatch(closeDialog());
+            return;
+          }
 
           if (deleteList.length === 0 && updateList.length === 0) {
             if (errorMessages.length > 0) {

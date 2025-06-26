@@ -20,6 +20,7 @@ import {
   injectBlankRows,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
+import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -68,7 +69,7 @@ export default function TeamAllocation({
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
-  const { allAllocations, calendarDate, loading, dataProcessing } = useSelector(
+  const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
   const {
@@ -82,13 +83,10 @@ export default function TeamAllocation({
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (getAllProjectViewRows().length > 0) {
+      if (!loading && getAllProjectViewRows().length > 0) {
         filteredResources = removeResourcesWithNoTeams(
           injectBlankRows(
-            getCombinedAllocation(
-              getAllProjectViewRows() as AllAllocations[],
-              (getAllTeamViewRows() as AllAllocations[]) || []
-            ) || [],
+            getAllProjectViewRows() as AllAllocations[],
             teams?.result || [],
             // @ts-ignore
             teamsResources,
@@ -96,8 +94,9 @@ export default function TeamAllocation({
             endDate
           )
         );
-      } else if (allAllocations) {
+      } else if (loading && allAllocations) {
         filteredResources = removeResourcesWithNoTeams(allAllocations || []);
+        dispatch(setLoading(false));
       }
 
       const formattedResources = filteredResources?.map(allocation => ({
@@ -184,7 +183,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Email',
+      field: 'email',
       headerName: 'Email',
       width: 180,
       type: 'string',
@@ -199,7 +198,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'PhoneNumber',
+      field: 'phoneNumber',
       headerName: 'Phone Number',
       width: 180,
       type: 'string',
@@ -212,7 +211,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Department',
+      field: 'department',
       headerName: 'Organization',
       width: 180,
       type: 'string',
@@ -225,7 +224,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'HRLevel',
+      field: 'hrLevel',
       headerName: 'HR Level',
       width: 100,
       type: 'string',
@@ -238,7 +237,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Role',
+      field: 'role',
       headerName: 'Role',
       width: 180,
       type: 'string',
@@ -251,7 +250,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'WorkLocation',
+      field: 'workLocation',
       headerName: 'Work Location',
       width: 180,
       type: 'string',
@@ -264,7 +263,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'StartDate',
+      field: 'resourceStartDate',
       headerName: 'Resource Start Date',
       width: 180,
       type: 'string',
@@ -277,7 +276,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'EndDate',
+      field: 'resourceEndDate',
       headerName: 'Resource End Date',
       width: 180,
       type: 'string',
@@ -290,7 +289,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'LocationCategory',
+      field: 'resourceLocationCategory',
       headerName: 'Location Category',
       width: 160,
       type: 'string',
@@ -303,7 +302,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'AverageWeeklyHours',
+      field: 'averageWeeklyHours',
       headerName: 'Average Weekly Hours',
       width: 190,
       type: 'string',
@@ -316,7 +315,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'ContractorHourlyRate',
+      field: 'contractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
       width: 195,
       type: 'string',
@@ -331,7 +330,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'ContractorHourlyRateCurrency',
+      field: 'contractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       type: 'string',
@@ -424,7 +423,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Description',
+      field: 'projectDescription',
       headerName: 'Project Description',
       width: 180,
       type: 'string',
@@ -476,7 +475,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'ProjectSponsor',
+      field: 'projectSponsor',
       headerName: 'Project Sponsor',
       width: 160,
       type: 'string',
@@ -489,7 +488,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'ProjectManager',
+      field: 'projectManager',
       headerName: 'Project Manager',
       width: 160,
       type: 'string',
@@ -502,7 +501,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Status',
+      field: 'projectStatus',
       headerName: 'Project Status',
       width: 130,
       type: 'string',
@@ -515,7 +514,7 @@ export default function TeamAllocation({
       },
     },
     {
-      field: 'Type',
+      field: 'projectType',
       headerName: 'Project Type',
       width: 130,
       type: 'string',
@@ -552,14 +551,33 @@ export default function TeamAllocation({
   ];
 
   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
-    return allocations.filter(allocation => allocation.teams);
+    return allocations.filter(
+      allocation =>
+        allocation.teams &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.EndDate
+          ? new Date(
+              _resources?.result?.find(
+                res => res.Id === allocation.resourceId
+              )?.EndDate
+            ) >= new Date(startDate)
+          : true) &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.StartDate
+          ? new Date(
+              _resources?.result?.find(
+                res => res.Id === allocation.resourceId
+              )?.StartDate
+            ) <= new Date(endDate)
+          : true)
+    );
   };
 
   return (
     <>
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
         <AllocationGrid
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           groupBy="teams"
           mode="team"
           startDate={startDate}
@@ -579,36 +597,36 @@ export default function TeamAllocation({
                 resourceType: true,
                 teams: false, // This column has to always be false, as we are using grouping.
                 resource: false, // This column has to always be false, as we are using grouping.
-                Email: false,
-                PhoneNumber: false,
-                Department: false,
-                HRLevel: false,
-                Role: false,
-                WorkLocation: false,
-                StartDate: false,
-                EndDate: false,
-                LocationCategory: false,
-                AverageWeeklyHours: false,
-                ContractorHourlyRate: false,
-                ContractorHourlyRateCurrency: false,
+                email: false,
+                phoneNumber: false,
+                department: false,
+                hrLevel: false,
+                role: false,
+                workLocation: false,
+                resourceStartDate: false,
+                resourceEndDate: false,
+                resourceLocationCategory: false,
+                averageWeeklyHours: false,
+                contractorHourlyRate: false,
+                contractorHourlyRateCurrency: false,
                 projectOvertimeAllowed: false,
                 projectCost: false,
                 projectCurrency: false,
-                Description: false,
+                projectDescription: false,
                 projectLocation: false,
-                ProjectManager: false,
+                projectManager: false,
                 projectSponsor: false,
                 projectEndDate: false,
                 projectStartDate: false,
-                Status: false,
-                Type: false,
+                projectStatus: false,
+                projectType: false,
               },
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
         />
-        {!allAllocations && !loading && (
+        {!allAllocations && !dataProcessing && (
           <div
             style={{
               display: 'flex',

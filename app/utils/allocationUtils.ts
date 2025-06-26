@@ -16,6 +16,7 @@ import {
   Project,
   ProjectsTableRow,
   Resource,
+  ResourceAllocation,
   Team,
 } from '../types';
 import {
@@ -27,6 +28,11 @@ import {
 } from './common';
 import { DATE_FORMAT } from '../constants/constants';
 import { GridApi } from '@mui/x-data-grid-premium';
+import dayjs from 'dayjs';
+import {
+  fetchResourceAllocationsForSaga,
+  fetchTeamAllocationsForSaga,
+} from '../services/teamServices';
 
 export const formatAllocations = (
   allocationsData: ApiResponse<Allocation[]>,
@@ -199,7 +205,6 @@ export function formatAllAllocations(
         teams: team?.Name || null,
         teamStatus: team?.Status || null,
         teamAllocationManager: team?.AllocationManager || null,
-
         project: project?.Name || alloc.ProjectName || null,
         projectId: project?.Id || alloc.Project || null,
         projectSponsor:
@@ -216,7 +221,21 @@ export function formatAllAllocations(
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
         projectEndDate: project?.EndDate || null,
-
+        projectDescription: project?.Description || null,
+        email: resource?.Email || null,
+        phoneNumber: resource?.PhoneNumber || null,
+        resourceStartDate: resource?.StartDate || null,
+        resourceEndDate: resource?.EndDate || null,
+        resourceLocationCategory: resource?.LocationCategory || null,
+        workLocation: resource?.WorkLocation || null,
+        department: resource?.Department || null,
+        hrLevel: resource?.HRLevel || null,
+        manager: resource?.Manager || null,
+        contractorHourlyRate: resource?.ContractorHourlyRate || null,
+        contractorHourlyRateCurrency:
+          resource?.ContractorHourlyRateCurrency || null,
+        averageWeeklyHours: resource?.AverageWeeklyHours || null,
+        resourceStatus: resource?.Status || null,
         totalEffort: 0,
       };
 
@@ -286,6 +305,21 @@ export function injectBlankRows(
           projectCurrency: '',
           projectStartDate: '',
           projectEndDate: '',
+          projectDescription: '',
+          email: resource?.Email || null,
+          phoneNumber: resource?.PhoneNumber || null,
+          resourceStartDate: resource?.StartDate || null,
+          resourceEndDate: resource?.EndDate || null,
+          resourceLocationCategory: resource?.LocationCategory || null,
+          workLocation: resource?.WorkLocation || null,
+          department: resource?.Department || null,
+          hrLevel: resource?.HRLevel || null,
+          manager: resource?.Manager || null,
+          contractorHourlyRate: resource?.ContractorHourlyRate || null,
+          contractorHourlyRateCurrency:
+            resource?.ContractorHourlyRateCurrency || null,
+          averageWeeklyHours: resource?.AverageWeeklyHours || null,
+          resourceStatus: resource?.Status || null,
           resource: resource.FullName,
           totalEffort: 0,
           role: resource.Role || '',
@@ -380,7 +414,21 @@ export function formatCostAllocations(
         projectCurrency: project?.BudgetCurrency || null,
         projectStartDate: project?.StartDate || null,
         projectEndDate: project?.EndDate || null,
-
+        projectDescription: project?.Description || null,
+        email: resource?.Email || null,
+        phoneNumber: resource?.PhoneNumber || null,
+        resourceStartDate: resource?.StartDate || null,
+        resourceEndDate: resource?.EndDate || null,
+        resourceLocationCategory: resource?.LocationCategory || null,
+        workLocation: resource?.WorkLocation || null,
+        department: resource?.Department || null,
+        hrLevel: resource?.HRLevel || null,
+        manager: resource?.Manager || null,
+        contractorHourlyRate: resource?.ContractorHourlyRate || null,
+        contractorHourlyRateCurrency:
+          resource?.ContractorHourlyRateCurrency || null,
+        averageWeeklyHours: resource?.AverageWeeklyHours || null,
+        resourceStatus: resource?.Status || null,
         totalEffort: 0,
       };
 
@@ -480,6 +528,21 @@ export const generateEmptyRow = (
     projectCurrency: project?.BudgetCurrency || null,
     projectStartDate: project?.StartDate || null,
     projectEndDate: project?.EndDate || null,
+    projectDescription: project?.Description || null,
+    email: resource?.Email || null,
+    phoneNumber: resource?.PhoneNumber || null,
+    resourceStartDate: resource?.StartDate || null,
+    resourceEndDate: resource?.EndDate || null,
+    resourceLocationCategory: resource?.LocationCategory || null,
+    workLocation: resource?.WorkLocation || null,
+    department: resource?.Department || null,
+    hrLevel: resource?.HRLevel || null,
+    manager: resource?.Manager || null,
+    contractorHourlyRate: resource?.ContractorHourlyRate || null,
+    contractorHourlyRateCurrency:
+      resource?.ContractorHourlyRateCurrency || null,
+    averageWeeklyHours: resource?.AverageWeeklyHours || null,
+    resourceStatus: resource?.Status || null,
     totalEffort: 0,
   };
 
@@ -706,4 +769,85 @@ export const filterAllocationsForSelectedProject = (
     return filledAllocations;
   }
   return allocations;
+};
+
+export const getMaxAllocationDate = (
+  allocations: Allocation[],
+  resourceId: string
+): string | null => {
+  if (!allocations || allocations.length === 0) return null;
+  const resourceAllocations = allocations.filter(
+    alloc => alloc.Resource === resourceId
+  );
+  if (resourceAllocations.length === 0) return null;
+  const period = resourceAllocations.map(d => d.Period);
+  if (period.length === 0) return null;
+  const maxPeriod = period.reduce((latest, current) =>
+    dayjs(current).isAfter(dayjs(latest)) ? current : latest
+  );
+  return maxPeriod;
+};
+
+export const fetchResourceAllocations = async (
+  teamId: string,
+  endDate: string,
+  email: string,
+  resources: Resource[]
+) => {
+  const postData = {
+    'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+      TeamId: teamId,
+      StartDate: endDate,
+      EndDate: '2099-08-31',
+    },
+  };
+
+  const result = await fetchTeamAllocationsForSaga(postData);
+  const allocations = (result?.result ?? []) as Allocation[];
+  const matchedResource = resources.find(resource => resource.Email === email);
+  const resourceId = matchedResource?.Id;
+  if (!resourceId) {
+    console.error('Resource ID not found for email:', email);
+    return { resourceAllocations: [], resourceId: null };
+  }
+  const resourceAllocations = allocations.filter(
+    alloc => alloc.Resource === resourceId
+  );
+
+  return { resourceAllocations, resourceId };
+};
+
+export const getResourceAllocationsForPeriod = async (
+  resourceId: string,
+  startDate: string
+): Promise<ResourceAllocation[]> => {
+  if (!resourceId || !startDate) {
+    return [];
+  }
+
+  const postData = {
+    'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
+      Resource: resourceId,
+      StartDate: startDate,
+      EndDate: '2099-08-31',
+    },
+  };
+
+  try {
+    const result = await fetchResourceAllocationsForSaga(postData);
+    return result?.result ?? [];
+  } catch (error) {
+    console.error('Error fetching resource allocations:', error);
+    return [];
+  }
+};
+
+export const getResourceIdByEmail = (
+  allResources: { Id: string; Email: string }[],
+  email: string
+): string | null => {
+  if (!Array.isArray(allResources) || !email) return null;
+
+  const matched = allResources.find(resource => resource.Email === email);
+  return matched?.Id ?? null;
 };

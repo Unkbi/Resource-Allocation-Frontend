@@ -181,7 +181,6 @@ export default function CustomDateRangePicker({
             onChange={(newValue) => handleDateChange(newValue)}
             localeText={{ start: '', end: '' }}
             format={format}
-            {...(!isProjectForm && { maxDate: getWeeksAfter(selectedDate[0]) })}
             slots={{ field: SingleInputDateRangeField }}
             slotProps={{
               popper: {
