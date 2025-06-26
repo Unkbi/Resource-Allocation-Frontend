@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { performLogin } from '@/app/redux/actions/authActions';
-import type { RootState, AppDispatch } from '@/app/redux/store';
 import {
     Box,
     Typography,
@@ -117,6 +116,7 @@ const MainBox = styled(Box)(({ theme }) => ({
         },
         "& .orText": {
             fontFamily: theme.typography.fontFamily,
+            fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
             fontWeight: "700",
@@ -129,7 +129,7 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#fff"
             },
             "&::before": {
-                // background: "rgb(255,255,255)",
+                background: "rgb(255,255,255)",
                 background: "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)",
                 width: "100%",
                 height: "1px",
@@ -176,14 +176,14 @@ const MainBox = styled(Box)(({ theme }) => ({
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const dispatch: AppDispatch = useDispatch();
-    const { loading, error, user } = useSelector((state: RootState) => state.user);
+    const dispatch = useDispatch();
+    const { loading, error, user } = useSelector((state) => state.user);
     const router = useRouter();
     const [showPassword, setShowPassword] = React.useState(false);
     const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
     const searchParams = useSearchParams();
     const redirectPath = searchParams.get('redirect');
-    const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleLogin = (e) => {
         e.preventDefault();
         dispatch(performLogin(
             {
