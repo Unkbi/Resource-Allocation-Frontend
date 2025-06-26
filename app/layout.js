@@ -7,6 +7,7 @@ import { DataGridProvider } from './context/dataGridContext';
 import { Suspense } from 'react';
 import LayoutClient from './layoutClient';
 
+// Dynpro Deployment, to be deleted.
 export default function CommonLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
