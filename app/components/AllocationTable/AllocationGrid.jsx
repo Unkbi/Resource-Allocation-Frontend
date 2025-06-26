@@ -67,6 +67,7 @@ import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
+import { CommentTooltip } from './components/AllocationCommentTooltip';
 
 export default function AllocationGrid({
   groupBy,
@@ -235,24 +236,26 @@ export default function AllocationGrid({
     allWeeks.forEach(weekKey => {
       const period = getMondayOfWeek(weekKey, new Date());
       const value = row[weekKey];
-
       if (value && typeof value === 'object' && 'value' in value) {
         normalized[weekKey] = {
           allocationId: value.allocationId || null,
           value: value.value,
           period: period,
+          notes: value.notes || '',
         };
       } else if (value !== undefined) {
         normalized[weekKey] = {
           allocationId: null,
           value,
           period,
+          notes: '',
         };
       } else {
         normalized[weekKey] = {
           allocationId: null,
           value: null,
           period,
+          notes: '',
         };
       }
     });
@@ -671,7 +674,9 @@ export default function AllocationGrid({
             cellClass.includes('non-editable-darker');
 
           const value = params.formattedValue ?? '';
-
+          // Extract notes from the cell data
+          const cellData = params.row[params.field];
+          const notes = cellData?.notes || '';
           return showTooltip ? (
             <Tooltip
               title="This resource is inactive for this period. Allocation not allowed."
@@ -688,9 +693,24 @@ export default function AllocationGrid({
                 {'' || <>&nbsp;</>}
               </span>
             </Tooltip>
-          ) : (
+          ) : editable ? (
+            <CommentTooltip notes={"notes"}>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                {value}
+              </Box>
+            </CommentTooltip>
+          ): (
             <span>{value}</span>
-          );
+          )
         },
       };
     }
