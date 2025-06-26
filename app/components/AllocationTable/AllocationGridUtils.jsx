@@ -139,6 +139,9 @@ const CellWithMenu = ({
           autoHideTimer: 4000,
         })
       );
+      setShowDeleteDialog(false);
+      setDeleteParams(null);
+      setAnchorEl(null);
       return;
     }
 
@@ -865,8 +868,8 @@ export const getCellClassName = (
       : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
-  return 'non-editable-cell';
-}
+    return 'non-editable-cell';
+  }
 
   return '';
 };
