@@ -1,10 +1,13 @@
-import { Box, Tabs, Tab, styled } from '@mui/material';
+import { Box, Tabs, Tab, styled, Button } from '@mui/material';
 import { useState } from 'react';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
   GridToolbarFilterButton,
 } from '@mui/x-data-grid';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { useDispatch } from 'react-redux';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -43,16 +46,45 @@ const StyledGridToolbarColumnsButton = styled(GridToolbarColumnsButton)({
   },
 });
 
-const ProjectToolbar = ({ setFilterButtonEl }) => {
-  const [value, setValue] = useState('project');
+const portfolioButtonStyle ={
+  width: 90,
+  height: 36,
+  flexShrink: 0,
+  backgroundColor: '#1C2D5F', 
+  color: '#FFF',
+  textAlign: 'center',
+  fontFamily: '"Open Sans", sans-serif',
+  fontSize: 12,
+  fontStyle: 'normal',
+  fontWeight: 700,
+  lineHeight: 'normal',
+  textTransform: 'none', 
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 1,
+  '&:hover': {
+    backgroundColor: '#16305a',
+  },
+};
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
 
+const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
+  const dispatch = useDispatch();
+  const handleAddPortfolio = () => {
+    dispatch(
+      openDialog({
+        title: `Add ${PORTFOLIO_DISPLAY_NAME}`,
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: 'add_portfolio',
+        initialData: '',
+      })
+    );
+  }; 
   return (
     <Box
-      style={{
+      sx={{
         display: 'flex',
         justifyContent: 'space-between',
         marginTop: '12px',
@@ -60,17 +92,29 @@ const ProjectToolbar = ({ setFilterButtonEl }) => {
     >
       <Tabs
         value={value}
-        onChange={handleChange}
+        onChange={onChange}
         textColor="primary"
         indicatorColor="primary"
         aria-label="secondary tabs example"
       >
         <Tab value="project" label="Projects" />
+        <Tab value="portfolio" label="Portfolio" />
         <Tab value="businessImpact" label="Business Impact" />
       </Tabs>
+
       <Box>
         <Box className="filterColBlock">
           <GridToolbarContainer ref={setFilterButtonEl}>
+            {value === 'portfolio' && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAddPortfolio}
+                sx={portfolioButtonStyle}
+              >
+                Add Portfolio
+              </Button>
+            )}
             <StyledGridToolbarColumnsButton
               slotProps={{
                 tooltip: { title: 'Columns' },

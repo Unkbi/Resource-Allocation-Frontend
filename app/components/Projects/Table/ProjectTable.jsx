@@ -17,7 +17,14 @@ function CustomColumnMenu(props) {
     );
   }
   
-const ProjectTable = ({columns, rows, loading, apiRef}) => {
+const ProjectTable = ({
+  columns,
+  rows,
+  loading,
+  apiRef,
+  value,
+  onChange = () => {},
+}) => {
     const [filterButtonEl, setFilterButtonEl] = useState(null);
     return (
         <StyledDataGrid
@@ -64,6 +71,8 @@ const ProjectTable = ({columns, rows, loading, apiRef}) => {
                 },
                 toolbar: {
                     setFilterButtonEl,
+                    value: value,
+                    onChange: onChange,
                 },
                 columnsPanel: {
                 className: 'styleColumnMenu',

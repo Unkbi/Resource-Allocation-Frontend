@@ -139,6 +139,7 @@ export default function Project() {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
   const allResources = resources.result || [];
+  const [value, setValue] = useState('project');
 
   useEffect(() => {
     if (!updating) {
@@ -555,6 +556,113 @@ export default function Project() {
     },
   ];
 
+
+  const portfolioColumns = [
+    {
+      field: 'Name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 180,
+      renderCell: params => {
+        const handleNameClick = () => {
+          handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+        };
+        {
+          params.row?.Name;
+        }
+        return (
+          <Box
+            onClick={handleNameClick}
+            sx={{
+              display: 'inline-block',
+              paddingLeft: '32px',
+              maxWidth: '100%',
+              color: '#152E75',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            {params.value}
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      width: 170,
+      flex: 1,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        const status = params.value;
+        return (
+          status && (
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <StatusPill status={status}>{status}</StatusPill>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  {/* <MenuItem
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setDeleteTarget({
+                        id: params.row.Id,
+                        name: params.row.Team,
+                        type: 'Team',
+                      });
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem> */}
+                </Menu>
+              </Box>
+            </Box>
+          )
+        );
+      },
+    },
+  ];
+
   const handleMenuClick = (event, id) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(id);
@@ -565,6 +673,44 @@ export default function Project() {
     setSelectedRow(null);
   };
 
+  const onChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
+  const renderTable = () => {
+    switch (value) {
+      case 'project':
+        return (
+          <ProjectTable
+            loading={loading || resourceLoading}
+            columns={columns}
+            rows={modifyData(rows)}
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
+        );
+
+      case 'portfolio':
+        return (
+          <ProjectTable
+            loading={loading || resourceLoading}
+            columns={portfolioColumns}
+            rows={modifyData(rows)}
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
+        );
+
+      case 'businessImpact':
+        return <>Busiiness impact</>;
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -573,12 +719,8 @@ export default function Project() {
         height: '100%',
       }}
     >
-      <ProjectTable
-        loading={loading || resourceLoading}
-        columns={columns}
-        rows={modifyData(rows)}
-        apiRef={apiRef}
-      />
+
+      {renderTable()}
       <ConfirmDialog
         open={deleteDialogOpen}
         onConfirm={() => handleConfirmDelete(projectToDelete.Id)}

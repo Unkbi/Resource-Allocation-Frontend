@@ -1,3 +1,4 @@
+
 import * as Yup from 'yup';
 
 interface Project {
@@ -366,4 +367,10 @@ export const addRatesValidationSchema = Yup.object({
       'End Date must be after or the same as Start Date'
     ),
   Status: Yup.string().required('Status is required'),
+});
+
+export const addPortfolioValidationSchema = Yup.object({
+  Name: Yup.string().required('Status is required'),
+  Status: Yup.string().required('Status is required'),
+  Description: Yup.string().nullable(),
 });
