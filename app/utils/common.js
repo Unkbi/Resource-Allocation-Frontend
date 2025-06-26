@@ -712,6 +712,7 @@ export function getOrganisationForResource(
 export function isCellEditableUtils(params, type, resources) {
   if (type === 'cost') return false;
   if (params.row.hasButton) return false;
+  if (/\_(\d)+/.test(params.row.id)) return true; // Allow Editing for Split View Empty Rows
 
   const cellData = params.row[params.field];
   const cellPeriod = cellData?.period;
