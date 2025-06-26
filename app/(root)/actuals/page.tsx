@@ -51,7 +51,7 @@ export default function ActualsPage() {
   );
   const [show, setShow] = useState(true);
   const [isModified, setIsModified] = useState(false);
-  const [canNavigate, setCanNavigate] = useState(false);
+  const [confirmSignal, setConfirmSignal] = useState(0);
 
   const handleModificationChange = (modified: boolean) => {
     setShow(false);
@@ -149,8 +149,8 @@ export default function ActualsPage() {
           }
           if (response?.status === 'ok') {
              setIsModified(false);
-             setCanNavigate(true);
              setHasInvalidRows(false);
+             setConfirmSignal((c) => c + 1);
             dispatch(
               showToast({
                 open: true,
@@ -285,13 +285,26 @@ export default function ActualsPage() {
       handleNext();
     }
     setDialogSource(null);
-     setCanNavigate(false);
   };
 
   const handleCancel = () => {
     setDeleteDialogOpen(false);
     setDialogSource(null);
   };
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isModified) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+
+      
+    };
+  }, [isModified]);
 
   return (
     <Box
@@ -358,6 +371,7 @@ export default function ActualsPage() {
             onValidationChange={handleValidationChange}
             setShow={handleSetShow}
             onModificationChange={handleModificationChange}
+            confirmSignal={confirmSignal}
           />
           <Box mt={4} width="100%">
             <Box
@@ -370,12 +384,11 @@ export default function ActualsPage() {
             <Button
               startIcon={<ChevronLeftIcon />}
               onClick={() => {
-                if (isModified && !canNavigate) {
+                if (isModified ) {
                   setDialogSource('prev');
                   setDeleteDialogOpen(true);
                 } else {
                   handlePrev();
-                  setCanNavigate(false);
                 }
               }}
               sx={{
@@ -430,12 +443,11 @@ export default function ActualsPage() {
             <Button
               endIcon={<ChevronRightIcon />}
               onClick={() => {
-                if (isModified && !canNavigate) {
+                if (isModified ) {
                   setDialogSource('next');
                   setDeleteDialogOpen(true);
                 } else {
                   handleNext();
-                  setCanNavigate(false);
                 }
               }}
               disabled={startDate ? isCurrentWeek(parseISO(startDate)) : false}
