@@ -269,6 +269,7 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
+  const { portfolios } = useSelector(state => state.portfolios);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -333,9 +334,9 @@ const AllocationForm = () => {
       case 'edit_rates':
         return addRatesValidationSchema;
       case 'add_portfolio':
-        return addPortfolioValidationSchema;
-      case 'edit_protfolio':
-        return addaddPortfolioValidationSchema;
+        return addPortfolioValidationSchema(portfolios);
+      case 'edit_portfolio':
+        return addPortfolioValidationSchema(portfolios,initialData.Name||'');
 
       default:
         return null;
@@ -1627,7 +1628,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        updatedFields = {
+        let updatedFields = {
           ...cleanedValues,
           WorkLocation: cleanedValues.WorkLocation,
           HRLevel: cleanedValues.HRLevel,
@@ -1726,59 +1727,55 @@ const AllocationForm = () => {
 
         break;
 
-      case 'edit_portfolio':
+      case 'edit_portfolio': {
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
           }
         });
 
-        updatedFields = {
-          ...cleanedValues,
-        };
+        const updatedFields = { ...cleanedValues };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: 'UPDATE_PORTFOLIOS',
+              payload: {
+                id: initialData?.Id,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
 
-        new Promise((resolve, reject) => {
-          dispatch({
-            type: 'UPDATE_PORTFOLIOS',
-            payload: {
-              id: initialData?.__Id__ || initialData?.Id,
-              updatedFields,
-              resolve,
-              reject,
-            },
-          });
-        })
-          .then(response => {
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Portfolio updated successfully.',
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-            dispatch(
-              setHighlightedRowId(
-                response.result?.__Id__ || response.result?.Id
-              )
-            );
-            dispatch(closeDialog());
-          })
-          .catch(error => {
-            console.error('Failed to update portfolio:', error);
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Failed to update portfolio.',
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Portfolio updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(
+            setHighlightedRowId(response.result?.Id)
+          );
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update portfolio:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update portfolio.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
 
         break;
+      }
 
       default:
         return;

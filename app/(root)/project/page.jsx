@@ -1,7 +1,8 @@
 'use client';
 import ProjectTable from '@/app/components/Projects/Table/ProjectTable';
-import { Box, styled } from '@mui/system';
+import { Box, display, styled } from '@mui/system';
 import {
+  Button,
   IconButton,
   Menu,
   MenuItem,
@@ -40,6 +41,8 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -140,6 +143,12 @@ export default function Project() {
   const router = useRouter();
   const allResources = resources.result || [];
   const [value, setValue] = useState('project');
+  const { portfolios } = useSelector(state => state.portfolios);
+  const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
+  const [portfolioDelete, setPortfolioDelete] = useState({
+    Id: '',
+    Name: '',
+  });
 
   useEffect(() => {
     if (!updating) {
@@ -158,6 +167,14 @@ export default function Project() {
     }
   }, []);
 
+  useEffect(() => {
+    dispatch({ type: FETCH_PORTFOLIOS });
+  }, []);
+
+  useEffect(() => {
+    setPortfolioRows(portfolios);
+  }, [portfolios]);
+
   const modifyData = data => {
     if (data) {
       return data.map(item => {
@@ -170,6 +187,20 @@ export default function Project() {
             ?.FullName,
         };
       });
+    }
+    return [];
+  };
+
+  const modifyPortfolioData = data => {
+    if (data) {
+      return data.map(item => ({
+        id: item.Id,
+        Id: item.Id,
+        SidebarColor: item.SidebarColor,
+        Name: item.Name,
+        Description: item.Description,
+        Status: item.Status,
+      }));
     }
     return [];
   };
@@ -215,7 +246,8 @@ export default function Project() {
     return () => clearTimeout(timeout);
   }, [projects, highlightedRowId]);
 
-  const handleConfirmDelete = async projectId => {
+  const handleConfirmDelete = async id => {
+    if (value === 'project') {
     dispatch(
       showToast({
         open: true,
@@ -228,14 +260,14 @@ export default function Project() {
     try {
       const postData = {
         'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-          Project: projectId,
+            Project: id,
           StartDate: '2000-01-01',
           EndDate: '2032-01-01',
         },
       };
       const response = await fetchProjectAllocationsForSaga(postData);
       if (!response.result || response.result.length === 0) {
-        await dispatch(deleteProject(projectId)).unwrap();
+          await dispatch(deleteProject(id)).unwrap();
         dispatch(
           showToast({
             open: true,
@@ -270,6 +302,35 @@ export default function Project() {
     } finally {
       setDeleteDialogOpen(false); 
       setProjectToDelete(null);
+    }
+  };
+    if (value === 'portfolio') {
+      try {
+        await dispatch({ type: 'DELETE_PORTFOLIOS', payload: id });
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Portfolio deleted successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+        dispatch({ type: 'FETCH_PORTFOLIOS' });
+      } catch (error) {
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to delete portfolio',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 1000,
+          })
+        );
+      } finally {
+        setDeleteDialogOpen(false);
+        setPortfolioDelete({ Id: '', Name: '' });
+      }
     }
   };
   const handleCancelDelete = () => {
@@ -561,8 +622,7 @@ export default function Project() {
     {
       field: 'Name',
       headerName: 'Name',
-      flex: 1,
-      minWidth: 180,
+      minWidth: 230,
       renderCell: params => {
         const handleNameClick = () => {
           handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
@@ -575,7 +635,6 @@ export default function Project() {
             onClick={handleNameClick}
             sx={{
               display: 'inline-block',
-              paddingLeft: '32px',
               maxWidth: '100%',
               color: '#152E75',
               cursor: 'pointer',
@@ -587,9 +646,54 @@ export default function Project() {
               },
             }}
           >
-            {params.value}
+            <EllipsisNameCell
+              showAvatar={false}
+              value={params.value}
+            />
           </Box>
         );
+      },
+    },
+    {
+      field: 'Description',
+      headerName: 'Portfolio Description',
+      minWidth: 300,
+      renderCell: params => {
+        const description = params.value;
+        return description ? (
+          <EllipsisNameCell showAvatar={false} value={description} />
+        ) : (
+          ''
+        );
+      },
+    },
+    {
+      field: 'SidebarColor',
+      headerName: 'Sidebar Color',
+      minWidth: 130,
+      renderCell: params => {
+        const color = params.value;
+        return color ? (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '4px',
+                backgroundColor: color,
+                border: '1px solid #ccc',
+              }}
+            />
+          </Box>
+        ) : null;
       },
     },
     {
@@ -631,7 +735,11 @@ export default function Project() {
                   <MenuItem
                     onClick={() => {
                       handleMenuClose();
-                      handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+                      handleOpenDialog(
+                        'Edit Portfolio',
+                        'edit_portfolio',
+                        params.row
+                      );
                     }}
                     sx={menuItemStyle}
                   >
@@ -639,21 +747,17 @@ export default function Project() {
                     Edit
                   </MenuItem>
 
-                  {/* <MenuItem
+                  <MenuItem
                     onClick={() => {
                       setDeleteDialogOpen(true);
                       handleMenuClose();
-                      setDeleteTarget({
-                        id: params.row.Id,
-                        name: params.row.Team,
-                        type: 'Team',
-                      });
+                      setPortfolioDelete(params.row);
                     }}
                     sx={menuItemStyle}
                   >
                     <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
                     Delete
-                  </MenuItem> */}
+                  </MenuItem>
                 </Menu>
               </Box>
             </Box>
@@ -696,7 +800,7 @@ export default function Project() {
           <ProjectTable
             loading={loading || resourceLoading}
             columns={portfolioColumns}
-            rows={modifyData(rows)}
+            rows={modifyPortfolioData(portfolioRows)}
             apiRef={apiRef}
             value={value}
             onChange={onChange}
@@ -704,7 +808,18 @@ export default function Project() {
         );
 
       case 'businessImpact':
-        return <>Busiiness impact</>;
+        return (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
+            <Button>Business impact</Button>
+          </Box>
+        );
 
       default:
         return null;
@@ -719,11 +834,14 @@ export default function Project() {
         height: '100%',
       }}
     >
-
       {renderTable()}
       <ConfirmDialog
         open={deleteDialogOpen}
-        onConfirm={() => handleConfirmDelete(projectToDelete.Id)}
+        onConfirm={() =>
+          handleConfirmDelete(
+            value === 'project' ? projectToDelete?.Id : portfolioDelete?.Id
+          )
+        }
         onCancel={handleCancelDelete}
         title="Are you sure you want to delete this project?"
       >

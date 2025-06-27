@@ -369,8 +369,30 @@ export const addRatesValidationSchema = Yup.object({
   Status: Yup.string().required('Status is required'),
 });
 
-export const addPortfolioValidationSchema = Yup.object({
-  Name: Yup.string().required('Status is required'),
-  Status: Yup.string().required('Status is required'),
-  Description: Yup.string().nullable(),
-});
+export const addPortfolioValidationSchema = (portfolios : any, initialName = '') => {
+  const portfolioNames = Array.isArray(portfolios)
+    ? portfolios.map(p => p.Name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    Name: Yup.string()
+      .required('Name is required')
+      .test(
+        'unique-name',
+        'A portfolio with this name already exists.',
+        function (value) {
+          if (!value) return true; 
+          const currentName = value.toLowerCase().trim();
+          const originalName = initialName.toLowerCase().trim();
+          return (
+            currentName === originalName ||
+            !portfolioNames.includes(currentName)
+          );
+        }
+      ),
+    Status: Yup.string().required('Status is required'),
+    Description: Yup.string().nullable(),
+  });
+};
+
+
+

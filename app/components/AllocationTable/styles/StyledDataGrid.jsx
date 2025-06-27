@@ -500,6 +500,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor:
         !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
     },
+    [`& .${gridClasses.cell}[data-field="Description"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="SidebarColor"]`]: {
+      backgroundColor:
+        !loading && !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
     //  '& .MuiDataGrid-row:hover': {
     //   backgroundColor: 'inherit !important',
     //   },
