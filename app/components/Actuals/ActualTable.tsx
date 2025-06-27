@@ -86,6 +86,7 @@ interface ActualTableProps {
   onValidationChange?: (hasInvalidRows: boolean) => void;
   setShow?: (val: boolean) => void;
   onModificationChange?: (isModified: boolean) => void;
+  confirmSignal?: number;
 }
 
 export default function ActualTable({
@@ -98,6 +99,7 @@ export default function ActualTable({
   setShow,
   onValidationChange,
   onModificationChange,
+  confirmSignal,
 }: ActualTableProps) {
   const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
@@ -130,6 +132,9 @@ export default function ActualTable({
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
   >({});
+  const [baselineRows, setBaselineRows] = useState<ActualAllocationTableRow[]>(
+    data
+  );
 
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
@@ -143,6 +148,7 @@ export default function ActualTable({
 
     if (data) {
       setRows(data);
+      setBaselineRows(data);
       if (data.length > 0 && data.find(row => row.project === 'Other Work')) {
         setHasOtherWork(true);
       }
@@ -152,6 +158,8 @@ export default function ActualTable({
       ) {
         setHasPersonalTime(true);
       }
+      onValidationChange && onValidationChange(false);
+      setRowValidationErrors({});
     }
   }, [startDate, endDate, data]);
 
@@ -166,15 +174,18 @@ export default function ActualTable({
   }, [rowValidationErrors, onValidationChange]);
 
   useEffect(() => {
+    setBaselineRows(rows);
+    onModificationChange?.(false);
+  }, [confirmSignal]);
+
+  useEffect(() => {
     if (onModificationChange) {
       const isModified =
-        rows.length !== data.length || // Check if rows were added or deleted
-        rows.some(
-          (row, index) => JSON.stringify(row) !== JSON.stringify(data[index])
-        ); // Check if rows were modified
-      onModificationChange(isModified);
+        rows.length !== baselineRows.length ||
+      rows.some((r, i) => JSON.stringify(r) !== JSON.stringify(baselineRows[i]));
+    onModificationChange?.(isModified);
     }
-    }, [rows, data, onModificationChange]);
+    }, [rows, baselineRows, onModificationChange]);
 
   // Organize rows into sections
   const getOrganizedRows = () => {
