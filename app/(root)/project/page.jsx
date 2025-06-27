@@ -351,19 +351,6 @@ export default function Project() {
         setDeleteDialogOpen(false);
         setPortfolioDelete({ Id: '', Name: '' });
       }
-    } catch (error) {
-      dispatch(
-        showToast({
-          open: true,
-          message: 'Failed to delete project',
-          type: 'error',
-          position: 'bottom-left',
-          autoHideTimer: 1000,
-        })
-      );
-    } finally {
-      setDeleteDialogOpen(false);
-      setProjectToDelete(null);
     }
   };
   const handleCancelDelete = () => {
