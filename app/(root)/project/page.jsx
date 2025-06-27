@@ -248,62 +248,62 @@ export default function Project() {
 
   const handleConfirmDelete = async id => {
     if (value === 'project') {
-    dispatch(
-      showToast({
-        open: true,
-        message: 'Checking for active allocations',
-        type: 'info',
-        position: 'bottom-left',
-        autoHideTimer: 1000,
-      })
-    );
-    try {
-      const postData = {
-        'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-            Project: id,
-          StartDate: '2000-01-01',
-          EndDate: '2032-01-01',
-        },
-      };
-      const response = await fetchProjectAllocationsForSaga(postData);
-      if (!response.result || response.result.length === 0) {
-          await dispatch(deleteProject(id)).unwrap();
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Project deleted successfully',
-            type: 'success',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-        dispatch(fetchAllProjects());
-      } else {
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Cannot delete project with active allocations',
-            type: 'error',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-      }
-    } catch (error) {
       dispatch(
         showToast({
           open: true,
-          message: 'Failed to delete project',
-          type: 'error',
+          message: 'Checking for active allocations',
+          type: 'info',
           position: 'bottom-left',
           autoHideTimer: 1000,
         })
       );
-    } finally {
-      setDeleteDialogOpen(false); 
-      setProjectToDelete(null);
+      try {
+        const postData = {
+          'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
+            Project: id,
+            StartDate: '2000-01-01',
+            EndDate: '2032-01-01',
+          },
+        };
+        const response = await fetchProjectAllocationsForSaga(postData);
+        if (!response.result || response.result.length === 0) {
+          await dispatch(deleteProject(id)).unwrap();
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Project deleted successfully',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(fetchAllProjects());
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Cannot delete project with active allocations',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+      } catch (error) {
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to delete project',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 1000,
+          })
+        );
+      } finally {
+        setDeleteDialogOpen(false);
+        setProjectToDelete(null);
+      }
     }
-  };
     if (value === 'portfolio') {
       try {
         await dispatch({ type: 'DELETE_PORTFOLIOS', payload: id });
@@ -617,12 +617,12 @@ export default function Project() {
     },
   ];
 
-
   const portfolioColumns = [
     {
       field: 'Name',
       headerName: 'Name',
       minWidth: 230,
+      hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
           handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
@@ -646,10 +646,7 @@ export default function Project() {
               },
             }}
           >
-            <EllipsisNameCell
-              showAvatar={false}
-              value={params.value}
-            />
+            <EllipsisNameCell showAvatar={false} value={params.value} />
           </Box>
         );
       },
@@ -703,6 +700,7 @@ export default function Project() {
       flex: 1,
       sortable: true,
       filterable: true,
+      hideable: false,
       headerAlign: 'left',
       renderCell: params => {
         const status = params.value;
