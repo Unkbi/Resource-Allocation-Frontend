@@ -667,8 +667,8 @@ export default function AllocationGrid({
             isCellEditable
           );
           const showTooltip =
-            cellClass.includes('non-editable-cell') ||
-            cellClass.includes('non-editable-darker');
+            cellClass.split(' ').includes('non-editable-cell') ||
+            cellClass.split(' ').includes('non-editable-darker');
 
           const value = params.formattedValue ?? '';
 
@@ -1299,10 +1299,10 @@ export default function AllocationGrid({
           projects?.result,
           isCellEditable
         );
-        const editable = isCellEditable(params);
-        if (!editable) {
-          return originalClass ? `${originalClass}` : 'non-editable-cell';
-        }
+        // const editable = isCellEditable(params);
+        // if (!editable) {
+        //   return originalClass ? `${originalClass}` : 'non-editable-cell';
+        // }
         return originalClass || '';
       }}
       getRowClassName={params => getRowClassName(params)}
