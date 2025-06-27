@@ -166,7 +166,7 @@ const initialValuesMap = {
     WorkLocation: '',
     Status: '',
     ConfirmTransfer: false,
-    shouldTransfer:false,
+    shouldTransfer: false,
   },
   add_allocation: {
     Resource: [],
@@ -240,6 +240,7 @@ const initialValuesMap = {
     Name: '',
     Status: 'Active',
     Description: '',
+    SidebarColor: '#000000',
   },
 };
 
@@ -718,7 +719,9 @@ const AllocationForm = () => {
         };
 
         try {
-          const selectedTeam = teams.result.find(team => team.Id === values.Team);
+          const selectedTeam = teams.result.find(
+            team => team.Id === values.Team
+          );
           let teamAllocationManagerId = null;
           if (selectedTeam?.AllocationManager) {
             const raw = selectedTeam.AllocationManager;
@@ -1624,7 +1627,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-         updatedFields = {
+        updatedFields = {
           ...cleanedValues,
           WorkLocation: cleanedValues.WorkLocation,
           HRLevel: cleanedValues.HRLevel,

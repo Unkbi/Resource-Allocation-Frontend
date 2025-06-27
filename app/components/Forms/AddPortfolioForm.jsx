@@ -7,6 +7,7 @@ import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { MuiColorInput } from 'mui-color-input';
 
 const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
   const dispatch = useDispatch();
@@ -30,23 +31,23 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
   ];
 
   useEffect(() => {
-    dispatch({ type: FETCH_PORTFOLIOS }); 
+    dispatch({ type: FETCH_PORTFOLIOS });
   }, [dispatch]);
-  
-    useEffect(() => {
-      if (initialData) {
-        const rowData = {
-          Name: initialData.Name || '',
-          Description: initialData.Description || '',
-          Status: initialData.Status || 'Active',
-        };
-  
-        setFormValue(rowData);
-        resetForm({ values: rowData });
-        setTouched({});
-      }
-    }, [initialData, projects]);
 
+  useEffect(() => {
+    if (initialData) {
+      const rowData = {
+        Name: initialData.Name || '',
+        Description: initialData.Description || '',
+        Status: initialData.Status || 'Active',
+        SidebarColor: initialData.SidebarColor || '#000000',
+      };
+
+      setFormValue(rowData);
+      resetForm({ values: rowData });
+      setTouched({});
+    }
+  }, [initialData, projects]);
 
   return (
     <Box>
@@ -99,6 +100,16 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
           }}
           error={touched.Description && Boolean(errors.Description)}
           helperText={touched.Description && errors.Description}
+        />
+      </Box>
+      <Box sx={{ pb: 2 }}>
+        <MuiColorInput
+          name="SidebarColor"
+          format="hex"
+          value={values.SidebarColor}
+          onChange={e => {
+            setFieldValue('SidebarColor', e);
+          }}
         />
       </Box>
     </Box>
