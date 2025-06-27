@@ -12,9 +12,10 @@ interface AuthResponse {
   'refresh-token': string;
 }
 
-interface LoginResponse {
-  'authentication-result': AuthResponse;
-}
+// interface LoginResponse {
+//   'authentication-result': AuthResponse;
+// }
+
 interface SignupData {
   email: string;
   password: string;
@@ -27,13 +28,32 @@ interface ConfirmSignUpData {
 }
 
 interface ForgotPasswordData {
-  email: string;
+  'Agentlang.Kernel.Identity/ForgotPassword': {
+    Username: string;
+  };
 }
 
 interface ConfirmForgotPasswordData {
   email: string;
   code: string;
   newPassword: string;
+}
+
+interface SignupData {
+  'Agentlang.Kernel.Identity/SignUp': {
+    User: {
+      'Agentlang.Kernel.Identity/User': {
+        Name: string;
+        FirstName: string;
+        LastName: string;
+        Email: string;
+        UserData: {
+          PhoneNumber: string;
+        };
+        Password: string;
+      };
+    };
+  };
 }
 
 // Login User
