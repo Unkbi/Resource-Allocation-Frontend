@@ -37,6 +37,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { generateEmptyRow } from '@/app/utils/allocationUtils';
+import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -463,14 +464,15 @@ export const getFinalColumns = (
   dispatch,
   startDate,
   endDate,
-  isFormatWithK
+  isFormatWithK,
+  showActuals = false
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
-  const allColumns = getAllColumnsWithWeek(
+  let allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
@@ -478,6 +480,22 @@ export const getFinalColumns = (
     isFormatWithK
   );
 
+  if (showActuals) {
+    allColumns = allColumns.map(column => {
+      if (/^W\d+/.test(column.headerName)) {
+        return {
+          ...column,
+          renderCell: params => {
+            if (params.rowNode?.type !== 'group') {
+              return <AllocationCellWithActuals params={params} />;
+            }
+            return params.formattedValue ?? '';
+          },
+        };
+      }
+      return column;
+    });
+  }
   const handleAddClick = params => {
     if (mode === 'split' && splitViewCurrentProject) {
       dispatch(
