@@ -102,6 +102,7 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
           helperText={touched.Description && errors.Description}
         />
       </Box>
+      <StyledLabel>Sidebar Color</StyledLabel>
       <Box sx={{ pb: 2 }}>
         <MuiColorInput
           name="SidebarColor"
@@ -109,6 +110,20 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
           value={values.SidebarColor}
           onChange={e => {
             setFieldValue('SidebarColor', e);
+          }}
+          size="small"
+          sx={{
+            width: '100%',
+            '& .MuiColorInput-input': {
+              width: '100%',
+              height: '32px',
+              borderRadius: '4px',
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+            },
+            '& .MuiInputBase-input': {
+              fontSize: '14px',
+            },
           }}
         />
       </Box>

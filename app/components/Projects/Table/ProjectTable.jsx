@@ -53,6 +53,10 @@ const ProjectTable = ({
                 toolbar: ProjectToolbar,
                 columnMenu: CustomColumnMenu
             }}
+            localeText={{
+              toolbarFilters: '',
+              toolbarColumns: '',
+            }}
             sx={{
                 height: '95vh',
                 '& .MuiDataGrid-columnHeader': {

@@ -14,17 +14,19 @@ const commonButtonStyles = {
   border: '1px solid rgb(214, 220, 225)',
   borderRadius: '4px',
   height: '32px',
+  width: '34px',
   padding: '5px 12px',
   fontSize: '13px',
   color: 'rgb(33, 33, 33)',
   fontFamily: theme => theme.typography.fontFamily,
   fontWeight: '600',
   textTransform: 'none',
+  minWidth: '0px',
 };
 
 const StyledGridToolbarColumnsButton = styled(GridToolbarColumnsButton)({
   '& .MuiButton-startIcon': {
-    marginRight: 0,
+    marginRight: '0px !important',
   },
   '& .MuiButton-endIcon': {
     display: 'none',
@@ -46,11 +48,10 @@ const StyledGridToolbarColumnsButton = styled(GridToolbarColumnsButton)({
   },
 });
 
-const portfolioButtonStyle ={
-  width: 90,
+const portfolioButtonStyle = {
   height: 36,
   flexShrink: 0,
-  backgroundColor: '#1C2D5F', 
+  backgroundColor: '#1C2D5F',
   color: '#FFF',
   textAlign: 'center',
   fontFamily: '"Open Sans", sans-serif',
@@ -58,7 +59,7 @@ const portfolioButtonStyle ={
   fontStyle: 'normal',
   fontWeight: 700,
   lineHeight: 'normal',
-  textTransform: 'none', 
+  textTransform: 'none',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -67,7 +68,6 @@ const portfolioButtonStyle ={
     backgroundColor: '#16305a',
   },
 };
-
 
 const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
   const dispatch = useDispatch();
@@ -81,7 +81,7 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
         initialData: '',
       })
     );
-  }; 
+  };
   return (
     <Box
       sx={{
@@ -105,23 +105,17 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
       <Box>
         <Box className="filterColBlock">
           <GridToolbarContainer ref={setFilterButtonEl}>
-            {value === 'portfolio' && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleAddPortfolio}
-                sx={portfolioButtonStyle}
-              >
-                Add Portfolio
-              </Button>
-            )}
             <StyledGridToolbarColumnsButton
               slotProps={{
                 tooltip: { title: 'Columns' },
                 button: {
                   variant: 'outlined',
                   startIcon: (
-                    <img src="/images/icons/columns.svg" alt="columns" />
+                    <img
+                      src="/images/icons/columns.svg"
+                      alt="columns"
+                      style={{ marginLeft: '8px' }}
+                    />
                   ),
                   className: 'columns-button',
                   sx: commonButtonStyles,
@@ -135,13 +129,27 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
                   variant: 'outlined',
                   sx: { color: '#555', borderColor: '#ddd' },
                   startIcon: (
-                    <img src="/images/icons/filter.svg" alt="filter" />
+                    <img
+                      src="/images/icons/filter.svg"
+                      alt="filter"
+                      style={{ marginLeft: '8px' }}
+                    />
                   ),
                   className: 'columns-button',
                   sx: commonButtonStyles,
                 },
               }}
             />
+            {value === 'portfolio' && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAddPortfolio}
+                sx={portfolioButtonStyle}
+              >
+                Add Portfolio
+              </Button>
+            )}
           </GridToolbarContainer>
         </Box>
       </Box>
