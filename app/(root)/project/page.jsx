@@ -43,6 +43,7 @@ import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -158,12 +159,31 @@ export default function Project() {
   }, [updating]);
 
   useEffect(() => {
-    setRows(projects?.result);
-  }, [projects]);
+    if (projects?.result?.length) {
+      if (portfolios?.length) {
+        setRows(
+          projects?.result?.map(project => ({
+            ...project,
+            Portfolio: project.PortfolioId
+              ? portfolios.find(p => p.Id === project.PortfolioId)?.Name || ''
+              : '',
+          }))
+        );
+      } else {
+        setRows(projects?.result);
+      }
+    }
+  }, [projects, portfolios]);
 
   useEffect(() => {
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
+    }
+    if (!portfolios?.length) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
     }
   }, []);
 
@@ -331,6 +351,19 @@ export default function Project() {
         setDeleteDialogOpen(false);
         setPortfolioDelete({ Id: '', Name: '' });
       }
+    } catch (error) {
+      dispatch(
+        showToast({
+          open: true,
+          message: 'Failed to delete project',
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 1000,
+        })
+      );
+    } finally {
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
     }
   };
   const handleCancelDelete = () => {
@@ -481,6 +514,20 @@ export default function Project() {
       headerName: 'Type',
       flex: 1,
       minWidth: 150,
+    },
+    {
+      field: 'Portfolio',
+      headerName: PORTFOLIO_DISPLAY_NAME,
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        return (
+          <EllipsisNameCell
+            showAvatar={false}
+            value={params?.row?.Portfolio || ''}
+          />
+        );
+      },
     },
     {
       field: 'AllowOvertime',

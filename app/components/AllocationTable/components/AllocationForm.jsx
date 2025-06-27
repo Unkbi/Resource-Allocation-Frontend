@@ -462,6 +462,10 @@ const AllocationForm = () => {
               cleanedValues.ProjectManager === ''
                 ? null
                 : cleanedValues.ProjectManager,
+            PortfolioId:
+              cleanedValues.PortfolioId === ''
+                ? null
+                : cleanedValues.PortfolioId,
           },
         };
         try {
