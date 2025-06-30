@@ -56,7 +56,8 @@ import {
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
-import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
+// import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../Toolbar/CustomAllocationToolbar';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { showToastAction } from '@/app/redux/actions/toastAction';
