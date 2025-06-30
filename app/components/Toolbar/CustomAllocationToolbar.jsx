@@ -85,10 +85,10 @@ import {
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
-
+import CloseIcon from '@mui/icons-material/Close'; 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
-  padding :'7px 5px 7px 7px' ,
+  height: '80px',
   justifyContent: 'space-between',
   alignItems: 'center',
   borderRight: '#DDE1E4 solid 1px',
@@ -138,24 +138,14 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: '7px 14px 5px 14px',
-  borderRight: '#DDE1E4 solid 1px',
+//   padding: '7px 14px 5px 14px',
+  paddingLeft :'10px',
+//   borderRight: '#DDE1E4 solid 1px',
   '& .filterColBlock': {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    '& button': {
-      backgroundColor: 'rgba(242, 245, 250, 0.3)',
-      border: '1px solid #D6DCE1',
-      borderRadius: '4px',
-      height: '32px',
-      padding: '5px 12px',
-      fontSize: '14px',
-      color: '#212121',
-      fontFamily: theme.typography.fontFamily,
-      fontWeight: '600',
-      textTransform: 'none',
-    },
+    
   },
   '& .dayWeekBlock': {
     backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -184,13 +174,18 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     },
   },
   '& .projectIcon': {
-    backgroundColor: 'rgba(242, 245, 250, 0.3)',
-    border: '1px solid #D6DCE1',
-    borderRadius: '4px',
-    height: '32px',
     display: 'flex',
+    width: '90px',
+    height: '44px',
+    padding: '4px 10px',
+    justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
+    gap: '6px',
+    borderRadius: '8px',
+    border: '1px solid #CBD0DB',
+    background: '#FFF',
+    boxShadow:' 0px 2px 0px 0px rgba(0, 0, 0, 0.25)',
+    flexShrink: 0,
     '& button': {
       color: '#757575',
       fontFamily: theme.typography.fontFamily,
@@ -199,7 +194,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       lineHeight: '16px',
       textAlign: 'center',
       textTransform: 'none',
-      borderLeft: '1px solid #D6DCE1',
+    //   borderLeft: '1px solid #D6DCE1',
       width: '36px',
       minWidth: '36px',
       height: '100%',
@@ -236,6 +231,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     border: '1px solid #D6DCE1',
     borderRadius: '4px',
     height: '32px',
+    marginLeft : '12px'
   },
 }));
 
@@ -250,10 +246,19 @@ const StyledFormControlForWeek = styled(FormControl)(({ theme }) => ({
 }));
 
 const StyledSelect = styled(Select)(({ theme }) => ({
-  backgroundColor: 'rgba(28, 45, 95, 0.02)',
-  border: '1px solid #dde1e4',
-  borderRadius: '4px',
-  height: '32px',
+  display: 'flex',
+  width: ' 128px',
+  height: '44px',
+  //   padding: '4px 10px',
+  marginLeft: '6px',
+  justifyContent: 'center',
+  alignitems: 'center',
+  gap: '6px',
+  flexShrink: 0,
+  borderradius: '8px',
+  border: '1px solid #CBD0DB',
+  background: '#FFF',
+  boxShadow: '2px 0px 0px 0px rgba(0, 0, 0, 0.25)',
   '& .MuiSelect-select': {
     marginLeft: '12px',
     padding: '6px 12px',
@@ -551,6 +556,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [selectedView, setSelectedView] = useState('0');
   const myTeamsButtonRef = useRef(null);
   const myProjectsButtonRef = useRef(null);
+  const [openAddMenu, setOpenAddMenu] = React.useState(false);
+  const anchorRefAdd = React.useRef(null);
 
   const handleViewClick = event => {
     setAnchorEl(event.currentTarget);
@@ -895,14 +902,78 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     }
   }, [currentView?.Name]);
 
+  const handleAddMenuToggle = () => {
+    setOpenAddMenu(prevOpen => !prevOpen);
+  };
+  //   const handleAddClose = event => {
+  //     if (
+  //       anchorRef.current?.contains(event.target) ||
+  //       anchorRefAdd.current?.contains(event.target)
+  //     ) {
+  //       return;
+  //     }
+  //     setOpenAddMenu(false);
+  //   };
+
   return (
     <Box
       display={'flex'}
       boxShadow={'0 1px 0 0 #DDE1E4'}
       position={'relative'}
       zIndex={1}
+      height={'80px'}
     >
       <ToolBox1>
+        <Box
+          sx={{
+            margin: '2px',
+            width: '64px',
+            borderRight: '#DDE1E4 solid 1px',
+            height: '80px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <IconButton
+            className="settingIcon"
+            onClick={handleAddMenuToggle}
+            ref={anchorRefAdd}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '30px',
+              height: '30px',
+              backgroundColor: '#0A1B39',
+              borderRadius: '8px',
+              '&:hover': {
+                backgroundColor: '#0A1B39',
+              },
+              '&:focus': {
+                backgroundColor: '#0A1B39',
+              },
+            }}
+          >
+            {openAddMenu ? (
+              <CloseIcon sx={{ color: '#fff', width: 22, height: 30 }} />
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#494F59',
+                  height: '40px',
+                  width: '30px',
+                }}
+              >
+                <img src={'/images/icons/AddIconNew.svg'} alt="" />
+              </Box>
+            )}
+          </IconButton>
+        </Box>
         <StyledFormControl size="small">
           <StyledSelect
             value={
@@ -1050,55 +1121,16 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </>
             ) : null}
           </Box>
-          <GridToolbarContainer ref={setFilterButtonEl} sx={{ padding: 0 ,flexWrap:'nowrap'}}>
-            <GridToolbarFilterButton
-              slotProps={{
-                tooltip: { title: 'Filters' },
-                button: {
-                  variant: 'outlined',
-                  sx: {
-                    color: '#555',
-                    borderColor: '#ddd',
-                    '.MuiButton-startIcon': { marginRight: '0px' },
-                    '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
-                    '& .MuiBadge-root svg': { display: 'none' },
-                  },
-                  component: props => (
-                    <Button
-                      sx={{
-                        margin: '0',
-                        padding: '0',
-                      }}
-                      {...props}
-                      startIcon={
-                        <img src="/images/icons/filter.svg" alt="filter" />
-                      }
-                    >
-                      {props.children}
-                    </Button>
-                  ),
-                },
-              }}
-            />
-            <GridToolbarColumnsButton
-              slotProps={{
-                tooltip: { title: 'Columns' },
-                button: {
-                  variant: 'outlined',
-                  startIcon: (
-                    <img src="/images/icons/columns.svg" alt="columns" />
-                  ),
-                  endIcon: <KeyboardArrowDown />,
-                  sx: {
-                    '.MuiButton-endIcon': {
-                      marginLeft: '0px',
-                    },
-                  },
-                },
-              }}
-            />
-          </GridToolbarContainer>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              borderLeft: '1px solid #D6DCE1',
+              height :'80px',
+              borderRight: '1px solid #D6DCE1',
+            }}
+          >
             <IconButton
               onClick={() => changeCalendarDate('prev')}
               size="medium"
@@ -1129,7 +1161,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
           </Box>
-          <Box className="view-btn" sx={{display:'flex' ,gap:0}}>
+
+
+          <Box className="view-btn" sx={{ display: 'flex', gap: 0 }}>
             <Box>
               <ViewButton
                 startIcon={<PreferencesIcon />}
@@ -1231,78 +1265,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 },
               }}
             >
-             <EllipsisNameCell value={'Save View'}/>
+              <EllipsisNameCell value={'Save View'} />
             </Button>
           </Box>
         </Box>
       </ToolBox2>
-      <ToolBox2 sx={{ gap: 1 }}>
-        <Box>
-          <Stack direction="row" sx={{ alignItems: 'center' }}>
-            <Typography
-              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
-            >
-              Allocations
-            </Typography>
-            <Switch
-              size="small"
-              checked={currentView?.GroupBy.includes('Cost')}
-              onChange={handleAllocationCostSwitch}
-            />
-            <Typography
-              sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
-            >
-              Costs
-            </Typography>
-          </Stack>
-        </Box>
-      </ToolBox2>
-      <ToolBox2 sx={{ gap: 1 }}>
-        <Box>
-          <IconButton
-            variant="outlined"
-            onClick={handleShareDeepLink}
-            size="small"
-            className="nextPrevIcon"
-          >
-            <ShareIcon />
-          </IconButton>
-        </Box>
-        {/* History button on the toolbar */}
-        {/* <Box>
-          <IconButton
-            variant="outlined"
-            size="small"
-            disabled={true}
-            sx={{ width: '32px', height: '32px' }}
-          >
-            <HistoryIcon />
-          </IconButton>
-        </Box> */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <CustomExport />
-        </Box>
-      </ToolBox2>
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        title="Are you sure you want to delete this View?"
-      >
-        {`This will permanently delete the view : ${deleteView?.Name}`}
-      </ConfirmDialog>
-      <ShareLinkDialog
-        open={shareDialogOpen}
-        title="Share this Allocation View"
-        onClose={handleCancelShare}
-      >
-        <CopyLinkInput
-          value={shareLink}
-          onButtonClick={copyLinkToClipboard}
-          buttonText="Copy link"
-          label=""
-        />
-      </ShareLinkDialog>
+  
     </Box>
   );
 });

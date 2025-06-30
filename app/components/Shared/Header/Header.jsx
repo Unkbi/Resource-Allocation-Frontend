@@ -53,33 +53,33 @@ const MainAppBar = styled(AppBar, {
     color: '#FFF',
     letterSpacing: '-0.56px',
   },
-  '& .searchBar': {
-    backgroundColor: '#FFFFFF',
-    border: '1px solid #D6DCE1',
-    boxShadow: '0 1px 0 0 #DDE1E4',
-    borderRadius: '4px',
-    width: '445px',
-    height: '33px',
-    transition: 'width 0.3s ease-in-out',
-    '& input': {
-      padding: '2px 10px',
-      fontSize: '12px',
-      color: '#757575',
-      width: '410px',
-      // height: "32px",
-      height: '30px',
-      boxSizing: 'border-box',
-      color: '#212121',
-    },
-    '& .MuiInputBase-adornedStart': {
-      display: 'flex',
-      flexDirection: 'row-reverse',
-    },
-    '& svg': {
-      width: '20px',
-      marginRight: '5px',
-    },
-  },
+  // '& .searchBar': {
+  //   backgroundColor: '#FFFFFF',
+  //   border: '1px solid #D6DCE1',
+  //   boxShadow: '0 1px 0 0 #DDE1E4',
+  //   borderRadius: '4px',
+  //   width: '445px',
+  //   height: '33px',
+  //   transition: 'width 0.3s ease-in-out',
+  //   '& input': {
+  //     padding: '2px 10px',
+  //     fontSize: '12px',
+  //     color: '#757575',
+  //     width: '410px',
+  //     // height: "32px",
+  //     height: '30px',
+  //     boxSizing: 'border-box',
+  //     color: '#212121',
+  //   },
+  //   '& .MuiInputBase-adornedStart': {
+  //     display: 'flex',
+  //     flexDirection: 'row-reverse',
+  //   },
+  //   '& svg': {
+  //     width: '20px',
+  //     marginRight: '5px',
+  //   },
+  // },
   '& .toobarRow': {
     minHeight: '30px',
     paddingLeft: '15px',
@@ -273,58 +273,6 @@ const Header = ({ sidebarExpanded }) => {
             getTitleFromPathname(pathname)
           )}
         </Typography>
-        <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
-          {pathname === '/allocation' && splitView ? (
-            <StyledButton variant="contained" onClick={handleSplitViewDone}>
-              Close
-            </StyledButton>
-          ) : (
-            <Box className="searchBar">
-              <TextField
-                placeholder="Search..."
-                size="small"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="end">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                  disableUnderline: true,
-                }}
-                variant="standard"
-              />
-            </Box>
-          )}
-
-          <IconButton
-            className="settingIcon"
-            onClick={handleAddMenuToggle}
-            ref={anchorRefAdd}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '30px',
-              height: '30px',
-              backgroundColor: '#0A1B39',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: '#0A1B39',
-              },
-              '&:focus': {
-                backgroundColor: '#0A1B39',
-              },
-            }}
-          >
-            {/* Toggle the icon here based on the openAddMenu state */}
-            {openAddMenu ? (
-              <CloseIcon sx={{ color: '#fff', width: 22, height: 30 }} />
-            ) : (
-              <img src={'/images/icons/addbutton.svg'} alt="" width={30} />
-            )}
-          </IconButton>
-        </Box>
       </Toolbar>
 
       <Popper
