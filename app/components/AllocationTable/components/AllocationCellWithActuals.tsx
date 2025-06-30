@@ -1,11 +1,11 @@
 import { RootState } from '@/app/redux/store';
 import { AllocationGridCell, AllocationGridCellData } from '@/app/types';
-import { Box, Divider, Typography } from '@mui/material';
+import { Box, Divider, Typography, Tooltip, styled, PopperProps } from '@mui/material';
 import { GridCellParams } from '@mui/x-data-grid-premium';
 import { useSelector } from 'react-redux';
 
 interface AllocationCellWithActualsProps {
-  params: GridCellParams<AllocationGridCell>;
+  params: any;
 }
 const AllocationCellWithActuals = ({
   params,
@@ -20,55 +20,15 @@ const AllocationCellWithActuals = ({
       )?.Color + '66' || 'transparent'
     );
   };
-  //   const CommentTagIcon = () => (
-  //     // <img src="/images/icons/CommentTag.svg" alt="comment" />
-  //     <svg
-  //       xmlns="http://www.w3.org/2000/svg"
-  //       width="12"
-  //       height="9"
-  //       viewBox="0 0 12 9"
-  //       fill="none"
-  //     >
-  //       <path d="M6 8.75L0 0.75L12 0.750001L6 8.75Z" fill="#FBEDED" />
-  //     </svg>
-  //   );
-  const CommentTagIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="10"
-      height="10"
-      viewBox="0 0 10 10"
-      fill="none"
-    >
-      <path d="M0 0 L0 10 L10 0 Z" fill="#C76C6C" />
-    </svg>
-  );
 
-  const comment = (parseFloat(params?.formattedValue as string) * 10) % 2;
+  // const notes = (parseFloat(params?.formattedValue as string) * 10) % 2;
+  const notes = params?.notes as string || "";
 
   return (
-    <Box>
-      {comment ? (
-        <Box
-          sx={{
-            position: 'relative',
-            top: -22,
-            right: 0,
-            zIndex: 0,
-            height: '2px',
-            width: '2px',
-          }}
-        >
-          <CommentTagIcon />
-        </Box>
-      ) : (
-        <></>
-      )}
-      {/* <Divider /> */}
-
+    <div>
       <Box
         sx={{
-          ...(comment ? { position: 'relative', top: -2 } : {}),
+          ...(notes ? { position: 'relative'} : {}),
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
@@ -77,23 +37,28 @@ const AllocationCellWithActuals = ({
       >
         <Box sx={{ position: 'relative', top: 0, left: 0, zIndex: 1 }}>
           <Typography sx={{ fontWeight: 600 }}>
-            {params?.formattedValue as string}
+            {params?.value as string}
           </Typography>
         </Box>
-        <Box>
+        <Box
+          sx={{
+             width: "52px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: getBackgroundColor(Number.parseFloat(params?.value as string)),
+          flex: 1,
+          }}>
           <Typography
             sx={{
               fontStyle: 'italic',
-              backgroundColor: getBackgroundColor(
-                parseFloat(params?.formattedValue as string)
-              ),
             }}
           >
-            {params?.formattedValue as string}
+            {params?.actuals as string}
           </Typography>
         </Box>
       </Box>
-    </Box>
+    </div>
   );
 };
 

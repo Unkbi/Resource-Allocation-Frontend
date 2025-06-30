@@ -162,6 +162,8 @@ const formatAllocations = (
           allocationId: null,
           value: null,
           period: week,
+          actuals: null,
+          notes: null,
         };
       });
   });

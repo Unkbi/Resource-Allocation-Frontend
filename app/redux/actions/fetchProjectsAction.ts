@@ -90,6 +90,8 @@ const formatAllocations = (
           allocationId: null,
           value: null,
           period: formattedDate,
+          actuals: null,
+          notes: null,
         };
       });
 

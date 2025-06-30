@@ -480,22 +480,6 @@ export const getFinalColumns = (
     isFormatWithK
   );
 
-  if (showActuals) {
-    allColumns = allColumns.map(column => {
-      if (/^W\d+/.test(column.headerName)) {
-        return {
-          ...column,
-          renderCell: params => {
-            if (params.rowNode?.type !== 'group') {
-              return <AllocationCellWithActuals params={params} />;
-            }
-            return params.formattedValue ?? '';
-          },
-        };
-      }
-      return column;
-    });
-  }
   const handleAddClick = params => {
     if (mode === 'split' && splitViewCurrentProject) {
       dispatch(

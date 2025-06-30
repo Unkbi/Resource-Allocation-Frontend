@@ -10,13 +10,13 @@ import { Instance } from '@popperjs/core';
 const CommentIndicator = styled(Box)(({ theme }) => ({
   position: "absolute",
   top: -2,
-  right: -1,
+  right: 0,
   width: 0,
   height: 0,
   borderLeft: "8px solid transparent",
   borderTop: "8px solid #E16F6F",
-  cursor: "pointer",
-  zIndex: 1,
+  cursor: "pointer !important",
+  zIndex: 999,
   "&:hover": {
     borderTop: "8px solid #E16F6F",
   },
@@ -69,12 +69,9 @@ const handleMouseMove = (event: React.MouseEvent) => {
       popperRef.current.update();
     }
   };
-//   if (!notes || notes.trim() === "") {
-//     return <>{children}</>
-//   }
+  
 
 const popperProps: PopperProps = useMemo(() => ({
-    // interactive: "true",
     popperRef,
     open,
     anchorEl: areaRef.current,
@@ -85,6 +82,10 @@ const popperProps: PopperProps = useMemo(() => ({
       },
     ],
   }), [open]);
+
+  if (!notes || notes.trim() === "") {
+    return <>{children}</>
+  }
 
   return (
     <div >
@@ -101,7 +102,6 @@ const popperProps: PopperProps = useMemo(() => ({
       placement="top-end"
       enterDelay={300}
       leaveDelay={100}
-      followCursor
       open={open}
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
@@ -134,13 +134,11 @@ const popperProps: PopperProps = useMemo(() => ({
         }}
         ref={areaRef}
         onMouseMove={handleMouseMove}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
       >
         { <CommentIndicator />}
       </Box>
     </Tooltip>
-    <div className="allocation-cell-content">{children}</div>
+  {children}
     </div>
   )
 }
