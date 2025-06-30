@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import {
   getToken,
   getRefreshToken,
@@ -9,7 +9,7 @@ import {
 
 const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const MAX_RETRIES = 3;
-const axiosInstance: AxiosInstance = axios.create({
+const axiosInstance = axios.create({
   baseURL: apiBaseURL,
   headers: {
     'Content-Type': 'application/json',
@@ -17,14 +17,14 @@ const axiosInstance: AxiosInstance = axios.create({
 });
 
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
+let refreshSubscribers = [];
 
-const onTokenRefreshed = (newToken: string): void => {
+const onTokenRefreshed = newToken => {
   refreshSubscribers.forEach(callback => callback(newToken));
   refreshSubscribers = [];
 };
 
-const addRefreshSubscriber = (callback: (token: string) => void): void => {
+const addRefreshSubscriber = callback => {
   refreshSubscribers.push(callback);
 };
 
@@ -92,8 +92,8 @@ axiosInstance.interceptors.response.use(
         );
 
         const data = response?.data?.result['authentication-result'];
-        const newToken: string = data['id-token'];
-        const newRefreshToken: string = data['refresh-token'];
+        const newToken = data['id-token'];
+        const newRefreshToken = data['refresh-token'];
 
         if (newRefreshToken) {
           saveRefreshToken(newRefreshToken);

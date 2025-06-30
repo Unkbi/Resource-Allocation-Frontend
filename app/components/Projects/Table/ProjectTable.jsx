@@ -1,27 +1,12 @@
-'use client';
-
-import { useState } from 'react';
-import type { RefObject } from 'react';
 import {
-  GridColumnMenu,
-  GridColumnMenuProps,
-  GridColDef,
-  GridRowsProp,
-  GridApi,
-  GridToolbarProps,
-} from '@mui/x-data-grid-premium';
-
-import { ColumnManagementStyles, FilterPanelStyles, StyledDataGrid } from '../../AllocationTable/styles/StyledDataGrid';
+  ColumnManagementStyles,
+  FilterPanelStyles,
+  StyledDataGrid,
+} from '../../AllocationTable/styles/StyledDataGrid';
+import { GridColumnMenu, useGridApiRef } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
-
-type ProjectTableProps = {
-  columns: GridColDef[];
-  rows: GridRowsProp;
-  loading: boolean;
-  apiRef: RefObject<GridApi>;
-};
-
-function CustomColumnMenu(props: GridColumnMenuProps) {
+import { useState } from 'react';
+function CustomColumnMenu(props) {
   return (
     <GridColumnMenu
       {...props}
@@ -33,20 +18,14 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
   );
 }
 
-const ProjectTable = ({ columns, rows, loading, apiRef }: ProjectTableProps) => {
-  const [filterButtonEl, setFilterButtonEl] = useState<HTMLElement | null>(null);
-
-  // ✅ Correct: close over setFilterButtonEl via closure, not props
-  const ProjectToolbarWrapper: React.FC<GridToolbarProps> = (props) => {
-    return <ProjectToolbar {...props} setFilterButtonEl={setFilterButtonEl} />;
-  };
-
+const ProjectTable = ({ columns, rows, loading, apiRef }) => {
+  const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
     <StyledDataGrid
       apiRef={apiRef}
       columns={columns}
       rows={rows}
-      hideFooter
+      hideFooter={true}
       loading={loading}
       initialState={{
         sorting: {
@@ -63,7 +42,7 @@ const ProjectTable = ({ columns, rows, loading, apiRef }: ProjectTableProps) => 
         },
       }}
       slots={{
-        toolbar: ProjectToolbarWrapper,
+        toolbar: ProjectToolbar,
         columnMenu: CustomColumnMenu,
       }}
       sx={{
@@ -82,13 +61,16 @@ const ProjectTable = ({ columns, rows, loading, apiRef }: ProjectTableProps) => 
           anchorEl: filterButtonEl,
           className: 'parent-grid-panel',
         },
+        toolbar: {
+          setFilterButtonEl,
+        },
         columnsPanel: {
           className: 'styleColumnMenu',
           sx: ColumnManagementStyles,
         },
         filterPanel: {
           columnsSort: 'asc',
-          sx: FilterPanelStyles,
+          className: 'filterPopup',
           filterFormProps: {
             columnInputProps: {
               size: 'small',
@@ -109,6 +91,7 @@ const ProjectTable = ({ columns, rows, loading, apiRef }: ProjectTableProps) => 
               },
             },
           },
+          sx: FilterPanelStyles,
         },
       }}
     />

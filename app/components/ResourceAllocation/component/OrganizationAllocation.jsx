@@ -1,9 +1,7 @@
 'use client';
-import { Box } from '@mui/material';
 import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
-import type { GridColDef } from '@mui/x-data-grid-pro';
 
-const organizationColumnConfig: GridColDef[] = [
+const organizationColumnConfig = [
   { field: 'teams', headerName: 'Organizaion Name', width: 240 },
   {
     field: 'project',
@@ -26,15 +24,6 @@ export default function OrganizationAllocation() {
         <AllocationGrid
           groupBy="organization"
           columns={organizationColumnConfig}
-          loading={false}
-          selectedTeam={null}
-          setSelectedTeam={() => {}}
-          initialState={{}}
-          startDate={new Date()}
-          endDate={new Date()}
-          toolbarComponent={null}
-          NoRowsOverlay={null}
-          mode="view"
         />
       </Box>
     </>

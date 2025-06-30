@@ -1,9 +1,6 @@
-'use client';
-
-import { Pagination, Box } from '@mui/material';
+import { Pagination } from '@mui/material';
 import { styled } from '@mui/system';
-import type { GridApiCommon } from '@mui/x-data-grid-pro';
-import type { SyntheticEvent } from 'react';
+import { Box } from '@mui/material';
 
 const StyledPagination = styled(Pagination)(({ theme }) => ({
   '& .MuiPagination-ul': {
@@ -28,20 +25,16 @@ const StyledPagination = styled(Pagination)(({ theme }) => ({
   },
 }));
 
-interface CustomPaginationProps {
-  apiRef: React.MutableRefObject<GridApiCommon>;
-}
-
-const CustomPagination = ({ apiRef }: CustomPaginationProps) => {
+const CustomPagination = ({ apiRef }) => {
   const paginationState = apiRef.current.state.pagination;
   const page = paginationState.paginationModel?.page || 0;
   const rowCount = paginationState.rowCount || 0;
   const pageSize = paginationState.paginationModel?.pageSize || 10;
   const pageCount = Math.ceil(rowCount / pageSize);
 
-  const handleChange = (_event: React.ChangeEvent<unknown>, page: number) => {
-  apiRef.current.setPage(page - 1);
-};
+  const handleChange = (event, value) => {
+    apiRef.current.setPage(value - 1);
+  };
 
   return (
     <Box
