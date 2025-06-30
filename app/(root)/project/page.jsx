@@ -849,7 +849,6 @@ export default function Project() {
               height: '100%',
             }}
           >
-            <Button>Business impact</Button>
           </Box>
         );
 
@@ -875,9 +874,15 @@ export default function Project() {
           )
         }
         onCancel={handleCancelDelete}
-        title="Are you sure you want to delete this project?"
+        title={
+          value === 'project'
+            ? 'Are you sure you want to delete this project?'
+            : 'Are you sure you want to delete this portfolio?'
+        }
       >
-        This will permanently delete the project.
+        {value === 'project'
+          ? 'This will permanently delete the project.'
+          : 'This will permanently delete the portfolio.'}
       </ConfirmDialog>
     </Box>
   );

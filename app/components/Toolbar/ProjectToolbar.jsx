@@ -99,7 +99,7 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
       >
         <Tab value="project" label="Projects" />
         <Tab value="portfolio" label="Portfolio" />
-        <Tab value="businessImpact" label="Business Impact" />
+        <Tab value="businessImpact" label="Business Impact" disabled />
       </Tabs>
 
       <Box>
