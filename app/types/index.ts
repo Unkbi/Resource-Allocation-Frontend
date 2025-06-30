@@ -31,6 +31,12 @@ export * from './allocationTypesCost';
 // Dashboard-related Types
 export * from './dashboardTypes';
 
+// Portfolio-related Types
+export * from './portfolioTypes';
+
+// Employee-related Types
+export * from './employeeRatesTypes';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;

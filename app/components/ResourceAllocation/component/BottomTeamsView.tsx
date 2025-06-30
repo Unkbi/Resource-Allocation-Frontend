@@ -9,13 +9,14 @@ import EllipsisNameCell from './EllipsisNameCell';
 import SplitTeamToolbar from '../../Toolbar/SplitTeamToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Resource } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getCombinedAllocation } from '@/app/utils/allocationUtils';
+import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface BottomTeamsViewProps {
-  startDate: string | null;
-  endDate: string | null;
+  startDate: string;
+  endDate: string;
 }
 
 export default function BottomTeamsView({
@@ -27,11 +28,18 @@ export default function BottomTeamsView({
   >([]);
   const [allocationThreshold, setAllocationThreshold] = useState(1.2);
   const dispatch = useDispatch<AppDispatch>();
-  const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
+  const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
   // const { startDate, endDate } = calendarDate || {};
 
+  const _resources = useSelector(
+    (state: RootState) => state.resources.resources
+  ) as {
+    result?: Resource[];
+    loading?: boolean;
+    error?: string;
+  };
   const { setRows, ready, getAllRows } = useAllocationGrid('bottomTeam');
 
   const handleAddClick = (params: GridCellParams) => {
@@ -120,7 +128,24 @@ export default function BottomTeamsView({
   };
 
   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
-    return allocations.filter(allocation => allocation.teams);
+    return allocations.filter(
+      allocation =>
+        allocation.teams &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.EndDate
+          ? new Date(
+              _resources?.result?.find(res => res.Id === allocation.resourceId)
+                ?.EndDate ?? ''
+            ) >= new Date(startDate)
+          : true) &&
+        (_resources?.result?.find(res => res.Id === allocation.resourceId)
+          ?.StartDate
+          ? new Date(
+              _resources?.result?.find(res => res.Id === allocation.resourceId)
+                ?.StartDate ?? ''
+            ) <= new Date(endDate)
+          : true)
+    );
   };
 
   const hasZeroAllocation = (row: AllAllocations) => {
@@ -137,18 +162,26 @@ export default function BottomTeamsView({
     });
   };
 
-  const filteredResources = useMemo(() => {
-    if (ready && (allAllocations || getAllRows())) {
+  useEffect(() => {
+    if (ready && (allAllocations?.length || getAllRows()?.length)) {
+      let filteredResources = [];
       // Combine to keep upto Date information.
-      const allRows = getCombinedAllocation(
-        getAllRows() as AllAllocations[],
-        allAllocations || []
-      );
+      let allRows = [];
+      if (!loading) {
+        allRows = getCombinedAllocation(
+          getAllRows() as AllAllocations[],
+          allAllocations || []
+        );
+      } else {
+        // Init or DateShift is performed so need latest information.
+        allRows = allAllocations as AllAllocations[];
+        dispatch(setLoading(false));
+      }
       const enrichedResources = computeAverageAllocations(
         removeResourcesWithNoTeams(allRows) ?? []
       );
 
-      return enrichedResources.filter(row => {
+      filteredResources = enrichedResources.filter(row => {
         const teamMatch = selectedTeam.length
           ? row.teams && selectedTeam.some(team => team.label === row.teams)
           : true;
@@ -163,25 +196,21 @@ export default function BottomTeamsView({
 
         return teamMatch && avgWeekly <= allocationThreshold;
       });
-    }
-  }, [ready, allAllocations, selectedTeam, allocationThreshold]);
 
-  useEffect(() => {
-    if (ready && allAllocations) {
       setRows(filteredResources || []);
     }
-  }, [ready, allAllocations, filteredResources]);
+  }, [ready, allAllocations, selectedTeam, allocationThreshold]);
 
   return (
     <>
       <Box
         sx={{
-          height: loading || dataProcessing ? '100vh' : 'var(--height)',
+          height: dataProcessing ? '100vh' : 'var(--height)',
           width: '100%',
         }}
       >
         <AllocationGrid
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           groupBy="teams"
           mode="split"
           startDate={startDate}

@@ -16,6 +16,7 @@ import {
   differenceInCalendarWeeks,
   endOfWeek,
   endOfISOWeek,
+  isValid,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -445,9 +446,17 @@ export const getAllocationManagerFromPath = (
   allocationManager_Path,
   resources
 ) => {
-  return resources.find(
-    resource => resource.__path__ === allocationManager_Path
-  );
+  if (!allocationManager_Path || !Array.isArray(resources)) return null;
+  if (/^:[^/]+\/[^,]+,.+/.test(allocationManager_Path)) {
+    // Check if the path is a valid resource path
+    return resources.find(
+      resource => resource.__path__ === allocationManager_Path
+    );
+  }
+
+  return {
+    FullName: allocationManager_Path,
+  };
 };
 
 export const getProjectsIamProjectManager = (uid, projects) => {
@@ -698,4 +707,47 @@ export function getOrganisationForResource(
     return organisations.find(o => o.Id === organisation);
   }
   return null;
+}
+
+export function isCellEditableUtils(params, type, resources) {
+  if (type === 'cost') return false;
+  if (params.row.hasButton) return false;
+  if (/\_(\d)+/.test(params.row.id)) return true; // Allow Editing for Split View Empty Rows
+
+  const cellData = params.row[params.field];
+  const cellPeriod = cellData?.period;
+  if (!cellPeriod) return false;
+
+  const parsedCellPeriod = parseISO(cellPeriod);
+  if (!isValid(parsedCellPeriod)) return false;
+
+  const cellPeriodStart = startOfWeek(parsedCellPeriod, { weekStartsOn: 1 }); // Monday start
+  const cellPeriodEnd = addDays(cellPeriodStart, 6);
+
+  const matchingResource = resources?.result?.find(
+    resource => resource.Id === params.row.resourceId
+  );
+  if (!matchingResource) return false;
+
+  const resourceStart = parseISO(matchingResource.StartDate);
+  const resourceEnd = matchingResource.EndDate
+    ? parseISO(matchingResource.EndDate)
+    : undefined;
+
+  const isOverlap =
+    resourceStart <= cellPeriodEnd &&
+    (!resourceEnd || resourceEnd >= cellPeriodStart);
+  return isOverlap;
+}
+
+export function isResourceWithinDate(resource, monday) {
+  if (!resource || !resource.StartDate) return false;
+
+  const resourceStart = parseISO(getMondayOfISO(resource.StartDate));
+  const resourceEnd = resource.EndDate ? parseISO(resource.EndDate) : undefined;
+
+  if (resourceEnd) {
+    return resourceStart <= monday && resourceEnd >= monday;
+  }
+  return resourceStart <= monday;
 }

@@ -24,7 +24,7 @@ export default function TopProjectsView({
   const { splitViewCurrentProject } = useSelector(
     (state: RootState) => state.allocationView
   );
-  const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
+  const { allAllocations, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
   const { setRows, ready } = useAllocationGrid('topProject');
@@ -204,7 +204,7 @@ export default function TopProjectsView({
     <>
       <Box
         sx={{
-          height: loading || dataProcessing ? '100vh' : 'var(--height)',
+          height: dataProcessing ? '100vh' : 'var(--height)',
           width: '100%',
         }}
       >
@@ -245,7 +245,7 @@ export default function TopProjectsView({
               ],
             },
           }}
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           NoRowsOverlay={NoRowsOverlay}
           toolbarComponent={''}
           viewId="topProject"

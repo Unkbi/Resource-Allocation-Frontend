@@ -15,6 +15,7 @@ import { getMondayOfISO } from '@/app/utils/common';
 import {
   setAllAllocations,
   setDataProcessing,
+  setLoading,
   updateAllAllocations,
 } from '../reducers/allAllocationsReducer';
 import {
@@ -25,6 +26,7 @@ import {
 import {
   fetchResourcesAgainstTeamsForSaga,
   fetchTeamAllocationsForSaga,
+  fetchTransferAllocationsForSaga,
 } from '@/app/services/teamServices';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
@@ -100,7 +102,9 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     const fullAllocations = injectBlankRows(
       formattedAllocations,
       teams,
-      teamResourceObject
+      teamResourceObject,
+      startDate,
+      endDate
     );
 
     if (fullAllocations.length) {
@@ -115,6 +119,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     if (reject) reject(error);
   } finally {
     yield put(setDataProcessing(false));
+    yield put(setLoading(true));
   }
 }
 
@@ -194,7 +199,9 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
     const fullAllocations = injectBlankRows(
       formattedAllocations,
       teams,
-      teamResourceObject
+      teamResourceObject,
+      startDate,
+      endDate
     );
 
     if (fullAllocations.length) {
@@ -265,7 +272,9 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
     const fullAllocations = injectBlankRows(
       formattedAllocations,
       teams,
-      teamsResources
+      teamsResources,
+      startDate,
+      endDate
     );
 
     yield put(updateAllAllocations(fullAllocations));
@@ -377,12 +386,120 @@ function* deleteBulkAllocationSaga(action: any): Generator<any, void, any> {
   }
 }
 
+function* updateResourceAllocationsSaga(
+  action: any
+): Generator<any, void, any> {
+  const {
+    ResourceId,
+    teams,
+    projects,
+    resources,
+    teamsResources,
+    startDate,
+    endDate,
+    resolve,
+    reject,
+  } = action.payload;
+  try {
+    yield put(setDataProcessing(true));
+
+    const results = yield all(
+      ResourceId.map((ResourceId: string) =>
+        call(function* () {
+          const postData = {
+            'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
+              Resource: ResourceId,
+              StartDate: getMondayOfISO(startDate),
+              EndDate: getMondayOfISO(endDate),
+            },
+          };
+          // @ts-ignore
+          const result = yield call(fetchTeamAllocationsForSaga, postData);
+          return { ResourceId, result };
+        })
+      )
+    );
+
+    const allTeamAllocations = results.reduce(
+      (
+        tot: Allocation[],
+        acc: { result: { result: Allocation[] }; teamId: string }
+      ) => {
+        return [...tot, ...acc.result.result];
+      },
+      []
+    );
+
+    const formattedAllocations = formatAllAllocations(
+      allTeamAllocations,
+      teams,
+      projects,
+      resources,
+      teamsResources,
+      startDate,
+      endDate
+    );
+
+    const fullAllocations = injectBlankRows(
+      formattedAllocations,
+      teams,
+      teamsResources,
+      startDate,
+      endDate
+    );
+
+    yield put(updateAllAllocations(fullAllocations));
+    // Notify if async operation is completed
+    if (resolve) resolve();
+  } catch (error) {
+    console.error('Saga error: Failed to update team allocations:', error);
+    if (reject) reject(error);
+  } finally {
+    yield put(setDataProcessing(false));
+  }
+}
+
+export function* TransferAllocationsSaga(
+  action: any
+): Generator<any, void, any> {
+  try {
+    yield put(setDataProcessing(true));
+    const { ResourceFrom, ResourceTo, StartDate, EndDate, resolve, reject } =
+      action.payload;
+    const postData = {
+      'ResourceAllocation.Core/TransferAllocations': {
+        ResourceFrom,
+        ResourceTo,
+        StartDate,
+        EndDate,
+      },
+    };
+    const response = yield call(fetchTransferAllocationsForSaga, postData);
+    if (response?.error) {
+      console.error('API returned error:', response.error);
+      if (reject) reject(response.error);
+    } else {
+      if (resolve) resolve(response);
+    }
+  } catch (error) {
+    console.error('Saga error: Failed to transfer allocations:', error);
+    if (action.payload.reject) action.payload.reject(error);
+  } finally {
+    yield put(setDataProcessing(false));
+  }
+}
+
 export function* allAllocationsSaga() {
-  yield takeLeading('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
+  yield takeLatest('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
   yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga); // This is for subsequent fetch. Ex : Date Shift.
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
   yield takeLatest('FETCH_ALLOCATIONS_COST', fetchAllocationsCostSaga);
-  yield takeEvery('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
-  yield takeEvery('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
+  yield takeLatest('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
+  yield takeLatest('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
+  yield takeLatest(
+    'UPDATE_RESOURCE_ALLOCATIONS',
+    updateResourceAllocationsSaga
+  );
+  yield takeLatest('TRANSFER_ALLOCATIONS_RESOURCES', TransferAllocationsSaga);
 }

@@ -15,7 +15,6 @@ import {
 import { X, Plus } from 'lucide-react';
 import StyledLabel from '../Label/StyledLabel';
 import CustomSelect from '../Select/CustomSelect';
-import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { useSelector } from 'react-redux';
 import { StyledInput } from '../Input/StyledInput';
@@ -77,10 +76,23 @@ const getColumnLabel = column => {
     AverageWeeklyHours: 'Average Weekly Hours',
     ContractorHourlyRate: 'Contractor Hourly Rate',
     ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
+    email: 'Email',
+    phoneNumber: 'Phone Number',
+    department: 'Organization',
+    hrLevel: 'HR Level',
+    role: 'Resource Role',
+    workLocation: 'Resource Work Location',
+    resourceStartDate: 'Resource Start Date',
+    resourceEndDate: 'Resource End Date',
+    resourceLocationCategory: 'Resource Location Category',
+    averageWeeklyHours: 'Average Weekly Hours',
+    contractorHourlyRate: 'Contractor Hourly Rate',
+    contractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
     projectOvertimeAllowed: 'Allow Overtime',
     projectCost: 'Project Budget',
     projectCurrency: 'Project Currency',
     Description: 'Project Description',
+    projectDescription: 'Project Description',
     projectLocation: 'Project Location',
     ProjectManager: 'Project Manager',
     ProjectSponsor: 'Project Sponsor',

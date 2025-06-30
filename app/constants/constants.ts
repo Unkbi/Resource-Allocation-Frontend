@@ -242,3 +242,6 @@ export const PROJECT_TOTAL_COST_CATEGORIES = [
   'overBudget',
   'underBudget',
 ];
+
+export const PORTFOLIO_DISPLAY_NAME = 'Portfolio';
+export const PORTFOLIO_DISPLAY_NAME_PLURAL = 'Portfolios';

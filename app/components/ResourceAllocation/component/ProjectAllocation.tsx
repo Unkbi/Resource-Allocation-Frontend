@@ -21,6 +21,7 @@ import {
   getCombinedAllocation,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
+import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -62,20 +63,18 @@ export default function ProjectAllocation({
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (getAllTeamViewRows().length > 0) {
+      if (!loading && getAllTeamViewRows().length > 0) {
         filteredResources = removeResourcesWithNoProjects(
           (getAllTeamViewRows() as AllAllocations[]) || []
         );
         setRows(
           removeResourcesWithNoProjects(
-            getCombinedAllocation(
-              getAllTeamViewRows() as AllAllocations[],
-              (getAllProjectViewRows() as AllAllocations[]) || []
-            ) || []
+            getAllTeamViewRows() as AllAllocations[]
           )
         );
-      } else if (allAllocations) {
+      } else if (loading && allAllocations) {
         filteredResources = removeResourcesWithNoProjects(allAllocations || []);
+        dispatch(setLoading(false));
       }
 
       const formattedResources = filteredResources?.map(allocation => ({
@@ -177,7 +176,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Email',
+      field: 'email',
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
@@ -193,7 +192,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'PhoneNumber',
+      field: 'phoneNumber',
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
@@ -209,7 +208,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Department',
+      field: 'department',
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
@@ -225,7 +224,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'WorkLocation',
+      field: 'workLocation',
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
@@ -241,7 +240,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'LocationCategory',
+      field: 'resourceLocationCategory',
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
@@ -257,7 +256,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Type',
+      field: 'resourceType',
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
@@ -273,7 +272,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Status',
+      field: 'resourceStatus',
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
@@ -289,7 +288,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'HRLevel',
+      field: 'hrLevel',
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
@@ -305,7 +304,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Role',
+      field: 'role',
       headerName: 'Resource Role',
       width: 170,
       isEditable: 'false',
@@ -321,7 +320,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'StartDate',
+      field: 'resourceStartDate',
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
@@ -337,7 +336,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'EndDate',
+      field: 'resourceEndDate',
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
@@ -353,7 +352,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'AverageWeeklyHours',
+      field: 'averageWeeklyHours',
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
@@ -369,7 +368,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'ContractorHourlyRate',
+      field: 'contractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
@@ -385,7 +384,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'ContractorHourlyRateCurrency',
+      field: 'contractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
@@ -603,25 +602,25 @@ export default function ProjectAllocation({
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
-                Email: false,
-                PhoneNumber: false,
-                Department: false,
-                WorkLocation: false,
-                LocationCategory: false,
-                Type: false,
-                Status: false,
-                HRLevel: false,
-                Role: false,
-                StartDate: false,
-                EndDate: false,
-                AverageWeeklyHours: false,
-                ContractorHourlyRate: false,
-                ContractorHourlyRateCurrency: false,
+                email: false,
+                phoneNumber: false,
+                department: false,
+                workLocation: false,
+                resourceLocationCategory: false,
+                resourceType: false,
+                resourceStatus: false,
+                hrLevel: false,
+                role: false,
+                resourceStartDate: false,
+                resourceEndDate: false,
+                averageWeeklyHours: false,
+                contractorHourlyRate: false,
+                contractorHourlyRateCurrency: false,
               },
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           viewId="projectAllocation"
         />
       </Box>

@@ -16,7 +16,7 @@ import {
   GridRowsProp,
   GridValidRowModel,
 } from '@mui/x-data-grid-premium';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
@@ -35,6 +35,7 @@ import { isCurrentWeek } from '@/app/utils/common';
 //@ts-ignore
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
+
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -85,6 +86,7 @@ interface ActualTableProps {
   onValidationChange?: (hasInvalidRows: boolean) => void;
   setShow?: (val: boolean) => void;
   onModificationChange?: (isModified: boolean) => void;
+  confirmSignal?: number;
 }
 
 export default function ActualTable({
@@ -97,6 +99,7 @@ export default function ActualTable({
   setShow,
   onValidationChange,
   onModificationChange,
+  confirmSignal,
 }: ActualTableProps) {
   const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
@@ -129,6 +132,9 @@ export default function ActualTable({
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
   >({});
+  const [baselineRows, setBaselineRows] = useState<ActualAllocationTableRow[]>(
+    data
+  );
 
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
@@ -142,6 +148,7 @@ export default function ActualTable({
 
     if (data) {
       setRows(data);
+      setBaselineRows(data);
       if (data.length > 0 && data.find(row => row.project === 'Other Work')) {
         setHasOtherWork(true);
       }
@@ -151,6 +158,8 @@ export default function ActualTable({
       ) {
         setHasPersonalTime(true);
       }
+      onValidationChange && onValidationChange(false);
+      setRowValidationErrors({});
     }
   }, [startDate, endDate, data]);
 
@@ -165,15 +174,18 @@ export default function ActualTable({
   }, [rowValidationErrors, onValidationChange]);
 
   useEffect(() => {
+    setBaselineRows(rows);
+    onModificationChange?.(false);
+  }, [confirmSignal]);
+
+  useEffect(() => {
     if (onModificationChange) {
       const isModified =
-        rows.length !== data.length || // Check if rows were added or deleted
-        rows.some(
-          (row, index) => JSON.stringify(row) !== JSON.stringify(data[index])
-        ); // Check if rows were modified
-      onModificationChange(isModified);
+        rows.length !== baselineRows.length ||
+      rows.some((r, i) => JSON.stringify(r) !== JSON.stringify(baselineRows[i]));
+    onModificationChange?.(isModified);
     }
-  }, [rows, data, onModificationChange]);
+    }, [rows, baselineRows, onModificationChange]);
 
   // Organize rows into sections
   const getOrganizedRows = () => {
@@ -225,7 +237,6 @@ export default function ActualTable({
     if (newRow.id === 'total' || newRow.id === 'second-total') {
       return oldRow;
     }
-
     const actualsChanged = newRow.actuals !== oldRow.actuals;
     let newActual = parseFloat(newRow.actuals) || 0;
     if (actualsChanged) {
@@ -281,16 +292,19 @@ export default function ActualTable({
     });
 
     // Validation logic for comments
-  const isUnplannedProject =
-    newRow.planned === 0 &&
-    newRow.project !== 'Other Work' &&
-    newRow.project !== 'Personal Time';
+    const isUnplannedProject =
+      newRow.planned === 0 &&
+      newRow.project !== 'Other Work' &&
+      newRow.project !== 'Personal Time';
 
-    const actualsInvalid = (isUnplannedProject || newRow.project === 'Other Work' || newRow.project === 'Personal Time') &&(!newRow.actuals || newRow.actuals === 0);
+    const actualsInvalid =
+      (isUnplannedProject ||
+        newRow.project === 'Other Work' ||
+        newRow.project === 'Personal Time') &&
+      (!newRow.actuals || newRow.actuals === 0);
     const commentsInvalid =
     (isUnplannedProject || newRow.project === 'Other Work' || newRow.project === 'Personal Time') &&
     (!newRow.comments || !newRow.comments.trim());
-
     setRowValidationErrors(prev => {
       const updated = { ...prev };
 
@@ -465,7 +479,7 @@ export default function ActualTable({
       headerClassName: 'header-comments',
       cellClassName: params =>
         `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
-          rowValidationErrors[params.id as string]?.comments &&
+          params.row.planned === 0 && rowValidationErrors[params.id as string]?.comments &&
           (!params.row.comments || !params.row.comments.trim())
             ? 'comment-error-cell'
             : ''
@@ -476,10 +490,6 @@ export default function ActualTable({
           showInitialError={rowValidationErrors[params.id as string]?.comments}
         />
       ),
-      preProcessEditCellProps: params => {
-        const hasError = !params.props.value || !params.props.value.trim();
-        return { ...params.props, error: hasError };
-      },
     },
   ];
 
@@ -535,7 +545,6 @@ export default function ActualTable({
   const addNewRow = (newRow: GridValidRowModel) => {
     setRows(prevRows => {
       const updatedRows = [...prevRows];
-
 
       updatedRows.push(newRow as ActualAllocationTableRow);
       return updatedRows;
@@ -689,7 +698,7 @@ export default function ActualTable({
             disableRowSelectionOnClick
             onCellKeyDown={handleCellKeyDown}
             processRowUpdate={handleProcessRowUpdate}
-            getRowClassName={params => {
+              getRowClassName={params => {
               const isLastRow =
                 params?.row?.id ===
                 getOrganizedRows()[getOrganizedRows().length - 1]?.id;
