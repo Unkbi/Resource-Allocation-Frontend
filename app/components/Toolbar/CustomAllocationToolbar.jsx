@@ -15,7 +15,7 @@ import {
   Stack,
   Switch,
 } from '@mui/material';
-import { KeyboardArrowDown } from '@mui/icons-material';
+import { ChevronRight, KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   deleteUsersSavedViewAction,
@@ -85,7 +85,8 @@ import {
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
-import CloseIcon from '@mui/icons-material/Close'; 
+import CloseIcon from '@mui/icons-material/Close';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
   height: '80px',
@@ -138,14 +139,11 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-//   padding: '7px 14px 5px 14px',
-  paddingLeft :'10px',
-//   borderRight: '#DDE1E4 solid 1px',
+  paddingLeft: '10px',
   '& .filterColBlock': {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    
   },
   '& .dayWeekBlock': {
     backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -184,7 +182,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     borderRadius: '8px',
     border: '1px solid #CBD0DB',
     background: '#FFF',
-    boxShadow:' 0px 2px 0px 0px rgba(0, 0, 0, 0.25)',
+    boxShadow: ' 0px 2px 0px 0px rgba(0, 0, 0, 0.25)',
     flexShrink: 0,
     '& button': {
       color: '#757575',
@@ -194,7 +192,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
       lineHeight: '16px',
       textAlign: 'center',
       textTransform: 'none',
-    //   borderLeft: '1px solid #D6DCE1',
+      //   borderLeft: '1px solid #D6DCE1',
       width: '36px',
       minWidth: '36px',
       height: '100%',
@@ -231,7 +229,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
     border: '1px solid #D6DCE1',
     borderRadius: '4px',
     height: '32px',
-    marginLeft : '12px'
+    marginLeft: '12px',
   },
 }));
 
@@ -249,7 +247,6 @@ const StyledSelect = styled(Select)(({ theme }) => ({
   display: 'flex',
   width: ' 128px',
   height: '44px',
-  //   padding: '4px 10px',
   marginLeft: '6px',
   justifyContent: 'center',
   alignitems: 'center',
@@ -327,15 +324,28 @@ const MenuItemContent = styled(Box)({
 });
 
 const ViewButton = styled(Button)(({ theme }) => ({
-  backgroundColor: '#ffffff !important',
-  color: '#344665 !important',
-  border: 'none !important',
-  borderRadius: '4px',
-  padding: '6px 12px',
-  textTransform: 'none',
-  fontWeight: 500,
-  fontSize: '14px',
-  maxWidth: '160px',
+  //   backgroundColor: '#ffffff !important',
+  //   color: '#344665 !important',
+  //   border: 'none !important',
+    borderRadius: '4px',
+  //   padding: '6px 12px',
+  //   textTransform: 'none',
+  //   fontWeight: 500,
+  //   fontSize: '14px',
+
+  display: 'flex',
+  minWidth: '128px',
+  height: '40px',
+  marginLeft: '6px',
+  justifyContent: 'center',
+  alignitems: 'center',
+  gap: '6px',
+  flexShrink: 0,
+  borderradius: '8px',
+  border: '1px solid #CBD0DB',
+  background: '#FFF',
+  boxShadow: '2px 0px 0px 0px rgba(0, 0, 0, 0.25)',
+   textTransform: 'none',
   '&:hover': {
     backgroundColor: '#f9fcff',
   },
@@ -905,15 +915,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const handleAddMenuToggle = () => {
     setOpenAddMenu(prevOpen => !prevOpen);
   };
-  //   const handleAddClose = event => {
-  //     if (
-  //       anchorRef.current?.contains(event.target) ||
-  //       anchorRefAdd.current?.contains(event.target)
-  //     ) {
-  //       return;
-  //     }
-  //     setOpenAddMenu(false);
-  //   };
 
   return (
     <Box
@@ -1021,6 +1022,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </StyledSelect>
         </StyledFormControl>
       </ToolBox1>
+
       <ToolBox2 flex={1} className="filterTopRow">
         <Box className="filterColBlock">
           <Box className="projectIcon">
@@ -1127,17 +1129,18 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               alignItems: 'center',
               gap: 1,
               borderLeft: '1px solid #D6DCE1',
-              height :'80px',
+              height: '80px',
               borderRight: '1px solid #D6DCE1',
             }}
           >
-            <IconButton
+            {/* <IconButton
               onClick={() => changeCalendarDate('prev')}
               size="medium"
               className="nextPrevIcon"
-            >
-              <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
-            </IconButton>
+            // > */}
+            {/* <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" /> */}
+            <ChevronLeftIcon />
+            {/* </IconButton> */}
             <CustomDateRangePicker
               open={isRangePickerOpen}
               placeholder={`${first} - ${last}`}
@@ -1153,15 +1156,15 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               maxWeeks={51}
               handleDateField={handleDateField}
             />
-            <IconButton
+            {/* <IconButton
               onClick={() => changeCalendarDate('next')}
               size="medium"
               className="nextPrevIcon"
-            >
-              <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
-            </IconButton>
+            > */}
+            {/* <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" /> */}
+            <ChevronRightIcon />
+            {/* </IconButton> */}
           </Box>
-
 
           <Box className="view-btn" sx={{ display: 'flex', gap: 0 }}>
             <Box>
@@ -1247,6 +1250,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 ))}
               </StyledMenu>
             </Box>
+
             <Button
               disabled={
                 currentView.GroupBy.includes('Cost') ||
@@ -1260,6 +1264,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 border: 'none !important',
                 color: '#344665 !important',
                 backgroundColor: '#ffffff !important',
+                textTransform: 'none',
                 '&.Mui-disabled': {
                   color: '#9F9F9F !important', // Change disabled text color
                 },
@@ -1270,7 +1275,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </Box>
         </Box>
       </ToolBox2>
-  
     </Box>
   );
 });
