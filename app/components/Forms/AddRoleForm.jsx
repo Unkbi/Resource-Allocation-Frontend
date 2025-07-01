@@ -1,89 +1,58 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { TextField, Box, Autocomplete } from "@mui/material";
-import CustomSelect from "../Select/CustomSelect";
-import StyledLabel from "../Label/StyledLabel";
-import { StyledCommentInput, StyledFormInfoText, StyledInput } from "../Input/StyledInput";
-import { useSelector, useDispatch } from "react-redux";
-import CustomDateRangePicker from "../DatePicker/CustomDateRangePicker";
-import { showToast } from "@/app/redux/reducers/toastReducer";
+import { useEffect, useState } from 'react';
+import { TextField, Box, Autocomplete } from '@mui/material';
+import CustomSelect from '../Select/CustomSelect';
+import StyledLabel from '../Label/StyledLabel';
+import {
+  StyledCommentInput,
+  StyledFormInfoText,
+  StyledInput,
+} from '../Input/StyledInput';
+import { useSelector, useDispatch } from 'react-redux';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const AddRoleForm = ({ formikProps, setFormValue }) => {
   const { values, handleChange, handleBlur, setFieldValue } = formikProps;
-  const { projects } = useSelector((state) => state.projects);
-  const { resources } = useSelector((state) => state.resources);
-  const { initialData } = useSelector((state) => state.globalDialog.formState);
+  const { projects } = useSelector(state => state.projects);
+  const { resources } = useSelector(state => state.resources);
+  const { initialData } = useSelector(state => state.globalDialog.formState);
   const dispatch = useDispatch();
+  const [selectStatus, setSelectStatus] = useState('Active');
+  const [roleName, setRoleName] = useState('');
 
   const commonAutocompleteStyles = {
-    "& .MuiInputBase-root": { fontSize: "12px" },
-    "& .MuiAutocomplete-tag": { fontSize: "10px", padding: "2px 5px" },
-    "& input": { fontSize: "12px" },
-    "& .MuiAutocomplete-popper": { fontSize: "12px" },
-    "& .MuiAutocomplete-option": { fontSize: "12px", padding: "4px 10px" },
+    '& .MuiInputBase-root': { fontSize: '12px' },
+    '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
+    '& input': { fontSize: '12px' },
+    '& .MuiAutocomplete-popper': { fontSize: '12px' },
+    '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
   };
 
   const commonSlotProps = {
     popper: {
       modifiers: [
         {
-          name: "preventOverflow",
+          name: 'preventOverflow',
           options: {
-            boundary: "window",
+            boundary: 'window',
           },
         },
       ],
     },
     paper: {
       sx: {
-        fontSize: "12px",
+        fontSize: '12px',
       },
     },
   };
 
-//   const currentResourceName = initialData?.Resource;
-
-//   const resourceTypeOptions = resources?.result
-//     ?.filter((resource) => resource.FullName !== currentResourceName)
-//     ?.map((resource) => ({
-//       label: resource.FullName,
-//       value: resource.Id,
-//     })) || [];
-
-  const selectedResourceOption = []
-//     Array.isArray(values?.Resource) && values.Resource.length > 0
-//       ? resourceTypeOptions.filter((opt) => values.Resource.includes(opt.value))
-//       : [];
-
-//   const selectedProjects = Array.isArray(values?.Project)
-//   ? projects?.result?.filter((proj) => values?.Project?.includes(proj.Id))
-//   : [initialData?.Project];
-  const projectNames =  [];
-
-//   useEffect(() => {
-//     if (initialData) {
-//       const filteredProjectIds =
-//         projects?.result
-//           ?.filter((project) => initialData.Project?.includes(project.Name))
-//           ?.map((project) => project.Id) || [];
-
-//       const rowData = {
-//         Resource: [],
-//         Project: filteredProjectIds,
-//         StartDate: initialData.StartDate || "",
-//         EndDate: initialData.EndDate || "",
-//       };
-//       setFormValue(rowData);
-//     }
-//   }, [initialData, projects]);
-
-  const handleResourceChange = (event, newValue) => {
-    if(newValue){
-    const selectedIds = newValue.map((item) => item.value);
-    setFieldValue("Resource", selectedIds);
-  }
-};
+  const handleStatusChange = (event, newValue) => {
+    if (newValue) {
+      setFieldValue('Status', newValue);
+    }
+  };
 
   return (
     <Box>
@@ -93,8 +62,8 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
           as={TextField}
           name="role"
           fullWidth
-          onChange={handleChange}
-          value={projectNames.join(", ")} 
+          onChange={(e)=> {setRoleName(e.target.value)}}
+          value={roleName}
         />
       </Box>
 
@@ -102,14 +71,13 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
         <StyledLabel>Status</StyledLabel>
         <Autocomplete
           sx={commonAutocompleteStyles}
-          multiple
           size="small"
-          options={["Active","Inactive"]}
-          getOptionLabel={(option) => option || ""}
-          value={selectedResourceOption}
-          onChange={handleResourceChange}
+          options={['Active', 'Inactive']}
+          getOptionLabel={option => option || ''}
+          value={selectStatus}
+          onChange={handleStatusChange}
           slotProps={commonSlotProps}
-          renderInput={(params) => (
+          renderInput={params => (
             <TextField
               {...params}
               placeholder="Select Status"
@@ -123,9 +91,9 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
               }
               FormHelperTextProps={{
                 sx: {
-                  fontSize: "12px",
-                  textAlign: "left",
-                  marginLeft: "0px",
+                  fontSize: '12px',
+                  textAlign: 'left',
+                  marginLeft: '0px',
                 },
               }}
             />
