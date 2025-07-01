@@ -31,6 +31,7 @@ import {
   fetchAllocationTheme,
   updateAllocationThemeAction,
 } from '@/app/redux/actions/settingsAction';
+import RoleManagement from '@/app/components/Settings/RoleManagement';
 
 interface MenuItem {
   id: string;
@@ -175,12 +176,12 @@ const SettingsPanel = () => {
         name: 'Admin Settings',
         items: [
           {
-            id: 'user-management',
-            title: 'User Management',
-            headerText: 'User Management',
+            id: 'access-management',
+            title: 'Access Management',
+            headerText: 'Role-Based Access Control Management',
             icon: '',
-            content: '',
-            description: 'Manage users and permissions',
+            content: <RoleManagement />,
+            description: 'Comprehensive role and privilege management system',
           },
           {
             id: 'allocation-setting',
@@ -358,24 +359,26 @@ const SettingsPanel = () => {
             </Typography>
           </ContentHeader>
           <ScrollableContent>{activeItem.content}</ScrollableContent>
-          <ContentFooter>
-            <BottomActions>
-              <CancelButton
-                variant="outlined"
-                onClick={handleCancel}
-                disabled={!hasUnsavedChanges}
-              >
-                Cancel
-              </CancelButton>
-              <SaveButton
-                variant="contained"
-                onClick={handleSaveChanges}
-                disabled={!hasUnsavedChanges}
-              >
-                Save Changes
-              </SaveButton>
-            </BottomActions>
-          </ContentFooter>
+          {activeItem.id === 'allocation-setting' && (
+            <ContentFooter>
+              <BottomActions>
+                <CancelButton
+                  variant="outlined"
+                  onClick={handleCancel}
+                  disabled={!hasUnsavedChanges}
+                >
+                  Cancel
+                </CancelButton>
+                <SaveButton
+                  variant="contained"
+                  onClick={handleSaveChanges}
+                  disabled={!hasUnsavedChanges}
+                >
+                  Save Changes
+                </SaveButton>
+              </BottomActions>
+            </ContentFooter>
+          )}
         </ContentContainer>
       </BodyContainer>
     </PageContainer>

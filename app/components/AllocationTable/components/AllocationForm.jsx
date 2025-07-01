@@ -102,6 +102,7 @@ import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
+import AddRoleForm from '../../Forms/AddRoleForm';
 
 const initialValuesMap = {
   add_project: {
@@ -242,6 +243,14 @@ const initialValuesMap = {
     Description: '',
     SidebarColor: '#000000',
   },
+  add_role: {
+    Name: '',
+    Status: 'Active'
+  },
+  edit_role: {
+    Name: '',
+    Status: 'Active',
+  }
 };
 
 const AllocationForm = () => {
@@ -337,7 +346,10 @@ const AllocationForm = () => {
         return addPortfolioValidationSchema(portfolios);
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios,initialData.Name||'');
-
+      // case 'add_role':
+      //   return addRoleValidationSchema;
+      // case 'edit_role':
+      //   return addRoleValidationSchema;
       default:
         return null;
     }
@@ -2046,6 +2058,18 @@ const AllocationForm = () => {
             formikProps={formikProps}
             setFormValue={setFormValue}
           />
+        );
+      case 'add_role':
+        return (
+          <AddRoleForm formikProps={formikProps}
+            setFormValue={setFormValue}
+            />
+        );
+      case 'edit_role':
+        return (
+          <AddRoleForm formikProps={formikProps}
+            setFormValue={setFormValue}
+            />
         );
       default:
         return <div>No form selected</div>;
