@@ -6,8 +6,11 @@ interface CustomButtonProps extends ButtonProps {
   label: React.ReactNode;
 }
 
-// I'm changing the name of the button to avoid nameing conflict 
-const CustomButton: React.FC<CustomButtonProps> = ({ label, variant = 'contained', ...props }) => {
+const CustomButton: React.FC<CustomButtonProps> = ({
+  label,
+  variant = 'contained',
+  ...props
+}) => {
   return (
     <Button variant={variant} {...props}>
       {label}
@@ -15,4 +18,4 @@ const CustomButton: React.FC<CustomButtonProps> = ({ label, variant = 'contained
   );
 };
 
-export default Button;
+export default CustomButton;
