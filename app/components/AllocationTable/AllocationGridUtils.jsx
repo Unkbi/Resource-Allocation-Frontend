@@ -139,6 +139,9 @@ const CellWithMenu = ({
           autoHideTimer: 4000,
         })
       );
+      setShowDeleteDialog(false);
+      setDeleteParams(null);
+      setAnchorEl(null);
       return;
     }
 
@@ -773,9 +776,6 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
-      const hasNonEditableChild = projectRows.some(
-        row => !isCellEditable({ ...params, row })
-      );
 
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
@@ -865,8 +865,11 @@ export const getCellClassName = (
       : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
-  return 'non-editable-cell';
-}
+    if (type === 'cost') {
+      return 'non-editable-cell-no-tooltip';
+    }
+    return 'non-editable-cell';
+  }
 
   return '';
 };
