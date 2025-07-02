@@ -186,7 +186,7 @@ export default function ExecutiveDashboardPage() {
   }, [dispatch, selectedDate, selectedOption]);
 
   useEffect(() => {
-    if (coverageData.length > 0) {
+    if (coverageData && coverageData.length > 0) {
       let filteredCoverage = coverageData;
       if (teamFilter !== 'all') {
         filteredCoverage = coverageData.filter(d => d.team_name === teamFilter);
@@ -196,7 +196,7 @@ export default function ExecutiveDashboardPage() {
   }, [coverageData, teamFilter]);
 
   useEffect(() => {
-    if (overAllocated.length > 0) {
+    if (overAllocated && overAllocated.length > 0) {
       let filteredCoverage = overAllocated;
       if (teamFilter !== 'all') {
         filteredCoverage = filteredCoverage.filter(
@@ -215,7 +215,7 @@ export default function ExecutiveDashboardPage() {
       setFilteredUnderAllocated(filteredCoverage);
     }
 
-    if (originalCapacityData.length > 0) {
+    if (originalCapacityData && originalCapacityData.length > 0) {
       let filteredCapacity = originalCapacityData;
       if (teamFilter !== 'all') {
         filteredCapacity = filteredCapacity.filter(
@@ -225,7 +225,7 @@ export default function ExecutiveDashboardPage() {
       setFilteredCapacityData(filteredCapacity);
     }
 
-    if (originalUnapprovedActualsByTeam.length > 0) {
+    if (originalUnapprovedActualsByTeam && originalUnapprovedActualsByTeam.length > 0) {
       let filteredCapacity = originalUnapprovedActualsByTeam;
       if (teamFilter !== 'all') {
         filteredCapacity = filteredCapacity.filter(
@@ -237,7 +237,7 @@ export default function ExecutiveDashboardPage() {
   }, [teamFilter]);
 
   useEffect(() => {
-    if (projectFTEData.length > 0) {
+    if (projectFTEData && projectFTEData.length > 0) {
       let filteredFTE = projectFTEData;
       if (selectedProjectType !== 'all') {
         filteredFTE = projectFTEData.filter(
@@ -249,7 +249,7 @@ export default function ExecutiveDashboardPage() {
   }, [projectFTEData, selectedProjectType]);
 
   useEffect(() => {
-    if (activeProjectsByType.length > 0) {
+    if (activeProjectsByType && activeProjectsByType.length > 0) {
       let filteredProjects = activeProjectsByType;
       if (selectedProjectType !== 'all') {
         filteredProjects = activeProjectsByType.filter(
@@ -273,13 +273,18 @@ export default function ExecutiveDashboardPage() {
     setTeamFilter('all');
 
     const capacityData = capacityAvailability;
-    const underAllocated = resourceUtilization.filter(
-      d => d.allocation_status === 'under-allocated'
-    );
+    const underAllocated =
+      resourceUtilization?.length
+      ? resourceUtilization.filter(
+          d => d.allocation_status === 'under-allocated'
+        )
+      : []; 
 
-    const overAllocated = resourceUtilization.filter(
+    const overAllocated = 
+    resourceUtilization?.length
+    ? resourceUtilization.filter(
       d => d.allocation_status === 'over-allocated'
-    );
+    ) : [];
 
     const unapprovedAllocation = unapprovedProjectAllocation;
 
@@ -364,7 +369,8 @@ export default function ExecutiveDashboardPage() {
     ? [...new Set(filteredCoverageData.map(d => d.period_start))].sort()
     : [];
 
-  const coverageSeries = teams.map(team => ({
+  const coverageSeries = teams?.length
+  ? teams.map(team => ({
     label: team,
     data: periods.map(period => {
       const match = filteredCoverageData.find(
@@ -373,21 +379,27 @@ export default function ExecutiveDashboardPage() {
       const value = match ? parseFloat(match.coverage_pct) : 0;
       return isNaN(value) ? 0 : value;
     }),
-  }));
+  }))
+  : [];
 
   // Extract unique project types and periods from projectFTEData
-  const projectTypes = [
+  const projectTypes = filteredProjectFTEData?.length 
+  ? [
     ...new Set(filteredProjectFTEData.map(d => d.project_type)),
-  ];
-  const projectPeriods = [
+  ]
+  : [];
+  const projectPeriods = filteredProjectFTEData?.length
+  ? [
     ...new Set(filteredProjectFTEData.map(d => d.period_start)),
-  ].sort();
+  ].sort()
+  : [];
 
   // Ensure projectTypes and projectPeriods remain the same
   const filteredProjectTypes =
     selectedProjectType === 'all' ? projectTypes : [selectedProjectType];
 
-  const projectSeries = filteredProjectTypes
+  const projectSeries = filteredProjectTypes?.length
+  ? filteredProjectTypes
     .filter(type => type !== null) // Filter out entries with project_type as null
     .map(type => ({
       label: type,
@@ -399,7 +411,8 @@ export default function ExecutiveDashboardPage() {
         return isNaN(value) ? 0 : value;
       }),
       area: true, // <-- Enable area shading
-    }));
+    }))
+    : [];
 
   const transformDataForPieChart = data => {
     const colors = {
@@ -409,21 +422,23 @@ export default function ExecutiveDashboardPage() {
       'Personal Time': '#0080FF', // Blue
     };
 
-    return data.map((item, index) => ({
+    return data?.length
+    ? data.map((item, index) => ({
       id: index,
       value: parseFloat(item.pct_of_actuals),
       label: item.category,
       color: colors[item.category] || '#CCCCCC',
-    }));
+    })) : [];
   };
 
   const unapprovedProjectAllocationData = transformDataForPieChart(
     filteredUnapprovedProjectAllocation
   );
 
-  const filteredbudgetVsPlanVsActual = budgetVsPlanVsActual.filter(
-    b => b.budget_total !== 0
-  );
+  const filteredbudgetVsPlanVsActual =
+    budgetVsPlanVsActual?.length
+      ? budgetVsPlanVsActual?.filter(b => b.budget_total !== 0)
+      : [];
 
   const overviewcharts = {
     resourceActualsDeviation: (
@@ -626,7 +641,8 @@ export default function ExecutiveDashboardPage() {
                 <PieChart
                   series={[
                     {
-                      data: (totalHeadcount || []).map((item, idx) => ({
+                      data: totalHeadcount?.length
+                      ? (totalHeadcount).map((item, idx) => ({
                         id: idx,
                         value: Number(item.count),
                         label: truncateLabel(
@@ -643,7 +659,7 @@ export default function ExecutiveDashboardPage() {
                                 : item._type === 'Contractor - PT'
                                   ? '#FFB6B6'
                                   : undefined,
-                      })),
+                      })) : [],
                       innerRadius: 0,
                       outerRadius: config.outerRadius || 80,
                       cornerRadius: 3,
@@ -758,18 +774,20 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   series={[
                     {
-                      data: resourceFTEContractorRatio.map(d =>
+                      data: resourceFTEContractorRatio?.length 
+                      ? resourceFTEContractorRatio?.map(d =>
                         Number.parseFloat(d.fte_cnt)
-                      ),
+                      ) : [],
                       label: 'FTE',
                       id: 'fteCount',
                       color: '#4CAF50',
                       stack: 'total',
                     },
                     {
-                      data: resourceFTEContractorRatio.map(d =>
+                      data: resourceFTEContractorRatio?.length
+                      ? resourceFTEContractorRatio?.map(d =>
                         Number.parseFloat(d.contractor_cnt)
-                      ),
+                      ) : [],
                       label: 'Contractor',
                       id: 'contractorCount',
                       color: '#FF5722',
@@ -778,13 +796,14 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: resourceFTEContractorRatio.map(d =>
+                      data: resourceFTEContractorRatio?.length
+                      ? resourceFTEContractorRatio?.map(d =>
                         formatTeamName(
                           d.shore_flag,
                           dimensions.width < 400 ? 6 : 10,
                           resourceFTEContractorRatio.length
                         )
-                      ),
+                      ) : [],
                       label: 'Workforce Distribution',
                       //tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -968,9 +987,10 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
-          const uniqueTeams = [
+          const uniqueTeams = filteredUnapprovedActualsByTeam?.length
+          ? [
             ...new Set(filteredUnapprovedActualsByTeam.map(d => d.team_name)),
-          ];
+          ] : [];
 
           return (
             <Box
@@ -1314,10 +1334,10 @@ export default function ExecutiveDashboardPage() {
     ),
   };
 
-  const teamNames = [...new Set(coverageData.map(d => d.team_name))];
-  const projectTypeNames = [
-    ...new Set(projectFTEData.map(d => d.project_type)),
-  ];
+  const teamNames = coverageData?.length ? [...new Set(coverageData.map(d => d.team_name))] : [];
+  const projectTypeNames = projectFTEData && projectFTEData.length
+    ? [...new Set(projectFTEData?.map(d => d.project_type))]
+    : [];
 
   return (
     <>
