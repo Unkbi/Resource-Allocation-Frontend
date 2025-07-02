@@ -97,7 +97,6 @@ export const fetchTeamAllocationsForSaga = async (
   return response.data;
 };
 
-
 export const fetchTransferAllocationsForSaga = async (
   postData: TransferAllocationsPayload
 ) => {
@@ -117,8 +116,6 @@ export const fetchResourceAllocationsForSaga = async (
   );
   return response.data;
 };
-
-
 
 export const getResourceDetail = createAsyncThunk(
   'resource/getResourceDetail',
@@ -174,9 +171,7 @@ export const createTeam = createAsyncThunk(
 
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(
-        error?.response?.data || 'Failed to create team.'
-      );
+      return rejectWithValue(error?.response?.data || 'Failed to create team.');
     }
   }
 );
@@ -193,9 +188,7 @@ export const updateTeam = createAsyncThunk<
     );
     return response.data;
   } catch (error: any) {
-    return rejectWithValue(
-      error?.response?.data || 'Failed to update team.'
-    );
+    return rejectWithValue(error?.response?.data || 'Failed to update team.');
   }
 });
 
@@ -203,33 +196,28 @@ export const deleteTeam = createAsyncThunk<
   string,
   string,
   { rejectValue: string }
->(
-  '/team/delete',
-  async (teamId, { rejectWithValue }) => {
-    try {
-      await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`);
-      return teamId;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to delete team');
-    }
+>('/team/delete', async (teamId, { rejectWithValue }) => {
+  try {
+    await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`);
+    return teamId;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data || 'Failed to delete team');
   }
-);
+});
 
 /*
  * Not being used currently in application
  * Uncomment the following code if you want to handle postTeamResource API call
  */
-export const postTeamResource = async (
-  postData: TeamResourcePayload
-) => {
-    try {
-      const response = await axiosInstance.post(
-        `${API_PROJECT_PORTFOLIO}/ChangeTeamResource`,
-        postData
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error('Failed to add resource to team:', error);
-      throw error;
-    }
-  };
+export const postTeamResource = async (postData: TeamResourcePayload) => {
+  try {
+    const response = await axiosInstance.post(
+      `${API_PROJECT_PORTFOLIO}/ChangeTeamResource`,
+      postData
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Failed to add resource to team:', error);
+    throw error;
+  }
+};
