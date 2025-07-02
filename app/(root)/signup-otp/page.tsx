@@ -1,20 +1,23 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { RootState, AppDispatch } from '@/app/redux/store';
 import {
     Box,
     Typography,
     TextField,
     Button,
     Link,
+    InputAdornment,
+    IconButton,
     CircularProgress,
     styled,
-    InputAdornment,
-    IconButton
 } from '@mui/material';
-import { performResetPassword } from '@/app/redux/actions/authActions';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import Image from 'next/image';
+import { confirmSignUpUser, performForgotPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -117,7 +120,6 @@ const MainBox = styled(Box)(({ theme }) => ({
             fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
-            fontWeight: "700",
             marginBottom: "20px",
             textAlign: "center",
             position: "relative",
@@ -127,7 +129,6 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#fff"
             },
             "&::before": {
-                background: "rgb(255,255,255)",
                 background: "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)",
                 width: "100%",
                 height: "1px",
@@ -171,54 +172,49 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function ResetPasswordPageWrapper() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <RestPasswordPage />
-        </Suspense>
-    );
-}
-
-function RestPasswordPage() {
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const [showNewPassword, setShowNewPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+export default function SignUpOtpPage(){
+    const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
+    const dispatch = useDispatch<AppDispatch>();
+    const { loading, error, user, signupData } = useSelector((state: RootState) => state.user);
+    const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
     const router = useRouter();
-    const dispatch = useDispatch();
-    const { loading, error, resetPasswordMessage } = useSelector((state) => state.user);
-    const searchParams = useSearchParams();
-    const username = searchParams.get('username');
-    const code = searchParams.get('code');
 
-    const handleResetPassword = (e) => {
+    const handleVerifyOtp = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (newPassword !== confirmPassword) {
-            setErrorMessage('Passwords do not match');
-            return;
-        }
-        dispatch(performResetPassword({
-            'Agentlang.Kernel.Identity/ConfirmForgotPassword': {
-                Password: newPassword,
-                Username: username,
-                ConfirmationCode: code
+        dispatch(confirmSignUpUser({
+            'Agentlang.Kernel.Identity/ConfirmSignUp': {
+                Username: signupData,
+                ConfirmationCode: otp.join(""),
             }
-        })).then((response) => {
-            console.log('Password reset successful:', response);
-        });
-
-        setNewPassword('');
-        setConfirmPassword('');
-        setErrorMessage('');
+        }));
     };
 
-    const handleToggleNewPassword = () => setShowNewPassword((prev) => !prev);
-    const handleToggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
+    const handleChange = (index: number, event: React.ChangeEvent<any>) => {
+        const value = event.target.value.replace(/\D/g, "").slice(0, 1);
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
 
-    if (resetPasswordMessage && !error) {
-        router.push('/login');
-    }
+        if (value && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (index: number, event: React.KeyboardEvent) => {
+        if (event.key === "Backspace" && !otp[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handleResendOtp = (e: React.MouseEvent<HTMLParagraphElement>) => {
+        e.preventDefault();
+        dispatch(performForgotPassword({
+            'Agentlang.Kernel.Identity/ForgotPassword': {
+                Username: signupData
+            }
+        }));
+    };
+
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -235,65 +231,32 @@ function RestPasswordPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Reset Password
+                            Verify with OTP
                         </Typography>
-                        <Typography className='subHeadingText' whiteSpace={'nowrap'}>
-                            Your new password must be different from previous one
+                        <Typography className='subHeadingText'>
+                            We've sent a verification code to {signupData}
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleResetPassword}
+                            onSubmit={handleVerifyOtp}
                         >
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="New Password"
-                                type={showNewPassword ? "text" : "password"}
-                                fullWidth
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleToggleNewPassword} edge="end">
-                                                {showNewPassword ? (
-                                                    <img src={"/images/icons/eye-on.svg"} alt='eye-on' />
-                                                ) : (
-                                                    <img src={"/images/icons/eye-off.svg"} alt='eye-off' />
-                                                )}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
+                            {otp.map((digit, index) => (
+                                <TextField
+                                    key={index}
+                                    variant="outlined"
+                                    value={digit}
+                                    onChange={(e) => handleChange(index, e)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    inputProps={{
+                                        maxLength: 1,
+                                        pattern: "[0-9]*",
+                                        inputMode: "numeric",
+                                        style: { textAlign: "center", width: "40px" },
+                                    }}
+                                    inputRef={(el) => (inputRefs.current[index] = el)}
+                                />
+                            ))}
 
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Confirm Password"
-                                type={showConfirmPassword ? "text" : "password"}
-                                fullWidth
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleToggleConfirmPassword} edge="end">
-                                                {showConfirmPassword ? (
-                                                    <img src={"/images/icons/eye-on.svg"} alt='eye-on' />
-                                                ) : (
-                                                    <img src={"/images/icons/eye-off.svg"} alt='eye-off' />
-                                                )}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            {errorMessage && (
-                                <Typography variant="body2" color="error" sx={{ mb: 2 }}>
-                                    {errorMessage}
-                                </Typography>
-                            )}
                             <Button
                                 type="submit"
                                 variant="contained"
@@ -303,27 +266,20 @@ function RestPasswordPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Reset Password'}
+                                {loading ? <CircularProgress size={24} /> : 'Verify'}
                             </Button>
                         </Box>
-
+                        <Typography className='noAccount' onClick={handleResendOtp}>
+                            Resend OTP
+                        </Typography>
                     </Box>
                 </Box>
             </Box>
-            {resetPasswordMessage && !error && (
-                <Typography
-                    variant="body2"
-                    color="success"
-                    sx={{ position: 'absolute', bottom: '150px', left: '50%', transform: 'translateX(-50%)' }}
-                >
-                    Password reset successfully! You can now log in with your new password.
-                </Typography>
-            )}
             {error && (
                 <Typography
                     variant="body2"
                     color="error"
-                    sx={{ position: 'absolute', bottom: '150px', left: '50%', transform: 'translateX(-50%)' }}
+                    sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)' }}
                 >
                     {error}
                 </Typography>
