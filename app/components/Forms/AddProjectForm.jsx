@@ -8,6 +8,7 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
 import { useDispatch } from 'react-redux';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -21,6 +22,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   } = formikProps;
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
+  const { portfolios } = useSelector(state => state.portfolios);
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
@@ -29,9 +31,21 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       label: resource.FullName,
     })) || [];
 
+  const portfolioOptions =
+    portfolios?.map(portfolio => ({
+      value: portfolio.Id,
+      label: portfolio.Name,
+    })) || [];
+
   useEffect(() => {
     if (!resources || !resources?.result) {
       dispatch(fetchAllResources());
+    }
+    if (!portfolios) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
     }
   }, []);
 
@@ -51,6 +65,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             res => res.FullName === initialData.ProjectManager
           )?.Id || '',
         Name: initialData.Name || '',
+        PortfolioId: initialData.PortfolioId || '',
         Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
         Budget: initialData.Budget || 0,
@@ -63,7 +78,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
 
   const projectTypeOptions = [
     { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB' }, //(Run-th-business) 
+    { value: 'RTB', label: 'RTB' }, //(Run-th-business)
     { value: 'CTB', label: 'CTB' },
     { value: 'STB', label: 'STB' },
     { value: 'Ongoing', label: 'Ongoing' },
@@ -95,6 +110,19 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           onBlur={handleBlur}
           error={touched.Name && Boolean(errors.Name)}
           helperText={touched.Name && formikProps.errors.Name}
+        />
+      </Box>
+      <Box sx={{ pb: 2 }}>
+        <StyledLabel>{PORTFOLIO_DISPLAY_NAME}</StyledLabel>
+        <CustomSelect
+          name="PortfolioId"
+          options={portfolioOptions}
+          value={values.PortfolioId || ''}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          width={'100%'}
+          error={touched.PortfolioId && Boolean(errors.PortfolioId)}
+          helperText={touched.PortfolioId && formikProps.errors.PortfolioId}
         />
       </Box>
       <Box sx={{ pb: 2 }}>

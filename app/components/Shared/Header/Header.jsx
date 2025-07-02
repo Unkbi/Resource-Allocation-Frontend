@@ -159,12 +159,9 @@ const Header = ({ sidebarExpanded }) => {
   }
 
   function handleSplitViewDone() {
-    router.push('/project');
-    setTimeout(() => {
-      dispatch(setSplitView(false));
-      dispatch(setSplitViewCurrentProject(null));
-      dispatch(updateCurrentView(COMPANY_DEFAULT_VIEW));
-    }, 1000);
+    dispatch(setSplitView(false));
+    dispatch(setSplitViewCurrentProject(null));
+    dispatch(updateCurrentView(COMPANY_DEFAULT_VIEW));
   }
   // return focus to the button when we transitioned from !open -> open
   const prevOpenAdd = React.useRef(openAddMenu);
