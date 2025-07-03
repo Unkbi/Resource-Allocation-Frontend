@@ -24,6 +24,14 @@ export interface GetTeamAllocationsForPeriodPayload {
   };
 }
 
+export interface GetResourceAllocationsForPeriodPayload {
+  'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
+    Resource: string;
+    StartDate: string;
+    EndDate: string;
+  };
+}
+
 export interface TeamResources {
   [key: string]: Resource[] | null;
 }
@@ -50,4 +58,9 @@ export interface TeamResourceResponse {
   teamStatus: 'fulfilled' | 'rejected'; // Status of the team resource fetch
   teamAllocationManager: string | null; // Team allocation manager (nullable)
   resource: Resource[]; // Array of resources
+}
+
+export interface TeamResourcePayload {
+  Team: string;
+  Resource: string;
 }

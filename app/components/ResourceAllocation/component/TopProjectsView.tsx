@@ -5,16 +5,11 @@ import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
-import {
-  AllAllocations,
-  AllocationGridCell,
-  AllocationGridCellData,
-  ProjectsTableRow,
-} from '@/app/types';
 import AllocationGrid from '../../AllocationTable/AllocationGrid';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
+import { filterAllocationsForSelectedProject } from '@/app/utils/allocationUtils';
 
 interface TopProjectsViewProps {
   startDate: string | null;
@@ -29,83 +24,21 @@ export default function TopProjectsView({
   const { splitViewCurrentProject } = useSelector(
     (state: RootState) => state.allocationView
   );
-  const { allAllocations, loading, dataProcessing, calendarDate } = useSelector(
+  const { allAllocations, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
   const { setRows, ready } = useAllocationGrid('topProject');
 
   useEffect(() => {
     if (ready && allAllocations) {
-      setRows(filterAllocationsForSelectedProject(allAllocations || []) || []);
+      setRows(
+        filterAllocationsForSelectedProject(
+          allAllocations || [],
+          splitViewCurrentProject
+        ) || []
+      );
     }
   }, [ready, allAllocations]);
-
-  const generateEmptyAllocation = (
-    id: string,
-    template: AllocationGridCell,
-    project: ProjectsTableRow
-  ) => {
-    const empty: AllocationGridCell = {
-      id: id,
-      resourceId: null,
-      project: project.Name,
-      projectId: project.Id,
-      projectSponsor: project.ProjectSponsor,
-      projectManager: project.ProjectManager,
-      projectStatus: project.Status,
-      projectLocation: project.Location,
-      projectType: project.Type,
-      projectOvertimeAllowed: project.AllowOvertime,
-      projectCost: project.Cost,
-      projectCurrency: project.CostCurrency,
-      projectStartDate: project.StartDate,
-      projectEndDate: project.EndDate,
-      resource: null,
-      totalEffort: null,
-      role: null,
-      teams: null,
-      resourceType: null,
-    };
-
-    // Extract Wxx weeks and set them to empty values with preserved "period"
-    Object.entries(template).forEach(([key, value]) => {
-      if (/^W\d+$/.test(key)) {
-        empty[key] = {
-          allocationId: null,
-          value: null,
-          period: (value as AllocationGridCellData)?.period ?? null,
-        };
-      }
-    });
-
-    return empty;
-  };
-
-  const filterAllocationsForSelectedProject = (
-    allocations: AllAllocations[]
-  ) => {
-    if (allocations && allocations.length > 0 && splitViewCurrentProject) {
-      const selectedProjectAllocations = allocations.filter(
-        allocation => allocation.projectId === splitViewCurrentProject.Id
-      );
-
-      const filledAllocations = [
-        ...selectedProjectAllocations,
-        ...Array.from(
-          { length: 10 - selectedProjectAllocations.length },
-          (_, index) =>
-            generateEmptyAllocation(
-              `${splitViewCurrentProject.Id}_${index}`,
-              allocations[0],
-              splitViewCurrentProject
-            )
-        ),
-      ];
-
-      return filledAllocations;
-    }
-    return allocations;
-  };
 
   const projectColumnConfig = [
     {
@@ -271,7 +204,7 @@ export default function TopProjectsView({
     <>
       <Box
         sx={{
-          height: loading || dataProcessing ? '100vh' : 'var(--height)',
+          height: dataProcessing ? '100vh' : 'var(--height)',
           width: '100%',
         }}
       >
@@ -312,7 +245,7 @@ export default function TopProjectsView({
               ],
             },
           }}
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           NoRowsOverlay={NoRowsOverlay}
           toolbarComponent={''}
           viewId="topProject"

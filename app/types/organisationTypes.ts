@@ -24,3 +24,8 @@ export interface GetOrganizationResourcesPayload {
     OrganizationId: string;
   };
 }
+
+export interface ResourceOrganizationPayload {
+  Organization: string;
+  Resource: string;
+}

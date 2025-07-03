@@ -15,12 +15,36 @@ import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
   getProjectTypeColorLine,
+  getResourceFromUid,
+  getTotalWeeks,
+  generateDateWeekMath,
+  calculateWeekRanges,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
   getCombinedAllocation,
   normalizeRow,
 } from '@/app/utils/allocationUtils';
+import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
+import Typography from '@mui/material/Typography';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import EditIcon from '@mui/icons-material/Edit';
+import { styled } from '@mui/material/styles';
+import {
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import {
+  COMPANY_DEFAULT_VIEW,
+  setSplitView,
+  setSplitViewCurrentProject,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
+import { useRouter } from 'next/navigation';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -34,11 +58,51 @@ interface Resource {
   [key: string]: any;
 }
 
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    borderRadius: 4,
+    boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
+    width: '150px',
+  },
+}));
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: 'rgba(20, 43, 81, 0.70)',
+    '& .MuiTypography-root': {
+      color: '#FFFFFF',
+    },
+    '& .MuiListItemIcon-root': {
+      color: '#FFFFFF',
+    },
+  },
+  '& .MuiTypography-root': {
+    color: '#1C2D5F',
+    fontSize: '12px',
+    fontWeight: '600',
+    lineHeight: ' 18px',
+  },
+  '& .MuiListItemIcon-root': {
+    minWidth: 32,
+    color: '#1C2D5F',
+  },
+}));
+
+interface SplitViewParams {
+  value: string;
+}
+
+interface DateRange {
+  start?: any;
+  end?: any;
+}
+
 export default function ProjectAllocation({
   startDate,
   endDate,
 }: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
+  const router = useRouter();
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
@@ -51,6 +115,9 @@ export default function ProjectAllocation({
   };
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuProjectName, setMenuProjectName] = useState<string>('');
+  const allResources = _resources.result || [];
   const {
     setRows,
     ready,
@@ -62,20 +129,18 @@ export default function ProjectAllocation({
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (getAllTeamViewRows().length > 0) {
+      if (!loading && getAllTeamViewRows().length > 0) {
         filteredResources = removeResourcesWithNoProjects(
           (getAllTeamViewRows() as AllAllocations[]) || []
         );
         setRows(
           removeResourcesWithNoProjects(
-            getCombinedAllocation(
-              getAllTeamViewRows() as AllAllocations[],
-              (getAllProjectViewRows() as AllAllocations[]) || []
-            ) || []
+            getAllTeamViewRows() as AllAllocations[]
           )
         );
-      } else if (allAllocations) {
+      } else if (loading && allAllocations) {
         filteredResources = removeResourcesWithNoProjects(allAllocations || []);
+        dispatch(setLoading(false));
       }
 
       const formattedResources = filteredResources?.map(allocation => ({
@@ -106,6 +171,72 @@ export default function ProjectAllocation({
     );
   };
 
+  const handleEditProject = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
+    );
+    dispatch(
+      openDialog({
+        title: 'Edit Project',
+        submitButtonText: 'Update',
+        cancelButtonText: 'Cancel',
+        formType: 'edit_project',
+        initialData: data?.[0] || {},
+      })
+    );
+  };
+
+  const handleOpenSplitView = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
+    );
+    dispatch(setSplitView(true));
+    dispatch(setSplitViewCurrentProject(data?.[0] || {}));
+    const { StartDate, EndDate } = data?.[0] || {};
+    const currentDate = new Date();
+
+    const getDateRange = (start?: any, end?: any): [any, any] => {
+      if (start && end) {
+        const weeks = getTotalWeeks(start, end);
+        return weeks > 52
+          ? [start, generateDateWeekMath('WEEK_PLUS', 51, new Date(start))]
+          : [start, end];
+      }
+
+      if (!start && end)
+        return [generateDateWeekMath('WEEK_MINUS', 20, new Date(end)), end];
+      if (start && !end)
+        return [start, generateDateWeekMath('WEEK_PLUS', 20, new Date(start))];
+
+      return [
+        generateDateWeekMath('WEEK_MINUS', 1, currentDate),
+        generateDateWeekMath('WEEK_PLUS', 19, currentDate),
+      ];
+    };
+
+    const [startRange, endRange] = getDateRange(StartDate, EndDate);
+
+    if (startRange && endRange) {
+      const { weekMinus, weekPlus } = calculateWeekRanges(
+        startRange,
+        endRange,
+        currentDate
+      );
+      dispatch(
+        updateCurrentView({
+          ...COMPANY_DEFAULT_VIEW,
+          isDynamicRange: false,
+          isFixedRange: true,
+          StartDate: startRange,
+          EndDate: endRange,
+          WeekPlus: weekPlus,
+          WeekMinus: weekMinus,
+        })
+      );
+    }
+    router.replace('/allocation');
+  };
+
   const getFirstChild = (params: GridCellParams) => {
     const { rowNode, api } = params;
     const isGridTreeNode = 'children' in rowNode; // Required for Typescript
@@ -128,6 +259,22 @@ export default function ProjectAllocation({
     return null;
   };
 
+  const modifyData = (data: any[]) => {
+    if (data) {
+      return data.map(item => {
+        return {
+          ...item,
+          id: item.Id,
+          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+            ?.FullName,
+          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+            ?.FullName,
+        };
+      });
+    }
+    return [];
+  };
+
   const projectColumnConfig = [
     {
       field: 'project',
@@ -146,16 +293,50 @@ export default function ProjectAllocation({
         const projectType = projects?.result?.find(
           project => project.Name === value
         )?.Type;
+
+        const open = Boolean(anchorEl);
+
+        const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+          event.stopPropagation();
+          setAnchorEl(event.currentTarget);
+        };
+
+        const handleMenuClose = () => {
+          setAnchorEl(null);
+        };
+
         if (isGridTreeNode && rowNode.children) {
           const resource_count = rowNode?.children?.length || null;
           return (
-            <EllipsisNameCell
-              value={value as string}
-              resourceCount={resource_count}
-              onAddClick={() => handleAddClick(params)}
-              showAddIcon={true}
-              leftBorderColor={getProjectTypeColorLine(projectType || '')}
-            />
+            <>
+              <EllipsisNameCell
+                value={value as string}
+                resourceCount={resource_count}
+                onAddClick={() => handleAddClick(params)}
+                showAddIcon={true}
+                leftBorderColor={getProjectTypeColorLine(projectType || '')}
+              />
+              <IconButton
+                size="small"
+                disableRipple
+                disableFocusRipple
+                onClick={e => {
+                  e.stopPropagation();
+                  setMenuProjectName(params.value as string);
+                  setAnchorEl(e.currentTarget);
+                }}
+                sx={{
+                  mr: -1.5,
+                  padding: '0px',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  },
+                }}
+              >
+                <MoreVertIcon sx={{ fontSize: 22 }} />
+              </IconButton>
+            </>
           );
         }
       },
@@ -177,7 +358,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Email',
+      field: 'email',
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
@@ -193,7 +374,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'PhoneNumber',
+      field: 'phoneNumber',
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
@@ -209,7 +390,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Department',
+      field: 'department',
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
@@ -225,7 +406,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'WorkLocation',
+      field: 'workLocation',
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
@@ -241,7 +422,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'LocationCategory',
+      field: 'resourceLocationCategory',
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
@@ -257,7 +438,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Type',
+      field: 'resourceType',
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
@@ -273,7 +454,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Status',
+      field: 'resourceStatus',
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
@@ -289,7 +470,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'HRLevel',
+      field: 'hrLevel',
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
@@ -305,7 +486,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'Role',
+      field: 'role',
       headerName: 'Resource Role',
       width: 170,
       isEditable: 'false',
@@ -321,7 +502,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'StartDate',
+      field: 'resourceStartDate',
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
@@ -337,7 +518,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'EndDate',
+      field: 'resourceEndDate',
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
@@ -353,7 +534,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'AverageWeeklyHours',
+      field: 'averageWeeklyHours',
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
@@ -369,7 +550,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'ContractorHourlyRate',
+      field: 'contractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
@@ -385,7 +566,7 @@ export default function ProjectAllocation({
       },
     },
     {
-      field: 'ContractorHourlyRateCurrency',
+      field: 'contractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
@@ -603,28 +784,60 @@ export default function ProjectAllocation({
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
-                Email: false,
-                PhoneNumber: false,
-                Department: false,
-                WorkLocation: false,
-                LocationCategory: false,
-                Type: false,
-                Status: false,
-                HRLevel: false,
-                Role: false,
-                StartDate: false,
-                EndDate: false,
-                AverageWeeklyHours: false,
-                ContractorHourlyRate: false,
-                ContractorHourlyRateCurrency: false,
+                email: false,
+                phoneNumber: false,
+                department: false,
+                workLocation: false,
+                resourceLocationCategory: false,
+                resourceType: false,
+                resourceStatus: false,
+                hrLevel: false,
+                role: false,
+                resourceStartDate: false,
+                resourceEndDate: false,
+                averageWeeklyHours: false,
+                contractorHourlyRate: false,
+                contractorHourlyRateCurrency: false,
               },
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
-          loading={loading || dataProcessing}
+          loading={dataProcessing}
           viewId="projectAllocation"
         />
       </Box>
+      <StyledMenu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
+        <StyledMenuItem
+          onClick={() => {
+            handleOpenSplitView({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <PersonAddIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={<Typography variant="body2">Add Resource</Typography>}
+          />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleEditProject({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={<Typography variant="body2">Edit Project</Typography>}
+          />
+        </StyledMenuItem>
+      </StyledMenu>
     </>
   );
 }

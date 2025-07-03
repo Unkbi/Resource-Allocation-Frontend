@@ -88,7 +88,7 @@ const CellWithMenu = ({
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
-  const { currentView } = useSelector(state => state.allocationView);
+  const { currentView, splitView } = useSelector(state => state.allocationView);
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
@@ -116,7 +116,7 @@ const CellWithMenu = ({
       allocationIds = childrenRows.reduce(
         (allAllocationId, childRow) => [
           ...allAllocationId,
-          ...Object.values(row)
+          ...Object.values(childRow)
             .filter(cell => cell?.allocationId)
             .map(cell => cell.allocationId),
         ],
@@ -129,6 +129,29 @@ const CellWithMenu = ({
         .filter(cell => cell?.allocationId)
         .map(cell => cell.allocationId);
     }
+
+    if (!allocationIds || allocationIds.length === 0) {
+      dispatch(
+        showToast({
+          open: true,
+          message: 'No allocations found to delete.',
+          type: 'error',
+          position: 'bottom-right',
+          autoHideTimer: 4000,
+        })
+      );
+      return;
+    }
+
+    dispatch(
+      showToast({
+        open: true,
+        message: 'Deleting allocations...',
+        type: 'info',
+        position: 'bottom-right',
+        autoHideTimer: 4000,
+      })
+    );
 
     // Perform delete.
     new Promise((resolve, reject) =>
@@ -143,6 +166,18 @@ const CellWithMenu = ({
       })
     )
       .then(response => {
+        if (!response?.result) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete allocation.',
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
         if (childrenRows) {
           // Update rows for view to delete all children rows
           updateRowsForView(
@@ -151,6 +186,14 @@ const CellWithMenu = ({
           );
           updateRowsForView(
             'projectAllocation',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'topProject',
+            childrenRows.map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'bottomTeam',
             childrenRows.map(r => ({ ...r, _action: 'delete' }))
           );
 
@@ -174,6 +217,18 @@ const CellWithMenu = ({
           updateRowsForView(
             'projectAllocation',
             getAllRowsForView('projectAllocation')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'topProject',
+            getAllRowsForView('topProject')
+              .filter(r => r.id === row.id)
+              .map(r => ({ ...r, _action: 'delete' }))
+          );
+          updateRowsForView(
+            'bottomTeam',
+            getAllRowsForView('bottomTeam')
               .filter(r => r.id === row.id)
               .map(r => ({ ...r, _action: 'delete' }))
           );
@@ -714,7 +769,8 @@ export const getCellClassName = (
   updatedRows,
   allocationTheme = [],
   type = 'allocation',
-  allProjects = []
+  allProjects = [],
+  isCellEditable
 ) => {
   if (params?.field === 'totalEffort') {
     if (
@@ -743,19 +799,23 @@ export const getCellClassName = (
       (params.rowNode?.groupingField === 'teams' ||
         params.rowNode?.groupingField === 'resource')
     ) {
-      const projectName = params.rowNode.groupingKey;
+      const groupKey = params.rowNode.groupingKey;
       let projectRows = [];
 
       if (params.rowNode?.groupingField === 'teams') {
-        projectRows = updatedRows.filter(row => row.teams === projectName);
+        projectRows = updatedRows.filter(row => row.teams === groupKey);
       } else if (params.rowNode?.groupingField === 'resource') {
-        projectRows = updatedRows.filter(row => row.resource === projectName);
+        projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
+      const hasNonEditableChild = projectRows.some(
+        row => !isCellEditable({ ...params, row })
+      );
 
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
       const totalRows = uniqueProjectRows.size;
+
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
@@ -787,18 +847,24 @@ export const getCellClassName = (
 
       // If no matching range found and value exceeds max range, use the last theme
       if (!matchingRange && sortedTheme.length > 0) {
-        const firstRange = sortedTheme[0];
-        const lastRange = sortedTheme[sortedTheme.length - 1];
-        matchingRange =
-          allocationValue < parseFloat(firstRange.From) ? lastRange : lastRange;
+        matchingRange = sortedTheme[sortedTheme.length - 1];
       }
 
       if (matchingRange) {
-        if (params.rowNode?.groupingField === 'teams') {
-          return `allocation-theme-${matchingRange.id}`;
-        } else {
-          return `allocation-theme-${matchingRange.id}-secondGroup`;
+        const base = `allocation-theme-${matchingRange.id}`;
+        const groupClass =
+          params.rowNode?.groupingField === 'teams'
+            ? base
+            : `${base}-secondGroup`;
+        let nonEditableClass = '';
+        if (
+          params.rowNode?.groupingField === 'resource' && // Only apply to resource group
+          projectRows.some(row => !isCellEditable({ ...params, row }))
+        ) {
+          nonEditableClass = 'non-editable-darker';
         }
+
+        return `${groupClass} ${nonEditableClass}`.trim();
       }
     } else if (
       params.rowNode?.type === 'group' &&
@@ -832,6 +898,9 @@ export const getCellClassName = (
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
   }
+  if (!isCellEditable(params)) {
+  return 'non-editable-cell';
+}
 
   return '';
 };
