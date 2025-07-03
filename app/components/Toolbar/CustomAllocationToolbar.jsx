@@ -557,7 +557,11 @@ const DeleteActionIcon = () => (
 );
 
 const PreferencesIcon = () => (
-  <img src="/images/icons/newPreferences.svg" style={{width:'20px',height:'20px'}} alt="preferences" />
+  <img
+    src="/images/icons/newPreferences.svg"
+    style={{ width: '20px', height: '20px' }}
+    alt="preferences"
+  />
 );
 
 const ShareIcon = () => (
@@ -568,9 +572,9 @@ const HistoryIcon = () => (
   <img src="/images/icons/HistoryButton.svg" alt="history" />
 );
 
-const TeamsCostIcon =() => (
-  <img src= "images/icons/teamsCostIcon.svg" alt="teams cost"/>
-)
+const TeamsCostIcon = () => (
+  <img src="images/icons/teamsCostIcon.svg" alt="teams cost" />
+);
 
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
@@ -603,7 +607,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
-  
+
   const handleViewClick = event => {
     setAnchorEl(event.currentTarget);
   };
@@ -1209,7 +1213,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                         fontStyle: 'normal',
                         fontWeight: 700,
                         lineHeight: '21.98px',
-                        marginLeft: '8px',
                       }}
                     >
                       {selected}
