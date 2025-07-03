@@ -23,6 +23,7 @@ import {
   editResourceValidationSchema,
   addTeamValidationSchema,
   addRatesValidationSchema,
+  addPortfolioValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -99,6 +100,8 @@ import {
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
+import { Description } from '@mui/icons-material';
+import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 
 const initialValuesMap = {
   add_project: {
@@ -233,6 +236,12 @@ const initialValuesMap = {
     ValidityEndDate: '',
     Status: 'Active',
   },
+  add_portfolio: {
+    Name: '',
+    Status: 'Active',
+    Description: '',
+    SidebarColor: '#000000',
+  },
 };
 
 const AllocationForm = () => {
@@ -260,6 +269,7 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
+  const { portfolios } = useSelector(state => state.portfolios);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -323,6 +333,10 @@ const AllocationForm = () => {
         return addRatesValidationSchema;
       case 'edit_rates':
         return addRatesValidationSchema;
+      case 'add_portfolio':
+        return addPortfolioValidationSchema(portfolios);
+      case 'edit_portfolio':
+        return addPortfolioValidationSchema(portfolios,initialData.Name||'');
 
       default:
         return null;
@@ -1568,7 +1582,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const postData = {
+        postData = {
           ...cleanedValues,
         };
 
@@ -1618,7 +1632,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const updatedFields = {
+        let updatedFields = {
           ...cleanedValues,
           WorkLocation: cleanedValues.WorkLocation,
           HRLevel: cleanedValues.HRLevel,
@@ -1666,6 +1680,106 @@ const AllocationForm = () => {
           });
 
         break;
+      case 'add_portfolio':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        postData = {
+          ...cleanedValues,
+        };
+
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'CREATE_PORTFOLIOS',
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Portfolio added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to add portfolio:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add portfolio.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+
+        break;
+
+      case 'edit_portfolio': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = { ...cleanedValues };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: 'UPDATE_PORTFOLIOS',
+              payload: {
+                id: initialData?.Id,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Portfolio updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(
+            setHighlightedRowId(response.result?.Id)
+          );
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update portfolio:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update portfolio.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+
+        break;
+      }
 
       default:
         return;
@@ -1918,6 +2032,20 @@ const AllocationForm = () => {
       case 'edit_rates':
         return (
           <AddRatesForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'add_portfolio':
+        return (
+          <AddPortfolioForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_portfolio':
+        return (
+          <AddPortfolioForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
         );
       default:
         return <div>No form selected</div>;

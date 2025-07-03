@@ -22,7 +22,7 @@ dayjs.extend(updateLocale);
 dayjs.updateLocale(DEFAULT_LOCALE, { weekStart: 1 });
 
 const CustomTextField = styled(TextField, {
-  shouldForwardProp: (prop) => prop !== 'error',
+  shouldForwardProp: prop => prop !== 'error',
 })<{ error?: boolean }>(({ theme, error }) => ({
   height: '36px',
   width: '160px',
@@ -55,14 +55,30 @@ const CustomTextField = styled(TextField, {
 }));
 
 const StyledSingleInputDateRangeField = (isButton: boolean) => ({
-  height: isButton ? '32px' : '36px',
+  height: isButton ? '40px' : '32px',
   width: '100%',
+  borderRadius: '6px',
+  background: '#FFF',
+  color: '#374151',
+  fontFamily: '"Open Sans", sans-serif',
+  fontSize: isButton ? '14px' : '12px',
+  fontStyle: 'normal',
+  fontWeight: isButton ? 600 : 500,
+  lineHeight: '20px',
+  marginBottom: '6px',
+
   '& .MuiInputBase-root': {
-    ...(isButton && { padding: '0px' }),
-    height: isButton ? '32px' : '36px',
+    height: isButton ? '39px' : '36px',
+    width: isButton ? '150px' : '100%',
     fontSize: isButton ? '14px' : '12px',
-    fontWeight: isButton ? 600 : 500,
-    cursor: 'pointer',
+    fontWeight: isButton ? 500 : 400,
+    fontFamily: '"Open Sans", sans-serif',
+    color: '#374151',
+    background: '#FFF',
+    borderRadius: '6px',
+    gap: '8px',
+    ...(isButton && { padding: '0px' }),
+
     '& input': {
       cursor: 'pointer',
       pointerEvents: isButton ? 'none' : 'auto',
@@ -104,6 +120,7 @@ interface CustomDateRangePickerProps {
   popperProps?: object;
   title?: string;
   isProjectForm?: boolean;
+  showCalendarIconOnlyHere?: boolean;
 }
 
 export default function CustomDateRangePicker({
@@ -122,12 +139,17 @@ export default function CustomDateRangePicker({
   popperProps = {},
   title,
   isProjectForm = false,
+  showCalendarIconOnlyHere = false,
 }: CustomDateRangePickerProps) {
   const { setFieldValue } = formikProps;
 
   const selectedDate: [Dayjs | null, Dayjs | null] = [
-    value?.StartDate || value?.startDate ? dayjs(value?.StartDate || value?.startDate) : null,
-    value?.EndDate || value?.endDate ? dayjs(value?.EndDate || value?.endDate) : null,
+    value?.StartDate || value?.startDate
+      ? dayjs(value?.StartDate || value?.startDate)
+      : null,
+    value?.EndDate || value?.endDate
+      ? dayjs(value?.EndDate || value?.endDate)
+      : null,
   ];
 
   const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
@@ -167,18 +189,28 @@ export default function CustomDateRangePicker({
 
   return (
     <FormControl sx={isButton ? { width: '56%' } : {}} error={error} fullWidth>
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale={DEFAULT_LOCALE}
+      >
         {showLabel && (
           <Box sx={{ display: 'flex', flexDirection: 'row', gap: '122px' }}>
             <StyledLabel>{title}</StyledLabel>
           </Box>
         )}
-        <Box sx={{ width: isButton ? '134px' : '100%' }}>
+        <Box
+          sx={{
+            width: isButton ? '134px' : '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
           <DateRangePicker
             calendars={1}
             displayWeekNumber
             value={selectedDate}
-            onChange={(newValue) => handleDateChange(newValue)}
+            onChange={newValue => handleDateChange(newValue)}
             localeText={{ start: '', end: '' }}
             format={format}
             slots={{ field: SingleInputDateRangeField }}
@@ -200,22 +232,40 @@ export default function CustomDateRangePicker({
                 error: error,
                 placeholder: placeholder,
                 sx: StyledSingleInputDateRangeField(isButton),
-                InputProps: !isButton
-                  ? {
-                      endAdornment: (
-                        <img
-                          src="/images/icons/calendar.svg"
-                          alt="Calendar"
-                          style={{ width: '13px', height: '14.4px', cursor: 'pointer' }}
-                        />
-                      ),
-                    }
-                  : undefined,
+                InputProps: {
+                  ...(showCalendarIconOnlyHere && {
+                    startAdornment: (
+                      <img
+                        src="/images/icons/CalendarIcon.svg"
+                        alt="Calendar"
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          marginRight: '6px',
+                          marginLeft: '6px',
+                        }}
+                      />
+                    ),
+                  }),
+                  ...(!isButton && {
+                    endAdornment: (
+                      <img
+                        src="/images/icons/calendar.svg"
+                        alt="Calendar"
+                        style={{
+                          width: '13px',
+                          height: '14.4px',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ),
+                  }),
+                },
               },
               desktopPaper: customStyles
                 ? {
                     sx: {
-                      position: isProjectForm ?'absolute':'relative',
+                      position: isProjectForm ? 'absolute' : 'relative',
                       top: '0px',
                     },
                   }
