@@ -67,7 +67,7 @@ const MainAppBar = styled(AppBar, {
 const StyledButton = styled(Button)(({ theme }) => ({
   display: 'flex',
   width: '96px',
-  height: '32px',
+  height: '20px',
   padding: '10px',
   justifyContent: 'center',
   alignItems: 'center',
@@ -171,6 +171,13 @@ const Header = ({ sidebarExpanded }) => {
             getTitleFromPathname(pathname)
           )}
         </Typography>
+        <Box display="flex" alignItems="center" ml="auto" gap="20px">
+          {pathname === '/allocation' && splitView ? (
+            <StyledButton variant="contained" onClick={handleSplitViewDone}>
+              Close
+            </StyledButton>
+          ) : null}
+        </Box>
       </Toolbar>
     </MainAppBar>
   );
