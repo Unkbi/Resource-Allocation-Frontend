@@ -745,35 +745,34 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     // dispatch(action({ startDate: startKey, endDate: endKey }));
   };
 
-  
-    const handleSaveView = () => {
-      if (selectedView === '0') {
-        // Default View is selected, open New View dialog
-        dispatch(
-          openDialog({
-            title: 'Save View',
-            submitButtonText: 'Next',
-            cancelButtonText: 'Cancel',
-            formType: 'new_view',
-            initialData: null,
-          })
-        );
-      } else {
-        dispatch(
-          openDialog({
-            title: currentView?.Name
-              ? `Save View - ${currentView?.Name}`
-              : 'Save View',
-            submitButtonText: 'Save',
-            secondaryButtonText: 'Save As',
-            cancelButtonText: 'Cancel',
-            formType: 'save_view',
-            initialData: null,
-          })
-        );
-      }
-    };
-  
+  const handleSaveView = () => {
+    if (selectedView === '0') {
+      // Default View is selected, open New View dialog
+      dispatch(
+        openDialog({
+          title: 'Save View',
+          submitButtonText: 'Next',
+          cancelButtonText: 'Cancel',
+          formType: 'new_view',
+          initialData: null,
+        })
+      );
+    } else {
+      dispatch(
+        openDialog({
+          title: currentView?.Name
+            ? `Save View - ${currentView?.Name}`
+            : 'Save View',
+          submitButtonText: 'Save',
+          secondaryButtonText: 'Save As',
+          cancelButtonText: 'Cancel',
+          formType: 'save_view',
+          initialData: null,
+        })
+      );
+    }
+  };
+
   const handleEditView = (e, savedViewData) => {
     e.stopPropagation();
     dispatch(
@@ -1768,7 +1767,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             disabled
             sx={{
               width: '41px',
-              height:'1px',
+              height: '1px',
               padding: '21px 12px 19px 12px',
               display: 'flex',
               justifyContent: 'center',
