@@ -1265,7 +1265,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     >
                       <span ref={myProjectsButtonRef}>
                         <MyProjectIcon
-                          color={
+                          customColor={
                             currentView?.MyProjects
                               ? '#5C6777'
                               : 'rgba(75, 85, 99, 0.30)'
@@ -1280,7 +1280,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     >
                       <span ref={myProjectsButtonRef}>
                         <AllProjectIcon
-                          color={
+                          customColor={
                             currentView?.MyProjects
                               ? 'rgba(75, 85, 99, 0.30)'
                               : '#5C6777'
