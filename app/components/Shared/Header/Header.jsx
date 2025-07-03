@@ -53,33 +53,6 @@ const MainAppBar = styled(AppBar, {
     color: '#FFF',
     letterSpacing: '-0.56px',
   },
-  // '& .searchBar': {
-  //   backgroundColor: '#FFFFFF',
-  //   border: '1px solid #D6DCE1',
-  //   boxShadow: '0 1px 0 0 #DDE1E4',
-  //   borderRadius: '4px',
-  //   width: '445px',
-  //   height: '33px',
-  //   transition: 'width 0.3s ease-in-out',
-  //   '& input': {
-  //     padding: '2px 10px',
-  //     fontSize: '12px',
-  //     color: '#757575',
-  //     width: '410px',
-  //     // height: "32px",
-  //     height: '30px',
-  //     boxSizing: 'border-box',
-  //     color: '#212121',
-  //   },
-  //   '& .MuiInputBase-adornedStart': {
-  //     display: 'flex',
-  //     flexDirection: 'row-reverse',
-  //   },
-  //   '& svg': {
-  //     width: '20px',
-  //     marginRight: '5px',
-  //   },
-  // },
   '& .toobarRow': {
     minHeight: '30px',
     paddingLeft: '15px',
@@ -141,25 +114,6 @@ const Header = ({ sidebarExpanded }) => {
     }
   }, [projects, resources]);
 
-  const handleAddMenuToggle = () => {
-    setOpenAddMenu(prevOpen => !prevOpen);
-  };
-  const handleClose = event => {
-    if (
-      anchorRef.current?.contains(event.target) ||
-      anchorRefAdd.current?.contains(event.target)
-    ) {
-      return;
-    }
-    setOpenAddMenu(false);
-  };
-
-  function handleListKeyDown(event) {
-    if (event.key === 'Tab' || event.key === 'Escape') {
-      event.preventDefault();
-      setOpenAddMenu(false);
-    }
-  }
 
   function handleSplitViewDone() {
     dispatch(setSplitView(false));
@@ -175,62 +129,6 @@ const Header = ({ sidebarExpanded }) => {
     }
     prevOpenAdd.current = openAddMenu;
   }, [openAddMenu]);
-
-  const menuItems = [
-    {
-      icon: '/images/icons/AllocationIcon.svg',
-      alt: 'Allocation Icon',
-      title: 'Update Allocation',
-      type: 'add_allocation',
-    },
-    {
-      icon: '/images/icons/ProjectIcon.svg',
-      alt: 'Project Icon',
-      title: 'Add Project',
-      type: 'add_project',
-      primarySecondButtonText: 'Add & Allocate Resources',
-      initialData: {
-        Status: 'Active',
-      },
-    },
-    {
-      icon: '/images/icons/TeamIcon.svg',
-      alt: 'Team Icon',
-      title: 'Add Team',
-      type: 'add_team',
-    },
-    {
-      icon: '/images/icons/ResourceIcon.svg',
-      alt: 'Resource Icon',
-      title: 'Add Resource',
-      type: 'add_resource',
-    },
-    {
-      icon: '/images/icons/corporate_fare.svg',
-      alt: 'Organization Icon',
-      title: 'Add Organization',
-      type: 'add_organization',
-    },
-  ];
-
-  const handleOpenDialog = (
-    title,
-    formType,
-    primarySecondButtonText,
-    initialData = null
-  ) => {
-    setOpenAddMenu(false);
-    dispatch(
-      openDialog({
-        title: title,
-        submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
-        cancelButtonText: 'Cancel',
-        primarySecondButtonText: primarySecondButtonText ?? '',
-        formType: formType,
-        initialData: initialData,
-      })
-    );
-  };
 
   const getTitleFromPathname = pathname => {
     switch (pathname) {
@@ -274,77 +172,6 @@ const Header = ({ sidebarExpanded }) => {
           )}
         </Typography>
       </Toolbar>
-
-      <Popper
-        open={openAddMenu}
-        anchorEl={anchorRefAdd.current}
-        role={undefined}
-        placement="bottom-start"
-        transition
-        disablePortal
-      >
-        {({ TransitionProps, placement }) => (
-          <Grow
-            {...TransitionProps}
-            style={{
-              transformOrigin:
-                placement === 'bottom-start' ? 'left top' : 'left bottom',
-            }}
-          >
-            <Paper
-              className="AddMenu"
-              sx={{
-                boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.06)',
-              }}
-            >
-              <ClickAwayListener onClickAway={handleClose}>
-                <MenuList
-                  autoFocusItem={openAddMenu}
-                  id="Add-menu"
-                  aria-labelledby="Add-button"
-                  onKeyDown={handleListKeyDown}
-                  sx={{
-                    gap: '8px',
-                    margin: ' 5px',
-                    paddingTop: '18px',
-                    paddingBottom: '12px',
-                  }}
-                >
-                  {menuItems.map((item, index) => (
-                    <MenuItem
-                      key={index}
-                      onClick={() =>
-                        handleOpenDialog(
-                          item.title,
-                          item.type,
-                          item?.primarySecondButtonText ?? '',
-                          item.initialData
-                        )
-                      }
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        paddingLeft: 2,
-                        paddingBottom: 2,
-                        gap: 1,
-                      }}
-                    >
-                      <img
-                        src={item.icon}
-                        alt={item.alt}
-                        width={20}
-                        style={{ marginRight: 8 }}
-                      />
-                      {item.title}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Grow>
-        )}
-      </Popper>
-      <AllocationForm />
     </MainAppBar>
   );
 };

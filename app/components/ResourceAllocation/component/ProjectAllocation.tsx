@@ -8,7 +8,7 @@ import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
 import {

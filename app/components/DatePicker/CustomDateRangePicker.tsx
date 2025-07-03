@@ -55,14 +55,29 @@ const CustomTextField = styled(TextField, {
 }));
 
 const StyledSingleInputDateRangeField = (isButton: boolean) => ({
-  height: isButton ? '32px' : '36px',
-  width: '100%',
+  width: '150px',
+  height: '40px',
+  flexShrink: 0,
+  borderRadius: '6px',
+  background: '#FFF',
+  border: '1px solid #E2E8F0',
+  color: '#374151',
+  fontFamily: '"Open Sans", sans-serif',
+  fontSize: '14px',
+  fontStyle: 'normal',
+  fontWeight: 500,
+  lineHeight: '20px',
+  marginBottom:'6px',
   '& .MuiInputBase-root': {
-    ...(isButton && { padding: '0px' }),
-    height: isButton ? '32px' : '36px',
-    fontSize: isButton ? '14px' : '12px',
-    fontWeight: isButton ? 600 : 500,
-    cursor: 'pointer',
+    height: '39px',
+    fontSize: '14px',
+    fontWeight: 500,
+    fontFamily: '"Open Sans", sans-serif',
+    color: '#374151',
+    paddingLeft: '0',
+    borderRadius: '6px',
+    background: '#FFF',
+
     '& input': {
       cursor: 'pointer',
       pointerEvents: isButton ? 'none' : 'auto',
@@ -104,6 +119,7 @@ interface CustomDateRangePickerProps {
   popperProps?: object;
   title?: string;
   isProjectForm?: boolean;
+  showCalendarIconOnlyHere?: boolean;
 }
 
 export default function CustomDateRangePicker({
@@ -122,6 +138,7 @@ export default function CustomDateRangePicker({
   popperProps = {},
   title,
   isProjectForm = false,
+  showCalendarIconOnlyHere = false,
 }: CustomDateRangePickerProps) {
   const { setFieldValue } = formikProps;
 
@@ -173,7 +190,14 @@ export default function CustomDateRangePicker({
             <StyledLabel>{title}</StyledLabel>
           </Box>
         )}
-        <Box sx={{ width: isButton ? '134px' : '100%' }}>
+        <Box
+          sx={{
+            width: isButton ? '134px' : '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
           <DateRangePicker
             calendars={1}
             displayWeekNumber
@@ -200,13 +224,18 @@ export default function CustomDateRangePicker({
                 error: error,
                 placeholder: placeholder,
                 sx: StyledSingleInputDateRangeField(isButton),
-                InputProps: !isButton
+                InputProps: showCalendarIconOnlyHere
                   ? {
-                      endAdornment: (
+                      startAdornment: (
                         <img
-                          src="/images/icons/calendar.svg"
+                          src="/images/icons/Calendaricon.svg"
                           alt="Calendar"
-                          style={{ width: '13px', height: '14.4px', cursor: 'pointer' }}
+                          style={{
+                            width: '16px',
+                            height: '16px',
+                            marginRight: '6px',
+                            marginLeft: '6px',
+                          }}
                         />
                       ),
                     }

@@ -6,7 +6,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import AllocationGrid from '../../AllocationTable/AllocationGrid';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Project } from '@/app/types';
