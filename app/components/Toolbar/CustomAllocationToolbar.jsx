@@ -1100,6 +1100,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               placement="bottom-start"
               transition
               disablePortal
+              modifiers={[
+                {
+                  name: 'offset',
+                  options: {
+                    offset: [0, 4], 
+                  },
+                },
+              ]}
             >
               {({ TransitionProps, placement }) => (
                 <Grow
