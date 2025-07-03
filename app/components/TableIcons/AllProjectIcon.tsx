@@ -6,13 +6,13 @@ interface AllProjectIconProps extends SvgIconProps {
 }
 
 const AllProjectIcon: React.FC<AllProjectIconProps> = ({
-  customColor = '#AEB5C1',
+  customColor = '#5C6777',
   fontSize = 'medium',
   ...props
 }) => {
   return (
     <SvgIcon {...props} fontSize={fontSize} viewBox="0 0 24 24">
-      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+      <g stroke="none" strokeWidth="1" fill="#5C6777" fillRule="evenodd">
         <g
           transform="translate(3, 3)"
           stroke={customColor}

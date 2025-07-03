@@ -410,7 +410,8 @@ export default function ActualsPage() {
             <Button
               variant="contained"
               sx={{
-              bgcolor: '#1C2D5F',
+                // @ts-ignore
+               bgcolor: theme => theme.palette.sideBarColor.main,
               px: 2,
               width: '192px',
               height: '36px',

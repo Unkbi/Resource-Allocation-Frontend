@@ -6,7 +6,7 @@ interface MyProjectIconProps extends SvgIconProps {
 }
 
 const MyProjectIcon: React.FC<MyProjectIconProps> = ({
-  customColor = '#344665',
+  customColor = '#5C6777',
   fontSize = 'medium',
   ...props
 }) => {
