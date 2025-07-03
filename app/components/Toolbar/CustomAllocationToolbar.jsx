@@ -1616,7 +1616,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </ToolBox2>
           <Box sx={{ borderLeft: '#DDE1E4 solid 1px', ml: '20px' }}></Box>
           <Box
-            sx={{ display: 'flex', alignItems: 'center', marginLeft: '22px',}}
+            sx={{ display: 'flex', alignItems: 'center', marginLeft: '22px' }}
           >
             <FormControlLabel
               control={
@@ -1643,7 +1643,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 </Typography>
               }
             />
-            <Box sx={{ display: 'flex', alignItems: 'center', }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <img src="/images/icons/InfoRounded.svg" alt="info" />
             </Box>
           </Box>
@@ -1714,7 +1714,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
             }}
           >
-            <img src="/images/icons/newShareIcon.svg" alt="filter" />
+            <img src="/images/icons/newShareIcon.svg" alt="share" />
           </IconButton>
 
           <GridToolbarContainer
@@ -1761,19 +1761,26 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             size="small"
             disabled
             sx={{
-              width: '40px',
-              height: '36px',
-              padding: '20px 12px 19px 12px',
+              width: '41px',
+              height:'1px',
+              padding: '21px 12px 19px 12px',
+              display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
               gap: '6px',
-              flexshrink: 0,
+              flexShrink: 0,
               borderRadius: '6px',
               border: '1px solid #E2E8F0',
               background: '#FFF',
+              boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
             }}
           >
-            <img src="/images/icons/newHistoryIcon.svg" alt="History" />
+            <img
+              src="/images/icons/newHistoryIcon(2).svg"
+              alt="History"
+              height="21px"
+              width="21px"
+            />
           </IconButton>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

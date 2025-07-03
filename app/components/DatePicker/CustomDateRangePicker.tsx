@@ -70,6 +70,7 @@ const StyledSingleInputDateRangeField = (isButton: boolean) => ({
   marginBottom:'6px',
   '& .MuiInputBase-root': {
     height: '39px',
+    width:'150px',
     fontSize: '14px',
     fontWeight: 500,
     fontFamily: '"Open Sans", sans-serif',
@@ -77,6 +78,7 @@ const StyledSingleInputDateRangeField = (isButton: boolean) => ({
     paddingLeft: '0',
     borderRadius: '6px',
     background: '#FFF',
+    gap:'8px',
 
     '& input': {
       cursor: 'pointer',
