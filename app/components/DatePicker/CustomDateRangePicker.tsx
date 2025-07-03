@@ -22,7 +22,7 @@ dayjs.extend(updateLocale);
 dayjs.updateLocale(DEFAULT_LOCALE, { weekStart: 1 });
 
 const CustomTextField = styled(TextField, {
-  shouldForwardProp: (prop) => prop !== 'error',
+  shouldForwardProp: prop => prop !== 'error',
 })<{ error?: boolean }>(({ theme, error }) => ({
   height: '36px',
   width: '160px',
@@ -144,8 +144,12 @@ export default function CustomDateRangePicker({
   const { setFieldValue } = formikProps;
 
   const selectedDate: [Dayjs | null, Dayjs | null] = [
-    value?.StartDate || value?.startDate ? dayjs(value?.StartDate || value?.startDate) : null,
-    value?.EndDate || value?.endDate ? dayjs(value?.EndDate || value?.endDate) : null,
+    value?.StartDate || value?.startDate
+      ? dayjs(value?.StartDate || value?.startDate)
+      : null,
+    value?.EndDate || value?.endDate
+      ? dayjs(value?.EndDate || value?.endDate)
+      : null,
   ];
 
   const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
@@ -185,7 +189,10 @@ export default function CustomDateRangePicker({
 
   return (
     <FormControl sx={isButton ? { width: '56%' } : {}} error={error} fullWidth>
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale={DEFAULT_LOCALE}
+      >
         {showLabel && (
           <Box sx={{ display: 'flex', flexDirection: 'row', gap: '122px' }}>
             <StyledLabel>{title}</StyledLabel>
@@ -203,7 +210,7 @@ export default function CustomDateRangePicker({
             calendars={1}
             displayWeekNumber
             value={selectedDate}
-            onChange={(newValue) => handleDateChange(newValue)}
+            onChange={newValue => handleDateChange(newValue)}
             localeText={{ start: '', end: '' }}
             format={format}
             slots={{ field: SingleInputDateRangeField }}
@@ -229,7 +236,7 @@ export default function CustomDateRangePicker({
                   ...(showCalendarIconOnlyHere && {
                     startAdornment: (
                       <img
-                        src="/images/icons/Calendaricon.svg"
+                        src="/images/icons/CalendarIcon.svg"
                         alt="Calendar"
                         style={{
                           width: '16px',
@@ -258,7 +265,7 @@ export default function CustomDateRangePicker({
               desktopPaper: customStyles
                 ? {
                     sx: {
-                      position: isProjectForm ?'absolute':'relative',
+                      position: isProjectForm ? 'absolute' : 'relative',
                       top: '0px',
                     },
                   }
