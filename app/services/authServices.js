@@ -7,12 +7,11 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      
       const response = await axiosInstance.post('/login', credentials);
       const data = response.data.result['authentication-result'];
       saveToken(data['id-token']);
       saveRefreshToken(data['refresh-token']);
-      return data; 
+      return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.reason || 'Login failed');
     }
@@ -20,18 +19,14 @@ export const loginUser = createAsyncThunk(
 );
 
 // Get User
-export const getUser = createAsyncThunk(
-  'auth/getUser',
-  async () => {
-    try {
-      const response = await axiosInstance.post('/get-user');
-      return response.data.result; 
-    } catch (error) {
-      return 'User not found'; 
-    }
+export const getUser = createAsyncThunk('auth/getUser', async () => {
+  try {
+    const response = await axiosInstance.post('/get-user');
+    return response.data.result;
+  } catch (error) {
+    return 'User not found';
   }
-);
-
+});
 
 export const signupUser = createAsyncThunk(
   'auth/signupUser',
@@ -57,7 +52,6 @@ export const confirmSignUp = createAsyncThunk(
   }
 );
 
-
 // Logout User
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
   clearToken();
@@ -69,9 +63,11 @@ export const forgotPassword = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/forgot-password', data);
-      return response; 
+      return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.reason || 'Failed to send reset link');
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to send reset link'
+      );
     }
   }
 );
@@ -80,10 +76,15 @@ export const confirmForgotPassword = createAsyncThunk(
   'auth/confirmForgotPassword',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/confirm-forgot-password', data);
+      const response = await axiosInstance.post(
+        '/confirm-forgot-password',
+        data
+      );
       return response.data.message;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.reason || 'Failed to reset password');
+      return rejectWithValue(
+        error.response?.data?.reason || 'Failed to reset password'
+      );
     }
   }
 );

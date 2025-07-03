@@ -26,6 +26,7 @@ import {
 import {
   fetchResourcesAgainstTeamsForSaga,
   fetchTeamAllocationsForSaga,
+  fetchTransferAllocationsForSaga,
 } from '@/app/services/teamServices';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
@@ -458,8 +459,38 @@ function* updateResourceAllocationsSaga(
   }
 }
 
+export function* TransferAllocationsSaga(
+  action: any
+): Generator<any, void, any> {
+  try {
+    yield put(setDataProcessing(true));
+    const { ResourceFrom, ResourceTo, StartDate, EndDate, resolve, reject } =
+      action.payload;
+    const postData = {
+      'ResourceAllocation.Core/TransferAllocations': {
+        ResourceFrom,
+        ResourceTo,
+        StartDate,
+        EndDate,
+      },
+    };
+    const response = yield call(fetchTransferAllocationsForSaga, postData);
+    if (response?.error) {
+      console.error('API returned error:', response.error);
+      if (reject) reject(response.error);
+    } else {
+      if (resolve) resolve(response);
+    }
+  } catch (error) {
+    console.error('Saga error: Failed to transfer allocations:', error);
+    if (action.payload.reject) action.payload.reject(error);
+  } finally {
+    yield put(setDataProcessing(false));
+  }
+}
+
 export function* allAllocationsSaga() {
-  yield takeLeading('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
+  yield takeLatest('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
   yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga); // This is for subsequent fetch. Ex : Date Shift.
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
@@ -470,4 +501,5 @@ export function* allAllocationsSaga() {
     'UPDATE_RESOURCE_ALLOCATIONS',
     updateResourceAllocationsSaga
   );
+  yield takeLatest('TRANSFER_ALLOCATIONS_RESOURCES', TransferAllocationsSaga);
 }

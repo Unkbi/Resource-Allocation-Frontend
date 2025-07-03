@@ -25,6 +25,7 @@ import {
   addTeamValidationSchema,
   addRatesValidationSchema,
   openHistoryValidationSchema,
+  addPortfolioValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -39,6 +40,7 @@ import {
   generateDateWeekMath,
   getUpdatedTotalWeeklyAllocation,
   isResourceWithinDate,
+  getMondayOfISO,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -68,7 +70,7 @@ import {
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { format, getWeek, parseISO } from 'date-fns';
+import { addDays, format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import {
   addResource,
@@ -101,6 +103,8 @@ import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { fetchHistory } from '@/app/services/allocationServices';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
+import { Description } from '@mui/icons-material';
+import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 
 const initialValuesMap = {
   add_project: {
@@ -165,6 +169,7 @@ const initialValuesMap = {
     WorkLocation: '',
     Status: '',
     ConfirmTransfer: false,
+    shouldTransfer: false,
   },
   add_allocation: {
     Resource: [],
@@ -240,6 +245,12 @@ const initialValuesMap = {
     Resource: '',
     Project: '',
   },
+  add_portfolio: {
+    Name: '',
+    Status: 'Active',
+    Description: '',
+    SidebarColor: '#000000',
+  },
 };
 
 const AllocationForm = () => {
@@ -268,6 +279,7 @@ const AllocationForm = () => {
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
   const [HistoryData, setHistoryData] = useState([]);
+  const { portfolios } = useSelector(state => state.portfolios);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -288,107 +300,6 @@ const AllocationForm = () => {
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
-  //   const HistoryData = [
-  //   {
-  //     id: "1",
-  //     userInitials: "AH",
-  //     userName: "Andrew Fard",
-  //     projectName: "Project Infinity",
-  //     weekNumber: 12,
-  //     date: "March 15, 2025",
-  //     timestamp: "15 minutes ago",
-  //     action: "Update",
-  //     fromVersion: "0.8",
-  //     toVersion: "0.5",
-  //     byUser: "Audrey Hepburn",
-  //   },
-  //   {
-  //     id: "2",
-  //     userInitials: "KR",
-  //     userName: "Bruno Mars",
-  //     projectName: "Project YML",
-  //     weekNumber: 13,
-  //     date: "March 15, 2025",
-  //     timestamp: "30 minutes ago",
-  //     action: "Deleted",
-  //     updatedTo: "0.8",
-  //     byUser: "Kacy Ryback",
-  //   },
-  //   {
-  //     id: "3",
-  //     userInitials: "TS",
-  //     userName: "Sheldon",
-  //     projectName: "Project Doom",
-  //     weekNumber: 13,
-  //     date: "March 15, 2025",
-  //     timestamp: "1 day ago",
-  //     action: "Created",
-  //     updatedTo: "0.5",
-  //     byUser: "Tom Sawyer",
-  //   },
-  //   {
-  //     id: "4",
-  //     userInitials: "JD",
-  //     userName: "John Doe",
-  //     projectName: "Project Alpha",
-  //     weekNumber: 11,
-  //     date: "March 14, 2025",
-  //     timestamp: "2 days ago",
-  //     action: "Update",
-  //     fromVersion: "1.0",
-  //     toVersion: "1.1",
-  //     byUser: "Jane Smith",
-  //   },
-  //   {
-  //     id: "5",
-  //     userInitials: "SM",
-  //     userName: "Sarah Miller",
-  //     projectName: "Project Beta",
-  //     weekNumber: 10,
-  //     date: "March 13, 2025",
-  //     timestamp: "3 days ago",
-  //     action: "Created",
-  //     updatedTo: "2.0",
-  //     byUser: "Mike Johnson",
-  //   },
-  //   {
-  //     id: "6",
-  //     userInitials: "AB",
-  //     userName: "Alex Brown",
-  //     projectName: "Project Gamma",
-  //     weekNumber: 9,
-  //     date: "March 12, 2025",
-  //     timestamp: "4 days ago",
-  //     action: "Deleted",
-  //     updatedTo: "1.5",
-  //     byUser: "Lisa Wilson",
-  //   },
-  //   {
-  //     id: "7",
-  //     userInitials: "MJ",
-  //     userName: "Mike Johnson",
-  //     projectName: "Project Delta",
-  //     weekNumber: 8,
-  //     date: "March 11, 2025",
-  //     timestamp: "5 days ago",
-  //     action: "Update",
-  //     fromVersion: "2.1",
-  //     toVersion: "2.2",
-  //     byUser: "Alex Brown",
-  //   },
-  //   {
-  //     id: "8",
-  //     userInitials: "LW",
-  //     userName: "Lisa Wilson",
-  //     projectName: "Project Epsilon",
-  //     weekNumber: 7,
-  //     date: "March 10, 2025",
-  //     timestamp: "6 days ago",
-  //     action: "Created",
-  //     updatedTo: "3.0",
-  //     byUser: "Sarah Miller",
-  //   },
-  // ]
   const [teamOrgData, setTeamOrgData] = useState({
     teamId: null,
     organisationId: null,
@@ -434,6 +345,11 @@ const AllocationForm = () => {
         return addRatesValidationSchema;
       case 'open_history':
         return openHistoryValidationSchema;
+      case 'add_portfolio':
+        return addPortfolioValidationSchema(portfolios);
+      case 'edit_portfolio':
+        return addPortfolioValidationSchema(portfolios, initialData.Name || '');
+
       default:
         return null;
     }
@@ -533,6 +449,7 @@ const AllocationForm = () => {
       submitType,
       Team,
       ConfirmTransfer,
+      shouldTransfer,
       ...cleanedValues
     } = values;
 
@@ -557,6 +474,10 @@ const AllocationForm = () => {
               cleanedValues.ProjectManager === ''
                 ? null
                 : cleanedValues.ProjectManager,
+            PortfolioId:
+              cleanedValues.PortfolioId === ''
+                ? null
+                : cleanedValues.PortfolioId,
           },
         };
         try {
@@ -632,7 +553,7 @@ const AllocationForm = () => {
         try {
           dispatch(updateProject({ postData, projectId: initialData.Id })).then(
             async response => {
-             if (response.meta.requestStatus === 'fulfilled') {
+              if (response.meta.requestStatus === 'fulfilled') {
                 dispatch(
                   showToast({
                     open: true,
@@ -820,10 +741,76 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': cleanedValues,
+          'ResourceAllocation.Core/Resource': {
+            ...cleanedValues,
+            EndDate:
+              cleanedValues.EndDate === undefined ||
+              cleanedValues.EndDate === ''
+                ? null
+                : cleanedValues.EndDate,
+          },
         };
 
         try {
+          const selectedTeam = teams.result.find(
+            team => team.Id === values.Team
+          );
+          let teamAllocationManagerId = null;
+          if (selectedTeam?.AllocationManager) {
+            const raw = selectedTeam.AllocationManager;
+            teamAllocationManagerId = raw.includes(',')
+              ? raw.split(',')[1]
+              : raw;
+          }
+          if (!teamAllocationManagerId) {
+            console.warn(
+              'No Allocation Manager found for selected team:',
+              values.Team
+            );
+          }
+          if (values.shouldTransfer === true) {
+            try {
+              await new Promise((resolve, reject) => {
+                dispatch({
+                  type: 'TRANSFER_ALLOCATIONS_RESOURCES',
+                  payload: {
+                    ResourceFrom: initialData.Id,
+                    ResourceTo: teamAllocationManagerId,
+                    StartDate: format(
+                      addDays(
+                        parseISO(getMondayOfISO(cleanedValues.EndDate)),
+                        7
+                      ),
+                      DATE_FORMAT
+                    ),
+                    EndDate: '2099-06-30',
+                    resolve,
+                    reject,
+                  },
+                });
+              });
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Allocations transferred successfully!',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            } catch (error) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to transfer allocations. Please try again.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return;
+            }
+          }
           await dispatch(
             updateResource({
               postData,
@@ -864,7 +851,6 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
-          // await dispatch(fetchAllResources());
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
@@ -1624,7 +1610,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const postData = {
+        postData = {
           ...cleanedValues,
         };
 
@@ -1674,7 +1660,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const updatedFields = {
+        let updatedFields = {
           ...cleanedValues,
           WorkLocation: cleanedValues.WorkLocation,
           HRLevel: cleanedValues.HRLevel,
@@ -1722,14 +1708,105 @@ const AllocationForm = () => {
           });
 
         break;
-      case 'open_history':
-        // setFormValue({
-        //   StartDate: initialData.StartDate || '',
-        //   EndDate: initialData.EndDate || '',
-        //   Resource: initialData.Resource || [],
-        //   Project: initialData.Project || [],
-        // });
+      case 'add_portfolio':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        postData = {
+          ...cleanedValues,
+        };
+
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'CREATE_PORTFOLIOS',
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Portfolio added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to add portfolio:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add portfolio.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+
         break;
+
+      case 'edit_portfolio': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = { ...cleanedValues };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: 'UPDATE_PORTFOLIOS',
+              payload: {
+                id: initialData?.Id,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Portfolio updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.Id));
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update portfolio:', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update portfolio.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+
+        break;
+      }
+
       default:
         return;
     }
@@ -1929,133 +2006,136 @@ const AllocationForm = () => {
 
       const fetchHistoryData = async () => {
         try {
+          setHistoryData([]);
           const response = await fetchHistory(initialData);
           if (response?.error) {
             console.error('Failed to fetch history:', response.error);
             return;
           }
-          
+
           const formattedHistory = [];
-            (response.result || [])
+          (response.result || [])
             .filter(
               item =>
-              Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
+                Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
             )
             .forEach((item, idx) => {
               const {
-              ResourceName,
-              ProjectName,
-              Period,
-              AllocationEntered,
-              ChangesLog = [],
-              AllocationId,
+                ResourceName,
+                ProjectName,
+                Period,
+                AllocationEntered,
+                ChangesLog = [],
+                AllocationId,
               } = item;
 
               // Helper functions
               const getUserInitials = email => {
-              if (!email) return '';
-              const [name] = email.split('@');
-              const parts = name.split(/[.\s_]/);
-              return parts
-                .map(p => p[0]?.toUpperCase())
-                .join('')
-                .slice(0, 2);
+                if (!email) return '';
+                const [name] = email.split('@');
+                const parts = name.split(/[.\s_]/);
+                return parts
+                  .map(p => p[0]?.toUpperCase())
+                  .join('')
+                  .slice(0, 2);
               };
               const getUserName = email => {
-              if (!email) return '';
-              const [name] = email.split('@');
-              return name
-                .split(/[.\s_]/)
-                .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-                .join(' ');
+                if (!email) return '';
+                const [name] = email.split('@');
+                return name
+                  .split(/[.\s_]/)
+                  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+                  .join(' ');
               };
               const getDateString = ts => {
-              if (!ts) return '';
-              const date = new Date(ts);
-              return date
-                .toLocaleDateString('en-US', {
-                month: 'short',
-                day: '2-digit',
-                year: 'numeric',
-                })
-                .replace(/ /g, ' ');
+                if (!ts) return '';
+                const date = new Date(ts);
+                return date
+                  .toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric',
+                  })
+                  .replace(/ /g, ' ');
               };
               const getRelativeTime = ts => {
-              if (!ts) return '';
-              const now = Date.now();
-              const diff = now - ts * 1000;
-              const min = Math.floor(diff / 60000);
-              if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
-              const hr = Math.floor(min / 60);
-              if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
-              const day = Math.floor(hr / 24);
-              return `${day} day${day === 1 ? '' : 's'} ago`;
+                if (!ts) return '';
+                const now = Date.now();
+                const diff = now - ts * 1000;
+                const min = Math.floor(diff / 60000);
+                if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+                const hr = Math.floor(min / 60);
+                if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+                const day = Math.floor(hr / 24);
+                return `${day} day${day === 1 ? '' : 's'} ago`;
               };
 
               // Calculate week number from Period
               let weekNumber = '';
               if (Period) {
-              const d = new Date(Period);
-              if (!isNaN(d)) {
-                const temp = new Date(d.getTime());
-                temp.setHours(0, 0, 0, 0);
-                temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                const yearStart = new Date(temp.getFullYear(), 0, 1);
-                weekNumber = Math.ceil(
-                ((temp - yearStart) / 86400000 + 1) / 7
-                );
-              }
+                const d = new Date(Period);
+                if (!isNaN(d)) {
+                  const temp = new Date(d.getTime());
+                  temp.setHours(0, 0, 0, 0);
+                  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+                  const yearStart = new Date(temp.getFullYear(), 0, 1);
+                  weekNumber = Math.ceil(
+                    ((temp - yearStart) / 86400000 + 1) / 7
+                  );
+                }
               }
 
               // For each change log, create a history entry
               ChangesLog.forEach((log, logIdx) => {
-              let action = '';
-              let fromVersion = '';
-              let toVersion = '';
+                let action = '';
+                let fromVersion = '';
+                let toVersion = '';
 
-              // Find the next log entry if it exists
-              const nextLog = ChangesLog[logIdx + 1];
+                // Find the next log entry if it exists
+                const nextLog = ChangesLog[logIdx + 1];
 
-              if (log.Action?.toLowerCase() === 'create') {
-                action = 'Created';
-                fromVersion = log.AllocationEnteredLast ?? '';
-                toVersion = nextLog
-                ? (nextLog.AllocationEnteredLast ?? '')
-                : (AllocationEntered ?? '');
-              } else if (log.Action?.toLowerCase() === 'update') {
-                action = 'Update';
-                fromVersion = log.AllocationEnteredLast ?? '';
-                toVersion = nextLog
-                ? (nextLog.AllocationEnteredLast ?? '')
-                : (AllocationEntered ?? '');
-              } else if (log.Action?.toLowerCase() === 'delete') {
-                action = 'Deleted';
-                fromVersion = log.AllocationEnteredLast ?? '';
-                toVersion = '';
-              } else {
-                action = log.Action;
-              }
+                if (log.Action?.toLowerCase() === 'create') {
+                  action = 'Created';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = nextLog
+                    ? (nextLog.AllocationEnteredLast ?? '')
+                    : (AllocationEntered ?? '');
+                } else if (log.Action?.toLowerCase() === 'update') {
+                  action = 'Update';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = nextLog
+                    ? (nextLog.AllocationEnteredLast ?? '')
+                    : (AllocationEntered ?? '');
+                } else if (log.Action?.toLowerCase() === 'delete') {
+                  action = 'Deleted';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = '';
+                } else {
+                  action = log.Action;
+                }
 
-              formattedHistory.push({
-                id: `${AllocationId || idx + 1}-${logIdx + 1}`,
-                userInitials: getUserInitials(ResourceName),
-                userName: getUserName(ResourceName),
-                projectName: ProjectName,
-                weekNumber: weekNumber ? Number(weekNumber) : undefined,
-                date: getDateString(Period),
-                timestamp: getRelativeTime(log.Timestamp),
-                action,
-                fromVersion:
-                fromVersion !== undefined ? String(fromVersion) : '',
-                toVersion: toVersion !== undefined ? String(toVersion) : '',
-                byUser: getUserName(log.User),
-                _timestampRaw: log.Timestamp, // Add raw timestamp for sorting
-              });
+                formattedHistory.push({
+                  id: `${AllocationId || idx + 1}-${logIdx + 1}`,
+                  userInitials: getUserInitials(ResourceName),
+                  userName: getUserName(ResourceName),
+                  projectName: ProjectName,
+                  weekNumber: weekNumber ? Number(weekNumber) : undefined,
+                  date: getDateString(Period),
+                  timestamp: getRelativeTime(log.Timestamp),
+                  action,
+                  fromVersion:
+                    fromVersion !== undefined ? String(fromVersion) : '',
+                  toVersion: toVersion !== undefined ? String(toVersion) : '',
+                  byUser: getUserName(log.User),
+                  _timestampRaw: log.Timestamp, // Add raw timestamp for sorting
+                });
               });
             });
 
-            // Sort by _timestampRaw descending (latest first)
-            formattedHistory.sort((a, b) => (b._timestampRaw || 0) - (a._timestampRaw || 0));
+          // Sort by _timestampRaw descending (latest first)
+          formattedHistory.sort(
+            (a, b) => (b._timestampRaw || 0) - (a._timestampRaw || 0)
+          );
 
           progressivelyLoadHistory(formattedHistory);
         } catch (error) {
@@ -2150,6 +2230,20 @@ const AllocationForm = () => {
             formikProps={formikProps}
             setFormValue={setFormValue}
             historyData={HistoryData}
+          />
+        );
+      case 'add_portfolio':
+        return (
+          <AddPortfolioForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_portfolio':
+        return (
+          <AddPortfolioForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
           />
         );
       default:
