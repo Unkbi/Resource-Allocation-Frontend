@@ -94,6 +94,8 @@ import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 import CloseIcon from '@mui/icons-material/Close';
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
 import AllocationForm from '../AllocationTable/components/AllocationForm';
+import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
+import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -132,13 +134,13 @@ const ToolBox1 = styled(Box)(({ theme }) => ({
     },
   },
   '& .projectDropdown': {
-    color: '#374151',
+    color: '#5D6979',
     fontFamily: theme.typography.fontFamily,
     fontWeight: '700',
     fontSize: '14px',
     borderRadius: '10px',
     height: '40px',
-    marginTop: '10.5px',
+    marginTop: '11px',
     width: 'auto',
     '& .MuiSelect-select': {
       paddingLeft: '0',
@@ -298,7 +300,6 @@ const StyledSelect = styled(Select)(({ theme }) => ({
     padding: '6px 12px',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
   },
   '& .MuiOutlinedInput-notchedOutline': {
     border: 'none',
@@ -363,7 +364,7 @@ const MenuItemContent = styled(Box)({
 const ViewButton = styled(Button)(({ theme }) => ({
   borderRadius: '8px',
   display: 'flex',
-  minWidth: '148px',
+  width: '168px',
   height: '40px',
   marginLeft: '6px',
   justifyContent: 'center',
@@ -375,7 +376,7 @@ const ViewButton = styled(Button)(({ theme }) => ({
   background: '#FFF',
   textTransform: 'none',
   marginTop: '2px',
-  color:' #344665',
+  color: '#5D6979',
   '&:hover': {
     backgroundColor: '#f9fcff',
   },
@@ -556,7 +557,7 @@ const DeleteActionIcon = () => (
 );
 
 const PreferencesIcon = () => (
-  <img src="/images/icons/preferences.svg" alt="preferences" />
+  <img src="/images/icons/newPreferences.svg" style={{width:'20px',height:'20px'}} alt="preferences" />
 );
 
 const ShareIcon = () => (
@@ -564,19 +565,11 @@ const ShareIcon = () => (
 );
 
 const HistoryIcon = () => (
-  <img src="/images/icons/HistoryButton.svg" alt="share" />
-);
-
-const MyTeamsIcon = () => (
-  <img src="/images/icons/newTeamIcon.svg" alt="share" />
-);
-
-const MyAllTeamsIcon = () => (
-  <img src="/images/icons/newAllTeamIcon.svg" alt="share" />
+  <img src="/images/icons/HistoryButton.svg" alt="history" />
 );
 
 const TeamsCostIcon =() => (
-    <img src= "images/icons/teamsCostIcon.svg" alt="teams cost"/>
+  <img src= "images/icons/teamsCostIcon.svg" alt="teams cost"/>
 )
 
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
@@ -610,7 +603,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
-
+  
   const handleViewClick = event => {
     setAnchorEl(event.currentTarget);
   };
@@ -1201,17 +1194,17 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 renderValue={selected => (
                   <MenuItemContent>
                     {selected === 'Projects' ? (
-                      <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />
+                      <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />
                     ) : selected === 'Teams' ? (
-                      <PeopleIcon sx={{ fontSize: 20, color: '#344665' }} />
+                      <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />
                     ) : (
                       <MonetizationOnIcon
-                        sx={{ fontSize: 20, color: '#344665' }}
+                        sx={{ fontSize: 20, color: '#5D6979' }}
                       />
                     )}
                     <Typography
                       sx={{
-                        color: '#374151',
+                        color: '#5D6979',
                         fontFamily: 'Open Sans',
                         fontSize: '14px',
                         fontStyle: 'normal',
@@ -1271,7 +1264,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       <span ref={myProjectsButtonRef}>
                         <MyProjectIcon
                           color={
-                            currentView?.MyProjects ? '#344665' : '#99A2B2'
+                            currentView?.MyProjects
+                              ? '#5C6777'
+                              : 'rgba(75, 85, 99, 0.30)'
                           }
                         />
                       </span>
@@ -1284,7 +1279,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       <span ref={myProjectsButtonRef}>
                         <AllProjectIcon
                           color={
-                            currentView?.MyProjects ? '#99A2B2' : '#344665'
+                            currentView?.MyProjects
+                              ? 'rgba(75, 85, 99, 0.30)'
+                              : '#5C6777'
                           }
                         />
                       </span>
@@ -1327,8 +1324,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     >
                       <span ref={myTeamsButtonRef}>
                         <MyTeamsIcon
-                          sx={{ width: 18, height: 18 }}
-                          color={currentView?.MyTeam ? '#344665' : '#99A2B2'}
+                          sx={{ width: 15, height: 15 }}
+                          color={
+                            currentView?.MyTeam
+                              ? '#5C6777'
+                              : 'rgba(75, 85, 99, 0.30)'
+                          }
                         />
                       </span>
                     </TooltipButton>
@@ -1339,7 +1340,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     >
                       <span ref={myTeamsButtonRef}>
                         <MyAllTeamsIcon
-                          color={currentView?.MyTeam ? '#99A2B2' : '#344665'}
+                          sx={{ width: 22, height: 22 }}
+                          color={
+                            currentView?.MyTeam
+                              ? 'rgba(75, 85, 99, 0.30)'
+                              : '#5C6777'
+                          }
                         />
                       </span>
                     </TooltipButton>

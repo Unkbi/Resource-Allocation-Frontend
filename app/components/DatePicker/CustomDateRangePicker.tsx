@@ -55,30 +55,29 @@ const CustomTextField = styled(TextField, {
 }));
 
 const StyledSingleInputDateRangeField = (isButton: boolean) => ({
-  width: '150px',
-  height: '40px',
-  flexShrink: 0,
+  height: isButton ? '40px' : '32px',
+  width: '100%',
   borderRadius: '6px',
   background: '#FFF',
-  border: '1px solid #E2E8F0',
   color: '#374151',
   fontFamily: '"Open Sans", sans-serif',
-  fontSize: '14px',
+  fontSize: isButton ? '14px' : '12px',
   fontStyle: 'normal',
-  fontWeight: 500,
+  fontWeight: isButton ? 600 : 500,
   lineHeight: '20px',
-  marginBottom:'6px',
+  marginBottom: '6px',
+
   '& .MuiInputBase-root': {
-    height: '39px',
-    width:'150px',
-    fontSize: '14px',
-    fontWeight: 500,
+    height: isButton ? '39px' : '36px',
+    width: isButton ? '150px' : '100%',
+    fontSize: isButton ? '14px' : '12px',
+    fontWeight: isButton ? 500 : 400,
     fontFamily: '"Open Sans", sans-serif',
     color: '#374151',
-    paddingLeft: '0',
-    borderRadius: '6px',
     background: '#FFF',
-    gap:'8px',
+    borderRadius: '6px',
+    gap: '8px',
+    ...(isButton && { padding: '0px' }),
 
     '& input': {
       cursor: 'pointer',
@@ -226,22 +225,35 @@ export default function CustomDateRangePicker({
                 error: error,
                 placeholder: placeholder,
                 sx: StyledSingleInputDateRangeField(isButton),
-                InputProps: showCalendarIconOnlyHere
-                  ? {
-                      startAdornment: (
-                        <img
-                          src="/images/icons/Calendaricon.svg"
-                          alt="Calendar"
-                          style={{
-                            width: '16px',
-                            height: '16px',
-                            marginRight: '6px',
-                            marginLeft: '6px',
-                          }}
-                        />
-                      ),
-                    }
-                  : undefined,
+                InputProps: {
+                  ...(showCalendarIconOnlyHere && {
+                    startAdornment: (
+                      <img
+                        src="/images/icons/Calendaricon.svg"
+                        alt="Calendar"
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          marginRight: '6px',
+                          marginLeft: '6px',
+                        }}
+                      />
+                    ),
+                  }),
+                  ...(!isButton && {
+                    endAdornment: (
+                      <img
+                        src="/images/icons/calendar.svg"
+                        alt="Calendar"
+                        style={{
+                          width: '13px',
+                          height: '14.4px',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ),
+                  }),
+                },
               },
               desktopPaper: customStyles
                 ? {

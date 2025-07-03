@@ -8,7 +8,7 @@ const AllProjectIcon = ({
 }) => {
   return (
     <SvgIcon {...props} fontSize={fontSize} viewBox="0 0 24 24">
-      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+      <g stroke="none" strokeWidth="1" fill="#5C6777" fillRule="evenodd">
         <g
           transform="translate(3, 3)"
           stroke={color}

@@ -2,7 +2,7 @@ import React from 'react';
 import { SvgIcon } from '@mui/material';
 
 const MyProjectIcon = ({
-  color = '#344665',
+  color = '#5C6777',
   fontSize = 'medium',
   ...props
 }) => {
