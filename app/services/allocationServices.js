@@ -178,22 +178,12 @@ export const bulkDeleteAllocations = async postData => {
 };
 
 export const fetchHistory = async payload => {
-
   let response;
-  if (Object.keys(payload).includes('Project')) {
-    response = await axiosInstance.post(
-      `${API_PROJECT_PORTFOLIO}/GetAllocationHistory`,
-      {
-        'ResourceAllocation.Core/GetAllocationHistory': payload,
-      }
-    );
-  } else {
-    response = await axiosInstance.post(
-      `${API_PROJECT_PORTFOLIO}/GetAllocationHistoryAllProjects`,
-      {
-        'ResourceAllocation.Core/GetAllocationHistoryAllProjects': payload,
-      }
-    );
-  }
+  response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/GetAllocationHistory`,
+    {
+      'ResourceAllocation.Core/GetAllocationHistory': payload,
+    }
+  );
   return response.data;
 };

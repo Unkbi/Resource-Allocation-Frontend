@@ -27,6 +27,7 @@ import AllocationForm from '../../AllocationTable/components/AllocationForm';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import Skeleton from '@mui/material/Skeleton';
+import HistoryIcon from '@mui/icons-material/History';
 import {
   COMPANY_DEFAULT_VIEW,
   setSplitView,
@@ -107,6 +108,7 @@ const Header = ({ sidebarExpanded }) => {
   const { resources } = useSelector(state => state.resources);
   const { user } = useSelector(state => state.user);
   const { splitView } = useSelector(state => state.allocationView);
+  const { calendarDate } = useSelector(state => state.allAllocations);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
@@ -114,6 +116,7 @@ const Header = ({ sidebarExpanded }) => {
   const dispatch = useDispatch();
   const [displayName, setDisplayName] = useState('');
   const [loadingName, setLoadingName] = useState(true);
+  const { startDate, endDate } = calendarDate || {};
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -210,6 +213,18 @@ const Header = ({ sidebarExpanded }) => {
       alt: 'Organization Icon',
       title: 'Add Organization',
       type: 'add_organization',
+    },
+    {
+      icon: <HistoryIcon size="small" sx={{width:'20px', marginRight: 1}} />,
+      alt: 'History Icon',
+      title: 'View History',
+      type: 'open_history',
+      initialData: {
+        Resource: null,
+        Project: null,
+        StartDate: startDate,
+        EndDate: endDate,
+      },
     },
   ];
 
@@ -381,12 +396,16 @@ const Header = ({ sidebarExpanded }) => {
                         gap: 1,
                       }}
                     >
-                      <img
-                        src={item.icon}
-                        alt={item.alt}
-                        width={20}
-                        style={{ marginRight: 8 }}
-                      />
+                      {item.type === 'open_history' ? (
+                        item.icon
+                      ) : (
+                        <img
+                          src={item.icon}
+                          alt={item.alt}
+                          width={20}
+                          style={{ marginRight: 8 }}
+                        />
+                      )}
                       {item.title}
                     </MenuItem>
                   ))}

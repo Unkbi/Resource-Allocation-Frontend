@@ -564,6 +564,7 @@ export const getFinalColumns = (
           Resource: allResources.find(
             resource => resource.FullName === params.value
           )?.Id || '',
+          Project: null,
           StartDate: startDate,
           EndDate: endDate,
         },

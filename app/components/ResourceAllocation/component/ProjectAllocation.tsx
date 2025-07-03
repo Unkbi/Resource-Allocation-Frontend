@@ -30,6 +30,7 @@ import Typography from '@mui/material/Typography';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EditIcon from '@mui/icons-material/Edit';
+import HistoryIcon from '@mui/icons-material/History';
 import { styled } from '@mui/material/styles';
 import {
   IconButton,
@@ -62,7 +63,7 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: 4,
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
-    width: '150px',
+    // width: '150px',
   },
 }));
 
@@ -227,8 +228,8 @@ export default function ProjectAllocation({
           ...COMPANY_DEFAULT_VIEW,
           isDynamicRange: false,
           isFixedRange: true,
-          StartDate: startRange,
-          EndDate: endRange,
+          StartDate: startDate,
+          EndDate: endDate,
           WeekPlus: weekPlus,
           WeekMinus: weekMinus,
         })
@@ -236,6 +237,27 @@ export default function ProjectAllocation({
     }
     router.replace('/allocation');
   };
+
+  const handleOpenHistory = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
+    );
+
+      dispatch(
+        openDialog({
+          title: 'Allocation History',
+          cancelButtonText: 'View All History',
+          formType: 'open_history',
+          initialData:{
+            Resource: null,
+            Project: data[0].Id,
+            StartDate: startDate,
+            EndDate: endDate,
+          },
+        })
+      );
+    };
+
 
   const getFirstChild = (params: GridCellParams) => {
     const { rowNode, api } = params;
@@ -821,7 +843,7 @@ export default function ProjectAllocation({
             <PersonAddIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            primary={<Typography variant="body2">Add Resource</Typography>}
+            primary={<Typography variant="body2">Find and Add Resource</Typography>}
           />
         </StyledMenuItem>
         <StyledMenuItem
@@ -835,6 +857,19 @@ export default function ProjectAllocation({
           </ListItemIcon>
           <ListItemText
             primary={<Typography variant="body2">Edit Project</Typography>}
+          />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleOpenHistory({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <HistoryIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={<Typography variant="body2">History</Typography>}
           />
         </StyledMenuItem>
       </StyledMenu>
