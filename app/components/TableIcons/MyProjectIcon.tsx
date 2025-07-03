@@ -1,8 +1,12 @@
 import React from 'react';
-import { SvgIcon } from '@mui/material';
+import { SvgIcon, SvgIconProps } from '@mui/material';
 
-const MyProjectIcon = ({
-  color = '#5C6777',
+interface MyProjectIconProps extends SvgIconProps {
+  customColor?: string;
+}
+
+const MyProjectIcon: React.FC<MyProjectIconProps> = ({
+  customColor = '#5C6777',
   fontSize = 'medium',
   ...props
 }) => {
@@ -11,7 +15,7 @@ const MyProjectIcon = ({
       <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
         <g
           transform="translate(5, 3)"
-          stroke={color}
+          stroke={customColor}
           strokeLinecap="round"
           strokeWidth="1.4"
         >
@@ -24,7 +28,7 @@ const MyProjectIcon = ({
             y1="11"
             x2="9"
             y2="11"
-            stroke={color}
+            stroke={customColor}
             strokeWidth="1.4"
           />
         </g>

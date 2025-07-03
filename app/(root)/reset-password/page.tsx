@@ -1,20 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { RootState, AppDispatch } from '@/app/redux/store';
 import {
     Box,
     Typography,
     TextField,
     Button,
     Link,
-    InputAdornment,
-    IconButton,
     CircularProgress,
     styled,
+    InputAdornment,
+    IconButton
 } from '@mui/material';
-import { signUp } from '@/app/redux/actions/authActions';
+import { performResetPassword } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -114,7 +115,6 @@ const MainBox = styled(Box)(({ theme }) => ({
         },
         "& .orText": {
             fontFamily: theme.typography.fontFamily,
-            fontWeight: "700",
             color: "#757575",
             fontSize: "15px",
             fontWeight: "700",
@@ -127,7 +127,6 @@ const MainBox = styled(Box)(({ theme }) => ({
                 background: "#fff"
             },
             "&::before": {
-                background: "rgb(255,255,255)",
                 background: "linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)",
                 width: "100%",
                 height: "1px",
@@ -171,54 +170,53 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-export default function SingupPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [mobile, setMobile] = useState('');
+export default function ResetPasswordPageWrapper() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <RestPasswordPage />
+        </Suspense>
+    );
+}
 
-    const dispatch = useDispatch();
-    const { loading, user, signupData, error } = useSelector((state) => state.user);
+function RestPasswordPage() {
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const router = useRouter();
+    const dispatch: AppDispatch = useDispatch();
+    const { loading, error, resetPasswordMessage } = useSelector((state: RootState) => state.user);
+    const searchParams = useSearchParams();
+    const username = searchParams.get('username');
+    const code = searchParams.get('code');
 
-    const [showPassword, setShowPassword] = React.useState(false);
-
-    const handleSignup = async (e) => {
+    const handleResetPassword = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!firstName || !lastName || !email || !password || !mobile) {
+        if (newPassword !== confirmPassword) {
+            setErrorMessage('Passwords do not match');
             return;
         }
-        dispatch(signUp({
-            'Agentlang.Kernel.Identity/SignUp': {
-                'User': {
-                    'Agentlang.Kernel.Identity/User': {
-                        Name: `${firstName} ${lastName}`,
-                        FirstName: firstName,
-                        LastName: lastName,
-                        Email: email,
-                        UserData: {
-                            PhoneNumber: mobile
-                        },
-                        Password: password
-                    }
-                }
+        dispatch(performResetPassword({
+            'Agentlang.Kernel.Identity/ConfirmForgotPassword': {
+                Password: newPassword,
+                Username: username,
+                ConfirmationCode: code
             }
-        }, email));
+        })).then((response) => {
+            console.log('Password reset successful:', response);
+        });
+
+        setNewPassword('');
+        setConfirmPassword('');
+        setErrorMessage('');
     };
 
-    useEffect(() => {
-        if (user) {
-            router.push('/dashboard');
-        }
-    }, [user, router]);
+    const handleToggleNewPassword = () => setShowNewPassword((prev) => !prev);
+    const handleToggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
 
-    const handleTogglePassword = () => {
-        setShowPassword((prev) => !prev);
-    };
-
-    if (signupData && !error) {
-        router.push('/signup-otp');
+    if (resetPasswordMessage && !error) {
+        router.push('/login');
     }
 
     return (
@@ -236,78 +234,63 @@ export default function SingupPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Create an Account
+                            Reset Password
                         </Typography>
-                        <Typography className='subHeadingText'>
-                            Please enter your details
+                        <Typography className='subHeadingText' whiteSpace={'nowrap'}>
+                            Your new password must be different from previous one
                         </Typography>
                         <Box
                             component="form"
-                            onSubmit={handleSignup}
+                            onSubmit={handleResetPassword}
                         >
                             <TextField
                                 className='textField'
-                                id="outlined-basic"
-                                placeholder="First Name"
                                 variant="outlined"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Last Name"
-                                variant="outlined"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Mobile Number"
-                                variant="outlined"
-                                type='tel'
-                                value={mobile}
-                                onChange={(e) => setMobile(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                id="outlined-basic"
-                                placeholder="Email Id"
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
-                                variant="outlined"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                            <TextField
-                                className='textField'
-                                variant="outlined"
-                                placeholder="Password"
-                                type={showPassword ? "text" : "password"}
-                                InputLabelProps={{
-                                    shrink: false
-                                }}
+                                placeholder="New Password"
+                                type={showNewPassword ? "text" : "password"}
                                 fullWidth
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton onClick={handleTogglePassword} edge="end">
-                                                {showPassword ? <img src={"/images/icons/eye-on.svg"} alt='eye-on' /> : <img src={"/images/icons/eye-off.svg"} alt='eye-off' />}
+                                            <IconButton onClick={handleToggleNewPassword} edge="end">
+                                                {showNewPassword ? (
+                                                    <img src={"/images/icons/eye-on.svg"} alt='eye-on' />
+                                                ) : (
+                                                    <img src={"/images/icons/eye-off.svg"} alt='eye-off' />
+                                                )}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
                                 }}
                             />
-                            {error && (
-                                <Typography
-                                    variant="body2"
-                                    color="error"
-                                >
-                                    {error}
+
+                            <TextField
+                                className='textField'
+                                variant="outlined"
+                                placeholder="Confirm Password"
+                                type={showConfirmPassword ? "text" : "password"}
+                                fullWidth
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={handleToggleConfirmPassword} edge="end">
+                                                {showConfirmPassword ? (
+                                                    <img src={"/images/icons/eye-on.svg"} alt='eye-on' />
+                                                ) : (
+                                                    <img src={"/images/icons/eye-off.svg"} alt='eye-off' />
+                                                )}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            {errorMessage && (
+                                <Typography variant="body2" color="error" sx={{ mb: 2 }}>
+                                    {errorMessage}
                                 </Typography>
                             )}
                             <Button
@@ -319,18 +302,31 @@ export default function SingupPage() {
                                 sx={{ mt: 2 }}
                                 className='signInButton'
                             >
-                                {loading ? <CircularProgress size={24} /> : 'Sign up'}
+                                {loading ? <CircularProgress size={24} /> : 'Reset Password'}
                             </Button>
                         </Box>
-                        <Typography className='noAccount'>
-                            Already have an account?{' '}
-                            <Link href="/login" underline="hover" color="primary">
-                                Sign in
-                            </Link>
-                        </Typography>
+
                     </Box>
                 </Box>
             </Box>
+            {resetPasswordMessage && !error && (
+                <Typography
+                    variant="body2"
+                    color="success"
+                    sx={{ position: 'absolute', bottom: '150px', left: '50%', transform: 'translateX(-50%)' }}
+                >
+                    Password reset successfully! You can now log in with your new password.
+                </Typography>
+            )}
+            {error && (
+                <Typography
+                    variant="body2"
+                    color="error"
+                    sx={{ position: 'absolute', bottom: '150px', left: '50%', transform: 'translateX(-50%)' }}
+                >
+                    {error}
+                </Typography>
+            )}
         </MainBox>
     );
 }

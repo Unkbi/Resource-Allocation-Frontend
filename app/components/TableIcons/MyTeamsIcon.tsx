@@ -1,7 +1,15 @@
 import React from 'react';
-import { SvgIcon } from '@mui/material';
+import { SvgIcon, SvgIconProps } from '@mui/material';
 
-const MyTeamsIcon = ({ color = '#344665', fontSize = 'medium', ...props }) => {
+interface MyTeamsIconProps extends SvgIconProps {
+  customColor?: string;
+}
+
+const MyTeamsIcon: React.FC<MyTeamsIconProps> = ({
+  customColor = '#344665',
+  fontSize = 'medium',
+  ...props
+}) => {
   return (
     <SvgIcon
       {...props}
@@ -11,7 +19,7 @@ const MyTeamsIcon = ({ color = '#344665', fontSize = 'medium', ...props }) => {
     >
       <path
         d="M13 14.5V13C13 11.3431 11.6569 10 10 10H4C2.34315 10 1 11.3431 1 13V14.5"
-        stroke={color}
+        stroke={customColor}
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -21,7 +29,7 @@ const MyTeamsIcon = ({ color = '#344665', fontSize = 'medium', ...props }) => {
         cx="7"
         cy="4"
         r="3"
-        stroke={color}
+        stroke={customColor}
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
