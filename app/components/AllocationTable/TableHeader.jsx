@@ -72,7 +72,7 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
     const formattedValue = Math.round(numericValue * 10) / 10 || null;
     const hasError = formattedValue > 2;
 
-    let className = props.className || '';
+    let className = props?.className || '';
     if (hasError) {
       dispatch(
         showToastAction(
