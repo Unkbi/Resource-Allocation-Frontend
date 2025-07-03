@@ -94,6 +94,7 @@ import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 import CloseIcon from '@mui/icons-material/Close';
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
 import AllocationForm from '../AllocationTable/components/AllocationForm';
+import MyTeamsIcon from '../TableIcons/NewMyTeamsIcon';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -375,7 +376,7 @@ const ViewButton = styled(Button)(({ theme }) => ({
   background: '#FFF',
   textTransform: 'none',
   marginTop: '2px',
-  color:' #344665',
+  color: ' #344665',
   '&:hover': {
     backgroundColor: '#f9fcff',
   },
@@ -567,17 +568,13 @@ const HistoryIcon = () => (
   <img src="/images/icons/HistoryButton.svg" alt="share" />
 );
 
-const MyTeamsIcon = () => (
-  <img src="/images/icons/newTeamIcon.svg" alt="share" />
-);
-
 const MyAllTeamsIcon = () => (
   <img src="/images/icons/newAllTeamIcon.svg" alt="share" />
 );
 
-const TeamsCostIcon =() => (
-    <img src= "images/icons/teamsCostIcon.svg" alt="teams cost"/>
-)
+const TeamsCostIcon = () => (
+  <img src="images/icons/teamsCostIcon.svg" alt="teams cost" />
+);
 
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
@@ -752,35 +749,34 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     // dispatch(action({ startDate: startKey, endDate: endKey }));
   };
 
-  
-    const handleSaveView = () => {
-      if (selectedView === '0') {
-        // Default View is selected, open New View dialog
-        dispatch(
-          openDialog({
-            title: 'Save View',
-            submitButtonText: 'Next',
-            cancelButtonText: 'Cancel',
-            formType: 'new_view',
-            initialData: null,
-          })
-        );
-      } else {
-        dispatch(
-          openDialog({
-            title: currentView?.Name
-              ? `Save View - ${currentView?.Name}`
-              : 'Save View',
-            submitButtonText: 'Save',
-            secondaryButtonText: 'Save As',
-            cancelButtonText: 'Cancel',
-            formType: 'save_view',
-            initialData: null,
-          })
-        );
-      }
-    };
-  
+  const handleSaveView = () => {
+    if (selectedView === '0') {
+      // Default View is selected, open New View dialog
+      dispatch(
+        openDialog({
+          title: 'Save View',
+          submitButtonText: 'Next',
+          cancelButtonText: 'Cancel',
+          formType: 'new_view',
+          initialData: null,
+        })
+      );
+    } else {
+      dispatch(
+        openDialog({
+          title: currentView?.Name
+            ? `Save View - ${currentView?.Name}`
+            : 'Save View',
+          submitButtonText: 'Save',
+          secondaryButtonText: 'Save As',
+          cancelButtonText: 'Cancel',
+          formType: 'save_view',
+          initialData: null,
+        })
+      );
+    }
+  };
+
   const handleEditView = (e, savedViewData) => {
     e.stopPropagation();
     dispatch(
@@ -1327,7 +1323,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     >
                       <span ref={myTeamsButtonRef}>
                         <MyTeamsIcon
-                          sx={{ width: 18, height: 18 }}
+                          sx={{ width: 15, height: 15 }}
                           color={currentView?.MyTeam ? '#344665' : '#99A2B2'}
                         />
                       </span>
@@ -1762,7 +1758,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             disabled
             sx={{
               width: '41px',
-              height:'1px',
+              height: '1px',
               padding: '21px 12px 19px 12px',
               display: 'flex',
               justifyContent: 'center',
