@@ -1188,7 +1188,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   PaperProps: {
                     sx: {
                       backgroundColor: '#FFFFFF',
-                      mt: '4px',
+                      ml: '1px',
                     },
                   },
                 }}
