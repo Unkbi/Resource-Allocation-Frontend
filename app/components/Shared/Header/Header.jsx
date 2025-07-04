@@ -83,6 +83,7 @@ const Header = ({ sidebarExpanded }) => {
   const { resources } = useSelector(state => state.resources);
   const { user } = useSelector(state => state.user);
   const { splitView } = useSelector(state => state.allocationView);
+  const { calendarDate } = useSelector(state => state.allAllocations);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();

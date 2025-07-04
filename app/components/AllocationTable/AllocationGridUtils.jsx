@@ -70,6 +70,7 @@ const CellWithMenu = ({
   handleAddClick,
   handleCloneClick,
   handleTranferClick,
+  handleOpenHistory,
   isFormatWithK,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -330,7 +331,11 @@ const CellWithMenu = ({
       icon: <SwapHorizIcon fontSize="small" />,
       func: () => handleTranferClick(params),
     },
-    { label: 'History', icon: <HistoryIcon fontSize="small" /> },
+    {
+      label: 'History',
+      icon: <HistoryIcon fontSize="small" />,
+      func: () => handleOpenHistory(params),
+    },
     {
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
@@ -368,6 +373,7 @@ const CellWithMenu = ({
             key={item.label}
             onClick={() => {
               item.func && item.func(params);
+              handleMenuClose();
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
@@ -469,6 +475,9 @@ export const getFinalColumns = (
   isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
+  const allResources = useSelector(
+    state => state.resources.resources?.result || []
+  );
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -543,6 +552,29 @@ export const getFinalColumns = (
     );
   };
 
+  const handleOpenHistory = params => {
+    dispatch(
+      openDialog({
+        title: 'Allocation History',
+        cancelButtonText: 'View All History',
+        formType: 'open_history',
+        initialData: params.field === 'project' ? {
+          Resource: params.row.resourceId,
+          Project: params.row.projectId,
+          StartDate: startDate,
+          EndDate: endDate,
+        } : {
+          Resource: allResources.find(
+            resource => resource.FullName === params.value
+          )?.Id || '',
+          Project: null,
+          StartDate: startDate,
+          EndDate: endDate,
+        },
+      })
+    );
+  };
+
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -566,6 +598,7 @@ export const getFinalColumns = (
               isFormatWithK={isFormatWithK}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
@@ -617,6 +650,7 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                handleOpenHistory={handleOpenHistory}
                 isFormatWithK={isFormatWithK}
               >
                 <EllipsisNameCell
@@ -707,6 +741,7 @@ export const getFinalColumns = (
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
               isFormatWithK={isFormatWithK}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },

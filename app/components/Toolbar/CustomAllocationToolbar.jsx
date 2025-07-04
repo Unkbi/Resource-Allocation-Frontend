@@ -1781,7 +1781,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </GridToolbarContainer>
           <IconButton
             size="small"
-            disabled
+            onClick={() =>
+              handleOpenDialog('View History', 'open_history', '', {
+                Resource: null,
+                Project: null,
+                StartDate: startDate,
+                EndDate: endDate,
+              })
+            }
             sx={{
               width: '41px',
               height: '1px',

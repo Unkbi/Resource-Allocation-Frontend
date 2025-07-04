@@ -367,6 +367,14 @@ export const addRatesValidationSchema = Yup.object({
   Status: Yup.string().required('Status is required'),
 });
 
+export const openHistoryValidationSchema = Yup.object({
+  StartDate: Yup.date().required('Start Date is required'),
+  EndDate: Yup.date()
+    .required('End Date is required')
+    .min(Yup.ref('StartDate'), 'End Date must be after or equal to Start Date'),
+  Resource: Yup.string().required('Resource is required'),
+  Project: Yup.string().optional(),
+});
 export const addPortfolioValidationSchema = (portfolios : any, initialName = '') => {
   const portfolioNames = Array.isArray(portfolios)
     ? portfolios.map(p => p.Name?.toLowerCase().trim())
