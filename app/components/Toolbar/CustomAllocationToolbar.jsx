@@ -1100,7 +1100,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 {
                   name: 'offset',
                   options: {
-                    offset: [0, 4], 
+                    offset: [0, 4],
                   },
                 },
               ]}
@@ -1193,7 +1193,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   PaperProps: {
                     sx: {
                       backgroundColor: '#FFFFFF',
-                      ml: '1px',
+                      ml: '2px',
                     },
                   },
                 }}
