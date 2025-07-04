@@ -375,7 +375,6 @@ const ViewButton = styled(Button)(({ theme }) => ({
   border: '1px solid #CBD0DB',
   background: '#FFF',
   textTransform: 'none',
-  marginTop: '2px',
   color: '#5D6979',
   '&:hover': {
     backgroundColor: '#f9fcff',
