@@ -93,7 +93,6 @@ import dayjs from 'dayjs';
 import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 import CloseIcon from '@mui/icons-material/Close';
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
-import AllocationForm from '../AllocationTable/components/AllocationForm';
 import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 
@@ -1167,7 +1166,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 </Grow>
               )}
             </Popper>
-            <AllocationForm />
           </Box>
 
           {/* View Grouping Dropdown */}
@@ -1195,7 +1193,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   PaperProps: {
                     sx: {
                       backgroundColor: '#FFFFFF',
-                      mt: '4px',
+                      ml: '1px',
                     },
                   },
                 }}
