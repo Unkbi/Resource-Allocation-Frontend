@@ -1038,12 +1038,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             sx={{
               width: '64px',
               borderRight: '#DDE1E4 solid 1px',
-              borderBottom: ' #fff 3px solid',
-              height: '68px',
+              height: '64px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '8px',
             }}
           >
             <IconButton
