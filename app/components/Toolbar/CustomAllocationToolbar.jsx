@@ -374,7 +374,6 @@ const ViewButton = styled(Button)(({ theme }) => ({
   border: '1px solid #CBD0DB',
   background: '#FFF',
   textTransform: 'none',
-  marginTop: '2px',
   color: '#5D6979',
   '&:hover': {
     backgroundColor: '#f9fcff',
@@ -1038,12 +1037,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             sx={{
               width: '64px',
               borderRight: '#DDE1E4 solid 1px',
-              borderBottom: ' #fff 3px solid',
-              height: '68px',
+              height: '64px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '8px',
             }}
           >
             <IconButton
@@ -1099,6 +1096,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               placement="bottom-start"
               transition
               disablePortal
+              modifiers={[
+                {
+                  name: 'offset',
+                  options: {
+                    offset: [0, 4],
+                  },
+                },
+              ]}
             >
               {({ TransitionProps, placement }) => (
                 <Grow
@@ -1188,7 +1193,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   PaperProps: {
                     sx: {
                       backgroundColor: '#FFFFFF',
-                      ml: '1px',
+                      ml: '2px',
                     },
                   },
                 }}

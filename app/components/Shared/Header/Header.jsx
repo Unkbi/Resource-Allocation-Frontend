@@ -55,7 +55,7 @@ const MainAppBar = styled(AppBar, {
   },
   '& .toobarRow': {
     minHeight: '30px',
-    paddingLeft: '15px',
+    paddingLeft: '11px',
     paddingRight: '15px',
   },
   '& .settingIcon': {

@@ -81,7 +81,6 @@ const StyledSingleInputDateRangeField = (isButton: boolean) => ({
 
     '& input': {
       cursor: 'pointer',
-      pointerEvents: isButton ? 'none' : 'auto',
     },
   },
   '& .MuiIconButton-root': {
