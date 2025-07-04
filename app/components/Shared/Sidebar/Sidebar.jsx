@@ -22,7 +22,7 @@ const MainBox = styled(Box, {
   left: "0",
   top: "0",
   zIndex :'1000',
-  backgroundColor: theme.custom.bgColor,
+  backgroundColor: theme.palette.sideBarColor.main,
   height: "100vh",
   color: theme.custom.secondryColor,
   paddingTop: "10px",
