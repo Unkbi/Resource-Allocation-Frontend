@@ -114,7 +114,6 @@ const Header = ({ sidebarExpanded }) => {
     }
   }, [projects, resources]);
 
-
   function handleSplitViewDone() {
     dispatch(setSplitView(false));
     dispatch(setSplitViewCurrentProject(null));
@@ -179,6 +178,7 @@ const Header = ({ sidebarExpanded }) => {
           ) : null}
         </Box>
       </Toolbar>
+      <AllocationForm />
     </MainAppBar>
   );
 };
