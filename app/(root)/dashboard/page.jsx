@@ -46,6 +46,7 @@ import {
   truncateLabel,
   formatTeamName,
 } from '@/app/utils/useResponsiveChart';
+import CommonToolbar from '@/app/components/Toolbar/CommonToolbar';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -1321,6 +1322,8 @@ export default function ExecutiveDashboardPage() {
 
   return (
     <>
+     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <CommonToolbar />
       <Global
         styles={css`
           circle.MuiMarkElement-root {
@@ -1502,6 +1505,7 @@ export default function ExecutiveDashboardPage() {
             </Button>
           </DialogActions>
         </Dialog>
+      </Box>
       </Box>
     </>
   );

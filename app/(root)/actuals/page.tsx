@@ -31,6 +31,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
+import CommonToolbar from '@/app/components/Toolbar/CommonToolbar';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
@@ -307,6 +308,8 @@ export default function ActualsPage() {
   }, [isModified]);
 
   return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <CommonToolbar />
     <Box
       px={{ xs: 2, sm: 2 }}
       py={2}
@@ -478,6 +481,7 @@ export default function ActualsPage() {
       >
         {"Are you sure you want to leave? Your actuals will not be saved."}
       </ConfirmDialog>
+    </Box>
     </Box>
   );
 }
