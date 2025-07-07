@@ -701,8 +701,7 @@ export default function AllocationGrid({
                 {'' || <>&nbsp;</>}
               </span>
             </Tooltip>
-          ) : 
-          editable ? (
+          ) : editable ? (
             <CommentTooltip notes={notes} actuals={actuals}>
               <Box
                 sx={{
@@ -714,14 +713,16 @@ export default function AllocationGrid({
                   position: 'relative',
                 }}
               >
-            {params.rowNode?.type !== 'group'  &&  actuals ? (
-              <AllocationCellWithActuals params={cellData} />
-            ) : <span>{value}</span>}
+                {showActuals && params.rowNode?.type !== 'group' && actuals ? (
+                  <AllocationCellWithActuals params={cellData} />
+                ) : (
+                  <span>{value}</span>
+                )}
               </Box>
             </CommentTooltip>
-          ): (
+          ) : (
             <span>{value}</span>
-          )
+          );
         },
       };
     }

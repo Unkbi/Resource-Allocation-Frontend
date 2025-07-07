@@ -126,6 +126,9 @@ export default function ProjectAllocation({
   } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
     useAllocationGrid('teamAllocation');
+  const { showActuals } = useSelector(
+    (state: RootState) => state.allocationView
+  );
 
   useEffect(() => {
     if (ready) {
@@ -243,21 +246,20 @@ export default function ProjectAllocation({
       (projects?.result ?? []).filter(project => project.Name === params.value)
     );
 
-      dispatch(
-        openDialog({
-          title: 'Allocation History',
-          cancelButtonText: 'View All History',
-          formType: 'open_history',
-          initialData:{
-            Resource: null,
-            Project: data[0].Id,
-            StartDate: startDate,
-            EndDate: endDate,
-          },
-        })
-      );
-    };
-
+    dispatch(
+      openDialog({
+        title: 'Allocation History',
+        cancelButtonText: 'View All History',
+        formType: 'open_history',
+        initialData: {
+          Resource: null,
+          Project: data[0].Id,
+          StartDate: startDate,
+          EndDate: endDate,
+        },
+      })
+    );
+  };
 
   const getFirstChild = (params: GridCellParams) => {
     const { rowNode, api } = params;
@@ -826,6 +828,7 @@ export default function ProjectAllocation({
           NoRowsOverlay={NoRowsOverlay}
           loading={dataProcessing}
           viewId="projectAllocation"
+          showActuals={showActuals}
         />
       </Box>
       <StyledMenu
@@ -843,7 +846,9 @@ export default function ProjectAllocation({
             <PersonAddIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            primary={<Typography variant="body2">Find and Add Resource</Typography>}
+            primary={
+              <Typography variant="body2">Find and Add Resource</Typography>
+            }
           />
         </StyledMenuItem>
         <StyledMenuItem

@@ -10,7 +10,7 @@ export interface Allocation {
   ResourceName: string | null;
   AllocationEntered: number;
   Project: string;
-  ActualsEntered: number ;
+  ActualsEntered: number;
   Notes: string | null;
 }
 
@@ -96,6 +96,7 @@ export interface AllocationGridViewState {
   view: string | null;
   splitView: boolean;
   splitViewCurrentProject: ProjectsTableRow | null;
+  showActuals: boolean;
   loading: boolean;
   error: string | null;
   columns: AllColumns;
