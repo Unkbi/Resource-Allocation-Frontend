@@ -15,6 +15,8 @@ import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
 import { fetchAllTeams } from './redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from './redux/actions/fetchProjectsAction';
 import { fetchAllResources } from './redux/actions/fetchResourcesAction';
+import { fetchPortfolios } from './services/prorfolioServices';
+import { FETCH_PORTFOLIOS } from './redux/actions/portfolioActions';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -22,7 +24,7 @@ const MainContent = styled(Box, {
   return {
     background: '#fff',
     marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
-    paddingTop: `${isLoggedIn ? '52px' : '0'}`,
+    paddingTop: `${isLoggedIn ? '31px' : '0'}`,
     transition: 'margin-left 0.3s ease-in-out',
   };
 });
@@ -41,6 +43,7 @@ export default function LayoutClient({ children }) {
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
   const { teams } = useSelector(state => state.teams);
+  const { portfolios } = useSelector(state => state.portfolios);
 
   useEffect(() => {
     setIsClient(true);
@@ -109,6 +112,12 @@ export default function LayoutClient({ children }) {
       }
       if (!resources?.result?.length) {
         dispatch(fetchAllResources());
+      }
+      if (!portfolios?.result?.length) {
+        dispatch({
+          type: FETCH_PORTFOLIOS,
+          patload: {},
+        });
       }
     }
   }, [dispatch, isLoggedIn, isClient]);

@@ -488,6 +488,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor:
         !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
     },
+    [`& .${gridClasses.cell}[data-field="Portfolio"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
     [`& .${gridClasses.cell}[data-field="Location"]`]: {
       backgroundColor:
         !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
@@ -499,6 +503,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="actions"]`]: {
       backgroundColor:
         !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Description"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="SidebarColor"]`]: {
+      backgroundColor:
+        !loading && !loading && (groupBy === 'project' ? '#FFF3E0' : '#F7FBFF'),
     },
     //  '& .MuiDataGrid-row:hover': {
     //   backgroundColor: 'inherit !important',

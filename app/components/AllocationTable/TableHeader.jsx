@@ -69,11 +69,11 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
 
   preProcessEditCellProps: params => {
     const { props } = params;
-    let numericValue = parseFloat(props.value) || 0;
+    let numericValue = parseFloat(props?.value) || 0;
     const formattedValue = Math.round(numericValue * 10) / 10 || null;
     const hasError = formattedValue > 2;
 
-    let className = props.className || '';
+    let className = props?.className || '';
     if (hasError) {
       dispatch(
         showToastAction(

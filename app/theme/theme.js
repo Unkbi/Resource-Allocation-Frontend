@@ -10,8 +10,11 @@ export const getTheme = (mode, primaryColor, fontSize) => {
     palette: {
       mode,
       primary: {
-        main: primaryColor,
+        main: primaryColor, 
       },
+      sideBarColor :{
+        main :'#152E75',
+      }
     },
     typography: {
       fontFamily: "Open Sans",

@@ -71,6 +71,7 @@ const CellWithMenu = ({
   handleAddClick,
   handleCloneClick,
   handleTranferClick,
+  handleOpenHistory,
   isFormatWithK,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -140,6 +141,9 @@ const CellWithMenu = ({
           autoHideTimer: 4000,
         })
       );
+      setShowDeleteDialog(false);
+      setDeleteParams(null);
+      setAnchorEl(null);
       return;
     }
 
@@ -328,7 +332,11 @@ const CellWithMenu = ({
       icon: <SwapHorizIcon fontSize="small" />,
       func: () => handleTranferClick(params),
     },
-    { label: 'History', icon: <HistoryIcon fontSize="small" /> },
+    {
+      label: 'History',
+      icon: <HistoryIcon fontSize="small" />,
+      func: () => handleOpenHistory(params),
+    },
     {
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
@@ -366,6 +374,7 @@ const CellWithMenu = ({
             key={item.label}
             onClick={() => {
               item.func && item.func(params);
+              handleMenuClose();
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
@@ -468,6 +477,9 @@ export const getFinalColumns = (
   showActuals = false
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
+  const allResources = useSelector(
+    state => state.resources.resources?.result || []
+  );
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -542,6 +554,43 @@ export const getFinalColumns = (
     );
   };
 
+  const handleOpenHistory = params => {
+    dispatch(
+      openDialog({
+        title: 'Allocation History',
+        cancelButtonText: 'View All History',
+        formType: 'open_history',
+        initialData:
+          params.field === 'project'
+            ? {
+                Resource: params.row.resourceId,
+                Project: params.row.projectId,
+                StartDate: startDate,
+                EndDate: endDate,
+              }
+            : params.field === 'resource'
+              ? {
+                  Resource:
+                    allResources.find(
+                      resource => resource.FullName === params.value
+                    )?.Id || '',
+                  Project: params.row.projectId,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                }
+              : {
+                  Resource:
+                    allResources.find(
+                      resource => resource.FullName === params.value
+                    )?.Id || '',
+                  Project: null,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                },
+      })
+    );
+  };
+
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -565,6 +614,7 @@ export const getFinalColumns = (
               isFormatWithK={isFormatWithK}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
@@ -616,6 +666,7 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                handleOpenHistory={handleOpenHistory}
                 isFormatWithK={isFormatWithK}
               >
                 <EllipsisNameCell
@@ -706,6 +757,7 @@ export const getFinalColumns = (
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
               isFormatWithK={isFormatWithK}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
@@ -775,9 +827,6 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
-      const hasNonEditableChild = projectRows.some(
-        row => !isCellEditable({ ...params, row })
-      );
 
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
@@ -867,8 +916,11 @@ export const getCellClassName = (
       : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
-  return 'non-editable-cell';
-}
+    if (type === 'cost') {
+      return 'non-editable-cell-no-tooltip';
+    }
+    return 'non-editable-cell';
+  }
 
   return '';
 };

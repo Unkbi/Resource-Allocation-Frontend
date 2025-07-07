@@ -30,6 +30,8 @@ import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
+import CommonToolbar from '@/app/components/Toolbar/CommonToolbar';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
@@ -44,8 +46,13 @@ export default function ActualsPage() {
   >([]);
   const apiRef = useGridApiRef();
   const [hasInvalidRows, setHasInvalidRows] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [dialogSource, setDialogSource] = useState<'prev' | 'next' | null>(
+    null
+  );
   const [show, setShow] = useState(true);
   const [isModified, setIsModified] = useState(false);
+  const [confirmSignal, setConfirmSignal] = useState(0);
 
   const handleModificationChange = (modified: boolean) => {
     setShow(false);
@@ -142,6 +149,9 @@ export default function ActualsPage() {
             dispatch(setActualAllocationsStatus('Confirmed'));
           }
           if (response?.status === 'ok') {
+             setIsModified(false);
+             setHasInvalidRows(false);
+             setConfirmSignal((c) => c + 1);
             dispatch(
               showToast({
                 open: true,
@@ -268,7 +278,38 @@ export default function ActualsPage() {
     }
   }, []);
 
+  const handleConfirm = () => {
+    setDeleteDialogOpen(false);
+    if (dialogSource === 'prev') {
+      handlePrev();
+    } else if (dialogSource === 'next') {
+      handleNext();
+    }
+    setDialogSource(null);
+  };
+
+  const handleCancel = () => {
+    setDeleteDialogOpen(false);
+    setDialogSource(null);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isModified) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+
+      
+    };
+  }, [isModified]);
+
   return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <CommonToolbar />
     <Box
       px={{ xs: 2, sm: 2 }}
       py={2}
@@ -333,6 +374,7 @@ export default function ActualsPage() {
             onValidationChange={handleValidationChange}
             setShow={handleSetShow}
             onModificationChange={handleModificationChange}
+            confirmSignal={confirmSignal}
           />
           <Box mt={4} width="100%">
             <Box
@@ -344,7 +386,14 @@ export default function ActualsPage() {
           <Box display="flex" justifyContent="space-between" mt={4}>
             <Button
               startIcon={<ChevronLeftIcon />}
-              onClick={handlePrev}
+              onClick={() => {
+                if (isModified ) {
+                  setDialogSource('prev');
+                  setDeleteDialogOpen(true);
+                } else {
+                  handlePrev();
+                }
+              }}
               sx={{
                 fontSize: '14px',
                 color: '#152e75',
@@ -364,7 +413,8 @@ export default function ActualsPage() {
             <Button
               variant="contained"
               sx={{
-              bgcolor: '#1C2D5F',
+                // @ts-ignore
+               bgcolor: theme => theme.palette.sideBarColor.main,
               px: 2,
               width: '192px',
               height: '36px',
@@ -396,7 +446,14 @@ export default function ActualsPage() {
 
             <Button
               endIcon={<ChevronRightIcon />}
-              onClick={handleNext}
+              onClick={() => {
+                if (isModified ) {
+                  setDialogSource('next');
+                  setDeleteDialogOpen(true);
+                } else {
+                  handleNext();
+                }
+              }}
               disabled={startDate ? isCurrentWeek(parseISO(startDate)) : false}
               sx={{
                 color: '#152e75',
@@ -416,6 +473,15 @@ export default function ActualsPage() {
           </Box>
         </Box>
       </Box>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        title="Alert"
+      >
+        {"Are you sure you want to leave? Your actuals will not be saved."}
+      </ConfirmDialog>
+    </Box>
     </Box>
   );
 }

@@ -1,3 +1,4 @@
+
 import * as Yup from 'yup';
 
 interface Project {
@@ -58,14 +59,14 @@ export const addProjectValidationSchema = (
     EndDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')
-      .test(
-        'required-if-start-date',
-        'End date is required if start date is provided',
-        function (value) {
-          const { StartDate } = this.parent;
-          return !StartDate || value !== null;
-        }
-      )
+      // .test(
+      //   'required-if-start-date',
+      //   'End date is required if start date is provided',
+      //   function (value) {
+      //     const { StartDate } = this.parent;
+      //     return !StartDate || value !== null;
+      //   }
+      // )
       .min(
         Yup.ref('StartDate'),
         'End date must be after or equal to start date'
@@ -76,11 +77,10 @@ export const addProjectValidationSchema = (
 };
 
 export const addTeamValidationSchema = Yup.object().shape({
-  Name: Yup.string()
-    .trim()
-    .required('Team Name is required'),
-  AllocationManager: Yup.string()
-    .required('Team Allocation Manager is required'),
+  Name: Yup.string().trim().required('Team Name is required'),
+  AllocationManager: Yup.string().required(
+    'Team Allocation Manager is required'
+  ),
   Status: Yup.string()
     .oneOf(['Active', 'Inactive'], 'Invalid status')
     .required('Status is required'),
@@ -148,16 +148,15 @@ export const editResourceValidationSchema = Yup.object({
     .when(['Status', 'StartDate'], {
       is: (status: String) => status === 'Inactive',
       then: schema =>
-        schema
-          .test(
-            'end-after-start',
-            'End Date cannot be before Start Date',
-            function (endDate) {
-              const { StartDate } = this.parent;
-              if (!endDate || !StartDate) return true;
-              return new Date(endDate) >= new Date(StartDate);
-            }
-          ),
+        schema.test(
+          'end-after-start',
+          'End Date cannot be before Start Date',
+          function (endDate) {
+            const { StartDate } = this.parent;
+            if (!endDate || !StartDate) return true;
+            return new Date(endDate) >= new Date(StartDate);
+          }
+        ),
       otherwise: schema =>
         schema.test(
           'end-after-start',
@@ -367,3 +366,36 @@ export const addRatesValidationSchema = Yup.object({
     ),
   Status: Yup.string().required('Status is required'),
 });
+
+export const openHistoryValidationSchema = Yup.object({
+  StartDate: Yup.date().required('Start Date is required'),
+  EndDate: Yup.date()
+    .required('End Date is required')
+    .min(Yup.ref('StartDate'), 'End Date must be after or equal to Start Date'),
+  Resource: Yup.string().required('Resource is required'),
+  Project: Yup.string().optional(),
+});
+export const addPortfolioValidationSchema = (portfolios : any, initialName = '') => {
+  const portfolioNames = Array.isArray(portfolios)
+    ? portfolios.map(p => p.Name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    Name: Yup.string()
+      .required('Name is required')
+      .test(
+        'unique-name',
+        'A portfolio with this name already exists.',
+        function (value) {
+          if (!value) return true; 
+          const currentName = value.toLowerCase().trim();
+          const originalName = initialName.toLowerCase().trim();
+          return (
+            currentName === originalName ||
+            !portfolioNames.includes(currentName)
+          );
+        }
+      ),
+    Status: Yup.string().required('Status is required'),
+    Description: Yup.string().nullable(),
+  });
+};

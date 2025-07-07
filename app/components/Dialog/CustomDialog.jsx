@@ -103,7 +103,7 @@ const StyledSubmitButtonContainer = styled(Box)(({ theme }) => ({
   gap: 5,
 }));
 
-const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel }) => {
+const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel, viewOnly = false }) => {
   const dispatch = useDispatch();
   const dialogState = useSelector(state => state.globalDialog);
   const {
@@ -128,7 +128,8 @@ const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel }) => {
           <CloseIcon />
         </StyledIconButton>
         <DialogContent>{children}</DialogContent>
-        <DialogActions>
+         {!viewOnly && (
+        <DialogActions>         
           {primarySecondButtonText ? (
             <StyledDialogActionsContainer>
               <StyledCancelButton variant="outlined" onClick={handleClose}>
@@ -172,8 +173,10 @@ const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel }) => {
                 {submitButtonText}
               </StyledSubmitButton>
             </>
-          )}
+          )
+        }      
         </DialogActions>
+         )}
       </StyledDialog>
     </React.Fragment>
   );
