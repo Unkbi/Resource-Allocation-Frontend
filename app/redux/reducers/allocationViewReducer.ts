@@ -53,6 +53,7 @@ const initialState: AllocationGridViewState = {
   view: 'Teams',
   splitView: false,
   splitViewCurrentProject: null,
+  showActuals: false,
   loading: false,
   error: null,
   expandRowId: [],
@@ -173,6 +174,9 @@ const viewSlice = createSlice({
     },
     setSplitViewCurrentProject: (state, action) => {
       state.splitViewCurrentProject = action.payload;
+    },
+    setShowActuals: (state, action) => {
+      state.showActuals = action.payload;
     },
     setExpandRowId: (state, action) => {
       state.expandRowId = action.payload;
@@ -375,6 +379,7 @@ export const {
   changeView,
   setSplitView,
   setSplitViewCurrentProject,
+  setShowActuals,
   setExpandRowId,
   setCellSelectionData,
   setInitialCurrentView,

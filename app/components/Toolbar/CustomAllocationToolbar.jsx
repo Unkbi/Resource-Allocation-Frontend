@@ -72,6 +72,7 @@ import AllProjectIcon from '../TableIcons/AllProjectIcon';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
   setCurrentView,
+  setShowActuals,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { set } from 'date-fns';
@@ -577,7 +578,7 @@ const TeamsCostIcon = () => (
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
-  const { view, savedViews, currentView } = useSelector(
+  const { view, savedViews, currentView, showActuals } = useSelector(
     state => state.allocationView
   );
   const { calendarDate: teamsCalendar } = useSelector(state => state.teams);
@@ -1024,6 +1025,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         initialData: initialData,
       })
     );
+  };
+
+  const handleShowActualsToggle = () => {
+    dispatch(setShowActuals(!showActuals));
   };
 
   return (
@@ -1643,8 +1648,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             <FormControlLabel
               control={
                 <Checkbox
-                  //   checked={showActuals}
-                  //   onChange={handleShowActualsToggle}
+                  checked={showActuals}
+                  onChange={handleShowActualsToggle}
                   size="small"
                   sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
                 />

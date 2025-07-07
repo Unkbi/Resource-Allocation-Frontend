@@ -97,6 +97,8 @@ export const formatAllocations = (
           allocationId: null,
           value: null,
           period: formattedDate,
+          actuals: null,
+          notes: null,
         };
       });
 
@@ -244,6 +246,8 @@ export function formatAllAllocations(
           allocationId: null,
           value: null,
           period: w.period,
+          actuals: null,
+          notes: null,
         };
       }
 
@@ -256,6 +260,8 @@ export function formatAllAllocations(
       allocationId: alloc.Id,
       value: alloc.AllocationEntered,
       period: alloc.Period,
+      actuals: alloc.ActualsEntered || null,
+      notes: alloc.Notes || null,
     };
 
     entry.totalEffort += alloc.AllocationEntered;
@@ -437,6 +443,8 @@ export function formatCostAllocations(
           allocationId: null,
           value: null,
           period: w.period,
+          actuals: null,
+          notes: null,
         };
       }
 

@@ -68,6 +68,8 @@ import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
+import { CommentTooltip } from './components/AllocationCommentTooltip';
+import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 
 export default function AllocationGrid({
   groupBy,
@@ -84,6 +86,7 @@ export default function AllocationGrid({
   columnsFilterable = true,
   type = '',
   viewId = 'main',
+  showActuals = false,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef } = useDataGrid();
@@ -236,24 +239,29 @@ export default function AllocationGrid({
     allWeeks.forEach(weekKey => {
       const period = getMondayOfWeek(weekKey, new Date());
       const value = row[weekKey];
-
       if (value && typeof value === 'object' && 'value' in value) {
         normalized[weekKey] = {
           allocationId: value.allocationId || null,
           value: value.value,
           period: period,
+          notes: value.notes || '',
+          actuals: value.actuals || null,
         };
       } else if (value !== undefined) {
         normalized[weekKey] = {
           allocationId: null,
           value,
           period,
+          notes: '',
+          actuals: null,
         };
       } else {
         normalized[weekKey] = {
           allocationId: null,
           value: null,
           period,
+          notes: '',
+          actuals: null,
         };
       }
     });
@@ -672,7 +680,10 @@ export default function AllocationGrid({
             cellClass.split(' ').includes('non-editable-darker');
 
           const value = params.formattedValue ?? '';
-
+          // Extract notes from the cell data
+          const cellData = params.row[params.field];
+          const notes = cellData?.notes || '';
+          const actuals = cellData?.actuals || null;
           return showTooltip ? (
             <Tooltip
               title="This resource is inactive for this period. Allocation not allowed."
@@ -689,6 +700,25 @@ export default function AllocationGrid({
                 {'' || <>&nbsp;</>}
               </span>
             </Tooltip>
+          ) : editable ? (
+            <CommentTooltip notes={notes} actuals={actuals}>
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                {showActuals && params.rowNode?.type !== 'group' && actuals ? (
+                  <AllocationCellWithActuals params={cellData} />
+                ) : (
+                  <span>{value}</span>
+                )}
+              </Box>
+            </CommentTooltip>
           ) : (
             <span>{value}</span>
           );

@@ -655,7 +655,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       fontWeight: '500',
       fontSize: '14px',
       color: '#212121',
-      padding: '3px',
+      padding: '3px 0px 0px 0px',
       ...(type === 'cost' && { backgroundColor: '#F1F6FF' }),
       lineHeight: '45px',
       '&.MuiDataGrid-cell--editing:focus-within': {
