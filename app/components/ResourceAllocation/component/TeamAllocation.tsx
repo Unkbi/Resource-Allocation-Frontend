@@ -67,7 +67,7 @@ export default function TeamAllocation({
     loading?: boolean;
     error?: string;
   };
-  const { currentView } = useSelector(
+  const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
   const { allAllocations, loading, dataProcessing } = useSelector(
@@ -576,7 +576,9 @@ export default function TeamAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%',paddingTop :'0px' }}>
+      <Box
+        sx={{ height: 'calc(100vh - 54px)', width: '100%', paddingTop: '0px' }}
+      >
         <AllocationGrid
           loading={dataProcessing}
           groupBy="teams"
@@ -626,6 +628,7 @@ export default function TeamAllocation({
           }}
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
+          showActuals={showActuals}
         />
         {!allAllocations && !dataProcessing && (
           <div
