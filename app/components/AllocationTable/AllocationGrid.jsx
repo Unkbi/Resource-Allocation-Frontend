@@ -660,8 +660,7 @@ export default function AllocationGrid({
     currentView?.isFixedRange
       ? currentView.endDate || endDate
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
-    type === 'cost',
-    showActuals
+    type === 'cost'
   ).map(column => {
     if (column.field.startsWith('W')) {
       return {

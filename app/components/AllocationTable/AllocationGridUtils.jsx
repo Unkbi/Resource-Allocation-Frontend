@@ -473,8 +473,7 @@ export const getFinalColumns = (
   dispatch,
   startDate,
   endDate,
-  isFormatWithK,
-  showActuals = false
+  isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
   const allResources = useSelector(
