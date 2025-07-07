@@ -55,7 +55,7 @@ const MainAppBar = styled(AppBar, {
   },
   '& .toobarRow': {
     minHeight: '30px',
-    paddingLeft: '15px',
+    paddingLeft: '11px',
     paddingRight: '15px',
   },
   '& .settingIcon': {
@@ -83,6 +83,7 @@ const Header = ({ sidebarExpanded }) => {
   const { resources } = useSelector(state => state.resources);
   const { user } = useSelector(state => state.user);
   const { splitView } = useSelector(state => state.allocationView);
+  const { calendarDate } = useSelector(state => state.allAllocations);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
@@ -113,7 +114,6 @@ const Header = ({ sidebarExpanded }) => {
       dispatch(fetchAllResources());
     }
   }, [projects, resources]);
-
 
   function handleSplitViewDone() {
     dispatch(setSplitView(false));
@@ -179,6 +179,7 @@ const Header = ({ sidebarExpanded }) => {
           ) : null}
         </Box>
       </Toolbar>
+      <AllocationForm />
     </MainAppBar>
   );
 };

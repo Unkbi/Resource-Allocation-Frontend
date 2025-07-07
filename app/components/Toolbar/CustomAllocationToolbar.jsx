@@ -93,7 +93,6 @@ import dayjs from 'dayjs';
 import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 import CloseIcon from '@mui/icons-material/Close';
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
-import AllocationForm from '../AllocationTable/components/AllocationForm';
 import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 
@@ -375,7 +374,6 @@ const ViewButton = styled(Button)(({ theme }) => ({
   border: '1px solid #CBD0DB',
   background: '#FFF',
   textTransform: 'none',
-  marginTop: '2px',
   color: '#5D6979',
   '&:hover': {
     backgroundColor: '#f9fcff',
@@ -1038,13 +1036,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           <Box
             sx={{
               width: '64px',
-              borderRight: '#DDE1E4 solid 1px',
-              borderBottom: ' #fff 3px solid',
-              height: '68px',
+              borderRight: 'rgba(171, 183, 194, 0.5) solid 1px',
+              height: '64px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '8px',
             }}
           >
             <IconButton
@@ -1100,6 +1096,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               placement="bottom-start"
               transition
               disablePortal
+              modifiers={[
+                {
+                  name: 'offset',
+                  options: {
+                    offset: [0, 4],
+                  },
+                },
+              ]}
             >
               {({ TransitionProps, placement }) => (
                 <Grow
@@ -1162,7 +1166,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 </Grow>
               )}
             </Popper>
-            <AllocationForm />
           </Box>
 
           {/* View Grouping Dropdown */}
@@ -1171,7 +1174,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               width: 'auto',
               height: '64px',
               backgroundColor: 'rgba(15, 23, 42, 0.04)',
-              borderBottom: ' #ABB7C2 1px solid',
+              borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
             }}
           >
             <StyledFormControl size="small">
@@ -1190,7 +1193,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   PaperProps: {
                     sx: {
                       backgroundColor: '#FFFFFF',
-                      mt: '4px',
+                      ml: '2px',
                     },
                   },
                 }}
@@ -1240,7 +1243,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             sx={{
               backgroundColor: 'rgba(15, 23, 42, 0.04)',
               height: '64px',
-              borderBottom: ' #ABB7C2 1px solid',
+              borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
             }}
           >
             <Box
@@ -1386,10 +1389,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  borderLeft: '1px solid #D6DCE1',
-                  borderRight: '1px solid #D6DCE1',
-                  height: '58px',
-                  mt: '6px',
+                  borderLeft: '1px solid rgba(206, 220, 233, 0.5)',
+                  borderRight: '1px solid rgba(206, 220, 233, 0.5)',
+                  height: '64px',
+                  pt: '6px',
                   px: 1,
                 }}
               >
@@ -1534,7 +1537,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             flexGrow: 1,
             height: '64px',
             backgroundColor: 'rgba(15, 23, 42, 0.04)',
-            borderBottom: ' #ABB7C2 1px solid',
+            borderBottom: ' rgba(206, 220, 233, 0.50) 1px solid',
           }}
         />
 
@@ -1546,7 +1549,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             backgroundColor: 'rgba(15, 23, 42, 0.04)',
             height: '64px',
             borderLeft: '1px solid #D6DCE1',
-            borderBottom: ' #ABB7C2 1px solid',
+            borderBottom: 'rgba(206, 220, 233, 0.50) 1px solid',
             ml: 'auto',
             p: 2,
           }}
@@ -1599,7 +1602,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           flexShrink: 0,
           display: 'flex',
           justifyContent: 'space-between',
-          borderBottom: '3px solid rgba(171, 183, 194, 0.50)',
+          // borderBottom: '3px solid rgba(171, 183, 194, 0.50)',
+          borderBottom: '2px solid rgba(206, 220, 233, 0.50)',
+          background:
+            'linear-gradient(185deg, #FFF 3.99%, rgba(239, 244, 254, 0.10) 251.06%)',
         }}
       >
         <Box className="lowerToolbarSub" sx={{ display: 'flex' }}>
@@ -1622,7 +1628,15 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </Typography>
             </Stack>
           </ToolBox2>
-          <Box sx={{ borderLeft: '#DDE1E4 solid 1px', ml: '20px' }}></Box>
+          <Box
+            sx={{
+              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+              ml: '20px',
+              height: '34px',
+              position: 'relative',
+              top: '10px',
+            }}
+          ></Box>
           <Box
             sx={{ display: 'flex', alignItems: 'center', marginLeft: '22px' }}
           >
@@ -1767,7 +1781,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
           </GridToolbarContainer>
           <IconButton
             size="small"
-            disabled
+            onClick={() =>
+              handleOpenDialog('View History', 'open_history', '', {
+                Resource: null,
+                Project: null,
+                StartDate: startDate,
+                EndDate: endDate,
+              })
+            }
             sx={{
               width: '41px',
               height: '1px',

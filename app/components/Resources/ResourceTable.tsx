@@ -13,6 +13,8 @@ import {
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
 import { Resource } from '@/app/types';
+import CommonToolbar from '../Toolbar/CommonToolbar';
+import { Box } from '@mui/material';
 
 interface ResourceTableProps {
   columns: GridColDef[];
@@ -45,6 +47,8 @@ const ResourceTable = ({
 }: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
+       <Box sx={{ display: 'flex', flexDirection: 'column',height:'95vh' }}>
+        <CommonToolbar />
     <StyledDataGrid
       apiRef={apiRef}
       columns={columns}
@@ -133,6 +137,7 @@ const ResourceTable = ({
         },
       }}
     />
+    </Box>
   );
 };
 

@@ -13,6 +13,8 @@ import {
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
 import { Team } from '@/app/types';
+import CommonToolbar from '../Toolbar/CommonToolbar';
+import { Box } from '@mui/material';
 
 interface TeamsTableProps {
   columns: GridColDef[];
@@ -46,6 +48,8 @@ const TeamsTable = ({
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (
+     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <CommonToolbar />
     <StyledDataGrid
       apiRef={apiRef}
       columns={columns}
@@ -131,6 +135,7 @@ const TeamsTable = ({
         },
       }}
     />
+    </Box>
   );
 };
 
