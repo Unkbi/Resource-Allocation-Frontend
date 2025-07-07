@@ -558,19 +558,33 @@ export const getFinalColumns = (
         title: 'Allocation History',
         cancelButtonText: 'View All History',
         formType: 'open_history',
-        initialData: params.field === 'project' ? {
-          Resource: params.row.resourceId,
-          Project: params.row.projectId,
-          StartDate: startDate,
-          EndDate: endDate,
-        } : {
-          Resource: allResources.find(
-            resource => resource.FullName === params.value
-          )?.Id || '',
-          Project: null,
-          StartDate: startDate,
-          EndDate: endDate,
-        },
+        initialData:
+          params.field === 'project'
+            ? {
+                Resource: params.row.resourceId,
+                Project: params.row.projectId,
+                StartDate: startDate,
+                EndDate: endDate,
+              }
+            : params.field === 'resource'
+              ? {
+                  Resource:
+                    allResources.find(
+                      resource => resource.FullName === params.value
+                    )?.Id || '',
+                  Project: params.row.projectId,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                }
+              : {
+                  Resource:
+                    allResources.find(
+                      resource => resource.FullName === params.value
+                    )?.Id || '',
+                  Project: null,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                },
       })
     );
   };
