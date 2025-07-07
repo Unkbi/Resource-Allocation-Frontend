@@ -37,7 +37,6 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { generateEmptyRow } from '@/app/utils/allocationUtils';
-import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -483,7 +482,7 @@ export const getFinalColumns = (
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
-  let allColumns = getAllColumnsWithWeek(
+  const allColumns = getAllColumnsWithWeek(
     columns,
     dispatch,
     startDate,
