@@ -21,10 +21,7 @@ import {
   calculateWeekRanges,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import {
-  getCombinedAllocation,
-  normalizeRow,
-} from '@/app/utils/allocationUtils';
+import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import Typography from '@mui/material/Typography';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -46,6 +43,8 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { useRouter } from 'next/navigation';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -129,35 +128,43 @@ export default function ProjectAllocation({
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
+  const { getAllRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (!loading && getAllTeamViewRows().length > 0) {
-        filteredResources = removeResourcesWithNoProjects(
-          (getAllTeamViewRows() as AllAllocations[]) || []
-        );
-        setRows(
-          removeResourcesWithNoProjects(
-            getAllTeamViewRows() as AllAllocations[]
-          )
-        );
-      } else if (loading && allAllocations) {
-        filteredResources = removeResourcesWithNoProjects(allAllocations || []);
-        dispatch(setLoading(false));
+      const allTempRows = getAllRowsForView('temp');
+      if (!loading && allTempRows?.length > 0) {
+        setRows(allTempRows || []);
+      } else {
+        if (!loading && getAllTeamViewRows().length > 0) {
+          filteredResources = removeResourcesWithNoProjects(
+            (getAllTeamViewRows() as AllAllocations[]) || []
+          );
+          setRows(
+            removeResourcesWithNoProjects(
+              getAllTeamViewRows() as AllAllocations[]
+            )
+          );
+        } else if (loading && allAllocations) {
+          filteredResources = removeResourcesWithNoProjects(
+            allAllocations || []
+          );
+          dispatch(setLoading(false));
+        }
+
+        const formattedResources = filteredResources?.map(allocation => ({
+          ...allocation,
+          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          teamAllocationManager: getAllocationManagerFromPath(
+            allocation?.teamAllocationManager,
+            _resources?.result || []
+          )?.FullName,
+        }));
+
+        setRows(formattedResources || []);
       }
-
-      const formattedResources = filteredResources?.map(allocation => ({
-        ...allocation,
-        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
-        teamAllocationManager: getAllocationManagerFromPath(
-          allocation?.teamAllocationManager,
-          _resources?.result || []
-        )?.FullName,
-      }));
-
-      setRows(formattedResources || []);
     }
   }, [ready && allAllocations]);
 
@@ -261,17 +268,6 @@ export default function ProjectAllocation({
     );
   };
 
-  const getFirstChild = (params: GridCellParams) => {
-    const { rowNode, api } = params;
-    const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-    if (isGridTreeNode && rowNode.children && rowNode.children.length > 0) {
-      const firstChildId = rowNode.children[0];
-      const firstChildRow = api.getRow(firstChildId);
-      return firstChildRow;
-    }
-    return null;
-  };
-
   const getResource = (params: GridCellParams): Resource | null => {
     const { rowNode } = params;
     const isGridTreeNode = 'children' in rowNode;
@@ -305,7 +301,6 @@ export default function ProjectAllocation({
       headerName: 'Project Name',
       width: 200,
       headerClassName: 'prime-header',
-      // cellClassName: getCellClassName,
       cellClassName: () => 'project-view-projectName',
       primaryColumn: true,
       filterable: true,
@@ -363,6 +358,22 @@ export default function ProjectAllocation({
             </>
           );
         }
+      },
+    },
+    {
+      field: 'portfolioName',
+      headerName: PORTFOLIO_DISPLAY_NAME,
+      width: 148,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild.portfolioName ?? 'N/A'} />
+        ) : null;
       },
     },
     {
@@ -795,6 +806,7 @@ export default function ProjectAllocation({
             columns: {
               columnVisibilityModel: {
                 project: false,
+                portfolioName: false,
                 projectCost: false,
                 projectCurrency: false,
                 projectEndDate: false,
@@ -829,6 +841,7 @@ export default function ProjectAllocation({
           loading={dataProcessing}
           viewId="projectAllocation"
           showActuals={showActuals}
+          rowGroupingColumnMode={'single'}
         />
       </Box>
       <StyledMenu

@@ -8,7 +8,7 @@ import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
 import {
@@ -19,6 +19,7 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
 interface PortfolioAllocationProps {
   startDate: string | null;
@@ -51,35 +52,47 @@ export default function PortfolioAllocation({
   const { setRows, ready } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
     useAllocationGrid('teamAllocation');
+  const { getAllRowsForView } = useAllGridRowsByView();
+
+  const { showActuals } = useSelector(
+    (state: RootState) => state.allocationView
+  );
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (!loading && getAllTeamViewRows().length > 0) {
-        filteredResources = removeResourcesWithNoProjects(
-          (getAllTeamViewRows() as AllAllocations[]) || []
-        );
-        setRows(
-          removeResourcesWithNoProjects(
-            getAllTeamViewRows() as AllAllocations[]
-          )
-        );
-      } else if (loading && allAllocations) {
-        filteredResources = removeResourcesWithNoProjects(allAllocations || []);
-        dispatch(setLoading(false));
+      const allTempRows = getAllRowsForView('temp');
+      if (!loading && allTempRows?.length > 0) {
+        setRows(allTempRows || []);
+      } else {
+        if (!loading && getAllTeamViewRows().length > 0) {
+          filteredResources = removeResourcesWithNoProjects(
+            (getAllTeamViewRows() as AllAllocations[]) || []
+          );
+          setRows(
+            removeResourcesWithNoProjects(
+              getAllTeamViewRows() as AllAllocations[]
+            )
+          );
+        } else if (allAllocations) {
+          filteredResources = removeResourcesWithNoProjects(
+            allAllocations || []
+          );
+          dispatch(setLoading(false));
+        }
+
+        const formattedResources = filteredResources?.map(allocation => ({
+          ...allocation,
+          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          teamAllocationManager: getAllocationManagerFromPath(
+            allocation?.teamAllocationManager,
+            _resources?.result || []
+          )?.FullName,
+        }));
+
+        setRows(formattedResources || []);
       }
-
-      const formattedResources = filteredResources?.map(allocation => ({
-        ...allocation,
-        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
-        teamAllocationManager: getAllocationManagerFromPath(
-          allocation?.teamAllocationManager,
-          _resources?.result || []
-        )?.FullName,
-      }));
-
-      setRows(formattedResources || []);
     }
   }, [ready && allAllocations]);
 
@@ -110,6 +123,40 @@ export default function PortfolioAllocation({
 
   const projectColumnConfig = [
     {
+      field: 'portfolioName',
+      headerName: PORTFOLIO_DISPLAY_NAME,
+      width: 148,
+      headerClassName: 'prime-header',
+      cellClassName: 'prime-cell',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const { rowNode, api, value = '' } = params;
+        const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+        if (isGridTreeNode && rowNode.children) {
+          const fisrtChildRowNode = api.getRowNode(rowNode.children[0]);
+          if (
+            fisrtChildRowNode &&
+            'children' in fisrtChildRowNode &&
+            fisrtChildRowNode.children
+          ) {
+            const secondChild = api.getRow(fisrtChildRowNode?.children[1]);
+            const portfolioSidebarColor = secondChild?.portfolioSidebarColor;
+            const project_count = rowNode?.children?.length || null;
+            return (
+              <EllipsisNameCell
+                value={value as string}
+                resourceCount={project_count}
+                onAddClick={() => handleAddClick(params)}
+                showAddButton={false}
+                showAddIcon={true}
+                leftBorderColor={portfolioSidebarColor || false}
+              />
+            );
+          }
+        }
+      },
+    },
+    {
       field: 'projectSponsor',
       headerName: 'Project Sponsor',
       width: 148,
@@ -121,7 +168,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectSponsor ?? ''} />
         ) : null;
       },
     },
@@ -362,7 +409,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectManager ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectManager ?? ''} />
         ) : null;
       },
     },
@@ -378,7 +425,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStatus ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStatus ?? ''} />
         ) : null;
       },
     },
@@ -394,7 +441,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectLocation ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectLocation ?? ''} />
         ) : null;
       },
     },
@@ -410,7 +457,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectType ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectType ?? ''} />
         ) : null;
       },
     },
@@ -427,7 +474,13 @@ export default function PortfolioAllocation({
         const firstChild = getFirstChild(params);
         return firstChild ? (
           <EllipsisNameCell
-            value={firstChild?.projectOvertimeAllowed ? 'Yes' : 'No'}
+            value={
+              firstChild?.projectOvertimeAllowed === true
+                ? 'Yes'
+                : firstChild?.projectOvertimeAllowed === false
+                  ? 'No'
+                  : ''
+            }
           />
         ) : null;
       },
@@ -461,7 +514,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCurrency ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectCurrency ?? ''} />
         ) : null;
       },
     },
@@ -477,7 +530,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStartDate ?? ''} />
         ) : null;
       },
     },
@@ -493,7 +546,7 @@ export default function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectEndDate ?? ''} />
         ) : null;
       },
     },
@@ -575,6 +628,7 @@ export default function PortfolioAllocation({
           loading={dataProcessing}
           viewId="projectAllocation"
           rowGroupingColumnMode={'multiple'}
+          showActuals={showActuals}
         />
       </Box>
     </>

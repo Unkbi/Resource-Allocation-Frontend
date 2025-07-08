@@ -87,9 +87,10 @@ export default function AllocationGrid({
   type = '',
   viewId = 'main',
   showActuals = false,
+  rowGroupingColumnMode = 'single',
 }) {
   const apiRef = useGridApiRef();
-  const { setApiRef } = useDataGrid();
+  const { setApiRef, getApiRef } = useDataGrid();
   const mainAllocationGrid = useAllocationGrid('main');
   const teamAllocationGrid = useAllocationGrid('teamAllocation');
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
@@ -272,6 +273,9 @@ export default function AllocationGrid({
   // Set the apiRef in the context when it's available
   useEffect(() => {
     if (apiRef.current) {
+      if (getApiRef(viewId)) {
+        setApiRef('temp', getApiRef(viewId)); // This is to keep inSync if other views are using the same apiRef
+      }
       setApiRef(viewId || 'main', apiRef.current);
     }
   }, [apiRef, setApiRef, viewId]);
@@ -391,7 +395,7 @@ export default function AllocationGrid({
     if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
       const updatedModel = {
         ...columnVisibilityModel,
-        ..._columns[groupBy === 'teams' ? 'team' : groupBy].reduce(
+        ..._columns[groupBy === 'teams' ? 'team' : groupBy]?.reduce(
           (acc, column) => {
             acc[column] = currentView.ColumnsVisible.includes(column);
             return acc;
@@ -444,7 +448,7 @@ export default function AllocationGrid({
         );
 
         const projectManagerName = projectManager
-          ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+          ? `${projectManager?.FullName}`.trim()
           : '';
 
         if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
@@ -502,7 +506,7 @@ export default function AllocationGrid({
     );
 
     const projectManagerName = projectManager
-      ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+      ? `${projectManager?.FullName}`.trim()
       : '';
     if (currentView?.MyProjects) {
       const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
@@ -732,11 +736,19 @@ export default function AllocationGrid({
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
     '__row_group_by_columns_group_teams__',
     '__row_group_by_columns_group_resource__',
+    '__row_group_by_columns_group_project__',
+    '__row_group_by_columns_group_portfolioName__',
     ...columns.map(col => col.field),
     ...finalColumns
-      .filter(i => i.field === 'resource' && groupBy === 'project')
+      .filter(
+        i =>
+          i.field === 'resource' &&
+          (groupBy === 'project' || groupBy === 'portfolioName')
+      )
       .map(col => col.field),
-    ...finalColumns.filter(i => i.field === 'project').map(col => col.field),
+    ...finalColumns
+      .filter(i => i.field === 'project' && groupBy === 'teams')
+      .map(col => col.field),
   ];
 
   const getTogglableColumns = columns =>
@@ -1231,6 +1243,11 @@ export default function AllocationGrid({
         resource: true,
         __row_group_by_columns_group__: true,
       },
+      portfolioName: {
+        __row_group_by_columns_group_portfolioName__: true,
+        __row_group_by_columns_group_project__: true,
+        resource: true,
+      },
     };
     let updatedModel = {
       ...newModel,
@@ -1246,9 +1263,9 @@ export default function AllocationGrid({
         }, {}),
         ...updatedModel,
       };
-    } else if (groupBy === 'project') {
+    } else {
       updatedModel = {
-        ..._columns['project'].reduce((acc, column) => {
+        ..._columns[groupBy].reduce((acc, column) => {
           acc[column] = true;
           return acc;
         }, {}),
@@ -1302,7 +1319,7 @@ export default function AllocationGrid({
       loading={loading}
       disableRowSelectionOnClick
       initialState={initialState}
-      rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
+      rowGroupingColumnMode={rowGroupingColumnMode}
       columnHeaderHeight={30}
       columnGroupHeaderHeight={22}
       columnGroupingModel={generateColumnGroupingModel(
