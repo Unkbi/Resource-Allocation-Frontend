@@ -8,6 +8,7 @@ import {
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import CommonToolbar from './CommonToolbar';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -69,6 +70,20 @@ const portfolioButtonStyle = {
   },
 };
 
+const tabTypographyStyle = {
+  color: 'var(--text-secondary, rgba(0, 0, 0, 0.60))',
+  fontFamily: 'Open Sans',
+  fontSize: '14px',
+  fontStyle: 'normal',
+  fontWeight: 400,
+  lineHeight: '24px',
+  textTransform: 'uppercase',
+  '&.Mui-selected': {
+    fontWeight: 600,
+    color: '#182752',
+  },
+};
+
 const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
   const dispatch = useDispatch();
   const handleAddPortfolio = () => {
@@ -83,77 +98,110 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
     );
   };
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginTop: '12px',
-      }}
-    >
-      <Tabs
-        value={value}
-        onChange={onChange}
-        textColor="primary"
-        indicatorColor="primary"
-        aria-label="secondary tabs example"
+    <CommonToolbar>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          height: '64px',
+          pl: 2,
+          pr: 1.5,
+          flexGrow: 1,
+        }}
       >
-        <Tab value="project" label="Projects" />
-        <Tab value="portfolio" label="Portfolio" />
-        <Tab value="businessImpact" label="Business Impact" disabled />
-      </Tabs>
+        <Box
+          className="tabsMenu"
+          sx={{
+            marginTop: '14px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            flex: '1 0 0',
+          }}
+        >
+          <Tabs
+            value={value}
+            onChange={onChange}
+            textColor="primary"
+            indicatorColor="primary"
+            aria-label="secondary tabs example"
+          >
+            <Tab value="project" label="Projects" sx={tabTypographyStyle} />
+            <Tab value="portfolio" label="Portfolio" sx={tabTypographyStyle} />
+            <Tab
+              value="businessImpact"
+              label="Business Impact"
+              disabled
+              sx={tabTypographyStyle}
+            />
+          </Tabs>
+        </Box>
 
-      <Box>
-        <Box className="filterColBlock">
-          <GridToolbarContainer ref={setFilterButtonEl}>
-            <StyledGridToolbarColumnsButton
-              slotProps={{
-                tooltip: { title: 'Columns' },
-                button: {
-                  variant: 'outlined',
-                  startIcon: (
-                    <img
-                      src="/images/icons/columns.svg"
-                      alt="columns"
-                      style={{ marginLeft: '8px' }}
-                    />
-                  ),
-                  className: 'columns-button',
-                  sx: commonButtonStyles,
-                },
-              }}
-            />
-            <GridToolbarFilterButton
-              slotProps={{
-                tooltip: { title: 'Filter' },
-                button: {
-                  variant: 'outlined',
-                  sx: { color: '#555', borderColor: '#ddd' },
-                  startIcon: (
-                    <img
-                      src="/images/icons/filter.svg"
-                      alt="filter"
-                      style={{ marginLeft: '8px' }}
-                    />
-                  ),
-                  className: 'columns-button',
-                  sx: commonButtonStyles,
-                },
-              }}
-            />
-            {value === 'portfolio' && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleAddPortfolio}
-                sx={portfolioButtonStyle}
-              >
-                Add Portfolio
-              </Button>
-            )}
-          </GridToolbarContainer>
+        <Box className="line" sx={{ marginRight: '12px', height: '64px' }}>
+          <img src="/images/icons/LinePeople.svg" />
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Box className="filterColBlock">
+            <GridToolbarContainer ref={setFilterButtonEl} sx={{ gap: '12px' }}>
+              <GridToolbarFilterButton
+                slotProps={{
+                  tooltip: { title: 'Filter' },
+                  button: {
+                    variant: 'outlined',
+                    sx: { color: '#555', borderColor: '#ddd' },
+                    startIcon: (
+                      <img
+                        src="/images/icons/newFilterPeople.svg"
+                        alt="filter"
+                        style={{ marginLeft: '8px' }}
+                      />
+                    ),
+                    className: 'columns-button',
+                    sx: commonButtonStyles,
+                  },
+                }}
+              />
+              <StyledGridToolbarColumnsButton
+                slotProps={{
+                  tooltip: { title: 'Columns' },
+                  button: {
+                    variant: 'outlined',
+                    startIcon: (
+                      <img
+                        src="/images/icons/newColumnPeople.svg"
+                        alt="columns"
+                        style={{ marginLeft: '8px' }}
+                      />
+                    ),
+                    className: 'columns-button',
+                    sx: commonButtonStyles,
+                  },
+                }}
+              />
+              {value === 'portfolio' && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleAddPortfolio}
+                  sx={portfolioButtonStyle}
+                >
+                  Add Portfolio
+                </Button>
+              )}
+            </GridToolbarContainer>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </CommonToolbar>
   );
 };
 

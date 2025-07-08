@@ -6,7 +6,6 @@ import {
 import { GridColumnMenu, useGridApiRef } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
 import { useState } from 'react';
-import CommonToolbar from '../../Toolbar/CommonToolbar';
 import { Box } from '@mui/material';
 
 function CustomColumnMenu(props) {
@@ -32,7 +31,6 @@ const ProjectTable = ({
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '95vh' }}>
-      <CommonToolbar />
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}

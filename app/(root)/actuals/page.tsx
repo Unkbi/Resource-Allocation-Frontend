@@ -309,7 +309,7 @@ export default function ActualsPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <CommonToolbar />
+                    {/* <CommonToolbar /> */}
     <Box
       px={{ xs: 2, sm: 2 }}
       py={2}
