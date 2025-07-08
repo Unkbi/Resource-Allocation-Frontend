@@ -248,6 +248,7 @@ export default function BottomTeamsView({
           }}
           NoRowsOverlay={NoRowsOverlay}
           viewId="bottomTeam"
+          rowGroupingColumnMode="multiple"
         />
       </Box>
     </>

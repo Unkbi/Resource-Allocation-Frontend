@@ -44,6 +44,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PORTFOLIO_DISPLAY_NAME,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
@@ -88,7 +89,7 @@ import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
-  padding :'7px 5px 7px 7px' ,
+  padding: '7px 5px 7px 7px',
   justifyContent: 'space-between',
   alignItems: 'center',
   borderRight: '#DDE1E4 solid 1px',
@@ -523,6 +524,10 @@ const HistoryIcon = () => (
   <img src="/images/icons/HistoryButton.svg" alt="share" />
 );
 
+const PortfolioIcon = () => (
+  <img src="/images/icons/portfolio.svg" alt="portfolio" />
+);
+
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
@@ -582,6 +587,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     {
       name: 'Project',
       icon: <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    },
+    {
+      name: 'Portfolio',
+      icon: <PortfolioIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
     {
       name: 'Project Cost',
@@ -930,6 +939,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <FolderIcon sx={{ fontSize: 20, color: '#344665' }} />
                 ) : selected === 'Teams' ? (
                   <PeopleIcon sx={{ fontSize: 20, color: '#344665' }} />
+                ) : selected === 'Portfolio' ? (
+                  <PortfolioIcon sx={{ fontSize: 20, color: '#344665' }} />
                 ) : (
                   <MonetizationOnIcon sx={{ fontSize: 20, color: '#344665' }} />
                 )}
@@ -944,7 +955,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   ? 'Projects'
                   : option.name === 'Project Cost'
                     ? 'Projects Cost'
-                    : option.name}
+                    : option.name === 'Portfolio'
+                      ? PORTFOLIO_DISPLAY_NAME
+                      : option.name}
               </StyledMenuItem>
             ))}
           </StyledSelect>
@@ -1050,7 +1063,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </>
             ) : null}
           </Box>
-          <GridToolbarContainer ref={setFilterButtonEl} sx={{ padding: 0 ,flexWrap:'nowrap'}}>
+          <GridToolbarContainer
+            ref={setFilterButtonEl}
+            sx={{ padding: 0, flexWrap: 'nowrap' }}
+          >
             <GridToolbarFilterButton
               slotProps={{
                 tooltip: { title: 'Filters' },
@@ -1129,7 +1145,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
             </IconButton>
           </Box>
-          <Box className="view-btn" sx={{display:'flex' ,gap:0}}>
+          <Box className="view-btn" sx={{ display: 'flex', gap: 0 }}>
             <Box>
               <ViewButton
                 startIcon={<PreferencesIcon />}
@@ -1231,7 +1247,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 },
               }}
             >
-             <EllipsisNameCell value={'Save View'}/>
+              <EllipsisNameCell value={'Save View'} />
             </Button>
           </Box>
         </Box>

@@ -52,6 +52,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PORTFOLIO_DISPLAY_NAME,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
@@ -575,6 +576,10 @@ const TeamsCostIcon = () => (
   <img src="images/icons/teamsCostIcon.svg" alt="teams cost" />
 );
 
+const PortfolioIcon = () => (
+  <img src="/images/icons/portfolio.svg" alt="portfolio" />
+);
+
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
@@ -637,6 +642,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     {
       name: 'Project',
       icon: <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
+      name: 'Portfolio',
+      icon: <PortfolioIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
     {
       name: 'Project Cost',
@@ -872,7 +881,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         projects?.result || []
       );
 
-      if (view.includes('Project') && projectsIAmProjectManager.length === 0) {
+      if (
+        (view.includes('Project') || view.includes('Portfolio')) &&
+        projectsIAmProjectManager.length === 0
+      ) {
         setPopOverAnchorEl(myProjectsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
@@ -881,7 +893,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
     if (view.includes('Teams')) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
-    } else if (view.includes('Project')) {
+    } else if (view.includes('Project') || view.includes('Portfolio')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
     }
   };
@@ -1187,9 +1199,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 value={
                   currentView?.GroupBy === 'Project'
                     ? 'Projects'
-                    : currentView?.GroupBy === 'Project Cost'
-                      ? 'Projects Cost'
-                      : currentView?.GroupBy || 'Teams'
+                    : currentView?.GroupBy === 'Portfolio'
+                      ? PORTFOLIO_DISPLAY_NAME
+                      : currentView?.GroupBy === 'Project Cost'
+                        ? 'Projects Cost'
+                        : currentView?.GroupBy || 'Teams'
                 }
                 onChange={handleViewChange}
                 className="projectDropdown"
@@ -1204,11 +1218,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 }}
                 renderValue={selected => (
                   <MenuItemContent>
-                    {selected === 'Projects' ? (
-                      <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />
-                    ) : selected === 'Teams' ? (
-                      <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />
-                    ) : (
+                    {viewOptions.find(
+                      option => option.name === currentView?.GroupBy
+                    )?.icon || (
                       <MonetizationOnIcon
                         sx={{ fontSize: 20, color: '#5D6979' }}
                       />
@@ -1264,7 +1276,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 className="projectIcon"
                 sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
               >
-                {view.includes('Project') ? (
+                {view.includes('Project') || view.includes('Portfolio') ? (
                   <>
                     <TooltipButton
                       msg="My Project"
@@ -1403,7 +1415,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               >
                 <IconButton
                   sx={{ marginBottom: '8px' }}
-                  onClick={() => changeCalendarDate('next')}
+                  onClick={() => changeCalendarDate('prev')}
                 >
                   <ChevronLeftIcon />
                 </IconButton>
@@ -1517,6 +1529,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 <Button
                   disabled={
                     currentView.GroupBy.includes('Cost') ||
+                    currentView.GroupBy === 'Portfolio' ||
                     isObjectEqual(
                       savedViews.find(view => view.Id === selectedView),
                       currentView

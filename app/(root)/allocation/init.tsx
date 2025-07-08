@@ -14,6 +14,7 @@ import { resetAllocations } from '@/app/redux/reducers/allAllocationsReducer';
 import { ApiResponse, Resource, Team } from '@/app/types';
 import { generateDateWeekMath } from '@/app/utils/common';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
 interface TopContentProps {
   startDate: string;
@@ -42,6 +43,7 @@ export default function AllocationInit() {
   const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
     (state: RootState) => state.resources
   );
+  const { portfolios } = useSelector((state: RootState) => state.portfolios);
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
@@ -76,6 +78,12 @@ export default function AllocationInit() {
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
     }
+    if (!portfolios?.length) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
+    }
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
       dispatch(fetchAllocationTheme());
     }
@@ -95,6 +103,7 @@ export default function AllocationInit() {
           teams: teams?.result,
           projects: projects?.result,
           resources: resources?.result,
+          portfolios: portfolios,
           startDate: currentViewStartDate,
           endDate: currentViewEndDate,
         },
@@ -115,6 +124,7 @@ export default function AllocationInit() {
           teams: teams?.result,
           projects: projects?.result,
           resources: resources?.result,
+          portfolios: portfolios,
           startDate: currentView?.isDynamicRange
             ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
             : currentView?.isFixedRange
