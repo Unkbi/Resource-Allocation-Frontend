@@ -74,6 +74,7 @@ const ProjectTable = ({
           panel: {
             anchorEl: filterButtonEl,
             className: 'parent-grid-panel',
+            placement: 'bottom-end',
           },
           toolbar: {
             setFilterButtonEl,

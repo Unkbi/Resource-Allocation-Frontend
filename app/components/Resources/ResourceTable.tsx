@@ -96,6 +96,7 @@ const ResourceTable = ({
         panel: {
           anchorEl: filterButtonEl,
           className: 'parent-grid-panel',
+          placement: 'bottom-end',
         },
         toolbar: {
           //@ts-ignore
