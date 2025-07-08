@@ -106,7 +106,7 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
           alignItems: 'center',
           height: '64px',
           pl: 2,
-          pr: 1.5,
+          pr: 1.75,
           flexGrow: 1,
         }}
       >
@@ -139,7 +139,7 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
           </Tabs>
         </Box>
 
-        <Box className="line" sx={{ marginRight: '12px', height: '64px' }}>
+        <Box className="line" sx={{ marginRight: '16px', height: '64px' }}>
           <img src="/images/icons/LinePeople.svg" />
         </Box>
 

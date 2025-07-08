@@ -71,7 +71,6 @@ const tabTypographyStyle = {
   },
 };
 
-
 const ActionButton = ({
   src,
   alt,
@@ -79,7 +78,7 @@ const ActionButton = ({
 }: {
   src: string;
   alt: string;
-  style:any;
+  style: any;
   onClick?: () => void;
 }) => (
   <button
@@ -171,12 +170,6 @@ const ResourceToolbar = ({
             textColor="primary"
             indicatorColor="primary"
             aria-label="toolbar tabs"
-            TabIndicatorProps={{
-              sx: {
-                bottom: '0px',
-                height: '3px',
-              },
-            }}
           >
             <Tab value="resource" label="Resources" sx={tabTypographyStyle} />
             <Tab value="teams" label="Teams" sx={tabTypographyStyle} />
