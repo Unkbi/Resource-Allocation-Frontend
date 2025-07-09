@@ -46,7 +46,7 @@ const ResourceTable = ({
 }: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
-       <Box sx={{ display: 'flex', flexDirection: 'column',height:'95vh' }}>
+       <Box sx={{ display: 'flex', flexDirection: 'column',height:'100vh' }}>
     <StyledDataGrid
       apiRef={apiRef}
       columns={columns}
@@ -117,25 +117,74 @@ const ResourceTable = ({
               size: 'small',
               sx: { mt: 'auto' },
             },
-            operatorInputProps: {
-              size: 'small',
-              sx: { mt: 'auto' },
-            },
-            valueInputProps: {
-              InputComponentProps: {
-                size: 'small',
-              },
-            },
-            deleteIconProps: {
-              sx: {
-                '& .MuiSvgIcon-root': { color: '#d32f2f' },
-              },
-            },
           },
-          sx: FilterPanelStyles,
-        },
-      }}
-    />
+        }}
+        slots={{
+          toolbar:
+            ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
+          columnMenu: CustomColumnMenu,
+        }}
+        localeText={{
+          toolbarFilters: '',
+          toolbarColumns: '',
+        }}
+        sx={{
+          height: '95vh',
+          '& .MuiDataGrid-columnHeader': {
+            padding: '0 16px',
+            borderRight: 'none',
+          },
+          '& .MuiDataGrid-footer': {
+            display: 'block',
+          },
+        }}
+        slotProps={{
+          loadingOverlay: {
+            variant: 'skeleton',
+            noRowsVariant: 'skeleton',
+          },
+          panel: {
+            anchorEl: filterButtonEl,
+            className: 'parent-grid-panel',
+          },
+          toolbar: {
+            //@ts-ignore
+            setFilterButtonEl,
+            value: value,
+            onChange: onChange,
+          },
+          columnsPanel: {
+            className: 'styleColumnMenu',
+            sx: ColumnManagementStyles,
+          },
+          filterPanel: {
+            columnsSort: 'asc',
+            //@ts-ignore
+            className: 'filterPopup',
+            filterFormProps: {
+              columnInputProps: {
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              operatorInputProps: {
+                size: 'small',
+                sx: { mt: 'auto' },
+              },
+              valueInputProps: {
+                InputComponentProps: {
+                  size: 'small',
+                },
+              },
+              deleteIconProps: {
+                sx: {
+                  '& .MuiSvgIcon-root': { color: '#d32f2f' },
+                },
+              },
+            },
+            sx: FilterPanelStyles,
+          },
+        }}
+      />
     </Box>
   );
 };

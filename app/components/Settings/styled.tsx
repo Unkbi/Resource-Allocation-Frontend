@@ -25,7 +25,7 @@ interface StyledListItemProps {
 const PageContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
-  height: 'calc(100vh - 54px)',
+  height: 'calc(100vh - 31px)',
   backgroundColor: '#ffffff',
   fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
 });

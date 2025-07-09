@@ -30,7 +30,8 @@ const ProjectTable = ({
 }) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '95vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <CommonToolbar />
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}

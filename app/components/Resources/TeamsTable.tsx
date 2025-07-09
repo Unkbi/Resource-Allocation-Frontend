@@ -75,7 +75,7 @@ const TeamsTable = ({
           toolbarColumns: '',
         }}
         sx={{
-          height: '95vh',
+          height: '100vh',
           '& .MuiDataGrid-columnHeader': {
             padding: '0 46px',
             borderRight: 'none',
