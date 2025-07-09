@@ -71,6 +71,7 @@ import { StyledInput } from '../Input/StyledInput';
 import CopyLinkInput from '../Input/InputWithButton';
 import ShareLinkDialog from '../Dialog/ShareLinkDialog';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 140,
@@ -86,7 +87,7 @@ const ToolBox2 = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: '7px 14px 5px 14px',
+  padding: '7px 0px 5px 14px',
   width: '100%',
   marginBottom: '10px',
   gap: '16px',
@@ -295,8 +296,9 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
 }));
 
 const StyledDivider = styled(Divider)(({ theme }) => ({
-  height: '32px',
-  margin: '0 16px',
+  height: '37px',
+  marginLeft: '6px',
+  marginRight: '6px',
   color: '#BABABA',
 }));
 
@@ -492,16 +494,26 @@ const SplitTeamToolbar = memo(
       width: '100%',
       '& .MuiInputBase-root': {
         fontSize: '12px',
-        minHeight: '32px',
-        height: 'auto',
-        padding: '2px 9px',
-        margin: '1%',
+        padding: '0 8px',
+        borderRadius: '6px',
+        backgroundColor: '#fff',
+        border: '1px solid #D9D9D9',
       },
       '& .MuiAutocomplete-tag': {
         fontSize: '10px',
-        padding: '2px 5px',
+        width: 'auto',
         height: '20px',
-        margin: '2px',
+        overflow: 'hidden',
+        backgroundColor: '#E9E9E9',
+        borderRadius: '30px',
+        border: '1px solid rgba(28, 45, 95, 0.20)',
+        borderRadius: '38px',
+        color: ' #1C2D5F',
+        fontfamily: 'Open Sans',
+        fontSize: '12px',
+        fontStyle: 'normal',
+        fontWeight: 600,
+        lineHeight: 'normal',
         '& .MuiSvgIcon-root': {
           // Add this section for the close icon
           width: '14px',
@@ -638,7 +650,7 @@ const SplitTeamToolbar = memo(
                 getOptionLabel={option => option?.label || ''}
                 value={selectedTeam}
                 filterSelectedOptions
-                limitTags={3}
+                limitTags={2}
                 onChange={handleTeamChange}
                 slotProps={commonSlotProps}
                 renderOption={(props, option) => {
@@ -670,26 +682,61 @@ const SplitTeamToolbar = memo(
                 )}
               />
             </Box>
-            <Box sx={{ flex: 1 }}>
+
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                paddingLeft: '9px',
+                paddingRight: '10px',
+              }}
+            >
               <Box
                 sx={{
+                  width: '0.894px',
+                  height: '37px',
+                  background: '#CEDCE9',
+                  opacity: 0.5,
+                }}
+              />
+              <Box
+                sx={{
+                  flex: 1,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 2,
+                  gap: 0.5,
                   padding: '0 16px',
-                  minWidth: '300px',
                 }}
               >
                 <Typography
                   variant="caption"
                   sx={{
-                    fontSize: '12px',
-                    color: '#1C2D5F',
-                    minWidth: '60px',
+                    color: ' #212121',
+                    fontFamily: 'Open Sans',
+                    fontSize: '14px',
+                    fontStyle: 'normal',
+                    fontWeight: ' 500',
+                    lineHeight: 'normal',
                   }}
                 >
-                  Select Allocation :
+                  Select Availability
                 </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <img src="/images/icons/splitInfo.svg" alt="info" />
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  paddingLeft: '3px',
+                }}
+              >
                 <StyledSlider
                   value={allocationThreshold}
                   onChange={handleAllocationRangeChange}
@@ -705,10 +752,10 @@ const SplitTeamToolbar = memo(
                     { value: 0.6, label: '0.6' },
                     { value: 0.8, label: '0.8' },
                     { value: 1, label: '1.0' },
-                    { value: 1.2, label: 'max' },
+                    { value: 1.2, label: '' },
                   ]}
                   valueLabelFormat={value =>
-                    value === 1.1 ? 'max' : value === 1.2 ? 'max' : `${value}`
+                    value === 1.1 ? '' : value === 1.2 ? '' : `${value}`
                   }
                 />
               </Box>
@@ -722,9 +769,16 @@ const SplitTeamToolbar = memo(
                   button: {
                     variant: 'outlined',
                     sx: {
-                      color: '#555',
-                      borderColor: '#ddd',
-                      height: '32px',
+                      minWidth: '36px',
+                      width: '36px',
+                      height: '36px',
+                      padding: 0,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      background: '#FFF',
+                      boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
                       '.MuiButton-startIcon': { marginRight: '0px' },
                       '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
                       '& .MuiBadge-root svg': { display: 'none' },
@@ -738,7 +792,10 @@ const SplitTeamToolbar = memo(
                         }}
                         {...props}
                         startIcon={
-                          <img src="/images/icons/filter.svg" alt="filter" />
+                          <img
+                            src="/images/icons/NewFilterIcon.svg"
+                            alt="filter"
+                          />
                         }
                       >
                         {props.children}
@@ -753,39 +810,38 @@ const SplitTeamToolbar = memo(
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
-              marginLeft: 'auto',
+              height: '64px',
+              pt: '14px',
+              px: 1,
             }}
           >
             <IconButton
+              sx={{ marginBottom: '8px' }}
               onClick={() => changeCalendarDate('prev')}
-              size="medium"
-              className="nextPrevIcon"
             >
-              <img src={'/images/icons/left-arrow.svg'} alt="left-arrow" />
+              <ChevronLeftIcon />
             </IconButton>
-
-            <CustomDateRangePicker
-              open={isRangePickerOpen}
-              placeholder={`${first} - ${last}`}
-              isButton={true}
-              value={{
-                StartDate: startDate,
-                EndDate: endDate,
-              }}
-              onOpen={() => setIsRangePickerOpen(true)}
-              onClose={() => setIsRangePickerOpen(false)}
-              showLabel={false}
-              format="MMM YY"
-              handleDateField={handleDateField}
-            />
+            <Box className="rangePicker" sx={{ display: 'flex' }}>
+              <CustomDateRangePicker
+                open={isRangePickerOpen}
+                placeholder={`${first} - ${last}`}
+                isButton={true}
+                value={{ StartDate: startDate, EndDate: endDate }}
+                showCalendarIconOnlyHere
+                onOpen={() => setIsRangePickerOpen(true)}
+                onClose={() => setIsRangePickerOpen(false)}
+                showLabel={false}
+                format="MMM YY"
+                maxWeeks={51}
+                handleDateField={handleDateField}
+              />
+            </Box>
 
             <IconButton
+              sx={{ marginLeft: '15px', marginBottom: '8px' }}
               onClick={() => changeCalendarDate('next')}
-              size="medium"
-              className="nextPrevIcon"
             >
-              <img src={'/images/icons/right-arrow.svg'} alt="right-arrow" />
+              <ChevronRightIcon />
             </IconButton>
           </Box>
         </ToolBox2>

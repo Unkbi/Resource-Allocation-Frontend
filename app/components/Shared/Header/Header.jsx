@@ -56,7 +56,7 @@ const MainAppBar = styled(AppBar, {
   '& .toobarRow': {
     minHeight: '30px',
     paddingLeft: '11px',
-    paddingRight: '15px',
+    paddingRight: '4px',
   },
   '& .settingIcon': {
     padding: '0',
@@ -171,11 +171,18 @@ const Header = ({ sidebarExpanded }) => {
             getTitleFromPathname(pathname)
           )}
         </Typography>
-        <Box display="flex" alignItems="center" ml="auto" gap="20px">
+        <Box display="flex" alignItems="center" ml="auto" gap="20px" width= '45px' height='24px'>
           {pathname === '/allocation' && splitView ? (
-            <StyledButton variant="contained" onClick={handleSplitViewDone}>
-              Close
-            </StyledButton>
+            <Button
+              onClick={handleSplitViewDone}
+              sx={{ width: '24px', height: '24px',padding:'0px' }}
+            >
+              <img
+                src="/images/icons/DisabledbyDefaultRounded.svg"
+                alt="close"
+                style={ {width: '24px', height: '24px'}}
+              />
+            </Button>
           ) : null}
         </Box>
       </Toolbar>
