@@ -752,10 +752,10 @@ const SplitTeamToolbar = memo(
                     { value: 0.6, label: '0.6' },
                     { value: 0.8, label: '0.8' },
                     { value: 1, label: '1.0' },
-                    { value: 1.2, label: '' },
+                    { value: 1.2, label: 'max' },
                   ]}
                   valueLabelFormat={value =>
-                    value === 1.1 ? '' : value === 1.2 ? '' : `${value}`
+                    value === 1.1 ? 'max' : value === 1.2 ? 'max' : `${value}`
                   }
                 />
               </Box>

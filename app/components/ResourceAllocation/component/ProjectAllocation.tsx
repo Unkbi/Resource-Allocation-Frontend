@@ -781,7 +781,7 @@ export default function ProjectAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box sx={{ height: 'calc(100vh - 31px)', width: '100%' }}>
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
