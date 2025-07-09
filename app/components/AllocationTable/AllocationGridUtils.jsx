@@ -824,6 +824,7 @@ export const getFinalColumns = (
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
               isFormatWithK={isFormatWithK}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
