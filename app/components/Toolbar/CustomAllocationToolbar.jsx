@@ -1638,6 +1638,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 size="small"
                 checked={currentView?.GroupBy.includes('Cost')}
                 onChange={handleAllocationCostSwitch}
+                disabled={currentView?.GroupBy === 'Portfolio'}
               />
               <Typography
                 sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
