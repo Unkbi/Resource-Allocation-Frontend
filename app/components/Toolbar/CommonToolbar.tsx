@@ -16,7 +16,7 @@ import { useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 
 interface CommonToolbarProps {
-  setFilterButtonEl?: (el: HTMLElement | null) => void;
+  children?: React.ReactNode;
 }
 
 const menuItems = [
@@ -56,7 +56,7 @@ const menuItems = [
   },
 ];
 
-const CommonToolbar: React.FC<CommonToolbarProps> = memo(() => {
+const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
   const dispatch = useDispatch();
   const [openAddMenu, setOpenAddMenu] = useState(false);
   const anchorRefAdd = useRef<HTMLButtonElement>(null);
@@ -126,33 +126,33 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(() => {
               '&:hover': { backgroundColor: '#20232D' },
             }}
           >
-           {openAddMenu ? (
-                         <CloseIcon
-                           sx={{
-                             color: '#fff',
-                             width: '40px',
-                             height: '40px',
-                             backgroundColor: '#20232D',
-                             borderRadius: '8px',
-                           }}
-                         />
-                       ) : (
-                         <Box
-                           sx={{
-                             display: 'flex',
-                             alignItems: 'center',
-                             justifyContent: 'center',
-                             width: '44px',
-                             height: '44px',
-                           }}
-                         >
-                           <img
-                             src="/images/icons/AddIconNew.svg"
-                             alt=""
-                             style={{ width: '44px', height: '44px' }}
-                           />
-                         </Box>
-                       )}
+            {openAddMenu ? (
+              <CloseIcon
+                sx={{
+                  color: '#fff',
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: '#20232D',
+                  borderRadius: '8px',
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '44px',
+                  height: '44px',
+                }}
+              >
+                <img
+                  src="/images/icons/AddIconNew.svg"
+                  alt=""
+                  style={{ width: '44px', height: '44px' }}
+                />
+              </Box>
+            )}
           </IconButton>
 
           <Popper
@@ -231,7 +231,9 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(() => {
             backgroundColor: 'rgba(15, 23, 42, 0.04)',
             borderBottom: '1px solid rgba(206, 220, 233, 0.50)',
           }}
-        />
+        >
+        {children ?? null}
+        </Box>
 
         <Box
           sx={{

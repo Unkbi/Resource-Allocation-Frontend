@@ -31,7 +31,6 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
-import CommonToolbar from '@/app/components/Toolbar/CommonToolbar';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
@@ -137,55 +136,57 @@ export default function ActualsPage() {
         ],
       };
 
-      if(isModified && !hasInvalidRows) {
-      new Promise((resolve, reject) => {
-        dispatch({
-          type: CONFIRM_ACTUAL_ALLOCATIONS,
-          payload: { ...payload, resolve, reject },
-        });
-      })
-        .then((response: any) => {
-          if (status !== 'Confirmed') {
-            dispatch(setActualAllocationsStatus('Confirmed'));
-          }
-          if (response?.status === 'ok') {
-             setIsModified(false);
-             setHasInvalidRows(false);
-             setConfirmSignal((c) => c + 1);
+      if (isModified && !hasInvalidRows) {
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CONFIRM_ACTUAL_ALLOCATIONS,
+            payload: { ...payload, resolve, reject },
+          });
+        })
+          .then((response: any) => {
+            if (status !== 'Confirmed') {
+              dispatch(setActualAllocationsStatus('Confirmed'));
+            }
+            if (response?.status === 'ok') {
+              setIsModified(false);
+              setHasInvalidRows(false);
+              setConfirmSignal(c => c + 1);
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Success. Thank you! Successfully updated Actuals!',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            }
+          })
+          .catch((error: any) => {
+            console.error('Error confirming actual allocations:', error);
             dispatch(
               showToast({
                 open: true,
-                message: 'Success. Thank you! Successfully updated Actuals!',
-                type: 'success',
+                message: `Failed to confirm Actual alloctions.`,
+                type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
               })
             );
-          }
-        })
-        .catch((error: any) => {
-          console.error('Error confirming actual allocations:', error);
-          dispatch(
-            showToast({
-              open: true,
-              message: `Failed to confirm Actual alloctions.`,
-              type: 'error',
-              position: 'bottom-left',
-              autoHideTimer: 4000,
-            })
-          );
-        });
+          });
       } else {
-      dispatch(
-        showToast({
-          open: true,
-          message: hasInvalidRows ? 'Must fill required fields.' : 'No changes present to confirm.',
-          type: hasInvalidRows ? 'error' : 'info',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-    }
+        dispatch(
+          showToast({
+            open: true,
+            message: hasInvalidRows
+              ? 'Must fill required fields.'
+              : 'No changes present to confirm.',
+            type: hasInvalidRows ? 'error' : 'info',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+      }
     } else {
       dispatch(
         showToast({
@@ -302,186 +303,185 @@ export default function ActualsPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-
-      
     };
   }, [isModified]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <CommonToolbar />
-    <Box
-      px={{ xs: 2, sm: 2 }}
-      py={2}
-      height="100%"
-      sx={{
-        maxWidth: '100vw',
-        boxSizing: 'border-box',
-      }}
-    >
-      <Typography
-        variant="body1"
-        mb={2}
-        sx={{ textAlign: 'left', fontSize: '14px' }}
-      >
-        Confirm your actual effort against the pre-filled planned allocation
-        values.
-      </Typography>
-
       <Box
-        className="tableWithArrow"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
+        px={{ xs: 2, sm: 2 }}
+        py={2}
+        height="100%"
+        sx={{
+          maxWidth: '100vw',
+          boxSizing: 'border-box',
+        }}
       >
-        <Box mx={2} maxWidth={580} minHeight={350} width={530}>
-          <Typography
-            style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}
-          >
-            Current Status :{' '}
-            {dataProcessing ? (
-              <Skeleton
-                variant="text"
+        <Typography
+          variant="body1"
+          mb={2}
+          sx={{ textAlign: 'left', fontSize: '14px' }}
+        >
+          Confirm your actual effort against the pre-filled planned allocation
+          values.
+        </Typography>
+
+        <Box
+          className="tableWithArrow"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Box mx={2} maxWidth={580} minHeight={350} width={530}>
+            <Typography
+              style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}
+            >
+              Current Status :{' '}
+              {dataProcessing ? (
+                <Skeleton
+                  variant="text"
+                  sx={{
+                    display: 'inline-block',
+                    width: '80px',
+                    height: '21px',
+                    marginLeft: '4px',
+                    verticalAlign: 'middle',
+                  }}
+                />
+              ) : (
+                <span
+                  style={{
+                    color: status === 'Confirmed' ? '#198F35' : '#FF7912',
+                  }}
+                >
+                  {status === 'Confirmed' ? status : 'Proposed'}
+                </span>
+              )}
+            </Typography>
+            <ActualTable
+              data={formattedActualAllocations || []}
+              dataProcessing={dataProcessing || false}
+              disableView={
+                status === 'Confirmed' &&
+                startDate !== null &&
+                !isCurrentWeek(parseISO(startDate))
+              }
+              startDate={startDate}
+              endDate={endDate}
+              apiRef={apiRef}
+              onValidationChange={handleValidationChange}
+              setShow={handleSetShow}
+              onModificationChange={handleModificationChange}
+              confirmSignal={confirmSignal}
+            />
+            <Box mt={4} width="100%">
+              <Box
                 sx={{
-                  display: 'inline-block',
-                  width: '80px',
-                  height: '21px',
-                  marginLeft: '4px',
-                  verticalAlign: 'middle',
+                  borderBottom: '1px solid #E0E0E0',
                 }}
               />
-            ) : (
-              <span
-                style={{
-                  color: status === 'Confirmed' ? '#198F35' : '#FF7912',
+            </Box>
+            <Box display="flex" justifyContent="space-between" mt={4}>
+              <Button
+                startIcon={<ChevronLeftIcon />}
+                onClick={() => {
+                  if (isModified) {
+                    setDialogSource('prev');
+                    setDeleteDialogOpen(true);
+                  } else {
+                    handlePrev();
+                  }
                 }}
+                sx={{
+                  fontSize: '14px',
+                  color: '#152e75',
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  },
+                  '& .MuiButton-startIcon': {
+                    marginRight: '0px',
+                  },
+                }}
+                variant="text"
               >
-                {status === 'Confirmed' ? status : 'Proposed'}
-              </span>
-            )}
-          </Typography>
-          <ActualTable
-            data={formattedActualAllocations || []}
-            dataProcessing={dataProcessing || false}
-            disableView={
-              status === 'Confirmed' &&
-              startDate !== null &&
-              !isCurrentWeek(parseISO(startDate))
-            }
-            startDate={startDate}
-            endDate={endDate}
-            apiRef={apiRef}
-            onValidationChange={handleValidationChange}
-            setShow={handleSetShow}
-            onModificationChange={handleModificationChange}
-            confirmSignal={confirmSignal}
-          />
-          <Box mt={4} width="100%">
-            <Box
-              sx={{
-                borderBottom: '1px solid #E0E0E0',
-              }}
-            />
-          </Box>
-          <Box display="flex" justifyContent="space-between" mt={4}>
-            <Button
-              startIcon={<ChevronLeftIcon />}
-              onClick={() => {
-                if (isModified ) {
-                  setDialogSource('prev');
-                  setDeleteDialogOpen(true);
-                } else {
-                  handlePrev();
-                }
-              }}
-              sx={{
-                fontSize: '14px',
-                color: '#152e75',
-                textTransform: 'none',
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                },
-                '& .MuiButton-startIcon': {
-                  marginRight: '0px',
-                },
-              }}
-              variant="text"
-            >
-              Prev Week
-            </Button>
+                Prev Week
+              </Button>
 
-            <Button
-              variant="contained"
-              sx={{
-                // @ts-ignore
-               bgcolor: theme => theme.palette.sideBarColor.main,
-              px: 2,
-              width: '192px',
-              height: '36px',
-              borderRadius: '5px',
-              }}
-              disabled={
-              status !== null &&
-              startDate !== null &&
-              status !== 'Proposed' &&
-              // Enable button if it's the current week even if status is 'Confirmed'
-              !isCurrentWeek(parseISO(startDate)) &&
-              (!isModified || show || hasInvalidRows)
-              }
-              onClick={handleConfirmed}
-            >
-              <Typography
-              sx={{
-                color: '#FFF',
-                textAlign: 'center',
-                fontFamily: 'Open Sans',
-                fontSize: 14,
-                fontWeight: 600,
-                textTransform: 'none',
-              }}
+              <Button
+                variant="contained"
+                sx={{
+                  // @ts-ignore
+                  bgcolor: theme => theme.palette.sideBarColor.main,
+                  px: 2,
+                  width: '192px',
+                  height: '36px',
+                  borderRadius: '5px',
+                }}
+                disabled={
+                  status !== null &&
+                  startDate !== null &&
+                  status !== 'Proposed' &&
+                  // Enable button if it's the current week even if status is 'Confirmed'
+                  !isCurrentWeek(parseISO(startDate)) &&
+                  (!isModified || show || hasInvalidRows)
+                }
+                onClick={handleConfirmed}
               >
-              {status === 'Confirmed' ? 'Modify' : 'Confirm'}
-              </Typography>
-            </Button>
+                <Typography
+                  sx={{
+                    color: '#FFF',
+                    textAlign: 'center',
+                    fontFamily: 'Open Sans',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                  }}
+                >
+                  {status === 'Confirmed' ? 'Modify' : 'Confirm'}
+                </Typography>
+              </Button>
 
-            <Button
-              endIcon={<ChevronRightIcon />}
-              onClick={() => {
-                if (isModified ) {
-                  setDialogSource('next');
-                  setDeleteDialogOpen(true);
-                } else {
-                  handleNext();
+              <Button
+                endIcon={<ChevronRightIcon />}
+                onClick={() => {
+                  if (isModified) {
+                    setDialogSource('next');
+                    setDeleteDialogOpen(true);
+                  } else {
+                    handleNext();
+                  }
+                }}
+                disabled={
+                  startDate ? isCurrentWeek(parseISO(startDate)) : false
                 }
-              }}
-              disabled={startDate ? isCurrentWeek(parseISO(startDate)) : false}
-              sx={{
-                color: '#152e75',
-                fontSize: '14px',
-                textTransform: 'none',
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                },
-                '& .MuiButton-endIcon': {
-                  marginLeft: '0px',
-                },
-              }}
-              variant="text"
-            >
-              Next Week
-            </Button>
+                sx={{
+                  color: '#152e75',
+                  fontSize: '14px',
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  },
+                  '& .MuiButton-endIcon': {
+                    marginLeft: '0px',
+                  },
+                }}
+                variant="text"
+              >
+                Next Week
+              </Button>
+            </Box>
           </Box>
         </Box>
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+          title="Alert"
+        >
+          {'Are you sure you want to leave? Your actuals will not be saved.'}
+        </ConfirmDialog>
       </Box>
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        title="Alert"
-      >
-        {"Are you sure you want to leave? Your actuals will not be saved."}
-      </ConfirmDialog>
-    </Box>
     </Box>
   );
 }

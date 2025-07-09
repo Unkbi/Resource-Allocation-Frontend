@@ -13,7 +13,6 @@ import {
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
 import { Resource } from '@/app/types';
-import CommonToolbar from '../Toolbar/CommonToolbar';
 import { Box } from '@mui/material';
 
 interface ResourceTableProps {
@@ -47,27 +46,76 @@ const ResourceTable = ({
 }: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <CommonToolbar />
-      <StyledDataGrid
-        apiRef={apiRef}
-        columns={columns}
-        rows={rows}
-        hideFooter={true}
-        hideFooterSelectedRowCount={true}
-        loading={loading}
-        initialState={{
-          sorting: {
-            sortModel: [{ field: 'FullName', sort: 'asc' }],
+       <Box sx={{ display: 'flex', flexDirection: 'column',height:'100vh' }}>
+    <StyledDataGrid
+      apiRef={apiRef}
+      columns={columns}
+      rows={rows}
+      hideFooter={true}
+      hideFooterSelectedRowCount={true}
+      loading={loading}
+      initialState={{
+        sorting: {
+          sortModel: [{ field: 'FullName', sort: 'asc' }],
+        },
+        columns: {
+          columnVisibilityModel: {
+            team: false,
+            organization: false,
+            WorkLocation: false,
+            AverageWeeklyHours: false,
+            ContractorHourlyRate:false,
+            PhoneNumber:false,
           },
-          columns: {
-            columnVisibilityModel: {
-              team: false,
-              organization: false,
-              WorkLocation: false,
-              AverageWeeklyHours: false,
-              ContractorHourlyRate: false,
-              PhoneNumber: false,
+        },
+      }}
+      slots={{
+        toolbar:
+          ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
+          columnMenu: CustomColumnMenu,
+      }}
+      localeText={{
+        toolbarFilters: '',
+        toolbarColumns: '',
+      }}
+      sx={{
+        height: '95vh',
+        '& .MuiDataGrid-columnHeader': {
+          padding: '0 16px',
+          borderRight: 'none',
+        },
+        '& .MuiDataGrid-footer': {
+          display: 'block',
+        },
+      }}
+      slotProps={{
+        loadingOverlay: {
+          variant: 'skeleton',
+          noRowsVariant: 'skeleton',
+        },
+        panel: {
+          anchorEl: filterButtonEl,
+          className: 'parent-grid-panel',
+          placement: 'bottom-end',
+        },
+        toolbar: {
+          //@ts-ignore
+          setFilterButtonEl,
+          value: value,
+          onChange: onChange,
+        },
+        columnsPanel: {
+          className: 'styleColumnMenu',
+          sx: ColumnManagementStyles,
+        },
+        filterPanel: {
+          columnsSort: 'asc',
+          //@ts-ignore
+          className: 'filterPopup',
+          filterFormProps: {
+            columnInputProps: {
+              size: 'small',
+              sx: { mt: 'auto' },
             },
           },
         }}

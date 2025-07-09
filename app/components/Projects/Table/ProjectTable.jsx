@@ -6,7 +6,6 @@ import {
 import { GridColumnMenu, useGridApiRef } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
 import { useState } from 'react';
-import CommonToolbar from '../../Toolbar/CommonToolbar';
 import { Box } from '@mui/material';
 
 function CustomColumnMenu(props) {
@@ -76,6 +75,7 @@ const ProjectTable = ({
           panel: {
             anchorEl: filterButtonEl,
             className: 'parent-grid-panel',
+            placement: 'bottom-end',
           },
           toolbar: {
             setFilterButtonEl,

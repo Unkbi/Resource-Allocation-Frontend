@@ -16,11 +16,7 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import {
-  getCombinedAllocation,
-  injectBlankRows,
-  normalizeRow,
-} from '@/app/utils/allocationUtils';
+import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface TeamAllocationProps {
@@ -629,6 +625,7 @@ export default function TeamAllocation({
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
           showActuals={showActuals}
+          rowGroupingColumnMode="multiple"
         />
         {!allAllocations && !dataProcessing && (
           <div
