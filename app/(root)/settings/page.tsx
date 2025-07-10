@@ -351,10 +351,36 @@ const SettingsPanel = () => {
         </Box>
         <ContentContainer>
           <ContentHeader>
-            <Typography variant="h6" fontWeight="500">
+            <Typography
+              sx={{
+                display: 'flex',
+                width: '784.023px',
+                height: '40px',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                color: '#333',
+                fontFamily: '"Open Sans", sans-serif',
+                fontSize: '18px',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                lineHeight: '36px',
+              }}
+            >
               {activeItem.headerText}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mb: 2,
+                color: ' rgba(0, 0, 0, 0.56)',
+                fontFamily: 'Open Sans',
+                fontSize: '14px',
+                fontStyle: ' normal',
+                fontWeight: 400,
+                lineHeight: '24px',
+              }}
+            >
               {activeItem.description}
             </Typography>
           </ContentHeader>

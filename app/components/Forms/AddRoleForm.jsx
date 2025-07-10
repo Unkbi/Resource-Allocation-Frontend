@@ -61,8 +61,11 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
         <StyledInput
           as={TextField}
           name="role"
+          placeholder="Enter Role"
           fullWidth
-          onChange={(e)=> {setRoleName(e.target.value)}}
+          onChange={e => {
+            setRoleName(e.target.value);
+          }}
           value={roleName}
         />
       </Box>
@@ -72,7 +75,7 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
-          options={['Active', 'Inactive']}
+          options={['Active']}
           getOptionLabel={option => option || ''}
           value={selectStatus}
           onChange={handleStatusChange}

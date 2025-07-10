@@ -41,6 +41,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import AccessTable from './AccessTable';
 
 type Role = {
   id: string;
@@ -75,6 +76,34 @@ const initialRoles: Role[] = [
     status: 'Active',
     createdDate: '2025-01-30',
   }
+];
+
+const AssignRoles: Role[] = [
+  { id: '1', name: 'Sahadev Admin', status: 'Active', createdDate: '2025-01-15' },
+  {
+    id: '2',
+    name: 'Serene Admin',
+    status: 'Active',
+    createdDate: '2025-01-20',
+  },
+  {
+    id: '3',
+    name: 'Project Admin',
+    status: 'Active',
+    createdDate: '2025-01-20',
+  },
+  {
+    id: '4',
+    name: 'Allocation Leader',
+    status: 'Active',
+    createdDate: '2025-01-25',
+  },
+  {
+    id: '5',
+    name: 'Project Manager',
+    status: 'Active',
+    createdDate: '2025-01-30',
+  },
 ];
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
@@ -175,7 +204,11 @@ export default function RoleManagementPage() {
   return (
     <div
       className="min-h-screen bg-[#f8f9fa] p-8"
-      style={{ fontFamily: 'open sans', padding: '2%' }}
+      style={{
+        fontFamily: 'open sans',
+        padding: '1.5%',
+        backgroundColor: 'rgba(217, 217, 217, 0.27)',
+      }}
     >
       <Box
         sx={{
@@ -184,32 +217,42 @@ export default function RoleManagementPage() {
           display: 'flex',
           justifyContent: 'center',
           width: '100%',
+          backgroundColor: '#fff',
+          height: '59px',
         }}
       >
         <Tabs
           value={tab}
           onChange={(_, v) => setTab(v)}
           sx={{
-            // minWidth: 600,
             width: 'fit-content',
             background: 'transparent',
 
             '& .MuiTabs-flexContainer': {
-              // justifyContent: "center",
-              gap: 1.5, // gap between tabs
+              gap: 1.5,
             },
-          }}
-          slotProps={{
-            indicator: { style: { background: '#3b82f6', height: 1 } },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#2563EB',
+            },
+            '& .Mui-selected .tab-icon': {
+              filter:
+                'brightness(0) saturate(100%) invert(33%) sepia(93%) saturate(1554%) hue-rotate(197deg) brightness(100%) contrast(101%)',
+            },
           }}
         >
           <Tab
-            icon={<Users sx={{ mr: 1, fontSize: '16px' }} />}
+            icon={
+              <img
+                src="/images/icons/roleManage.svg"
+                alt="User"
+                style={{ width: 21, height: 16, marginRight: 6 }}
+                className="tab-icon"
+              />
+            }
             iconPosition="start"
             label="Role Management"
             value="role-management"
             sx={{
-              // minWidth: 150,
               color: '#4B5563',
               borderRadius: 0,
               textTransform: 'none',
@@ -223,12 +266,18 @@ export default function RoleManagementPage() {
             }}
           />
           <Tab
-            icon={<UserCog sx={{ mr: 1, fontSize: '14px' }} />}
+            icon={
+              <img
+                src="/images/icons/roleAssign.svg"
+                alt="User"
+                style={{ width: 21, height: 16, marginRight: 6 }}
+                className="tab-icon"
+              />
+            }
             iconPosition="start"
             label="Role Assignments"
             value="role-assignments"
             sx={{
-              // minWidth: 150,
               color: '#4B5563',
               textTransform: 'none',
               borderRadius: 0,
@@ -242,12 +291,18 @@ export default function RoleManagementPage() {
             }}
           />
           <Tab
-            icon={<KeyRound sx={{ mr: 1, fontSize: '14px' }} />}
+            icon={
+              <img
+                src="/images/icons/privilegeManage.svg"
+                alt="User"
+                style={{ width: 21, height: 16, marginRight: 6 }}
+                className="tab-icon"
+              />
+            }
             iconPosition="start"
             label="Privilege Management"
             value="privilege-management"
             sx={{
-              // minWidth: 180,
               color: '#4B5563',
               textTransform: 'none',
               borderRadius: 0,
@@ -261,12 +316,18 @@ export default function RoleManagementPage() {
             }}
           />
           <Tab
-            icon={<LinkIcon sx={{ mr: 1, fontSize: '14px' }} />}
+            icon={
+              <img
+                src="/images/icons/privilegeAssign.svg"
+                alt="User"
+                style={{ width: 21, height: 16, marginRight: 6 }}
+                className="tab-icon"
+              />
+            }
             iconPosition="start"
             label="Privilege Assignments"
             value="privilege-assignments"
             sx={{
-              // minWidth: 190,
               color: '#4B5563',
               textTransform: 'none',
               borderRadius: 0,
@@ -295,192 +356,101 @@ export default function RoleManagementPage() {
         </Card>
       )} */}
 
-      <Card sx={{ mt: 2, mb: 2, border: 'none', boxShadow: 1 }}>
-        <CardHeader
-          title={
-            <Typography
-              variant="h6"
-              sx={{ color: '#1F2937', fontWeight: 600, fontSize: '18px' }}
+      {tab === 'role-management' && (
+        <AccessTable
+          title="Role Management"
+          data={roles}
+          onAdd={handleAddNewRole}
+          onEdit={handleEditRole}
+          onDelete={handleDeleteRole}
+          menuId={menuRoleId}
+          setMenuId={setMenuRoleId}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+          buttonLabel="Add New Role"
+          renderMenu={id => (
+            <StyledMenu
+              anchorEl={anchorEl}
+              open={menuRoleId === id}
+              onClose={() => setMenuRoleId(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              Role Management
-            </Typography>
-          }
-          action={
-            <Button
-              variant="contained"
-              startIcon={<AddIcon sx={{ fontSize: '16px' }} />}
-              onClick={handleAddNewRole}
-              sx={{
-                background: '#152E75',
-                color: '#fff',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
-            >
-              Add New Role
-            </Button>
-          }
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: '#fff',
-            p: 3,
-          }}
+              <StyledMenuItem
+                onClick={() => {
+                  const role = roles.find(r => r.id === id);
+                  if (role) handleEditRole(role);
+                  setMenuRoleId(null);
+                }}
+              >
+                <Pencil sx={{ mr: 1, fontSize: 18 }} />
+                Edit
+              </StyledMenuItem>
+              <StyledMenuItem
+                onClick={() => {
+                  handleDeleteRole(id);
+                  setMenuRoleId(null);
+                }}
+              >
+                <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+                Delete
+              </StyledMenuItem>
+            </StyledMenu>
+          )}
         />
-        <CardContent sx={{ padding: '0px !important' }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ background: '#f8f9fa' }}>
-                  <TableCell
-                    sx={{
-                      width: '25%',
-                      px: 3,
-                      py: 1.5,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      color: '#6c757d',
-                    }}
-                  >
-                    Role Name
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      color: '#6c757d',
-                    }}
-                  >
-                    Status
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      color: '#6c757d',
-                    }}
-                  >
-                    Created Date
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                       width: '15%',
-                      px: 3,
-                      py: 1.5,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      color: '#6c757d',
-                    }}
-                  >
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-                <TableBody>
-                {roles.map(role => (
-                  <TableRow key={role.id} sx={{ background: '#fff' }}>
-                    <TableCell
-                      sx={{
-                        px: 3,
-                        py: 2,
-                        fontWeight: 600,
-                        fontSize: 14,
-                        color: '#111827',
-                      }}
-                    >
-                      {role.name}
-                    </TableCell>
-                    <TableCell sx={{ px: 3, py: 2 }}>
-                      <Badge
-                        sx={{
-                          border: '1px solid none',
-                          background: '#4B9F471A',
-                          color: '#4B9F47',
-                          px: 1.5,
-                          py: 0.5,
-                          fontWeight: 400,
-                          fontSize: 12,
-                        }}
-                      >
-                        {role.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell sx={{ px: 3, py: 2, color: '#6c757d' }}>
-                      {role.createdDate}
-                    </TableCell>
-                    <TableCell sx={{ px: 3, py: 2 }}>
-                      <IconButton
-                        onClick={e => {
-                          setAnchorEl(e.currentTarget);
-                          setMenuRoleId(role.id);
-                        }}
-                        size="small"
-                      >
-                        <MoreHorizontal sx={{ fontSize: 20 }} />
-                      </IconButton>
-                      <StyledMenu
-                        anchorEl={anchorEl}
-                        open={menuRoleId === role.id}
-                        onClose={() => setMenuRoleId(null)}
-                        anchorOrigin={{
-                          vertical: 'bottom',
-                          horizontal: 'right',
-                        }}
-                        transformOrigin={{
-                          vertical: 'top',
-                          horizontal: 'right',
-                        }}
-                      >
-                        <StyledMenuItem
-                          sx={{ color: '#424242' }}
-                          onClick={() => {
-                            handleEditRole(role);
-                            setMenuRoleId(null);
-                          }}
-                        >
-                          <Pencil sx={{ mr: 1, fontSize: 18 }} />
-                          Edit
-                        </StyledMenuItem>
-                        <StyledMenuItem
-                          onClick={() => {
-                            handleDeleteRole(role.id);
-                            setMenuRoleId(null);
-                          }}
-                          sx={{ color: ' #424242' }}
-                        >
-                          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-                          Delete
-                        </StyledMenuItem>
-                      </StyledMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-      {/* You can add tab content switching logic here */}
-      {/* Dialog for Add/Edit Role */}
-      <ConfirmDialog
-              open={isDialogOpen}
-              onCancel={() => setIsDialogOpen(false)}
-              onConfirm={handleConfirmDelete}
-              title="Alert"
+      )}
+      {tab === 'role-assignments' && (
+        <AccessTable
+          title="Role Assignments"
+          data={roles}
+          onAdd={handleAddNewRole}
+          onEdit={handleEditRole}
+          onDelete={handleDeleteRole}
+          menuId={menuRoleId}
+          setMenuId={setMenuRoleId}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+          buttonLabel="Assign Role"
+          renderMenu={id => (
+            <StyledMenu
+              anchorEl={anchorEl}
+              open={menuRoleId === id}
+              onClose={() => setMenuRoleId(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              Are you sure you want to delete{' '}
-              {editingRole ? editingRole.name : 'this role'}?
-            </ConfirmDialog>
+              <StyledMenuItem
+                onClick={() => {
+                  const role = roles.find(r => r.id === id);
+                  if (role) handleEditRole(role);
+                  setMenuRoleId(null);
+                }}
+              >
+                <Pencil sx={{ mr: 1, fontSize: 18 }} />
+                Edit
+              </StyledMenuItem>
+              <StyledMenuItem
+                onClick={() => {
+                  handleDeleteRole(id);
+                  setMenuRoleId(null);
+                }}
+              >
+                <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+                Delete
+              </StyledMenuItem>
+            </StyledMenu>
+          )}
+        />
+      )}
+      <ConfirmDialog
+        open={isDialogOpen}
+        onCancel={() => setIsDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Alert"
+      >
+        Are you sure you want to delete{' '}
+        {editingRole ? editingRole.name : 'this role'}?
+      </ConfirmDialog>
     </div>
   );
 }
