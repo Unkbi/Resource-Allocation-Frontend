@@ -10,7 +10,7 @@ const initialState: RBACState = {
   error: false,
 };
 
-const portfolioSlice = createSlice({
+const rbacSlice = createSlice({
   name: 'RBAC',
   initialState,
   reducers: {
@@ -114,5 +114,5 @@ export const {
   updatePrivilegeAssignments,
   setLoading,
   setError,
-} = portfolioSlice.actions;
-export default portfolioSlice.reducer;
+} = rbacSlice.actions;
+export default rbacSlice.reducer;
