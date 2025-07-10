@@ -22,6 +22,7 @@ import {
   ClickAwayListener,
   MenuList,
   Paper,
+  Tooltip,
 } from '@mui/material';
 import { ChevronRight, KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -1684,9 +1685,39 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 </Typography>
               }
             />
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/images/icons/InfoRounded.svg" alt="info" />
-            </Box>
+            <Tooltip
+              placement="right"
+              title={
+                <Box>
+                  <Typography variant="body2">
+                    Displays actuals beneath planned allocations for all weeks
+                    with actuals.
+                  </Typography>
+                  <Typography variant="body2" fontWeight="bold" mt={1}>
+                    Color indicators:
+                  </Typography>
+                  <Typography variant="body2">
+                    <span>● Green</span> = match
+                    <br />
+                    <span>● Yellow</span> = actuals
+                    are lower
+                    <br />
+                    <span>● Red</span> = actuals are
+                    higher than planned.
+                  </Typography>
+                </Box>
+              }
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <img src="/images/icons/InfoRounded.svg" alt="info" />
+              </Box>
+            </Tooltip>
           </Box>
         </Box>
 
