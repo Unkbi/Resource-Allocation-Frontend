@@ -326,17 +326,40 @@ export default function Project() {
     }
     if (value === 'portfolio') {
       try {
-        await dispatch({ type: 'DELETE_PORTFOLIOS', payload: id });
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Portfolio deleted successfully',
-            type: 'success',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-        dispatch({ type: 'FETCH_PORTFOLIOS' });
+        const { Id, Name } = portfolioDelete;
+        if (
+          projects?.result &&
+          projects?.result?.some(
+            p =>
+              p.PortfolioId === Id &&
+              !['Requested', 'Paused', 'Cancelled', 'Completed'].includes(
+                p.Status
+              )
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message:
+                'This Portfolio contains active projects. Please unassign these projects or update their statuses to inactive before proceeding.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          await dispatch({ type: 'DELETE_PORTFOLIOS', payload: id });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Portfolio deleted successfully',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch({ type: 'FETCH_PORTFOLIOS' });
+        }
       } catch (error) {
         dispatch(
           showToast({
@@ -848,8 +871,7 @@ export default function Project() {
               alignItems: 'center',
               height: '100%',
             }}
-          >
-          </Box>
+          ></Box>
         );
 
       default:
@@ -882,7 +904,7 @@ export default function Project() {
       >
         {value === 'project'
           ? 'This will permanently delete the project.'
-          : 'This will permanently delete the portfolio.'}
+          : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
       </ConfirmDialog>
     </Box>
   );
