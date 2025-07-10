@@ -1797,10 +1797,12 @@ const AllocationForm = () => {
           dispatch(closeDialog());
         } catch (error) {
           console.error('Failed to update portfolio:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to update portfolio.';
           dispatch(
             showToast({
               open: true,
-              message: 'Failed to update portfolio.',
+              message: message,
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -1808,7 +1810,7 @@ const AllocationForm = () => {
           );
         }
 
-        break;
+        return;
       }
 
       default:
