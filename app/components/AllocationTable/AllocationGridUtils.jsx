@@ -36,7 +36,8 @@ import { setExpandRowId } from '@/app/redux/reducers/allocationViewReducer';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
-import { generateEmptyRow } from '@/app/utils/allocationUtils';
+import { generateEmptyRow, getFirstChild } from '@/app/utils/allocationUtils';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -70,6 +71,7 @@ const CellWithMenu = ({
   handleAddClick,
   handleCloneClick,
   handleTranferClick,
+  handleOpenHistory,
   isFormatWithK,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -330,7 +332,11 @@ const CellWithMenu = ({
       icon: <SwapHorizIcon fontSize="small" />,
       func: () => handleTranferClick(params),
     },
-    { label: 'History', icon: <HistoryIcon fontSize="small" /> },
+    {
+      label: 'History',
+      icon: <HistoryIcon fontSize="small" />,
+      func: () => handleOpenHistory(params),
+    },
     {
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
@@ -368,6 +374,7 @@ const CellWithMenu = ({
             key={item.label}
             onClick={() => {
               item.func && item.func(params);
+              handleMenuClose();
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
@@ -441,7 +448,12 @@ export const getInitialState = (
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD
 ) => ({
   rowGrouping: {
-    model: groupBy === 'teams' ? [groupBy, 'resource'] : [groupBy],
+    model:
+      groupBy === 'teams'
+        ? [groupBy, 'resource']
+        : groupBy === 'portfolioName'
+          ? ['portfolioName', 'project']
+          : [groupBy],
   },
   sorting: {
     sortModel: [
@@ -469,6 +481,9 @@ export const getFinalColumns = (
   isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
+  const allResources = useSelector(
+    state => state.resources.resources?.result || []
+  );
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -543,6 +558,43 @@ export const getFinalColumns = (
     );
   };
 
+  const handleOpenHistory = params => {
+    dispatch(
+      openDialog({
+        title: 'Allocation History',
+        cancelButtonText: 'View All History',
+        formType: 'open_history',
+        initialData:
+          params.field === 'project'
+            ? {
+                Resource: params.row.resourceId,
+                Project: params.row.projectId,
+                StartDate: startDate,
+                EndDate: endDate,
+              }
+            : params.field === 'resource'
+              ? {
+                  Resource:
+                    allResources.find(
+                      resource => resource.FullName === params.value
+                    )?.Id || '',
+                  Project: params.row.projectId,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                }
+              : {
+                  Resource:
+                    allResources.find(
+                      resource => resource.FullName === params.value
+                    )?.Id || '',
+                  Project: null,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                },
+      })
+    );
+  };
+
   if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams') {
@@ -566,6 +618,7 @@ export const getFinalColumns = (
               isFormatWithK={isFormatWithK}
               // handleCloneClick={handleCloneClick}
               // handleTranferClick={handleTranferClick}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
@@ -617,6 +670,7 @@ export const getFinalColumns = (
                 handleAddClick={handleAddClick}
                 handleCloneClick={handleCloneClick}
                 handleTranferClick={handleTranferClick}
+                handleOpenHistory={handleOpenHistory}
                 isFormatWithK={isFormatWithK}
               >
                 <EllipsisNameCell
@@ -707,6 +761,70 @@ export const getFinalColumns = (
               handleCloneClick={handleCloneClick}
               handleTranferClick={handleTranferClick}
               isFormatWithK={isFormatWithK}
+              handleOpenHistory={handleOpenHistory}
+            />
+          ) : null;
+        },
+      },
+      ...(allColumns?.slice(1) || []),
+    ];
+  } else if (groupBy === 'portfolioName') {
+    return [
+      ...(allColumns?.slice(0, 1) || []),
+      {
+        field: 'project',
+        headerName: 'Project Name',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: false,
+        primaryColumn: true,
+        renderCell: params => {
+          const { rowNode } = params;
+          const firstChild = getFirstChild(params);
+          const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+          if (isGridTreeNode && rowNode.children) {
+            return firstChild ? (
+              <>
+                <EllipsisNameCell value={firstChild.project ?? 'N/A'} />
+                <span
+                  style={{
+                    flexShrink: 0,
+                    background: '#E9EFF8',
+                    color: '#000',
+                    paddingRight: 4,
+                    paddingLeft: 4,
+                    fontSize: 12,
+                    borderRadius: 4,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  +{rowNode?.children?.length}
+                </span>
+              </>
+            ) : null;
+          }
+        },
+      },
+      {
+        field: 'resource',
+        headerName: 'Resource',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: false,
+        primaryColumn: true,
+        cellClassName: () =>
+          groupBy === 'project' ? 'common-NonEditableCells' : '',
+        renderCell: params => {
+          return params.value ? (
+            <CellWithMenu
+              params={params}
+              handleAddClick={handleAddClick}
+              handleCloneClick={handleCloneClick}
+              handleTranferClick={handleTranferClick}
+              isFormatWithK={isFormatWithK}
+              handleOpenHistory={handleOpenHistory}
             />
           ) : null;
         },
@@ -715,10 +833,12 @@ export const getFinalColumns = (
     ];
   }
 };
+
 export const groupPage = groupBy => {
   const groupPages = {
     project: 'Project Name',
     teams: 'Team Name',
+    portfolioName: 'Portfolio Name',
     organization: 'Organization Name',
   };
   return groupPages[groupBy];
@@ -819,7 +939,8 @@ export const getCellClassName = (
       if (matchingRange) {
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =
-          params.rowNode?.groupingField === 'teams'
+          params.rowNode?.groupingField === 'teams' ||
+          params.rowNode?.groupingField === 'portfolioName'
             ? base
             : `${base}-secondGroup`;
         let nonEditableClass = '';
@@ -860,7 +981,8 @@ export const getCellClassName = (
 
   if (params.rowNode?.type === 'group') {
     return params.rowNode?.groupingField === 'teams' ||
-      params.rowNode?.groupingField === 'project'
+      // params.rowNode?.groupingField === 'project' ||
+      params.rowNode?.groupingField === 'portfolioName'
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
   }
@@ -880,7 +1002,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     totalEffort: calculateTotalEffort(row),
   }));
 
-  if (groupBy === 'project') {
+  if (groupBy === 'project' || groupBy === 'portfolioName') {
     return rowsWithTotalEffort;
   } else if (groupBy === 'teams') {
     // Get unique teams for teams and teamsId to avoid duplicate teams

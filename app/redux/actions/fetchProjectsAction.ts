@@ -19,10 +19,21 @@ import {
   GetProjectAllocationsForPeriodPayload,
   Project,
 } from '@/app/types';
+import { setDataProcessing as setAllocationDataProcessing } from '../reducers/allAllocationsReducer';
 
 export const fetchAllProjects = () => async (dispatch: AppDispatch) => {
   try {
-    await dispatch(getAllProjects());
+    const response = await dispatch(getAllProjects());
+
+    // If no Resources load then set AllAllocations data processing to false
+    if (
+      response &&
+      response?.meta?.requestStatus === 'fulfilled' &&
+      //@ts-ignore
+      response?.payload?.result?.length === 0
+    ) {
+      dispatch(setAllocationDataProcessing(false));
+    }
   } catch (error) {
     console.error('Error fetching projects data:', error);
   }
@@ -90,6 +101,8 @@ const formatAllocations = (
           allocationId: null,
           value: null,
           period: formattedDate,
+          actuals: null,
+          notes: null,
         };
       });
 

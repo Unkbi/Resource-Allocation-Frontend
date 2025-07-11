@@ -5,6 +5,7 @@ import {
   getStartOfPreviousWeek,
 } from '@/app/utils/common';
 import {
+  DATE_FORMAT,
   DISPLAY_DATE_FORMAT,
   TOTAL_FUTURE_WEEKS,
 } from '@/app/constants/constants';
@@ -59,8 +60,8 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
     return isNaN(num)
       ? ''
       : isFormatWithK
-      ? `${num.toFixed(1)}k`
-      : num.toFixed(1);
+        ? `${num.toFixed(1)}k`
+        : num.toFixed(1);
   },
   valueGetter: params => {
     return params?.value ?? null;
@@ -68,11 +69,11 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
 
   preProcessEditCellProps: params => {
     const { props } = params;
-    let numericValue = parseFloat(props.value) || 0;
+    let numericValue = parseFloat(props?.value) || 0;
     const formattedValue = Math.round(numericValue * 10) / 10 || null;
     const hasError = formattedValue > 2;
 
-    let className = props.className || '';
+    let className = props?.className || '';
     if (hasError) {
       dispatch(
         showToastAction(
@@ -98,8 +99,12 @@ const createValueHandlers = (dispatch, isFormatWithK) => ({
   },
 });
 
-
-export const generateWeeklyColumns = (startDate, endDate, dispatch, isFormatWithK) => {
+export const generateWeeklyColumns = (
+  startDate,
+  endDate,
+  dispatch,
+  isFormatWithK
+) => {
   const isoStart = parseISO(startDate);
   const isoEnd = parseISO(endDate);
   const currentDate = new Date();

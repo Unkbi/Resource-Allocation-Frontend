@@ -29,6 +29,13 @@ export const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
   'totalEffort',
 ];
 
+export const DEFAULT_VISIBLE_PORTFOLIO_COLUMNS = [
+  '__row_group_by_columns_group_project__',
+  '__row_group_by_columns_group_portfolioName__',
+  'resource',
+  'totalEffort',
+];
+
 export const COMPANY_DEFAULT_VIEW: AllocationGridView = {
   Id: '0',
   UserId: null,
@@ -53,6 +60,7 @@ const initialState: AllocationGridViewState = {
   view: 'Teams',
   splitView: false,
   splitViewCurrentProject: null,
+  showActuals: false,
   loading: false,
   error: null,
   expandRowId: [],
@@ -119,6 +127,38 @@ const initialState: AllocationGridViewState = {
       'resourceType',
       'projectType',
     ],
+    portfolioName: [
+      '__row_group_by_columns_group_project__',
+      '__row_group_by_columns_group_portfolioName__',
+      'resource',
+      'project',
+      'portfolioName',
+      'projectCost',
+      'projectCurrency',
+      'projectEndDate',
+      'projectLocation',
+      'projectManager',
+      'projectOvertimeAllowed',
+      'projectSponsor',
+      'projectStartDate',
+      'projectStatus',
+      'projectType',
+      'totalEffort',
+      'email',
+      'phoneNumber',
+      'department',
+      'workLocation',
+      'resourceLocationCategory',
+      'resourceType',
+      'resourceStatus',
+      'hrLevel',
+      'role',
+      'resourceStartDate',
+      'resourceEndDate',
+      'averageWeeklyHours',
+      'contractorHourlyRate',
+      'contractorHourlyRateCurrency',
+    ],
     project_cost: [
       '__row_group_by_columns_group__',
       'resource',
@@ -165,7 +205,9 @@ const viewSlice = createSlice({
         GroupBy: action.payload,
         ColumnsVisible: action.payload.includes('Teams')
           ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-          : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+          : action.payload.includes('Portfolio')
+            ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
+            : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
       };
     },
     setSplitView: (state, action) => {
@@ -173,6 +215,9 @@ const viewSlice = createSlice({
     },
     setSplitViewCurrentProject: (state, action) => {
       state.splitViewCurrentProject = action.payload;
+    },
+    setShowActuals: (state, action) => {
+      state.showActuals = action.payload;
     },
     setExpandRowId: (state, action) => {
       state.expandRowId = action.payload;
@@ -375,6 +420,7 @@ export const {
   changeView,
   setSplitView,
   setSplitViewCurrentProject,
+  setShowActuals,
   setExpandRowId,
   setCellSelectionData,
   setInitialCurrentView,

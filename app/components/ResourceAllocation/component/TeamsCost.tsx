@@ -10,7 +10,7 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
@@ -523,7 +523,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   };
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box sx={{ height: 'calc(100vh - 31px)', width: '100%' }}>
         <AllocationGrid
           loading={loading}
           groupBy="teams"

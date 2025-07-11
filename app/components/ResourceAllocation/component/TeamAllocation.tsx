@@ -10,16 +10,13 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+// import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import {
-  getCombinedAllocation,
-  injectBlankRows,
-  normalizeRow,
-} from '@/app/utils/allocationUtils';
+import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 
 interface TeamAllocationProps {
@@ -66,7 +63,7 @@ export default function TeamAllocation({
     loading?: boolean;
     error?: string;
   };
-  const { currentView } = useSelector(
+  const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
   const { allAllocations, loading, dataProcessing } = useSelector(
@@ -575,7 +572,9 @@ export default function TeamAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box
+        sx={{ height: 'calc(100vh - 31px)', width: '100%', paddingTop: '0px' }}
+      >
         <AllocationGrid
           loading={dataProcessing}
           groupBy="teams"
@@ -625,6 +624,8 @@ export default function TeamAllocation({
           }}
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
+          showActuals={showActuals}
+          rowGroupingColumnMode="multiple"
         />
         {!allAllocations && !dataProcessing && (
           <div

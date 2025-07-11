@@ -1,5 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { confirmForgotPassword, forgotPassword, loginUser, logoutUser,confirmSignUp, signupUser,getUser } from '../../services/authServices';
+import {
+  confirmForgotPassword,
+  forgotPassword,
+  loginUser,
+  logoutUser,
+  confirmSignUp,
+  signupUser,
+  getUser,
+} from '../../services/authServices.js';
 
 const initialState = {
   user: null,
@@ -20,10 +28,10 @@ const authSlice = createSlice({
     },
     logout: () => initialState,
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
       // Login Actions
-      .addCase(loginUser.pending, (state) => {
+      .addCase(loginUser.pending, state => {
         state.loading = true;
         state.error = null;
       })
@@ -38,11 +46,11 @@ const authSlice = createSlice({
       })
 
       // Logout Actions
-      .addCase(logoutUser.pending, (state) => {
+      .addCase(logoutUser.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(logoutUser.fulfilled, (state) => {
+      .addCase(logoutUser.fulfilled, state => {
         state.loading = false;
         state.user = null;
         state.token = null;
@@ -53,11 +61,11 @@ const authSlice = createSlice({
       })
 
       // Signup Actions
-      .addCase(signupUser.pending, (state) => {
+      .addCase(signupUser.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(signupUser.fulfilled, (state) => {
+      .addCase(signupUser.fulfilled, state => {
         state.loading = false;
         state.user = null;
         state.token = null;
@@ -67,7 +75,7 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
       // forgot
-      .addCase(forgotPassword.pending, (state) => {
+      .addCase(forgotPassword.pending, state => {
         state.loading = true;
         state.error = null;
       })
@@ -80,7 +88,7 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
       // confirm forgot password
-      .addCase(confirmForgotPassword.pending, (state) => {
+      .addCase(confirmForgotPassword.pending, state => {
         state.loading = true;
         state.error = null;
       })
@@ -93,7 +101,7 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
       // confirm signup
-      .addCase(confirmSignUp.pending, (state) => {
+      .addCase(confirmSignUp.pending, state => {
         state.loading = true;
         state.error = null;
       })
@@ -106,8 +114,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-       // get user
-       .addCase(getUser.pending, (state) => {
+      // get user
+      .addCase(getUser.pending, state => {
         state.loading = true;
         state.error = null;
       })
@@ -118,7 +126,7 @@ const authSlice = createSlice({
       .addCase(getUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      })
+      });
   },
 });
 

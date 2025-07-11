@@ -24,7 +24,7 @@ const MainContent = styled(Box, {
   return {
     background: '#fff',
     marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
-    paddingTop: `${isLoggedIn ? '52px' : '0'}`,
+    paddingTop: `${isLoggedIn ? '31px' : '0'}`,
     transition: 'margin-left 0.3s ease-in-out',
   };
 });

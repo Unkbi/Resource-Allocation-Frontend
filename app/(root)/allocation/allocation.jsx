@@ -19,6 +19,7 @@ import { decompressFromEncodedURIComponent } from 'lz-string';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCost';
 import TeamsCost from '@/app/components/ResourceAllocation/component/TeamsCost';
+import PortfolioAllocation from '@/app/components/ResourceAllocation/component/PorfolioAllocation';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -70,6 +71,10 @@ export default function Allocation({ startDate, endDate }) {
       switch (currentView.GroupBy) {
         case 'Project':
           return <ProjectAllocation startDate={startDate} endDate={endDate} />;
+        case 'Portfolio':
+          return (
+            <PortfolioAllocation startDate={startDate} endDate={endDate} />
+          );
         case 'Teams':
           return <TeamAllocation startDate={startDate} endDate={endDate} />;
         case 'Project Cost':

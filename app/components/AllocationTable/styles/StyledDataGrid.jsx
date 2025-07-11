@@ -89,10 +89,32 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       {
         backgroundColor: !loading && '#F0F7FF',
       },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_portfolioName__"]`]:
+      {
+        backgroundColor: !loading && '#F7FBFF',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_portfolioName__"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_project__"]`]:
+      {
+        backgroundColor: !loading && '#F7FBFF',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_project__"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
     [`& .${gridClasses.cell}[data-field="project"].secondGroupsRow`]: {
       backgroundColor: !loading && '#F0F7FF',
     },
     [`& .${gridClasses.cell}[data-field="project"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="resource"].secondGroupsRow`]: {
+      backgroundColor: !loading && '#F0F7FF',
+    },
+    [`& .${gridClasses.cell}[data-field="resource"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
     [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
@@ -655,7 +677,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       fontWeight: '500',
       fontSize: '14px',
       color: '#212121',
-      padding: '3px',
+      padding: '3px 0px 0px 0px',
       ...(type === 'cost' && { backgroundColor: '#F1F6FF' }),
       lineHeight: '45px',
       '&.MuiDataGrid-cell--editing:focus-within': {

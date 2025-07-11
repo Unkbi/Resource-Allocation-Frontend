@@ -35,13 +35,23 @@ import {
   Resource,
   Team,
   TeamResourceResponse,
-  TeamResourcePayload,
 } from '@/app/types';
+import { setDataProcessing } from '../reducers/allAllocationsReducer';
 
 export const fetchAllTeams = () => async (dispatch: AppDispatch) => {
   try {
     await dispatch(setTeamsDataProcessing(true));
-    await dispatch(getAllTeams());
+    const response = await dispatch(getAllTeams());
+
+    // If no Resources load then set AllAllocations data processing to false
+    if (
+      response &&
+      response?.meta?.requestStatus === 'fulfilled' &&
+      //@ts-ignore
+      response?.payload?.result?.length === 0
+    ) {
+      dispatch(setDataProcessing(false));
+    }
   } catch (error) {
     console.error('Error fetching teams data:', error);
   } finally {
@@ -187,6 +197,8 @@ const formatAllocations = (
           allocationId: null,
           value: null,
           period: week,
+          actuals: null,
+          notes: null,
         };
       });
   });

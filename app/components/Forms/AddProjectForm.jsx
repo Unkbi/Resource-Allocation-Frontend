@@ -32,10 +32,12 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     })) || [];
 
   const portfolioOptions =
-    portfolios?.map(portfolio => ({
-      value: portfolio.Id,
-      label: portfolio.Name,
-    })) || [];
+    portfolios
+      ?.filter(p => p.Status === 'Active')
+      .map(portfolio => ({
+        value: portfolio.Id,
+        label: portfolio.Name,
+      })) || [];
 
   useEffect(() => {
     if (!resources || !resources?.result) {

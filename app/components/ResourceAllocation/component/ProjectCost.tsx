@@ -6,7 +6,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import AllocationGrid from '../../AllocationTable/AllocationGrid';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Project } from '@/app/types';
@@ -597,7 +597,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box sx={{ height: 'calc(100vh - 31px)', width: '100%' }}>
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
