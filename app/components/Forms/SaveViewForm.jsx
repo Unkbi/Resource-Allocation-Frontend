@@ -11,6 +11,7 @@ import {
   IconButton,
   TextField,
   styled,
+  Autocomplete,
 } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 import StyledLabel from '../Label/StyledLabel';
@@ -36,6 +37,7 @@ import {
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import {
+  DEFAULT_VISIBLE_PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_PROJECTS_COLUMNS,
   DEFAULT_VISIBLE_TEAMS_COLUMNS,
 } from '@/app/redux/reducers/allocationViewReducer';
@@ -45,6 +47,8 @@ const getColumnLabel = column => {
     __row_group_by_columns_group_teams__: 'Team Name',
     __row_group_by_columns_group_resource__: 'Resource',
     __row_group_by_columns_group__: 'Project Name',
+    __row_group_by_columns_group_project__: 'Project Name',
+    __row_group_by_columns_group_portfolioName__: 'Portfolio',
     totalEffort: 'Total Effort',
     resource: 'Resource',
     project: 'Project',
@@ -133,6 +137,32 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
 
+  const commonAutocompleteStyles = {
+    '& .MuiInputBase-root': { fontSize: '12px' },
+    '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
+    '& input': { fontSize: '12px' },
+    '& .MuiAutocomplete-popper': { fontSize: '12px' },
+    '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
+  };
+
+  const commonSlotProps = {
+    popper: {
+      modifiers: [
+        {
+          name: 'preventOverflow',
+          options: {
+            boundary: 'window',
+          },
+        },
+      ],
+    },
+    paper: {
+      sx: {
+        fontSize: '12px',
+      },
+    },
+  };
+
   const columnOptions =
     values?.groupBy === 'Teams'
       ? columns.team.map(column => ({
@@ -140,11 +170,36 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           value: column,
           label: getColumnLabel(column),
         }))
-      : columns.project.map(column => ({
-          id: column,
-          value: column,
-          label: getColumnLabel(column),
-        }));
+      : values?.groupBy === 'Portfolio'
+        ? columns.portfolioName.map(column => ({
+            id: column,
+            value: column,
+            label: getColumnLabel(column),
+          }))
+        : columns.project.map(column => ({
+            id: column,
+            value: column,
+            label: getColumnLabel(column),
+          }));
+
+  // All possible viewBys
+  const vewByOptions = [
+    {
+      value: 'Teams',
+      label: 'Teams*',
+      extraInfo: 'Group by Resources, then by Teams',
+    },
+    {
+      value: 'Project',
+      label: 'Projects*',
+      extraInfo: 'Group by Projects',
+    },
+    {
+      value: 'Portfolio',
+      label: 'Portfolios*',
+      extraInfo: 'Group by Projects, then by Portfolios',
+    },
+  ];
 
   // All possible opetrators. Static.
   const operatorOptions = [
@@ -202,8 +257,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     setFieldValue('showColumns', value);
   };
 
-  const handleGroupByChange = e => {
-    const { value } = e.target;
+  const handleGroupByChange = newValue => {
+    const { value } = newValue;
     setFieldValue('groupBy', value);
 
     setFieldValue('showBy', value === 'Teams' ? 'AllTeams' : 'AllProject');
@@ -211,7 +266,9 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       'showColumns',
       value === 'Teams'
         ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-        : DEFAULT_VISIBLE_PROJECTS_COLUMNS
+        : value === 'Portfolio'
+          ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
+          : DEFAULT_VISIBLE_PROJECTS_COLUMNS
     );
     setFieldValue('filters', []);
   };
@@ -415,6 +472,15 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     fontSize: '14px',
   }));
 
+  const StyledExtraInfoText = styled(Typography)(({ theme }) => ({
+    color: '#D24546',
+    fontFamily: 'Open Sans',
+    fontSize: '10px',
+    fontStyle: 'italic',
+    fontWeight: '400',
+    lineHeight: '180%',
+  }));
+
   const handleDateField = (StartDate, EndDate) => {
     const currentDate = new Date();
     const { weekMinus, weekPlus } = calculateWeekRanges(
@@ -429,26 +495,45 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     <Box>
       {/* Group By */}
       <StyledContainer>
-        <StyledLabel>Group By</StyledLabel>
-        <RadioGroup
-          name="groupBy"
-          value={values?.groupBy || 'Teams'}
-          onChange={handleGroupByChange}
-          onBlur={handleBlur}
-          row
-          sx={{ gap: 2 }}
-        >
-          <FormControlLabel
-            value="Teams"
-            control={<Radio size="small" />}
-            label={<StyledOptionsLabel>Teams</StyledOptionsLabel>}
-          />
-          <FormControlLabel
-            value="Project"
-            control={<Radio size="small" />}
-            label={<StyledOptionsLabel>Project</StyledOptionsLabel>}
-          />
-        </RadioGroup>
+        <StyledLabel>View By</StyledLabel>
+        <Autocomplete
+          sx={commonAutocompleteStyles}
+          size="small"
+          options={vewByOptions || []}
+          disableClearable
+          getOptionLabel={option => option?.label || ''}
+          value={vewByOptions.find(option => option.value === values.groupBy)}
+          onChange={(event, newValue) => {
+            handleGroupByChange(newValue);
+          }}
+          slotProps={commonSlotProps}
+          renderInput={params => (
+            <TextField
+              {...params}
+              placeholder="Select View By"
+              variant="outlined"
+              error={
+                formikProps.touched.groupBy &&
+                Boolean(formikProps.errors.groupBy)
+              }
+              helperText={
+                formikProps.touched.groupBy && formikProps.errors.groupBy
+              }
+              FormHelperTextProps={{
+                sx: {
+                  fontSize: '12px',
+                  textAlign: 'left',
+                  marginLeft: '0px',
+                },
+              }}
+            />
+          )}
+        />
+        {values.groupBy && (
+          <StyledExtraInfoText>
+            {`* ${vewByOptions?.find(option => option.value === values.groupBy)?.extraInfo}`}
+          </StyledExtraInfoText>
+        )}
         {showError('groupBy')}
       </StyledContainer>
       <Box sx={{ borderTop: '1px solid #E5E7EB', my: 2 }} />

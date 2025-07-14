@@ -14,7 +14,10 @@ import {
 } from '@/app/redux/actions/allocationViewAction';
 import { getUserIdFromEmail } from '@/app/utils/common';
 import { useSearchParams } from 'next/navigation';
-import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
+import {
+  changeView,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCost';
@@ -59,6 +62,9 @@ export default function Allocation({ startDate, endDate }) {
           decompressFromEncodedURIComponent(settingsParam)
         );
 
+        if (parsedSettings?.GroupBy) {
+          dispatch(changeView(parsedSettings?.GroupBy));
+        }
         dispatch(updateCurrentView(parsedSettings));
       } catch (e) {
         console.error('Failed to parse settings:', e);
