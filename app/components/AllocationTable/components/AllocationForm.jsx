@@ -26,6 +26,7 @@ import {
   addRatesValidationSchema,
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
+  addRoleValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -106,6 +107,8 @@ import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 import AddRoleForm from '../../Forms/AddRoleForm';
+import AssignRoleForm from '../../Forms/AssignRoleForm';
+import { CREATE_ROLE, CREATE_ROLESASSIGNMENT } from '@/app/redux/actions/rbacActions';
 
 const initialValuesMap = {
   add_project: {
@@ -254,12 +257,21 @@ const initialValuesMap = {
   },
   add_role: {
     Name: '',
-    Status: 'Active'
   },
   edit_role: {
     Name: '',
     Status: 'Active',
-  }
+  },
+  assign_role: {
+    Assignee: '',
+    Name :'',
+    Role: '',
+  },
+  edit_role_assignment: {
+    Assignee: '',
+    Name: '',
+    Role: '',
+  },
 };
 
 const AllocationForm = () => {
@@ -358,10 +370,10 @@ const AllocationForm = () => {
         return addPortfolioValidationSchema(portfolios);
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios,initialData.Name||'');
-      // case 'add_role':
-      //   return addRoleValidationSchema;
-      // case 'edit_role':
-      //   return addRoleValidationSchema;
+      case 'add_role':
+        return addRoleValidationSchema;
+      case 'edit_role':
+        return addRoleValidationSchema;
       default:
         return null;
     }
@@ -1824,7 +1836,105 @@ const AllocationForm = () => {
 
         return;
       }
+      case 'add_role': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = { ...cleanedValues };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_ROLE,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Role added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .catch(error => {
+            console.error('Failed to add role:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add role.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+      }
+      break;
 
+      case 'assign_role': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+      
+        const postData = {
+          ...cleanedValues,
+          Assignee: cleanedValues.Assignee?.Email || null,
+          Role: values.Role || null,
+          Name : `${values.Role}-${cleanedValues.Assignee?.Email}`, 
+        };
+      
+         new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_ROLESASSIGNMENT,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Role assigned successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+
+          })
+          .catch(error => {
+            console.error('Failed to assign role:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to assign role.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+      }
+      
       default:
         return;
     }
@@ -2276,6 +2386,17 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
             />
         );
+      case 'assign_role':
+        return (
+          <AssignRoleForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_role_assignment':
+        return (
+          <AssignRoleForm
+            formikProps={formikProps} 
+            setFormValue={setFormValue}/>
+          );
+
       default:
         return <div>No form selected</div>;
     }

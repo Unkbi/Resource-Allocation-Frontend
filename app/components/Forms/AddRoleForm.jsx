@@ -14,7 +14,7 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const AddRoleForm = ({ formikProps, setFormValue }) => {
-  const { values, handleChange, handleBlur, setFieldValue } = formikProps;
+  const { values, handleChange, handleBlur, setFieldValue,touched,errors} = formikProps;
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
   const { initialData } = useSelector(state => state.globalDialog.formState);
@@ -60,19 +60,24 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
         <StyledLabel>Role</StyledLabel>
         <StyledInput
           as={TextField}
-          name="role"
+          name="Name"
           placeholder="Enter Role"
           fullWidth
           onChange={e => {
+            handleChange(e);
             setRoleName(e.target.value);
           }}
-          value={roleName}
+          onBlur={handleBlur}
+          value={values.Name || ''}
+          error={touched.Name && Boolean(errors.Name)}
+          helperText={touched.Name && errors.Name}
         />
       </Box>
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Status</StyledLabel>
         <Autocomplete
+          disableClearable
           sx={commonAutocompleteStyles}
           size="small"
           options={['Active']}

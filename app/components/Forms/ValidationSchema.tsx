@@ -386,7 +386,7 @@ export const addPortfolioValidationSchema = (portfolios : any, initialName = '')
         'unique-name',
         'A portfolio with this name already exists.',
         function (value) {
-          if (!value) return true; 
+          if (!value) return true;
           const currentName = value.toLowerCase().trim();
           const originalName = initialName.toLowerCase().trim();
           return (
@@ -399,3 +399,19 @@ export const addPortfolioValidationSchema = (portfolios : any, initialName = '')
     Description: Yup.string().nullable(),
   });
 };
+
+export const addRoleValidationSchema = Yup.object({
+  Name: Yup.string()
+    .required('Role Name is required')
+    .max(90, 'Reached Max Characters')
+    .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word
+    .test(
+      'unique-name',
+      'Role Name already exists. Please choose another name.',
+      function (value) {
+        if (!value) return true;
+        const roleNames = this.options.context?.roleNames || [];
+        return !roleNames.includes(value.toLowerCase().trim());
+      }
+    ),
+});
