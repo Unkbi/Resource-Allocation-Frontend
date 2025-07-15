@@ -413,7 +413,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       );
 
       const projectManagerName = projectManager
-        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        ? `${projectManager?.FullName}`.trim()
         : '';
 
       if (values.showBy === 'MyProject') {
@@ -454,7 +454,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       );
 
       const projectManagerName = projectManager
-        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        ? `${projectManager?.FullName}`.trim()
         : '';
 
       if (!isMyProjectsValid(projectManagerName, values.filters)) {
