@@ -415,3 +415,8 @@ export const addRoleValidationSchema = Yup.object({
       }
     ),
 });
+
+export const assignRoleValidationSchema = Yup.object({
+  Assignee: Yup.object().nullable().required('Assignee is required'),
+  Role: Yup.string().required('Role is required'),
+});

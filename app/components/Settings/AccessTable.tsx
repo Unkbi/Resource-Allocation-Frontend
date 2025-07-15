@@ -25,6 +25,7 @@ export default function AccessTable({
   anchorEl,
   buttonLabel = 'Add New',
   columns = [],
+  apiRef
 }: {
   title: string;
   data: any[];
@@ -38,6 +39,7 @@ export default function AccessTable({
   anchorEl: HTMLElement | null;
   buttonLabel?: string;
   columns?: any[];
+  apiRef?: any; 
 }) {
   return (
     <Box
@@ -92,6 +94,7 @@ export default function AccessTable({
           hideFooter
           disableRowSelectionOnClick
           autoHeight
+          apiRef={apiRef}
           sx={{
             border: 'none',
             '.MuiDataGrid-columnHeaders': {

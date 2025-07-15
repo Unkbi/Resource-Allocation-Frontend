@@ -49,6 +49,8 @@ import {
   FETCH_ROLESASSIGNMENTS,
 } from '@/app/redux/actions/rbacActions';
 import { Role, RoleAssignment } from '@/app/types';
+import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
+import { useGridApiRef } from '@mui/x-data-grid-premium';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -70,8 +72,8 @@ const StatusPill = styled('div')(({ theme }) => ({
   lineHeight: '16px',
   width: '86px',
   height: '28px',
-  backgroundColor: '#4B9F471A', 
-  color: '#4B9F47',            
+  backgroundColor: '#4B9F471A',
+  color: '#4B9F47',
 }));
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -225,6 +227,10 @@ export default function RoleManagementPage() {
     (state: any) => state.rbac.roleAssignments
   );
   const loading = useSelector((state: any) => state.rbac.loading);
+  const { id: highlightedRowId } = useSelector(
+    (state: any) => state.highlightedRow
+  );
+  const apiRef = useGridApiRef();
 
   useEffect(() => {
     if (tab === 'role-management') {
@@ -234,6 +240,45 @@ export default function RoleManagementPage() {
       dispatch({ type: FETCH_ROLESASSIGNMENTS });
     }
   }, [tab, dispatch]);
+
+  useEffect(() => {
+    if (!highlightedRowId || !apiRef?.current) return;
+
+    const timeout = setTimeout(() => {
+      requestAnimationFrame(() => {
+        try {
+          const sortedRowIds = apiRef.current.getSortedRowIds?.();
+          if (!sortedRowIds || !Array.isArray(sortedRowIds)) return;
+
+          const rowIndex = sortedRowIds.findIndex(
+            id => id === highlightedRowId
+          );
+          if (rowIndex === -1) return;
+
+          const focusColumn = tab === 'role-management' ? 'Name' : 'Role';
+
+          apiRef.current.scrollToIndexes({ rowIndex });
+          apiRef.current.setCellFocus(highlightedRowId, focusColumn);
+          apiRef.current.selectRow?.(highlightedRowId, true);
+
+          const scroller = document.querySelector(
+            '.MuiDataGrid-virtualScroller'
+          );
+          if (scroller) {
+            const original = scroller.scrollTop;
+            scroller.scrollTop = original + 1;
+            scroller.scrollTop = original;
+          }
+        } catch (error) {
+          console.error('Error during row scroll/focus:', error);
+        } finally {
+          dispatch(clearHighlightedRowId());
+        }
+      });
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [highlightedRowId, roles, roleAssignments, tab]);
 
   const handleAddNewRole = () => {
     dispatch(
@@ -307,7 +352,7 @@ export default function RoleManagementPage() {
       setIsDialogOpen(false);
     }
   };
-  
+
   const rolesColumns = [
     {
       field: 'Name',
@@ -325,9 +370,7 @@ export default function RoleManagementPage() {
       sortable: false,
       filterable: true,
       hideable: false,
-      renderCell: () => (
-        <StatusPill>Active</StatusPill>
-      ),
+      renderCell: () => <StatusPill>Active</StatusPill>,
     },
     {
       field: 'actions',
@@ -362,7 +405,7 @@ export default function RoleManagementPage() {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem 
+      <StyledMenuItem
         disabled
         onClick={() => {
           const role = roles.find(r => r.Name === id);
@@ -498,6 +541,7 @@ export default function RoleManagementPage() {
           buttonLabel="Add New Role"
           columns={rolesColumns}
           renderMenu={renderRoleMenu}
+          apiRef={apiRef}
         />
       )}
       {tab === 'role-assignments' && (
@@ -514,6 +558,7 @@ export default function RoleManagementPage() {
           buttonLabel="Assign Role"
           renderMenu={renderAssignmentMenu}
           columns={roleAssignmentColumns}
+          apiRef={apiRef}
         />
       )}
       <ConfirmDialog
@@ -523,11 +568,11 @@ export default function RoleManagementPage() {
         title="Alert"
       >
         Are you sure you want to delete{' '}
-          {deletingRole
-            ? tab === 'role-management'
-              ? `the Role "${deletingRole}"`
-              : `Role Assignment for "${deletingRole}"`
-            : 'this item'}
+        {deletingRole
+          ? tab === 'role-management'
+            ? `the Role "${deletingRole}"`
+            : `Role Assignment for "${deletingRole}"`
+          : 'this item'}
         ?
       </ConfirmDialog>
     </div>

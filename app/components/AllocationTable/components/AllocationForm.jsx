@@ -27,6 +27,7 @@ import {
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
   addRoleValidationSchema,
+  assignRoleValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -374,6 +375,10 @@ const AllocationForm = () => {
         return addRoleValidationSchema;
       case 'edit_role':
         return addRoleValidationSchema;
+      case 'assign_role':
+        return assignRoleValidationSchema;
+      case 'edit_role_assignment':
+        return assignRoleValidationSchema;
       default:
         return null;
     }
@@ -1863,6 +1868,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(setHighlightedRowId(response.result?.Name));
           })
           .catch(error => {
             console.error('Failed to add role:', error);
@@ -1893,7 +1899,9 @@ const AllocationForm = () => {
           ...cleanedValues,
           Assignee: cleanedValues.Assignee?.Email || null,
           Role: values.Role || null,
-          Name : `${values.Role}-${cleanedValues.Assignee?.Email}`, 
+          Name: values.Role
+            ? `${values.Role}-${cleanedValues.Assignee?.Email}`
+            : null,
         };
       
          new Promise((resolve, reject) => {
@@ -1916,6 +1924,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(setHighlightedRowId(response.result?.Name));
 
           })
           .catch(error => {
@@ -1934,6 +1943,7 @@ const AllocationForm = () => {
             dispatch(closeDialog());
           });
       }
+      break;
       
       default:
         return;
