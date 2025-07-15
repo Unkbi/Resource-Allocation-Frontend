@@ -1530,7 +1530,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 <Button
                   disabled={
                     currentView.GroupBy.includes('Cost') ||
-                    currentView.GroupBy === 'Portfolio' ||
                     isObjectEqual(
                       savedViews.find(view => view.Id === selectedView),
                       currentView
@@ -1699,11 +1698,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <Typography variant="body2">
                     <span>● Green</span> = match
                     <br />
-                    <span>● Yellow</span> = actuals
-                    are lower
+                    <span>● Yellow</span> = actuals are lower
                     <br />
-                    <span>● Red</span> = actuals are
-                    higher than planned.
+                    <span>● Red</span> = actuals are higher than planned.
                   </Typography>
                 </Box>
               }
