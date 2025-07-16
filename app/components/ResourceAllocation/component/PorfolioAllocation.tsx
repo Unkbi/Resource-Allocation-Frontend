@@ -61,7 +61,7 @@ export default function PortfolioAllocation({
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      const allTempRows = getAllRowsForView('temp');
+      const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
         setRows(allTempRows || []);
       } else {

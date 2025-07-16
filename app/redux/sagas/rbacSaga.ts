@@ -53,7 +53,6 @@ function* createRoleSaga(action: any): Generator<any, void, any> {
   const { postData, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    debugger;
     const response = yield call(createRole, postData);
     yield call(fetchRolesSaga);
     if (resolve) resolve(response);
@@ -96,7 +95,6 @@ function* createRoleAssignmentSaga(action: any): Generator<any, void, any> {
   const { postData, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    debugger;
     const response = yield call(createRoleAssignment, postData);
     yield call(fetchRoleAssignmentsSaga);
     if (resolve) resolve(response);

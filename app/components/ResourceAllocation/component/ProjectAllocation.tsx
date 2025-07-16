@@ -133,7 +133,7 @@ export default function ProjectAllocation({
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      const allTempRows = getAllRowsForView('temp');
+      const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
         setRows(allTempRows || []);
       } else {
@@ -146,7 +146,7 @@ export default function ProjectAllocation({
               getAllTeamViewRows() as AllAllocations[]
             )
           );
-        } else if (loading && allAllocations) {
+        } else if (allAllocations) {
           filteredResources = removeResourcesWithNoProjects(
             allAllocations || []
           );
