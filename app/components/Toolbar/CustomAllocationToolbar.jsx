@@ -22,6 +22,7 @@ import {
   ClickAwayListener,
   MenuList,
   Paper,
+  Tooltip,
 } from '@mui/material';
 import { ChevronRight, KeyboardArrowDown } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -1529,7 +1530,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 <Button
                   disabled={
                     currentView.GroupBy.includes('Cost') ||
-                    currentView.GroupBy === 'Portfolio' ||
                     isObjectEqual(
                       savedViews.find(view => view.Id === selectedView),
                       currentView
@@ -1684,9 +1684,37 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 </Typography>
               }
             />
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/images/icons/InfoRounded.svg" alt="info" />
-            </Box>
+            <Tooltip
+              placement="right"
+              title={
+                <Box>
+                  <Typography variant="body2">
+                    Displays actuals beneath planned allocations for all weeks
+                    with actuals.
+                  </Typography>
+                  <Typography variant="body2" fontWeight="bold" mt={1}>
+                    Color indicators:
+                  </Typography>
+                  <Typography variant="body2">
+                    <span>● Green</span> = match
+                    <br />
+                    <span>● Yellow</span> = actuals are lower
+                    <br />
+                    <span>● Red</span> = actuals are higher than planned.
+                  </Typography>
+                </Box>
+              }
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <img src="/images/icons/InfoRounded.svg" alt="info" />
+              </Box>
+            </Tooltip>
           </Box>
         </Box>
 
@@ -1714,7 +1742,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     flexShrink: 0,
                     borderRadius: '6px',
                     border: '1px solid #E2E8F0',
-                    background: '#FFF',
                     boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
                     '.MuiButton-startIcon': { marginRight: '0px' },
                     '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
@@ -1738,25 +1765,27 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             />
           </GridToolbarContainer>
 
-          <IconButton
-            size="small"
-            onClick={handleShareDeepLink}
-            sx={{
-              width: '41px',
-              height: '36px',
-              padding: '20px 10px 20px 12px',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '6px',
-              flexshrink: 0,
-              borderRadius: '6px',
-              border: '1px solid #E2E8F0',
-              background: '#FFF',
-              boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-            }}
-          >
-            <img src="/images/icons/newShareIcon.svg" alt="share" />
-          </IconButton>
+          <Tooltip title={'Share View'}>
+            <IconButton
+              size="small"
+              onClick={handleShareDeepLink}
+              sx={{
+                width: '41px',
+                height: '36px',
+                padding: '20px 10px 20px 12px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                flexshrink: 0,
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                background: '#FFF',
+                boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+              }}
+            >
+              <img src="/images/icons/newShareIcon.svg" alt="share" />
+            </IconButton>
+          </Tooltip>
 
           <GridToolbarContainer
             ref={setFilterButtonEl}
@@ -1785,7 +1814,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     flexShrink: 0,
                     borderRadius: '6px',
                     border: '1px solid #E2E8F0',
-                    backgroundColor: '#FFF',
                     boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
                     '& .MuiButton-startIcon': {
                       marginRight: '0px',
@@ -1798,39 +1826,40 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               }}
             />
           </GridToolbarContainer>
-          <IconButton
-            size="small"
-            onClick={() =>
-              handleOpenDialog('View History', 'open_history', '', {
-                Resource: null,
-                Project: null,
-                StartDate: startDate,
-                EndDate: endDate,
-              })
-            }
-            sx={{
-              width: '41px',
-              height: '1px',
-              padding: '21px 12px 19px 12px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '6px',
-              flexShrink: 0,
-              borderRadius: '6px',
-              border: '1px solid #E2E8F0',
-              background: '#FFF',
-              boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-            }}
-          >
-            <img
-              src="/images/icons/newHistoryIcon(2).svg"
-              alt="History"
-              height="21px"
-              width="21px"
-            />
-          </IconButton>
-
+          <Tooltip title={'History'}>
+            <IconButton
+              size="small"
+              onClick={() =>
+                handleOpenDialog('View History', 'open_history', '', {
+                  Resource: null,
+                  Project: null,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                })
+              }
+              sx={{
+                width: '41px',
+                height: '1px',
+                padding: '21px 12px 19px 12px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0,
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                background: '#FFF',
+                boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+              }}
+            >
+              <img
+                src="/images/icons/newHistoryIcon(2).svg"
+                alt="History"
+                height="21px"
+                width="21px"
+              />
+            </IconButton>
+          </Tooltip>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <CustomExport />
           </Box>

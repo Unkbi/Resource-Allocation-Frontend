@@ -273,11 +273,14 @@ export default function AllocationGrid({
   // Set the apiRef in the context when it's available
   useEffect(() => {
     if (apiRef.current) {
-      if (getApiRef(viewId)) {
-        setApiRef('temp', getApiRef(viewId)); // This is to keep inSync if other views are using the same apiRef
-      }
       setApiRef(viewId || 'main', apiRef.current);
     }
+
+    return () => {
+      if (getApiRef(viewId)) {
+        setApiRef(viewId + 'temp', getApiRef(viewId)); // This is to keep inSync if other views are using the same apiRef
+      }
+    };
   }, [apiRef, setApiRef, viewId]);
 
   useEffect(() => {
