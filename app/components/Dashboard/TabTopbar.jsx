@@ -5,7 +5,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { KeyboardArrowDown } from '@mui/icons-material';
 
 const Topbar = ({
   text,
@@ -44,19 +44,16 @@ const Topbar = ({
           mb: 1,
           mt: 2,
           pl: 2,
-          justifyContent: 'space-between',
+          pb: 2,
+          justifyContent: 'flex-end',
+          borderBottom: '1px solid #ddd' ,
         }}
       >
-        <Typography
-          variant="h2"
-          sx={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}
-        >
-          {text}
-        </Typography>
+        
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Button
             variant="outlined"
-            endIcon={<ArrowDropDownIcon />}
+            endIcon={<KeyboardArrowDown />}
             onClick={handleMenuOpen}
             sx={{
               height: '40px', // Match height with DatePicker
@@ -64,8 +61,9 @@ const Topbar = ({
               textTransform: 'none', // Keep text consistent
               fontWeight: 500,
               '& .MuiButton-root': {
-                borderColor: 'rgb(196 196 196) !important', // Optional: Match border color
+                borderColor: '#D1D5DB !important', // Optional: Match border color
               },
+              borderRadius: 1.5,
             }}
           >
             {selectedOption}
@@ -74,6 +72,7 @@ const Topbar = ({
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={() => handleMenuClose(null)}
+            disableScrollLock={true}
             PaperProps={{
               sx: {
                 width: '150px',
@@ -120,6 +119,12 @@ const Topbar = ({
           </LocalizationProvider>
         </Box>
       </Box>
+      <Typography
+          variant="h2"
+          sx={{ fontSize: '24px', fontWeight: 700, color: '#000000', paddingLeft: '24px', paddingBottom: '8px' }}
+        >
+          {text}
+        </Typography>
     </>
   );
 };

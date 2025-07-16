@@ -935,7 +935,9 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: filteredbudgetVsPlanVsActual.map(d => d.project_name),
+                      data: filteredbudgetVsPlanVsActual.map(
+                        d => d.project_name
+                      ),
                       label: 'Project',
                       //tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -1023,7 +1025,11 @@ export default function ExecutiveDashboardPage() {
                       data: [
                         ...new Set(
                           filteredUnapprovedActualsByTeam.map(d => {
-                            return formatTeamName(d.team_name, dimensions.width < 400 ? 10 : 12, filteredUnapprovedActualsByTeam.length);
+                            return formatTeamName(
+                              d.team_name,
+                              dimensions.width < 400 ? 10 : 12,
+                              filteredUnapprovedActualsByTeam.length
+                            );
                           })
                         ),
                       ],
@@ -1098,10 +1104,18 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: [...new Set(filteredCapacityData.map((d) =>
-                        formatTeamName(d.team_name, dimensions.width < 400 ? 10 : 12, filteredCapacityData.length),
-                      ))],
-                      label: "Team",
+                      data: [
+                        ...new Set(
+                          filteredCapacityData.map(d =>
+                            formatTeamName(
+                              d.team_name,
+                              dimensions.width < 400 ? 10 : 12,
+                              filteredCapacityData.length
+                            )
+                          )
+                        ),
+                      ],
+                      label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
                   ]}
@@ -1162,9 +1176,17 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: [...new Set(filteredCoverageData.map(d => {
-                        return formatTeamName(d.team_name, dimensions.width < 400 ? 10 : 12, filteredCoverageData.length);
-                      }))], // Team names as x-axis labels
+                      data: [
+                        ...new Set(
+                          filteredCoverageData.map(d => {
+                            return formatTeamName(
+                              d.team_name,
+                              dimensions.width < 400 ? 10 : 12,
+                              filteredCoverageData.length
+                            );
+                          })
+                        ),
+                      ], // Team names as x-axis labels
                       label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -1228,9 +1250,17 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: [...new Set(filteredUnderAllocated.map(d => {
-                        return formatTeamName(d.team_name, dimensions.width < 400 ? 10 : 12, filteredUnderAllocated.length);
-                      }))],
+                      data: [
+                        ...new Set(
+                          filteredUnderAllocated.map(d => {
+                            return formatTeamName(
+                              d.team_name,
+                              dimensions.width < 400 ? 10 : 12,
+                              filteredUnderAllocated.length
+                            );
+                          })
+                        ),
+                      ],
                       label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -1288,9 +1318,17 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: [...new Set(filteredOverAllocated.map(d => {
-                        return formatTeamName(d.team_name, dimensions.width < 400 ? 10 : 12, filteredOverAllocated.length);
-                      }))],
+                      data: [
+                        ...new Set(
+                          filteredOverAllocated.map(d => {
+                            return formatTeamName(
+                              d.team_name,
+                              dimensions.width < 400 ? 10 : 12,
+                              filteredOverAllocated.length
+                            );
+                          })
+                        ),
+                      ],
                       label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -1322,80 +1360,79 @@ export default function ExecutiveDashboardPage() {
 
   return (
     <>
-     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <CommonToolbar />
-      <Global
-        styles={css`
-          circle.MuiMarkElement-root {
-            r: 3 !important; /* Set the radius to a smaller value */
-          }
-          .react-grid-item {
-            transition: all 200ms ease;
-            transition-property: left, top;
-          }
-          .react-grid-item.cssTransforms {
-            transition-property: transform;
-          }
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Global
+          styles={css`
+            circle.MuiMarkElement-root {
+              r: 3 !important; /* Set the radius to a smaller value */
+            }
+            .react-grid-item {
+              transition: all 200ms ease;
+              transition-property: left, top;
+            }
+            .react-grid-item.cssTransforms {
+              transition-property: transform;
+            }
 
-          /* Responsive chart styles */
-          .MuiChartsLegend-root {
-            max-width: 100% !important;
-            overflow: hidden !important;
-            font-size: 12px !important;
-            margin: 0 !important;
-          }
+            /* Responsive chart styles */
+            .MuiChartsLegend-root {
+              max-width: 100% !important;
+              overflow: hidden !important;
+              font-size: 12px !important;
+              margin: 0 !important;
+            }
 
-          .MuiChartsAxis-tickLabel {
-            font-size: 11px !important;
-          }
-
-          .MuiChartsAxisHighlight-root {
-            fill: none !important;
-            opcacity: 0 !important;
-          }
-
-          @media (max-width: 768px) {
             .MuiChartsAxis-tickLabel {
-              font-size: 9px !important;
-            }
-
-            .MuiChartsLegend-mark {
-              width: 16px !important;
-              height: 12px !important;
-            }
-
-            .MuiChartsLegend-label {
               font-size: 11px !important;
             }
-          }
-        `}
-      />
-      <Box sx={{ p: 2 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(e, val) => setActiveTab(val)}
-          sx={{ mt: 1, mb: 1, borderBottom: '1px solid #ddd' }}
-        >
-          <Tab
-            value="overview"
-            label="Overview"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          />
-          <Tab value="teams" label="Teams" sx={{ textTransform: 'none' }} />
-          <Tab
-            value="projects"
-            label="Projects"
-            sx={{ textTransform: 'none' }}
-          />
-          <DashboardToolbar
-            onFilterChange={handleFilterChange}
-            timeFilter={bucket}
-            teamfilter={teamFilter}
-            projectTypes={projectTypeNames}
-            teamNames={teamNames}
-          />
-        </Tabs>
 
+            .MuiChartsAxisHighlight-root {
+              fill: none !important;
+              opcacity: 0 !important;
+            }
+
+            @media (max-width: 768px) {
+              .MuiChartsAxis-tickLabel {
+                font-size: 9px !important;
+              }
+
+              .MuiChartsLegend-mark {
+                width: 16px !important;
+                height: 12px !important;
+              }
+
+              .MuiChartsLegend-label {
+                font-size: 11px !important;
+              }
+            }
+          `}
+        />
+        <CommonToolbar>
+          <Tabs
+            value={activeTab}
+            onChange={(e, val) => setActiveTab(val)}
+            sx={{ padding: '16px 16px 0px 8px' }}
+          >
+            <Tab
+              value="overview"
+              label="Overview"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab value="teams" label="Teams" sx={{ textTransform: 'none' }} />
+            <Tab
+              value="projects"
+              label="Projects"
+              sx={{ textTransform: 'none' }}
+            />
+            <DashboardToolbar
+              onFilterChange={handleFilterChange}
+              timeFilter={bucket}
+              teamfilter={teamFilter}
+              projectTypes={projectTypeNames}
+              teamNames={teamNames}
+            />
+          </Tabs>
+        </CommonToolbar>
         {activeTab === 'overview' && (
           <>
             <Topbar
@@ -1423,6 +1460,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
+              style={{padding: '0 16px'}}
             >
               {Object.entries(overviewcharts).map(([key, component]) => (
                 <div key={key}>{component}</div>
@@ -1452,6 +1490,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
+              style={{padding: '0 16px'}}
             >
               {Object.entries(teamCharts).map(([key, component]) => (
                 <div key={key}>{component}</div>
@@ -1480,6 +1519,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
+              style={{padding: '0 16px'}}
             >
               {Object.entries(projectCharts).map(([key, component]) => (
                 <div key={key}>{component}</div>
@@ -1505,7 +1545,6 @@ export default function ExecutiveDashboardPage() {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
       </Box>
     </>
   );
