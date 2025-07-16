@@ -18,6 +18,7 @@ import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
+import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -76,37 +77,44 @@ export default function TeamAllocation({
   } = useAllocationGrid('teamAllocation');
   const { getAllRows: getAllProjectViewRows } =
     useAllocationGrid('projectAllocation');
+  const { getAllRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (!loading && getAllProjectViewRows().length > 0) {
-        filteredResources = removeResourcesWithNoTeams(
-          injectBlankRows(
-            getAllProjectViewRows() as AllAllocations[],
-            teams?.result || [],
-            // @ts-ignore
-            teamsResources,
-            startDate,
-            endDate
-          )
-        );
-      } else if (loading && allAllocations) {
-        filteredResources = removeResourcesWithNoTeams(allAllocations || []);
-        dispatch(setLoading(false));
+      const allTempRows = getAllRowsForView('teamAllocationtemp');
+      debugger;
+      if (!loading && allTempRows?.length > 0) {
+        setRows(allTempRows || []);
+      } else {
+        if (!loading && getAllProjectViewRows().length > 0) {
+          filteredResources = removeResourcesWithNoTeams(
+            injectBlankRows(
+              getAllProjectViewRows() as AllAllocations[],
+              teams?.result || [],
+              // @ts-ignore
+              teamsResources,
+              startDate,
+              endDate
+            )
+          );
+        } else if (allAllocations) {
+          filteredResources = removeResourcesWithNoTeams(allAllocations || []);
+          dispatch(setLoading(false));
+        }
+
+        const formattedResources = filteredResources?.map(allocation => ({
+          ...allocation,
+          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          teamAllocationManager: getAllocationManagerFromPath(
+            allocation?.teamAllocationManager,
+            _resources?.result || []
+          )?.FullName,
+        }));
+
+        setRows(formattedResources || []);
       }
-
-      const formattedResources = filteredResources?.map(allocation => ({
-        ...allocation,
-        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
-        teamAllocationManager: getAllocationManagerFromPath(
-          allocation?.teamAllocationManager,
-          _resources?.result || []
-        )?.FullName,
-      }));
-
-      setRows(formattedResources || []);
     }
   }, [ready, allAllocations]);
 
