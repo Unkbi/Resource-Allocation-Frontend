@@ -39,7 +39,9 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Select User</StyledLabel>
+        <StyledLabel>
+          Select User <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
@@ -68,7 +70,10 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel> Select Role</StyledLabel>
+        <StyledLabel>
+          {' '}
+          Select Role <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"

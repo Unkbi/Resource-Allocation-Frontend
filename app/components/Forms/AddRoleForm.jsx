@@ -57,7 +57,9 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Role</StyledLabel>
+        <StyledLabel>
+          Role <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
         <StyledInput
           as={TextField}
           name="Name"
