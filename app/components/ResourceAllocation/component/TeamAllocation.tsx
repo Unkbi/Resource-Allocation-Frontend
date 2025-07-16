@@ -83,7 +83,6 @@ export default function TeamAllocation({
     if (ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('teamAllocationtemp');
-      debugger;
       if (!loading && allTempRows?.length > 0) {
         setRows(allTempRows || []);
       } else {
