@@ -92,9 +92,9 @@ const DashboardToolbar = ({
                 },
               }}
             >
-              <MenuItem value="all">All Teams</MenuItem>
+              <MenuItem value="all" sx={{color: '#344665'}}>All Teams</MenuItem>
               {teamNames.map(team => (
-                <MenuItem key={team} value={team}>
+                <MenuItem key={team} value={team} sx={{color: '#344665'}}>
                   {team}
                 </MenuItem>
               ))}
@@ -135,9 +135,9 @@ const DashboardToolbar = ({
                 },
               }}
             >
-              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="all" sx={{color: '#344665'}}>All Project Type</MenuItem>
               {projectTypes.map(type => (
-                <MenuItem key={type} value={type}>
+                <MenuItem key={type} value={type} sx={{color: '#344665'}}>
                   {type}
                 </MenuItem>
               ))}

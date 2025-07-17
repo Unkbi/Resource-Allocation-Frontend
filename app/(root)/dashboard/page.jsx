@@ -1418,11 +1418,11 @@ export default function ExecutiveDashboardPage() {
               label="Overview"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-            <Tab value="teams" label="Teams" sx={{ textTransform: 'none' }} />
+            <Tab value="teams" label="Teams" sx={{ textTransform: 'none', fontWeight: 600 }} />
             <Tab
               value="projects"
               label="Projects"
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <DashboardToolbar
               onFilterChange={handleFilterChange}
