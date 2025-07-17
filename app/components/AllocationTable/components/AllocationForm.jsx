@@ -1950,7 +1950,7 @@ const AllocationForm = () => {
             Role: values.Role || null,
             Name: values.Role
               ? `${values.Role}-${cleanedValues.Assignee?.Email}`
-                : null,
+              : null,
           };
 
           new Promise((resolve, reject) => {
@@ -2063,7 +2063,7 @@ const AllocationForm = () => {
           .map(([action]) => action.toLowerCase());
 
         const updatedFields = {
-          // Name: cleanedValues.Name,
+          Name: cleanedValues.Name,
           Resource: cleanedValues.Resource,
           Actions: actionsArray,
         };
