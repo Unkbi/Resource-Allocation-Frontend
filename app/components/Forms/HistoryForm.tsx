@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useSelector } from "react-redux"
 import {
   Box,
@@ -74,6 +74,8 @@ export default function HistoryForm({ historyData }: { historyData: ActivityItem
     if (showAll) return historyData
     return historyData.slice(0, INITIAL_ITEMS_COUNT)
   }, [historyData, showAll])
+  const [isLoading, setIsLoading] = useState(historyData === undefined || historyData === null)
+  const [showNoHistory, setShowNoHistory] = useState(false)
 
   const hasMoreItems = historyData.length > INITIAL_ITEMS_COUNT
   const remainingCount = historyData.length - INITIAL_ITEMS_COUNT
@@ -93,7 +95,25 @@ export default function HistoryForm({ historyData }: { historyData: ActivityItem
     })
   }
 
-  const isLoading = historyData.length === 0
+  useEffect(() => {
+    if (historyData && historyData.length === 0) {
+        setIsLoading(false)
+        setShowNoHistory(true)
+    } else {
+      setIsLoading(historyData === undefined || historyData === null)
+      setShowNoHistory(false)
+    }
+  }, [historyData])
+
+  if (showNoHistory) {
+    return (
+      <Box sx={{ width: "100%", maxWidth: 600, bgcolor: "background.paper", p: 3, textAlign: "center" }}>
+        <Typography variant="body2" color="text.secondary">
+          No history found.
+        </Typography>
+      </Box>
+    )
+  }
   const skeletonCount = 5
 
   return (

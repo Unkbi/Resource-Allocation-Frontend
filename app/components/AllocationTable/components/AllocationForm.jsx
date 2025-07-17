@@ -2019,122 +2019,128 @@ const AllocationForm = () => {
             return;
           }
 
+          // If result is empty array, return immediately
+          if (Array.isArray(response?.result) && response.result.length === 0) {
+            setHistoryData([]);
+            return;
+          }
+
           const formattedHistory = [];
-          (response.result || [])
+          ((response && response.result) ? response.result : [])
             .filter(
               item =>
-                Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
+          Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
             )
             .forEach((item, idx) => {
               const {
-                ResourceName,
-                ProjectName,
-                Period,
-                AllocationEntered,
-                ChangesLog = [],
-                AllocationId,
+          ResourceName,
+          ProjectName,
+          Period,
+          AllocationEntered,
+          ChangesLog = [],
+          AllocationId,
               } = item;
 
               // Helper functions
               const getUserInitials = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                const parts = name.split(/[.\s_]/);
-                return parts
-                  .map(p => p[0]?.toUpperCase())
-                  .join('')
-                  .slice(0, 2);
+          if (!email) return '';
+          const [name] = email.split('@');
+          const parts = name.split(/[.\s_]/);
+          return parts
+            .map(p => p[0]?.toUpperCase())
+            .join('')
+            .slice(0, 2);
               };
               const getUserName = email => {
-                if (!email) return '';
-                const [name] = email.split('@');
-                return name
-                  .split(/[.\s_]/)
-                  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-                  .join(' ');
+          if (!email) return '';
+          const [name] = email.split('@');
+          return name
+            .split(/[.\s_]/)
+            .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+            .join(' ');
               };
               const getDateString = ts => {
-                if (!ts) return '';
-                const date = new Date(ts);
-                return date
-                  .toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric',
-                  })
-                  .replace(/ /g, ' ');
+          if (!ts) return '';
+          const date = new Date(ts);
+          return date
+            .toLocaleDateString('en-US', {
+              month: 'short',
+              day: '2-digit',
+              year: 'numeric',
+            })
+            .replace(/ /g, ' ');
               };
               const getRelativeTime = ts => {
-                if (!ts) return '';
-                const now = Date.now();
-                const diff = now - ts * 1000;
-                const min = Math.floor(diff / 60000);
-                if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
-                const hr = Math.floor(min / 60);
-                if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
-                const day = Math.floor(hr / 24);
-                return `${day} day${day === 1 ? '' : 's'} ago`;
+          if (!ts) return '';
+          const now = Date.now();
+          const diff = now - ts * 1000;
+          const min = Math.floor(diff / 60000);
+          if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+          const hr = Math.floor(min / 60);
+          if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+          const day = Math.floor(hr / 24);
+          return `${day} day${day === 1 ? '' : 's'} ago`;
               };
 
               // Calculate week number from Period
               let weekNumber = '';
               if (Period) {
-                const d = new Date(Period);
-                if (!isNaN(d)) {
-                  const temp = new Date(d.getTime());
-                  temp.setHours(0, 0, 0, 0);
-                  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                  const yearStart = new Date(temp.getFullYear(), 0, 1);
-                  weekNumber = Math.ceil(
-                    ((temp - yearStart) / 86400000 + 1) / 7
-                  );
-                }
+          const d = new Date(Period);
+          if (!isNaN(d)) {
+            const temp = new Date(d.getTime());
+            temp.setHours(0, 0, 0, 0);
+            temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+            const yearStart = new Date(temp.getFullYear(), 0, 1);
+            weekNumber = Math.ceil(
+              ((temp - yearStart) / 86400000 + 1) / 7
+            );
+          }
               }
 
               // For each change log, create a history entry
               ChangesLog.forEach((log, logIdx) => {
-                let action = '';
-                let fromVersion = '';
-                let toVersion = '';
+          let action = '';
+          let fromVersion = '';
+          let toVersion = '';
 
-                // Find the next log entry if it exists
-                const nextLog = ChangesLog[logIdx + 1];
+          // Find the next log entry if it exists
+          const nextLog = ChangesLog[logIdx + 1];
 
-                if (log.Action?.toLowerCase() === 'create') {
-                  action = 'Created';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'update') {
-                  action = 'Update';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = nextLog
-                    ? (nextLog.AllocationEnteredLast ?? '')
-                    : (AllocationEntered ?? '');
-                } else if (log.Action?.toLowerCase() === 'delete') {
-                  action = 'Deleted';
-                  fromVersion = log.AllocationEnteredLast ?? '';
-                  toVersion = '';
-                } else {
-                  action = log.Action;
-                }
+          if (log.Action?.toLowerCase() === 'create') {
+            action = 'Created';
+            fromVersion = log.AllocationEnteredLast ?? '';
+            toVersion = nextLog
+              ? (nextLog.AllocationEnteredLast ?? '')
+              : (AllocationEntered ?? '');
+          } else if (log.Action?.toLowerCase() === 'update') {
+            action = 'Update';
+            fromVersion = log.AllocationEnteredLast ?? '';
+            toVersion = nextLog
+              ? (nextLog.AllocationEnteredLast ?? '')
+              : (AllocationEntered ?? '');
+          } else if (log.Action?.toLowerCase() === 'delete') {
+            action = 'Deleted';
+            fromVersion = log.AllocationEnteredLast ?? '';
+            toVersion = '';
+          } else {
+            action = log.Action;
+          }
 
-                formattedHistory.push({
-                  id: `${AllocationId || idx + 1}-${logIdx + 1}`,
-                  userInitials: getUserInitials(ResourceName),
-                  userName: getUserName(ResourceName),
-                  projectName: ProjectName,
-                  weekNumber: weekNumber ? Number(weekNumber) : undefined,
-                  date: getDateString(Period),
-                  timestamp: getRelativeTime(log.Timestamp),
-                  action,
-                  fromVersion:
-                    fromVersion !== undefined ? String(fromVersion) : '',
-                  toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: getUserName(log.User),
-                  _timestampRaw: log.Timestamp, // Add raw timestamp for sorting
-                });
+          formattedHistory.push({
+            id: `${AllocationId || idx + 1}-${logIdx + 1}`,
+            userInitials: getUserInitials(ResourceName),
+            userName: getUserName(ResourceName),
+            projectName: ProjectName,
+            weekNumber: weekNumber ? Number(weekNumber) : undefined,
+            date: getDateString(Period),
+            timestamp: getRelativeTime(log.Timestamp),
+            action,
+            fromVersion:
+              fromVersion !== undefined ? String(fromVersion) : '',
+            toVersion: toVersion !== undefined ? String(toVersion) : '',
+            byUser: getUserName(log.User),
+            _timestampRaw: log.Timestamp, // Add raw timestamp for sorting
+          });
               });
             });
 
