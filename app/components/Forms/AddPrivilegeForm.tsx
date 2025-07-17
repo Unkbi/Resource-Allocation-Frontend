@@ -10,11 +10,10 @@ import {
   Typography,
 } from '@mui/material';
 import StyledLabel from '../Label/StyledLabel';
-import { StyledInput } from '../Input/StyledInput';
+import { StyledFormHelperText, StyledInput } from '../Input/StyledInput';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { FormikProps } from 'formik';
-import { stat } from 'fs';
 
 type ActionType = 'Create' | 'Read' | 'Update' | 'Delete';
 
@@ -36,7 +35,9 @@ const AddPrivilegeForm = ({
     formikProps;
   const privileges = useSelector((state: any) => state.rbac.privileges);
   const [privilegeName, setPrivilegeName] = useState('');
-  const { initialData } = useSelector((state: any) => state.globalDialog.formState);
+  const { initialData } = useSelector(
+    (state: any) => state.globalDialog.formState
+  );
 
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -46,32 +47,49 @@ const AddPrivilegeForm = ({
     '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
   };
 
-useEffect(() => {
-  if (initialData) {
-    const rowData: PrivilegeFormValues = {
-      Name: initialData.Name || '',
-      Resource: Array.isArray(initialData.Resource)
-        ? initialData.Resource[0] || ''
-        : initialData.Resource || '',
-      Actions: {
-        Create: initialData.Actions?.Create || false,
-        Read: initialData.Actions?.Read || false,
-        Update: initialData.Actions?.Update || false,
-        Delete: initialData.Actions?.Delete || false,
-      },
-    };
-    setFormValue(rowData);
-    formikProps.resetForm({ values: rowData });
-    formikProps.setTouched({});
-  }
-}, [initialData]);
-  
+  useEffect(() => {
+    if (initialData) {
+      const actionArray: string[] = initialData.Actions || [];
+
+      const actionObject: Record<ActionType, boolean> = {
+        Create: actionArray.includes('create'),
+        Read: actionArray.includes('read'),
+        Update: actionArray.includes('update'),
+        Delete: actionArray.includes('delete'),
+      };
+
+      const rowData: PrivilegeFormValues = {
+        Name: initialData.Name || '',
+        Resource: Array.isArray(initialData.Resource)
+          ? initialData.Resource[0] || ''
+          : initialData.Resource || '',
+        Actions: actionObject,
+      };
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
+    }
+  }, [initialData]);
+
   const handleAutocompleteChange =
     (field: string) => (_event: any, newValue: any) => {
       setFieldValue(field, newValue || '');
     };
 
   const actionList: ActionType[] = ['Create', 'Read', 'Update', 'Delete'];
+  const actionError =
+    formikProps.touched.Actions &&
+    typeof formikProps.errors.Actions === 'string'
+      ? formikProps.errors.Actions
+      : undefined;
+
+  const resourceOptions: string[] = Array.from(
+    new Set(
+      privileges.map((r: any) =>
+        Array.isArray(r.Resource) ? r.Resource[0] : r.Resource
+      )
+    )
+  );
 
   return (
     <Box>
@@ -101,16 +119,10 @@ useEffect(() => {
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
-          options={[
-            ...new Set(
-              privileges.map((r: any) =>
-                Array.isArray(r.Resource) ? r.Resource[0] : r.Resource
-              )
-            ),
-          ]}
-          // options={[...new Set(privileges.map((r: any) => r.Resource[0]))]}
-          //   options={[...new Set(privileges.map((r: any) => r.Resource))]}
-          //   getOptionLabel={(option: string) => option}
+          options={resourceOptions}
+          getOptionLabel={(option: string) =>
+            option?.split('/').length >= 2 ? option?.split('/')[1] : option
+          }
           value={values.Resource || ''}
           onChange={handleAutocompleteChange('Resource')}
           renderInput={params => (
@@ -151,11 +163,16 @@ useEffect(() => {
             />
           ))}
         </FormGroup>
-
-        {touched.Actions && typeof errors.Actions === 'string' && (
-          <Typography sx={{ color: '#B44536', fontSize: '12px', mt: 0.5 }}>
-            {errors.Actions}
-          </Typography>
+        {actionError && (
+          <StyledFormHelperText
+            sx={{
+              marginLeft: '3px',
+              mt: 0.5,
+            }}
+            error
+          >
+            {actionError}
+          </StyledFormHelperText>
         )}
       </Box>
     </Box>

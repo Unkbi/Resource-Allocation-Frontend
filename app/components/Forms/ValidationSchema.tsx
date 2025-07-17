@@ -441,3 +441,8 @@ export const addPrivilegeValidationSchema = Yup.object({
     value => !!value && Object.values(value).some(v => v)
   ),
 });
+
+export const assignPrivilegeValidationSchema = Yup.object({
+  Role: Yup.string().required('Role is required'),
+  Privilege: Yup.string().required('Privilege is required'),
+});

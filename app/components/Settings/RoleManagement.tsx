@@ -8,29 +8,16 @@ import {
   Tab,
   Box,
   Typography,
-  Button,
-  Badge,
-  Table,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Menu,
   MenuItem,
   InputLabel,
 } from '@mui/material';
 import {
-  People as Users,
-  Settings as UserCog,
-  VpnKey as KeyRound,
-  Link as LinkIcon,
   MoreVert as MoreHorizontal,
   Edit as Pencil,
   Delete as Trash2,
 } from '@mui/icons-material';
-import AddIcon from '@mui/icons-material/Add';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AccessTable from './AccessTable';
@@ -236,16 +223,16 @@ export default function RoleManagementPage() {
 
   useEffect(() => {
     if (tab === 'role-management') {
-      dispatch({ type: FETCH_ROLES });
+        dispatch({ type: FETCH_ROLES });
     }
     if (tab === 'role-assignments') {
-      dispatch({ type: FETCH_ROLESASSIGNMENTS });
+        dispatch({ type: FETCH_ROLESASSIGNMENTS });
     }
     if (tab === 'privilege-management') {
       dispatch({ type: FETCH_PRIVILEGES});
     } 
     if (tab === 'privilege-assignments') {
-      dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
+        dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
     }
   }, [tab, dispatch]);
 
@@ -371,7 +358,7 @@ export default function RoleManagementPage() {
         title: 'Edit Privilege Assignments',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
-        formType: 'edit_privilege_Assignments',
+        formType: 'edit_privilege_assignment',
         initialData: privilegeAssignments,
       })
     );
@@ -505,7 +492,7 @@ export default function RoleManagementPage() {
     {
       field: 'Role',
       headerName: 'Role',
-      flex: 1,
+      flex: 0.5,
       renderCell: (params: any) => (
         <Box
           sx={{
@@ -524,15 +511,21 @@ export default function RoleManagementPage() {
     {
       field: 'Assignee',
       headerName: 'Assigned User',
-      flex: 1,
+      flex:1,
       renderCell: (params: any) => (
         <Typography sx={commonCellStyle}>{params.value}</Typography>
       ),
     },
     {
+      field: 'Status',
+      headerName: 'Status',
+      flex: 0.3,
+      renderCell: () => <StatusPill>Active</StatusPill>,
+    },
+    {
       field: 'actions',
       headerName: 'Actions',
-      width: 100,
+      flex : 0.8,
       sortable: false,
       filterable: false,
       renderCell: (params: any) => (
@@ -862,6 +855,7 @@ export default function RoleManagementPage() {
           columns={rolesColumns}
           renderMenu={renderRoleMenu}
           apiRef={apiRef}
+          loading={loading}
         />
       )}
       {tab === 'role-assignments' && (
@@ -879,6 +873,7 @@ export default function RoleManagementPage() {
           renderMenu={renderAssignmentMenu}
           columns={roleAssignmentColumns}
           apiRef={apiRef}
+          loading={loading}
         />
       )}
       {tab === 'privilege-management' && (
@@ -896,6 +891,7 @@ export default function RoleManagementPage() {
           renderMenu={renderprivilegeMenu}
           columns={privilegesColumns}
           apiRef={apiRef}
+          loading={loading}
         />
       )}
       {tab === 'privilege-assignments' && (
@@ -913,6 +909,7 @@ export default function RoleManagementPage() {
           renderMenu={renderPrivilegeAssignmentMenu}
           columns={privilegeAssignmentsColumns}
           apiRef={apiRef}
+          loading={loading}
         />
       )}
 

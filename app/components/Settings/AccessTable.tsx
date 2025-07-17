@@ -4,13 +4,27 @@ import {
   Box,
   Button,
   Typography,
-  IconButton,
-  Menu,
-  MenuItem,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 
+
+interface AccessTableProps {
+  title: string;
+  data: any[];
+  onAdd: () => void;
+  onEdit: (item: any) => void;
+  onDelete: (id: string) => void;
+  renderMenu: (id: string) => React.ReactNode;
+  menuId: string | null;
+  setMenuId: (id: string | null) => void;
+  setAnchorEl: (el: HTMLElement | null) => void;
+  anchorEl: HTMLElement | null;
+  buttonLabel?: string;
+  columns?: any[];
+  apiRef?: any;
+  loading?: boolean;
+}
 
 export default function AccessTable({
   title,
@@ -25,22 +39,9 @@ export default function AccessTable({
   anchorEl,
   buttonLabel = 'Add New',
   columns = [],
-  apiRef
-}: {
-  title: string;
-  data: any[];
-  onAdd: () => void;
-  onEdit: (item: any) => void;
-  onDelete: (id: string) => void;
-  renderMenu: (id: string) => React.ReactNode;
-  menuId: string | null;
-  setMenuId: (id: string | null) => void;
-  setAnchorEl: (el: HTMLElement | null) => void;
-  anchorEl: HTMLElement | null;
-  buttonLabel?: string;
-  columns?: any[];
-  apiRef?: any; 
-}) {
+  apiRef,
+  loading = false,
+}: AccessTableProps) {
   return (
     <Box
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
@@ -95,6 +96,7 @@ export default function AccessTable({
           disableRowSelectionOnClick
           autoHeight
           apiRef={apiRef}
+          loading={loading}
           sx={{
             border: 'none',
             '.MuiDataGrid-columnHeaders': {
@@ -120,11 +122,17 @@ export default function AccessTable({
               borderRight: 'none', // Avoid double border on last column
             },
             '.MuiDataGrid-columnSeparator': {
-              display: 'block', 
+              display: 'block',
             },
             '.MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
               fontSize: 13,
+            },
+          }}
+          slotProps={{
+            loadingOverlay: {
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
             },
           }}
         />

@@ -29,6 +29,7 @@ import {
   addRoleValidationSchema,
   assignRoleValidationSchema,
   addPrivilegeValidationSchema,
+  assignPrivilegeValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -112,11 +113,14 @@ import AddRoleForm from '../../Forms/AddRoleForm';
 import AssignRoleForm from '../../Forms/AssignRoleForm';
 import {
   CREATE_PRIVILEGE,
+  CREATE_PRIVILEGEASSIGNMENT,
   CREATE_ROLE,
   CREATE_ROLESASSIGNMENT,
   UPDATE_PRIVILEGE,
+  UPDATE_PRIVILEGEASSIGNMENT,
 } from '@/app/redux/actions/rbacActions';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
+import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
 
 const initialValuesMap = {
   add_project: {
@@ -300,6 +304,14 @@ const initialValuesMap = {
       Delete: false,
     },
   },
+  assign_privilege: {
+    Role: '',
+    Privilege: '',
+  },
+  edit_privilege_assignment: {
+    Role: '',
+    Privilege: '',
+  },
 };
 
 const AllocationForm = () => {
@@ -410,6 +422,10 @@ const AllocationForm = () => {
         return addPrivilegeValidationSchema;
       case 'edit_privilege':
         return addPrivilegeValidationSchema;
+      case 'assign_privilege':
+        return assignPrivilegeValidationSchema;
+      case 'edit_privilege_assignment':
+        return assignPrivilegeValidationSchema;
       default:
         return null;
     }
@@ -1934,7 +1950,7 @@ const AllocationForm = () => {
             Role: values.Role || null,
             Name: values.Role
               ? `${values.Role}-${cleanedValues.Assignee?.Email}`
-              : null,
+                : null,
           };
 
           new Promise((resolve, reject) => {
@@ -2057,8 +2073,8 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                name: cleanedValues.Name,  
-                updatedFields, 
+                name: cleanedValues.Name,
+                updatedFields,
                 resolve,
                 reject,
               },
@@ -2079,6 +2095,108 @@ const AllocationForm = () => {
         } catch (error) {
           const message =
             error?.response?.data?.exception || 'Failed to update privilege.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
+      case 'assign_privilege': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = {
+          ...cleanedValues,
+          Role: values.Role || null,
+          Privilege: values.Privilege || null,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_PRIVILEGEASSIGNMENT,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Privilege assigned successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result?.Name));
+          })
+          .catch(error => {
+            console.error('Failed to assign privilege:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to assign privilege.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+        break;
+      }
+      case 'edit_privilege_assignment': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = {
+          Role: values.Role || null,
+          Privilege: values.Privilege || null,
+        };
+
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_PRIVILEGEASSIGNMENT,
+              payload: {
+                name: initialData?.Name,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Privilege assignment updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.Name));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            error?.response?.data?.exception ||
+            'Failed to update privilege assignment.';
           dispatch(
             showToast({
               open: true,
@@ -2563,6 +2681,20 @@ const AllocationForm = () => {
       case 'edit_privilege':
         return (
           <AddPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'assign_privilege':
+        return (
+          <AssignPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_privilege_assignment':
+        return (
+          <AssignPrivilegeForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />
