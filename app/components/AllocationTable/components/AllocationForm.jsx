@@ -26,6 +26,10 @@ import {
   addRatesValidationSchema,
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
+  addRoleValidationSchema,
+  assignRoleValidationSchema,
+  addPrivilegeValidationSchema,
+  assignPrivilegeValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -105,6 +109,18 @@ import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
+import AddRoleForm from '../../Forms/AddRoleForm';
+import AssignRoleForm from '../../Forms/AssignRoleForm';
+import {
+  CREATE_PRIVILEGE,
+  CREATE_PRIVILEGEASSIGNMENT,
+  CREATE_ROLE,
+  CREATE_ROLESASSIGNMENT,
+  UPDATE_PRIVILEGE,
+  UPDATE_PRIVILEGEASSIGNMENT,
+} from '@/app/redux/actions/rbacActions';
+import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
+import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
 
 const initialValuesMap = {
   add_project: {
@@ -251,6 +267,51 @@ const initialValuesMap = {
     Description: '',
     SidebarColor: '#000000',
   },
+  add_role: {
+    Name: '',
+  },
+  edit_role: {
+    Name: '',
+    Status: 'Active',
+  },
+  assign_role: {
+    Assignee: '',
+    Name: '',
+    Role: '',
+  },
+  edit_role_assignment: {
+    Assignee: '',
+    Name: '',
+    Role: '',
+  },
+  add_privilege: {
+    Name: '',
+    Resource: '',
+    Actions: {
+      Create: false,
+      Update: false,
+      Read: false,
+      Delete: false,
+    },
+  },
+  edit_privilege: {
+    Name: '',
+    Resource: '',
+    Actions: {
+      Create: false,
+      Update: false,
+      Read: false,
+      Delete: false,
+    },
+  },
+  assign_privilege: {
+    Role: '',
+    Privilege: '',
+  },
+  edit_privilege_assignment: {
+    Role: '',
+    Privilege: '',
+  },
 };
 
 const AllocationForm = () => {
@@ -349,7 +410,22 @@ const AllocationForm = () => {
         return addPortfolioValidationSchema(portfolios);
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios, initialData.Name || '');
-
+      case 'add_role':
+        return addRoleValidationSchema;
+      case 'edit_role':
+        return addRoleValidationSchema;
+      case 'assign_role':
+        return assignRoleValidationSchema;
+      case 'edit_role_assignment':
+        return assignRoleValidationSchema;
+      case 'add_privilege':
+        return addPrivilegeValidationSchema;
+      case 'edit_privilege':
+        return addPrivilegeValidationSchema;
+      case 'assign_privilege':
+        return assignPrivilegeValidationSchema;
+      case 'edit_privilege_assignment':
+        return assignPrivilegeValidationSchema;
       default:
         return null;
     }
@@ -1812,6 +1888,327 @@ const AllocationForm = () => {
 
         return;
       }
+      case 'add_role':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+          const postData = { ...cleanedValues };
+          new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_ROLE,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          })
+            .then(response => {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Role added successfully.',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              dispatch(setHighlightedRowId(response.result?.Name));
+            })
+            .catch(error => {
+              console.error('Failed to add role:', error);
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to add role.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            })
+            .finally(() => {
+              dispatch(closeDialog());
+            });
+        }
+        break;
+
+      case 'assign_role':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+
+          const postData = {
+            ...cleanedValues,
+            Assignee: cleanedValues.Assignee?.Email || null,
+            Role: values.Role || null,
+            Name: values.Role
+              ? `${values.Role}-${cleanedValues.Assignee?.Email}`
+              : null,
+          };
+
+          new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_ROLESASSIGNMENT,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          })
+            .then(response => {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Role assigned successfully.',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              dispatch(setHighlightedRowId(response.result?.Name));
+            })
+            .catch(error => {
+              console.error('Failed to assign role:', error);
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to assign role.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            })
+            .finally(() => {
+              dispatch(closeDialog());
+            });
+        }
+        break;
+
+      case 'add_privilege': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const actionsArray = Object.entries(cleanedValues.Actions || {})
+          .filter(([_, isChecked]) => isChecked)
+          .map(([action]) => action.toLowerCase());
+
+        const postData = {
+          Name: cleanedValues.Name,
+          Resource: cleanedValues.Resource,
+          Actions: actionsArray,
+        };
+
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_PRIVILEGE,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Privilege added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result?.Name));
+          })
+          .catch(error => {
+            console.error('Failed to add privilege:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add privilege.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+        break;
+      }
+      case 'edit_privilege': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        if (Array.isArray(cleanedValues.Resource)) {
+          cleanedValues.Resource = cleanedValues.Resource[0] || null;
+        }
+        const actionsArray = Object.entries(cleanedValues.Actions || {})
+          .filter(([_, isChecked]) => isChecked)
+          .map(([action]) => action.toLowerCase());
+
+        const updatedFields = {
+          Name: cleanedValues.Name,
+          Resource: cleanedValues.Resource,
+          Actions: actionsArray,
+        };
+
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_PRIVILEGE,
+              payload: {
+                name: cleanedValues.Name,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Privilege updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(cleanedValues.Name));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            error?.response?.data?.exception || 'Failed to update privilege.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
+      case 'assign_privilege': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = {
+          ...cleanedValues,
+          Role: values.Role || null,
+          Privilege: values.Privilege || null,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_PRIVILEGEASSIGNMENT,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Privilege assigned successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result?.Name));
+          })
+          .catch(error => {
+            console.error('Failed to assign privilege:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to assign privilege.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+        break;
+      }
+      case 'edit_privilege_assignment': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = {
+          Role: values.Role || null,
+          Privilege: values.Privilege || null,
+        };
+
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_PRIVILEGEASSIGNMENT,
+              payload: {
+                name: initialData?.Name,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Privilege assignment updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.Name));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            error?.response?.data?.exception ||
+            'Failed to update privilege assignment.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
 
       default:
         return;
@@ -2258,6 +2655,57 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+      case 'add_role':
+        return (
+          <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_role':
+        return (
+          <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'assign_role':
+        return (
+          <AssignRoleForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_role_assignment':
+        return (
+          <AssignRoleForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_privilege':
+        return (
+          <AddPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_privilege':
+        return (
+          <AddPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'assign_privilege':
+        return (
+          <AssignPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_privilege_assignment':
+        return (
+          <AssignPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+
       default:
         return <div>No form selected</div>;
     }

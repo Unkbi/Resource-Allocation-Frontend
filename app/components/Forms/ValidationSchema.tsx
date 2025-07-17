@@ -386,7 +386,7 @@ export const addPortfolioValidationSchema = (portfolios : any, initialName = '')
         'unique-name',
         'A portfolio with this name already exists.',
         function (value) {
-          if (!value) return true; 
+          if (!value) return true;
           const currentName = value.toLowerCase().trim();
           const originalName = initialName.toLowerCase().trim();
           return (
@@ -399,3 +399,50 @@ export const addPortfolioValidationSchema = (portfolios : any, initialName = '')
     Description: Yup.string().nullable(),
   });
 };
+
+export const addRoleValidationSchema = Yup.object({
+  Name: Yup.string()
+    .required('Role Name is required')
+    .max(90, 'Reached Max Characters')
+    .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word
+    .test(
+      'unique-name',
+      'Role Name already exists. Please choose another name.',
+      function (value) {
+        if (!value) return true;
+        const roleNames = this.options.context?.roleNames || [];
+        return !roleNames.includes(value.toLowerCase().trim());
+      }
+    ),
+});
+
+export const assignRoleValidationSchema = Yup.object({
+  Assignee: Yup.object().nullable().required('Assignee is required'),
+  Role: Yup.string().required('Role is required'),
+});
+
+export const addPrivilegeValidationSchema = Yup.object({
+  Name: Yup.string()
+    .required('Privilege Name is required')
+    .max(90, 'Reached Max Characters')
+    .test(
+      'unique-name',
+      'Privilege Name already exists. Please choose another name.',
+      function (value) {
+        if (!value) return true;
+        const privilegeNames = this.options.context?.privilegeNames || [];
+        return !privilegeNames.includes(value.toLowerCase().trim());
+      }
+    ),
+  Resource: Yup.string().required('Entity is required'),
+  Actions: Yup.object().test(
+    'at-least-one-action',
+    'At least one action must be selected',
+    value => !!value && Object.values(value).some(v => v)
+  ),
+});
+
+export const assignPrivilegeValidationSchema = Yup.object({
+  Role: Yup.string().required('Role is required'),
+  Privilege: Yup.string().required('Privilege is required'),
+});
