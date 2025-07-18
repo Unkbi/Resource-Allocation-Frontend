@@ -10,12 +10,13 @@ import {
   Paper,
   Grid,
 } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const DashboardToolbar = ({
   onFilterChange,
   teamNames = [],
   projectTypes = [],
-  teamfilter : externalTeamFilter = 'all',
+  teamfilter: externalTeamFilter = 'all',
 }) => {
   const [timeFilter, setTimeFilter] = useState('week');
   const [teamFilter, setTeamFilter] = useState(externalTeamFilter);
@@ -54,6 +55,7 @@ const DashboardToolbar = ({
         borderRadius: 2,
         width: '100%',
         position: 'relative',
+        backgroundColor: 'inherit',
       }}
     >
       <Grid container spacing={4} alignItems="center" justifyContent="end">
@@ -62,7 +64,7 @@ const DashboardToolbar = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography
               variant="subtitle2"
-              sx={{ fontSize: '14px' }} // Font size 14px
+              // Font size 14px
             >
               Teams
             </Typography>
@@ -72,12 +74,15 @@ const DashboardToolbar = ({
               displayEmpty
               size="small"
               fullWidth
+              IconComponent={KeyboardArrowDownIcon}
               sx={{
-                borderRadius: 1,
+                borderRadius: 1.5,
                 bgcolor: 'white',
+                borderColor: '#D1D5DB',
                 fontSize: '14px',
               }}
               MenuProps={{
+                disableScrollLock: true,
                 PaperProps: {
                   sx: {
                     '& .MuiMenuItem-root': {
@@ -87,9 +92,9 @@ const DashboardToolbar = ({
                 },
               }}
             >
-              <MenuItem value="all">All Teams</MenuItem>
+              <MenuItem value="all" sx={{color: '#344665'}}>All Teams</MenuItem>
               {teamNames.map(team => (
-                <MenuItem key={team} value={team}>
+                <MenuItem key={team} value={team} sx={{color: '#344665'}}>
                   {team}
                 </MenuItem>
               ))}
@@ -110,14 +115,17 @@ const DashboardToolbar = ({
               value={projectTypeFilter}
               onChange={handleProjectTypeFilterChange}
               displayEmpty
+              IconComponent={KeyboardArrowDownIcon}
               size="small"
               fullWidth
               sx={{
-                borderRadius: 1,
+                borderRadius: 1.5,
                 bgcolor: 'white',
+                borderColor: '#D1D5DB',
                 fontSize: '14px', // Font size 14px for the Select component
               }}
               MenuProps={{
+                disableScrollLock: true,
                 PaperProps: {
                   sx: {
                     '& .MuiMenuItem-root': {
@@ -127,9 +135,9 @@ const DashboardToolbar = ({
                 },
               }}
             >
-              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="all" sx={{color: '#344665'}}>All Project Type</MenuItem>
               {projectTypes.map(type => (
-                <MenuItem key={type} value={type}>
+                <MenuItem key={type} value={type} sx={{color: '#344665'}}>
                   {type}
                 </MenuItem>
               ))}
