@@ -575,11 +575,24 @@ const AllocationForm = () => {
               const newProjectId = response.payload?.result?.Id;
               if (newProjectId) {
                 await dispatch(fetchAllProjects());
-                dispatch(setHighlightedRowId(newProjectId));
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: 'Project added successfully',
+                    type: 'success',
+                    position: 'bottom-left',
+                    autoHideTimer: 3000,
+                  })
+                );
+                setTimeout(() => {
+                  dispatch(setHighlightedRowId(newProjectId));
+                }, 4000); 
               }
+              
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
                 dispatch(setSplitViewCurrentProject(response.payload.result));
+                dispatch(closeDialog());
                 router.replace('/allocation');
                 return;
               }
@@ -602,9 +615,6 @@ const AllocationForm = () => {
               );
               console.error('Failed to add project:', error);
             });
-          if (pathname !== '/project') {
-            router.replace('/project');
-          }
         } catch (e) {
           console.error('Failed to add project:', e);
         }
