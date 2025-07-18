@@ -67,14 +67,14 @@ const getAvatarColorHSL = (initials: string) => {
 
 const INITIAL_ITEMS_COUNT = 5
 
-export default function HistoryForm({ historyData }: { historyData: ActivityItem[]}) {
+export default function HistoryForm({ historyData, historyStatus }: { historyData: ActivityItem[], historyStatus: string }) {
   const [showAll, setShowAll] = useState(false)
   const [isExpanding, setIsExpanding] = useState(false)
   const displayedItems = useMemo(() => {
     if (showAll) return historyData
     return historyData.slice(0, INITIAL_ITEMS_COUNT)
   }, [historyData, showAll])
-  const [isLoading, setIsLoading] = useState(historyData === undefined || historyData === null)
+  const [isLoading, setIsLoading] = useState(true)
   const [showNoHistory, setShowNoHistory] = useState(false)
 
   const hasMoreItems = historyData.length > INITIAL_ITEMS_COUNT
@@ -96,11 +96,11 @@ export default function HistoryForm({ historyData }: { historyData: ActivityItem
   }
 
   useEffect(() => {
-    if (historyData && historyData.length === 0) {
+    if (historyStatus === "no-data") {
         setIsLoading(false)
         setShowNoHistory(true)
     } else {
-      setIsLoading(historyData === undefined || historyData === null)
+      setIsLoading(historyStatus !== "loaded")
       setShowNoHistory(false)
     }
   }, [historyData])
