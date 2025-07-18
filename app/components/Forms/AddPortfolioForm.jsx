@@ -8,6 +8,7 @@ import CustomSelect from '../Select/CustomSelect';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { MuiColorInput } from 'mui-color-input';
+import StyledAutocomplete from '../Select/Autocomplete';
 
 const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
   const dispatch = useDispatch();
@@ -74,15 +75,14 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>
           Status <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <CustomSelect
+        <StyledAutocomplete
           name="Status"
+          label="Status"
+          placeholder="Select status"
           options={statusOptions}
           value={values.Status || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          width="100%"
-          error={touched.Status && Boolean(errors.Status)}
-          helperText={errors.Status}
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
 
