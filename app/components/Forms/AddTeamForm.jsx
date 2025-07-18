@@ -79,7 +79,7 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>
-          Team Allocation Manager <span style={{ color: 'red' }}>*</span>
+          Team Allocation Manager
         </StyledLabel>
         <CustomSelect
           name="AllocationManager"
