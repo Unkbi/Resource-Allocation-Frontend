@@ -614,7 +614,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>
-          Manager <span style={{ color: 'red' }}>*</span>
+          Manager 
         </StyledLabel>
         <CustomSelect
           name="Manager"
