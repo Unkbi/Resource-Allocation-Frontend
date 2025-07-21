@@ -228,7 +228,7 @@ export function formatAllAllocations(
         projectEndDate: project?.EndDate || null,
         projectDescription: project?.Description || null,
         portfolioId: portfolio ? portfolio?.Id : null,
-        portfolioName: portfolio ? portfolio?.Name : 'default',
+        portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
         portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
         portfolioDescription: portfolio ? portfolio?.Description || null : null,
         portfolioStatus: portfolio ? portfolio?.Status || null : null,

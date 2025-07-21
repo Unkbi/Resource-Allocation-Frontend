@@ -18,7 +18,10 @@ import {
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import {
+  PORTFOLIO_BLANK,
+  PORTFOLIO_DISPLAY_NAME,
+} from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
 interface PortfolioAllocationProps {
@@ -121,7 +124,7 @@ export default function PortfolioAllocation({
     return null;
   };
 
-  const projectColumnConfig = [
+  const portfolioColumnConfig = [
     {
       field: 'portfolioName',
       headerName: PORTFOLIO_DISPLAY_NAME,
@@ -144,12 +147,12 @@ export default function PortfolioAllocation({
             const project_count = rowNode?.children?.length || null;
             return (
               <EllipsisNameCell
-                value={value as string}
+                value={value === 'zzzzz' ? PORTFOLIO_BLANK : (value as string)}
                 resourceCount={project_count}
                 onAddClick={() => handleAddClick(params)}
                 showAddButton={false}
                 showAddIcon={true}
-                leftBorderColor={portfolioSidebarColor || false}
+                leftBorderColor={portfolioSidebarColor || 'none'}
               />
             );
           }
@@ -581,7 +584,7 @@ export default function PortfolioAllocation({
       <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
         <AllocationGrid
           groupBy={'portfolioName'}
-          columns={projectColumnConfig}
+          columns={portfolioColumnConfig}
           startDate={startDate}
           mode="portfolio"
           endDate={endDate}
@@ -622,6 +625,9 @@ export default function PortfolioAllocation({
                 __row_group_by_columns_group_portfolioName__: true,
                 __row_group_by_columns_group_project__: true,
               },
+            },
+            sorting: {
+              sortModel: [{ field: 'portfolioName', sort: 'asc' }],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}

@@ -246,3 +246,5 @@ export const PROJECT_TOTAL_COST_CATEGORIES = [
 
 export const PORTFOLIO_DISPLAY_NAME = 'Portfolio';
 export const PORTFOLIO_DISPLAY_NAME_PLURAL = 'Portfolios';
+
+export const PORTFOLIO_BLANK = 'Blank';
