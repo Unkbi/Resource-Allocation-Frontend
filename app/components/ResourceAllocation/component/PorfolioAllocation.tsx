@@ -55,7 +55,7 @@ export default function PortfolioAllocation({
   const { setRows, ready } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
     useAllocationGrid('teamAllocation');
-  const { getAllRowsForView } = useAllGridRowsByView();
+  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
@@ -67,6 +67,7 @@ export default function PortfolioAllocation({
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
         setRows(allTempRows || []);
+        setRowsForView('projectAllocationtemp', []);
       } else {
         if (!loading && getAllTeamViewRows().length > 0) {
           filteredResources = removeResourcesWithNoProjects(

@@ -292,6 +292,15 @@ const CellWithMenu = ({
               hasAllocation: false,
             }))
           );
+          updateRowsForView(
+            'bottomTeam',
+            [emptyRow].map(r => ({
+              ...r,
+              project: null,
+              projectId: null,
+              hasAllocation: false,
+            }))
+          );
         }
       })
       .catch(error => {
