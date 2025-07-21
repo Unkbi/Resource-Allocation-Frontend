@@ -171,16 +171,23 @@ const Header = ({ sidebarExpanded }) => {
             getTitleFromPathname(pathname)
           )}
         </Typography>
-        <Box display="flex" alignItems="center" ml="auto" gap="20px" width= '45px' height='24px'>
+        <Box
+          display="flex"
+          alignItems="center"
+          ml="auto"
+          gap="20px"
+          width="45px"
+          height="24px"
+        >
           {pathname === '/allocation' && splitView ? (
             <Button
               onClick={handleSplitViewDone}
-              sx={{ width: '24px', height: '24px',padding:'0px' }}
+              sx={{ width: '24px', height: '24px', padding: '0px' }}
             >
               <img
                 src="/images/icons/DisabledbyDefaultRounded.svg"
                 alt="close"
-                style={ {width: '24px', height: '24px'}}
+                style={{ width: '24px', height: '24px' }}
               />
             </Button>
           ) : null}

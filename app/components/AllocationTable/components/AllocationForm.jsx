@@ -586,9 +586,9 @@ const AllocationForm = () => {
                 );
                 setTimeout(() => {
                   dispatch(setHighlightedRowId(newProjectId));
-                }, 4000); 
+                }, 4000);
               }
-              
+
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
                 dispatch(setSplitViewCurrentProject(response.payload.result));
@@ -1313,6 +1313,8 @@ const AllocationForm = () => {
 
                   // Update Allocation for Bottom Team Allocation Grid
                   updateRowsForView('bottomTeam', allUpdatedRows);
+                  updateRowsForView('projectAllocation', allUpdatedRows);
+                  updateRowsForView('teamAllocation', allUpdatedRows);
                 } else {
                   updateRowsForView('projectAllocation', allUpdatedRows);
                   updateRowsForView('teamAllocation', allUpdatedRows);

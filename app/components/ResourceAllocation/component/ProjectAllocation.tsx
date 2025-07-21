@@ -128,7 +128,7 @@ export default function ProjectAllocation({
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
-  const { getAllRowsForView } = useAllGridRowsByView();
+  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
     if (ready) {
@@ -136,6 +136,7 @@ export default function ProjectAllocation({
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
         setRows(allTempRows || []);
+        setRowsForView('projectAllocationtemp', []);
       } else {
         if (!loading && getAllTeamViewRows().length > 0) {
           filteredResources = removeResourcesWithNoProjects(

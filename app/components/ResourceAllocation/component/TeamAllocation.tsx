@@ -77,7 +77,7 @@ export default function TeamAllocation({
   } = useAllocationGrid('teamAllocation');
   const { getAllRows: getAllProjectViewRows } =
     useAllocationGrid('projectAllocation');
-  const { getAllRowsForView } = useAllGridRowsByView();
+  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
     if (ready) {
@@ -85,6 +85,7 @@ export default function TeamAllocation({
       const allTempRows = getAllRowsForView('teamAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
         setRows(allTempRows || []);
+        setRowsForView('teamAllocationtemp', []);
       } else {
         if (!loading && getAllProjectViewRows().length > 0) {
           filteredResources = removeResourcesWithNoTeams(
