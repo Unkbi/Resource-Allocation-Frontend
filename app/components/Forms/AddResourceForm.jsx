@@ -612,24 +612,13 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel sx={{ flex: 1 }}>
-          Manager 
-        </StyledLabel>
+        <StyledLabel sx={{ flex: 1 }}>Manager</StyledLabel>
         <StyledAutocomplete
           name="Manager"
           label="Manager"
           placeholder="Select manager"
           options={resourceListOptions}
-          value={
-            resourceListOptions.find(
-              option => option.value === values.Manager
-            ) || null
-          }
-          getOptionLabel={option => option.label}
-          isOptionEqualToValue={(option, value) => option.value === value.value}
-          onChange={(event, newValue) => {
-            formikProps.setFieldValue('Manager', newValue?.value || '');
-          }}
+          value={values.Manager || ''}
           formikProps={formikProps}
           fullWidth
         />
