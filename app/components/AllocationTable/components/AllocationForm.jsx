@@ -340,6 +340,7 @@ const AllocationForm = () => {
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
   const [HistoryData, setHistoryData] = useState([]);
+  const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
 
   const _startDate = currentView?.isDynamicRange
@@ -2405,7 +2406,7 @@ const AllocationForm = () => {
       const progressivelyLoadHistory = fullData => {
         let index = 0;
         setHistoryData([]); // Reset before appending
-
+        setHistoryStatus('loaded');
         const loadNextBatch = () => {
           const nextBatch = fullData.slice(index, index + BATCH_SIZE);
           setHistoryData(prev => [...prev, ...nextBatch]);
@@ -2422,14 +2423,22 @@ const AllocationForm = () => {
       const fetchHistoryData = async () => {
         try {
           setHistoryData([]);
+          setHistoryStatus('loading');
           const response = await fetchHistory(initialData);
           if (response?.error) {
             console.error('Failed to fetch history:', response.error);
             return;
           }
 
+          // If result is empty, return immediately
+          if (response?.result === null && response?.status === 'not-found') {
+            setHistoryStatus('no-data');
+            setHistoryData([]);
+            return;
+          }
+
           const formattedHistory = [];
-          (response.result || [])
+          (response && response.result ? response.result : [])
             .filter(
               item =>
                 Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
@@ -2645,6 +2654,7 @@ const AllocationForm = () => {
             formikProps={formikProps}
             setFormValue={setFormValue}
             historyData={HistoryData}
+            historyStatus={historyStatus}
           />
         );
       case 'add_portfolio':
