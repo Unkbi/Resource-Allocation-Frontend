@@ -54,7 +54,7 @@ export const makeStore = () => {
         serializableCheck: false,
       }).concat(sagaMiddleware),
   });
-
+// attaching all of our saga through rootSaga
   sagaMiddleware.run(rootSaga);
   return store;
 };

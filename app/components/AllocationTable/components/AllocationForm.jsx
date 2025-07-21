@@ -26,6 +26,7 @@ import {
   addRatesValidationSchema,
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
+  addOrganizationValidationSchema
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -105,6 +106,8 @@ import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
+import AddOrganizationForm from '../../Forms/addOrganization';
+
 
 const initialValuesMap = {
   add_project: {
@@ -297,6 +300,7 @@ const AllocationForm = () => {
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
   const topProjectAllocationGrid = useAllocationGrid('topProject');
   const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
+  
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
@@ -349,7 +353,10 @@ const AllocationForm = () => {
         return addPortfolioValidationSchema(portfolios);
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios, initialData.Name || '');
-
+      
+      case 'add_organization':
+        console.log("vali")
+        return addOrganizationValidationSchema(organizations);
       default:
         return null;
     }
@@ -435,7 +442,7 @@ const AllocationForm = () => {
   const handleSubmit = async (
     values,
     { setSubmitting, setErrors, validateForm }
-  ) => {
+    ) => {
     const errors = await validateForm(values);
     if (Object.keys(errors).length > 0) {
       setErrors(errors);
@@ -1761,6 +1768,57 @@ const AllocationForm = () => {
             dispatch(closeDialog());
           });
 
+      case 'add_organization':
+        console.log("here too")
+      Object.keys(cleanedValues).forEach(key => {
+        if (cleanedValues[key] === '') {
+          cleanedValues[key] = null;
+        }
+      });
+
+  postData = {
+    ...cleanedValues,
+  };
+  console.log("dispatched")
+
+  new Promise((resolve, reject) => {
+    dispatch({
+      type: 'CREATE_ORGANISATION',
+      payload: {
+        postData,
+        resolve,
+        reject,
+      },
+    });
+  })
+    .then(response => {
+      dispatch(
+        showToast({
+          open: true,
+          message: 'Organization added successfully.',
+          type: 'success',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+      dispatch(setHighlightedRowId(response.result.__Id__));
+    })
+    .catch(error => {
+      console.error('Failed to add organization:', error);
+      dispatch(
+        showToast({
+          open: true,
+          message: 'Failed to add organization.',
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    })
+    .finally(() => {
+      dispatch(closeDialog());
+    });
+
         break;
 
       case 'edit_portfolio': {
@@ -2252,6 +2310,17 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+      
+      case 'add_organization':
+        console.log('here boy')
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+      />
+        );
+
+      
       default:
         return <div>No form selected</div>;
     }
