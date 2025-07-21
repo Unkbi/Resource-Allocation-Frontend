@@ -193,7 +193,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
@@ -208,7 +208,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -221,7 +221,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -234,7 +234,7 @@ export default function TeamAllocation({
       width: 100,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -247,7 +247,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -260,7 +260,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -273,7 +273,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -286,7 +286,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -299,7 +299,7 @@ export default function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -312,7 +312,7 @@ export default function TeamAllocation({
       width: 190,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -325,7 +325,7 @@ export default function TeamAllocation({
       width: 195,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -340,7 +340,7 @@ export default function TeamAllocation({
       width: 260,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);

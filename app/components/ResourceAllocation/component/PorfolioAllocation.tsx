@@ -168,6 +168,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -181,7 +182,7 @@ export default function PortfolioAllocation({
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -197,7 +198,7 @@ export default function PortfolioAllocation({
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -213,7 +214,7 @@ export default function PortfolioAllocation({
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -229,7 +230,7 @@ export default function PortfolioAllocation({
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -245,7 +246,7 @@ export default function PortfolioAllocation({
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -261,7 +262,7 @@ export default function PortfolioAllocation({
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -277,7 +278,7 @@ export default function PortfolioAllocation({
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -293,7 +294,7 @@ export default function PortfolioAllocation({
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -309,7 +310,7 @@ export default function PortfolioAllocation({
       headerName: 'Resource Role',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -325,7 +326,7 @@ export default function PortfolioAllocation({
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -341,7 +342,7 @@ export default function PortfolioAllocation({
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -357,7 +358,7 @@ export default function PortfolioAllocation({
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -373,7 +374,7 @@ export default function PortfolioAllocation({
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -389,7 +390,7 @@ export default function PortfolioAllocation({
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -409,6 +410,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -425,6 +427,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -441,6 +444,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -457,6 +461,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -473,6 +478,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -497,6 +503,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -514,6 +521,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -530,6 +538,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -546,6 +555,7 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
