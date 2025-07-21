@@ -124,7 +124,7 @@ import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
 
 const initialValuesMap = {
   add_project: {
-    StartDate: '',
+    StartDate: new Date().toISOString().split('T')[0],
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
@@ -542,6 +542,7 @@ const AllocationForm = () => {
             Description: 'string',
             EndDate:
               cleanedValues.EndDate === '' ? null : cleanedValues.EndDate,
+            StartDate: cleanedValues.StartDate,
             ProjectSponsor:
               cleanedValues.ProjectSponsor === ''
                 ? null
