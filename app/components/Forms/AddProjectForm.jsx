@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { TextField, Box, Typography } from '@mui/material';
+import { TextField, Box, Typography, Autocomplete } from '@mui/material';
 import CustomSelect from '../Select/CustomSelect';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
@@ -8,6 +8,8 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
 import { useDispatch } from 'react-redux';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import StyledAutocomplete from '../Select/Autocomplete';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -21,6 +23,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   } = formikProps;
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
+  const { portfolios } = useSelector(state => state.portfolios);
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
@@ -29,9 +32,23 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       label: resource.FullName,
     })) || [];
 
+  const portfolioOptions =
+    portfolios
+      ?.filter(p => p.Status === 'Active')
+      .map(portfolio => ({
+        value: portfolio.Id,
+        label: portfolio.Name,
+      })) || [];
+
   useEffect(() => {
     if (!resources || !resources?.result) {
       dispatch(fetchAllResources());
+    }
+    if (!portfolios) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
     }
   }, []);
 
@@ -51,6 +68,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             res => res.FullName === initialData.ProjectManager
           )?.Id || '',
         Name: initialData.Name || '',
+        PortfolioId: initialData.PortfolioId || '',
         Type: initialData.Type || '',
         Status: initialData.Status || 'Active',
         Budget: initialData.Budget || 0,
@@ -63,7 +81,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
 
   const projectTypeOptions = [
     { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB' }, //(Run-th-business) 
+    { value: 'RTB', label: 'RTB' }, //(Run-th-business)
     { value: 'CTB', label: 'CTB' },
     { value: 'STB', label: 'STB' },
     { value: 'Ongoing', label: 'Ongoing' },
@@ -80,6 +98,22 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     { value: 'Paused', label: 'Paused' },
     { value: 'Approved', label: 'Approved' },
   ];
+
+  const helperTextStyles = {
+    sx: {
+      fontSize: '12px',
+      fontFamily: 'Open Sans, sans-serif',
+      fontWeight: 400,
+      lineHeight: 1.66,
+      textAlign: 'left',
+      marginTop: '3px',
+      marginRight: '14px',
+      marginBottom: 0,
+      marginLeft: 0,
+    },
+  };
+  
+  
 
   return (
     <Box>
@@ -98,18 +132,23 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <Box sx={{ pb: 2 }}>
+        <StyledLabel>{PORTFOLIO_DISPLAY_NAME}</StyledLabel>
+        <StyledAutocomplete
+          name="PortfolioId"
+          // label={PORTFOLIO_DISPLAY_NAME}
+          options={portfolioOptions}
+          value={values.PortfolioId}
+          formikProps={formikProps}
+        />
+      </Box>
+      <Box sx={{ pb: 2 }}>
         <StyledLabel>Project Sponsor</StyledLabel>
-        <CustomSelect
+        <StyledAutocomplete
           name="ProjectSponsor"
+          // label="Project Sponsor"
           options={resourceTypeOptions}
-          value={values.ProjectSponsor || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          width={'100%'}
-          error={touched.ProjectSponsor && Boolean(errors.ProjectSponsor)}
-          helperText={
-            touched.ProjectSponsor && formikProps.errors.ProjectSponsor
-          }
+          value={values.ProjectSponsor}
+          formikProps={formikProps}
         />
       </Box>
       <Box sx={{ pb: 2 }}>
@@ -138,15 +177,12 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       </Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Project Manager</StyledLabel>
-        <CustomSelect
+        <StyledAutocomplete
           name="ProjectManager"
+          // label="Project Manager"
           options={resourceTypeOptions}
-          value={values.ProjectManager || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          width={'100%'}
-          error={touched.ProjectManager && Boolean(errors.ProjectManager)}
-          helperText={formikProps.errors.ProjectManager}
+          value={values.ProjectManager}
+          formikProps={formikProps}
         />
       </Box>
       <Box sx={{ pb: 2 }}>
@@ -168,36 +204,33 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           alignItems: 'flex-start',
           justifyContent: 'space-between',
           width: '100%',
+          gap: 2,
         }}
       >
-        <Box>
+        <Box sx={{ flex: 1 }}>
           <StyledLabel>
             Project Type <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
-          <CustomSelect
+          <StyledAutocomplete
             name="Type"
+            // label="Type"
             options={projectTypeOptions}
-            value={values.Type || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            width={'160px'}
-            error={touched.Type && Boolean(errors.Type)}
-            helperText={formikProps.errors.Type}
+            value={values.Type}
+            formikProps={formikProps}
+            FormHelperTextProps={helperTextStyles}
           />
         </Box>
-        <Box>
+        <Box sx={{ flex: 1 }}>
           <StyledLabel>
             Allow Overtime <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
-          <CustomSelect
+          <StyledAutocomplete
             name="AllowOvertime"
+            // label="Allow Overtime"
             options={allowOverTimeOptions}
-            value={values.AllowOvertime ?? ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            width={'160px'}
-            error={touched.AllowOvertime && Boolean(errors.AllowOvertime)}
-            helperText={formikProps.errors.AllowOvertime}
+            value={values.AllowOvertime}
+            formikProps={formikProps}
+            FormHelperTextProps={helperTextStyles}
           />
         </Box>
       </Box>
@@ -237,15 +270,13 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>
           Status <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <CustomSelect
+        <StyledAutocomplete
           name="Status"
+          // label="Status"
           options={statusOptions}
-          value={values.Status || ''}
-          onChange={handleChange}
-          width={'100%'}
-          onBlur={handleBlur}
-          error={touched.Status && Boolean(errors.Status)}
-          helperText={formikProps.errors.Status}
+          value={values.Status}
+          formikProps={formikProps}
+          disableClearable
         />
       </Box>
     </Box>

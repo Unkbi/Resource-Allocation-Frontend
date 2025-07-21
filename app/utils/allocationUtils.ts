@@ -13,6 +13,7 @@ import {
   AllocationGridCellData,
   ApiResponse,
   CostAllocation,
+  Portfolio,
   Project,
   ProjectsTableRow,
   Resource,
@@ -27,7 +28,7 @@ import {
   getWeekNumber,
 } from './common';
 import { DATE_FORMAT } from '../constants/constants';
-import { GridApi } from '@mui/x-data-grid-premium';
+import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
 import {
   fetchResourceAllocationsForSaga,
@@ -97,6 +98,8 @@ export const formatAllocations = (
           allocationId: null,
           value: null,
           period: formattedDate,
+          actuals: null,
+          notes: null,
         };
       });
 
@@ -165,6 +168,7 @@ export function formatAllAllocations(
   teams: Team[],
   projects: Project[],
   resources: Resource[],
+  portfolios: Portfolio[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
   endDate: string
@@ -192,6 +196,7 @@ export function formatAllAllocations(
     const project = projects.find(p => p.Id === alloc.Project);
     const resource = resources.find(r => r.Id === alloc.Resource);
     const team = resourceIdToTeam.get(alloc.Resource);
+    const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
 
     const key = `${alloc.Resource}-${team?.Id}-${alloc.Project}`;
 
@@ -222,6 +227,11 @@ export function formatAllAllocations(
         projectStartDate: project?.StartDate || null,
         projectEndDate: project?.EndDate || null,
         projectDescription: project?.Description || null,
+        portfolioId: portfolio ? portfolio?.Id : null,
+        portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
+        portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
+        portfolioDescription: portfolio ? portfolio?.Description || null : null,
+        portfolioStatus: portfolio ? portfolio?.Status || null : null,
         email: resource?.Email || null,
         phoneNumber: resource?.PhoneNumber || null,
         resourceStartDate: resource?.StartDate || null,
@@ -244,6 +254,8 @@ export function formatAllAllocations(
           allocationId: null,
           value: null,
           period: w.period,
+          actuals: null,
+          notes: null,
         };
       }
 
@@ -256,6 +268,8 @@ export function formatAllAllocations(
       allocationId: alloc.Id,
       value: alloc.AllocationEntered,
       period: alloc.Period,
+      actuals: alloc.ActualsEntered || null,
+      notes: alloc.Notes || null,
     };
 
     entry.totalEffort += alloc.AllocationEntered;
@@ -306,6 +320,11 @@ export function injectBlankRows(
           projectStartDate: '',
           projectEndDate: '',
           projectDescription: '',
+          portfolioId: '',
+          portfolioName: '',
+          portfolioSidebarColor: '',
+          portfolioDescription: '',
+          portfolioStatus: '',
           email: resource?.Email || null,
           phoneNumber: resource?.PhoneNumber || null,
           resourceStartDate: resource?.StartDate || null,
@@ -437,6 +456,8 @@ export function formatCostAllocations(
           allocationId: null,
           value: null,
           period: w.period,
+          actuals: null,
+          notes: null,
         };
       }
 
@@ -850,4 +871,15 @@ export const getResourceIdByEmail = (
 
   const matched = allResources.find(resource => resource.Email === email);
   return matched?.Id ?? null;
+};
+
+export const getFirstChild = (params: GridCellParams) => {
+  const { rowNode, api } = params;
+  const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+  if (isGridTreeNode && rowNode.children && rowNode.children.length > 0) {
+    const firstChildId = rowNode.children[0];
+    const firstChildRow = api.getRow(firstChildId);
+    return firstChildRow;
+  }
+  return null;
 };

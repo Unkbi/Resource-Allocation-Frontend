@@ -8,20 +8,43 @@ import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
   getProjectTypeColorLine,
+  getResourceFromUid,
+  getTotalWeeks,
+  generateDateWeekMath,
+  calculateWeekRanges,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import {
-  getCombinedAllocation,
-  normalizeRow,
-} from '@/app/utils/allocationUtils';
+import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
+import Typography from '@mui/material/Typography';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import EditIcon from '@mui/icons-material/Edit';
+import HistoryIcon from '@mui/icons-material/History';
+import { styled } from '@mui/material/styles';
+import {
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import {
+  COMPANY_DEFAULT_VIEW,
+  setSplitView,
+  setSplitViewCurrentProject,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
+import { useRouter } from 'next/navigation';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -35,11 +58,51 @@ interface Resource {
   [key: string]: any;
 }
 
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    borderRadius: 4,
+    boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
+    // width: '150px',
+  },
+}));
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: 'rgba(20, 43, 81, 0.70)',
+    '& .MuiTypography-root': {
+      color: '#FFFFFF',
+    },
+    '& .MuiListItemIcon-root': {
+      color: '#FFFFFF',
+    },
+  },
+  '& .MuiTypography-root': {
+    color: '#1C2D5F',
+    fontSize: '12px',
+    fontWeight: '600',
+    lineHeight: ' 18px',
+  },
+  '& .MuiListItemIcon-root': {
+    minWidth: 32,
+    color: '#1C2D5F',
+  },
+}));
+
+interface SplitViewParams {
+  value: string;
+}
+
+interface DateRange {
+  start?: any;
+  end?: any;
+}
+
 export default function ProjectAllocation({
   startDate,
   endDate,
 }: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
+  const router = useRouter();
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
@@ -52,6 +115,9 @@ export default function ProjectAllocation({
   };
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuProjectName, setMenuProjectName] = useState<string>('');
+  const allResources = _resources.result || [];
   const {
     setRows,
     ready,
@@ -59,35 +125,47 @@ export default function ProjectAllocation({
   } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
     useAllocationGrid('teamAllocation');
+  const { showActuals } = useSelector(
+    (state: RootState) => state.allocationView
+  );
+  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (!loading && getAllTeamViewRows().length > 0) {
-        filteredResources = removeResourcesWithNoProjects(
-          (getAllTeamViewRows() as AllAllocations[]) || []
-        );
-        setRows(
-          removeResourcesWithNoProjects(
-            getAllTeamViewRows() as AllAllocations[]
-          )
-        );
-      } else if (loading && allAllocations) {
-        filteredResources = removeResourcesWithNoProjects(allAllocations || []);
-        dispatch(setLoading(false));
+      const allTempRows = getAllRowsForView('projectAllocationtemp');
+      if (!loading && allTempRows?.length > 0) {
+        setRows(allTempRows || []);
+        setRowsForView('projectAllocationtemp', []);
+      } else {
+        if (!loading && getAllTeamViewRows().length > 0) {
+          filteredResources = removeResourcesWithNoProjects(
+            (getAllTeamViewRows() as AllAllocations[]) || []
+          );
+          setRows(
+            removeResourcesWithNoProjects(
+              getAllTeamViewRows() as AllAllocations[]
+            )
+          );
+        } else if (allAllocations) {
+          filteredResources = removeResourcesWithNoProjects(
+            allAllocations || []
+          );
+          dispatch(setLoading(false));
+        }
+
+        const formattedResources = filteredResources?.map(allocation => ({
+          ...allocation,
+          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          teamAllocationManager: getAllocationManagerFromPath(
+            allocation?.teamAllocationManager,
+            _resources?.result || []
+          )?.FullName,
+        }));
+
+        setRows(formattedResources || []);
       }
-
-      const formattedResources = filteredResources?.map(allocation => ({
-        ...allocation,
-        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
-        teamAllocationManager: getAllocationManagerFromPath(
-          allocation?.teamAllocationManager,
-          _resources?.result || []
-        )?.FullName,
-      }));
-
-      setRows(formattedResources || []);
     }
   }, [ready && allAllocations]);
 
@@ -105,15 +183,90 @@ export default function ProjectAllocation({
     );
   };
 
-  const getFirstChild = (params: GridCellParams) => {
-    const { rowNode, api } = params;
-    const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-    if (isGridTreeNode && rowNode.children && rowNode.children.length > 0) {
-      const firstChildId = rowNode.children[0];
-      const firstChildRow = api.getRow(firstChildId);
-      return firstChildRow;
+  const handleEditProject = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
+    );
+    dispatch(
+      openDialog({
+        title: 'Edit Project',
+        submitButtonText: 'Update',
+        cancelButtonText: 'Cancel',
+        formType: 'edit_project',
+        initialData: data?.[0] || {},
+      })
+    );
+  };
+
+  const handleOpenSplitView = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
+    );
+    dispatch(setSplitView(true));
+    dispatch(setSplitViewCurrentProject(data?.[0] || {}));
+    const { StartDate, EndDate } = data?.[0] || {};
+    const currentDate = new Date();
+
+    const getDateRange = (start?: any, end?: any): [any, any] => {
+      if (start && end) {
+        const weeks = getTotalWeeks(start, end);
+        return weeks > 52
+          ? [start, generateDateWeekMath('WEEK_PLUS', 51, new Date(start))]
+          : [start, end];
+      }
+
+      if (!start && end)
+        return [generateDateWeekMath('WEEK_MINUS', 20, new Date(end)), end];
+      if (start && !end)
+        return [start, generateDateWeekMath('WEEK_PLUS', 20, new Date(start))];
+
+      return [
+        generateDateWeekMath('WEEK_MINUS', 1, currentDate),
+        generateDateWeekMath('WEEK_PLUS', 19, currentDate),
+      ];
+    };
+
+    const [startRange, endRange] = getDateRange(StartDate, EndDate);
+
+    if (startRange && endRange) {
+      const { weekMinus, weekPlus } = calculateWeekRanges(
+        startRange,
+        endRange,
+        currentDate
+      );
+      dispatch(
+        updateCurrentView({
+          ...COMPANY_DEFAULT_VIEW,
+          isDynamicRange: false,
+          isFixedRange: true,
+          StartDate: startDate,
+          EndDate: endDate,
+          WeekPlus: weekPlus,
+          WeekMinus: weekMinus,
+        })
+      );
     }
-    return null;
+    router.replace('/allocation');
+  };
+
+  const handleOpenHistory = (params: SplitViewParams) => {
+    const data = modifyData(
+      (projects?.result ?? []).filter(project => project.Name === params.value)
+    );
+
+    dispatch(
+      openDialog({
+        title: 'Allocation History',
+        cancelButtonText: 'View All History',
+        formType: 'open_history',
+        initialData: {
+          Resource: null,
+          Project: data[0].Id,
+          StartDate: startDate,
+          EndDate: endDate,
+        },
+      })
+    );
   };
 
   const getResource = (params: GridCellParams): Resource | null => {
@@ -127,13 +280,28 @@ export default function ProjectAllocation({
     return null;
   };
 
+  const modifyData = (data: any[]) => {
+    if (data) {
+      return data.map(item => {
+        return {
+          ...item,
+          id: item.Id,
+          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+            ?.FullName,
+          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+            ?.FullName,
+        };
+      });
+    }
+    return [];
+  };
+
   const projectColumnConfig = [
     {
       field: 'project',
       headerName: 'Project Name',
       width: 200,
       headerClassName: 'prime-header',
-      // cellClassName: getCellClassName,
       cellClassName: () => 'project-view-projectName',
       primaryColumn: true,
       filterable: true,
@@ -145,18 +313,69 @@ export default function ProjectAllocation({
         const projectType = projects?.result?.find(
           project => project.Name === value
         )?.Type;
+
+        const open = Boolean(anchorEl);
+
+        const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+          event.stopPropagation();
+          setAnchorEl(event.currentTarget);
+        };
+
+        const handleMenuClose = () => {
+          setAnchorEl(null);
+        };
+
         if (isGridTreeNode && rowNode.children) {
           const resource_count = rowNode?.children?.length || null;
           return (
-            <EllipsisNameCell
-              value={value as string}
-              resourceCount={resource_count}
-              onAddClick={() => handleAddClick(params)}
-              showAddIcon={true}
-              leftBorderColor={getProjectTypeColorLine(projectType || '')}
-            />
+            <>
+              <EllipsisNameCell
+                value={value as string}
+                resourceCount={resource_count}
+                onAddClick={() => handleAddClick(params)}
+                showAddIcon={true}
+                leftBorderColor={getProjectTypeColorLine(projectType || '')}
+              />
+              <IconButton
+                size="small"
+                disableRipple
+                disableFocusRipple
+                onClick={e => {
+                  e.stopPropagation();
+                  setMenuProjectName(params.value as string);
+                  setAnchorEl(e.currentTarget);
+                }}
+                sx={{
+                  mr: -1.5,
+                  padding: '0px',
+                  backgroundColor: 'transparent',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  },
+                }}
+              >
+                <MoreVertIcon sx={{ fontSize: 22 }} />
+              </IconButton>
+            </>
           );
         }
+      },
+    },
+    {
+      field: 'portfolioName',
+      headerName: PORTFOLIO_DISPLAY_NAME,
+      width: 148,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild.portfolioName ?? 'N/A'} />
+        ) : null;
       },
     },
     {
@@ -167,6 +386,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -180,7 +400,7 @@ export default function ProjectAllocation({
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -196,7 +416,7 @@ export default function ProjectAllocation({
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -212,7 +432,7 @@ export default function ProjectAllocation({
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -228,7 +448,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -244,7 +464,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -260,7 +480,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -276,7 +496,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -292,7 +512,7 @@ export default function ProjectAllocation({
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -308,7 +528,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Role',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -324,7 +544,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -340,7 +560,7 @@ export default function ProjectAllocation({
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -356,7 +576,7 @@ export default function ProjectAllocation({
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -372,7 +592,7 @@ export default function ProjectAllocation({
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -388,7 +608,7 @@ export default function ProjectAllocation({
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -408,6 +628,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -424,6 +645,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -439,6 +661,7 @@ export default function ProjectAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
+      sortable: false,
       isEditable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
@@ -456,6 +679,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -471,6 +695,7 @@ export default function ProjectAllocation({
       type: 'boolean',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
+      sortable: false,
       isEditable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
@@ -489,6 +714,7 @@ export default function ProjectAllocation({
       type: 'string ',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
+      sortable: false,
       isEditable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
@@ -507,6 +733,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -523,6 +750,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -539,6 +767,7 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -575,7 +804,7 @@ export default function ProjectAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box sx={{ height: 'calc(100vh - 31px)', width: '100%' }}>
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
@@ -589,6 +818,7 @@ export default function ProjectAllocation({
             columns: {
               columnVisibilityModel: {
                 project: false,
+                portfolioName: false,
                 projectCost: false,
                 projectCurrency: false,
                 projectEndDate: false,
@@ -622,8 +852,57 @@ export default function ProjectAllocation({
           NoRowsOverlay={NoRowsOverlay}
           loading={dataProcessing}
           viewId="projectAllocation"
+          showActuals={showActuals}
+          rowGroupingColumnMode={'single'}
         />
       </Box>
+      <StyledMenu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
+        <StyledMenuItem
+          onClick={() => {
+            handleOpenSplitView({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <PersonAddIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              <Typography variant="body2">Find and Add Resource</Typography>
+            }
+          />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleEditProject({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={<Typography variant="body2">Edit Project</Typography>}
+          />
+        </StyledMenuItem>
+        <StyledMenuItem
+          onClick={() => {
+            handleOpenHistory({ value: menuProjectName });
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <HistoryIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={<Typography variant="body2">History</Typography>}
+          />
+        </StyledMenuItem>
+      </StyledMenu>
     </>
   );
 }

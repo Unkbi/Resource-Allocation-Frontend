@@ -10,6 +10,7 @@ import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { filterAllocationsForSelectedProject } from '@/app/utils/allocationUtils';
+import CommonToolbar from '../../Toolbar/CommonToolbar';
 
 interface TopProjectsViewProps {
   startDate: string | null;
@@ -73,6 +74,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -83,6 +85,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -103,6 +106,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
     },
     {
       field: 'projectLocation',
@@ -122,6 +126,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -132,6 +137,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -152,6 +158,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -172,6 +179,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -201,13 +209,16 @@ export default function TopProjectsView({
   ];
 
   return (
-    <>
-      <Box
-        sx={{
-          height: dataProcessing ? '100vh' : 'var(--height)',
-          width: '100%',
-        }}
-      >
+        <Box
+      sx={{
+        height: dataProcessing ? '100vh' : 'var(--height)',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <CommonToolbar />
+      <Box sx={{ flexGrow: 1 }}>
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
@@ -251,6 +262,6 @@ export default function TopProjectsView({
           viewId="topProject"
         />
       </Box>
-    </>
+    </Box>
   );
 }

@@ -31,6 +31,9 @@ import {
   fetchAllocationTheme,
   updateAllocationThemeAction,
 } from '@/app/redux/actions/settingsAction';
+import RoleManagement from '@/app/components/Settings/RoleManagement';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface MenuItem {
   id: string;
@@ -138,6 +141,8 @@ const SettingsPanel = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     dispatch(fetchAllocationTheme());
@@ -175,12 +180,12 @@ const SettingsPanel = () => {
         name: 'Admin Settings',
         items: [
           {
-            id: 'user-management',
-            title: 'User Management',
-            headerText: 'User Management',
+            id: 'access-management',
+            title: 'Access Management',
+            headerText: 'Role-Based Access Control Management',
             icon: '',
-            content: '',
-            description: 'Manage users and permissions',
+            content: <RoleManagement />,
+            description: 'Comprehensive role and privilege management system',
           },
           {
             id: 'allocation-setting',
@@ -241,7 +246,7 @@ const SettingsPanel = () => {
   };
 
   const MenuItems = createMenuItems();
-  const [activeItem, setActiveItem] = useState<MenuItem>(MenuItems[1].items[1]); // Default to allocation settings
+  const [activeItem, setActiveItem] = useState<MenuItem | null>(null); // Default to allocation settings
 
   // Update menu items when allocation ranges change
   useEffect(() => {
@@ -250,15 +255,43 @@ const SettingsPanel = () => {
     // Find and update the active item to maintain selection
     const updatedActiveItem = updatedMenuItems
       .flatMap(category => category.items)
-      .find(item => item.id === activeItem.id);
+      .find(item => item.id === activeItem?.id);
 
     if (updatedActiveItem) {
       setActiveItem(updatedActiveItem);
     }
-  }, [allocationRanges, activeItem.id]);
+  }, [allocationRanges]);
+
+  useEffect(() => {
+    const menu = searchParams.get('menu');
+    const updatedMenuItems = createMenuItems();
+    if (menu) {
+      const updatedActiveItem = updatedMenuItems
+        .flatMap(category => category.items)
+        .find(item => item.id === menu);
+
+      if (updatedActiveItem) {
+        setActiveItem(updatedActiveItem);
+      }
+    } else {
+      setActiveItem(updatedMenuItems[1].items[1]);
+    }
+  }, []);
+
+  useEffect(() => {
+    const menu = searchParams.get('menu');
+    if (activeItem && (!menu || (menu && activeItem.id !== menu))) {
+      const menuParam =
+        activeItem.id === 'access-management'
+          ? `?menu=${activeItem.id}&tab=role-management`
+          : `?menu=${activeItem.id}`;
+      const newUrl = `/settings${menuParam}`;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [activeItem?.id]);
 
   const handleSaveChanges = () => {
-    if (activeItem.id === 'allocation-setting' || activeItem.id === 'theme') {
+    if (activeItem?.id === 'allocation-setting' || activeItem?.id === 'theme') {
       // Validate ranges before saving
       const errors = validateRanges(allocationRanges);
       const hasErrors = Object.keys(errors).length > 0;
@@ -313,7 +346,7 @@ const SettingsPanel = () => {
 
   const handleCancel = () => {
     // Restore original data
-    if (activeItem.id === 'allocation-setting' || activeItem.id === 'theme') {
+    if (activeItem?.id === 'allocation-setting' || activeItem?.id === 'theme') {
       setAllocationRanges([...originalAllocationRanges]);
       setValidationErrors({});
     }
@@ -333,12 +366,12 @@ const SettingsPanel = () => {
                   {category.items.map(item => (
                     <StyledListItem
                       key={item.id}
-                      selected={activeItem.id === item.id}
+                      selected={activeItem?.id === item.id}
                       onClick={() => setActiveItem(item)}
                     >
                       <ListItemLabel
                         primary={item.title}
-                        selected={activeItem.id === item.id}
+                        selected={activeItem?.id === item.id}
                       />
                     </StyledListItem>
                   ))}
@@ -350,32 +383,60 @@ const SettingsPanel = () => {
         </Box>
         <ContentContainer>
           <ContentHeader>
-            <Typography variant="h6" fontWeight="500">
-              {activeItem.headerText}
+            <Typography
+              sx={{
+                display: 'flex',
+                width: '784.023px',
+                height: '40px',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                color: '#333',
+                fontFamily: '"Open Sans", sans-serif',
+                fontSize: '18px',
+                fontStyle: 'normal',
+                fontWeight: 700,
+                lineHeight: '36px',
+              }}
+            >
+              {activeItem?.headerText}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {activeItem.description}
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mb: 2,
+                color: ' rgba(0, 0, 0, 0.56)',
+                fontFamily: 'Open Sans',
+                fontSize: '14px',
+                fontStyle: ' normal',
+                fontWeight: 400,
+                lineHeight: '24px',
+              }}
+            >
+              {activeItem?.description}
             </Typography>
           </ContentHeader>
-          <ScrollableContent>{activeItem.content}</ScrollableContent>
-          <ContentFooter>
-            <BottomActions>
-              <CancelButton
-                variant="outlined"
-                onClick={handleCancel}
-                disabled={!hasUnsavedChanges}
-              >
-                Cancel
-              </CancelButton>
-              <SaveButton
-                variant="contained"
-                onClick={handleSaveChanges}
-                disabled={!hasUnsavedChanges}
-              >
-                Save Changes
-              </SaveButton>
-            </BottomActions>
-          </ContentFooter>
+          <ScrollableContent>{activeItem?.content}</ScrollableContent>
+          {activeItem?.id === 'allocation-setting' && (
+            <ContentFooter>
+              <BottomActions>
+                <CancelButton
+                  variant="outlined"
+                  onClick={handleCancel}
+                  disabled={!hasUnsavedChanges}
+                >
+                  Cancel
+                </CancelButton>
+                <SaveButton
+                  variant="contained"
+                  onClick={handleSaveChanges}
+                  disabled={!hasUnsavedChanges}
+                >
+                  Save Changes
+                </SaveButton>
+              </BottomActions>
+            </ContentFooter>
+          )}
         </ContentContainer>
       </BodyContainer>
     </PageContainer>

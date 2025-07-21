@@ -1,5 +1,5 @@
-import { Box } from '@mui/material';
-import AllocationGrid from '../../AllocationTable/AllocationGrid';
+'use client';
+import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
@@ -10,8 +10,9 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
+import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
@@ -47,7 +48,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
-  const { costs: teamsCost, loading } = useSelector(
+  const { costs: teamsCost, dataProcessing } = useSelector(
     (state: RootState) => state.allocationsCost
   );
   const { setRows, ready } = useAllocationGrid('main');
@@ -151,12 +152,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'Email',
+      field: 'email',
       headerName: 'Email',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
@@ -166,12 +167,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'PhoneNumber',
+      field: 'phoneNumber',
       headerName: 'Phone Number',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -179,12 +180,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'Department',
+      field: 'department',
       headerName: 'Organization',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -192,12 +193,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'HRLevel',
+      field: 'hrLevel',
       headerName: 'HR Level',
       width: 100,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -205,12 +206,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'Role',
+      field: 'role',
       headerName: 'Role',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -218,12 +219,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'WorkLocation',
+      field: 'workLocation',
       headerName: 'Work Location',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -231,12 +232,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'StartDate',
+      field: 'resourceStartDate',
       headerName: 'Resource Start Date',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -244,12 +245,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'EndDate',
+      field: 'resourceEndDate',
       headerName: 'Resource End Date',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -257,12 +258,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'LocationCategory',
+      field: 'resourceLocationCategory',
       headerName: 'Location Category',
       width: 160,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -270,12 +271,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'AverageWeeklyHours',
+      field: 'averageWeeklyHours',
       headerName: 'Average Weekly Hours',
       width: 190,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -283,12 +284,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'ContractorHourlyRate',
+      field: 'contractorHourlyRate',
       headerName: 'Contractor Hourly Rate',
       width: 195,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -298,12 +299,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'ContractorHourlyRateCurrency',
+      field: 'contractorHourlyRateCurrency',
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -391,7 +392,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'Description',
+      field: 'projectDescription',
       headerName: 'Project Description',
       width: 180,
       type: 'string',
@@ -443,7 +444,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'ProjectSponsor',
+      field: 'projectSponsor',
       headerName: 'Project Sponsor',
       width: 160,
       type: 'string',
@@ -456,7 +457,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'ProjectManager',
+      field: 'projectManager',
       headerName: 'Project Manager',
       width: 160,
       type: 'string',
@@ -469,7 +470,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'Status',
+      field: 'projectStatus',
       headerName: 'Project Status',
       width: 130,
       type: 'string',
@@ -482,7 +483,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       },
     },
     {
-      field: 'Type',
+      field: 'projectType',
       headerName: 'Project Type',
       width: 130,
       type: 'string',
@@ -523,9 +524,9 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   };
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box sx={{ height: 'calc(100vh - 31px)', width: '100%' }}>
         <AllocationGrid
-          loading={loading}
+          loading={dataProcessing}
           groupBy="teams"
           type="cost"
           mode="team"
@@ -546,35 +547,36 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
                 resourceType: true,
                 teams: false, // This column has to always be false, as we are using grouping.
                 resource: false, // This column has to always be false, as we are using grouping.
-                Email: false,
-                PhoneNumber: false,
-                Department: false,
-                HRLevel: false,
-                Role: false,
-                WorkLocation: false,
-                StartDate: false,
-                EndDate: false,
-                LocationCategory: false,
-                AverageWeeklyHours: false,
-                ContractorHourlyRate: false,
-                ContractorHourlyRateCurrency: false,
+                email: false,
+                phoneNumber: false,
+                department: false,
+                hrLevel: false,
+                role: false,
+                workLocation: false,
+                resourceStartDate: false,
+                resourceEndDate: false,
+                resourceLocationCategory: false,
+                averageWeeklyHours: false,
+                contractorHourlyRate: false,
+                contractorHourlyRateCurrency: false,
                 projectOvertimeAllowed: false,
                 projectCost: false,
                 projectCurrency: false,
-                Description: false,
+                projectDescription: false,
                 projectLocation: false,
-                ProjectManager: false,
+                projectManager: false,
                 projectSponsor: false,
                 projectEndDate: false,
                 projectStartDate: false,
-                Status: false,
-                Type: false,
+                projectStatus: false,
+                projectType: false,
               },
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
+          rowGroupingColumnMode="multiple"
         />
-        {!teamsCost && !loading && (
+        {!teamsCost && !dataProcessing && (
           <div
             style={{
               display: 'flex',

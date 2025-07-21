@@ -876,7 +876,6 @@ export default function Resources() {
     )
       return;
 
-
     const timeout = setTimeout(() => {
       const sortedRowIds = apiRef?.current?.getSortedRowIds?.();
       const totalRows = sortedRowIds?.length ?? 0;
@@ -900,7 +899,6 @@ export default function Resources() {
           } else {
             focusColumn = 'FullName';
           }
-
 
           apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);

@@ -146,13 +146,16 @@ const GridToolbarExport = () => {
       slotProps={{
         button: {
           variant: 'outlined',
+          startIcon: <img src="/images/icons/ExportIcon.svg" alt="Export" />,
           sx: {
-            minWidth: '32px',
-            height: '32px',
-            padding: '0px 0px',
+            minWidth: '0px',
+            height: '36px',
+            width: '40px',
+            padding: '20px 10px 20px 12px',
             color: '#555',
-            borderColor: '#ddd',
-            backgroundColor: 'rgba(28, 45, 95, 0.02)',
+            borderRadius: '6px',
+            boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #E2E8F0',
             '.MuiButton-startIcon': { margin: '0px' },
           },
         },

@@ -42,45 +42,21 @@ const MainAppBar = styled(AppBar, {
   transition: 'margin-left 0.3s ease-in-out, width 0.3s ease-in-out',
   zIndex: '91',
   boxShadow: '0 1px 0 0 #DDE1E4',
-  background: '#EBEFFC',
+  background: theme.palette.sideBarColor.main,
   '& h6': {
     color: theme.custom.primaryColor,
     fontFamily: theme.typography.fontFamily,
-    fontWeight: 'SemiBold',
-    fontSize: '18px',
-    lineHeight: '22px',
-  },
-  '& .searchBar': {
-    backgroundColor: '#FFFFFF',
-    border: '1px solid #D6DCE1',
-    boxShadow: '0 1px 0 0 #DDE1E4',
-    borderRadius: '4px',
-    width: '445px',
-    height: '33px',
-    transition: 'width 0.3s ease-in-out',
-    '& input': {
-      padding: '2px 10px',
-      fontSize: '12px',
-      color: '#757575',
-      width: '410px',
-      // height: "32px",
-      height: '30px',
-      boxSizing: 'border-box',
-      color: '#212121',
-    },
-    '& .MuiInputBase-adornedStart': {
-      display: 'flex',
-      flexDirection: 'row-reverse',
-    },
-    '& svg': {
-      width: '20px',
-      marginRight: '5px',
-    },
+    fontWeight: '700',
+    fontSize: '14px',
+    lineHeight: 'normal',
+    textTransform: ' uppercase',
+    color: '#FFF',
+    letterSpacing: '-0.56px',
   },
   '& .toobarRow': {
-    minHeight: '54px',
-    paddingLeft: '15px',
-    paddingRight: '15px',
+    minHeight: '30px',
+    paddingLeft: '11px',
+    paddingRight: '4px',
   },
   '& .settingIcon': {
     padding: '0',
@@ -91,7 +67,7 @@ const MainAppBar = styled(AppBar, {
 const StyledButton = styled(Button)(({ theme }) => ({
   display: 'flex',
   width: '96px',
-  height: '32px',
+  height: '20px',
   padding: '10px',
   justifyContent: 'center',
   alignItems: 'center',
@@ -107,6 +83,7 @@ const Header = ({ sidebarExpanded }) => {
   const { resources } = useSelector(state => state.resources);
   const { user } = useSelector(state => state.user);
   const { splitView } = useSelector(state => state.allocationView);
+  const { calendarDate } = useSelector(state => state.allAllocations);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
   const router = useRouter();
@@ -138,26 +115,6 @@ const Header = ({ sidebarExpanded }) => {
     }
   }, [projects, resources]);
 
-  const handleAddMenuToggle = () => {
-    setOpenAddMenu(prevOpen => !prevOpen);
-  };
-  const handleClose = event => {
-    if (
-      anchorRef.current?.contains(event.target) ||
-      anchorRefAdd.current?.contains(event.target)
-    ) {
-      return;
-    }
-    setOpenAddMenu(false);
-  };
-
-  function handleListKeyDown(event) {
-    if (event.key === 'Tab' || event.key === 'Escape') {
-      event.preventDefault();
-      setOpenAddMenu(false);
-    }
-  }
-
   function handleSplitViewDone() {
     dispatch(setSplitView(false));
     dispatch(setSplitViewCurrentProject(null));
@@ -172,62 +129,6 @@ const Header = ({ sidebarExpanded }) => {
     }
     prevOpenAdd.current = openAddMenu;
   }, [openAddMenu]);
-
-  const menuItems = [
-    {
-      icon: '/images/icons/AllocationIcon.svg',
-      alt: 'Allocation Icon',
-      title: 'Update Allocation',
-      type: 'add_allocation',
-    },
-    {
-      icon: '/images/icons/ProjectIcon.svg',
-      alt: 'Project Icon',
-      title: 'Add Project',
-      type: 'add_project',
-      primarySecondButtonText: 'Add & Allocate Resources',
-      initialData: {
-        Status: 'Active',
-      },
-    },
-    {
-      icon: '/images/icons/TeamIcon.svg',
-      alt: 'Team Icon',
-      title: 'Add Team',
-      type: 'add_team',
-    },
-    {
-      icon: '/images/icons/ResourceIcon.svg',
-      alt: 'Resource Icon',
-      title: 'Add Resource',
-      type: 'add_resource',
-    },
-    {
-      icon: '/images/icons/corporate_fare.svg',
-      alt: 'Organization Icon',
-      title: 'Add Organization',
-      type: 'add_organization',
-    },
-  ];
-
-  const handleOpenDialog = (
-    title,
-    formType,
-    primarySecondButtonText,
-    initialData = null
-  ) => {
-    setOpenAddMenu(false);
-    dispatch(
-      openDialog({
-        title: title,
-        submitButtonText: formType === 'add_allocation' ? 'Update' : 'Add',
-        cancelButtonText: 'Cancel',
-        primarySecondButtonText: primarySecondButtonText ?? '',
-        formType: formType,
-        initialData: initialData,
-      })
-    );
-  };
 
   const getTitleFromPathname = pathname => {
     switch (pathname) {
@@ -270,129 +171,28 @@ const Header = ({ sidebarExpanded }) => {
             getTitleFromPathname(pathname)
           )}
         </Typography>
-        <Box display={'flex'} alignItems={'center'} ml={'auto'} gap={'20px'}>
+        <Box
+          display="flex"
+          alignItems="center"
+          ml="auto"
+          gap="20px"
+          width="45px"
+          height="24px"
+        >
           {pathname === '/allocation' && splitView ? (
-            <StyledButton variant="contained" onClick={handleSplitViewDone}>
-              Close
-            </StyledButton>
-          ) : (
-            <Box className="searchBar">
-              <TextField
-                placeholder="Search..."
-                size="small"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="end">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                  disableUnderline: true,
-                }}
-                variant="standard"
+            <Button
+              onClick={handleSplitViewDone}
+              sx={{ width: '24px', height: '24px', padding: '0px' }}
+            >
+              <img
+                src="/images/icons/DisabledbyDefaultRounded.svg"
+                alt="close"
+                style={{ width: '24px', height: '24px' }}
               />
-            </Box>
-          )}
-
-          <IconButton
-            className="settingIcon"
-            onClick={handleAddMenuToggle}
-            ref={anchorRefAdd}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '30px',
-              height: '30px',
-              backgroundColor: '#0A1B39',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: '#0A1B39',
-              },
-              '&:focus': {
-                backgroundColor: '#0A1B39',
-              },
-            }}
-          >
-            {/* Toggle the icon here based on the openAddMenu state */}
-            {openAddMenu ? (
-              <CloseIcon sx={{ color: '#fff', width: 22, height: 30 }} />
-            ) : (
-              <img src={'/images/icons/addbutton.svg'} alt="" width={30} />
-            )}
-          </IconButton>
+            </Button>
+          ) : null}
         </Box>
       </Toolbar>
-
-      <Popper
-        open={openAddMenu}
-        anchorEl={anchorRefAdd.current}
-        role={undefined}
-        placement="bottom-start"
-        transition
-        disablePortal
-      >
-        {({ TransitionProps, placement }) => (
-          <Grow
-            {...TransitionProps}
-            style={{
-              transformOrigin:
-                placement === 'bottom-start' ? 'left top' : 'left bottom',
-            }}
-          >
-            <Paper
-              className="AddMenu"
-              sx={{
-                boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.06)',
-              }}
-            >
-              <ClickAwayListener onClickAway={handleClose}>
-                <MenuList
-                  autoFocusItem={openAddMenu}
-                  id="Add-menu"
-                  aria-labelledby="Add-button"
-                  onKeyDown={handleListKeyDown}
-                  sx={{
-                    gap: '8px',
-                    margin: ' 5px',
-                    paddingTop: '18px',
-                    paddingBottom: '12px',
-                  }}
-                >
-                  {menuItems.map((item, index) => (
-                    <MenuItem
-                      key={index}
-                      onClick={() =>
-                        handleOpenDialog(
-                          item.title,
-                          item.type,
-                          item?.primarySecondButtonText ?? '',
-                          item.initialData
-                        )
-                      }
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        paddingLeft: 2,
-                        paddingBottom: 2,
-                        gap: 1,
-                      }}
-                    >
-                      <img
-                        src={item.icon}
-                        alt={item.alt}
-                        width={20}
-                        style={{ marginRight: 8 }}
-                      />
-                      {item.title}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Grow>
-        )}
-      </Popper>
       <AllocationForm />
     </MainAppBar>
   );

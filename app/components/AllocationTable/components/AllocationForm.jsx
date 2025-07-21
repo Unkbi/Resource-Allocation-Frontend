@@ -11,6 +11,7 @@ import AssignAllocationForm from '../../Forms/AssignAllocationForm';
 import SaveViewForm from '../../Forms/SaveViewForm';
 import CloneResourceForm from '../../Forms/CloneResourceForm';
 import TransferResourceForm from '../../Forms/TransferResourceForm';
+import HistoryForm from '../../Forms/HistoryForm';
 import {
   addAllocationValidationSchema,
   addProjectValidationSchema,
@@ -23,6 +24,12 @@ import {
   editResourceValidationSchema,
   addTeamValidationSchema,
   addRatesValidationSchema,
+  openHistoryValidationSchema,
+  addPortfolioValidationSchema,
+  addRoleValidationSchema,
+  assignRoleValidationSchema,
+  addPrivilegeValidationSchema,
+  assignPrivilegeValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -97,8 +104,23 @@ import {
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { fetchHistory } from '@/app/services/allocationServices';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
+import { Description } from '@mui/icons-material';
+import AddPortfolioForm from '../../Forms/AddPortfolioForm';
+import AddRoleForm from '../../Forms/AddRoleForm';
+import AssignRoleForm from '../../Forms/AssignRoleForm';
+import {
+  CREATE_PRIVILEGE,
+  CREATE_PRIVILEGEASSIGNMENT,
+  CREATE_ROLE,
+  CREATE_ROLESASSIGNMENT,
+  UPDATE_PRIVILEGE,
+  UPDATE_PRIVILEGEASSIGNMENT,
+} from '@/app/redux/actions/rbacActions';
+import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
+import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
 
 const initialValuesMap = {
   add_project: {
@@ -163,7 +185,7 @@ const initialValuesMap = {
     WorkLocation: '',
     Status: '',
     ConfirmTransfer: false,
-    shouldTransfer:false,
+    shouldTransfer: false,
   },
   add_allocation: {
     Resource: [],
@@ -233,6 +255,63 @@ const initialValuesMap = {
     ValidityEndDate: '',
     Status: 'Active',
   },
+  open_history: {
+    StartDate: '',
+    EndDate: '',
+    Resource: '',
+    Project: '',
+  },
+  add_portfolio: {
+    Name: '',
+    Status: 'Active',
+    Description: '',
+    SidebarColor: '#000000',
+  },
+  add_role: {
+    Name: '',
+  },
+  edit_role: {
+    Name: '',
+    Status: 'Active',
+  },
+  assign_role: {
+    Assignee: '',
+    Name: '',
+    Role: '',
+  },
+  edit_role_assignment: {
+    Assignee: '',
+    Name: '',
+    Role: '',
+  },
+  add_privilege: {
+    Name: '',
+    Resource: '',
+    Actions: {
+      Create: false,
+      Update: false,
+      Read: false,
+      Delete: false,
+    },
+  },
+  edit_privilege: {
+    Name: '',
+    Resource: '',
+    Actions: {
+      Create: false,
+      Update: false,
+      Read: false,
+      Delete: false,
+    },
+  },
+  assign_privilege: {
+    Role: '',
+    Privilege: '',
+  },
+  edit_privilege_assignment: {
+    Role: '',
+    Privilege: '',
+  },
 };
 
 const AllocationForm = () => {
@@ -260,6 +339,9 @@ const AllocationForm = () => {
   const pathname = usePathname();
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
   const [pendingTransferData, setPendingTransferData] = useState(null);
+  const [HistoryData, setHistoryData] = useState([]);
+  const [historyStatus, setHistoryStatus] = useState('loading');
+  const { portfolios } = useSelector(state => state.portfolios);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -323,7 +405,28 @@ const AllocationForm = () => {
         return addRatesValidationSchema;
       case 'edit_rates':
         return addRatesValidationSchema;
-
+      case 'open_history':
+        return openHistoryValidationSchema;
+      case 'add_portfolio':
+        return addPortfolioValidationSchema(portfolios);
+      case 'edit_portfolio':
+        return addPortfolioValidationSchema(portfolios, initialData.Name || '');
+      case 'add_role':
+        return addRoleValidationSchema;
+      case 'edit_role':
+        return addRoleValidationSchema;
+      case 'assign_role':
+        return assignRoleValidationSchema;
+      case 'edit_role_assignment':
+        return assignRoleValidationSchema;
+      case 'add_privilege':
+        return addPrivilegeValidationSchema;
+      case 'edit_privilege':
+        return addPrivilegeValidationSchema;
+      case 'assign_privilege':
+        return assignPrivilegeValidationSchema;
+      case 'edit_privilege_assignment':
+        return assignPrivilegeValidationSchema;
       default:
         return null;
     }
@@ -448,6 +551,10 @@ const AllocationForm = () => {
               cleanedValues.ProjectManager === ''
                 ? null
                 : cleanedValues.ProjectManager,
+            PortfolioId:
+              cleanedValues.PortfolioId === ''
+                ? null
+                : cleanedValues.PortfolioId,
           },
         };
         try {
@@ -469,11 +576,24 @@ const AllocationForm = () => {
               const newProjectId = response.payload?.result?.Id;
               if (newProjectId) {
                 await dispatch(fetchAllProjects());
-                dispatch(setHighlightedRowId(newProjectId));
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: 'Project added successfully',
+                    type: 'success',
+                    position: 'bottom-left',
+                    autoHideTimer: 3000,
+                  })
+                );
+                setTimeout(() => {
+                  dispatch(setHighlightedRowId(newProjectId));
+                }, 4000);
               }
+
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
                 dispatch(setSplitViewCurrentProject(response.payload.result));
+                dispatch(closeDialog());
                 router.replace('/allocation');
                 return;
               }
@@ -496,9 +616,6 @@ const AllocationForm = () => {
               );
               console.error('Failed to add project:', error);
             });
-          if (pathname !== '/project') {
-            router.replace('/project');
-          }
         } catch (e) {
           console.error('Failed to add project:', e);
         }
@@ -518,11 +635,31 @@ const AllocationForm = () => {
               cleanedValues.ProjectManager === ''
                 ? null
                 : cleanedValues.ProjectManager,
+            PortfolioId:
+              cleanedValues.PortfolioId === ''
+                ? null
+                : cleanedValues.PortfolioId,
           },
         };
         try {
-          dispatch(updateProject({ postData, projectId: initialData.Id }));
+          dispatch(updateProject({ postData, projectId: initialData.Id })).then(
+            async response => {
+              if (response.meta.requestStatus === 'fulfilled') {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Project updated successfully`,
+                    type: 'success',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
+            }
+          );
           await dispatch(fetchAllProjects());
+          dispatch(closeDialog());
           dispatch(setHighlightedRowId(initialData.Id));
         } catch (e) {
           console.error('Failed to edit project:', e);
@@ -706,7 +843,9 @@ const AllocationForm = () => {
         };
 
         try {
-          const selectedTeam = teams.result.find(team => team.Id === values.Team);
+          const selectedTeam = teams.result.find(
+            team => team.Id === values.Team
+          );
           let teamAllocationManagerId = null;
           if (selectedTeam?.AllocationManager) {
             const raw = selectedTeam.AllocationManager;
@@ -760,7 +899,7 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
-              return; 
+              return;
             }
           }
           await dispatch(
@@ -1175,6 +1314,8 @@ const AllocationForm = () => {
 
                   // Update Allocation for Bottom Team Allocation Grid
                   updateRowsForView('bottomTeam', allUpdatedRows);
+                  updateRowsForView('projectAllocation', allUpdatedRows);
+                  updateRowsForView('teamAllocation', allUpdatedRows);
                 } else {
                   updateRowsForView('projectAllocation', allUpdatedRows);
                   updateRowsForView('teamAllocation', allUpdatedRows);
@@ -1562,7 +1703,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const postData = {
+        postData = {
           ...cleanedValues,
         };
 
@@ -1612,7 +1753,7 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const updatedFields = {
+        let updatedFields = {
           ...cleanedValues,
           WorkLocation: cleanedValues.WorkLocation,
           HRLevel: cleanedValues.HRLevel,
@@ -1660,6 +1801,427 @@ const AllocationForm = () => {
           });
 
         break;
+      case 'add_portfolio':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        postData = {
+          ...cleanedValues,
+        };
+
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'CREATE_PORTFOLIOS',
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Portfolio added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to add portfolio:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add portfolio.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+
+        break;
+
+      case 'edit_portfolio': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = { ...cleanedValues };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: 'UPDATE_PORTFOLIOS',
+              payload: {
+                id: initialData?.Id,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Portfolio updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.Id));
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update portfolio:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to update portfolio.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+
+        return;
+      }
+      case 'add_role':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+          const postData = { ...cleanedValues };
+          new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_ROLE,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          })
+            .then(response => {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Role added successfully.',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              dispatch(setHighlightedRowId(response.result?.Name));
+            })
+            .catch(error => {
+              console.error('Failed to add role:', error);
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to add role.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            })
+            .finally(() => {
+              dispatch(closeDialog());
+            });
+        }
+        break;
+
+      case 'assign_role':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+
+          const postData = {
+            ...cleanedValues,
+            Assignee: cleanedValues.Assignee?.Email || null,
+            Role: values.Role || null,
+            Name: values.Role
+              ? `${values.Role}-${cleanedValues.Assignee?.Email}`
+              : null,
+          };
+
+          new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_ROLESASSIGNMENT,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          })
+            .then(response => {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Role assigned successfully.',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              dispatch(setHighlightedRowId(response.result?.Name));
+            })
+            .catch(error => {
+              console.error('Failed to assign role:', error);
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to assign role.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            })
+            .finally(() => {
+              dispatch(closeDialog());
+            });
+        }
+        break;
+
+      case 'add_privilege': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const actionsArray = Object.entries(cleanedValues.Actions || {})
+          .filter(([_, isChecked]) => isChecked)
+          .map(([action]) => action.toLowerCase());
+
+        const postData = {
+          Name: cleanedValues.Name,
+          Resource: cleanedValues.Resource,
+          Actions: actionsArray,
+        };
+
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_PRIVILEGE,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Privilege added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result?.Name));
+          })
+          .catch(error => {
+            console.error('Failed to add privilege:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add privilege.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+        break;
+      }
+      case 'edit_privilege': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        if (Array.isArray(cleanedValues.Resource)) {
+          cleanedValues.Resource = cleanedValues.Resource[0] || null;
+        }
+        const actionsArray = Object.entries(cleanedValues.Actions || {})
+          .filter(([_, isChecked]) => isChecked)
+          .map(([action]) => action.toLowerCase());
+
+        const updatedFields = {
+          Name: cleanedValues.Name,
+          Resource: cleanedValues.Resource,
+          Actions: actionsArray,
+        };
+
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_PRIVILEGE,
+              payload: {
+                name: cleanedValues.Name,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Privilege updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(cleanedValues.Name));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            error?.response?.data?.exception || 'Failed to update privilege.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
+      case 'assign_privilege': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = {
+          ...cleanedValues,
+          Role: values.Role || null,
+          Privilege: values.Privilege || null,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_PRIVILEGEASSIGNMENT,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Privilege assigned successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result?.Name));
+          })
+          .catch(error => {
+            console.error('Failed to assign privilege:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to assign privilege.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+        break;
+      }
+      case 'edit_privilege_assignment': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = {
+          Role: values.Role || null,
+          Privilege: values.Privilege || null,
+        };
+
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_PRIVILEGEASSIGNMENT,
+              payload: {
+                name: initialData?.Name,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Privilege assignment updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.Name));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            error?.response?.data?.exception ||
+            'Failed to update privilege assignment.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
 
       default:
         return;
@@ -1836,6 +2398,179 @@ const AllocationForm = () => {
     }
   };
 
+  useEffect(() => {
+    if (formType === 'open_history') {
+      const BATCH_SIZE = 20;
+      const BATCH_DELAY = 100;
+
+      const progressivelyLoadHistory = fullData => {
+        let index = 0;
+        setHistoryData([]); // Reset before appending
+        setHistoryStatus('loaded');
+        const loadNextBatch = () => {
+          const nextBatch = fullData.slice(index, index + BATCH_SIZE);
+          setHistoryData(prev => [...prev, ...nextBatch]);
+          index += BATCH_SIZE;
+
+          if (index < fullData.length) {
+            setTimeout(loadNextBatch, BATCH_DELAY);
+          }
+        };
+
+        loadNextBatch();
+      };
+
+      const fetchHistoryData = async () => {
+        try {
+          setHistoryData([]);
+          setHistoryStatus('loading');
+          const response = await fetchHistory(initialData);
+          if (response?.error) {
+            console.error('Failed to fetch history:', response.error);
+            return;
+          }
+
+          // If result is empty, return immediately
+          if (response?.result === null && response?.status === 'not-found') {
+            setHistoryStatus('no-data');
+            setHistoryData([]);
+            return;
+          }
+
+          const formattedHistory = [];
+          (response && response.result ? response.result : [])
+            .filter(
+              item =>
+                Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
+            )
+            .forEach((item, idx) => {
+              const {
+                ResourceName,
+                ProjectName,
+                Period,
+                AllocationEntered,
+                ChangesLog = [],
+                AllocationId,
+              } = item;
+
+              // Helper functions
+              const getUserInitials = email => {
+                if (!email) return '';
+                const [name] = email.split('@');
+                const parts = name.split(/[.\s_]/);
+                return parts
+                  .map(p => p[0]?.toUpperCase())
+                  .join('')
+                  .slice(0, 2);
+              };
+              const getUserName = email => {
+                if (!email) return '';
+                const [name] = email.split('@');
+                return name
+                  .split(/[.\s_]/)
+                  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
+                  .join(' ');
+              };
+              const getDateString = ts => {
+                if (!ts) return '';
+                const date = new Date(ts);
+                return date
+                  .toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric',
+                  })
+                  .replace(/ /g, ' ');
+              };
+              const getRelativeTime = ts => {
+                if (!ts) return '';
+                const now = Date.now();
+                const diff = now - ts * 1000;
+                const min = Math.floor(diff / 60000);
+                if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+                const hr = Math.floor(min / 60);
+                if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+                const day = Math.floor(hr / 24);
+                return `${day} day${day === 1 ? '' : 's'} ago`;
+              };
+
+              // Calculate week number from Period
+              let weekNumber = '';
+              if (Period) {
+                const d = new Date(Period);
+                if (!isNaN(d)) {
+                  const temp = new Date(d.getTime());
+                  temp.setHours(0, 0, 0, 0);
+                  temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
+                  const yearStart = new Date(temp.getFullYear(), 0, 1);
+                  weekNumber = Math.ceil(
+                    ((temp - yearStart) / 86400000 + 1) / 7
+                  );
+                }
+              }
+
+              // For each change log, create a history entry
+              ChangesLog.forEach((log, logIdx) => {
+                let action = '';
+                let fromVersion = '';
+                let toVersion = '';
+
+                // Find the next log entry if it exists
+                const nextLog = ChangesLog[logIdx + 1];
+
+                if (log.Action?.toLowerCase() === 'create') {
+                  action = 'Created';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = nextLog
+                    ? (nextLog.AllocationEnteredLast ?? '')
+                    : (AllocationEntered ?? '');
+                } else if (log.Action?.toLowerCase() === 'update') {
+                  action = 'Update';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = nextLog
+                    ? (nextLog.AllocationEnteredLast ?? '')
+                    : (AllocationEntered ?? '');
+                } else if (log.Action?.toLowerCase() === 'delete') {
+                  action = 'Deleted';
+                  fromVersion = log.AllocationEnteredLast ?? '';
+                  toVersion = '';
+                } else {
+                  action = log.Action;
+                }
+
+                formattedHistory.push({
+                  id: `${AllocationId || idx + 1}-${logIdx + 1}`,
+                  userInitials: getUserInitials(ResourceName),
+                  userName: getUserName(ResourceName),
+                  projectName: ProjectName,
+                  weekNumber: weekNumber ? Number(weekNumber) : undefined,
+                  date: getDateString(Period),
+                  timestamp: getRelativeTime(log.Timestamp),
+                  action,
+                  fromVersion:
+                    fromVersion !== undefined ? String(fromVersion) : '',
+                  toVersion: toVersion !== undefined ? String(toVersion) : '',
+                  byUser: getUserName(log.User),
+                  _timestampRaw: log.Timestamp, // Add raw timestamp for sorting
+                });
+              });
+            });
+
+          // Sort by _timestampRaw descending (latest first)
+          formattedHistory.sort(
+            (a, b) => (b._timestampRaw || 0) - (a._timestampRaw || 0)
+          );
+
+          progressivelyLoadHistory(formattedHistory);
+        } catch (error) {
+          console.error('Error fetching history:', error);
+        }
+      };
+
+      fetchHistoryData();
+    }
+  }, [formType]);
+
   const getFormComponent = (formType, formikProps) => {
     switch (formType) {
       case 'add_project':
@@ -1913,6 +2648,80 @@ const AllocationForm = () => {
         return (
           <AddRatesForm formikProps={formikProps} setFormValue={setFormValue} />
         );
+      case 'open_history':
+        return (
+          <HistoryForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+            historyData={HistoryData}
+            historyStatus={historyStatus}
+          />
+        );
+      case 'add_portfolio':
+        return (
+          <AddPortfolioForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_portfolio':
+        return (
+          <AddPortfolioForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_role':
+        return (
+          <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_role':
+        return (
+          <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'assign_role':
+        return (
+          <AssignRoleForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_role_assignment':
+        return (
+          <AssignRoleForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_privilege':
+        return (
+          <AddPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_privilege':
+        return (
+          <AddPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'assign_privilege':
+        return (
+          <AssignPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_privilege_assignment':
+        return (
+          <AssignPrivilegeForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+
       default:
         return <div>No form selected</div>;
     }
@@ -1966,6 +2775,7 @@ const AllocationForm = () => {
           isSubmitting={formikProps.isSubmitting}
           isValid={formikProps.isValid}
           onCancel={onCancel}
+          viewOnly={formType === 'open_history'}
         >
           <Box>
             {getFormComponent(formType, {

@@ -1,3 +1,4 @@
+
 import * as Yup from 'yup';
 
 interface Project {
@@ -58,14 +59,14 @@ export const addProjectValidationSchema = (
     EndDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')
-      .test(
-        'required-if-start-date',
-        'End date is required if start date is provided',
-        function (value) {
-          const { StartDate } = this.parent;
-          return !StartDate || value !== null;
-        }
-      )
+      // .test(
+      //   'required-if-start-date',
+      //   'End date is required if start date is provided',
+      //   function (value) {
+      //     const { StartDate } = this.parent;
+      //     return !StartDate || value !== null;
+      //   }
+      // )
       .min(
         Yup.ref('StartDate'),
         'End date must be after or equal to start date'
@@ -76,11 +77,8 @@ export const addProjectValidationSchema = (
 };
 
 export const addTeamValidationSchema = Yup.object().shape({
-  Name: Yup.string()
-    .trim()
-    .required('Team Name is required'),
-  AllocationManager: Yup.string()
-    .required('Team Allocation Manager is required'),
+  Name: Yup.string().trim().required('Team Name is required'),
+  AllocationManager: Yup.string(),
   Status: Yup.string()
     .oneOf(['Active', 'Inactive'], 'Invalid status')
     .required('Status is required'),
@@ -96,7 +94,7 @@ export const addResourceValidationSchema = Yup.object({
     .matches(emailRegex, 'Enter a valid email address'),
   Role: Yup.string().required('Role is required'),
   Type: Yup.string().required('Resource type is required'),
-  Manager: Yup.string().required('Manager is required'),
+  Manager: Yup.string(),
   Team: Yup.string().required('Team is required'),
   ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
   AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
@@ -139,7 +137,7 @@ export const editResourceValidationSchema = Yup.object({
     .matches(emailRegex, 'Enter a valid email address'),
   Role: Yup.string().required('Role is required'),
   Type: Yup.string().required('Resource type is required'),
-  Manager: Yup.string().required('Manager is required'),
+  Manager: Yup.string(),
   Team: Yup.string().required('Team is required'),
   ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
   AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
@@ -148,16 +146,15 @@ export const editResourceValidationSchema = Yup.object({
     .when(['Status', 'StartDate'], {
       is: (status: String) => status === 'Inactive',
       then: schema =>
-        schema
-          .test(
-            'end-after-start',
-            'End Date cannot be before Start Date',
-            function (endDate) {
-              const { StartDate } = this.parent;
-              if (!endDate || !StartDate) return true;
-              return new Date(endDate) >= new Date(StartDate);
-            }
-          ),
+        schema.test(
+          'end-after-start',
+          'End Date cannot be before Start Date',
+          function (endDate) {
+            const { StartDate } = this.parent;
+            if (!endDate || !StartDate) return true;
+            return new Date(endDate) >= new Date(StartDate);
+          }
+        ),
       otherwise: schema =>
         schema.test(
           'end-after-start',
@@ -366,4 +363,84 @@ export const addRatesValidationSchema = Yup.object({
       'End Date must be after or the same as Start Date'
     ),
   Status: Yup.string().required('Status is required'),
+});
+
+export const openHistoryValidationSchema = Yup.object({
+  StartDate: Yup.date().required('Start Date is required'),
+  EndDate: Yup.date()
+    .required('End Date is required')
+    .min(Yup.ref('StartDate'), 'End Date must be after or equal to Start Date'),
+  Resource: Yup.string().required('Resource is required'),
+  Project: Yup.string().optional(),
+});
+export const addPortfolioValidationSchema = (portfolios : any, initialName = '') => {
+  const portfolioNames = Array.isArray(portfolios)
+    ? portfolios.map(p => p.Name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    Name: Yup.string()
+      .required('Name is required')
+      .test(
+        'unique-name',
+        'A portfolio with this name already exists.',
+        function (value) {
+          if (!value) return true;
+          const currentName = value.toLowerCase().trim();
+          const originalName = initialName.toLowerCase().trim();
+          return (
+            currentName === originalName ||
+            !portfolioNames.includes(currentName)
+          );
+        }
+      ),
+    Status: Yup.string().required('Status is required'),
+    Description: Yup.string().nullable(),
+  });
+};
+
+export const addRoleValidationSchema = Yup.object({
+  Name: Yup.string()
+    .required('Role Name is required')
+    .max(90, 'Reached Max Characters')
+    .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word
+    .test(
+      'unique-name',
+      'Role Name already exists. Please choose another name.',
+      function (value) {
+        if (!value) return true;
+        const roleNames = this.options.context?.roleNames || [];
+        return !roleNames.includes(value.toLowerCase().trim());
+      }
+    ),
+});
+
+export const assignRoleValidationSchema = Yup.object({
+  Assignee: Yup.object().nullable().required('Assignee is required'),
+  Role: Yup.string().required('Role is required'),
+});
+
+export const addPrivilegeValidationSchema = Yup.object({
+  Name: Yup.string()
+    .required('Privilege Name is required')
+    .max(90, 'Reached Max Characters')
+    .test(
+      'unique-name',
+      'Privilege Name already exists. Please choose another name.',
+      function (value) {
+        if (!value) return true;
+        const privilegeNames = this.options.context?.privilegeNames || [];
+        return !privilegeNames.includes(value.toLowerCase().trim());
+      }
+    ),
+  Resource: Yup.string().required('Entity is required'),
+  Actions: Yup.object().test(
+    'at-least-one-action',
+    'At least one action must be selected',
+    value => !!value && Object.values(value).some(v => v)
+  ),
+});
+
+export const assignPrivilegeValidationSchema = Yup.object({
+  Role: Yup.string().required('Role is required'),
+  Privilege: Yup.string().required('Privilege is required'),
 });

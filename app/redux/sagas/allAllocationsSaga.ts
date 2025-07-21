@@ -38,8 +38,16 @@ import {
 import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
-  const { projects, teams, resources, startDate, endDate, resolve, reject } =
-    action.payload;
+  const {
+    projects,
+    teams,
+    resources,
+    portfolios,
+    startDate,
+    endDate,
+    resolve,
+    reject,
+  } = action.payload;
   try {
     yield put(setDataProcessing(true));
 
@@ -94,6 +102,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
+      portfolios || [],
       teamResourceObject,
       startDate,
       endDate
@@ -223,6 +232,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
     teams,
     projects,
     resources,
+    portfolios,
     teamsResources,
     startDate,
     endDate,
@@ -264,6 +274,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
+      portfolios || [],
       teamsResources,
       startDate,
       endDate
@@ -294,6 +305,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
     teams,
     projects,
     resources,
+    portfolios,
     teamsResources,
     startDate,
     endDate,
@@ -334,6 +346,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
+      portfolios || [],
       teamsResources,
       startDate,
       endDate
@@ -394,6 +407,7 @@ function* updateResourceAllocationsSaga(
     teams,
     projects,
     resources,
+    portfolios,
     teamsResources,
     startDate,
     endDate,
@@ -435,6 +449,7 @@ function* updateResourceAllocationsSaga(
       teams,
       projects,
       resources,
+      portfolios,
       teamsResources,
       startDate,
       endDate
@@ -490,7 +505,7 @@ export function* TransferAllocationsSaga(
 }
 
 export function* allAllocationsSaga() {
-  yield takeLeading('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
+  yield takeLatest('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
   yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga); // This is for subsequent fetch. Ex : Date Shift.
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
