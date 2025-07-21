@@ -157,7 +157,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
@@ -172,7 +172,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -185,7 +185,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -198,7 +198,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 100,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -211,7 +211,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -224,7 +224,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -237,7 +237,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -250,7 +250,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -263,7 +263,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 160,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -276,7 +276,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 190,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -289,7 +289,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 195,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -304,7 +304,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       width: 260,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);

@@ -606,7 +606,7 @@ export const getFinalColumns = (
         width: 201,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const value = params.value;
