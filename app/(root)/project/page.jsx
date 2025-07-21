@@ -44,6 +44,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { parseISO } from 'date-fns';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -562,7 +563,7 @@ export default function Project() {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = new Date(parseISO(params.value));
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -578,7 +579,7 @@ export default function Project() {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = new Date(parseISO(params.value));
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
