@@ -2,6 +2,7 @@
 
 import { Autocomplete, TextField } from '@mui/material';
 import { FormikProps } from 'formik';
+import { useState } from 'react';
 
 interface Option {
   value: any;
@@ -17,6 +18,7 @@ interface StyledAutocompleteProps {
   required?: boolean;
   FormHelperTextProps?: any;
   disableClearable?: boolean;
+  onChange?: (value: any) => void;
 }
 
 const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
@@ -34,22 +36,63 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
     },
   },
   disableClearable = false,
+  onChange,
 }) => {
   const { touched, errors, setFieldValue, setFieldTouched } = formikProps;
+  const [open, setOpen] = useState(false);
 
+  const selectedOption = options.find(opt => opt.value === value) || null;
 
   return (
     <Autocomplete
       options={options}
       getOptionLabel={option => option.label || ''}
-      value={options.find(opt => opt.value === value) || null}
+      value={value === '' ? null : selectedOption}
       disableClearable={disableClearable}
       isOptionEqualToValue={(opt, val) => opt.value === val?.value}
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
       onChange={(_, newValue) => {
-        formikProps.setFieldValue(name, newValue?.value ?? '');
-        formikProps.setFieldTouched(name, true, true);
+        const currentValue = formikProps.values[name];
+        const isSameValue = currentValue === newValue?.value;
+        const finalValue = isSameValue ? '' : (newValue?.value ?? '');
+
+        setFieldValue(name, finalValue);
+        setFieldTouched(name, true, true);
+        setOpen(false);
+        if (onChange) {
+          onChange(finalValue);
+        }
       }}
       onBlur={() => setFieldTouched(name, true)}
+      renderOption={(props, option) => {
+        const { key, ...restProps } = props;
+        const isSelected = selectedOption?.value === option.value;
+
+        return (
+          <li
+            key={key}
+            {...restProps}
+            onClick={e => {
+              e.stopPropagation();
+              if (isSelected) {
+                setFieldValue(name, '');
+                setFieldTouched(name, true, true);
+                setOpen(false);
+                if (onChange) onChange('');
+              } else {
+                setFieldValue(name, option.value);
+                setFieldTouched(name, true, true);
+                setOpen(false);
+                if (onChange) onChange(option.value);
+              }
+            }}
+          >
+            {option.label}
+          </li>
+        );
+      }}
       renderInput={params => (
         <TextField
           {...params}
@@ -68,6 +111,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
               padding: '0 8px',
             },
           }}
+          onFocus={() => setOpen(true)}
         />
       )}
       sx={{
