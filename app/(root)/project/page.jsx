@@ -136,13 +136,7 @@ export default function Project() {
 
   useEffect(() => {
   
-  console.log("triggered")
-
   new Promise((resolve, reject) => {
-    dispatch({
-      type: DELETE_ORGANISATION,
-      payload: { id: 'ca12b865-2210-4d51-93fe-a55ed2d579b3'},
-    });
   })
     .then((res) => {
       console.log('✅ Organisation created successfully:', res);

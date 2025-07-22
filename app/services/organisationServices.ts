@@ -12,7 +12,6 @@ export const fetchAllOrganisations = async () => {
 };
 
 export const createOrganisation = async (newData: any) => {
-  console.log("got to create")
   const payload = {
     'ResourceAllocation.Core/Organization': newData,
   };

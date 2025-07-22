@@ -4,12 +4,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
-import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction'; // adjust if necessary
+import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction'; 
 
 const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
-
+  const { organizations } = useSelector(state => state.organisations);
   const {
     values,
     handleChange,

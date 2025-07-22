@@ -107,6 +107,8 @@ import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 import AddOrganizationForm from '../../Forms/addOrganization';
+import { CREATE_ORGANISATION, DELETE_ORGANISATION } from '@/app/redux/actions/organizationsAction';
+import { type } from 'os';
 
 
 const initialValuesMap = {
@@ -283,6 +285,7 @@ const AllocationForm = () => {
   const [pendingTransferData, setPendingTransferData] = useState(null);
   const [HistoryData, setHistoryData] = useState([]);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { organizations } = useSelector(state => state.organisations);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -355,7 +358,6 @@ const AllocationForm = () => {
         return addPortfolioValidationSchema(portfolios, initialData.Name || '');
       
       case 'add_organization':
-        console.log("vali")
         return addOrganizationValidationSchema(organizations);
       default:
         return null;
@@ -1729,7 +1731,6 @@ const AllocationForm = () => {
         postData = {
           ...cleanedValues,
         };
-
         new Promise((resolve, reject) => {
           dispatch({
             type: 'CREATE_PORTFOLIOS',
@@ -1769,55 +1770,52 @@ const AllocationForm = () => {
           });
 
       case 'add_organization':
-        console.log("here too")
       Object.keys(cleanedValues).forEach(key => {
         if (cleanedValues[key] === '') {
           cleanedValues[key] = null;
         }
       });
 
-  postData = {
-    ...cleanedValues,
-  };
-  console.log("dispatched")
-
-  new Promise((resolve, reject) => {
-    dispatch({
-      type: 'CREATE_ORGANISATION',
-      payload: {
-        postData,
-        resolve,
-        reject,
-      },
-    });
-  })
-    .then(response => {
-      dispatch(
-        showToast({
-          open: true,
-          message: 'Organization added successfully.',
-          type: 'success',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-      dispatch(setHighlightedRowId(response.result.__Id__));
-    })
-    .catch(error => {
-      console.error('Failed to add organization:', error);
-      dispatch(
-        showToast({
-          open: true,
-          message: 'Failed to add organization.',
-          type: 'error',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-    })
-    .finally(() => {
-      dispatch(closeDialog());
-    });
+          postData = {
+            ...cleanedValues,
+          };
+          new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_ORGANISATION,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          })
+            .then(response => {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Organization added successfully.',
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              dispatch(setHighlightedRowId(response.result.__Id__));
+            })
+            .catch(error => {
+              console.error('Failed to add organization:', error);
+              dispatch(
+                showToast({
+                  open: true,
+                  message: 'Failed to add organization.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+            })
+            .finally(() => {
+              dispatch(closeDialog());
+            });
 
         break;
 
@@ -2297,6 +2295,9 @@ const AllocationForm = () => {
           />
         );
       case 'add_portfolio':
+        // dispatch({type: DELETE_ORGANISATION,
+        //     payload: {id:'57078e0c-2519-4ff9-8398-1314d385ce5d'
+        //     },})
         return (
           <AddPortfolioForm
             formikProps={formikProps}
@@ -2312,7 +2313,6 @@ const AllocationForm = () => {
         );
       
       case 'add_organization':
-        console.log('here boy')
         return (
           <AddOrganizationForm
             formikProps={formikProps}
