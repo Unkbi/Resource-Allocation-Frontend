@@ -638,7 +638,13 @@ export default function PortfolioAllocation({
               },
             },
             sorting: {
-              sortModel: [{ field: 'portfolioName', sort: 'asc' }],
+              sortModel: [
+                { field: 'portfolioName', sort: 'asc' },
+                {
+                  field: '__row_group_by_columns_group_portfolioName__',
+                  sort: 'asc',
+                },
+              ],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
