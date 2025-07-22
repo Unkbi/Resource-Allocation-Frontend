@@ -63,7 +63,6 @@ function* updateOrganisationSaga(action: any): Generator<any, void, any> {
     yield put(setLoading(true));
     // parts passed into undate function
     const response = yield call(updateOrganisation, id, updatedFields);
-    console.log(response.result)
     yield call(fetchOrganisationsSaga);
     if (resolve) resolve(response);
   } catch (error) {

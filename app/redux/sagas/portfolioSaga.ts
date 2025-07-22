@@ -23,7 +23,6 @@ function* fetchPortfolioSaga(): Generator<any, void, any> {
     yield put(setLoading(true));
     // calling fetchPortfolio from services to get all the portfolios
     const responses = yield call(fetchPortfolios);
-    // console.log(responses.result)
     // updating portfolios state using response 
     // the dispatch type is type: 'portfolios/setPortfolios'
     yield put(setPortfolios(responses?.result));

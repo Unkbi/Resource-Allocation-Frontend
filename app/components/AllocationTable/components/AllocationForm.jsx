@@ -2295,9 +2295,6 @@ const AllocationForm = () => {
           />
         );
       case 'add_portfolio':
-        // dispatch({type: DELETE_ORGANISATION,
-        //     payload: {id:'57078e0c-2519-4ff9-8398-1314d385ce5d'
-        //     },})
         return (
           <AddPortfolioForm
             formikProps={formikProps}

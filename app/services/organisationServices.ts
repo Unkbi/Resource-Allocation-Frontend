@@ -7,7 +7,6 @@ export const fetchAllOrganisations = async () => {
  const response = await axiosInstance.get(
    `${API_PROJECT_PORTFOLIO}/Organization`
  );
-//  console.log(response.data)
  return response.data;
 };
 
