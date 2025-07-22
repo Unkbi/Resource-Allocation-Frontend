@@ -25,7 +25,12 @@ const AllocationCellWithActuals = ({
   };
 
   // const notes = (parseFloat(params?.formattedValue as string) * 10) % 2;
+  const rawValue = parseFloat(params?.value as string);
+  const rawActuals = parseFloat(params?.actuals as string);
   const notes = (params?.notes as string) || '';
+
+  const formattedValue = !isNaN(rawValue) ? rawValue.toFixed(1) : '';
+  const formattedActuals = !isNaN(rawActuals) ? rawActuals.toFixed(1) : '';
 
   return (
     <div>
@@ -39,9 +44,7 @@ const AllocationCellWithActuals = ({
         }}
       >
         <Box sx={{ position: 'relative', top: 0, left: 0, zIndex: 1 }}>
-          <Typography sx={{ fontWeight: 600 }}>
-            {params?.value as string}
-          </Typography>
+          <Typography sx={{ fontWeight: 600 }}>{formattedValue}</Typography>
         </Box>
         <Box
           sx={{
@@ -61,7 +64,7 @@ const AllocationCellWithActuals = ({
               fontStyle: 'italic',
             }}
           >
-            {params?.actuals as string}
+            {formattedActuals}
           </Typography>
         </Box>
       </Box>
