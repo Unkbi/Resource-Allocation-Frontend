@@ -42,6 +42,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
   const [open, setOpen] = useState(false);
 
   const selectedOption = options.find(opt => opt.value === value) || null;
+  const hasError = touched[name] && errors[name] && !value;
 
   return (
     <Autocomplete
@@ -52,20 +53,25 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
       isOptionEqualToValue={(opt, val) => opt.value === val?.value}
       open={open}
       onOpen={() => setOpen(true)}
-      onClose={() => setOpen(false)}
+      onClose={() => {
+        setOpen(false);
+        setFieldTouched(name, true);
+      }}
       onChange={(_, newValue) => {
         const currentValue = formikProps.values[name];
         const isSameValue = currentValue === newValue?.value;
         const finalValue = isSameValue ? '' : (newValue?.value ?? '');
 
-        setFieldValue(name, finalValue);
-        setFieldTouched(name, true, true);
-        setOpen(false);
+        setFieldValue(name, finalValue, true); 
         if (onChange) {
           onChange(finalValue);
         }
       }}
-      onBlur={() => setFieldTouched(name, true)}
+      onBlur={() => {
+        if (value || required) {
+          setFieldTouched(name, true, true);
+        }
+      }}
       renderOption={(props, option) => {
         const { key, ...restProps } = props;
         const isSelected = selectedOption?.value === option.value;
@@ -77,16 +83,14 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
             onClick={e => {
               e.stopPropagation();
               if (isSelected) {
-                setFieldValue(name, '');
-                setFieldTouched(name, true, true);
-                setOpen(false);
+                setFieldValue(name, '', true);
                 if (onChange) onChange('');
               } else {
-                setFieldValue(name, option.value);
-                setFieldTouched(name, true, true);
-                setOpen(false);
+                setFieldValue(name, option.value, true);
                 if (onChange) onChange(option.value);
               }
+              setFieldTouched(name, true, true);
+              setOpen(false);
             }}
           >
             {option.label}
@@ -99,8 +103,8 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
           placeholder={label || ''}
           required={required}
           name={name}
-          error={Boolean(touched[name] && errors[name])}
-          helperText={touched[name] && (errors[name] as string)}
+          error={Boolean(hasError)}
+          helperText={hasError ? (errors[name] as string) : undefined}
           FormHelperTextProps={FormHelperTextProps}
           sx={{
             '& .MuiInputBase-root': {
