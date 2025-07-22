@@ -648,14 +648,15 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       name: 'Portfolio',
       icon: <PortfolioIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
-    {
-      name: 'Project Cost',
-      icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    },
-    {
-      name: 'Teams Cost',
-      icon: <TeamsCostIcon sx={{ fontSize: 20, color: '#344665' }} />,
-    },
+    //Commenting two dropdown views , Project and Teams Cost
+    // {
+    //   name: 'Project Cost',
+    //   icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    // },
+    // {
+    //   name: 'Teams Cost',
+    //   icon: <TeamsCostIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    // },
     // 'Organizations'
   ];
   const [active, setActive] = useState(false);
