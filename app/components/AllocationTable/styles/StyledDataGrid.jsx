@@ -81,6 +81,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       {
         backgroundColor: !loading && '#F0F7FF',
       },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_organisationName__"]`]:
+      {
+        backgroundColor: !loading && '#F7FBFF',
+      },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_organisationName__"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
     [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_resource__"]`]:
       {
         backgroundColor: !loading && '#F7FBFF',
@@ -178,6 +186,13 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor: !loading && '#F7FBFF',
     },
     [`& .${gridClasses.cell}[data-field="teamAllocationManager"].secondGroupsRow`]:
+      {
+        backgroundColor: !loading && '#F0F7FF',
+      },
+    [`& .${gridClasses.cell}[data-field="organisationStatus"]`]: {
+      backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="organisationStatus"].secondGroupsRow`]:
       {
         backgroundColor: !loading && '#F0F7FF',
       },

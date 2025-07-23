@@ -45,6 +45,7 @@ import {
 const getColumnLabel = column => {
   const columnLabels = {
     __row_group_by_columns_group_teams__: 'Team Name',
+    __row_group_by_columns_group_organisationName__: 'Organisation Name',
     __row_group_by_columns_group_resource__: 'Resource',
     __row_group_by_columns_group__: 'Project Name',
     __row_group_by_columns_group_project__: 'Project Name',
@@ -55,6 +56,7 @@ const getColumnLabel = column => {
     teams: 'Team',
     teamStatus: 'Team Status',
     teamAllocationManager: 'Allocation Manager',
+    organisationStatus: 'Organisation Status',
     resourceType: 'Resource Type',
     projectSponsor: 'Project Sponsor',
     projectManager: 'Project Manager',
@@ -68,7 +70,7 @@ const getColumnLabel = column => {
     projectEndDate: 'Project End Date',
     Email: 'Email',
     PhoneNumber: 'Phone Number',
-    Department: 'Organization',
+    Department: 'Department',
     WorkLocation: 'Resource Work Location',
     LocationCategory: 'Resource Location Category',
     Type: 'Resource Type',
@@ -82,7 +84,7 @@ const getColumnLabel = column => {
     ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
     email: 'Email',
     phoneNumber: 'Phone Number',
-    department: 'Organization',
+    department: 'department',
     hrLevel: 'HR Level',
     role: 'Resource Role',
     workLocation: 'Resource Work Location',
@@ -170,17 +172,23 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           value: column,
           label: getColumnLabel(column),
         }))
-      : values?.groupBy === 'Portfolio'
-        ? columns.portfolioName.map(column => ({
+      : values?.groupBy === 'Organisations'
+        ? columns.organisationName.map(column => ({
             id: column,
             value: column,
             label: getColumnLabel(column),
           }))
-        : columns.project.map(column => ({
-            id: column,
-            value: column,
-            label: getColumnLabel(column),
-          }));
+        : values?.groupBy === 'Portfolio'
+          ? columns.portfolioName.map(column => ({
+              id: column,
+              value: column,
+              label: getColumnLabel(column),
+            }))
+          : columns.project.map(column => ({
+              id: column,
+              value: column,
+              label: getColumnLabel(column),
+            }));
 
   // All possible viewBys
   const vewByOptions = [
@@ -188,6 +196,11 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       value: 'Teams',
       label: 'Teams*',
       extraInfo: 'Group by Resources, then by Teams',
+    },
+    {
+      value: 'Organisations',
+      label: 'Organisations*',
+      extraInfo: 'Group by Resources, then by Organisations',
     },
     {
       value: 'Project',
@@ -354,7 +367,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     const initialData = {
       groupBy: currentView?.GroupBy || 'Teams',
       showBy:
-        currentView?.GroupBy === 'Teams'
+        currentView?.GroupBy === 'Teams' ||
+        currentView?.GroupBy === 'Organisations'
           ? currentView?.MyTeam
             ? 'MyTeams'
             : 'AllTeams'
@@ -541,7 +555,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       {/* Show by */}
       <StyledContainer>
         <StyledLabel>Quick Filter</StyledLabel>
-        {values?.groupBy === 'Teams' ? (
+        {values?.groupBy === 'Teams' || values?.groupBy === 'Organisations' ? (
           <RadioGroup
             name="showBy"
             value={values?.showBy || 'MyTeams'}

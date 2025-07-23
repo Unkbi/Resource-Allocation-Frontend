@@ -91,6 +91,7 @@ export interface AllColumns {
   project: string[];
   portfolioName: string[];
   project_cost: string[];
+  organisationName: string[];
 }
 
 export interface AllocationGridViewState {

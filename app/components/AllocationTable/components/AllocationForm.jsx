@@ -100,7 +100,6 @@ import {
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
   filterAllocationsForSelectedProject,
-  generateEmptyRow,
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';

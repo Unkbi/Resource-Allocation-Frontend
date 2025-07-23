@@ -458,7 +458,7 @@ export const getInitialState = (
 ) => ({
   rowGrouping: {
     model:
-      groupBy === 'teams'
+      groupBy === 'teams' || groupBy === 'organisationName'
         ? [groupBy, 'resource']
         : groupBy === 'portfolioName'
           ? ['portfolioName', 'project']
@@ -606,7 +606,7 @@ export const getFinalColumns = (
 
   if (groupBy === 'organization') {
     return allColumns || [];
-  } else if (groupBy === 'teams') {
+  } else if (groupBy === 'teams' || groupBy === 'organisationName') {
     return [
       ...(allColumns?.slice(0, 1) || []),
       {
@@ -849,6 +849,7 @@ export const groupPage = groupBy => {
     teams: 'Team Name',
     portfolioName: 'Portfolio Name',
     organization: 'Organization Name',
+    organisationName: 'Organization Name',
   };
   return groupPages[groupBy];
 };
@@ -895,6 +896,7 @@ export const getCellClassName = (
       type !== 'cost' &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
+        params.rowNode?.groupingField === 'organisationName' ||
         params.rowNode?.groupingField === 'resource')
     ) {
       const groupKey = params.rowNode.groupingKey;
@@ -902,6 +904,10 @@ export const getCellClassName = (
 
       if (params.rowNode?.groupingField === 'teams') {
         projectRows = updatedRows.filter(row => row.teams === groupKey);
+      } else if (params.rowNode?.groupingField === 'organisationName') {
+        projectRows = updatedRows.filter(
+          row => row.organisationName === groupKey
+        );
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
@@ -910,7 +916,6 @@ export const getCellClassName = (
         projectRows.map(item => item.resourceId)
       );
       const totalRows = uniqueProjectRows.size;
-
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
@@ -990,7 +995,7 @@ export const getCellClassName = (
 
   if (params.rowNode?.type === 'group') {
     return params.rowNode?.groupingField === 'teams' ||
-      // params.rowNode?.groupingField === 'project' ||
+      params.rowNode?.groupingField === 'organisationName' ||
       params.rowNode?.groupingField === 'portfolioName'
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
@@ -1011,7 +1016,11 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     totalEffort: calculateTotalEffort(row),
   }));
 
-  if (groupBy === 'project' || groupBy === 'portfolioName') {
+  if (
+    groupBy === 'project' ||
+    groupBy === 'portfolioName' ||
+    groupBy === 'organisationName'
+  ) {
     return rowsWithTotalEffort;
   } else if (groupBy === 'teams') {
     // Get unique teams for teams and teamsId to avoid duplicate teams

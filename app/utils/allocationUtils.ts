@@ -11,6 +11,7 @@ import {
   Allocation,
   AllocationGridCell,
   AllocationGridCellData,
+  AllResourceDetail,
   ApiResponse,
   CostAllocation,
   Portfolio,
@@ -169,6 +170,7 @@ export function formatAllAllocations(
   projects: Project[],
   resources: Resource[],
   portfolios: Portfolio[],
+  allResourcesDetail: AllResourceDetail[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
   endDate: string
@@ -197,6 +199,9 @@ export function formatAllAllocations(
     const resource = resources.find(r => r.Id === alloc.Resource);
     const team = resourceIdToTeam.get(alloc.Resource);
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
+    const organisation = allResourcesDetail?.find(
+      r => r?.Resource?.Id === alloc.Resource
+    )?.Organization;
 
     const key = `${alloc.Resource}-${team?.Id}-${alloc.Project}`;
 
@@ -246,6 +251,9 @@ export function formatAllAllocations(
           resource?.ContractorHourlyRateCurrency || null,
         averageWeeklyHours: resource?.AverageWeeklyHours || null,
         resourceStatus: resource?.Status || null,
+        organisationId: organisation?.Id,
+        organisationName: organisation?.Name,
+        organisationStatus: organisation?.Status,
         totalEffort: 0,
       };
 
@@ -325,6 +333,9 @@ export function injectBlankRows(
           portfolioSidebarColor: '',
           portfolioDescription: '',
           portfolioStatus: '',
+          organisationId: '',
+          organisationName: '',
+          organisationStatus: '',
           email: resource?.Email || null,
           phoneNumber: resource?.PhoneNumber || null,
           resourceStartDate: resource?.StartDate || null,
