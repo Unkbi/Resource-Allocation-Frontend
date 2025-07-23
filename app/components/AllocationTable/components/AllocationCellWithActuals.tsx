@@ -25,9 +25,15 @@ const AllocationCellWithActuals = ({
   };
 
   // const notes = (parseFloat(params?.formattedValue as string) * 10) % 2;
-  const rawValue = parseFloat(params?.value as string);
-  const rawActuals = parseFloat(params?.actuals as string);
+  const rawValue = parseFloat(params.value ?? '');
+  let rawActuals = parseFloat(params.actuals ?? '');
   const notes = (params?.notes as string) || '';
+  if (
+    (params.actuals === null || params.actuals === undefined) &&
+    !isNaN(rawValue)
+  ) {
+    rawActuals = 0;
+  }
 
   const formattedValue = !isNaN(rawValue) ? rawValue.toFixed(1) : '';
   const formattedActuals = !isNaN(rawActuals) ? rawActuals.toFixed(1) : '';
@@ -52,10 +58,7 @@ const AllocationCellWithActuals = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: getBackgroundColor(
-              Number.parseFloat(params?.value as string),
-              Number.parseFloat(params?.actuals as string)
-            ),
+            backgroundColor: getBackgroundColor(rawValue, rawActuals),
             flex: 1,
           }}
         >
