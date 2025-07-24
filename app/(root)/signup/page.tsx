@@ -102,7 +102,7 @@ const MainBox = styled(Box)(({ theme }) => ({
             textTransform: "none"
         },
         "& .noAccount": {
-            color: "#142B51",
+            color: "#757575",
             fontFamily: theme.typography.fontFamily,
             fontWeight: "500",
             fontSize: "14px",
@@ -175,7 +175,7 @@ export default function SingupPage() {
     const [password, setPassword] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [mobile, setMobile] = useState('');
+    // const [mobile, setMobile] = useState('');
     const dispatch = useDispatch<AppDispatch>();
     const { loading, user, signupData, error } = useSelector((state: RootState) => state.user);
     const router = useRouter();
@@ -184,7 +184,7 @@ export default function SingupPage() {
 
     const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!firstName || !lastName || !email || !password || !mobile) {
+        if (!firstName || !lastName || !email || !password ) {
             return;
         }
         dispatch(signUp({
@@ -195,9 +195,9 @@ export default function SingupPage() {
                         FirstName: firstName,
                         LastName: lastName,
                         Email: email,
-                        UserData: {
-                            PhoneNumber: mobile
-                        },
+                        // UserData: {
+                        //     PhoneNumber: mobile
+                        // },
                         Password: password
                     }
                 }
@@ -243,6 +243,7 @@ export default function SingupPage() {
                             component="form"
                             onSubmit={handleSignup}
                         >
+                            <Box className='NameBox' display='flex' gap={2}>
                             <TextField
                                 className='textField'
                                 id="outlined-basic"
@@ -259,7 +260,8 @@ export default function SingupPage() {
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                             />
-                            <TextField
+                            </Box>
+                            {/* <TextField
                                 className='textField'
                                 id="outlined-basic"
                                 placeholder="Mobile Number"
@@ -267,7 +269,7 @@ export default function SingupPage() {
                                 type='tel'
                                 value={mobile}
                                 onChange={(e) => setMobile(e.target.value)}
-                            />
+                            /> */}
                             <TextField
                                 className='textField'
                                 id="outlined-basic"
