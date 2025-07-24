@@ -115,6 +115,7 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
   return (
     <>
       {(field === '__row_group_by_columns_group_teams__' ||
+        field === '__row_group_by_columns_group_organisationName__' ||
         field === '__row_group_by_columns_group__' ||
         field === '__row_group_by_columns_group_portfolioName__') && (
         <>
@@ -130,21 +131,27 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
                     ? 'Collapse All Projects'
                     : view === 'Portfolio'
                       ? 'Collapse All Portfolios'
-                      : 'Collapse All Teams'
+                      : view === 'Organisations'
+                        ? 'Collapse All Organisations'
+                        : 'Collapse All Teams'
                 : view === 'Project'
                   ? 'Expand All Projects'
                   : view === 'Project Cost'
                     ? 'Expand All Projects'
                     : view === 'Portfolio'
                       ? 'Expand All Portfolios'
-                      : 'Expand All Teams'}
+                      : view === 'Organisations'
+                        ? 'Expand All Organisations'
+                        : 'Expand All Teams'}
             </ListItemText>
           </MenuItem>
 
           {(view === 'Teams' ||
+            view === 'Organisations' ||
             view === 'Teams Cost' ||
             view === 'Portfolio') &&
             (field === '__row_group_by_columns_group_teams__' ||
+              field === '__row_group_by_columns_group_organisationName__' ||
               field === '__row_group_by_columns_group_portfolioName__') && (
               <MenuItem onClick={handleToggleResources}>
                 <ListItemIcon>
@@ -166,7 +173,10 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
 
       {(field === '__row_group_by_columns_group_resource__' ||
         field === '__row_group_by_columns_group_project__') &&
-        (view === 'Teams' || view === 'Teams Cost' || view === 'Portfolio') && (
+        (view === 'Teams' ||
+          view === 'Teams Cost' ||
+          view === 'Organisations' ||
+          view === 'Portfolio') && (
           <MenuItem onClick={handleToggleResources}>
             <ListItemIcon>
               <PersonIcon fontSize="small" />
@@ -190,6 +200,7 @@ export const CustomColumnMenu = props => {
   const field = props.colDef?.field;
   const showUserItem =
     field === '__row_group_by_columns_group_teams__' ||
+    field === '__row_group_by_columns_group_organisationName__' ||
     field === '__row_group_by_columns_group__' ||
     field === '__row_group_by_columns_group_resource__' ||
     field === '__row_group_by_columns_group_portfolioName__' ||

@@ -577,6 +577,10 @@ const TeamsCostIcon = () => (
   <img src="images/icons/teamsCostIcon.svg" alt="teams cost" />
 );
 
+const OrganisationIcon = () => (
+  <img src="images/icons/organisationView.svg" alt="organisation" />
+);
+
 const PortfolioIcon = () => (
   <img src="/images/icons/portfolio.svg" alt="portfolio" />
 );
@@ -639,6 +643,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     {
       name: 'Teams',
       icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
+      name: 'Organisations',
+      icon: <OrganisationIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
     },
     {
       name: 'Project',
@@ -868,7 +876,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         teams?.result || []
       );
 
-      if (view.includes('Teams') && teamsIAmAllocationManager.length === 0) {
+      if (
+        (view.includes('Teams') || view.includes('Organisations')) &&
+        teamsIAmAllocationManager.length === 0
+      ) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
@@ -893,7 +904,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       }
     }
 
-    if (view.includes('Teams')) {
+    if (view.includes('Teams') || view.includes('Organisations')) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
     } else if (view.includes('Project') || view.includes('Portfolio')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
@@ -1339,7 +1350,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       </Typography>
                     </Popover>
                   </>
-                ) : view.includes('Teams') ? (
+                ) : view.includes('Teams') || view.includes('Organisations') ? (
                   <>
                     <TooltipButton
                       msg="My Teams"
@@ -1639,7 +1650,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 size="small"
                 checked={currentView?.GroupBy.includes('Cost')}
                 onChange={handleAllocationCostSwitch}
-                disabled={currentView?.GroupBy === 'Portfolio'}
+                disabled={
+                  currentView?.GroupBy === 'Portfolio' ||
+                  currentView?.GroupBy === 'Organisations'
+                }
               />
               <Typography
                 sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}

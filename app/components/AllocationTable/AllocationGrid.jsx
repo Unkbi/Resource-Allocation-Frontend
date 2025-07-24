@@ -301,7 +301,10 @@ export default function AllocationGrid({
 
   useEffect(() => {
     try {
-      if (groupBy === 'teams' && expandRowId?.length) {
+      if (
+        (groupBy === 'teams' || groupBy === 'organisationName') &&
+        expandRowId?.length
+      ) {
         expandRowId.forEach(rowId => {
           const row = apiRef.current.getRow(rowId);
           if (row) {
@@ -738,6 +741,7 @@ export default function AllocationGrid({
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
     '__row_group_by_columns_group_teams__',
+    '__row_group_by_columns_group_organisationName__',
     '__row_group_by_columns_group_resource__',
     '__row_group_by_columns_group_project__',
     '__row_group_by_columns_group_portfolioName__',
@@ -750,7 +754,11 @@ export default function AllocationGrid({
       )
       .map(col => col.field),
     ...finalColumns
-      .filter(i => i.field === 'project' && groupBy === 'teams')
+      .filter(
+        i =>
+          i.field === 'project' &&
+          (groupBy === 'teams' || groupBy === 'organisationName')
+      )
       .map(col => col.field),
   ];
 
@@ -1122,7 +1130,7 @@ export default function AllocationGrid({
               return false;
             }
           }
-          if (groupBy === 'teams') {
+          if (groupBy === 'teams' || groupBy === 'organisationName') {
             // Previously selected team
             const currentResourceSelected = apiRef.current.getRow(
               selectedCells[0].id
@@ -1150,7 +1158,9 @@ export default function AllocationGrid({
       if (Object.keys(newModel)[0].startsWith('auto-generated')) {
         if (
           apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
-          'teams'
+            'teams' ||
+          apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
+            'organisationName'
         ) {
           setCellSelectionModel({});
           return;
@@ -1242,6 +1252,11 @@ export default function AllocationGrid({
         __row_group_by_columns_group_resource__: true,
         project: true,
       },
+      organisationName: {
+        __row_group_by_columns_group_organisationName__: true,
+        __row_group_by_columns_group_resource__: true,
+        project: true,
+      },
       project: {
         resource: true,
         __row_group_by_columns_group__: true,
@@ -1316,7 +1331,11 @@ export default function AllocationGrid({
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}
-      onRowClick={groupBy === 'teams' ? onRowClick : () => null}
+      onRowClick={
+        groupBy === 'teams' || groupBy === 'organisationName'
+          ? onRowClick
+          : () => null
+      }
       apiRef={apiRef}
       groupBy={groupBy}
       loading={loading}
