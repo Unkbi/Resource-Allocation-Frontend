@@ -60,6 +60,9 @@ export default function OrganisationAllocation({
   const { organisations } = useSelector(
     (state: RootState) => state.organisations
   );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   ) as {
@@ -97,6 +100,7 @@ export default function OrganisationAllocation({
               teams?.result || [],
               // @ts-ignore
               teamsResources,
+              allResourcesDetail,
               startDate,
               endDate
             )

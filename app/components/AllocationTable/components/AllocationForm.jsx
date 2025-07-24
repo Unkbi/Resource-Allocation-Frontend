@@ -327,6 +327,7 @@ const AllocationForm = () => {
   const { teams, teamsResources, calendarDate } = useSelector(
     state => state.teams
   );
+  const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
@@ -1216,6 +1217,7 @@ const AllocationForm = () => {
                   allocationsUpdated,
                   teams,
                   teamsResources,
+                  allResourcesDetail,
                   projects,
                   resources,
                   splitView,

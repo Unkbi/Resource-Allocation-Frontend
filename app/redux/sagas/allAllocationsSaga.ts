@@ -114,6 +114,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamResourceObject,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -211,6 +212,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamResourceObject,
+      [],
       startDate,
       endDate
     );
@@ -288,6 +290,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamsResources,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -467,6 +470,7 @@ function* updateResourceAllocationsSaga(
       formattedAllocations,
       teams,
       teamsResources,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
