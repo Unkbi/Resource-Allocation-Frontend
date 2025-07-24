@@ -47,6 +47,7 @@ import {
   formatTeamName,
 } from '@/app/utils/useResponsiveChart';
 import CommonToolbar from '@/app/components/Toolbar/CommonToolbar';
+import { getWeekNumber } from '@/app/utils/common';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -855,7 +856,7 @@ export default function ExecutiveDashboardPage() {
                   }))}
                   xAxis={[
                     {
-                      data: projectPeriods.map((p, idx) => `W${idx + 1}`),
+                      data: projectPeriods.map((p, idx) => `${getWeekNumber(p)}`),
                       label: 'Week',
                       //tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
