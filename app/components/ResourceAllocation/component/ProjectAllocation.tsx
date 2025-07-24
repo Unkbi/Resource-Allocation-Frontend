@@ -374,7 +374,13 @@ export default function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.portfolioName ?? 'N/A'} />
+          <EllipsisNameCell
+            value={
+              firstChild.portfolioName === 'zzzzz'
+                ? ''
+                : (firstChild.portfolioName ?? '')
+            }
+          />
         ) : null;
       },
     },
