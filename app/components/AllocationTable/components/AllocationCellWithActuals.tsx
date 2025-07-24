@@ -10,9 +10,9 @@ const AllocationCellWithActuals = ({
     if (isNaN(value) || isNaN(actuals)) {
       return 'transparent';
     }
-    if (value === 0 && actuals === 0) {
-      return 'transparent';
-    }
+    // if (value === 0 && actuals === 0) {
+    //   return 'transparent';
+    // }
     if (value === actuals) {
       return '#F0FFEC';
     } else if (value < actuals) {
@@ -25,8 +25,8 @@ const AllocationCellWithActuals = ({
   };
 
   // const notes = (parseFloat(params?.formattedValue as string) * 10) % 2;
-  const rawValue = parseFloat(params.value ?? '');
-  let rawActuals = parseFloat(params.actuals ?? '');
+  const rawValue = params.value ? parseFloat(params.value) : 0;
+  let rawActuals = params.actuals ? parseFloat(params.actuals) : 0;
   const notes = (params?.notes as string) || '';
   if (
     (params.actuals === null || params.actuals === undefined) &&
