@@ -693,8 +693,10 @@ export default function AllocationGrid({
           const notes = cellData?.notes || '';
           const actuals = cellData?.actuals || null;
           const period = cellData?.period;
-          const isFutureWeek =
-            period && !isCurrentWeek(period) && !isCurrentOrPastWeek(period);
+         const isFutureWeek =
+           period &&
+           !isCurrentWeek(parseISO(period)) &&
+           !isCurrentOrPastWeek(parseISO(period));
           const cellContent = (() => {
             if (showTooltip) {
               return (
