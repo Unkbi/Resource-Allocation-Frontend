@@ -1216,7 +1216,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       ? PORTFOLIO_DISPLAY_NAME
                       : currentView?.GroupBy === 'Project Cost'
                         ? 'Projects Cost'
-                        : currentView?.GroupBy || 'Teams'
+                        : currentView?.GroupBy === 'Organisations'
+                          ? 'Organizations'
+                          : currentView?.GroupBy || 'Teams'
                 }
                 onChange={handleViewChange}
                 className="projectDropdown"
@@ -1260,7 +1262,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       ? 'Projects'
                       : option.name === 'Project Cost'
                         ? 'Projects Cost'
-                        : option.name}
+                        : option.name === 'Organisations'
+                          ? 'Organizations'
+                          : option.name}
                   </StyledMenuItem>
                 ))}
               </StyledSelect>

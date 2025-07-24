@@ -57,6 +57,9 @@ export default function TeamAllocation({
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
   );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   ) as {
@@ -94,6 +97,7 @@ export default function TeamAllocation({
               teams?.result || [],
               // @ts-ignore
               teamsResources,
+              allResourcesDetail,
               startDate,
               endDate
             )

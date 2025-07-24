@@ -83,6 +83,7 @@ const CellWithMenu = ({
   const allResources = useSelector(
     state => state.resources.resources?.result || []
   );
+  const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allProjects = useSelector(
     state => state.projects.projects?.result || []
   );
@@ -268,6 +269,7 @@ const CellWithMenu = ({
                 : '',
             allTeams,
             teamsResources,
+            allResourcesDetail,
             null,
             allResources.filter(resource => resource.Id === row.resourceId),
             {

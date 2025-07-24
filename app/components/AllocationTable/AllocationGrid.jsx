@@ -114,6 +114,7 @@ export default function AllocationGrid({
   const { teams, teamsResources, teamAllocations } = useSelector(
     state => state.teams
   );
+  const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const [rowModesModel, setRowModesModel] = useState({});
   const [cellSelectionModel, setCellSelectionModel] = useState({});
@@ -1018,6 +1019,7 @@ export default function AllocationGrid({
               allocationsUpdated,
               teams,
               teamsResources,
+              allResourcesDetail,
               projects,
               resources,
               splitView,
