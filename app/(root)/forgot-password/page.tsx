@@ -200,7 +200,7 @@ export default function ForgotPasswordPage() {
                 <Box className='loginRight'>
                     <Box className='formBox'>
                         <Typography variant="h4">
-                            Forgot Password
+                            Reset Password
                         </Typography>
                         <Typography className='subHeadingText'>
                             We will send you an link to reset your password
