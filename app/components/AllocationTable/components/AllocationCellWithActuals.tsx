@@ -10,9 +10,9 @@ const AllocationCellWithActuals = ({
     if (isNaN(value) || isNaN(actuals)) {
       return 'transparent';
     }
-    if (value === 0 && actuals === 0) {
-      return 'transparent';
-    }
+    // if (value === 0 && actuals === 0) {
+    //   return 'transparent';
+    // }
     if (value === actuals) {
       return '#F0FFEC';
     } else if (value < actuals) {
@@ -25,9 +25,15 @@ const AllocationCellWithActuals = ({
   };
 
   // const notes = (parseFloat(params?.formattedValue as string) * 10) % 2;
-  const rawValue = parseFloat(params?.value as string);
-  const rawActuals = parseFloat(params?.actuals as string);
+  const rawValue = params.value ? parseFloat(params.value) : 0;
+  let rawActuals = params.actuals ? parseFloat(params.actuals) : 0;
   const notes = (params?.notes as string) || '';
+  if (
+    (params.actuals === null || params.actuals === undefined) &&
+    !isNaN(rawValue)
+  ) {
+    rawActuals = 0;
+  }
 
   const formattedValue = !isNaN(rawValue) ? rawValue.toFixed(1) : '';
   const formattedActuals = !isNaN(rawActuals) ? rawActuals.toFixed(1) : '';
@@ -52,10 +58,7 @@ const AllocationCellWithActuals = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: getBackgroundColor(
-              Number.parseFloat(params?.value as string),
-              Number.parseFloat(params?.actuals as string)
-            ),
+            backgroundColor: getBackgroundColor(rawValue, rawActuals),
             flex: 1,
           }}
         >
