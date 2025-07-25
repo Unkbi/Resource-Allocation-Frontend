@@ -895,7 +895,7 @@ ORDER BY cal.period_start,
   ) => `SELECT count(*) as Active_project
   FROM public.resourceallocation_core__project_0_0_1
   WHERE _agentlang__is_deleted is false
-    AND _status = 'Active'`,
+    AND _status IN ('Active', 'Approved');`,
   activeResources: (
     startDate,
     endDate,
