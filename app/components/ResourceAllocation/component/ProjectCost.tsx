@@ -214,7 +214,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectSponsor || ''} />
         ) : null;
       },
     },
@@ -456,7 +456,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectManager ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectManager || ''} />
         ) : null;
       },
     },
@@ -473,7 +473,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStatus ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStatus || ''} />
         ) : null;
       },
     },
@@ -490,7 +490,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectLocation ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectLocation || ''} />
         ) : null;
       },
     },
@@ -507,7 +507,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectType ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectType || ''} />
         ) : null;
       },
     },
@@ -561,7 +561,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCurrency ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectCurrency || ''} />
         ) : null;
       },
     },
@@ -578,7 +578,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStartDate || ''} />
         ) : null;
       },
     },
@@ -594,7 +594,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectEndDate || ''} />
         ) : null;
       },
     },

@@ -136,10 +136,10 @@ const formatAllocations = (
             team.Id === allocation.Resource
         );
 
-      const role = matchingTeamResource ? matchingTeamResource.Role : 'N/A';
+      const role = matchingTeamResource ? matchingTeamResource.Role : '';
       const resourceType = matchingTeamResource
         ? matchingTeamResource.Type
-        : 'N/A';
+        : '';
 
       // Using Resource + Team ID + Project ID as the unique identifier
       const uniqueId = `${allocation.Resource}-${teamId}-${allocation.Project}`;

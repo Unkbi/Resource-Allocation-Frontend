@@ -219,7 +219,7 @@ export default function OrganisationAllocation({
       renderCell: (params: GridCellParams) => {
         const organisation = getOrganisation(params);
         return organisation ? (
-          <EllipsisNameCell value={organisation?.Status ?? 'N/A'} />
+          <EllipsisNameCell value={organisation?.Status || ''} />
         ) : null;
       },
     },
@@ -410,7 +410,7 @@ export default function OrganisationAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team ? <EllipsisNameCell value={team?.Status ?? 'N/A'} /> : null;
+        return team ? <EllipsisNameCell value={team?.Status || ''} /> : null;
       },
     },
     {
@@ -583,7 +583,7 @@ export default function OrganisationAllocation({
               getAllocationManagerFromPath(
                 team?.AllocationManager,
                 _resources?.result || []
-              )?.FullName ?? 'N/A'
+              )?.FullName || ''
             }
           />
         ) : null;
