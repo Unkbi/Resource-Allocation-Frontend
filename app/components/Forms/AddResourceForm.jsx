@@ -516,8 +516,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             formikProps={formikProps}
             fullWidth
             onChange={(event, newValue) => {
-              formikProps.setFieldValue('Type', newValue || '');
-
               if (
                 newValue !== 'Contractor - FT' &&
                 newValue !== 'Contractor - PT'
