@@ -510,7 +510,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledAutocomplete
             name="Type"
             label="Type"
-            x
             placeholder="Select type"
             value={values.Type || ''}
             options={typeOptions}
