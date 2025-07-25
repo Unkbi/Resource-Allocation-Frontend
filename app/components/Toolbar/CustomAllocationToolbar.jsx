@@ -1215,10 +1215,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     : currentView?.GroupBy === 'Portfolio'
                       ? PORTFOLIO_DISPLAY_NAME
                       : currentView?.GroupBy === 'Project Cost'
-                        ? 'Projects Cost'
-                        : currentView?.GroupBy === 'Organisations'
-                          ? 'Organizations'
-                          : currentView?.GroupBy || 'Teams'
+                        ? 'Projects'
+                        : currentView?.GroupBy === 'Teams Cost'
+                          ? 'Teams'
+                          : currentView?.GroupBy === 'Organisations'
+                            ? 'Organizations'
+                            : currentView?.GroupBy || 'Teams'
                 }
                 onChange={handleViewChange}
                 className="projectDropdown"
@@ -1235,11 +1237,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <MenuItemContent>
                     {viewOptions.find(
                       option => option.name === currentView?.GroupBy
-                    )?.icon || (
-                      <MonetizationOnIcon
-                        sx={{ fontSize: 20, color: '#5D6979' }}
-                      />
-                    )}
+                    )?.icon ||
+                      (currentView?.GroupBy === 'Teams Cost' ? (
+                        <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />
+                      ) : (
+                        <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />
+                      ))}
                     <Typography
                       sx={{
                         color: '#5D6979',
