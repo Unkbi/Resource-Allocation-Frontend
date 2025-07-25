@@ -448,7 +448,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="Organisation"
-            label="Organisation"
+            label="Organization"
             placeholder="Enter organization"
             value={values.Organisation || ''}
             options={organisationListOptions}
@@ -510,6 +510,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledAutocomplete
             name="Type"
             label="Type"
+            x
             placeholder="Select type"
             value={values.Type || ''}
             options={typeOptions}
