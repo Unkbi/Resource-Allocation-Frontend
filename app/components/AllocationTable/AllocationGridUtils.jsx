@@ -797,7 +797,7 @@ export const getFinalColumns = (
           if (isGridTreeNode && rowNode.children) {
             return firstChild ? (
               <>
-                <EllipsisNameCell value={firstChild.project ?? 'N/A'} />
+                <EllipsisNameCell value={firstChild.project || ''} />
                 <span
                   style={{
                     flexShrink: 0,
