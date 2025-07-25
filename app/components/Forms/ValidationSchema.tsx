@@ -41,7 +41,7 @@ export const addProjectValidationSchema = (
         }
       ),
     Type: Yup.string().required('Project type is required'),
-    AllowOvertime: Yup.boolean().required('Allow overtime is required'),
+    AllowOvertime: Yup.string().required('Allow overtime is required'),
     StartDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')
