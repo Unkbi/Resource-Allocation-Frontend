@@ -53,7 +53,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
-  PORTFOLIO_DISPLAY_NAME,
+  PORTFOLIO_DISPLAY_NAME_PLURAL,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
@@ -1213,7 +1213,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   currentView?.GroupBy === 'Project'
                     ? 'Projects'
                     : currentView?.GroupBy === 'Portfolio'
-                      ? PORTFOLIO_DISPLAY_NAME
+                      ? PORTFOLIO_DISPLAY_NAME_PLURAL
                       : currentView?.GroupBy === 'Project Cost'
                         ? 'Projects'
                         : currentView?.GroupBy === 'Teams Cost'
@@ -1267,7 +1267,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                         ? 'Projects Cost'
                         : option.name === 'Organisations'
                           ? 'Organizations'
-                          : option.name}
+                          : option.name === 'Portfolio'
+                            ? PORTFOLIO_DISPLAY_NAME_PLURAL
+                            : option.name}
                   </StyledMenuItem>
                 ))}
               </StyledSelect>
