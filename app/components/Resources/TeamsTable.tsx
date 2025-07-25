@@ -47,7 +47,14 @@ const TeamsTable = ({
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+        height: 'calc(100vh - 31px)',
+      }}
+    >
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
