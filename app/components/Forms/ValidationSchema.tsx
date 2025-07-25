@@ -136,6 +136,7 @@ export const editResourceValidationSchema = Yup.object({
   Type: Yup.string().required('Resource type is required'),
   Manager: Yup.string(),
   Team: Yup.string().required('Team is required'),
+  Organisation: Yup.string().required('Organization is required'),
   ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
   AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
   EndDate: Yup.string()
