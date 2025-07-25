@@ -592,7 +592,15 @@ export default function PortfolioAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box
+        sx={{
+          height: 'calc(100vh - 54px)',
+          width: '100%',
+          '& .MuiDataGrid-columnHeader .MuiBadge-badge': {
+            display: 'none !important',
+          },
+        }}
+      >
         <AllocationGrid
           groupBy={'portfolioName'}
           columns={portfolioColumnConfig}
