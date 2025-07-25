@@ -556,6 +556,7 @@ const AllocationForm = () => {
               cleanedValues.PortfolioId === ''
                 ? null
                 : cleanedValues.PortfolioId,
+            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
           },
         };
         try {
@@ -640,6 +641,7 @@ const AllocationForm = () => {
               cleanedValues.PortfolioId === ''
                 ? null
                 : cleanedValues.PortfolioId,
+            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
           },
         };
         try {

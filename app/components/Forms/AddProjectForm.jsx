@@ -62,7 +62,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           resources?.result?.find(
             res => res.FullName === initialData.ProjectSponsor
           )?.Id || '',
-        AllowOvertime: initialData.AllowOvertime ?? '',
+        AllowOvertime: initialData.AllowOvertime ? 'Yes': 'No',
         Location: initialData.Location || '',
         ProjectManager:
           resources?.result?.find(
@@ -88,8 +88,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     { value: 'Ongoing', label: 'Ongoing' },
   ];
   const allowOverTimeOptions = [
-    { value: true, label: 'Yes' },
-    { value: false, label: 'No' },
+    { value: 'Yes', label: 'Yes' },
+    { value: 'No', label: 'No' },
   ];
 
   const statusOptions = [
