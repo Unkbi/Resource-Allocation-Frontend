@@ -1469,6 +1469,15 @@ const AllocationForm = () => {
 
             // PUT request.
             dispatch(updateUsersSavedViewAction(values.id, updatedView));
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `View "${values.name}" updated successfully`,
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
             dispatch(closeDialog());
           } else {
             const userId = getUserIdFromEmail(
@@ -1501,6 +1510,15 @@ const AllocationForm = () => {
 
             // POST request to save the view.
             dispatch(addUsersSavedViewAction(newView));
+            ispatch(
+              showToast({
+                open: true,
+                message: `New view "${values.name}" created successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           }
         } catch (e) {
@@ -1544,6 +1562,15 @@ const AllocationForm = () => {
 
             // PUT request to update the view
             dispatch(updateUsersSavedViewAction(currentView.Id, updatedView));
+            dispatch(
+              showToast({
+                open: true,
+                message: `View saved successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           }
         } catch (e) {
