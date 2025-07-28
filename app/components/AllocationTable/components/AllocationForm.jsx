@@ -696,6 +696,15 @@ const AllocationForm = () => {
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
                 dispatch(setHighlightedRowId(newTeamId));
+                 dispatch(
+                   showToast({
+                     open: true,
+                     message: `Team added successfully`,
+                     type: 'success',
+                     position: 'bottom-left',
+                     autoHideTimer: 4000,
+                   })
+                 );
               }
 
               if (pathname !== '/people?tab=teams') {
@@ -747,6 +756,15 @@ const AllocationForm = () => {
 
           await dispatch(fetchAllTeams());
           dispatch(setHighlightedRowId(initialData.Id));
+           dispatch(
+             showToast({
+               open: true,
+               message: `Team updated successfully`,
+               type: 'success',
+               position: 'bottom-left',
+               autoHideTimer: 4000,
+             })
+           );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update team:', e);
@@ -817,6 +835,15 @@ const AllocationForm = () => {
               payload: {},
             });
             dispatch(setHighlightedRowId(newResourceId));
+            dispatch(
+              showToast({
+                open: true,
+                message: `Resource added successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
           }
 
           if (pathname !== '/people') {
@@ -945,6 +972,15 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
+           dispatch(
+             showToast({
+               open: true,
+               message: `Resource updated successfully`,
+               type: 'success',
+               position: 'bottom-left',
+               autoHideTimer: 4000,
+             })
+           );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
