@@ -165,7 +165,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     };
 
     loadAndSetForm();
-  }, [initialData?.Id]);
+  }, [initialData?.Id, organisations, teams]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
