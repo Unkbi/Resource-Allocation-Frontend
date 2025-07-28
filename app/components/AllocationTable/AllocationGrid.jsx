@@ -862,7 +862,16 @@ export default function AllocationGrid({
       const deleteList = [];
       const updateList = [];
       let allUpdatedRows = [];
-      keys.map(key => {
+
+      for (const key of keys) {
+        const newValue = newRow[key];
+        const oldValue = oldRow[key]?.value || 0;
+        const allocationId = oldRow[key]?.allocationId;
+        const period = oldRow[key]?.period;
+        const resourceId = oldRow.resourceId;
+        const projectId = oldRow.projectId;
+        const projectName = oldRow.project;
+        const projectOvertimeAllowed = newRow.projectOvertimeAllowed;
         // Handle Delete Case
         if (
           (newRow[key] === null ||
@@ -872,49 +881,31 @@ export default function AllocationGrid({
           oldRow[key]?.allocationId
         ) {
           deleteList.push({
-            Id: oldRow[key]?.allocationId,
-            Resource: oldRow.resourceId,
-            Project: oldRow.projectId,
-            ProjectName: oldRow.project,
-            Period: oldRow[key]?.period,
+            Id: allocationId,
+            Resource: resourceId,
+            Project: projectId,
+            ProjectName: projectName,
+            Period: period,
             AllocationEntered: null,
           });
+          continue;
         }
-
-        // Verify Updated Values total allocation for resource is not greater than 2.0
-        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
-
-        const period = oldRow[key]?.period;
-        const value = formattedCellValue;
-        const resourceId = oldRow.resourceId;
-
-        // Calculate total allocation for the week across all rows for that resource
+        const value = Math.round(newValue * 10) / 10;
+       // 2. Check weekly total across all projects for resource
+        const allData = getAllRowsForView(viewId);
         let totalForWeek = 0;
 
-        const allData = getAllRowsForView(viewId);
-
-        allData.forEach(row => {
+        for (const row of allData) {
           if (row.resourceId === resourceId) {
-            const val = row[key]?.value || 0;
-            totalForWeek += parseFloat(val);
+            const val = parseFloat(row[key]?.value || 0);
+            totalForWeek += val;
           }
-        });
+        }
 
-        // Add new value (replace current row’s old value with new one)
-        const currentRowOldValue = oldRow[key]?.value || 0;
-        totalForWeek = totalForWeek - currentRowOldValue + value;
+        totalForWeek = totalForWeek - oldValue + value;
 
-        if (totalForWeek > 1.5 && totalForWeek <= 2) {
-          dispatch(
-            showToastAction(
-              true,
-              `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
-              'warning',
-              4000
-            )
-          );
-        } else if (totalForWeek > 2) {
-          newRow[key] = oldRow[key]?.value;
+        if (totalForWeek > 2.0) {
+          newRow[key] = oldValue;
           dispatch(
             showToastAction(
               true,
@@ -923,34 +914,55 @@ export default function AllocationGrid({
               4000
             )
           );
-          return;
+          return oldRow;
+        } else if (totalForWeek > 1.5 && totalForWeek <= 2) {
+          dispatch(
+            showToastAction(
+              true,
+              `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
+              'warning',
+              4000
+            )
+          );
+        }
+        if (!projectOvertimeAllowed && value > 1.0) {
+          newRow[key] = oldValue;
+          dispatch(
+            showToastAction(
+              true,
+              `Project ${projectName} does not allow overtime. Max allocation is 1.0.`,
+              'error',
+              4000
+            )
+          );
+          return oldRow;
         }
 
         // API call to update the data, if any changes are made.
-        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
-          if (oldRow[key]?.allocationId && newRow[key] !== null) {
+        if (value !== oldValue) {
+          if (allocationId) {
             // Add to update list
             updateList.push({
-              Id: oldRow[key]?.allocationId,
-              Resource: oldRow.resourceId,
-              Project: oldRow.projectId,
-              ProjectName: oldRow.project,
-              Period: oldRow[key]?.period,
-              AllocationEntered: formattedCellValue,
+              Id: allocationId,
+              Resource: resourceId,
+              Project: projectId,
+              ProjectName: projectName,
+              Period: period,
+              AllocationEntered: value,
               // Notes: 'This is an allocation 1', // To Be Impemented
             });
-          } else if (formattedCellValue) {
+          } else {
             updateList.push({
-              Resource: oldRow.resourceId,
-              Project: oldRow.projectId,
-              ProjectName: oldRow.project,
-              Period: oldRow[key]?.period,
-              AllocationEntered: formattedCellValue,
+              Resource: resourceId,
+              Project: projectId,
+              ProjectName: projectName,
+              Period: period,
+              AllocationEntered: value,
               // Notes: 'This is an allocation 1', // To Be Impemented
             });
           }
         }
-      });
+      }
 
       if (deleteList.length === 0 && updateList.length === 0) {
         return oldRow;
