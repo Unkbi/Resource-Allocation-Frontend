@@ -959,15 +959,19 @@ LEFT JOIN bucket_actuals ba
        ON ba.period_start = cal.period_start
 ORDER BY cal.period_start;`,
 
-  totalResourceCost: (startDate, endDate, bucket) => `with active_resource as (
-    select ___path__ as resource_id
-        FROM public.resourceallocation_core__resource_0_0_1
-            where _agentlang__is_deleted is false
-            and _type <> 'Contractor - PT'
+  totalResourceCost: (startDate, endDate, bucket) => `WITH active_resource AS (
+    SELECT ___path__ AS resource_id
+    FROM public.resourceallocation_core__resource_0_0_1
+    WHERE _agentlang__is_deleted IS FALSE
+      AND _type <> 'Contractor - PT'
 )
-select sum(rcu._cost) as total_cost,rcu._costcurrency as Currency  from public.resourceallocation_core__resourceunitcost_0_0_1 rcu
-join active_resource ar on ar.resource_id = rcu._resourceref
-group by rcu._costcurrency`,
+SELECT
+    SUM(rcu._actualscost) AS total_cost,
+    rcu._costcurrency AS Currency
+FROM public.resourceallocation_core__allocationcost_0_0_1 rcu
+JOIN active_resource ar ON ar.resource_id = rcu._resourceref
+WHERE rcu._period BETWEEN '${startDate}' AND '${endDate}'
+GROUP BY rcu._costcurrency;`,
 
   allocationPercentage: (
     startDate,
