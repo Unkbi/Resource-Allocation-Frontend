@@ -464,10 +464,16 @@ const AllocationForm = () => {
   };
 
   const handleOnAdd = resources => {
-    const rowIds = resources?.map(
-      resource =>
-        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`
-    );
+    const rowIds = resources?.reduce((acc, resource) => {
+      const organisation = allResourcesDetail.find(
+        r => r.Resource.Id === resource.Id
+      )?.Organization;
+      return [
+        ...acc,
+        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`,
+        `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
+      ];
+    }, []);
     dispatch(setExpandRowId(rowIds));
   };
 
