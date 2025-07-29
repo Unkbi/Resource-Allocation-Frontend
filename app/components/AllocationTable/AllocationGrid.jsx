@@ -697,10 +697,10 @@ export default function AllocationGrid({
           const notes = cellData?.notes || '';
           const actuals = cellData?.actuals || null;
           const period = cellData?.period;
-         const isFutureWeek =
-           period &&
-           !isCurrentWeek(parseISO(period)) &&
-           !isCurrentOrPastWeek(parseISO(period));
+          const isFutureWeek =
+            period &&
+            !isCurrentWeek(parseISO(period)) &&
+            !isCurrentOrPastWeek(parseISO(period));
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -778,7 +778,9 @@ export default function AllocationGrid({
       .filter(
         i =>
           i.field === 'project' &&
-          (groupBy === 'teams' || groupBy === 'organisationName')
+          (groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource')
       )
       .map(col => col.field),
   ];
@@ -1152,7 +1154,11 @@ export default function AllocationGrid({
               return false;
             }
           }
-          if (groupBy === 'teams' || groupBy === 'organisationName') {
+          if (
+            groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource'
+          ) {
             // Previously selected team
             const currentResourceSelected = apiRef.current.getRow(
               selectedCells[0].id
@@ -1279,6 +1285,10 @@ export default function AllocationGrid({
         __row_group_by_columns_group_resource__: true,
         project: true,
       },
+      resource: {
+        __row_group_by_columns_group__: true,
+        project: true,
+      },
       project: {
         resource: true,
         __row_group_by_columns_group__: true,
@@ -1389,7 +1399,8 @@ export default function AllocationGrid({
           allocationTheme,
           type,
           projects?.result,
-          isCellEditable
+          isCellEditable,
+          groupBy
         );
         // const editable = isCellEditable(params);
         // if (!editable) {

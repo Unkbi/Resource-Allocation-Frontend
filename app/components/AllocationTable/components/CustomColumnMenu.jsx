@@ -133,7 +133,9 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
                       ? 'Collapse All Portfolios'
                       : view === 'Organisations'
                         ? 'Collapse All Organisations'
-                        : 'Collapse All Teams'
+                        : view === 'Resources'
+                          ? 'Collapse All Resources'
+                          : 'Collapse All Teams'
                 : view === 'Project'
                   ? 'Expand All Projects'
                   : view === 'Project Cost'
@@ -142,7 +144,9 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
                       ? 'Expand All Portfolios'
                       : view === 'Organisations'
                         ? 'Expand All Organisations'
-                        : 'Expand All Teams'}
+                        : view === 'Resources'
+                          ? 'Expand All Resources'
+                          : 'Expand All Teams'}
             </ListItemText>
           </MenuItem>
 
