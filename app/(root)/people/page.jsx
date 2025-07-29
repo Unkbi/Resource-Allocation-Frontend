@@ -990,6 +990,15 @@ export default function Resources() {
           } else {
             dispatch(deleteTeam(teamId));
             dispatch(fetchAllTeams());
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Team deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 1000,
+              })
+            );
           }
         } catch (error) {
           dispatch(
