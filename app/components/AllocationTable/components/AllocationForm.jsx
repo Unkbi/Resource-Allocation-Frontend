@@ -192,6 +192,7 @@ const initialValuesMap = {
     StartDate: '',
     EndDate: '',
     AllocationEntered: '',
+    AllowOvertime:  false,
   },
   assign_allocation: {
     Resource: '',
@@ -527,6 +528,7 @@ const AllocationForm = () => {
       Team,
       ConfirmTransfer,
       shouldTransfer,
+      AllowOvertime,
       ...cleanedValues
     } = values;
 
@@ -1038,6 +1040,7 @@ const AllocationForm = () => {
                     `Total allocation for week ${weekKey} exceeds 1.5 (${newFinalTotal.toFixed(2)}).`
                   );
                 }
+                
 
                 if (
                   allocation &&
