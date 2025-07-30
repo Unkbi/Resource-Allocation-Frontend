@@ -1123,8 +1123,17 @@ export const ColumnManagementStyles = {
       fontWeight: '600',
       cursor: 'pointer',
       padding: '0',
+      backgroundColor: 'transparent',
       '&:hover': {
-        background: 'none',
+        backgroundColor: 'none',
+      },
+      '&.Mui-disabled': {
+        color: '#9E9E9E',
+        backgroundColor: 'transparent',
+        cursor: 'not-allowed',
+        '&:hover': {
+          backgroundColor: 'transparent',
+        },
       },
     },
   },
