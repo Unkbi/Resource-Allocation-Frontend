@@ -743,7 +743,7 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
+            <EllipsisNameCell value={""} showAddIcon={false} />
           ) : (
             ''
           );
@@ -885,7 +885,7 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
+            <EllipsisNameCell value={""} showAddIcon={false} />
           ) : (
             ''
           );
