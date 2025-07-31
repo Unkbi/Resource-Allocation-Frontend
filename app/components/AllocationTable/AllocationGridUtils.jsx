@@ -271,7 +271,7 @@ const CellWithMenu = ({
             teamsResources,
             allResourcesDetail,
             null,
-            allResources.filter(resource => resource.Id === row.resourceId),
+            allResources,
             {
               ProjectName: row?.project || '',
               Id: '',
