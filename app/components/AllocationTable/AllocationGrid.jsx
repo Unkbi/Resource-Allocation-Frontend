@@ -864,6 +864,8 @@ export default function AllocationGrid({
       const deleteList = [];
       const updateList = [];
       let allUpdatedRows = [];
+      const projectOvertimeAllowed = oldRow.projectOvertimeAllowed;
+
       keys.map(key => {
         // Handle Delete Case
         if (
@@ -881,6 +883,19 @@ export default function AllocationGrid({
             Period: oldRow[key]?.period,
             AllocationEntered: null,
           });
+        }
+
+        if (!projectOvertimeAllowed && newRow[key] > 1.0) {
+          newRow[key] = oldRow[key]?.value;
+          dispatch(
+            showToastAction(
+              true,
+              `Project ${oldRow.project} does not allow overtime. Max allocation is 1.0.`,
+              'error',
+              4000
+            )
+          );
+          return;
         }
 
         // Verify Updated Values total allocation for resource is not greater than 2.0
