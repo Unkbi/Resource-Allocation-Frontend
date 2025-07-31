@@ -100,7 +100,6 @@ import {
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import {
   filterAllocationsForSelectedProject,
-  generateEmptyRow,
   getFormattedAllocationsForUpdate,
 } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
@@ -124,7 +123,7 @@ import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
 
 const initialValuesMap = {
   add_project: {
-    StartDate: '',
+    StartDate: new Date().toISOString().split('T')[0],
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
@@ -328,6 +327,7 @@ const AllocationForm = () => {
   const { teams, teamsResources, calendarDate } = useSelector(
     state => state.teams
   );
+  const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
@@ -464,10 +464,16 @@ const AllocationForm = () => {
   };
 
   const handleOnAdd = resources => {
-    const rowIds = resources?.map(
-      resource =>
-        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`
-    );
+    const rowIds = resources?.reduce((acc, resource) => {
+      const organisation = allResourcesDetail.find(
+        r => r.Resource.Id === resource.Id
+      )?.Organization;
+      return [
+        ...acc,
+        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`,
+        `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
+      ];
+    }, []);
     dispatch(setExpandRowId(rowIds));
   };
 
@@ -543,6 +549,7 @@ const AllocationForm = () => {
             Description: 'string',
             EndDate:
               cleanedValues.EndDate === '' ? null : cleanedValues.EndDate,
+            StartDate: cleanedValues.StartDate,
             ProjectSponsor:
               cleanedValues.ProjectSponsor === ''
                 ? null
@@ -555,6 +562,7 @@ const AllocationForm = () => {
               cleanedValues.PortfolioId === ''
                 ? null
                 : cleanedValues.PortfolioId,
+            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
           },
         };
         try {
@@ -639,6 +647,7 @@ const AllocationForm = () => {
               cleanedValues.PortfolioId === ''
                 ? null
                 : cleanedValues.PortfolioId,
+            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
           },
         };
         try {
@@ -693,6 +702,15 @@ const AllocationForm = () => {
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
                 dispatch(setHighlightedRowId(newTeamId));
+                 dispatch(
+                   showToast({
+                     open: true,
+                     message: `Team added successfully`,
+                     type: 'success',
+                     position: 'bottom-left',
+                     autoHideTimer: 4000,
+                   })
+                 );
               }
 
               if (pathname !== '/people?tab=teams') {
@@ -744,6 +762,15 @@ const AllocationForm = () => {
 
           await dispatch(fetchAllTeams());
           dispatch(setHighlightedRowId(initialData.Id));
+           dispatch(
+             showToast({
+               open: true,
+               message: `Team updated successfully`,
+               type: 'success',
+               position: 'bottom-left',
+               autoHideTimer: 4000,
+             })
+           );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update team:', e);
@@ -814,6 +841,15 @@ const AllocationForm = () => {
               payload: {},
             });
             dispatch(setHighlightedRowId(newResourceId));
+            dispatch(
+              showToast({
+                open: true,
+                message: `Resource added successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
           }
 
           if (pathname !== '/people') {
@@ -942,6 +978,15 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
+           dispatch(
+             showToast({
+               open: true,
+               message: `Resource updated successfully`,
+               type: 'success',
+               position: 'bottom-left',
+               autoHideTimer: 4000,
+             })
+           );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
@@ -1216,6 +1261,7 @@ const AllocationForm = () => {
                   allocationsUpdated,
                   teams,
                   teamsResources,
+                  allResourcesDetail,
                   projects,
                   resources,
                   splitView,
@@ -1429,6 +1475,15 @@ const AllocationForm = () => {
 
             // PUT request.
             dispatch(updateUsersSavedViewAction(values.id, updatedView));
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `View "${values.name}" updated successfully`,
+                  type: 'success',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
             dispatch(closeDialog());
           } else {
             const userId = getUserIdFromEmail(
@@ -1461,6 +1516,15 @@ const AllocationForm = () => {
 
             // POST request to save the view.
             dispatch(addUsersSavedViewAction(newView));
+            ispatch(
+              showToast({
+                open: true,
+                message: `New view "${values.name}" created successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           }
         } catch (e) {
@@ -1504,6 +1568,15 @@ const AllocationForm = () => {
 
             // PUT request to update the view
             dispatch(updateUsersSavedViewAction(currentView.Id, updatedView));
+            dispatch(
+              showToast({
+                open: true,
+                message: `View saved successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           }
         } catch (e) {

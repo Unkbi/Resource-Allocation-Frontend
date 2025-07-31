@@ -11,6 +11,7 @@ import {
   Allocation,
   AllocationGridCell,
   AllocationGridCellData,
+  AllResourceDetail,
   ApiResponse,
   CostAllocation,
   Portfolio,
@@ -169,6 +170,7 @@ export function formatAllAllocations(
   projects: Project[],
   resources: Resource[],
   portfolios: Portfolio[],
+  allResourcesDetail: AllResourceDetail[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
   endDate: string
@@ -197,6 +199,9 @@ export function formatAllAllocations(
     const resource = resources.find(r => r.Id === alloc.Resource);
     const team = resourceIdToTeam.get(alloc.Resource);
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
+    const organisation = allResourcesDetail?.find(
+      r => r?.Resource?.Id === alloc.Resource
+    )?.Organization;
 
     const key = `${alloc.Resource}-${team?.Id}-${alloc.Project}`;
 
@@ -246,6 +251,9 @@ export function formatAllAllocations(
           resource?.ContractorHourlyRateCurrency || null,
         averageWeeklyHours: resource?.AverageWeeklyHours || null,
         resourceStatus: resource?.Status || null,
+        organisationId: organisation?.Id,
+        organisationName: organisation?.Name,
+        organisationStatus: organisation?.Status,
         totalEffort: 0,
       };
 
@@ -286,6 +294,7 @@ export function injectBlankRows(
   allocations: AllAllocations[],
   teams: Team[],
   teamsResources: Record<string, Resource[]>,
+  allResourcesDetail: AllResourceDetail[],
   StartDate?: string,
   EndDate?: string
 ) {
@@ -303,6 +312,9 @@ export function injectBlankRows(
     const teamRes = teamsResources?.[team.Id] || [];
     teamRes.forEach(resource => {
       const key = `${team.Name}___${resource.Id}`;
+      const organisation = allResourcesDetail?.find(
+        r => r.Resource?.Id === resource.Id
+      )?.Organization;
       if (!existingKeys.has(key)) {
         extraRows.push({
           id: `team/${team.Name}-resource/${resource.FullName}`,
@@ -325,6 +337,9 @@ export function injectBlankRows(
           portfolioSidebarColor: '',
           portfolioDescription: '',
           portfolioStatus: '',
+          organisationId: organisation?.Id,
+          organisationName: organisation?.Name,
+          organisationStatus: organisation?.Status,
           email: resource?.Email || null,
           phoneNumber: resource?.PhoneNumber || null,
           resourceStartDate: resource?.StartDate || null,
@@ -501,6 +516,7 @@ export const generateEmptyRow = (
   endDate: string,
   teams: Team[],
   teamResources: Record<string, Resource[]>,
+  allResourcesDetail: AllResourceDetail[],
   projects: Project[] | null,
   resources: Resource[],
   allocation: Allocation
@@ -521,6 +537,9 @@ export const generateEmptyRow = (
   const team = resourceIdToTeam.get(allocation.Resource);
   const project = projects?.find(p => p.Id === allocation.Project);
   const resource = resources.find(r => r.Id === allocation.Resource);
+  const organisation = allResourcesDetail.find(
+    r => r?.Resource?.Id === allocation.Resource
+  )?.Organization;
   let key;
   if (project) {
     key = `${allocation.Resource}-${team?.Id}-${allocation.Project}`;
@@ -537,6 +556,9 @@ export const generateEmptyRow = (
     teams: team?.Name || null,
     teamStatus: team?.Status || null,
     teamAllocationManager: team?.AllocationManager || null,
+    organisationId: organisation?.Id || null,
+    organisationName: organisation?.Name || null,
+    organisationStatus: organisation?.Status || null,
     project: project?.Name || allocation.ProjectName || null,
     projectId: project?.Id || allocation.Project || null,
     projectSponsor: project?.ProjectSponsor || null,
@@ -600,6 +622,7 @@ export const getFormattedAllocationsForUpdate = (
   allocationsUpdated: Allocation[],
   teams: ApiResponse<Team[]>,
   teamsResources: Record<string, Resource[]>,
+  allResourcesDetail: AllResourceDetail[],
   projects: ApiResponse<Project[]>,
   resources: ApiResponse<Resource[]>,
   splitView: boolean,
@@ -672,6 +695,7 @@ export const getFormattedAllocationsForUpdate = (
         endDate,
         teams?.result || [],
         teamsResources,
+        allResourcesDetail || [],
         projects?.result || [],
         resources?.result || [],
         allocation

@@ -1,4 +1,3 @@
-
 import * as Yup from 'yup';
 
 interface Project {
@@ -42,9 +41,7 @@ export const addProjectValidationSchema = (
         }
       ),
     Type: Yup.string().required('Project type is required'),
-    AllowOvertime: Yup.boolean().required(
-      'Allow overtime selection is required'
-    ),
+    AllowOvertime: Yup.string().required('Allow overtime is required'),
     StartDate: Yup.date()
       .nullable()
       .typeError('Invalid date format')
@@ -139,6 +136,7 @@ export const editResourceValidationSchema = Yup.object({
   Type: Yup.string().required('Resource type is required'),
   Manager: Yup.string(),
   Team: Yup.string().required('Team is required'),
+  Organisation: Yup.string().required('Organization is required'),
   ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
   AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
   EndDate: Yup.string()
@@ -373,7 +371,10 @@ export const openHistoryValidationSchema = Yup.object({
   Resource: Yup.string().required('Resource is required'),
   Project: Yup.string().optional(),
 });
-export const addPortfolioValidationSchema = (portfolios : any, initialName = '') => {
+export const addPortfolioValidationSchema = (
+  portfolios: any,
+  initialName = ''
+) => {
   const portfolioNames = Array.isArray(portfolios)
     ? portfolios.map(p => p.Name?.toLowerCase().trim())
     : [];

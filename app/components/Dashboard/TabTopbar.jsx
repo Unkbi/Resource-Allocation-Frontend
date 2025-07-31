@@ -17,6 +17,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import EventIcon from '@mui/icons-material/Event';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { DEFAULT_LOCALE } from '@/app/constants/constants';
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   padding: '10px 12px',
@@ -175,7 +176,7 @@ const Topbar = ({
               </StyledSelect>
             </StyledFormControl>
           </Box>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
             <DemoContainer components={['DatePicker']}>
               <DatePicker
                 displayWeekNumber

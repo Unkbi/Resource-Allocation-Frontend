@@ -23,6 +23,8 @@ import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCost';
 import TeamsCost from '@/app/components/ResourceAllocation/component/TeamsCost';
 import PortfolioAllocation from '@/app/components/ResourceAllocation/component/PorfolioAllocation';
+import OrganisationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
+import ResourceAllocation from '@/app/components/ResourceAllocation/component/ResourceAllocation';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -83,6 +85,12 @@ export default function Allocation({ startDate, endDate }) {
           );
         case 'Teams':
           return <TeamAllocation startDate={startDate} endDate={endDate} />;
+        case 'Organisations':
+          return (
+            <OrganisationAllocation startDate={startDate} endDate={endDate} />
+          );
+        case 'Resources':
+          return <ResourceAllocation startDate={startDate} endDate={endDate} />;
         case 'Project Cost':
           return <ProjectCost startDate={startDate} endDate={endDate} />;
         case 'Teams Cost':

@@ -43,6 +43,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     teams,
     resources,
     portfolios,
+    allResourcesDetail,
     startDate,
     endDate,
     resolve,
@@ -103,6 +104,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       projects,
       resources,
       portfolios || [],
+      allResourcesDetail || [],
       teamResourceObject,
       startDate,
       endDate
@@ -112,6 +114,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamResourceObject,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -209,6 +212,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamResourceObject,
+      [],
       startDate,
       endDate
     );
@@ -233,6 +237,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
     projects,
     resources,
     portfolios,
+    allResourcesDetail,
     teamsResources,
     startDate,
     endDate,
@@ -275,6 +280,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       projects,
       resources,
       portfolios || [],
+      allResourcesDetail || [],
       teamsResources,
       startDate,
       endDate
@@ -284,6 +290,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamsResources,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -306,6 +313,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
     projects,
     resources,
     portfolios,
+    allResourcesDetail,
     teamsResources,
     startDate,
     endDate,
@@ -347,6 +355,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
       projects,
       resources,
       portfolios || [],
+      allResourcesDetail || [],
       teamsResources,
       startDate,
       endDate
@@ -408,6 +417,7 @@ function* updateResourceAllocationsSaga(
     projects,
     resources,
     portfolios,
+    allResourcesDetail,
     teamsResources,
     startDate,
     endDate,
@@ -450,6 +460,7 @@ function* updateResourceAllocationsSaga(
       projects,
       resources,
       portfolios,
+      allResourcesDetail || [],
       teamsResources,
       startDate,
       endDate
@@ -459,6 +470,7 @@ function* updateResourceAllocationsSaga(
       formattedAllocations,
       teams,
       teamsResources,
+      allResourcesDetail || [],
       startDate,
       endDate
     );

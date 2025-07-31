@@ -165,7 +165,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     };
 
     loadAndSetForm();
-  }, [initialData?.Id]);
+  }, [initialData?.Id, organisations, teams]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -448,7 +448,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="Organisation"
-            label="Organisation"
+            label="Organization"
             placeholder="Enter organization"
             value={values.Organisation || ''}
             options={organisationListOptions}
@@ -516,8 +516,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             formikProps={formikProps}
             fullWidth
             onChange={(event, newValue) => {
-              formikProps.setFieldValue('Type', newValue || '');
-
               if (
                 newValue !== 'Contractor - FT' &&
                 newValue !== 'Contractor - PT'

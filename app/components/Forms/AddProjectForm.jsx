@@ -8,8 +8,9 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
 import { useDispatch } from 'react-redux';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { DATE_FORMAT, PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import StyledAutocomplete from '../Select/Autocomplete';
+import CustomDatePicker from '../DatePicker/CustomDatePicker';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -61,7 +62,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           resources?.result?.find(
             res => res.FullName === initialData.ProjectSponsor
           )?.Id || '',
-        AllowOvertime: initialData.AllowOvertime ?? '',
+        AllowOvertime: initialData.AllowOvertime ? 'Yes': 'No',
         Location: initialData.Location || '',
         ProjectManager:
           resources?.result?.find(
@@ -87,8 +88,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     { value: 'Ongoing', label: 'Ongoing' },
   ];
   const allowOverTimeOptions = [
-    { value: true, label: 'Yes' },
-    { value: false, label: 'No' },
+    { value: 'Yes', label: 'Yes' },
+    { value: 'No', label: 'No' },
   ];
 
   const statusOptions = [
@@ -112,7 +113,16 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       marginLeft: 0,
     },
   };
-  
+
+  const handleEndDateChange = newDate => {
+    if (!newDate || !newDate.isValid?.()) {
+      formikProps.setFieldValue('EndDate', null); 
+      return;
+    }
+
+    const formattedEndDate = newDate.format(DATE_FORMAT.toUpperCase());
+    formikProps.setFieldValue('EndDate', formattedEndDate);
+  };
   
 
   return (
@@ -242,28 +252,40 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           justifyContent: 'space-between',
         }}
       >
-        <CustomDateRangePicker
+        <CustomDatePicker
           name="StartDate"
-          value={{
-            StartDate: formikProps.values.StartDate,
-            EndDate: formikProps.values.EndDate,
-          }}
-          placeholder="Select Date"
-          endDateLabel="End Date"
-          startDateLabel="Start Date"
+          value={formikProps.values.StartDate || null}
           formikProps={formikProps}
           error={
-            (formikProps.touched.StartDate &&
-              Boolean(formikProps.errors.StartDate)) ||
-            (formikProps.touched.EndDate && Boolean(formikProps.errors.EndDate))
+            formikProps.touched.StartDate &&
+            Boolean(formikProps.errors.StartDate)
           }
           helperText={
-            (formikProps.touched.StartDate && formikProps.errors.StartDate) ||
-            (formikProps.touched.EndDate && formikProps.errors.EndDate)
+            formikProps.touched.StartDate && formikProps.errors.StartDate
           }
-          customStyles={true}
-          isProjectForm={true}
-          title="Date Range"
+          label="Start Date"
+          placeholder="MM/DD/YYYY"
+          title="Start Date"
+          isRequired={false}
+        />
+
+        <CustomDatePicker
+          name="EndDate"
+          value={formikProps.values.EndDate || null}
+          formikProps={formikProps}
+          onChange={handleEndDateChange}
+          error={
+            formikProps.touched.EndDate && Boolean(formikProps.errors.EndDate)
+          }
+          helperText={
+            formikProps.touched.EndDate && formikProps.errors.EndDate
+              ? formikProps.errors.EndDate
+              : ''
+          }
+          label="End Date"
+          placeholder="MM/DD/YYYY"
+          title="End Date"
+          isRequired={false}
         />
       </Box>
       <Box sx={{ pb: 2 }}>

@@ -338,7 +338,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team ? <EllipsisNameCell value={team?.Status ?? 'N/A'} /> : null;
+        return team ? <EllipsisNameCell value={team?.Status || ''} /> : null;
       },
     },
     {
@@ -511,7 +511,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
               getAllocationManagerFromPath(
                 team?.AllocationManager,
                 _resources?.result || []
-              )?.FullName ?? 'N/A'
+              )?.FullName || ''
             }
           />
         ) : null;

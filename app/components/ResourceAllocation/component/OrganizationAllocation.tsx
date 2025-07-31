@@ -20,7 +20,7 @@ import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
-interface TeamAllocationProps {
+interface OrganisationAllocationProps {
   startDate: string;
   endDate: string;
 }
@@ -48,14 +48,17 @@ export interface Project {
   Type: string;
 }
 
-export default function TeamAllocation({
+export default function OrganisationAllocation({
   startDate,
   endDate,
-}: TeamAllocationProps) {
+}: OrganisationAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
+  );
+  const { organisations } = useSelector(
+    (state: RootState) => state.organisations
   );
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
@@ -149,6 +152,21 @@ export default function TeamAllocation({
     return null;
   };
 
+  const getOrganisation = (params: GridCellParams) => {
+    if (
+      params.rowNode.type === 'group' &&
+      params.rowNode.groupingField === 'organisationName'
+    ) {
+      // Find the organisation by name in the organisations array
+      const organisationName = params.rowNode.groupingKey;
+      const organisation = organisations?.find(
+        o => o.Name === organisationName
+      );
+      return organisation;
+    }
+    return null;
+  };
+
   const getResource = (params: GridCellParams): Resource | null => {
     if (
       params.rowNode.type === 'group' &&
@@ -163,10 +181,10 @@ export default function TeamAllocation({
     return null;
   };
 
-  const teamsColumnConfig = [
+  const organisationColumnConfig = [
     {
-      field: 'teams',
-      headerName: 'Team Name',
+      field: 'organisationName',
+      headerName: 'Organization Name',
       width: 201,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
@@ -189,6 +207,20 @@ export default function TeamAllocation({
             showAddButton={false}
           />
         );
+      },
+    },
+    {
+      field: 'organisationStatus',
+      headerName: 'Organization Status',
+      width: 201,
+      headerClassName: 'prime-header',
+      cellClassName: 'prime-cell',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const organisation = getOrganisation(params);
+        return organisation ? (
+          <EllipsisNameCell value={organisation?.Status || ''} />
+        ) : null;
       },
     },
     {
@@ -221,7 +253,7 @@ export default function TeamAllocation({
     },
     {
       field: 'department',
-      headerName: 'Organization',
+      headerName: 'Department',
       width: 180,
       type: 'string',
       isEditable: 'false',
@@ -589,11 +621,11 @@ export default function TeamAllocation({
       >
         <AllocationGrid
           loading={dataProcessing}
-          groupBy="teams"
+          groupBy="organisationName"
           mode="team"
           startDate={startDate}
           endDate={endDate}
-          columns={teamsColumnConfig}
+          columns={organisationColumnConfig}
           selectedTeam={selectedTeam}
           toolbarComponent={CustomToolbar}
           setSelectedTeam={setSelectedTeam}
@@ -602,12 +634,13 @@ export default function TeamAllocation({
               columnVisibilityModel: {
                 teamAllocationManager: false,
                 teamStatus: false,
-                __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
+                __row_group_by_columns_group_organisationName__: true, // This is the grouping column for teams
                 __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
                 project: true,
                 resourceType: true,
-                teams: false, // This column has to always be false, as we are using grouping.
+                organisationName: false, // This column has to always be false, as we are using grouping.
                 resource: false, // This column has to always be false, as we are using grouping.
+                organisationStatus: false,
                 email: false,
                 phoneNumber: false,
                 department: false,

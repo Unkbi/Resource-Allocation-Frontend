@@ -128,7 +128,7 @@ export default function PortfolioAllocation({
   const portfolioColumnConfig = [
     {
       field: 'portfolioName',
-      headerName: PORTFOLIO_DISPLAY_NAME,
+      headerName: PORTFOLIO_DISPLAY_NAME + ' Name',
       width: 148,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
@@ -166,7 +166,6 @@ export default function PortfolioAllocation({
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -186,7 +185,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const email = resource?.Email || '';
@@ -202,7 +200,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const PhoneNumber = resource?.PhoneNumber || '';
@@ -218,7 +215,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const Department = resource?.Department || '';
@@ -234,7 +230,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const WorkLocation = resource?.WorkLocation || '';
@@ -250,7 +245,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const LocationCategory = resource?.LocationCategory || '';
@@ -266,7 +260,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const Type = resource?.Type || '';
@@ -282,7 +275,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const Status = resource?.Status || '';
@@ -298,7 +290,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const HRLevel = resource?.HRLevel || '';
@@ -314,7 +305,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const Role = resource?.Role || '';
@@ -330,7 +320,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const StartDate = resource?.StartDate || '';
@@ -346,7 +335,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const EndDate = resource?.EndDate || '';
@@ -362,7 +350,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const AverageWeeklyHours = resource?.AverageWeeklyHours || '';
@@ -378,7 +365,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const ContractorHourlyRate = resource?.ContractorHourlyRate || '';
@@ -394,7 +380,6 @@ export default function PortfolioAllocation({
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const ContractorHourlyRateCurrency =
@@ -408,7 +393,6 @@ export default function PortfolioAllocation({
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -425,7 +409,6 @@ export default function PortfolioAllocation({
       width: 130,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -442,7 +425,6 @@ export default function PortfolioAllocation({
       width: 150,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -459,7 +441,6 @@ export default function PortfolioAllocation({
       width: 130,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -476,7 +457,6 @@ export default function PortfolioAllocation({
       width: 110, // min-width without eliding.
       type: 'boolean',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -501,7 +481,6 @@ export default function PortfolioAllocation({
       width: 150,
       type: 'string ',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -519,7 +498,6 @@ export default function PortfolioAllocation({
       width: 160,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -536,7 +514,6 @@ export default function PortfolioAllocation({
       width: 160,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -553,7 +530,6 @@ export default function PortfolioAllocation({
       width: 150,
       type: 'string',
       headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
       isEditable: false,
       sortable: false,
       primaryColumn: true,
@@ -592,7 +568,15 @@ export default function PortfolioAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box
+        sx={{
+          height: 'calc(100vh - 54px)',
+          width: '100%',
+          '& .MuiDataGrid-columnHeader .MuiBadge-badge': {
+            display: 'none !important',
+          },
+        }}
+      >
         <AllocationGrid
           groupBy={'portfolioName'}
           columns={portfolioColumnConfig}

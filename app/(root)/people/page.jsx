@@ -527,7 +527,7 @@ export default function Resources() {
           'result' in resources &&
           getAllocationManagerFromPath(params.value, resources.result);
 
-        if (!manager?.FullName) return <span>N/A</span>;
+        if (!manager?.FullName) return <span>&nbsp;</span>;
         return (
           <Box
             sx={{ display: 'flex', alignItems: 'center', paddingLeft: '30px' }}
@@ -990,6 +990,15 @@ export default function Resources() {
           } else {
             dispatch(deleteTeam(teamId));
             dispatch(fetchAllTeams());
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Team deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 1000,
+              })
+            );
           }
         } catch (error) {
           dispatch(

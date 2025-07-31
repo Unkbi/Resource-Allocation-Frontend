@@ -10,7 +10,6 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
-// import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
@@ -48,7 +47,7 @@ export interface Project {
   Type: string;
 }
 
-export default function TeamAllocation({
+export default function ResourceAllocation({
   startDate,
   endDate,
 }: TeamAllocationProps) {
@@ -122,20 +121,6 @@ export default function TeamAllocation({
     }
   }, [ready, allAllocations]);
 
-  const handleAddClick = (params: GridCellParams) => {
-    dispatch(
-      openDialog({
-        title: 'Add Allocation',
-        submitButtonText: 'Add',
-        cancelButtonText: 'Cancel',
-        formType: 'add_allocation',
-        initialData: {
-          Project: params.value,
-        },
-      })
-    );
-  };
-
   const getTeam = (params: GridCellParams) => {
     if (
       params.rowNode.type === 'group' &&
@@ -163,7 +148,7 @@ export default function TeamAllocation({
     return null;
   };
 
-  const teamsColumnConfig = [
+  const resourcesColumnConfig = [
     {
       field: 'teams',
       headerName: 'Team Name',
@@ -172,23 +157,14 @@ export default function TeamAllocation({
       cellClassName: 'prime-cell',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const { rowNode, api, value = '' } = params;
+        const { rowNode, api } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        let resource_count: any[] = [];
+
         if (isGridTreeNode && rowNode.children) {
-          resource_count = [
-            ...new Set(rowNode?.children?.map(child => api.getRow(child))),
-          ];
+          const row = api.getRow(rowNode.children[0]);
+          return <EllipsisNameCell value={row.teams as string} />;
         }
-        return (
-          <EllipsisNameCell
-            value={value as string}
-            resourceCount={resource_count.length}
-            onAddClick={() => handleAddClick(params)}
-            showAddIcon
-            showAddButton={false}
-          />
-        );
+        return null;
       },
     },
     {
@@ -544,17 +520,14 @@ export default function TeamAllocation({
       sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const team = getTeam(params);
-        return team && _resources && 'result' in _resources ? (
-          <EllipsisNameCell
-            value={
-              getAllocationManagerFromPath(
-                team?.AllocationManager,
-                _resources?.result || []
-              )?.FullName || ''
-            }
-          />
-        ) : null;
+        const { rowNode, api } = params;
+        const isGridTreeNode = 'children' in rowNode; // Required for Typescript
+
+        if (isGridTreeNode && rowNode.children) {
+          const row = api.getRow(rowNode.children[0]);
+          return <EllipsisNameCell value={row?.teamAllocationManager} />;
+        }
+        return null;
       },
     },
   ];
@@ -589,11 +562,11 @@ export default function TeamAllocation({
       >
         <AllocationGrid
           loading={dataProcessing}
-          groupBy="teams"
+          groupBy="resource"
           mode="team"
           startDate={startDate}
           endDate={endDate}
-          columns={teamsColumnConfig}
+          columns={resourcesColumnConfig}
           selectedTeam={selectedTeam}
           toolbarComponent={CustomToolbar}
           setSelectedTeam={setSelectedTeam}
@@ -602,11 +575,10 @@ export default function TeamAllocation({
               columnVisibilityModel: {
                 teamAllocationManager: false,
                 teamStatus: false,
-                __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
-                __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
+                __row_group_by_columns_group__: true, // This is the gtouping column for resource
                 project: true,
                 resourceType: true,
-                teams: false, // This column has to always be false, as we are using grouping.
+                teams: false,
                 resource: false, // This column has to always be false, as we are using grouping.
                 email: false,
                 phoneNumber: false,
@@ -637,7 +609,7 @@ export default function TeamAllocation({
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
           showActuals={showActuals}
-          rowGroupingColumnMode="multiple"
+          rowGroupingColumnMode="single"
         />
         {!allAllocations && !dataProcessing && (
           <div
