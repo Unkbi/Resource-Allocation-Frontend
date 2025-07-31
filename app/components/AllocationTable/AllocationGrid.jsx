@@ -697,10 +697,10 @@ export default function AllocationGrid({
           const notes = cellData?.notes || '';
           const actuals = cellData?.actuals || null;
           const period = cellData?.period;
-         const isFutureWeek =
-           period &&
-           !isCurrentWeek(parseISO(period)) &&
-           !isCurrentOrPastWeek(parseISO(period));
+          const isFutureWeek =
+            period &&
+            !isCurrentWeek(parseISO(period)) &&
+            !isCurrentOrPastWeek(parseISO(period));
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -778,7 +778,9 @@ export default function AllocationGrid({
       .filter(
         i =>
           i.field === 'project' &&
-          (groupBy === 'teams' || groupBy === 'organisationName')
+          (groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource')
       )
       .map(col => col.field),
   ];
@@ -862,16 +864,9 @@ export default function AllocationGrid({
       const deleteList = [];
       const updateList = [];
       let allUpdatedRows = [];
+      const projectOvertimeAllowed = oldRow.projectOvertimeAllowed;
 
-      for (const key of keys) {
-        const newValue = newRow[key];
-        const oldValue = oldRow[key]?.value || 0;
-        const allocationId = oldRow[key]?.allocationId;
-        const period = oldRow[key]?.period;
-        const resourceId = oldRow.resourceId;
-        const projectId = oldRow.projectId;
-        const projectName = oldRow.project;
-        const projectOvertimeAllowed = newRow.projectOvertimeAllowed;
+      keys.map(key => {
         // Handle Delete Case
         if (
           (newRow[key] === null ||
@@ -881,54 +876,52 @@ export default function AllocationGrid({
           oldRow[key]?.allocationId
         ) {
           deleteList.push({
-            Id: allocationId,
-            Resource: resourceId,
-            Project: projectId,
-            ProjectName: projectName,
-            Period: period,
+            Id: oldRow[key]?.allocationId,
+            Resource: oldRow.resourceId,
+            Project: oldRow.projectId,
+            ProjectName: oldRow.project,
+            Period: oldRow[key]?.period,
             AllocationEntered: null,
           });
-          continue;
         }
-        const value = Math.round(newValue * 10) / 10;
-        
-        if (!projectOvertimeAllowed && value > 1.0) {
-          newRow[key] = oldValue;
+
+        if (!projectOvertimeAllowed && newRow[key] > 1.0) {
+          newRow[key] = oldRow[key]?.value;
           dispatch(
             showToastAction(
               true,
-              `Project ${projectName} does not allow overtime. Max allocation is 1.0.`,
+              `Project ${oldRow.project} does not allow overtime. Max allocation is 1.0.`,
               'error',
               4000
             )
           );
-          return oldRow;
+          return;
         }
-       // 2. Check weekly total across all projects for resource
-        const allData = getAllRowsForView(viewId);
+
+        // Verify Updated Values total allocation for resource is not greater than 2.0
+        let formattedCellValue = Math.round(newRow[key] * 10) / 10;
+
+        const period = oldRow[key]?.period;
+        const value = formattedCellValue;
+        const resourceId = oldRow.resourceId;
+
+        // Calculate total allocation for the week across all rows for that resource
         let totalForWeek = 0;
 
-        for (const row of allData) {
+        const allData = getAllRowsForView(viewId);
+
+        allData.forEach(row => {
           if (row.resourceId === resourceId) {
-            const val = parseFloat(row[key]?.value || 0);
-            totalForWeek += val;
+            const val = row[key]?.value || 0;
+            totalForWeek += parseFloat(val);
           }
-        }
+        });
 
-        totalForWeek = totalForWeek - oldValue + value;
+        // Add new value (replace current row’s old value with new one)
+        const currentRowOldValue = oldRow[key]?.value || 0;
+        totalForWeek = totalForWeek - currentRowOldValue + value;
 
-        if (totalForWeek > 2.0) {
-          newRow[key] = oldValue;
-          dispatch(
-            showToastAction(
-              true,
-              `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
-              'error',
-              4000
-            )
-          );
-          return oldRow;
-        } else if (totalForWeek > 1.5 && totalForWeek <= 2) {
+        if (totalForWeek > 1.5 && totalForWeek <= 2) {
           dispatch(
             showToastAction(
               true,
@@ -937,33 +930,44 @@ export default function AllocationGrid({
               4000
             )
           );
+        } else if (totalForWeek > 2) {
+          newRow[key] = oldRow[key]?.value;
+          dispatch(
+            showToastAction(
+              true,
+              `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
+              'error',
+              4000
+            )
+          );
+          return;
         }
 
         // API call to update the data, if any changes are made.
-        if (value !== oldValue) {
-          if (allocationId) {
+        if (newRow[key] && newRow[key] !== oldRow[key]?.value) {
+          if (oldRow[key]?.allocationId && newRow[key] !== null) {
             // Add to update list
             updateList.push({
-              Id: allocationId,
-              Resource: resourceId,
-              Project: projectId,
-              ProjectName: projectName,
-              Period: period,
-              AllocationEntered: value,
+              Id: oldRow[key]?.allocationId,
+              Resource: oldRow.resourceId,
+              Project: oldRow.projectId,
+              ProjectName: oldRow.project,
+              Period: oldRow[key]?.period,
+              AllocationEntered: formattedCellValue,
               // Notes: 'This is an allocation 1', // To Be Impemented
             });
-          } else {
+          } else if (formattedCellValue) {
             updateList.push({
-              Resource: resourceId,
-              Project: projectId,
-              ProjectName: projectName,
-              Period: period,
-              AllocationEntered: value,
+              Resource: oldRow.resourceId,
+              Project: oldRow.projectId,
+              ProjectName: oldRow.project,
+              Period: oldRow[key]?.period,
+              AllocationEntered: formattedCellValue,
               // Notes: 'This is an allocation 1', // To Be Impemented
             });
           }
         }
-      }
+      });
 
       if (deleteList.length === 0 && updateList.length === 0) {
         return oldRow;
@@ -1165,7 +1169,11 @@ export default function AllocationGrid({
               return false;
             }
           }
-          if (groupBy === 'teams' || groupBy === 'organisationName') {
+          if (
+            groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource'
+          ) {
             // Previously selected team
             const currentResourceSelected = apiRef.current.getRow(
               selectedCells[0].id
@@ -1292,6 +1300,10 @@ export default function AllocationGrid({
         __row_group_by_columns_group_resource__: true,
         project: true,
       },
+      resource: {
+        __row_group_by_columns_group__: true,
+        project: true,
+      },
       project: {
         resource: true,
         __row_group_by_columns_group__: true,
@@ -1402,7 +1414,8 @@ export default function AllocationGrid({
           allocationTheme,
           type,
           projects?.result,
-          isCellEditable
+          isCellEditable,
+          groupBy
         );
         // const editable = isCellEditable(params);
         // if (!editable) {
