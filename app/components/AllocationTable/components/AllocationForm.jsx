@@ -702,15 +702,15 @@ const AllocationForm = () => {
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
                 dispatch(setHighlightedRowId(newTeamId));
-                 dispatch(
-                   showToast({
-                     open: true,
-                     message: `Team added successfully`,
-                     type: 'success',
-                     position: 'bottom-left',
-                     autoHideTimer: 4000,
-                   })
-                 );
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Team added successfully`,
+                    type: 'success',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
               }
 
               if (pathname !== '/people?tab=teams') {
@@ -762,15 +762,15 @@ const AllocationForm = () => {
 
           await dispatch(fetchAllTeams());
           dispatch(setHighlightedRowId(initialData.Id));
-           dispatch(
-             showToast({
-               open: true,
-               message: `Team updated successfully`,
-               type: 'success',
-               position: 'bottom-left',
-               autoHideTimer: 4000,
-             })
-           );
+          dispatch(
+            showToast({
+              open: true,
+              message: `Team updated successfully`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update team:', e);
@@ -978,15 +978,15 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
-           dispatch(
-             showToast({
-               open: true,
-               message: `Resource updated successfully`,
-               type: 'success',
-               position: 'bottom-left',
-               autoHideTimer: 4000,
-             })
-           );
+          dispatch(
+            showToast({
+              open: true,
+              message: `Resource updated successfully`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
@@ -1475,15 +1475,15 @@ const AllocationForm = () => {
 
             // PUT request.
             dispatch(updateUsersSavedViewAction(values.id, updatedView));
-              dispatch(
-                showToast({
-                  open: true,
-                  message: `View "${values.name}" updated successfully`,
-                  type: 'success',
-                  position: 'bottom-left',
-                  autoHideTimer: 4000,
-                })
-              );
+            dispatch(
+              showToast({
+                open: true,
+                message: `View "${values.name}" updated successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           } else {
             const userId = getUserIdFromEmail(
@@ -1516,7 +1516,7 @@ const AllocationForm = () => {
 
             // POST request to save the view.
             dispatch(addUsersSavedViewAction(newView));
-            ispatch(
+            dispatch(
               showToast({
                 open: true,
                 message: `New view "${values.name}" created successfully`,
