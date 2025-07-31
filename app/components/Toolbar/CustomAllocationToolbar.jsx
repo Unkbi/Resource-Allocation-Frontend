@@ -649,6 +649,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       icon: <OrganisationIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
     },
     {
+      name: 'Resources',
+      icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
       name: 'Project',
       icon: <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
     },
@@ -877,7 +881,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       );
 
       if (
-        (view.includes('Teams') || view.includes('Organisations')) &&
+        (view.includes('Teams') ||
+          view.includes('Organisations') ||
+          view.includes('Resources')) &&
         teamsIAmAllocationManager.length === 0
       ) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
@@ -904,7 +910,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       }
     }
 
-    if (view.includes('Teams') || view.includes('Organisations')) {
+    if (
+      view.includes('Teams') ||
+      view.includes('Organisations') ||
+      view.includes('Resources')
+    ) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
     } else if (view.includes('Project') || view.includes('Portfolio')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
@@ -1359,7 +1369,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       </Typography>
                     </Popover>
                   </>
-                ) : view.includes('Teams') || view.includes('Organisations') ? (
+                ) : view.includes('Teams') ||
+                  view.includes('Organisations') ||
+                  view.includes('Resources') ? (
                   <>
                     <TooltipButton
                       msg="My Teams"
@@ -1661,7 +1673,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 onChange={handleAllocationCostSwitch}
                 disabled={
                   currentView?.GroupBy === 'Portfolio' ||
-                  currentView?.GroupBy === 'Organisations'
+                  currentView?.GroupBy === 'Organisations' ||
+                  currentView?.GroupBy === 'Resources'
                 }
               />
               <Typography

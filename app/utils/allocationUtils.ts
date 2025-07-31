@@ -23,6 +23,7 @@ import {
 } from '../types';
 import {
   generateAllWeeks,
+  getAllocationManagerFromPath,
   getMondayOfWeek,
   getResourceFromUid,
   getTeamForResource,
@@ -555,14 +556,18 @@ export const generateEmptyRow = (
     resourceType: resource?.Type || null,
     teams: team?.Name || null,
     teamStatus: team?.Status || null,
-    teamAllocationManager: team?.AllocationManager || null,
+    teamAllocationManager:
+      getAllocationManagerFromPath(team?.AllocationManager, resources || [])
+        ?.FullName || null,
     organisationId: organisation?.Id || null,
     organisationName: organisation?.Name || null,
     organisationStatus: organisation?.Status || null,
     project: project?.Name || allocation.ProjectName || null,
     projectId: project?.Id || allocation.Project || null,
-    projectSponsor: project?.ProjectSponsor || null,
-    projectManager: project?.ProjectManager || null,
+    projectSponsor:
+      getResourceFromUid(project?.ProjectSponsor, resources)?.FullName || null,
+    projectManager:
+      getResourceFromUid(project?.ProjectManager, resources)?.FullName || null,
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,

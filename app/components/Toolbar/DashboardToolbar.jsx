@@ -52,7 +52,7 @@ const DashboardToolbar = ({
       elevation={0}
       sx={{
         mb: 1,
-        borderRadius: 2,
+        borderRadius: 0,
         width: '100%',
         position: 'relative',
         backgroundColor: 'inherit',

@@ -465,10 +465,16 @@ const AllocationForm = () => {
   };
 
   const handleOnAdd = resources => {
-    const rowIds = resources?.map(
-      resource =>
-        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`
-    );
+    const rowIds = resources?.reduce((acc, resource) => {
+      const organisation = allResourcesDetail.find(
+        r => r.Resource.Id === resource.Id
+      )?.Organization;
+      return [
+        ...acc,
+        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`,
+        `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
+      ];
+    }, []);
     dispatch(setExpandRowId(rowIds));
   };
 
@@ -698,6 +704,15 @@ const AllocationForm = () => {
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
                 dispatch(setHighlightedRowId(newTeamId));
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Team added successfully`,
+                    type: 'success',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
               }
 
               if (pathname !== '/people?tab=teams') {
@@ -749,6 +764,15 @@ const AllocationForm = () => {
 
           await dispatch(fetchAllTeams());
           dispatch(setHighlightedRowId(initialData.Id));
+          dispatch(
+            showToast({
+              open: true,
+              message: `Team updated successfully`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update team:', e);
@@ -819,6 +843,15 @@ const AllocationForm = () => {
               payload: {},
             });
             dispatch(setHighlightedRowId(newResourceId));
+            dispatch(
+              showToast({
+                open: true,
+                message: `Resource added successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
           }
 
           if (pathname !== '/people') {
@@ -947,6 +980,15 @@ const AllocationForm = () => {
             payload: {},
           });
           dispatch(setHighlightedRowId(initialData.Id));
+          dispatch(
+            showToast({
+              open: true,
+              message: `Resource updated successfully`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
           dispatch(closeDialog());
         } catch (e) {
           console.error('Failed to update resource:', e);
@@ -1451,6 +1493,15 @@ const AllocationForm = () => {
 
             // PUT request.
             dispatch(updateUsersSavedViewAction(values.id, updatedView));
+            dispatch(
+              showToast({
+                open: true,
+                message: `View "${values.name}" updated successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           } else {
             const userId = getUserIdFromEmail(
@@ -1483,6 +1534,15 @@ const AllocationForm = () => {
 
             // POST request to save the view.
             dispatch(addUsersSavedViewAction(newView));
+            dispatch(
+              showToast({
+                open: true,
+                message: `New view "${values.name}" created successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           }
         } catch (e) {
@@ -1526,6 +1586,15 @@ const AllocationForm = () => {
 
             // PUT request to update the view
             dispatch(updateUsersSavedViewAction(currentView.Id, updatedView));
+            dispatch(
+              showToast({
+                open: true,
+                message: `View saved successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
             dispatch(closeDialog());
           }
         } catch (e) {
