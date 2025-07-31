@@ -964,6 +964,22 @@ const AllocationForm = () => {
               values.Project.includes(project.Id)
             ) || [];
 
+            if (
+              filteredProjects.some(p => !p.AllowOvertime) &&
+              values.AllocationEntered > 1.0
+            ) {
+              dispatch(
+                showToastAction(
+                  true,
+                  'Allocation cannot exceed 1.0 for projects that do not allow overtime.',
+                  'error',
+                  4000
+                )
+              );
+              dispatch(closeDialog());
+              return;
+            }
+
           const warningMessages = [];
           const errorMessages = [];
           const deleteList = [];
@@ -1027,7 +1043,6 @@ const AllocationForm = () => {
                   values.AllocationEntered,
                   filteredProjects
                 );
-
                 if (newFinalTotal > 2.0) {
                   errorMessages.push(
                     `Total allocation for week ${weekKey} exceeds 2.0 (${newFinalTotal.toFixed(2)}). Update skipped.`

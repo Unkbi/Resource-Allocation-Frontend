@@ -891,6 +891,19 @@ export default function AllocationGrid({
           continue;
         }
         const value = Math.round(newValue * 10) / 10;
+        
+        if (!projectOvertimeAllowed && value > 1.0) {
+          newRow[key] = oldValue;
+          dispatch(
+            showToastAction(
+              true,
+              `Project ${projectName} does not allow overtime. Max allocation is 1.0.`,
+              'error',
+              4000
+            )
+          );
+          return oldRow;
+        }
        // 2. Check weekly total across all projects for resource
         const allData = getAllRowsForView(viewId);
         let totalForWeek = 0;
@@ -924,18 +937,6 @@ export default function AllocationGrid({
               4000
             )
           );
-        }
-        if (!projectOvertimeAllowed && value > 1.0) {
-          newRow[key] = oldValue;
-          dispatch(
-            showToastAction(
-              true,
-              `Project ${projectName} does not allow overtime. Max allocation is 1.0.`,
-              'error',
-              4000
-            )
-          );
-          return oldRow;
         }
 
         // API call to update the data, if any changes are made.

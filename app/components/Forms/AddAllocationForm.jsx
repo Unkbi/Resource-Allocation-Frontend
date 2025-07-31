@@ -76,10 +76,6 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
       const filteredResource = resources?.result
         ?.filter(resource => initialData.Resource?.includes(resource.FullName))
         .map(resource => resource.Id);
-        const selectedProjects = projects?.result?.filter(project =>
-          filteredProject.includes(project.Id)
-        );
-        const allowOvertime = selectedProjects?.every(p => p.AllowOvertime);
       const rowData = {
         Resource: filteredResource || [],
         Project: filteredProject || [],
@@ -112,19 +108,6 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
       setFieldValue('allocationEntered', Number(customCapacity));
     } else {
       setCustomCapacity('');
-        if (!values.AllowOvertime && numericValue > 1.0) {
-        dispatch(
-          showToast({
-            open: true,
-            type: 'error',
-            message:
-              'Allocation above 1.0 is not allowed as one or more selected projects disallow overtime.',
-          })
-        );
-        setFieldValue('AllocationEntered', 1.0);
-        setCapacityOption('1.0');
-        return;
-      }
       setFieldValue('AllocationEntered', Number(value));
     }
   };
@@ -149,20 +132,6 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
     let formattedValue = e.target.value;
     if (formattedValue && !isNaN(formattedValue)) {
       const numValue = Number(formattedValue);
-      if (!values.AllowOvertime && numValue > 1.0) {
-        dispatch(
-          showToast({
-            open: true,
-            type: 'error',
-            message:
-              'Allocation above 1.0 is not allowed as one or more selected projects disallow overtime.',
-          })
-        );
-        setCustomCapacity('');
-        setFieldValue('AllocationEntered', '');
-        return;
-      }
-
       formattedValue = (Math.round(numValue * 10) / 10).toString();
       if (formattedValue.indexOf('.') === -1 && numValue <= 2) {
         formattedValue = formattedValue + '.0';
@@ -197,18 +166,12 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
         setMultipleProjectError(false);
       }, 4000);
       return;
-    } else setMultipleProjectError(false);
-
-    const selectedIds = newValue.map(item => item.value);
+    } else {
+      setMultipleProjectError(false);
+    }
     handleChange({
-       target: { name: 'Project', value: selectedIds } });
-    const selectedProjects = projects?.result?.filter(project =>
-      selectedIds.includes(project.Id)
-    );
-    const allowOvertime = selectedProjects?.every(
-      project => project.AllowOvertime
-    );
-    setFieldValue('AllowOvertime', allowOvertime);
+      target: { name: 'Project', value: newValue.map(item => item.value) },
+    });
   };
 
   return (
