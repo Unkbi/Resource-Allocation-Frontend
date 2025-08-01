@@ -933,43 +933,6 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          const { rowNode } = params;
-          const firstChild = getFirstChild(params);
-          const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-          if (isGridTreeNode && rowNode.children) {
-            return firstChild ? (
-              <>
-                <EllipsisNameCell value={firstChild.project || ''} />
-                <span
-                  style={{
-                    flexShrink: 0,
-                    background: '#E9EFF8',
-                    color: '#000',
-                    paddingRight: 4,
-                    paddingLeft: 4,
-                    fontSize: 12,
-                    borderRadius: 4,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  +{rowNode?.children?.length}
-                </span>
-              </>
-            ) : null;
-          }
-        },
-      },
-      {
-        field: 'resource',
-        headerName: 'Resource',
-        width: 200,
-        headerClassName: 'secondary-header',
-        cellClassName: 'secondary-cell',
-        sortable: false,
-        primaryColumn: true,
-        cellClassName: () =>
-          groupBy === 'project' ? 'common-NonEditableCells' : '',
-        renderCell: params => {
           return params.value ? (
             <CellWithMenu
               params={params}
@@ -980,6 +943,126 @@ export const getFinalColumns = (
               handleOpenHistory={handleOpenHistory}
             />
           ) : null;
+        },
+      },
+      {
+        field: 'resource',
+        headerName: 'Resource',
+        width: 200,
+        headerClassName: 'secondary-header',
+        sortable: false,
+        primaryColumn: true,
+        cellClassName: () =>
+          groupBy === 'project' ? 'common-NonEditableCells' : 'secondary-cell',
+        renderCell: params => {
+          const { rowNode, value } = params;
+          const firstChild = getFirstChild(params);
+          const isParent = rowNode?.children?.length;
+          const isGroupExpanded = rowNode?.childrenExpanded;
+          
+          // if (params.row.hasResource && !params.row.resource) {
+          //   return (
+          //     <AddRowButton
+          //       row={params.row}
+          //       teamsId={params.row.teamsId}
+          //       project={params.row.project}
+          //       handleAddRow={handleAddResource}
+          //       buttonName="Add Resource"
+          //       onClick={() => {
+          //         setSelectedTeam(params.row.teams);
+          //         setSelectedResourceId(params.row.resourceId);
+          //       }}
+          //     />
+          //   );
+          // }
+
+          if (isParent) {
+            const resources_set = [
+              ...new Set(
+                rowNode.children?.map(
+                  child => params.api.getRow(child)?.resource || ''
+                )
+              ),
+            ].filter(Boolean);
+
+            if (resources_set.length > 1) {
+              const firstResource = resources_set[0];
+
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    minWidth: 0,
+                    width: '100%',
+                    gap: 8,
+                  }}
+                >
+                  {!isGroupExpanded && (
+                    <EllipsisNameCell
+                      value={firstResource}
+                      showAddIcon={false}
+                      isFormatWithK={isFormatWithK}
+                    />
+                  )}
+                  {!isGroupExpanded && (
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        backgroundColor: '#E9EFF8',
+                        color: '#000',
+                        padding: '0 4px',
+                        fontSize: 12,
+                        borderRadius: 4,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      +{resources_set.length - 1}
+                    </span>
+                  )}
+                </div>
+              );
+            }
+            return resources_set.length ? (
+              <EllipsisNameCell
+                value={resources_set[0]}
+                showAddIcon={false}
+                isFormatWithK={isFormatWithK}
+              />
+            ) : null;
+          }
+          const allocationsCount = params.row?.resource_count?.length || 0;
+          if (value) {
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CellWithMenu
+                  params={params}
+                  handleAddClick={handleAddClick}
+                  handleCloneClick={handleCloneClick}
+                  handleTranferClick={handleTranferClick}
+                  isFormatWithK={isFormatWithK}
+                  handleOpenHistory={handleOpenHistory}
+                />
+                {allocationsCount > 1 && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      background: '#E9EFF8',
+                      color: '#000',
+                      padding: '0 4px',
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{allocationsCount - 1}
+                  </span>
+                )}
+              </div>
+            );
+          }
+
+          return null;
         },
       },
       ...(allColumns?.slice(1) || []),
