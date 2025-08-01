@@ -44,6 +44,7 @@ function* createOrganisationSaga(action: any): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     // API post 
+    console.log('Creating org with:', postData)
     const response = yield call(createOrganisation, postData);
     yield call(fetchOrganisationsSaga);
     if (resolve) resolve(response);
@@ -176,13 +177,5 @@ export function* organizationsSaga() {
  yield takeEvery(CREATE_ORGANISATION, createOrganisationSaga)
  yield takeEvery(UPDATE_ORGANISATION, updateOrganisationSaga)
  yield takeEvery(DELETE_ORGANISATION, deleteOrganisationSaga)
- // yield takeEvery(
- //   FETCH_ORGANISATIONS_RESOURCES,
- //   fetchOrganisationResourcesSaga
- // );
- // yield takeLatest(
- //   'UPDATE_RESOURCE_ORGANISATION',
- //   updateOrganizationForResourceSaga
- // );
 }
 

@@ -14,7 +14,6 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { fetchAllOrganisations } from '@/app/services/organisationServices';
 interface CommonToolbarProps {
  children?: React.ReactNode;
 }
@@ -277,8 +276,6 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
              fullWidth
 
 
-             // testing fetch
-             onClick={fetchAllOrganisations}
              InputProps={{
                disableUnderline: true,
                endAdornment: (

@@ -14,6 +14,7 @@ export const createOrganisation = async (newData: any) => {
   const payload = {
     'ResourceAllocation.Core/Organization': newData,
   };
+  console.log("Payload being sent:", payload);
   const response = await axiosInstance.post(
     `${API_PROJECT_PORTFOLIO}/Organization`,
     payload
@@ -41,30 +42,6 @@ export const deleteOrganisation = async (organisationId: string) => {
   );
   return response.data;
 };
-
-// delete?
-
-
-// export const fetchResourcesAgainstOrganizationsForSaga = async (
-//   postData: GetOrganizationResourcesPayload
-// ) => {
-//   const response = await axiosInstance.post(
-//     `${API_PROJECT_PORTFOLIO}/GetOrganizationResources`,
-//     postData
-//   );
-//   return response.data;
-// };
-
-
-// export const updateOrganizationForResourceSaga = async (
-//   postData: ResourceOrganizationPayload
-// ) => {
-//   const response = await axiosInstance.post(
-//     `${API_PROJECT_PORTFOLIO}/ChangeTeamOrganization`,
-//     postData
-//   );
-//   return response.data;
-// };
 
 
  
