@@ -40,6 +40,7 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
   }, []);
 
   useEffect(() => {
+    console.log('T initialData:', initialData);
     if (initialData) {
       const rowData = {
         Name: initialData.Team || '',

@@ -816,7 +816,7 @@ useEffect(() => {
 
   const organizationColumns = [
   {
-    field: 'name',
+    field: 'Name',
     headerName: 'Organization Name',
     minWidth: 290,
     maxWidth: 500,
@@ -852,7 +852,7 @@ useEffect(() => {
     },
   },
   {
-    field: 'status',
+    field: 'Status',
     headerName: 'Status',
     width: 170,
     flex: 1,
@@ -1328,9 +1328,10 @@ useEffect(() => {
             loading={loading}
             columns={organizationColumns}
             rows={organisations.map((org, index) => ({
-              id: org.id || index,
-              name: org.Name,
-              status: org.Status,
+              Id: org.Id,
+              id: org.Id,
+              Name: org.Name,
+              Status: org.Status,
             }))}
             apiRef={apiRef}
             value={value}       
