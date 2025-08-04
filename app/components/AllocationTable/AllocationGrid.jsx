@@ -1420,10 +1420,7 @@ export default function AllocationGrid({
       }}
       getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}
-      onCellSelectionModelChange={(newModel, details) => {
-        console.log('newModel : ', newModel);
-        console.log('details : ', details);
-      }}
+      onCellSelectionModelChange={handleCellSelectionModelChange}
       {...toolBarBasedProperties}
       slots={{
         noRowsOverlay: NoRowsOverlay,
