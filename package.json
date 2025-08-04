@@ -31,6 +31,7 @@
     "formik": "^2.4.6",
     "lucide-react": "^0.484.0",
     "lz-string": "^1.5.0",
+    "mui-color-input": "^7.0.0",
     "next": "^15.2.4",
     "pg": "^8.16.0",
     "react": "^19.0.0",
