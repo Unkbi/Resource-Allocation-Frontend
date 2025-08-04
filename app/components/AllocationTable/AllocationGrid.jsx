@@ -1128,6 +1128,7 @@ export default function AllocationGrid({
   );
   const handleCellSelectionModelChange = useCallback(
     newModel => {
+      console.log('Cell Selection Model Changed: ', newModel);
       // Cell Selection Model should have a value only for minimum of 2 cells
       // If only one cell is selected, then clear the selection
       if (type === 'cost') return;
@@ -1235,6 +1236,7 @@ export default function AllocationGrid({
           }
         }
       });
+      console.log('filteredModel : ', filteredModel);
       setCellSelectionModel(filteredModel);
     },
     [apiRef, type, isCellEditable, setCellSelectionModel, groupBy]
