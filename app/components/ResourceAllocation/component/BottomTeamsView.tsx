@@ -1,5 +1,13 @@
 'use client';
-import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
+// import AllocationGrid from '@/app/components/AllocationTable/AllocationGrid';
+import dynamic from 'next/dynamic';
+
+const ClientOnlyAllocationGrid = dynamic(
+  () => import('@/app/components/AllocationTable/AllocationGrid'),
+  {
+    ssr: false,
+  }
+);
 import { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
@@ -209,7 +217,7 @@ export default function BottomTeamsView({
           width: '100%',
         }}
       >
-        <AllocationGrid
+        <ClientOnlyAllocationGrid
           loading={dataProcessing}
           groupBy="teams"
           mode="split"
