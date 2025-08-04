@@ -7,7 +7,7 @@ import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
-// import { MuiColorInput } from 'mui-color-input';
+import { MuiColorInput } from 'mui-color-input';
 import StyledAutocomplete from '../Select/Autocomplete';
 
 const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
@@ -103,7 +103,7 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
       <StyledLabel>Sidebar Color</StyledLabel>
-      {/* <Box sx={{ pb: 2 }}>
+      <Box sx={{ pb: 2 }}>
         <MuiColorInput
           name="SidebarColor"
           format="hex"
@@ -126,7 +126,7 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
             },
           }}
         />
-      </Box> */}
+      </Box>
     </Box>
   );
 };
