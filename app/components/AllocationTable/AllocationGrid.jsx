@@ -736,14 +736,7 @@ export default function AllocationGrid({
                 }}
               >
                 {showActuals && params.rowNode?.type !== 'group' ? (
-                  <AllocationCellWithActuals
-                    params={{
-                      ...params,
-                      period: period,
-                      actuals: actuals, 
-                      notes: notes,
-                    }}
-                  />
+                  <AllocationCellWithActuals params={cellData} />
                 ) : (
                   <span>{value}</span>
                 )}
