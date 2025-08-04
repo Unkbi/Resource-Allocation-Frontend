@@ -740,6 +740,8 @@ export default function AllocationGrid({
                     params={{
                       ...params,
                       period: period,
+                      actuals: actuals, 
+                      notes: notes,
                     }}
                   />
                 ) : (
