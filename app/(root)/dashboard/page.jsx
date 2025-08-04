@@ -856,7 +856,9 @@ export default function ExecutiveDashboardPage() {
                   }))}
                   xAxis={[
                     {
-                      data: projectPeriods.map((p, idx) => `${getWeekNumber(p)}`),
+                      data: projectPeriods.map(
+                        (p, idx) => `${getWeekNumber(p)}`
+                      ),
                       label: 'Week',
                       //tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -1419,7 +1421,11 @@ export default function ExecutiveDashboardPage() {
               label="Overview"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-            <Tab value="teams" label="Teams" sx={{ textTransform: 'none', fontWeight: 600 }} />
+            <Tab
+              value="teams"
+              label="Teams"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
             <Tab
               value="projects"
               label="Projects"
@@ -1461,7 +1467,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
-              style={{padding: '0 16px'}}
+              style={{ padding: '0 16px' }}
             >
               {Object.entries(overviewcharts).map(([key, component]) => (
                 <div key={key}>{component}</div>
@@ -1491,7 +1497,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
-              style={{padding: '0 16px'}}
+              style={{ padding: '0 16px' }}
             >
               {Object.entries(teamCharts).map(([key, component]) => (
                 <div key={key}>{component}</div>
@@ -1520,7 +1526,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
-              style={{padding: '0 16px'}}
+              style={{ padding: '0 16px' }}
             >
               {Object.entries(projectCharts).map(([key, component]) => (
                 <div key={key}>{component}</div>
