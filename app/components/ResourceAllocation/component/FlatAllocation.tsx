@@ -10,6 +10,7 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
+// import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
@@ -19,7 +20,7 @@ import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
-interface ResourceAllocationProps {
+interface FlatAllocationProps {
   startDate: string;
   endDate: string;
 }
@@ -47,14 +48,17 @@ export interface Project {
   Type: string;
 }
 
-export default function ResourceAllocation({
+export default function FlatAllocation({
   startDate,
   endDate,
-}: ResourceAllocationProps) {
+}: FlatAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
+  );
+  const { organisations } = useSelector(
+    (state: RootState) => state.organisations
   );
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
@@ -121,6 +125,20 @@ export default function ResourceAllocation({
     }
   }, [ready, allAllocations]);
 
+  const handleAddClick = (params: GridCellParams) => {
+    dispatch(
+      openDialog({
+        title: 'Add Allocation',
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: 'add_allocation',
+        initialData: {
+          Project: params.value,
+        },
+      })
+    );
+  };
+
   const getTeam = (params: GridCellParams) => {
     if (
       params.rowNode.type === 'group' &&
@@ -130,6 +148,21 @@ export default function ResourceAllocation({
       const teamName = params.rowNode.groupingKey;
       const team = teams?.result?.find(t => t.Name === teamName);
       return team;
+    }
+    return null;
+  };
+
+  const getOrganisation = (params: GridCellParams) => {
+    if (
+      params.rowNode.type === 'group' &&
+      params.rowNode.groupingField === 'organisationName'
+    ) {
+      // Find the organisation by name in the organisations array
+      const organisationName = params.rowNode.groupingKey;
+      const organisation = organisations?.find(
+        o => o.Name === organisationName
+      );
+      return organisation;
     }
     return null;
   };
@@ -148,23 +181,70 @@ export default function ResourceAllocation({
     return null;
   };
 
-  const resourcesColumnConfig = [
+  const organisationColumnConfig = [
     {
-      field: 'teams',
-      headerName: 'Team Name',
+      field: 'organisationName',
+      headerName: 'Organization Name',
       width: 201,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const { rowNode, api } = params;
-        const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-
-        if (isGridTreeNode && rowNode.children) {
-          const row = api.getRow(rowNode.children[0]);
-          return <EllipsisNameCell value={row.teams as string} />;
-        }
-        return null;
+        const allocation = params.row;
+        const organisationName = allocation?.organisationName;
+        return <EllipsisNameCell value={organisationName || ''} />;
+      },
+    },
+    {
+      field: 'teams',
+      headerName: 'Team',
+      width: 201,
+      type: 'string',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        const team = allocation?.teams;
+        return team ? <EllipsisNameCell value={team || ''} /> : null;
+      },
+    },
+    {
+      field: 'resource',
+      headerName: 'Resource',
+      width: 201,
+      type: 'string',
+      isEditable: 'false',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        const resource = allocation?.resource;
+        return <EllipsisNameCell value={resource || ''} />;
+      },
+    },
+    {
+      field: 'project',
+      headerName: 'Project',
+      width: 201,
+      type: 'string',
+      isEditable: 'false',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        const project = allocation?.project;
+        return <EllipsisNameCell value={project || ''} />;
+      },
+    },
+    {
+      field: 'organisationStatus',
+      headerName: 'Organization Status',
+      width: 201,
+      headerClassName: 'prime-header',
+      cellClassName: 'prime-cell',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        const organisationStatus = allocation?.organisationStatus;
+        return <EllipsisNameCell value={organisationStatus || ''} />;
       },
     },
     {
@@ -173,13 +253,13 @@ export default function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.Email || ''} />;
+        const allocation = params.row;
+        const email = allocation?.email;
+        return <EllipsisNameCell value={email || ''} />;
       },
     },
     {
@@ -188,24 +268,24 @@ export default function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.PhoneNumber || ''} />;
+        const allocation = params.row;
+        const phoneNumber = allocation?.phoneNumber;
+        return <EllipsisNameCell value={phoneNumber || ''} />;
       },
     },
     {
       field: 'department',
-      headerName: 'Organization',
+      headerName: 'Department',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.Department || ''} />;
+        const allocation = params.row;
+        const department = allocation?.department;
+        return <EllipsisNameCell value={department || ''} />;
       },
     },
     {
@@ -214,11 +294,11 @@ export default function ResourceAllocation({
       width: 100,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.HRLevel || ''} />;
+        const allocation = params.row;
+        const hrLevel = allocation?.hrLevel;
+        return <EllipsisNameCell value={hrLevel || ''} />;
       },
     },
     {
@@ -227,11 +307,11 @@ export default function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.Role || ''} />;
+        const allocation = params.row;
+        const role = allocation?.role;
+        return <EllipsisNameCell value={role || ''} />;
       },
     },
     {
@@ -240,11 +320,11 @@ export default function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+        const allocation = params.row;
+        const workLocation = allocation?.workLocation;
+        return <EllipsisNameCell value={workLocation || ''} />;
       },
     },
     {
@@ -253,11 +333,11 @@ export default function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.StartDate || ''} />;
+        const allocation = params.row;
+        const resourceStartDate = allocation?.resourceStartDate;
+        return <EllipsisNameCell value={resourceStartDate || ''} />;
       },
     },
     {
@@ -266,11 +346,11 @@ export default function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.EndDate || ''} />;
+        const allocation = params.row;
+        const resourceEndDate = allocation?.resourceEndDate;
+        return <EllipsisNameCell value={resourceEndDate || ''} />;
       },
     },
     {
@@ -279,11 +359,11 @@ export default function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.LocationCategory || ''} />;
+        const allocation = params.row;
+        const resourceLocationCategory = allocation?.resourceLocationCategory;
+        return <EllipsisNameCell value={resourceLocationCategory || ''} />;
       },
     },
     {
@@ -292,11 +372,15 @@ export default function ResourceAllocation({
       width: 190,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.AverageWeeklyHours || ''} />;
+        const allocation = params.row;
+        const averageWeeklyHours = allocation?.averageWeeklyHours;
+        return (
+          <EllipsisNameCell
+            value={averageWeeklyHours ? `${averageWeeklyHours} hrs/week` : ''}
+          />
+        );
       },
     },
     {
@@ -305,12 +389,16 @@ export default function ResourceAllocation({
       width: 195,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
+        const allocation = params.row;
+        const contractorHourlyRate = allocation?.contractorHourlyRate;
         return (
-          <EllipsisNameCell value={resource?.ContractorHourlyRate || ''} />
+          <EllipsisNameCell
+            value={
+              contractorHourlyRate ? `$ ${contractorHourlyRate.toFixed(2)}` : ''
+            }
+          />
         );
       },
     },
@@ -320,28 +408,25 @@ export default function ResourceAllocation({
       width: 260,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return (
-          <EllipsisNameCell
-            value={resource?.ContractorHourlyRateCurrency || ''}
-          />
-        );
+        const allocation = params.row;
+        const contractorHourlyRateCurrency =
+          allocation?.contractorHourlyRateCurrency;
+        return <EllipsisNameCell value={contractorHourlyRateCurrency || ''} />;
       },
     },
     {
       field: 'resourceType',
       headerName: 'Resource Type',
       width: 135,
-      sortable: false,
       primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',
       renderCell: (params: GridCellParams) => {
-        const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.Type || ''} />;
+        const allocation = params.row;
+        const resourceType = allocation?.resourceType;
+        return <EllipsisNameCell value={resourceType || ''} />;
       },
     },
     {
@@ -350,11 +435,11 @@ export default function ResourceAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const team = getTeam(params);
-        return team ? <EllipsisNameCell value={team?.Status || ''} /> : null;
+        const allocation = params.row;
+        const teamStatus = allocation?.teamStatus;
+        return <EllipsisNameCell value={teamStatus || ''} />;
       },
     },
     {
@@ -363,18 +448,18 @@ export default function ResourceAllocation({
       width: 140,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
+        const projectOvertimeAllowed = allocation?.projectOvertimeAllowed;
         return (
           <EllipsisNameCell
             value={
-              allocation?.projectOvertimeAllowed === true
-                ? 'True'
-                : allocation?.projectOvertimeAllowed === false
-                  ? 'False'
-                  : ''
+              projectOvertimeAllowed
+                ? projectOvertimeAllowed === 'true'
+                  ? 'Yes'
+                  : 'No'
+                : ''
             }
           />
         );
@@ -386,7 +471,6 @@ export default function ResourceAllocation({
       width: 140,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -400,7 +484,6 @@ export default function ResourceAllocation({
       width: 150,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -413,7 +496,6 @@ export default function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -426,7 +508,6 @@ export default function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -439,7 +520,6 @@ export default function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -452,7 +532,6 @@ export default function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -465,7 +544,6 @@ export default function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -478,7 +556,6 @@ export default function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -491,7 +568,6 @@ export default function ResourceAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -504,7 +580,6 @@ export default function ResourceAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -517,17 +592,11 @@ export default function ResourceAllocation({
       width: 170,
       type: 'string',
       isEditable: false,
-      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const { rowNode, api } = params;
-        const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-
-        if (isGridTreeNode && rowNode.children) {
-          const row = api.getRow(rowNode.children[0]);
-          return <EllipsisNameCell value={row?.teamAllocationManager} />;
-        }
-        return null;
+        const allocation = params.row;
+        const allocationManager = allocation?.teamAllocationManager;
+        return <EllipsisNameCell value={allocationManager || ''} />;
       },
     },
   ];
@@ -562,11 +631,11 @@ export default function ResourceAllocation({
       >
         <AllocationGrid
           loading={dataProcessing}
-          groupBy="resource"
+          groupBy=""
           mode="team"
           startDate={startDate}
           endDate={endDate}
-          columns={resourcesColumnConfig}
+          columns={organisationColumnConfig}
           selectedTeam={selectedTeam}
           toolbarComponent={CustomToolbar}
           setSelectedTeam={setSelectedTeam}
@@ -575,11 +644,13 @@ export default function ResourceAllocation({
               columnVisibilityModel: {
                 teamAllocationManager: false,
                 teamStatus: false,
-                __row_group_by_columns_group__: true, // This is the gtouping column for resource
+                // __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
+                // __row_group_by_columns_group_organisationName__: true, // This is the grouping column for teams
                 project: true,
                 resourceType: true,
-                teams: false,
-                resource: false, // This column has to always be false, as we are using grouping.
+                organisationName: true, // This column has to always be false, as we are using grouping.
+                resource: true, // This column has to always be false, as we are using grouping.
+                organisationStatus: false,
                 email: false,
                 phoneNumber: false,
                 department: false,
@@ -609,7 +680,7 @@ export default function ResourceAllocation({
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
           showActuals={showActuals}
-          rowGroupingColumnMode="single"
+          rowGroupingColumnMode={''}
         />
         {!allAllocations && !dataProcessing && (
           <div

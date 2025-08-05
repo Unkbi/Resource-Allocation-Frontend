@@ -585,6 +585,8 @@ const PortfolioIcon = () => (
   <img src="/images/icons/portfolio.svg" alt="portfolio" />
 );
 
+const FlatIcon = () => <img src="/images/icons/flatView.svg" alt="flat view" />;
+
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
@@ -651,6 +653,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     {
       name: 'Resources',
       icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
+      name: 'Flat',
+      icon: <FlatIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
     },
     {
       name: 'Project',
@@ -883,7 +889,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       if (
         (view.includes('Teams') ||
           view.includes('Organisations') ||
-          view.includes('Resources')) &&
+          view.includes('Resources') ||
+          view.includes('Flat')) &&
         teamsIAmAllocationManager.length === 0
       ) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
@@ -1371,7 +1378,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   </>
                 ) : view.includes('Teams') ||
                   view.includes('Organisations') ||
-                  view.includes('Resources') ? (
+                  view.includes('Resources') ||
+                  view.includes('Flat') ? (
                   <>
                     <TooltipButton
                       msg="My Teams"
@@ -1674,7 +1682,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 disabled={
                   currentView?.GroupBy === 'Portfolio' ||
                   currentView?.GroupBy === 'Organisations' ||
-                  currentView?.GroupBy === 'Resources'
+                  currentView?.GroupBy === 'Resources' ||
+                  currentView?.GroupBy === 'Flat'
                 }
               />
               <Typography

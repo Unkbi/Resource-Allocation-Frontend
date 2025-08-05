@@ -52,6 +52,7 @@ const getColumnLabel = (column, groupBy = '') => {
     __row_group_by_columns_group_project__: 'Project Name',
     __row_group_by_columns_group_portfolioName__: 'Portfolio',
     totalEffort: 'Total Effort',
+    organisationName: 'Organisation Name',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',
@@ -191,11 +192,17 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                 value: column,
                 label: getColumnLabel(column),
               }))
-            : columns.project.map(column => ({
-                id: column,
-                value: column,
-                label: getColumnLabel(column),
-              }));
+            : values?.groupBy === 'Project'
+              ? columns.project.map(column => ({
+                  id: column,
+                  value: column,
+                  label: getColumnLabel(column),
+                }))
+              : columns['']?.map(column => ({
+                  id: column,
+                  value: column,
+                  label: getColumnLabel(column),
+                }));
 
   // All possible viewBys
   const viewByOptions = [
@@ -223,6 +230,11 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       value: 'Portfolio',
       label: 'Portfolios*',
       extraInfo: 'Group by Projects, then by Portfolios',
+    },
+    {
+      value: 'Flat',
+      label: 'Flat*',
+      extraInfo: 'No Grouping',
     },
   ];
 
@@ -381,7 +393,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       showBy:
         currentView?.GroupBy === 'Teams' ||
         currentView?.GroupBy === 'Organisations' ||
-        currentView?.GroupBy === 'Resources'
+        currentView?.GroupBy === 'Resources' ||
+        currentView?.GroupBy === 'Flat'
           ? currentView?.MyTeam
             ? 'MyTeams'
             : 'AllTeams'
@@ -570,7 +583,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         <StyledLabel>Quick Filter</StyledLabel>
         {values?.groupBy === 'Teams' ||
         values?.groupBy === 'Organisations' ||
-        values?.groupBy === 'Resources' ? (
+        values?.groupBy === 'Resources' ||
+        values?.groupBy === 'Flat' ? (
           <RadioGroup
             name="showBy"
             value={values?.showBy || 'MyTeams'}

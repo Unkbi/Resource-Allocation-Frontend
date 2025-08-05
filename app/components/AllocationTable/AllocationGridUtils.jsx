@@ -606,7 +606,7 @@ export const getFinalColumns = (
     );
   };
 
-  if (groupBy === 'organization') {
+  if (groupBy === 'organization' || groupBy === '') {
     return allColumns || [];
   } else if (groupBy === 'teams' || groupBy === 'organisationName') {
     return [
