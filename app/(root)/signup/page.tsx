@@ -170,6 +170,13 @@ const MainBox = styled(Box)(({ theme }) => ({
     }
 }));
 
+const commonHelperText = {
+  marginTop: '4px',
+  marginLeft: '4px',
+  lineHeight: '16px',
+};
+
+
 export default function SingupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -179,14 +186,44 @@ export default function SingupPage() {
     const dispatch = useDispatch<AppDispatch>();
     const { loading, user, signupData, error } = useSelector((state: RootState) => state.user);
     const router = useRouter();
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     const [showPassword, setShowPassword] = React.useState(false);
 
     const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!firstName || !lastName || !email || !password ) {
-            return;
+         const newErrors: { [key: string]: string } = {};
+         if (!firstName.trim()) newErrors.firstName = 'First Name is required';
+         if (!lastName.trim()) newErrors.lastName = 'Last Name is required';
+         if (!email.trim()) newErrors.email = 'Email is required';
+         if (!password.trim()) newErrors.password = 'Password is required';
+
+         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+         if (!email.trim()) {
+         newErrors.email = 'Email is required';
+         } else if (!emailRegex.test(email)) {
+         newErrors.email = 'Please enter a valid email address';
         }
+       if (!password.trim()) {
+         newErrors.password = 'Password is required';
+       } else if (password.length < 6) {
+         newErrors.password = 'Password must be at least 6 characters long';
+       } else if (!/[A-Z]/.test(password)) {
+         newErrors.password =
+           'Password must contain at least 1 uppercase letter';
+       } else if (!/[a-z]/.test(password)) {
+         newErrors.password =
+           'Password must contain at least 1 lowercase letter';
+       } else if (!/[^a-zA-Z0-9]/.test(password)) {
+         newErrors.password =
+           'Password must contain at least 1 special character(@,#, $, %, &, *, etc.)';
+       }
+         if (Object.keys(newErrors).length > 0) {
+           setErrors(newErrors);
+           return;
+         }
+
+         setErrors({});
         dispatch(signUp({
             'Agentlang.Kernel.Identity/SignUp': {
                 'User': {
@@ -215,9 +252,11 @@ export default function SingupPage() {
         setShowPassword((prev) => !prev);
     };
 
-    if (signupData && !error) {
-        router.push('/signup-otp');
-    }
+   useEffect(() => {
+     if (signupData && !error) {
+       router.push('/signup-otp');
+     }
+   }, [signupData, error, router]);
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -250,7 +289,15 @@ export default function SingupPage() {
                                 placeholder="First Name"
                                 variant="outlined"
                                 value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
+                                 onChange={(e) => {
+                                setFirstName(e.target.value);
+                                 if (errors.firstName && e.target.value.trim()) {
+                                  setErrors(prev => ({ ...prev, firstName: '' }));
+                                  }
+                               }}
+                                error={!!errors.firstName}
+                                helperText={errors.firstName}
+                                FormHelperTextProps={{ sx: commonHelperText}}
                             />
                             <TextField
                                 className='textField'
@@ -258,7 +305,14 @@ export default function SingupPage() {
                                 placeholder="Last Name"
                                 variant="outlined"
                                 value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
+                                onChange={(e) => {
+                                    setLastName(e.target.value);
+                                    if (errors.lastName && e.target.value.trim()) {
+                                         setErrors(prev => ({ ...prev, lastName: '' }));
+                                        }}}
+                                error={!!errors.lastName}
+                                helperText={errors.lastName}
+                                FormHelperTextProps={{ sx: commonHelperText}}
                             />
                             </Box>
                             {/* <TextField
@@ -279,7 +333,15 @@ export default function SingupPage() {
                                 }}
                                 variant="outlined"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (errors.email && e.target.value.trim()) {
+                                        setErrors(prev => ({ ...prev, email: '' }));
+                                    }
+                                }}
+                                error={!!errors.email}
+                                helperText={errors.email}
+                                FormHelperTextProps={{ sx: commonHelperText}}
                             />
                             <TextField
                                 className='textField'
@@ -291,7 +353,15 @@ export default function SingupPage() {
                                 }}
                                 fullWidth
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) => {
+                                     setPassword(e.target.value);
+                                     if (errors.password && e.target.value.trim()) {
+                                         setErrors(prev => ({ ...prev, password: '' }));
+                                        }
+                                   }}
+                                error={!!errors.password}
+                                helperText={errors.password}  
+                                FormHelperTextProps={{ sx: commonHelperText}} 
                                 InputProps={{
                                     endAdornment: (
                                         <InputAdornment position="end">
