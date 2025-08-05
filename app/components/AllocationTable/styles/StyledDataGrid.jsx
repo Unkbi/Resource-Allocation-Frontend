@@ -1047,8 +1047,6 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     ...(groupBy === '' && {
       '& .MuiDataGrid-virtualScrollerContent': {
         flexBasis: 'auto !important',
-        // flexGrow: 1,
-        // flexShrink: '1 !important',
       },
     }),
   };
