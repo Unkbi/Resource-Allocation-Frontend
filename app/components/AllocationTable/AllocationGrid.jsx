@@ -1308,6 +1308,12 @@ export default function AllocationGrid({
         __row_group_by_columns_group_project__: true,
         resource: true,
       },
+      '': {
+        organisationName: true,
+        teams: true,
+        resource: true,
+        project: true,
+      },
     };
     let updatedModel = {
       ...newModel,

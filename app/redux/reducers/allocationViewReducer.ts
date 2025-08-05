@@ -36,6 +36,14 @@ export const DEFAULT_VISIBLE_RESOURCES_COLUMNS = [
   'resourceType',
 ];
 
+export const DEFAULT_VISIBLE_FLAT_COLUMNS = [
+  'organisationName',
+  'teams',
+  'resource',
+  'project',
+  'resourceType',
+];
+
 export const DEFAULT_VISIBLE_PROJECTS_COLUMNS = [
   '__row_group_by_columns_group__',
   'resource',
@@ -264,6 +272,39 @@ const initialState: AllocationGridViewState = {
       'ContractorHourlyRate',
       'ContractorHourlyRateCurrency',
     ],
+    '': [
+      'organisationName',
+      'teams',
+      'resource',
+      'project',
+      'resourceType',
+      'teamStatus',
+      'teamAllocationManager',
+      'organisationStatus',
+      'email',
+      'phoneNumber',
+      'department',
+      'hrLevel',
+      'role',
+      'workLocation',
+      'resourceStartDate',
+      'resourceEndDate',
+      'resourceLocationCategory',
+      'averageWeeklyHours',
+      'contractorHourlyRate',
+      'contractorHourlyRateCurrency',
+      'projectOvertimeAllowed',
+      'projectCost',
+      'projectCurrency',
+      'projectDescription',
+      'projectLocation',
+      'projectManager',
+      'projectSponsor',
+      'projectEndDate',
+      'projectStartDate',
+      'projectStatus',
+      'projectType',
+    ],
   },
   currentView: COMPANY_DEFAULT_VIEW,
   savedViews: [COMPANY_DEFAULT_VIEW],
@@ -286,7 +327,9 @@ const viewSlice = createSlice({
               ? DEFAULT_VISIBLE_RESOURCES_COLUMNS
               : action.payload.includes('Portfolio')
                 ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
-                : DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+                : action.payload.includes('Project')
+                  ? DEFAULT_VISIBLE_PROJECTS_COLUMNS
+                  : DEFAULT_VISIBLE_FLAT_COLUMNS,
       };
     },
     setSplitView: (state, action) => {
