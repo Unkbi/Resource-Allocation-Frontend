@@ -616,6 +616,20 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
+  const [allApiSuccess, setAllApiSuccess] = useState(false);
+  const { portfolios } = useSelector(state => state.portfolios);
+
+  const projectsLoaded = Array.isArray(projects?.result ?? projects);
+  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
+  const teamsLoaded = Array.isArray(teams?.result ?? teams);
+  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
+
+  const allDataLoaded =
+    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+
+  useEffect(() => {
+    setAllApiSuccess(allDataLoaded);
+  }, [projects, resources, teams, portfolios]);
 
   const handleViewClick = event => {
     setAnchorEl(event.currentTarget);
@@ -1087,6 +1101,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               className="AddIcon"
               onClick={handleAddMenuToggle}
               ref={anchorRefAdd}
+              disabled={!allApiSuccess}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
