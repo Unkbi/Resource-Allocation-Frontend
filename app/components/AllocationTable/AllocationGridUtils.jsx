@@ -271,7 +271,7 @@ const CellWithMenu = ({
             teamsResources,
             allResourcesDetail,
             null,
-            allResources.filter(resource => resource.Id === row.resourceId),
+            allResources,
             {
               ProjectName: row?.project || '',
               Id: '',
@@ -606,7 +606,7 @@ export const getFinalColumns = (
     );
   };
 
-  if (groupBy === 'organization') {
+  if (groupBy === 'organization' || groupBy === '') {
     return allColumns || [];
   } else if (groupBy === 'teams' || groupBy === 'organisationName') {
     return [
@@ -743,13 +743,158 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
+            <EllipsisNameCell
+              value={isGroupExpanded ? '' : projects_set[0]}
+              showAddIcon={false}
+            />
           ) : (
             ''
           );
         },
       },
       ...(allColumns?.slice(1) || []),
+    ];
+  } else if (groupBy === 'resource') {
+    return [
+      {
+        field: 'resource',
+        headerName: 'Resource Name',
+        width: 201,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: true,
+        primaryColumn: true,
+        renderCell: params => {
+          const value = params.value;
+          const resourceCount = params.row?.resource_count?.length || 0;
+          return value ? (
+            <CellWithMenu
+              params={params}
+              handleAddClick={handleAddClick}
+              isFormatWithK={isFormatWithK}
+              // handleCloneClick={handleCloneClick}
+              // handleTranferClick={handleTranferClick}
+              handleOpenHistory={handleOpenHistory}
+            />
+          ) : null;
+        },
+      },
+      {
+        field: 'project',
+        headerName: 'Project',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: groupBy == 'project' ? true : false,
+        primaryColumn: true,
+        renderCell: params => {
+          const allocationsOfAddedResource =
+            Array.isArray(teamAllocations.result) &&
+            teamAllocations.result.filter(
+              resource => resource.Resource === params.row.resourceId
+            );
+          const uniqueProjectNames = [
+            ...new Set(
+              (Array.isArray(allocationsOfAddedResource) &&
+                allocationsOfAddedResource.map(item => item.ProjectName)) ||
+                []
+            ),
+          ];
+          const isGroupExpanded = params.rowNode.childrenExpanded;
+          if (params.row.hasProject && !params.row.project) {
+            return (
+              <AddRowButton
+                row={params.row}
+                teamsId={params.row.teamsId}
+                project={params.row.project}
+                handleAddRow={handleAddProject}
+                buttonName="Add Project"
+                resourceProjects={projects?.result.filter(
+                  item => !uniqueProjectNames?.includes(item.Name)
+                )}
+                onClick={event => {
+                  setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId);
+                }}
+              />
+            );
+          }
+          if (params.value) {
+            return (
+              <CellWithMenu
+                params={params}
+                handleAddClick={handleAddClick}
+                handleCloneClick={handleCloneClick}
+                handleTranferClick={handleTranferClick}
+                handleOpenHistory={handleOpenHistory}
+                isFormatWithK={isFormatWithK}
+              >
+                <EllipsisNameCell
+                  value={params.value}
+                  showAddIcon
+                  onAddClick={() => handleAddClick(params)}
+                  isFormatWithK={isFormatWithK}
+                />
+              </CellWithMenu>
+            );
+          }
+
+          const projects_set = [
+            ...new Set(
+              params?.rowNode?.children?.map(
+                child => params.api.getRow(child)?.project
+              )
+            ),
+          ].filter(Boolean);
+
+          if (projects_set.length > 1) {
+            const firstProject = projects_set?.[0];
+
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  minWidth: 0,
+                  width: '100%',
+                  gap: 8,
+                }}
+              >
+                {!isGroupExpanded && (
+                  <EllipsisNameCell
+                    value={firstProject}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                  />
+                )}
+                {!isGroupExpanded && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      backgroundColor: '#E9EFF8',
+                      color: '#000',
+                      paddingRight: 4,
+                      paddingLeft: 4,
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{projects_set.length - 1}
+                  </span>
+                )}
+              </div>
+            );
+          }
+
+          return projects_set.length ? (
+            <EllipsisNameCell value={''} showAddIcon={false} />
+          ) : (
+            ''
+          );
+        },
+      },
+      ...(allColumns || []),
     ];
   } else if (groupBy === 'project') {
     return [
@@ -784,7 +929,7 @@ export const getFinalColumns = (
       ...(allColumns?.slice(0, 1) || []),
       {
         field: 'project',
-        headerName: 'Project Name',
+        headerName: 'Project',
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
@@ -852,6 +997,7 @@ export const groupPage = groupBy => {
     portfolioName: 'Portfolio Name',
     organization: 'Organization Name',
     organisationName: 'Organization Name',
+    resource: 'Resource',
   };
   return groupPages[groupBy];
 };
@@ -871,7 +1017,8 @@ export const getCellClassName = (
   allocationTheme = [],
   type = 'allocation',
   allProjects = [],
-  isCellEditable
+  isCellEditable,
+  groupBy = ''
 ) => {
   if (params?.field === 'totalEffort') {
     if (
@@ -998,7 +1145,10 @@ export const getCellClassName = (
   if (params.rowNode?.type === 'group') {
     return params.rowNode?.groupingField === 'teams' ||
       params.rowNode?.groupingField === 'organisationName' ||
-      params.rowNode?.groupingField === 'portfolioName'
+      params.rowNode?.groupingField === 'portfolioName' ||
+      (groupBy === 'resource' &&
+        params.rowNode?.groupingField === 'resource') ||
+      (groupBy === 'project' && params.rowNode?.groupingField === 'project')
       ? 'firstGroupsRow'
       : 'secondGroupsRow';
   }
@@ -1021,7 +1171,8 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
   if (
     groupBy === 'project' ||
     groupBy === 'portfolioName' ||
-    groupBy === 'organisationName'
+    groupBy === 'organisationName' ||
+    groupBy === 'resource'
   ) {
     return rowsWithTotalEffort;
   } else if (groupBy === 'teams') {

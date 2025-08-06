@@ -697,10 +697,10 @@ export default function AllocationGrid({
           const notes = cellData?.notes || '';
           const actuals = cellData?.actuals || null;
           const period = cellData?.period;
-         const isFutureWeek =
-           period &&
-           !isCurrentWeek(parseISO(period)) &&
-           !isCurrentOrPastWeek(parseISO(period));
+          const isFutureWeek =
+            period &&
+            !isCurrentWeek(parseISO(period)) &&
+            !isCurrentOrPastWeek(parseISO(period));
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -736,12 +736,7 @@ export default function AllocationGrid({
                 }}
               >
                 {showActuals && params.rowNode?.type !== 'group' ? (
-                  <AllocationCellWithActuals
-                    params={{
-                      ...params,
-                      period: period,
-                    }}
-                  />
+                  <AllocationCellWithActuals params={cellData} />
                 ) : (
                   <span>{value}</span>
                 )}
@@ -778,7 +773,9 @@ export default function AllocationGrid({
       .filter(
         i =>
           i.field === 'project' &&
-          (groupBy === 'teams' || groupBy === 'organisationName')
+          (groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource')
       )
       .map(col => col.field),
   ];
@@ -862,6 +859,8 @@ export default function AllocationGrid({
       const deleteList = [];
       const updateList = [];
       let allUpdatedRows = [];
+      const projectOvertimeAllowed = oldRow.projectOvertimeAllowed;
+
       keys.map(key => {
         // Handle Delete Case
         if (
@@ -879,6 +878,19 @@ export default function AllocationGrid({
             Period: oldRow[key]?.period,
             AllocationEntered: null,
           });
+        }
+
+        if (!projectOvertimeAllowed && newRow[key] > 1.0) {
+          newRow[key] = oldRow[key]?.value;
+          dispatch(
+            showToastAction(
+              true,
+              `Project ${oldRow.project} does not allow overtime. Max allocation is 1.0.`,
+              'error',
+              4000
+            )
+          );
+          return;
         }
 
         // Verify Updated Values total allocation for resource is not greater than 2.0
@@ -1152,7 +1164,11 @@ export default function AllocationGrid({
               return false;
             }
           }
-          if (groupBy === 'teams' || groupBy === 'organisationName') {
+          if (
+            groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource'
+          ) {
             // Previously selected team
             const currentResourceSelected = apiRef.current.getRow(
               selectedCells[0].id
@@ -1279,6 +1295,10 @@ export default function AllocationGrid({
         __row_group_by_columns_group_resource__: true,
         project: true,
       },
+      resource: {
+        __row_group_by_columns_group__: true,
+        project: true,
+      },
       project: {
         resource: true,
         __row_group_by_columns_group__: true,
@@ -1287,6 +1307,12 @@ export default function AllocationGrid({
         __row_group_by_columns_group_portfolioName__: true,
         __row_group_by_columns_group_project__: true,
         resource: true,
+      },
+      '': {
+        organisationName: true,
+        teams: true,
+        resource: true,
+        project: true,
       },
     };
     let updatedModel = {
@@ -1389,7 +1415,8 @@ export default function AllocationGrid({
           allocationTheme,
           type,
           projects?.result,
-          isCellEditable
+          isCellEditable,
+          groupBy
         );
         // const editable = isCellEditable(params);
         // if (!editable) {

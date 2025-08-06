@@ -199,7 +199,7 @@ export function getProjectRangeWarnings(
   const { Project: selectedIds, StartDate, EndDate } = values;
 
   if (
-    Array.isArray(projects.result) &&
+    Array.isArray(projects?.result) &&
     selectedIds?.length &&
     StartDate &&
     EndDate

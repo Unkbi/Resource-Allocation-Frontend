@@ -80,7 +80,7 @@ export const confirmForgotPassword = createAsyncThunk(
         '/confirm-forgot-password',
         data
       );
-      return response.data.message;
+      return response;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'Failed to reset password'

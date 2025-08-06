@@ -585,6 +585,8 @@ const PortfolioIcon = () => (
   <img src="/images/icons/portfolio.svg" alt="portfolio" />
 );
 
+const FlatIcon = () => <img src="/images/icons/flatView.svg" alt="flat view" />;
+
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
@@ -616,6 +618,20 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
+  const [allApiSuccess, setAllApiSuccess] = useState(false);
+  const { portfolios } = useSelector(state => state.portfolios);
+
+  const projectsLoaded = Array.isArray(projects?.result ?? projects);
+  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
+  const teamsLoaded = Array.isArray(teams?.result ?? teams);
+  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
+
+  const allDataLoaded =
+    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+
+  useEffect(() => {
+    setAllApiSuccess(allDataLoaded);
+  }, [projects, resources, teams, portfolios]);
 
   const handleViewClick = event => {
     setAnchorEl(event.currentTarget);
@@ -647,6 +663,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     {
       name: 'Organisations',
       icon: <OrganisationIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
+      name: 'Resources',
+      icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
+      name: 'Flat',
+      icon: <FlatIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
     },
     {
       name: 'Project',
@@ -877,7 +901,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       );
 
       if (
-        (view.includes('Teams') || view.includes('Organisations')) &&
+        (view.includes('Teams') ||
+          view.includes('Organisations') ||
+          view.includes('Resources') ||
+          view.includes('Flat')) &&
         teamsIAmAllocationManager.length === 0
       ) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
@@ -904,7 +931,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       }
     }
 
-    if (view.includes('Teams') || view.includes('Organisations')) {
+    if (
+      view.includes('Teams') ||
+      view.includes('Organisations') ||
+      view.includes('Resources')
+    ) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
     } else if (view.includes('Project') || view.includes('Portfolio')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
@@ -1077,6 +1108,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               className="AddIcon"
               onClick={handleAddMenuToggle}
               ref={anchorRefAdd}
+              disabled={!allApiSuccess}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1359,7 +1391,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       </Typography>
                     </Popover>
                   </>
-                ) : view.includes('Teams') || view.includes('Organisations') ? (
+                ) : view.includes('Teams') ||
+                  view.includes('Organisations') ||
+                  view.includes('Resources') ||
+                  view.includes('Flat') ? (
                   <>
                     <TooltipButton
                       msg="My Teams"
@@ -1661,7 +1696,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 onChange={handleAllocationCostSwitch}
                 disabled={
                   currentView?.GroupBy === 'Portfolio' ||
-                  currentView?.GroupBy === 'Organisations'
+                  currentView?.GroupBy === 'Organisations' ||
+                  currentView?.GroupBy === 'Resources' ||
+                  currentView?.GroupBy === 'Flat'
                 }
               />
               <Typography

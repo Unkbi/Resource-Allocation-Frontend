@@ -24,6 +24,8 @@ import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCo
 import TeamsCost from '@/app/components/ResourceAllocation/component/TeamsCost';
 import PortfolioAllocation from '@/app/components/ResourceAllocation/component/PorfolioAllocation';
 import OrganisationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
+import ResourceAllocation from '@/app/components/ResourceAllocation/component/ResourceAllocation';
+import FlatAllocation from '@/app/components/ResourceAllocation/component/FlatAllocation';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -88,6 +90,10 @@ export default function Allocation({ startDate, endDate }) {
           return (
             <OrganisationAllocation startDate={startDate} endDate={endDate} />
           );
+        case 'Resources':
+          return <ResourceAllocation startDate={startDate} endDate={endDate} />;
+        case 'Flat':
+          return <FlatAllocation startDate={startDate} endDate={endDate} />;
         case 'Project Cost':
           return <ProjectCost startDate={startDate} endDate={endDate} />;
         case 'Teams Cost':
