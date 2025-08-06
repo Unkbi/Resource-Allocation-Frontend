@@ -45,20 +45,20 @@ import {
 const getColumnLabel = (column, groupBy = '') => {
   const columnLabels = {
     __row_group_by_columns_group_teams__: 'Team Name',
-    __row_group_by_columns_group_organisationName__: 'Organisation Name',
+    __row_group_by_columns_group_organisationName__: 'Organization Name',
     __row_group_by_columns_group_resource__: 'Resource',
     __row_group_by_columns_group__:
       groupBy === 'Resources' ? 'Resource Name' : 'Project Name',
     __row_group_by_columns_group_project__: 'Project Name',
     __row_group_by_columns_group_portfolioName__: 'Portfolio',
     totalEffort: 'Total Effort',
-    organisationName: 'Organisation Name',
+    organisationName: 'Organization Name',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',
     teamStatus: 'Team Status',
     teamAllocationManager: 'Allocation Manager',
-    organisationStatus: 'Organisation Status',
+    organisationStatus: 'Organization Status',
     resourceType: 'Resource Type',
     projectSponsor: 'Project Sponsor',
     projectManager: 'Project Manager',
@@ -213,8 +213,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     },
     {
       value: 'Organisations',
-      label: 'Organisations*',
-      extraInfo: 'Group by Resources, then by Organisations',
+      label: 'Organizations*',
+      extraInfo: 'Group by Resources, then by Organizations',
     },
     {
       value: 'Resources',
