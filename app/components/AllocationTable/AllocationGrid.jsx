@@ -1364,39 +1364,39 @@ export default function AllocationGrid({
   return (
     <StyledDataGrid
       cellSelection
-      allocationTheme={allocationTheme}
-      isCellEditable={isCellEditable}
-      onCellKeyDown={handleCellKeyDown}
-      type={type}
-      rowModesModel={rowModesModel}
-      onRowModesModelChange={handleRowModesModelChange}
-      processRowUpdate={handleCellUpdate}
-      onProcessRowUpdateError={err => {
-        console.error('Row update failed:', err);
-      }}
-      aggregationModel={aggregation}
+      // allocationTheme={allocationTheme}
+      // isCellEditable={isCellEditable}
+      // onCellKeyDown={handleCellKeyDown}
+      // type={type}
+      // rowModesModel={rowModesModel}
+      // onRowModesModelChange={handleRowModesModelChange}
+      // processRowUpdate={handleCellUpdate}
+      // onProcessRowUpdateError={err => {
+      //   console.error('Row update failed:', err);
+      // }}
+      // aggregationModel={aggregation}
       columns={finalColumns}
-      rowSelection={true}
-      onRowClick={
-        groupBy === 'teams' || groupBy === 'organisationName'
-          ? onRowClick
-          : () => null
-      }
+      // rowSelection={true}
+      // onRowClick={
+      //   groupBy === 'teams' || groupBy === 'organisationName'
+      //     ? onRowClick
+      //     : () => null
+      // }
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={loading}
-      disableRowSelectionOnClick
+      // loading={loading}
+      // disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={rowGroupingColumnMode}
-      columnHeaderHeight={30}
-      columnGroupHeaderHeight={22}
-      columnGroupingModel={generateColumnGroupingModel(
-        startDate,
-        endDate,
-        finalColumns
-      )}
-      defaultGroupingExpansionDepth={1}
-      disableAutosize
+      // columnHeaderHeight={30}
+      // columnGroupHeaderHeight={22}
+      // columnGroupingModel={generateColumnGroupingModel(
+      //   startDate,
+      //   endDate,
+      //   finalColumns
+      // )}
+      // defaultGroupingExpansionDepth={1}
+      // disableAutosize
       // getCellClassName={params => {
       //   if (
       //     (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
@@ -1422,74 +1422,75 @@ export default function AllocationGrid({
       //   // }
       //   return originalClass || '';
       // }}
-      getRowClassName={params => getRowClassName(params)}
+      // getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}
       onCellSelectionModelChange={(newModel, details) => {
         console.log('newModel : ', newModel);
         console.log('details : ', details);
+        handleCellSelectionModelChange(newModel);
       }}
-      {...toolBarBasedProperties}
-      slots={{
-        noRowsOverlay: NoRowsOverlay,
-        toolbar: toolbarComponent,
-        columnMenu: props => {
-          return <CustomColumnMenu {...props} apiRef={apiRef} />;
-        },
-      }}
-      slotProps={{
-        loadingOverlay: {
-          variant: 'skeleton',
-          noRowsVariant: 'skeleton',
-        },
-        panel: {
-          anchorEl: filterButtonEl,
-          className: 'parent-grid-panel',
-        },
-        columnsManagement: {
-          getTogglableColumns,
-        },
-        toolbar: {
-          setFilterButtonEl,
-        },
-        columnsPanel: {
-          className: 'styleColumnMenu',
-          sx: ColumnManagementStyles,
-        },
-        filterPanel: {
-          columnsSort: 'asc',
-          className: 'filterPopup',
-          filterFormProps: {
-            filterColumns,
-            columnInputProps: {
-              size: 'small',
-              sx: { mt: 'auto' },
-            },
-            operatorInputProps: {
-              size: 'small',
-              sx: { mt: 'auto' },
-            },
-            valueInputProps: {
-              InputComponentProps: {
-                size: 'small',
-              },
-            },
-            deleteIconProps: {
-              sx: {
-                '& .MuiSvgIcon-root': { color: '#d32f2f' },
-              },
-            },
-          },
-          sx: FilterPanelStyles,
-        },
-      }}
-      getAggregationPosition={groupNode =>
-        groupNode.depth === -1 ? null : 'inline'
-      }
-      hideFooter
-      editMode="row"
-      aggregationRowsCount={params => {
-        return params.rowNode.children?.length || 1;
-      }}
+      // {...toolBarBasedProperties}
+      // slots={{
+      //   noRowsOverlay: NoRowsOverlay,
+      //   toolbar: toolbarComponent,
+      //   columnMenu: props => {
+      //     return <CustomColumnMenu {...props} apiRef={apiRef} />;
+      //   },
+      // }}
+      // slotProps={{
+      //   loadingOverlay: {
+      //     variant: 'skeleton',
+      //     noRowsVariant: 'skeleton',
+      //   },
+      //   panel: {
+      //     anchorEl: filterButtonEl,
+      //     className: 'parent-grid-panel',
+      //   },
+      //   columnsManagement: {
+      //     getTogglableColumns,
+      //   },
+      //   toolbar: {
+      //     setFilterButtonEl,
+      //   },
+      //   columnsPanel: {
+      //     className: 'styleColumnMenu',
+      //     sx: ColumnManagementStyles,
+      //   },
+      //   filterPanel: {
+      //     columnsSort: 'asc',
+      //     className: 'filterPopup',
+      //     filterFormProps: {
+      //       filterColumns,
+      //       columnInputProps: {
+      //         size: 'small',
+      //         sx: { mt: 'auto' },
+      //       },
+      //       operatorInputProps: {
+      //         size: 'small',
+      //         sx: { mt: 'auto' },
+      //       },
+      //       valueInputProps: {
+      //         InputComponentProps: {
+      //           size: 'small',
+      //         },
+      //       },
+      //       deleteIconProps: {
+      //         sx: {
+      //           '& .MuiSvgIcon-root': { color: '#d32f2f' },
+      //         },
+      //       },
+      //     },
+      //     sx: FilterPanelStyles,
+      //   },
+      // }}
+      // getAggregationPosition={groupNode =>
+      //   groupNode.depth === -1 ? null : 'inline'
+      // }
+      // hideFooter
+      // editMode="row"
+      // aggregationRowsCount={params => {
+      //   return params.rowNode.children?.length || 1;
+      // }}
     />
   );
 }
