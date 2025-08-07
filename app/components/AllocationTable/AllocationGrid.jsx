@@ -123,6 +123,8 @@ export default function AllocationGrid({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
+
+  // console.log('cellSelectionModel : ', cellSelectionModel);
   const [columnVisibilityModel, setColumnVisibilityModel] = useState(
     {
       ..._initialState?.columns?.columnVisibilityModel, // Initial state
@@ -1374,7 +1376,8 @@ export default function AllocationGrid({
       }}
       aggregationModel={aggregation}
       columns={finalColumns}
-      rowSelection={true}
+      rowSelection={false}
+      keepNonExistentRowsSelected
       onRowClick={
         groupBy === 'teams' || groupBy === 'organisationName'
           ? onRowClick
@@ -1421,11 +1424,11 @@ export default function AllocationGrid({
         return originalClass || '';
       }}
       getRowClassName={params => getRowClassName(params)}
-      // cellSelectionModel={cellSelectionModel}
-      // onCellSelectionModelChange={(newModel, details) => {
-      //   console.log('newModel : ', newModel);
-      //   console.log('details : ', details);
-      // }}
+      cellSelectionModel={cellSelectionModel}
+      onCellSelectionModelChange={(newModel, details) => {
+        console.log('newModel : ', newModel);
+        console.log('details : ', details);
+      }}
       {...toolBarBasedProperties}
       slots={{
         noRowsOverlay: NoRowsOverlay,
