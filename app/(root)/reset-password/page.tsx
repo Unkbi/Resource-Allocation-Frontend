@@ -210,7 +210,6 @@ function RestPasswordPage() {
         },
       })
     ).then(response => {
-      console.log('Password reset successful:', response);
       // @ts-ignore
       if (response && response.status === 200) {
         setErrorMessage('');
