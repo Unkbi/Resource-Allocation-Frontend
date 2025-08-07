@@ -6,6 +6,7 @@ import {
   getUser,
   loginUser,
   logoutUser,
+  resendConfirmationCode,
   signupUser,
 } from '../../services/authServices.js';
 
@@ -66,5 +67,21 @@ export const performResetPassword = data => async dispatch => {
     return response;
   } catch (error) {
     console.error('Password reset failed:', error);
+  }
+};
+
+export const resendOtp = email => async dispatch => {
+  try {
+    const response = await dispatch(
+      resendConfirmationCode({
+        'Agentlang.Kernel.Identity/ResendConfirmationCode': {
+          Username: email,
+        },
+      })
+    ).unwrap();
+    console.log('OTP resend successful:', response);
+  } catch (error) {
+    console.error('OTP resend failed:', error);
+    throw error;
   }
 };

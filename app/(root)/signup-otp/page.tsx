@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import Image from 'next/image';
-import { confirmSignUpUser, performForgotPassword } from '@/app/redux/actions/authActions';
+import { confirmSignUpUser, performForgotPassword, resendOtp } from '@/app/redux/actions/authActions';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -221,14 +221,11 @@ export default function SignUpOtpPage(){
         }
     };
 
-    const handleResendOtp = (e: React.MouseEvent<HTMLParagraphElement>) => {
-        e.preventDefault();
-        dispatch(performForgotPassword({
-            'Agentlang.Kernel.Identity/ForgotPassword': {
-                Username: signupData
-            }
-        }));
-    };
+   const handleResendOtp = (e: React.MouseEvent<HTMLParagraphElement>) => {
+     e.preventDefault();
+     dispatch(resendOtp(signupData));
+   };
+
 
 useEffect(() => {
   const normalizedError = String(error || '');

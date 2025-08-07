@@ -7,6 +7,7 @@ import {
   confirmSignUp,
   signupUser,
   getUser,
+  resendConfirmationCode,
 } from '../../services/authServices.js';
 
 const initialState = {
@@ -117,6 +118,18 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
          state.otpVerified = false;
+      })
+      //resend otp
+      .addCase(resendConfirmationCode.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendConfirmationCode.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(resendConfirmationCode.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
       // get user
       .addCase(getUser.pending, state => {
