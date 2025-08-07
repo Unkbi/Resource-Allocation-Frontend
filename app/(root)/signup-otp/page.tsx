@@ -229,7 +229,6 @@ export default function SignUpOtpPage(){
 
 useEffect(() => {
   const normalizedError = String(error || '');
-  console.log('Normalized OTP Error:', normalizedError);
   if (otpVerified && !loading && !error) {
     router.push('/login');
     return;
