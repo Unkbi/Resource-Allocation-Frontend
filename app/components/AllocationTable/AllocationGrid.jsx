@@ -1376,8 +1376,7 @@ export default function AllocationGrid({
       }}
       aggregationModel={aggregation}
       columns={finalColumns}
-      rowSelection={false}
-      keepNonExistentRowsSelected
+      rowSelection={true}
       onRowClick={
         groupBy === 'teams' || groupBy === 'organisationName'
           ? onRowClick
@@ -1398,37 +1397,37 @@ export default function AllocationGrid({
       )}
       defaultGroupingExpansionDepth={1}
       disableAutosize
-      getCellClassName={params => {
-        if (
-          (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
-          (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
-          (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
-          (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
-          (viewId === 'main' && !mainAllocationGrid.ready)
-        ) {
-          return '';
-        }
-        const originalClass = getCellClassName(
-          params,
-          getAllRowsForView(viewId),
-          allocationTheme,
-          type,
-          projects?.result,
-          isCellEditable,
-          groupBy
-        );
-        // const editable = isCellEditable(params);
-        // if (!editable) {
-        //   return originalClass ? `${originalClass}` : 'non-editable-cell';
-        // }
-        return originalClass || '';
-      }}
+      // getCellClassName={params => {
+      //   if (
+      //     (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
+      //     (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
+      //     (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
+      //     (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
+      //     (viewId === 'main' && !mainAllocationGrid.ready)
+      //   ) {
+      //     return '';
+      //   }
+      //   const originalClass = getCellClassName(
+      //     params,
+      //     getAllRowsForView(viewId),
+      //     allocationTheme,
+      //     type,
+      //     projects?.result,
+      //     isCellEditable,
+      //     groupBy
+      //   );
+      //   // const editable = isCellEditable(params);
+      //   // if (!editable) {
+      //   //   return originalClass ? `${originalClass}` : 'non-editable-cell';
+      //   // }
+      //   return originalClass || '';
+      // }}
       getRowClassName={params => getRowClassName(params)}
-      cellSelectionModel={cellSelectionModel}
-      onCellSelectionModelChange={(newModel, details) => {
-        console.log('newModel : ', newModel);
-        console.log('details : ', details);
-      }}
+      // cellSelectionModel={cellSelectionModel}
+      // onCellSelectionModelChange={(newModel, details) => {
+      //   console.log('newModel : ', newModel);
+      //   console.log('details : ', details);
+      // }}
       {...toolBarBasedProperties}
       slots={{
         noRowsOverlay: NoRowsOverlay,
