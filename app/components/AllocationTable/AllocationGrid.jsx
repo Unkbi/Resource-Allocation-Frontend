@@ -393,6 +393,8 @@ export default function AllocationGrid({
     },
   });
 
+  console.log('initialState : ', initialState);
+
   useEffect(() => {
     if (startDate && endDate) {
       setAggregation({
