@@ -656,6 +656,7 @@ export const getFinalColumns = (
             ),
           ];
           const isGroupExpanded = params.rowNode.childrenExpanded;
+          console.log(params , "project page params");
           if (params.row.hasProject && !params.row.project) {
             return (
               <AddRowButton
@@ -907,6 +908,7 @@ export const getFinalColumns = (
         cellClassName: () =>
           groupBy === 'project' ? 'common-NonEditableCells' : '',
         renderCell: params => {
+          console.log(params, 'project page params');
           return params.value ? (
             <CellWithMenu
               params={params}
@@ -933,7 +935,31 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          return params.value ? (
+        const isParent = params.rowNode?.children?.length;
+        const isGroupExpanded = params.rowNode?.childrenExpanded;
+        console.log('params', params);
+        console.log('params.rowNode', params.rowNode);
+        console.log(isGroupExpanded , 'isGroupExpanded');
+        
+        // if (params.row.hasProject && !params.row.project) {
+        //   return (
+        //     <AddRowButton
+        //       row={params.row}
+        //       portfolioId={params.row.portfolioId}
+        //       project={params.row.project}
+        //       handleAddRow={handleAddProject}
+        //       buttonName="Add Resource"
+        //       resourceProjects={projects?.result}
+        //       onClick={event => {
+        //         setSelectedTeam(params.row.teams),
+        //         setSelectedResourceId(params.row.resourceId);
+        //       }}
+        //     />
+        //   );
+        // }
+
+        if (params.value) {
+          return (
             <CellWithMenu
               params={params}
               handleAddClick={handleAddClick}
@@ -942,6 +968,56 @@ export const getFinalColumns = (
               isFormatWithK={isFormatWithK}
               handleOpenHistory={handleOpenHistory}
             />
+          );
+        }
+        const projects_set = [
+          ...new Set(
+            params?.rowNode?.children?.map(
+              child => params.api.getRow(child)?.project
+            )
+          ),
+        ].filter(Boolean);
+
+        if (projects_set.length > 1) {
+          const firstProject = projects_set?.[0];
+          return (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                minWidth: 0,
+                width: '100%',
+                gap: 8,
+              }}
+            >
+              {!isGroupExpanded && (
+                <EllipsisNameCell
+                  value={firstProject}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                />
+              )}
+              {!isGroupExpanded && (
+                <span
+                  style={{
+                    flexShrink: 0,
+                    backgroundColor: '#E9EFF8',
+                    color: '#000',
+                    paddingRight: 4,
+                    paddingLeft: 4,
+                    fontSize: 12,
+                    borderRadius: 4,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  +{projects_set.length - 1}
+                </span>
+              )}
+            </div>
+          );
+        }
+        return projects_set.length ? (
+          <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
           ) : null;
         },
       },
@@ -955,27 +1031,10 @@ export const getFinalColumns = (
         cellClassName: () =>
           groupBy === 'project' ? 'common-NonEditableCells' : 'secondary-cell',
         renderCell: params => {
-          const { rowNode, value } = params;
-          const firstChild = getFirstChild(params);
-          const isParent = rowNode?.children?.length;
-          const isGroupExpanded = rowNode?.childrenExpanded;
-          
-          // if (params.row.hasResource && !params.row.resource) {
-          //   return (
-          //     <AddRowButton
-          //       row={params.row}
-          //       teamsId={params.row.teamsId}
-          //       project={params.row.project}
-          //       handleAddRow={handleAddResource}
-          //       buttonName="Add Resource"
-          //       onClick={() => {
-          //         setSelectedTeam(params.row.teams);
-          //         setSelectedResourceId(params.row.resourceId);
-          //       }}
-          //     />
-          //   );
-          // }
-
+        const { rowNode, value } = params;
+        const isParent = rowNode?.children?.length;
+        const isGroupExpanded = rowNode?.childrenExpanded;
+        
           if (isParent) {
             const resources_set = [
               ...new Set(
