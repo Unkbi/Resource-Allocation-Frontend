@@ -304,82 +304,82 @@ export default function AllocationGrid({
     setRowsForView(viewId, new_row_state);
   }, [apiRef.current, groupBy, teams]);
 
-  useEffect(() => {
-    try {
-      if (
-        (groupBy === 'teams' || groupBy === 'organisationName') &&
-        expandRowId?.length
-      ) {
-        expandRowId.forEach(rowId => {
-          const row = apiRef.current.getRow(rowId);
-          if (row) {
-            setTimeout(() => {
-              apiRef.current.setRowChildrenExpansion(rowId, true);
-            }, 50);
-          } else {
-            // Row not ready yet, retry after small delay
-            setTimeout(() => {
-              const delayedRow = apiRef.current.getRow(rowId);
-              if (delayedRow) {
-                apiRef.current.setRowChildrenExpansion(rowId, true);
-              }
-            }, 50);
-          }
-        });
-      }
-    } catch (error) {
-      console.warn('Error in setting row expansion', error);
-    }
-  }, [expandRowId, groupBy, apiRef]);
+  // useEffect(() => {
+  //   try {
+  //     if (
+  //       (groupBy === 'teams' || groupBy === 'organisationName') &&
+  //       expandRowId?.length
+  //     ) {
+  //       expandRowId.forEach(rowId => {
+  //         const row = apiRef.current.getRow(rowId);
+  //         if (row) {
+  //           setTimeout(() => {
+  //             apiRef.current.setRowChildrenExpansion(rowId, true);
+  //           }, 50);
+  //         } else {
+  //           // Row not ready yet, retry after small delay
+  //           setTimeout(() => {
+  //             const delayedRow = apiRef.current.getRow(rowId);
+  //             if (delayedRow) {
+  //               apiRef.current.setRowChildrenExpansion(rowId, true);
+  //             }
+  //           }, 50);
+  //         }
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.warn('Error in setting row expansion', error);
+  //   }
+  // }, [expandRowId, groupBy, apiRef]);
 
-  // Use useEffect to add the key-up listener once
-  useEffect(() => {
-    const handleDocumentKeyUp = e => handleKeyUp(e);
+  // // Use useEffect to add the key-up listener once
+  // useEffect(() => {
+  //   const handleDocumentKeyUp = e => handleKeyUp(e);
 
-    // Bind keyUp event on component mount
-    document.addEventListener('mouseup', handleDocumentKeyUp);
+  //   // Bind keyUp event on component mount
+  //   document.addEventListener('mouseup', handleDocumentKeyUp);
 
-    // Cleanup event listener on component unmount
-    return () => {
-      document.removeEventListener('mouseup', handleDocumentKeyUp);
-    };
-  }, [cellSelectionModel]);
+  //   // Cleanup event listener on component unmount
+  //   return () => {
+  //     document.removeEventListener('mouseup', handleDocumentKeyUp);
+  //   };
+  // }, [cellSelectionModel]);
 
-  useEffect(() => {
-    const handleScrollAndFocus = () => {
-      if (
-        !apiRef.current ||
-        (Object.keys(cellSelectionModel).length === 0 &&
-          Object.keys(cellSelectionData).length === 0)
-      )
-        return;
-      const [rowId] =
-        Object.keys(cellSelectionModel).length > 0
-          ? Object.keys(cellSelectionModel)
-          : Object.keys(cellSelectionData);
+  // useEffect(() => {
+  //   const handleScrollAndFocus = () => {
+  //     if (
+  //       !apiRef.current ||
+  //       (Object.keys(cellSelectionModel).length === 0 &&
+  //         Object.keys(cellSelectionData).length === 0)
+  //     )
+  //       return;
+  //     const [rowId] =
+  //       Object.keys(cellSelectionModel).length > 0
+  //         ? Object.keys(cellSelectionModel)
+  //         : Object.keys(cellSelectionData);
 
-      const field =
-        Object.keys(cellSelectionModel).length > 0
-          ? Object.keys(cellSelectionModel[rowId])
-          : Object.keys(cellSelectionData[rowId]);
+  //     const field =
+  //       Object.keys(cellSelectionModel).length > 0
+  //         ? Object.keys(cellSelectionModel[rowId])
+  //         : Object.keys(cellSelectionData[rowId]);
 
-      const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
-      const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
-      const rowIndex = visibleRowIds.indexOf(rowId);
-      const colIndex = visibleColumns.findIndex(col =>
-        field.includes(col.field)
-      );
+  //     const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
+  //     const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
+  //     const rowIndex = visibleRowIds.indexOf(rowId);
+  //     const colIndex = visibleColumns.findIndex(col =>
+  //       field.includes(col.field)
+  //     );
 
-      if (rowIndex === -1 || colIndex === -1) {
-        return;
-      }
-      apiRef.current.scrollToIndexes({ rowIndex, colIndex });
-      setCellSelectionModel(cellSelectionData);
-    };
-    const timeoutId = setTimeout(handleScrollAndFocus, 50);
-    setExpandRowId(null);
-    return () => clearTimeout(timeoutId);
-  }, [apiRef, cellSelectionData]);
+  //     if (rowIndex === -1 || colIndex === -1) {
+  //       return;
+  //     }
+  //     apiRef.current.scrollToIndexes({ rowIndex, colIndex });
+  //     setCellSelectionModel(cellSelectionData);
+  //   };
+  //   const timeoutId = setTimeout(handleScrollAndFocus, 50);
+  //   setExpandRowId(null);
+  //   return () => clearTimeout(timeoutId);
+  // }, [apiRef, cellSelectionData]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -395,198 +395,198 @@ export default function AllocationGrid({
 
   console.log('initialState : ', initialState);
 
-  useEffect(() => {
-    if (startDate && endDate) {
-      setAggregation({
-        totalEffort: 'sum',
-        ...aggregationModel(startDate, endDate, type === 'cost'),
-      });
-    }
-  }, [startDate, endDate]);
+  // useEffect(() => {
+  //   if (startDate && endDate) {
+  //     setAggregation({
+  //       totalEffort: 'sum',
+  //       ...aggregationModel(startDate, endDate, type === 'cost'),
+  //     });
+  //   }
+  // }, [startDate, endDate]);
 
-  useEffect(() => {
-    if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
-      const updatedModel = {
-        ...columnVisibilityModel,
-        ..._columns[groupBy === 'teams' ? 'team' : groupBy]?.reduce(
-          (acc, column) => {
-            acc[column] = currentView.ColumnsVisible.includes(column);
-            return acc;
-          },
-          {}
-        ),
-      };
-      setColumnVisibilityModel(updatedModel);
-    }
-  }, [currentView.ColumnsVisible]);
+  // useEffect(() => {
+  //   if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
+  //     const updatedModel = {
+  //       ...columnVisibilityModel,
+  //       ..._columns[groupBy === 'teams' ? 'team' : groupBy]?.reduce(
+  //         (acc, column) => {
+  //           acc[column] = currentView.ColumnsVisible.includes(column);
+  //           return acc;
+  //         },
+  //         {}
+  //       ),
+  //     };
+  //     setColumnVisibilityModel(updatedModel);
+  //   }
+  // }, [currentView.ColumnsVisible]);
 
-  useEffect(() => {
-    if (user?.Email && resources?.result) {
-      if (currentView?.Filters) {
-        setFilterModel({
-          items:
-            currentView?.Filters.map((filter, index) => {
-              return {
-                ...filter,
-                id: index,
-              };
-            }) ?? [],
-        });
-      }
+  // useEffect(() => {
+  //   if (user?.Email && resources?.result) {
+  //     if (currentView?.Filters) {
+  //       setFilterModel({
+  //         items:
+  //           currentView?.Filters.map((filter, index) => {
+  //             return {
+  //               ...filter,
+  //               id: index,
+  //             };
+  //           }) ?? [],
+  //       });
+  //     }
 
-      //Check if myTeam is selected, if yes, then check if filters match with myTeam
-      // If not, then update myTeam to allTeams
-      if (currentView?.Filters !== null && currentView?.MyTeam) {
-        const allocationManagerName = getResourceFromEmail(
-          user?.Email,
-          resources?.result || []
-        )?.FullName;
+  //     //Check if myTeam is selected, if yes, then check if filters match with myTeam
+  //     // If not, then update myTeam to allTeams
+  //     if (currentView?.Filters !== null && currentView?.MyTeam) {
+  //       const allocationManagerName = getResourceFromEmail(
+  //         user?.Email,
+  //         resources?.result || []
+  //       )?.FullName;
 
-        if (isMyTeamsValid(allocationManagerName, currentView?.Filters)) {
-          return;
-        }
-        dispatch(
-          updateCurrentView({
-            MyTeam: false,
-          })
-        );
-      }
+  //       if (isMyTeamsValid(allocationManagerName, currentView?.Filters)) {
+  //         return;
+  //       }
+  //       dispatch(
+  //         updateCurrentView({
+  //           MyTeam: false,
+  //         })
+  //       );
+  //     }
 
-      // Check if myProjects is selected, if yes, then check if filters match with myProjects
-      // If not, then update myProjects to allProjects
-      if (currentView?.Filters !== null && currentView?.MyProjects) {
-        const projectManager = getResourceFromEmail(
-          user?.Email,
-          resources?.result || []
-        );
+  //     // Check if myProjects is selected, if yes, then check if filters match with myProjects
+  //     // If not, then update myProjects to allProjects
+  //     if (currentView?.Filters !== null && currentView?.MyProjects) {
+  //       const projectManager = getResourceFromEmail(
+  //         user?.Email,
+  //         resources?.result || []
+  //       );
 
-        const projectManagerName = projectManager
-          ? `${projectManager?.FullName}`.trim()
-          : '';
+  //       const projectManagerName = projectManager
+  //         ? `${projectManager?.FullName}`.trim()
+  //         : '';
 
-        if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
-          return;
-        }
+  //       if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
+  //         return;
+  //       }
 
-        dispatch(
-          updateCurrentView({
-            MyProjects: false,
-          })
-        );
-      }
-    }
-  }, [currentView?.Filters, user?.Email, resources?.result]);
+  //       dispatch(
+  //         updateCurrentView({
+  //           MyProjects: false,
+  //         })
+  //       );
+  //     }
+  //   }
+  // }, [currentView?.Filters, user?.Email, resources?.result]);
 
-  useEffect(() => {
-    if (user?.Email && resources?.result) {
-      const allocationManagerName = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
-      )?.FullName;
+  // useEffect(() => {
+  //   if (user?.Email && resources?.result) {
+  //     const allocationManagerName = getResourceFromEmail(
+  //       user?.Email,
+  //       resources?.result || []
+  //     )?.FullName;
 
-      if (currentView?.MyTeam) {
-        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
-          allocationManagerName,
-          currentView?.Filters || [],
-          true
-        );
+  //     if (currentView?.MyTeam) {
+  //       const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+  //         allocationManagerName,
+  //         currentView?.Filters || [],
+  //         true
+  //       );
 
-        dispatch(
-          updateCurrentView({
-            Filters: updatedFilters,
-          })
-        );
-      } else {
-        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
-          allocationManagerName,
-          currentView?.Filters || [],
-          false
-        );
+  //       dispatch(
+  //         updateCurrentView({
+  //           Filters: updatedFilters,
+  //         })
+  //       );
+  //     } else {
+  //       const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+  //         allocationManagerName,
+  //         currentView?.Filters || [],
+  //         false
+  //       );
 
-        dispatch(
-          updateCurrentView({
-            Filters: updatedFilters,
-          })
-        );
-      }
-    }
-  }, [currentView?.MyTeam, user?.Email, resources?.result]);
+  //       dispatch(
+  //         updateCurrentView({
+  //           Filters: updatedFilters,
+  //         })
+  //       );
+  //     }
+  //   }
+  // }, [currentView?.MyTeam, user?.Email, resources?.result]);
 
-  useEffect(() => {
-    const projectManager = getResourceFromEmail(
-      user?.Email,
-      resources?.result || []
-    );
+  // useEffect(() => {
+  //   const projectManager = getResourceFromEmail(
+  //     user?.Email,
+  //     resources?.result || []
+  //   );
 
-    const projectManagerName = projectManager
-      ? `${projectManager?.FullName}`.trim()
-      : '';
-    if (currentView?.MyProjects) {
-      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
-        projectManagerName,
-        currentView?.Filters || [],
-        true
-      );
+  //   const projectManagerName = projectManager
+  //     ? `${projectManager?.FullName}`.trim()
+  //     : '';
+  //   if (currentView?.MyProjects) {
+  //     const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+  //       projectManagerName,
+  //       currentView?.Filters || [],
+  //       true
+  //     );
 
-      dispatch(
-        updateCurrentView({
-          Filters: updatedFilters,
-        })
-      );
-    } else {
-      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
-        projectManagerName,
-        currentView?.Filters || [],
-        false
-      );
+  //     dispatch(
+  //       updateCurrentView({
+  //         Filters: updatedFilters,
+  //       })
+  //     );
+  //   } else {
+  //     const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+  //       projectManagerName,
+  //       currentView?.Filters || [],
+  //       false
+  //     );
 
-      dispatch(
-        updateCurrentView({
-          Filters: updatedFilters,
-        })
-      );
-    }
-  }, [currentView?.MyProjects]);
+  //     dispatch(
+  //       updateCurrentView({
+  //         Filters: updatedFilters,
+  //       })
+  //     );
+  //   }
+  // }, [currentView?.MyProjects]);
 
-  useEffect(() => {
-    const isTeams = view === 'Teams';
-    const action = isTeams
-      ? updateStartAndEndDate
-      : updateProjectStartAndEndDate;
+  // useEffect(() => {
+  //   const isTeams = view === 'Teams';
+  //   const action = isTeams
+  //     ? updateStartAndEndDate
+  //     : updateProjectStartAndEndDate;
 
-    // Fixed Range
-    if (
-      currentView?.isFixedRange &&
-      currentView?.StartDate &&
-      currentView?.EndDate
-    ) {
-      dispatch(
-        action({
-          startDate: currentView?.StartDate,
-          endDate: currentView?.EndDate,
-        })
-      );
-    }
-    if (
-      currentView?.isDynamicRange &&
-      currentView?.WeekMinus &&
-      currentView?.WeekPlus
-    ) {
-      dispatch(
-        action({
-          startDate: generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus),
-          endDate: generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus),
-        })
-      );
-    }
-  }, [
-    currentView?.isFixedRange,
-    currentView?.StateDate,
-    currentView?.EndDate,
-    currentView?.isDynamicRange,
-    currentView?.WeekPlus,
-    currentView?.WeekMinus,
-  ]);
+  //   // Fixed Range
+  //   if (
+  //     currentView?.isFixedRange &&
+  //     currentView?.StartDate &&
+  //     currentView?.EndDate
+  //   ) {
+  //     dispatch(
+  //       action({
+  //         startDate: currentView?.StartDate,
+  //         endDate: currentView?.EndDate,
+  //       })
+  //     );
+  //   }
+  //   if (
+  //     currentView?.isDynamicRange &&
+  //     currentView?.WeekMinus &&
+  //     currentView?.WeekPlus
+  //   ) {
+  //     dispatch(
+  //       action({
+  //         startDate: generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus),
+  //         endDate: generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus),
+  //       })
+  //     );
+  //   }
+  // }, [
+  //   currentView?.isFixedRange,
+  //   currentView?.StateDate,
+  //   currentView?.EndDate,
+  //   currentView?.isDynamicRange,
+  //   currentView?.WeekPlus,
+  //   currentView?.WeekMinus,
+  // ]);
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
