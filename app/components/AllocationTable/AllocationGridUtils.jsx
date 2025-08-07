@@ -656,7 +656,6 @@ export const getFinalColumns = (
             ),
           ];
           const isGroupExpanded = params.rowNode.childrenExpanded;
-          console.log(params , "project page params");
           if (params.row.hasProject && !params.row.project) {
             return (
               <AddRowButton
@@ -908,7 +907,6 @@ export const getFinalColumns = (
         cellClassName: () =>
           groupBy === 'project' ? 'common-NonEditableCells' : '',
         renderCell: params => {
-          console.log(params, 'project page params');
           return params.value ? (
             <CellWithMenu
               params={params}
@@ -937,10 +935,6 @@ export const getFinalColumns = (
         renderCell: params => {
         const isParent = params.rowNode?.children?.length;
         const isGroupExpanded = params.rowNode?.childrenExpanded;
-        console.log('params', params);
-        console.log('params.rowNode', params.rowNode);
-        console.log(isGroupExpanded , 'isGroupExpanded');
-        
         // if (params.row.hasProject && !params.row.project) {
         //   return (
         //     <AddRowButton
@@ -951,7 +945,7 @@ export const getFinalColumns = (
         //       buttonName="Add Resource"
         //       resourceProjects={projects?.result}
         //       onClick={event => {
-        //         setSelectedTeam(params.row.teams),
+        //         setSelectedTeam(params.row.portfolio),
         //         setSelectedResourceId(params.row.resourceId);
         //       }}
         //     />
