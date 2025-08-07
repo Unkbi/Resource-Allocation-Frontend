@@ -333,17 +333,17 @@ export default function AllocationGrid({
   }, [expandRowId, groupBy, apiRef]);
 
   // Use useEffect to add the key-up listener once
-  // useEffect(() => {
-  //   const handleDocumentKeyUp = e => handleKeyUp(e);
+  useEffect(() => {
+    const handleDocumentKeyUp = e => handleKeyUp(e);
 
-  //   // Bind keyUp event on component mount
-  //   document.addEventListener('mouseup', handleDocumentKeyUp);
+    // Bind keyUp event on component mount
+    document.addEventListener('mouseup', handleDocumentKeyUp);
 
-  //   // Cleanup event listener on component unmount
-  //   return () => {
-  //     document.removeEventListener('mouseup', handleDocumentKeyUp);
-  //   };
-  // }, [cellSelectionModel]);
+    // Cleanup event listener on component unmount
+    return () => {
+      document.removeEventListener('mouseup', handleDocumentKeyUp);
+    };
+  }, [cellSelectionModel]);
 
   useEffect(() => {
     const handleScrollAndFocus = () => {
