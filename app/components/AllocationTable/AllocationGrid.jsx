@@ -1421,11 +1421,11 @@ export default function AllocationGrid({
         return originalClass || '';
       }}
       getRowClassName={params => getRowClassName(params)}
-      cellSelectionModel={cellSelectionModel}
-      onCellSelectionModelChange={(newModel, details) => {
-        console.log('newModel : ', newModel);
-        console.log('details : ', details);
-      }}
+      // cellSelectionModel={cellSelectionModel}
+      // onCellSelectionModelChange={(newModel, details) => {
+      //   console.log('newModel : ', newModel);
+      //   console.log('details : ', details);
+      // }}
       {...toolBarBasedProperties}
       slots={{
         noRowsOverlay: NoRowsOverlay,
