@@ -13,12 +13,12 @@ import {
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { Box } from '@mui/material';
 import { useState, JSXElementConstructor } from 'react';
-// Optionally replace `any` with a real Organization type from your types file
-import { Organisation } from '@/app/types'; // <-- only if it exists
+
+import { Organisation } from '@/app/types'; 
 
 interface OrganisationsTableProps {
   columns: GridColDef[];
-  rows: Organisation[]; // <- change to `any[]` if you don't have the type yet
+  rows: Organisation[];
   loading: boolean;
   apiRef: React.RefObject<GridApi>;
   value: string;
@@ -45,6 +45,8 @@ const OrganisationsTable = ({
   value,
   onChange = () => {},
 }: OrganisationsTableProps) => {
+  console.log('OrganisationsTable — rows:', rows);
+  console.log('OrganisationsTable — loading:', loading);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (

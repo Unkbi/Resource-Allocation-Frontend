@@ -10,7 +10,7 @@ import {
  setAllOrganisationsResources,
  setLoading,
  setOrganisations,
-} from '../reducers/oraganisationsReducer';
+} from '../reducers/organisationsReducer';
 import {
  fetchAllOrganisations,
  createOrganisation,

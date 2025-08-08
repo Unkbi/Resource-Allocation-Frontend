@@ -1769,7 +1769,7 @@ const AllocationForm = () => {
           .finally(() => {
             dispatch(closeDialog());
           });
-
+        break
       case 'add_organization':
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
@@ -1817,7 +1817,7 @@ const AllocationForm = () => {
             .finally(() => {
               dispatch(closeDialog());
             });
-
+          break
         case 'edit_organization':
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {

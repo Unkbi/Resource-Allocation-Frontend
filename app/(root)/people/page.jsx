@@ -25,7 +25,11 @@ import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
+import { DELETE_ORGANISATION } from '@/app/redux/actions/organizationsAction';
+
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+
+
 
 import {
   deleteTeam,
@@ -169,7 +173,7 @@ export default function Resources() {
     state => state.resources
   );
 
-  const { organisations } = useSelector(state => state.organisations);
+  const { organisations, loading: allOrganizationsLoading } = useSelector(state => state.organisations);
 
   const { allResourcesDetail, loading: allResourcesDetailLoading } =
     useSelector(state => state.allResourcesDetail);
@@ -904,12 +908,13 @@ useEffect(() => {
 
                 <MenuItem
                   onClick={() => {
+                    console.log("look here ", params)
                     setDeleteDialogOpen(true);
                     handleMenuClose();
                     setDeleteTarget({
                       id: params.row.Id,
-                      name: params.row.Organization,
-                      type: 'Organization',
+                      name: params.row.Name,
+                      type: 'organizations',
                     });
                   }}
                   sx={menuItemStyle}
@@ -1067,6 +1072,9 @@ useEffect(() => {
   ]);
 
   const handleConfirmDelete = async () => {
+
+    console.log('handleConfirmDelete called with value:', value);
+    console.log('deleteTarget:', deleteTarget);
     if (!deleteTarget.id) {
       setDeleteDialogOpen(false);
       setDeleteTarget({ id: '', name: '' });
@@ -1140,6 +1148,92 @@ useEffect(() => {
           setDeleteTarget({ id: '', name: '', type: '' });
         }
         break;
+
+
+        case 'organizations':
+  try {
+    dispatch({
+      type: DELETE_ORGANISATION,
+      payload: { id: deleteTarget.id },
+    });
+
+    dispatch({
+      type: FETCH_ORGANISATIONS,
+    });
+
+    dispatch(
+      showToast({
+        open: true,
+        message: 'Organization deleted successfully',
+        type: 'success',
+        position: 'bottom-left',
+        autoHideTimer: 4000,
+      })
+    );
+
+    setDeleteDialogOpen(false);
+    setDeleteTarget({ id: '', name: '' });
+  } catch (error) {
+    dispatch(
+      showToast({
+        open: true,
+        message: 'Failed to delete organization',
+        type: 'error',
+        position: 'bottom-left',
+        autoHideTimer: 4000,
+      })
+    );
+    console.error('Error deleting organization:', error);
+  }
+  break;
+
+    // case 'organizations':
+    // dispatch({ type: DELETE_ORGANISATION, payload: { id: deleteTarget.id } });
+    // dispatch({ type: FETCH_ORGANISATIONS });
+    // setDeleteDialogOpen(false);
+    // setDeleteTarget({ id: '', name: '' });
+    // break;
+    
+    // This one is like the Teams setup but it gives a red box saying the delete did not work even though it did
+    // case 'organizations':
+    //   const organisationId = deleteTarget.id;
+
+    //   try {
+    //     // Optional: Check if the organization has teams, projects, or dependencies before deleting
+    //     const isInUse = allResourcesDetail.some(
+    //       resource => resource?.Organization?.Id === organisationId
+    //     );
+
+    //     if (isInUse) {
+    //       dispatch(
+    //         showToast({
+    //           open: true,
+    //           message: `Cannot delete an organization with active resources. Please reassign them and try again.`,
+    //           type: 'error',
+    //           position: 'bottom-left',
+    //           autoHideTimer: 4000,
+    //         })
+    //       );
+    //     } else {
+    //       dispatch({ type: DELETE_ORGANISATION, payload: { id: organisationId } });
+    //       dispatch(fetchOrganisations()); // optional: refresh organization list
+    //     }
+    //   } catch (error) {
+    //     dispatch(
+    //       showToast({
+    //         open: true,
+    //         message: 'Failed to delete organization',
+    //         type: 'error',
+    //         position: 'bottom-left',
+    //         autoHideTimer: 4000,
+    //       })
+    //     );
+    //   } finally {
+    //     setDeleteDialogOpen(false);
+    //     setDeleteTarget({ id: '', name: '', type: '' });
+    //   }
+    // break;
+
       case 'resource':
         dispatch(
           showToast({
@@ -1325,7 +1419,7 @@ useEffect(() => {
       case 'organizations':
         return (
           <OrganisationsTable
-            loading={loading}
+            loading={allOrganizationsLoading}
             columns={organizationColumns}
             rows={organisations.map((org, index) => ({
               Id: org.Id,
