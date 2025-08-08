@@ -1132,7 +1132,6 @@ export default function AllocationGrid({
   );
   const handleCellSelectionModelChange = useCallback(
     newModel => {
-      console.log('Cell Selection Model Changed: ', newModel);
       // Cell Selection Model should have a value only for minimum of 2 cells
       // If only one cell is selected, then clear the selection
       if (type === 'cost') return;
@@ -1240,7 +1239,6 @@ export default function AllocationGrid({
           }
         }
       });
-      console.log('filteredModel : ', filteredModel);
       setCellSelectionModel(filteredModel);
     },
     [apiRef, type, isCellEditable, setCellSelectionModel, groupBy]
@@ -1313,6 +1311,12 @@ export default function AllocationGrid({
         __row_group_by_columns_group_portfolioName__: true,
         __row_group_by_columns_group_project__: true,
         resource: true,
+      },
+      '': {
+        organisationName: true,
+        teams: true,
+        resource: true,
+        project: true,
       },
     };
     let updatedModel = {
@@ -1426,73 +1430,69 @@ export default function AllocationGrid({
       // }}
       // getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}
-      onCellSelectionModelChange={(newModel, details) => {
-        console.log('newModel : ', newModel);
-        console.log('details : ', details);
-        handleCellSelectionModelChange(newModel);
+      onCellSelectionModelChange={handleCellSelectionModelChange}
+      {...toolBarBasedProperties}
+      slots={{
+        noRowsOverlay: NoRowsOverlay,
+        toolbar: toolbarComponent,
+        columnMenu: props => {
+          return <CustomColumnMenu {...props} apiRef={apiRef} />;
+        },
       }}
-      // {...toolBarBasedProperties}
-      // slots={{
-      //   noRowsOverlay: NoRowsOverlay,
-      //   toolbar: toolbarComponent,
-      //   columnMenu: props => {
-      //     return <CustomColumnMenu {...props} apiRef={apiRef} />;
-      //   },
-      // }}
-      // slotProps={{
-      //   loadingOverlay: {
-      //     variant: 'skeleton',
-      //     noRowsVariant: 'skeleton',
-      //   },
-      //   panel: {
-      //     anchorEl: filterButtonEl,
-      //     className: 'parent-grid-panel',
-      //   },
-      //   columnsManagement: {
-      //     getTogglableColumns,
-      //   },
-      //   toolbar: {
-      //     setFilterButtonEl,
-      //   },
-      //   columnsPanel: {
-      //     className: 'styleColumnMenu',
-      //     sx: ColumnManagementStyles,
-      //   },
-      //   filterPanel: {
-      //     columnsSort: 'asc',
-      //     className: 'filterPopup',
-      //     filterFormProps: {
-      //       filterColumns,
-      //       columnInputProps: {
-      //         size: 'small',
-      //         sx: { mt: 'auto' },
-      //       },
-      //       operatorInputProps: {
-      //         size: 'small',
-      //         sx: { mt: 'auto' },
-      //       },
-      //       valueInputProps: {
-      //         InputComponentProps: {
-      //           size: 'small',
-      //         },
-      //       },
-      //       deleteIconProps: {
-      //         sx: {
-      //           '& .MuiSvgIcon-root': { color: '#d32f2f' },
-      //         },
-      //       },
-      //     },
-      //     sx: FilterPanelStyles,
-      //   },
-      // }}
-      // getAggregationPosition={groupNode =>
-      //   groupNode.depth === -1 ? null : 'inline'
-      // }
-      // hideFooter
-      // editMode="row"
-      // aggregationRowsCount={params => {
-      //   return params.rowNode.children?.length || 1;
-      // }}
+      slotProps={{
+        loadingOverlay: {
+          variant: 'skeleton',
+          noRowsVariant: 'skeleton',
+        },
+        panel: {
+          anchorEl: filterButtonEl,
+          className: 'parent-grid-panel',
+        },
+        columnsManagement: {
+          getTogglableColumns,
+        },
+        toolbar: {
+          setFilterButtonEl,
+        },
+        columnsPanel: {
+          className: 'styleColumnMenu',
+          sx: ColumnManagementStyles,
+        },
+        filterPanel: {
+          columnsSort: 'asc',
+          className: 'filterPopup',
+          filterFormProps: {
+            filterColumns,
+            columnInputProps: {
+              size: 'small',
+              sx: { mt: 'auto' },
+            },
+            operatorInputProps: {
+              size: 'small',
+              sx: { mt: 'auto' },
+            },
+            valueInputProps: {
+              InputComponentProps: {
+                size: 'small',
+              },
+            },
+            deleteIconProps: {
+              sx: {
+                '& .MuiSvgIcon-root': { color: '#d32f2f' },
+              },
+            },
+          },
+          sx: FilterPanelStyles,
+        },
+      }}
+      getAggregationPosition={groupNode =>
+        groupNode.depth === -1 ? null : 'inline'
+      }
+      hideFooter
+      editMode="row"
+      aggregationRowsCount={params => {
+        return params.rowNode.children?.length || 1;
+      }}
     />
   );
 }

@@ -129,7 +129,7 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
             aria-label="secondary tabs example"
           >
             <Tab value="project" label="Projects" sx={tabTypographyStyle} />
-            <Tab value="portfolio" label="Portfolio" sx={tabTypographyStyle} />
+            <Tab value="portfolio" label="Portfolios" sx={tabTypographyStyle} />
             <Tab
               value="businessImpact"
               label="Business Impact"
