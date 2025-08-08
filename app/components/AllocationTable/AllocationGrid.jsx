@@ -123,6 +123,8 @@ export default function AllocationGrid({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
+
+  // console.log('cellSelectionModel : ', cellSelectionModel);
   const [columnVisibilityModel, setColumnVisibilityModel] = useState(
     {
       ..._initialState?.columns?.columnVisibilityModel, // Initial state
@@ -302,82 +304,82 @@ export default function AllocationGrid({
     setRowsForView(viewId, new_row_state);
   }, [apiRef.current, groupBy, teams]);
 
-  useEffect(() => {
-    try {
-      if (
-        (groupBy === 'teams' || groupBy === 'organisationName') &&
-        expandRowId?.length
-      ) {
-        expandRowId.forEach(rowId => {
-          const row = apiRef.current.getRow(rowId);
-          if (row) {
-            setTimeout(() => {
-              apiRef.current.setRowChildrenExpansion(rowId, true);
-            }, 50);
-          } else {
-            // Row not ready yet, retry after small delay
-            setTimeout(() => {
-              const delayedRow = apiRef.current.getRow(rowId);
-              if (delayedRow) {
-                apiRef.current.setRowChildrenExpansion(rowId, true);
-              }
-            }, 50);
-          }
-        });
-      }
-    } catch (error) {
-      console.warn('Error in setting row expansion', error);
-    }
-  }, [expandRowId, groupBy, apiRef]);
+  // useEffect(() => {
+  //   try {
+  //     if (
+  //       (groupBy === 'teams' || groupBy === 'organisationName') &&
+  //       expandRowId?.length
+  //     ) {
+  //       expandRowId.forEach(rowId => {
+  //         const row = apiRef.current.getRow(rowId);
+  //         if (row) {
+  //           setTimeout(() => {
+  //             apiRef.current.setRowChildrenExpansion(rowId, true);
+  //           }, 50);
+  //         } else {
+  //           // Row not ready yet, retry after small delay
+  //           setTimeout(() => {
+  //             const delayedRow = apiRef.current.getRow(rowId);
+  //             if (delayedRow) {
+  //               apiRef.current.setRowChildrenExpansion(rowId, true);
+  //             }
+  //           }, 50);
+  //         }
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.warn('Error in setting row expansion', error);
+  //   }
+  // }, [expandRowId, groupBy, apiRef]);
 
-  // Use useEffect to add the key-up listener once
-  useEffect(() => {
-    const handleDocumentKeyUp = e => handleKeyUp(e);
+  // // Use useEffect to add the key-up listener once
+  // useEffect(() => {
+  //   const handleDocumentKeyUp = e => handleKeyUp(e);
 
-    // Bind keyUp event on component mount
-    document.addEventListener('mouseup', handleDocumentKeyUp);
+  //   // Bind keyUp event on component mount
+  //   document.addEventListener('mouseup', handleDocumentKeyUp);
 
-    // Cleanup event listener on component unmount
-    return () => {
-      document.removeEventListener('mouseup', handleDocumentKeyUp);
-    };
-  }, [cellSelectionModel]);
+  //   // Cleanup event listener on component unmount
+  //   return () => {
+  //     document.removeEventListener('mouseup', handleDocumentKeyUp);
+  //   };
+  // }, [cellSelectionModel]);
 
-  useEffect(() => {
-    const handleScrollAndFocus = () => {
-      if (
-        !apiRef.current ||
-        (Object.keys(cellSelectionModel).length === 0 &&
-          Object.keys(cellSelectionData).length === 0)
-      )
-        return;
-      const [rowId] =
-        Object.keys(cellSelectionModel).length > 0
-          ? Object.keys(cellSelectionModel)
-          : Object.keys(cellSelectionData);
+  // useEffect(() => {
+  //   const handleScrollAndFocus = () => {
+  //     if (
+  //       !apiRef.current ||
+  //       (Object.keys(cellSelectionModel).length === 0 &&
+  //         Object.keys(cellSelectionData).length === 0)
+  //     )
+  //       return;
+  //     const [rowId] =
+  //       Object.keys(cellSelectionModel).length > 0
+  //         ? Object.keys(cellSelectionModel)
+  //         : Object.keys(cellSelectionData);
 
-      const field =
-        Object.keys(cellSelectionModel).length > 0
-          ? Object.keys(cellSelectionModel[rowId])
-          : Object.keys(cellSelectionData[rowId]);
+  //     const field =
+  //       Object.keys(cellSelectionModel).length > 0
+  //         ? Object.keys(cellSelectionModel[rowId])
+  //         : Object.keys(cellSelectionData[rowId]);
 
-      const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
-      const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
-      const rowIndex = visibleRowIds.indexOf(rowId);
-      const colIndex = visibleColumns.findIndex(col =>
-        field.includes(col.field)
-      );
+  //     const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
+  //     const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
+  //     const rowIndex = visibleRowIds.indexOf(rowId);
+  //     const colIndex = visibleColumns.findIndex(col =>
+  //       field.includes(col.field)
+  //     );
 
-      if (rowIndex === -1 || colIndex === -1) {
-        return;
-      }
-      apiRef.current.scrollToIndexes({ rowIndex, colIndex });
-      setCellSelectionModel(cellSelectionData);
-    };
-    const timeoutId = setTimeout(handleScrollAndFocus, 50);
-    setExpandRowId(null);
-    return () => clearTimeout(timeoutId);
-  }, [apiRef, cellSelectionData]);
+  //     if (rowIndex === -1 || colIndex === -1) {
+  //       return;
+  //     }
+  //     apiRef.current.scrollToIndexes({ rowIndex, colIndex });
+  //     setCellSelectionModel(cellSelectionData);
+  //   };
+  //   const timeoutId = setTimeout(handleScrollAndFocus, 50);
+  //   setExpandRowId(null);
+  //   return () => clearTimeout(timeoutId);
+  // }, [apiRef, cellSelectionData]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -391,198 +393,200 @@ export default function AllocationGrid({
     },
   });
 
-  useEffect(() => {
-    if (startDate && endDate) {
-      setAggregation({
-        totalEffort: 'sum',
-        ...aggregationModel(startDate, endDate, type === 'cost'),
-      });
-    }
-  }, [startDate, endDate]);
+  console.log('initialState : ', initialState);
 
-  useEffect(() => {
-    if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
-      const updatedModel = {
-        ...columnVisibilityModel,
-        ..._columns[groupBy === 'teams' ? 'team' : groupBy]?.reduce(
-          (acc, column) => {
-            acc[column] = currentView.ColumnsVisible.includes(column);
-            return acc;
-          },
-          {}
-        ),
-      };
-      setColumnVisibilityModel(updatedModel);
-    }
-  }, [currentView.ColumnsVisible]);
+  // useEffect(() => {
+  //   if (startDate && endDate) {
+  //     setAggregation({
+  //       totalEffort: 'sum',
+  //       ...aggregationModel(startDate, endDate, type === 'cost'),
+  //     });
+  //   }
+  // }, [startDate, endDate]);
 
-  useEffect(() => {
-    if (user?.Email && resources?.result) {
-      if (currentView?.Filters) {
-        setFilterModel({
-          items:
-            currentView?.Filters.map((filter, index) => {
-              return {
-                ...filter,
-                id: index,
-              };
-            }) ?? [],
-        });
-      }
+  // useEffect(() => {
+  //   if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
+  //     const updatedModel = {
+  //       ...columnVisibilityModel,
+  //       ..._columns[groupBy === 'teams' ? 'team' : groupBy]?.reduce(
+  //         (acc, column) => {
+  //           acc[column] = currentView.ColumnsVisible.includes(column);
+  //           return acc;
+  //         },
+  //         {}
+  //       ),
+  //     };
+  //     setColumnVisibilityModel(updatedModel);
+  //   }
+  // }, [currentView.ColumnsVisible]);
 
-      //Check if myTeam is selected, if yes, then check if filters match with myTeam
-      // If not, then update myTeam to allTeams
-      if (currentView?.Filters !== null && currentView?.MyTeam) {
-        const allocationManagerName = getResourceFromEmail(
-          user?.Email,
-          resources?.result || []
-        )?.FullName;
+  // useEffect(() => {
+  //   if (user?.Email && resources?.result) {
+  //     if (currentView?.Filters) {
+  //       setFilterModel({
+  //         items:
+  //           currentView?.Filters.map((filter, index) => {
+  //             return {
+  //               ...filter,
+  //               id: index,
+  //             };
+  //           }) ?? [],
+  //       });
+  //     }
 
-        if (isMyTeamsValid(allocationManagerName, currentView?.Filters)) {
-          return;
-        }
-        dispatch(
-          updateCurrentView({
-            MyTeam: false,
-          })
-        );
-      }
+  //     //Check if myTeam is selected, if yes, then check if filters match with myTeam
+  //     // If not, then update myTeam to allTeams
+  //     if (currentView?.Filters !== null && currentView?.MyTeam) {
+  //       const allocationManagerName = getResourceFromEmail(
+  //         user?.Email,
+  //         resources?.result || []
+  //       )?.FullName;
 
-      // Check if myProjects is selected, if yes, then check if filters match with myProjects
-      // If not, then update myProjects to allProjects
-      if (currentView?.Filters !== null && currentView?.MyProjects) {
-        const projectManager = getResourceFromEmail(
-          user?.Email,
-          resources?.result || []
-        );
+  //       if (isMyTeamsValid(allocationManagerName, currentView?.Filters)) {
+  //         return;
+  //       }
+  //       dispatch(
+  //         updateCurrentView({
+  //           MyTeam: false,
+  //         })
+  //       );
+  //     }
 
-        const projectManagerName = projectManager
-          ? `${projectManager?.FullName}`.trim()
-          : '';
+  //     // Check if myProjects is selected, if yes, then check if filters match with myProjects
+  //     // If not, then update myProjects to allProjects
+  //     if (currentView?.Filters !== null && currentView?.MyProjects) {
+  //       const projectManager = getResourceFromEmail(
+  //         user?.Email,
+  //         resources?.result || []
+  //       );
 
-        if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
-          return;
-        }
+  //       const projectManagerName = projectManager
+  //         ? `${projectManager?.FullName}`.trim()
+  //         : '';
 
-        dispatch(
-          updateCurrentView({
-            MyProjects: false,
-          })
-        );
-      }
-    }
-  }, [currentView?.Filters, user?.Email, resources?.result]);
+  //       if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
+  //         return;
+  //       }
 
-  useEffect(() => {
-    if (user?.Email && resources?.result) {
-      const allocationManagerName = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
-      )?.FullName;
+  //       dispatch(
+  //         updateCurrentView({
+  //           MyProjects: false,
+  //         })
+  //       );
+  //     }
+  //   }
+  // }, [currentView?.Filters, user?.Email, resources?.result]);
 
-      if (currentView?.MyTeam) {
-        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
-          allocationManagerName,
-          currentView?.Filters || [],
-          true
-        );
+  // useEffect(() => {
+  //   if (user?.Email && resources?.result) {
+  //     const allocationManagerName = getResourceFromEmail(
+  //       user?.Email,
+  //       resources?.result || []
+  //     )?.FullName;
 
-        dispatch(
-          updateCurrentView({
-            Filters: updatedFilters,
-          })
-        );
-      } else {
-        const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
-          allocationManagerName,
-          currentView?.Filters || [],
-          false
-        );
+  //     if (currentView?.MyTeam) {
+  //       const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+  //         allocationManagerName,
+  //         currentView?.Filters || [],
+  //         true
+  //       );
 
-        dispatch(
-          updateCurrentView({
-            Filters: updatedFilters,
-          })
-        );
-      }
-    }
-  }, [currentView?.MyTeam, user?.Email, resources?.result]);
+  //       dispatch(
+  //         updateCurrentView({
+  //           Filters: updatedFilters,
+  //         })
+  //       );
+  //     } else {
+  //       const updatedFilters = getUpdatedFiltersOnMyTeamsAllTeams(
+  //         allocationManagerName,
+  //         currentView?.Filters || [],
+  //         false
+  //       );
 
-  useEffect(() => {
-    const projectManager = getResourceFromEmail(
-      user?.Email,
-      resources?.result || []
-    );
+  //       dispatch(
+  //         updateCurrentView({
+  //           Filters: updatedFilters,
+  //         })
+  //       );
+  //     }
+  //   }
+  // }, [currentView?.MyTeam, user?.Email, resources?.result]);
 
-    const projectManagerName = projectManager
-      ? `${projectManager?.FullName}`.trim()
-      : '';
-    if (currentView?.MyProjects) {
-      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
-        projectManagerName,
-        currentView?.Filters || [],
-        true
-      );
+  // useEffect(() => {
+  //   const projectManager = getResourceFromEmail(
+  //     user?.Email,
+  //     resources?.result || []
+  //   );
 
-      dispatch(
-        updateCurrentView({
-          Filters: updatedFilters,
-        })
-      );
-    } else {
-      const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
-        projectManagerName,
-        currentView?.Filters || [],
-        false
-      );
+  //   const projectManagerName = projectManager
+  //     ? `${projectManager?.FullName}`.trim()
+  //     : '';
+  //   if (currentView?.MyProjects) {
+  //     const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+  //       projectManagerName,
+  //       currentView?.Filters || [],
+  //       true
+  //     );
 
-      dispatch(
-        updateCurrentView({
-          Filters: updatedFilters,
-        })
-      );
-    }
-  }, [currentView?.MyProjects]);
+  //     dispatch(
+  //       updateCurrentView({
+  //         Filters: updatedFilters,
+  //       })
+  //     );
+  //   } else {
+  //     const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
+  //       projectManagerName,
+  //       currentView?.Filters || [],
+  //       false
+  //     );
 
-  useEffect(() => {
-    const isTeams = view === 'Teams';
-    const action = isTeams
-      ? updateStartAndEndDate
-      : updateProjectStartAndEndDate;
+  //     dispatch(
+  //       updateCurrentView({
+  //         Filters: updatedFilters,
+  //       })
+  //     );
+  //   }
+  // }, [currentView?.MyProjects]);
 
-    // Fixed Range
-    if (
-      currentView?.isFixedRange &&
-      currentView?.StartDate &&
-      currentView?.EndDate
-    ) {
-      dispatch(
-        action({
-          startDate: currentView?.StartDate,
-          endDate: currentView?.EndDate,
-        })
-      );
-    }
-    if (
-      currentView?.isDynamicRange &&
-      currentView?.WeekMinus &&
-      currentView?.WeekPlus
-    ) {
-      dispatch(
-        action({
-          startDate: generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus),
-          endDate: generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus),
-        })
-      );
-    }
-  }, [
-    currentView?.isFixedRange,
-    currentView?.StateDate,
-    currentView?.EndDate,
-    currentView?.isDynamicRange,
-    currentView?.WeekPlus,
-    currentView?.WeekMinus,
-  ]);
+  // useEffect(() => {
+  //   const isTeams = view === 'Teams';
+  //   const action = isTeams
+  //     ? updateStartAndEndDate
+  //     : updateProjectStartAndEndDate;
+
+  //   // Fixed Range
+  //   if (
+  //     currentView?.isFixedRange &&
+  //     currentView?.StartDate &&
+  //     currentView?.EndDate
+  //   ) {
+  //     dispatch(
+  //       action({
+  //         startDate: currentView?.StartDate,
+  //         endDate: currentView?.EndDate,
+  //       })
+  //     );
+  //   }
+  //   if (
+  //     currentView?.isDynamicRange &&
+  //     currentView?.WeekMinus &&
+  //     currentView?.WeekPlus
+  //   ) {
+  //     dispatch(
+  //       action({
+  //         startDate: generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus),
+  //         endDate: generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus),
+  //       })
+  //     );
+  //   }
+  // }, [
+  //   currentView?.isFixedRange,
+  //   currentView?.StateDate,
+  //   currentView?.EndDate,
+  //   currentView?.isDynamicRange,
+  //   currentView?.WeekPlus,
+  //   currentView?.WeekMinus,
+  // ]);
 
   const handleAddProject = (e, project, curRow) => {
     const checkEntryExists = (data, resourceId, projectName, projectId) => {
@@ -1366,65 +1370,65 @@ export default function AllocationGrid({
   return (
     <StyledDataGrid
       cellSelection
-      allocationTheme={allocationTheme}
-      isCellEditable={isCellEditable}
-      onCellKeyDown={handleCellKeyDown}
-      type={type}
-      rowModesModel={rowModesModel}
-      onRowModesModelChange={handleRowModesModelChange}
-      processRowUpdate={handleCellUpdate}
-      onProcessRowUpdateError={err => {
-        console.error('Row update failed:', err);
-      }}
-      aggregationModel={aggregation}
+      // allocationTheme={allocationTheme}
+      // isCellEditable={isCellEditable}
+      // onCellKeyDown={handleCellKeyDown}
+      // type={type}
+      // rowModesModel={rowModesModel}
+      // onRowModesModelChange={handleRowModesModelChange}
+      // processRowUpdate={handleCellUpdate}
+      // onProcessRowUpdateError={err => {
+      //   console.error('Row update failed:', err);
+      // }}
+      // aggregationModel={aggregation}
       columns={finalColumns}
-      rowSelection={true}
-      onRowClick={
-        groupBy === 'teams' || groupBy === 'organisationName'
-          ? onRowClick
-          : () => null
-      }
+      // rowSelection={true}
+      // onRowClick={
+      //   groupBy === 'teams' || groupBy === 'organisationName'
+      //     ? onRowClick
+      //     : () => null
+      // }
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={loading}
-      disableRowSelectionOnClick
+      // loading={loading}
+      // disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={rowGroupingColumnMode}
-      columnHeaderHeight={30}
-      columnGroupHeaderHeight={22}
-      columnGroupingModel={generateColumnGroupingModel(
-        startDate,
-        endDate,
-        finalColumns
-      )}
-      defaultGroupingExpansionDepth={1}
-      disableAutosize
-      getCellClassName={params => {
-        if (
-          (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
-          (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
-          (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
-          (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
-          (viewId === 'main' && !mainAllocationGrid.ready)
-        ) {
-          return '';
-        }
-        const originalClass = getCellClassName(
-          params,
-          getAllRowsForView(viewId),
-          allocationTheme,
-          type,
-          projects?.result,
-          isCellEditable,
-          groupBy
-        );
-        // const editable = isCellEditable(params);
-        // if (!editable) {
-        //   return originalClass ? `${originalClass}` : 'non-editable-cell';
-        // }
-        return originalClass || '';
-      }}
-      getRowClassName={params => getRowClassName(params)}
+      // columnHeaderHeight={30}
+      // columnGroupHeaderHeight={22}
+      // columnGroupingModel={generateColumnGroupingModel(
+      //   startDate,
+      //   endDate,
+      //   finalColumns
+      // )}
+      // defaultGroupingExpansionDepth={1}
+      // disableAutosize
+      // getCellClassName={params => {
+      //   if (
+      //     (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
+      //     (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
+      //     (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
+      //     (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
+      //     (viewId === 'main' && !mainAllocationGrid.ready)
+      //   ) {
+      //     return '';
+      //   }
+      //   const originalClass = getCellClassName(
+      //     params,
+      //     getAllRowsForView(viewId),
+      //     allocationTheme,
+      //     type,
+      //     projects?.result,
+      //     isCellEditable,
+      //     groupBy
+      //   );
+      //   // const editable = isCellEditable(params);
+      //   // if (!editable) {
+      //   //   return originalClass ? `${originalClass}` : 'non-editable-cell';
+      //   // }
+      //   return originalClass || '';
+      // }}
+      // getRowClassName={params => getRowClassName(params)}
       cellSelectionModel={cellSelectionModel}
       onCellSelectionModelChange={handleCellSelectionModelChange}
       {...toolBarBasedProperties}
