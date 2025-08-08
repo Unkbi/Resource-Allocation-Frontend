@@ -19,7 +19,7 @@ import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
-interface ResourceAllocationProps {
+interface TeamAllocationProps {
   startDate: string;
   endDate: string;
 }
@@ -50,7 +50,7 @@ export interface Project {
 export default function ResourceAllocation({
   startDate,
   endDate,
-}: ResourceAllocationProps) {
+}: TeamAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
   const { teams, teamsResources } = useSelector(

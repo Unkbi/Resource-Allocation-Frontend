@@ -45,20 +45,19 @@ import {
 const getColumnLabel = (column, groupBy = '') => {
   const columnLabels = {
     __row_group_by_columns_group_teams__: 'Team Name',
-    __row_group_by_columns_group_organisationName__: 'Organization Name',
+    __row_group_by_columns_group_organisationName__: 'Organisation Name',
     __row_group_by_columns_group_resource__: 'Resource',
     __row_group_by_columns_group__:
       groupBy === 'Resources' ? 'Resource Name' : 'Project Name',
     __row_group_by_columns_group_project__: 'Project Name',
     __row_group_by_columns_group_portfolioName__: 'Portfolio',
     totalEffort: 'Total Effort',
-    organisationName: 'Organization Name',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',
     teamStatus: 'Team Status',
     teamAllocationManager: 'Allocation Manager',
-    organisationStatus: 'Organization Status',
+    organisationStatus: 'Organisation Status',
     resourceType: 'Resource Type',
     projectSponsor: 'Project Sponsor',
     projectManager: 'Project Manager',
@@ -192,17 +191,11 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
                 value: column,
                 label: getColumnLabel(column),
               }))
-            : values?.groupBy === 'Project'
-              ? columns.project.map(column => ({
-                  id: column,
-                  value: column,
-                  label: getColumnLabel(column),
-                }))
-              : columns['']?.map(column => ({
-                  id: column,
-                  value: column,
-                  label: getColumnLabel(column),
-                }));
+            : columns.project.map(column => ({
+                id: column,
+                value: column,
+                label: getColumnLabel(column),
+              }));
 
   // All possible viewBys
   const viewByOptions = [
@@ -213,8 +206,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     },
     {
       value: 'Organisations',
-      label: 'Organizations*',
-      extraInfo: 'Group by Resources, then by Organizations',
+      label: 'Organisations*',
+      extraInfo: 'Group by Resources, then by Organisations',
     },
     {
       value: 'Resources',
@@ -230,11 +223,6 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       value: 'Portfolio',
       label: 'Portfolios*',
       extraInfo: 'Group by Projects, then by Portfolios',
-    },
-    {
-      value: 'Flat',
-      label: 'Flat*',
-      extraInfo: 'No Grouping',
     },
   ];
 
@@ -393,8 +381,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       showBy:
         currentView?.GroupBy === 'Teams' ||
         currentView?.GroupBy === 'Organisations' ||
-        currentView?.GroupBy === 'Resources' ||
-        currentView?.GroupBy === 'Flat'
+        currentView?.GroupBy === 'Resources'
           ? currentView?.MyTeam
             ? 'MyTeams'
             : 'AllTeams'
@@ -583,8 +570,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         <StyledLabel>Quick Filter</StyledLabel>
         {values?.groupBy === 'Teams' ||
         values?.groupBy === 'Organisations' ||
-        values?.groupBy === 'Resources' ||
-        values?.groupBy === 'Flat' ? (
+        values?.groupBy === 'Resources' ? (
           <RadioGroup
             name="showBy"
             value={values?.showBy || 'MyTeams'}

@@ -103,7 +103,7 @@ const MainBox = styled(Box)(({ theme }) => ({
             textTransform: "none"
         },
         "& .noAccount": {
-            color: "#757575",
+            color: "#142B51",
             fontFamily: theme.typography.fontFamily,
             fontWeight: "500",
             fontSize: "14px",
@@ -305,12 +305,12 @@ export default function LoginPage() {
                                 Sign in with SSO
                             </Button>
                         </Box>
-                        <Typography className='noAccount'>
+                        {/* <Typography className='noAccount'>
                             Don't have an account?{' '}
                             <Link href="/signup" underline="hover" color="primary">
                                 Sign up
                             </Link>
-                        </Typography>
+                        </Typography> */}
                     </Box>
                 </Box>
             </Box>

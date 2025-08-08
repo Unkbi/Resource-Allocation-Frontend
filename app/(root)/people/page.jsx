@@ -200,7 +200,7 @@ export default function Resources() {
   const columns = [
     {
       field: 'FullName',
-      headerName: 'Resource Name',
+      headerName: 'Resource',
       flex: 1,
       minWidth: 200,
       hideable: false,

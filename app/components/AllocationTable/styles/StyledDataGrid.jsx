@@ -166,9 +166,6 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="organization"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
-    [`& .${gridClasses.cell}[data-field="organisationName"]`]: {
-      backgroundColor: !loading && '#F7FBFF',
-    },
     [`& .${gridClasses.cell}[data-field="Team"]`]: {
       backgroundColor: !loading && '#F7FBFF',
     },
@@ -1044,11 +1041,6 @@ export const StyledDataGrid = styled(DataGridPremium)(({
         display: 'none',
       },
     },
-    ...(groupBy === '' && {
-      '& .MuiDataGrid-virtualScrollerContent': {
-        flexBasis: 'auto !important',
-      },
-    }),
   };
 });
 

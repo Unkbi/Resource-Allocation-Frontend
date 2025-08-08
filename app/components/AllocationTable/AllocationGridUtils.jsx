@@ -606,7 +606,7 @@ export const getFinalColumns = (
     );
   };
 
-  if (groupBy === 'organization' || groupBy === '') {
+  if (groupBy === 'organization') {
     return allColumns || [];
   } else if (groupBy === 'teams' || groupBy === 'organisationName') {
     return [
@@ -743,10 +743,7 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell
-              value={isGroupExpanded ? '' : projects_set[0]}
-              showAddIcon={false}
-            />
+            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
           ) : (
             ''
           );
@@ -888,7 +885,7 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell value={''} showAddIcon={false} />
+            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
           ) : (
             ''
           );

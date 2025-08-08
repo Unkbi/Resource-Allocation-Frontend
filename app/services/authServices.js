@@ -80,7 +80,7 @@ export const confirmForgotPassword = createAsyncThunk(
         '/confirm-forgot-password',
         data
       );
-      return response;
+      return response.data.message;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.reason || 'Failed to reset password'
@@ -88,21 +88,3 @@ export const confirmForgotPassword = createAsyncThunk(
     }
   }
 );
-
-export const resendConfirmationCode = createAsyncThunk(
-  'auth/resendConfirmationCode',
-  async (data, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(
-        '/resend-confirmation-code',
-        data
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.reason || 'Failed to resend OTP'
-      );
-    }
-  }
-);
-

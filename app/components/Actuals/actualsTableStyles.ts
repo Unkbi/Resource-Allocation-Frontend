@@ -1,3 +1,5 @@
+import { BorderLeft } from "@mui/icons-material";
+
 export const actualsTableStyles = {
   '& .MuiDataGrid-columnHeaders': {
     borderBottom: ' #EEEEEE',
@@ -91,9 +93,8 @@ export const actualsTableStyles = {
   '.disabled-cell': {
     backgroundColor: '#F8F9FA',
   },
-  /* You can adjust the color and thickness as needed */
-  '.section-end-planned .MuiDataGrid-cell, .section-end-unplanned .MuiDataGrid-cell, .section-end-other .MuiDataGrid-cell':
-    {
-      borderBottom: '2px solid #C3C3C3 !important',
-    },
+/* You can adjust the color and thickness as needed */
+'.section-end-planned .MuiDataGrid-cell, .section-end-unplanned .MuiDataGrid-cell, .section-end-other .MuiDataGrid-cell': {
+  borderBottom: '2px solid #C3C3C3 !important',
+},
 };

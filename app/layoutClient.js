@@ -119,7 +119,7 @@ export default function LayoutClient({ children }) {
     if (!portfolios?.result?.length) {
         dispatch({
           type: FETCH_PORTFOLIOS,
-          payload: {},
+          patload: {},
         });
       }
     }
