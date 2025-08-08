@@ -63,6 +63,7 @@ export const performResetPassword = data => async dispatch => {
   try {
     const response = await dispatch(confirmForgotPassword(data)).unwrap();
     console.log('Password reset successful:', response);
+    return response;
   } catch (error) {
     console.error('Password reset failed:', error);
   }

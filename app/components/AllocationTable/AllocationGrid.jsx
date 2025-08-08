@@ -736,12 +736,7 @@ export default function AllocationGrid({
                 }}
               >
                 {showActuals && params.rowNode?.type !== 'group' ? (
-                  <AllocationCellWithActuals
-                    params={{
-                      ...params,
-                      period: period,
-                    }}
-                  />
+                  <AllocationCellWithActuals params={cellData} />
                 ) : (
                   <span>{value}</span>
                 )}
@@ -1312,6 +1307,12 @@ export default function AllocationGrid({
         __row_group_by_columns_group_portfolioName__: true,
         __row_group_by_columns_group_project__: true,
         resource: true,
+      },
+      '': {
+        organisationName: true,
+        teams: true,
+        resource: true,
+        project: true,
       },
     };
     let updatedModel = {

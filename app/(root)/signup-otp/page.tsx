@@ -110,10 +110,11 @@ const MainBox = styled(Box)(({ theme }) => ({
             fontSize: "14px",
             lineHeight: "17px",
             textAlign: "center",
-            "& a": {
-                color: "#1567CA",
-                fontWeight: "600"
-            }
+      cursor: 'pointer',
+      '& a': {
+        color: '#1567CA',
+        fontWeight: '600',
+      },
         },
         "& .orText": {
             fontFamily: theme.typography.fontFamily,
@@ -175,12 +176,24 @@ const MainBox = styled(Box)(({ theme }) => ({
 export default function SignUpOtpPage(){
     const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
     const dispatch = useDispatch<AppDispatch>();
-    const { loading, error, user, signupData } = useSelector((state: RootState) => state.user);
+  const { loading, error, user, signupData, token, otpVerified } = useSelector(
+    (state: RootState) => state.user
+  );
     const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
     const router = useRouter();
+    const [otpError, setOtpError] = useState<string>('');
 
     const handleVerifyOtp = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const enteredOtp = otp.join('');
+
+        if (enteredOtp.length < 6) {
+            setOtpError('Please enter a valid OTP');
+            return;
+        } else {
+            setOtpError('');
+        }
+
         dispatch(confirmSignUpUser({
             'Agentlang.Kernel.Identity/ConfirmSignUp': {
                 Username: signupData,
@@ -194,6 +207,8 @@ export default function SignUpOtpPage(){
         const newOtp = [...otp];
         newOtp[index] = value;
         setOtp(newOtp);
+
+        if (otpError) setOtpError('');
 
         if (value && index < 5) {
             inputRefs.current[index + 1]?.focus();
@@ -215,6 +230,27 @@ export default function SignUpOtpPage(){
         }));
     };
 
+useEffect(() => {
+  const normalizedError = String(error || '');
+  console.log('Normalized OTP Error:', normalizedError);
+  if (otpVerified && !loading && !error) {
+    router.push('/login');
+    return;
+  }
+  if (!otpVerified && !loading && normalizedError) {
+    if (normalizedError.toLowerCase().includes('invalid code')) {
+      setOtpError('Incorrect OTP. Please try again.');
+    } else if (
+      normalizedError
+        .toLowerCase()
+        .includes('exceed max confirmation code attempts')
+    ) {
+      setOtpError('You have exceeded the maximum attempts. Please resend OTP.');
+    } else {
+      setOtpError('Something went wrong. Please try again.');
+    }
+  }
+}, [otpVerified, loading, error]);
 
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -236,26 +272,60 @@ export default function SignUpOtpPage(){
                         <Typography className='subHeadingText'>
                             We've sent a verification code to {signupData}
                         </Typography>
-                        <Box
-                            component="form"
-                            onSubmit={handleVerifyOtp}
+            <Box component="form" onSubmit={handleVerifyOtp} sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 2,
+                  mb: 2,
+                }}
                         >
                             {otp.map((digit, index) => (
-                                <TextField
-                                    key={index}
-                                    variant="outlined"
-                                    value={digit}
-                                    onChange={(e) => handleChange(index, e)}
-                                    onKeyDown={(e) => handleKeyDown(index, e)}
-                                    inputProps={{
-                                        maxLength: 1,
-                                        pattern: "[0-9]*",
-                                        inputMode: "numeric",
-                                        style: { textAlign: "center", width: "40px" },
-                                    }}
-                                    inputRef={(el) => (inputRefs.current[index] = el)}
-                                />
-                            ))}
+                   <TextField
+                    key={index}
+                    variant="outlined"
+                    value={digit}
+                    onChange={e => handleChange(index, e)}
+                    onKeyDown={e => handleKeyDown(index, e)}
+                    inputProps={{
+                      maxLength: 1,
+                      pattern: '[0-9]*',
+                      inputMode: 'numeric',
+                      style: { textAlign: 'center', width: '40px' },
+                 }}
+                    inputRef={el => (inputRefs.current[index] = el)}
+                    sx={{
+                      width: '55px',
+                      height: '45px',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '5px',
+                        '& fieldset': {
+                          borderColor: '#E0E0E0',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#E0E0E0',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#E0E0E0',
+                        },
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+              {/* Frontend OTP error */}
+              {otpError && (
+                <Typography
+                  variant="body2"
+                  color="error"
+                  sx={{ textAlign: "center", mb: 1 }}
+                >
+                  {otpError}
+                </Typography>
+              )}
+
+              {/* Backend error (wrong OTP) */}
 
                             <Button
                                 type="submit"
@@ -275,7 +345,8 @@ export default function SignUpOtpPage(){
                     </Box>
                 </Box>
             </Box>
-            {error && (
+        {/* Keeping this code for now to catch errors from backend and add it on frontend too */}
+            {/* {error && (
                 <Typography
                     variant="body2"
                     color="error"
@@ -283,7 +354,7 @@ export default function SignUpOtpPage(){
                 >
                     {error}
                 </Typography>
-            )}
+            )} */}
         </MainBox>
     );
 }
