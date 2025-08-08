@@ -131,6 +131,7 @@ export default function AllocationGrid({
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
+  const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
@@ -1052,6 +1053,7 @@ export default function AllocationGrid({
               teams,
               teamsResources,
               allResourcesDetail,
+              portfolios,
               projects,
               resources,
               splitView,
