@@ -236,7 +236,8 @@ export default function ExecutiveDashboardPage() {
       }
       setFilteredUnapprovedActualsByTeam(filteredCapacity);
     }
-  }, [teamFilter]);
+
+  }, [teamFilter, overAllocated, underAllocated, originalCapacityData, originalUnapprovedActualsByTeam]);
 
   useEffect(() => {
     if (projectFTEData.length > 0) {
@@ -272,8 +273,6 @@ export default function ExecutiveDashboardPage() {
   const filterDataByDate = date => {
     const monday = getMonday(date).format('YYYY-MM-DD');
 
-    setTeamFilter('all');
-
     const capacityData = capacityAvailability;
     const underAllocated = resourceUtilization.filter(
       d => d.allocation_status === 'under-allocated'
@@ -301,7 +300,6 @@ export default function ExecutiveDashboardPage() {
     setFilteredOverAllocated(overAllocated);
     setFilteredUnapprovedProjectAllocation(unapprovedAllocation);
     setFilteredActualsConfirmed(actualsconfirmed);
-    setFilteredUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setFilteredActualDeviation(actualdeviation);
     setFilteredAllocationPercentage(filterallocationpercentage);

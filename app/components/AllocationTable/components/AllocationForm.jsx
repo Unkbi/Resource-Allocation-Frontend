@@ -192,7 +192,6 @@ const initialValuesMap = {
     StartDate: '',
     EndDate: '',
     AllocationEntered: '',
-    AllowOvertime: false,
   },
   assign_allocation: {
     Resource: '',
@@ -543,7 +542,6 @@ const AllocationForm = () => {
       Team,
       ConfirmTransfer,
       shouldTransfer,
-      AllowOvertime,
       ...cleanedValues
     } = values;
 
