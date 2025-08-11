@@ -271,7 +271,7 @@ const CellWithMenu = ({
             teamsResources,
             allResourcesDetail,
             null,
-            allResources.filter(resource => resource.Id === row.resourceId),
+            allResources,
             {
               ProjectName: row?.project || '',
               Id: '',
@@ -606,7 +606,7 @@ export const getFinalColumns = (
     );
   };
 
-  if (groupBy === 'organization') {
+  if (groupBy === 'organization' || groupBy === '') {
     return allColumns || [];
   } else if (groupBy === 'teams' || groupBy === 'organisationName') {
     return [
@@ -743,7 +743,10 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
+            <EllipsisNameCell
+              value={isGroupExpanded ? '' : projects_set[0]}
+              showAddIcon={false}
+            />
           ) : (
             ''
           );
@@ -885,7 +888,7 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
+            <EllipsisNameCell value={''} showAddIcon={false} />
           ) : (
             ''
           );
@@ -1100,7 +1103,8 @@ export const getCellClassName = (
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =
           params.rowNode?.groupingField === 'teams' ||
-          params.rowNode?.groupingField === 'portfolioName'
+          params.rowNode?.groupingField === 'portfolioName' ||
+          params.rowNode?.groupingField === 'organisationName'
             ? base
             : `${base}-secondGroup`;
         let nonEditableClass = '';
@@ -1138,7 +1142,6 @@ export const getCellClassName = (
       }
     }
   }
-
   if (params.rowNode?.type === 'group') {
     return params.rowNode?.groupingField === 'teams' ||
       params.rowNode?.groupingField === 'organisationName' ||

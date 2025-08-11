@@ -678,7 +678,7 @@ export default function Project() {
   const portfolioColumns = [
     {
       field: 'Name',
-      headerName: 'Name',
+      headerName: 'Portfolio Name',
       minWidth: 230,
       hideable: false,
       renderCell: params => {

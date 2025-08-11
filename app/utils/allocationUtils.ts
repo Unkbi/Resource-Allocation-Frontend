@@ -23,6 +23,7 @@ import {
 } from '../types';
 import {
   generateAllWeeks,
+  getAllocationManagerFromPath,
   getMondayOfWeek,
   getResourceFromUid,
   getTeamForResource,
@@ -171,7 +172,6 @@ export function formatAllAllocations(
   resources: Resource[],
   portfolios: Portfolio[],
   allResourcesDetail: AllResourceDetail[],
-  teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
   endDate: string
 ) {
@@ -180,28 +180,17 @@ export function formatAllAllocations(
   }
   const weeks = getWeeksInRange(startDate, endDate);
 
-  // Build a lookup map from resource ID to team
-  const resourceIdToTeam = new Map<string, Team>();
-
-  for (const [teamId, teamResourceList] of Object.entries(teamResources)) {
-    const team = teams.find(t => t.Id === teamId); // find the team based on teamId
-    if (!team) continue; // skip if team not found
-
-    for (const res of teamResourceList) {
-      resourceIdToTeam.set(res.Id, team);
-    }
-  }
-
   const grouped = new Map<string, any>();
 
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
-    const resource = resources.find(r => r.Id === alloc.Resource);
-    const team = resourceIdToTeam.get(alloc.Resource);
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
-    const organisation = allResourcesDetail?.find(
+    const resourceDetails = allResourcesDetail?.find(
       r => r?.Resource?.Id === alloc.Resource
-    )?.Organization;
+    );
+    const resource = resourceDetails?.Resource;
+    const team = resourceDetails?.Team;
+    const organisation = resourceDetails?.Organization;
 
     const key = `${alloc.Resource}-${team?.Id}-${alloc.Project}`;
 
@@ -555,14 +544,18 @@ export const generateEmptyRow = (
     resourceType: resource?.Type || null,
     teams: team?.Name || null,
     teamStatus: team?.Status || null,
-    teamAllocationManager: team?.AllocationManager || null,
+    teamAllocationManager:
+      getAllocationManagerFromPath(team?.AllocationManager, resources || [])
+        ?.FullName || null,
     organisationId: organisation?.Id || null,
     organisationName: organisation?.Name || null,
     organisationStatus: organisation?.Status || null,
     project: project?.Name || allocation.ProjectName || null,
     projectId: project?.Id || allocation.Project || null,
-    projectSponsor: project?.ProjectSponsor || null,
-    projectManager: project?.ProjectManager || null,
+    projectSponsor:
+      getResourceFromUid(project?.ProjectSponsor, resources)?.FullName || null,
+    projectManager:
+      getResourceFromUid(project?.ProjectManager, resources)?.FullName || null,
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,
