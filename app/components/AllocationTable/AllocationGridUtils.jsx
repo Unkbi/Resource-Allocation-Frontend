@@ -1076,6 +1076,16 @@ export const getFinalColumns = (
                   )}
                 </div>
               );
+            }else if(resources_set.length === 1) {
+              const firstResource = resources_set[0];
+              return !isGroupExpanded ? (
+                <EllipsisNameCell
+                  value={resources_set[0]}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                  showAvatar={true}
+                />
+              ) : null;
             }
             return resources_set.length ? (
               <EllipsisNameCell
