@@ -1151,88 +1151,41 @@ useEffect(() => {
 
 
         case 'organizations':
-  try {
-    dispatch({
-      type: DELETE_ORGANISATION,
-      payload: { id: deleteTarget.id },
-    });
+          try {
+            dispatch({
+              type: DELETE_ORGANISATION,
+              payload: { id: deleteTarget.id },
+            });
 
-    dispatch({
-      type: FETCH_ORGANISATIONS,
-    });
+            dispatch({
+              type: FETCH_ORGANISATIONS,
+            });
 
-    dispatch(
-      showToast({
-        open: true,
-        message: 'Organization deleted successfully',
-        type: 'success',
-        position: 'bottom-left',
-        autoHideTimer: 4000,
-      })
-    );
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Organization deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
 
-    setDeleteDialogOpen(false);
-    setDeleteTarget({ id: '', name: '' });
-  } catch (error) {
-    dispatch(
-      showToast({
-        open: true,
-        message: 'Failed to delete organization',
-        type: 'error',
-        position: 'bottom-left',
-        autoHideTimer: 4000,
-      })
-    );
-    console.error('Error deleting organization:', error);
-  }
-  break;
-
-    // case 'organizations':
-    // dispatch({ type: DELETE_ORGANISATION, payload: { id: deleteTarget.id } });
-    // dispatch({ type: FETCH_ORGANISATIONS });
-    // setDeleteDialogOpen(false);
-    // setDeleteTarget({ id: '', name: '' });
-    // break;
-    
-    // This one is like the Teams setup but it gives a red box saying the delete did not work even though it did
-    // case 'organizations':
-    //   const organisationId = deleteTarget.id;
-
-    //   try {
-    //     // Optional: Check if the organization has teams, projects, or dependencies before deleting
-    //     const isInUse = allResourcesDetail.some(
-    //       resource => resource?.Organization?.Id === organisationId
-    //     );
-
-    //     if (isInUse) {
-    //       dispatch(
-    //         showToast({
-    //           open: true,
-    //           message: `Cannot delete an organization with active resources. Please reassign them and try again.`,
-    //           type: 'error',
-    //           position: 'bottom-left',
-    //           autoHideTimer: 4000,
-    //         })
-    //       );
-    //     } else {
-    //       dispatch({ type: DELETE_ORGANISATION, payload: { id: organisationId } });
-    //       dispatch(fetchOrganisations()); // optional: refresh organization list
-    //     }
-    //   } catch (error) {
-    //     dispatch(
-    //       showToast({
-    //         open: true,
-    //         message: 'Failed to delete organization',
-    //         type: 'error',
-    //         position: 'bottom-left',
-    //         autoHideTimer: 4000,
-    //       })
-    //     );
-    //   } finally {
-    //     setDeleteDialogOpen(false);
-    //     setDeleteTarget({ id: '', name: '', type: '' });
-    //   }
-    // break;
+            setDeleteDialogOpen(false);
+            setDeleteTarget({ id: '', name: '' });
+          } catch (error) {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to delete organization',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            console.error('Error deleting organization:', error);
+          }
+        break;
 
       case 'resource':
         dispatch(
