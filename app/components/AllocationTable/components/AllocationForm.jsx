@@ -464,8 +464,8 @@ const AllocationForm = () => {
     );
   };
 
-  const handleOnAdd = resources => {
-    const rowIds = resources?.reduce((acc, resource) => {
+  const handleOnAdd = (resources, projects = []) => {
+    let rowIds = resources?.reduce((acc, resource) => {
       const organisation = allResourcesDetail.find(
         r => r.Resource.Id === resource.Id
       )?.Organization;
@@ -475,6 +475,15 @@ const AllocationForm = () => {
         `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
       ];
     }, []);
+    rowIds = projects.reduce((acc, project) => {
+      const portfolio = portfolios.find(p => p.Id === project.PortfolioId) ?? {
+        Name: 'zzzzz',
+      };
+      return [
+        ...acc,
+        `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`,
+      ];
+    }, rowIds);
     dispatch(setExpandRowId(rowIds));
   };
 
@@ -1392,7 +1401,7 @@ const AllocationForm = () => {
                   )
                 );
               }
-              handleOnAdd(new_resources);
+              handleOnAdd(new_resources, filteredProjects);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);
             }
           );

@@ -306,7 +306,9 @@ export default function AllocationGrid({
   useEffect(() => {
     try {
       if (
-        (groupBy === 'teams' || groupBy === 'organisationName') &&
+        (groupBy === 'teams' ||
+          groupBy === 'organisationName' ||
+          groupBy === 'portfolioName') &&
         expandRowId?.length
       ) {
         expandRowId.forEach(rowId => {
