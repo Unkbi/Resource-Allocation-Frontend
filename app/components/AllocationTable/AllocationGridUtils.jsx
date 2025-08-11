@@ -1103,7 +1103,8 @@ export const getCellClassName = (
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =
           params.rowNode?.groupingField === 'teams' ||
-          params.rowNode?.groupingField === 'portfolioName'
+          params.rowNode?.groupingField === 'portfolioName' ||
+          params.rowNode?.groupingField === 'organisationName'
             ? base
             : `${base}-secondGroup`;
         let nonEditableClass = '';
@@ -1141,7 +1142,6 @@ export const getCellClassName = (
       }
     }
   }
-
   if (params.rowNode?.type === 'group') {
     return params.rowNode?.groupingField === 'teams' ||
       params.rowNode?.groupingField === 'organisationName' ||

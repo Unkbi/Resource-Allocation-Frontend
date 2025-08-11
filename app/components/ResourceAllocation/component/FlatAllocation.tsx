@@ -125,62 +125,6 @@ export default function FlatAllocation({
     }
   }, [ready, allAllocations]);
 
-  const handleAddClick = (params: GridCellParams) => {
-    dispatch(
-      openDialog({
-        title: 'Add Allocation',
-        submitButtonText: 'Add',
-        cancelButtonText: 'Cancel',
-        formType: 'add_allocation',
-        initialData: {
-          Project: params.value,
-        },
-      })
-    );
-  };
-
-  const getTeam = (params: GridCellParams) => {
-    if (
-      params.rowNode.type === 'group' &&
-      params.rowNode.groupingField === 'teams'
-    ) {
-      // Find the team by name in the teams array
-      const teamName = params.rowNode.groupingKey;
-      const team = teams?.result?.find(t => t.Name === teamName);
-      return team;
-    }
-    return null;
-  };
-
-  const getOrganisation = (params: GridCellParams) => {
-    if (
-      params.rowNode.type === 'group' &&
-      params.rowNode.groupingField === 'organisationName'
-    ) {
-      // Find the organisation by name in the organisations array
-      const organisationName = params.rowNode.groupingKey;
-      const organisation = organisations?.find(
-        o => o.Name === organisationName
-      );
-      return organisation;
-    }
-    return null;
-  };
-
-  const getResource = (params: GridCellParams): Resource | null => {
-    if (
-      params.rowNode.type === 'group' &&
-      params.rowNode.groupingField === 'resource'
-    ) {
-      const resourceName = params.rowNode.groupingKey;
-      const resource = _resources?.result?.find(
-        r => r.FullName === resourceName
-      );
-      return resource || null;
-    }
-    return null;
-  };
-
   const organisationColumnConfig = [
     {
       field: 'organisationName',
@@ -219,6 +163,22 @@ export default function FlatAllocation({
         const allocation = params.row;
         const resource = allocation?.resource;
         return <EllipsisNameCell value={resource || ''} />;
+      },
+    },
+    {
+      field: 'portfolioName',
+      headerName: 'Portfolio',
+      width: 201,
+      type: 'string',
+      isEditable: 'false',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        const portfolio =
+          allocation?.portfolioName === 'zzzzz'
+            ? ''
+            : allocation?.portfolioName;
+        return <EllipsisNameCell value={portfolio || ''} />;
       },
     },
     {
@@ -644,8 +604,7 @@ export default function FlatAllocation({
               columnVisibilityModel: {
                 teamAllocationManager: false,
                 teamStatus: false,
-                // __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
-                // __row_group_by_columns_group_organisationName__: true, // This is the grouping column for teams
+                portfolioName: true,
                 project: true,
                 resourceType: true,
                 organisationName: true, // This column has to always be false, as we are using grouping.

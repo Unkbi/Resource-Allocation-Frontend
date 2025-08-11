@@ -30,7 +30,12 @@ import {
 } from '@/app/services/teamServices';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
-import { Allocation, GetAllCostForPeriodResponse, Resource } from '@/app/types';
+import {
+  Allocation,
+  AllResourceDetail,
+  GetAllCostForPeriodResponse,
+  Resource,
+} from '@/app/types';
 import {
   setCost,
   setDataProcessing as setCostDataProcessing,
@@ -65,14 +70,11 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     const teamResults = yield all(
       teams.map((team: any) =>
         call(function* () {
-          const resourcesPostData = {
-            'ResourceAllocation.Core/GetTeamResources': { TeamId: team.Id },
+          const resourcesResult = {
+            result: allResourcesDetail
+              .filter((r: AllResourceDetail) => r.Team?.Id === team?.Id)
+              .map((r: AllResourceDetail) => r.Resource),
           };
-          //@ts-ignore
-          const resourcesResult = yield call(
-            fetchResourcesAgainstTeamsForSaga,
-            resourcesPostData
-          );
 
           return { resourcesResult, team };
         })
@@ -105,7 +107,6 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       resources,
       portfolios || [],
       allResourcesDetail || [],
-      teamResourceObject,
       startDate,
       endDate
     );
@@ -281,7 +282,6 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       resources,
       portfolios || [],
       allResourcesDetail || [],
-      teamsResources,
       startDate,
       endDate
     );
@@ -356,7 +356,6 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
       resources,
       portfolios || [],
       allResourcesDetail || [],
-      teamsResources,
       startDate,
       endDate
     );
@@ -461,7 +460,6 @@ function* updateResourceAllocationsSaga(
       resources,
       portfolios,
       allResourcesDetail || [],
-      teamsResources,
       startDate,
       endDate
     );

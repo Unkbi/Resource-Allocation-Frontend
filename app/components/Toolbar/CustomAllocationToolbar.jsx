@@ -585,7 +585,7 @@ const PortfolioIcon = () => (
   <img src="/images/icons/portfolio.svg" alt="portfolio" />
 );
 
-const FlatIcon = () => <img src="/images/icons/flatView.svg" alt="flat view" />;
+const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
