@@ -40,6 +40,7 @@ export const DEFAULT_VISIBLE_FLAT_COLUMNS = [
   'organisationName',
   'teams',
   'resource',
+  'portfolioName',
   'project',
   'resourceType',
 ];
@@ -276,6 +277,7 @@ const initialState: AllocationGridViewState = {
       'organisationName',
       'teams',
       'resource',
+      'portfolioName',
       'project',
       'resourceType',
       'teamStatus',

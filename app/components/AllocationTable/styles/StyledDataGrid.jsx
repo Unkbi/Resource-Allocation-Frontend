@@ -121,6 +121,14 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       backgroundColor:
         !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F7FBFF'),
     },
+    [`& .${gridClasses.cell}[data-field="portfolioName"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F0F7FF'),
+    },
+    [`& .${gridClasses.cell}[data-field="portfolioName"]`]: {
+      backgroundColor:
+        !loading && (groupBy === 'resource' ? '#F1F6FF' : '#F7FBFF'),
+    },
     [`& .${gridClasses.cell}[data-field="resource"].secondGroupsRow`]: {
       backgroundColor: !loading && '#F0F7FF',
     },

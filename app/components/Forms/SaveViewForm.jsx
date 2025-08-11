@@ -26,6 +26,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
+  PORTFOLIO_DISPLAY_NAME,
 } from '@/app/constants/constants';
 import {
   calculateWeekRanges,
@@ -49,8 +50,10 @@ const getColumnLabel = (column, groupBy = '') => {
     __row_group_by_columns_group_resource__: 'Resource',
     __row_group_by_columns_group__:
       groupBy === 'Resources' ? 'Resource Name' : 'Project Name',
-    __row_group_by_columns_group_project__: 'Project Name',
-    __row_group_by_columns_group_portfolioName__: 'Portfolio',
+    __row_group_by_columns_group_project__:
+      groupBy === 'Project' ? 'Project Name' : 'Project',
+    __row_group_by_columns_group_portfolioName__: `${PORTFOLIO_DISPLAY_NAME} Name`,
+    portfolioName: PORTFOLIO_DISPLAY_NAME,
     totalEffort: 'Total Effort',
     organisationName: 'Organization Name',
     resource: 'Resource',
@@ -196,7 +199,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
               ? columns.project.map(column => ({
                   id: column,
                   value: column,
-                  label: getColumnLabel(column),
+                  label: getColumnLabel(column, values?.groupBy),
                 }))
               : columns['']?.map(column => ({
                   id: column,
