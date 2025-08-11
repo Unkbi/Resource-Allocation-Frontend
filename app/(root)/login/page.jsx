@@ -185,13 +185,12 @@ export default function LoginPage() {
     const redirectPath = searchParams.get('redirect');
     const handleLogin = (e) => {
         e.preventDefault();
-        dispatch(performLogin(
-            {
-                "Agentlang.Kernel.Identity/UserLogin": {
-                    "Username": email,
-                    "Password": password
-                }
-            }));
+        dispatch(
+          performLogin({
+            email: email,
+            password: password,
+          })
+        );
     }
 
     useEffect(() => {

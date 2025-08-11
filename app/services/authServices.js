@@ -7,13 +7,20 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/login', credentials);
-      const data = response.data.result['authentication-result'];
-      saveToken(data['id-token']);
-      saveRefreshToken(data['refresh-token']);
+      const response = await axiosInstance.post('/agentlang_auth/login', {
+        email: credentials.email,
+        password: credentials.password,
+      });
+      const data = response.data;
+      saveToken(data.id_Token);
+      saveRefreshToken(data.refresh_token);
       return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.reason || 'Login failed');
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.reason ||
+        'Login failed';
+      return rejectWithValue(message);
     }
   }
 );
