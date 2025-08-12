@@ -489,7 +489,7 @@ const AllocationForm = () => {
       });
     });
 
-    teams?.result?.forEach(team => {
+    teams?.forEach(team => {
       if (team?.Id == new_user?.teamId) {
         new_user = { team: team, ...new_user };
       }
@@ -881,9 +881,7 @@ const AllocationForm = () => {
         };
 
         try {
-          const selectedTeam = teams.result.find(
-            team => team.Id === values.Team
-          );
+          const selectedTeam = teams?.find(team => team.Id === values.Team);
           let teamAllocationManagerId = null;
           if (selectedTeam?.AllocationManager) {
             const raw = selectedTeam.AllocationManager;

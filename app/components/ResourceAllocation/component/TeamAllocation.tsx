@@ -94,7 +94,7 @@ export default function TeamAllocation({
           filteredResources = removeResourcesWithNoTeams(
             injectBlankRows(
               getAllProjectViewRows() as AllAllocations[],
-              teams?.result || [],
+              teams || [],
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
@@ -143,7 +143,7 @@ export default function TeamAllocation({
     ) {
       // Find the team by name in the teams array
       const teamName = params.rowNode.groupingKey;
-      const team = teams?.result?.find(t => t.Name === teamName);
+      const team = teams?.find(t => t.Name === teamName);
       return team;
     }
     return null;

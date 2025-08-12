@@ -808,7 +808,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       const teamsIAmAllocationManager = getTeamsIamAllocationManager(
         user?.Email,
         resources?.result || [],
-        teams?.result || []
+        teams || []
       );
 
       if (view.includes('Teams') && teamsIAmAllocationManager.length === 0) {

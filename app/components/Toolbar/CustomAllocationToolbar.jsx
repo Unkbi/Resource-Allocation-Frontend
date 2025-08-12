@@ -626,7 +626,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
   const projectsLoaded = Array.isArray(projects?.result ?? projects);
   const resourcesLoaded = Array.isArray(resources?.result ?? resources);
-  const teamsLoaded = Array.isArray(teams?.result ?? teams);
+  const teamsLoaded = Array.isArray(teams ?? teams);
   const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
 
   const allDataLoaded =
@@ -900,7 +900,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       const teamsIAmAllocationManager = getTeamsIamAllocationManager(
         email,
         resources?.result || [],
-        teams?.result || []
+        teams || []
       );
 
       if (
