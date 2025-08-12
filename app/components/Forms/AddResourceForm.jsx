@@ -97,7 +97,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       label: org.Name,
     })) || [];
   const teamListOptions =
-    teams?.result?.map(team => ({
+    teams?.map(team => ({
       value: team.Id,
       label: team.Name,
     })) || [];
@@ -118,9 +118,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
 
-      const matchedTeam = teams?.result?.find(
-        team => team.Name === initialData.Team
-      );
+      const matchedTeam = teams?.find(team => team.Name === initialData.Team);
       const matchedOrg = organisations?.find(
         org => org.Name === initialData.Organization
       );

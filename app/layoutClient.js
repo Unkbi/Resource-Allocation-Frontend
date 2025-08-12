@@ -108,7 +108,7 @@ export default function LayoutClient({ children }) {
     if (isLoggedIn && userId) {
       setIsUserLoginIn(isLoggedIn);
       dispatch(getUserData(userId));
-      if (!teams?.result?.length) {
+      if (!teams?.length) {
         dispatch(fetchAllTeams());
       }
       if (!projects?.result?.length) {

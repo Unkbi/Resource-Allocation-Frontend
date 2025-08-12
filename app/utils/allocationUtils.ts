@@ -613,7 +613,7 @@ export const getCombinedAllocation = (
 
 export const getFormattedAllocationsForUpdate = (
   allocationsUpdated: Allocation[],
-  teams: ApiResponse<Team[]>,
+  teams: Team[],
   teamsResources: Record<string, Resource[]>,
   allResourcesDetail: AllResourceDetail[],
   projects: ApiResponse<Project[]>,
@@ -627,7 +627,7 @@ export const getFormattedAllocationsForUpdate = (
   return allocationsUpdated?.reduce((acc: Record<string, any>, allocation) => {
     const team = getTeamForResource(
       allocation?.Resource,
-      teams?.result,
+      teams,
       teamsResources
     );
     const weekKey = getWeekNumber(parseISO(allocation?.Period));
@@ -686,7 +686,7 @@ export const getFormattedAllocationsForUpdate = (
       const emptyRow = generateEmptyRow(
         startDate,
         endDate,
-        teams?.result || [],
+        teams || [],
         teamsResources,
         allResourcesDetail || [],
         projects?.result || [],
