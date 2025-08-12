@@ -173,7 +173,7 @@ export default function Resources() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(allResourcesDetail || null);
-  const [teamRows, setTeamRows] = useState(teams?.result || null);
+  const [teamRows, setTeamRows] = useState(teams || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState({
     id: '',
@@ -822,11 +822,11 @@ export default function Resources() {
   }, [allResourcesDetail]);
 
   useEffect(() => {
-    setTeamRows(teams?.result);
+    setTeamRows(teams);
   }, [teams]);
 
   useEffect(() => {
-    if (!teams || teams?.result?.length === 0) {
+    if (!teams || teams?.length === 0) {
       dispatch(fetchAllTeams());
     }
     if (!employeeRates || employeeRates?.length === 0) {

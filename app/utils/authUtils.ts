@@ -139,3 +139,13 @@ export const getUserAttributes = (
   });
   return attributes;
 };
+
+export const formatAPIResponse = (keyToRemove: string, response: any) => {
+  if (keyToRemove === null || keyToRemove === undefined) {
+    return response;
+  }
+  if (Array.isArray(response)) {
+    return response.map(item => item[keyToRemove]);
+  }
+  return response;
+};
