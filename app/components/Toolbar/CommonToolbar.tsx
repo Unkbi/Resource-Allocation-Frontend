@@ -132,7 +132,8 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
             className="AddIcon"
             onClick={handleAddMenuToggle}
             ref={anchorRefAdd}
-            disabled={!allApiSuccess}
+            // Temporary disabled state for testing
+            // disabled={!allApiSuccess}
             sx={{
               display: 'flex',
               alignItems: 'center',

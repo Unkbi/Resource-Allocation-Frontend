@@ -45,9 +45,9 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
       const rowData = {
         Name: initialData.Team || '',
         AllocationManager:
-          resources.result.find(
+          resources?.result?.find(
             res => res.__path__ === initialData.AllocationManager
-          )?.__path__ || '', 
+          )?.__path__ || '',
         Status: initialData.Status || 'Active',
       };
 
@@ -79,15 +79,13 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel sx={{ flex: 1 }}>
-          Team Allocation Manager
-        </StyledLabel>
+        <StyledLabel sx={{ flex: 1 }}>Team Allocation Manager</StyledLabel>
         <StyledAutocomplete
           name="AllocationManager"
           label="Team Allocation Manager"
           options={resourceListOptions}
           value={values.AllocationManager || ''}
-          formikProps={formikProps} 
+          formikProps={formikProps}
           fullWidth
         />
       </Box>
