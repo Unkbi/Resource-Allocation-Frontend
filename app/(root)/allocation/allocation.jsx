@@ -26,6 +26,7 @@ import PortfolioAllocation from '@/app/components/ResourceAllocation/component/P
 import OrganisationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
 import ResourceAllocation from '@/app/components/ResourceAllocation/component/ResourceAllocation';
 import FlatAllocation from '@/app/components/ResourceAllocation/component/FlatAllocation';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -33,6 +34,7 @@ export default function Allocation({ startDate, endDate }) {
     state => state.allocationView
   );
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { teams } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
@@ -46,11 +48,13 @@ export default function Allocation({ startDate, endDate }) {
   }, []);
 
   useEffect(() => {
-    const userId = getUserIdFromEmail(resources?.result || [], user?.Email);
-    if (userId) {
-      dispatch(fetchUsersSavedViews(userId));
+    if (user && email) {
+      const userId = getUserIdFromEmail(resources?.result || [], email);
+      if (userId) {
+        dispatch(fetchUsersSavedViews(userId));
+      }
     }
-  }, [resources, user]);
+  }, [resources, user, email]);
 
   useEffect(() => {
     // Only after fetching resources, projects, and teams should the deeplinked settings be processed.

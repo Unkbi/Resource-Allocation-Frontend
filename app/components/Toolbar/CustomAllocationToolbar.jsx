@@ -98,6 +98,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
 import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -598,6 +599,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     state => state.projects
   );
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
+
   const { resources } = useSelector(state => state.resources);
   const { teams } = useSelector(state => state.teams);
   const { startDate, endDate } = getStartAndEndDateForView(
@@ -893,9 +896,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   };
 
   const handleToggle = isMine => {
-    if (isMine) {
+    if (isMine && email) {
       const teamsIAmAllocationManager = getTeamsIamAllocationManager(
-        user?.Email,
+        email,
         resources?.result || [],
         teams?.result || []
       );
@@ -913,9 +916,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       }
 
       // Check if the user is a project manager in any of the projects
-      const currentResource = resources?.result?.find(
-        r => r.Email === user?.Email
-      );
+      const currentResource = resources?.result?.find(r => r.Email === email);
       const projectsIAmProjectManager = getProjectsIamProjectManager(
         currentResource?.Id,
         projects?.result || []

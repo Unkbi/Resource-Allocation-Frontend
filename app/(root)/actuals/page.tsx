@@ -31,6 +31,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
@@ -38,6 +39,8 @@ export default function ActualsPage() {
     useSelector((state: RootState) => state.actualAllocations);
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
+  // @ts-ignore
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
   const { projects } = useSelector((state: RootState) => state.projects);
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
@@ -73,12 +76,11 @@ export default function ActualsPage() {
       resources &&
       'result' in resources &&
       user &&
-      'Email' in user
+      email
     ) {
       const userId = getUserIdFromEmail(
         ('result' in resources && resources?.result) || [],
-        // @ts-ignore
-        ('Email' in user && user?.Email) || ''
+        email
       );
 
       const allData = apiRef.current
@@ -231,11 +233,10 @@ export default function ActualsPage() {
   };
 
   useEffect(() => {
-    if (resources && 'result' in resources && user && 'Email' in user) {
+    if (resources && 'result' in resources && user && email) {
       const userId = getUserIdFromEmail(
         ('result' in resources && resources?.result) || [],
-        // @ts-ignore
-        ('Email' in user && user?.Email) || ''
+        email
       );
       dispatch({
         type: GET_ACTUAL_ALLOCATIONS,
@@ -246,7 +247,7 @@ export default function ActualsPage() {
         },
       });
     }
-  }, [resources, user, startDate, endDate]);
+  }, [resources, user, email, startDate, endDate]);
 
   useEffect(() => {
     if (actualAllocations) {
