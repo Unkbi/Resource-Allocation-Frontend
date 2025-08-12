@@ -271,6 +271,7 @@ const CellWithMenu = ({
             teamsResources,
             allResourcesDetail,
             null,
+            null,
             allResources,
             {
               ProjectName: row?.project || '',
@@ -936,30 +937,82 @@ export const getFinalColumns = (
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          const { rowNode } = params;
-          const firstChild = getFirstChild(params);
-          const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-          if (isGridTreeNode && rowNode.children) {
-            return firstChild ? (
-              <>
-                <EllipsisNameCell value={firstChild.project || ''} />
-                <span
-                  style={{
-                    flexShrink: 0,
-                    background: '#E9EFF8',
-                    color: '#000',
-                    paddingRight: 4,
-                    paddingLeft: 4,
-                    fontSize: 12,
-                    borderRadius: 4,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  +{rowNode?.children?.length}
-                </span>
-              </>
-            ) : null;
+          const isParent = params.rowNode?.children?.length;
+          const isGroupExpanded = params.rowNode?.childrenExpanded;
+
+          if (params.value) {
+            return (
+              <CellWithMenu
+                params={params}
+                handleAddClick={handleAddClick}
+                handleCloneClick={handleCloneClick}
+                handleTranferClick={handleTranferClick}
+                isFormatWithK={isFormatWithK}
+                handleOpenHistory={handleOpenHistory}
+              >
+                <EllipsisNameCell
+                value={params.value}
+                showAddIcon={false}
+                isFormatWithK={isFormatWithK}
+                showAvatar={false}
+              />
+              </CellWithMenu>
+            );
           }
+          const projects_set = [
+          ...new Set(
+            params?.rowNode?.children?.map(
+              child => params.api.getRow(child)?.project
+            )
+          ),
+        ].filter(Boolean);
+
+          if (projects_set.length > 1) {
+            const firstProject = projects_set?.[0];
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  minWidth: 0,
+                  width: '100%',
+                  gap: 8,
+                }}
+              >
+                {!isGroupExpanded && (
+                  <EllipsisNameCell
+                    value={firstProject}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                    showAvatar={false}
+                  />
+                )}
+                {!isGroupExpanded && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      backgroundColor: '#E9EFF8',
+                      color: '#000',
+                      paddingRight: 4,
+                      paddingLeft: 4,
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{projects_set.length - 1}
+                  </span>
+                )}
+              </div>
+            );
+          }
+          return projects_set.length ? (
+           <EllipsisNameCell
+            value={projects_set[0]}
+            showAddIcon={false}
+            showAvatar={false}
+          />
+          ) : null;
         },
       },
       {
@@ -967,22 +1020,121 @@ export const getFinalColumns = (
         headerName: 'Resource',
         width: 200,
         headerClassName: 'secondary-header',
-        cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
         cellClassName: () =>
-          groupBy === 'project' ? 'common-NonEditableCells' : '',
+          groupBy === 'project' ? 'common-NonEditableCells' : 'secondary-cell',
         renderCell: params => {
-          return params.value ? (
-            <CellWithMenu
-              params={params}
-              handleAddClick={handleAddClick}
-              handleCloneClick={handleCloneClick}
-              handleTranferClick={handleTranferClick}
-              isFormatWithK={isFormatWithK}
-              handleOpenHistory={handleOpenHistory}
-            />
-          ) : null;
+          const { rowNode, value } = params;
+          const isParent = rowNode?.children?.length;
+          const isGroupExpanded = rowNode?.childrenExpanded;
+
+        if (isParent) {
+          const resources_set = [
+            ...new Set(
+              rowNode.children?.map(
+                child => params.api.getRow(child)?.resource || ''
+              )
+            ),
+          ].filter(Boolean);
+
+            if (resources_set.length > 1) {
+              const firstResource = resources_set[0];
+
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    minWidth: 0,
+                    width: '100%',
+                    gap: 8,
+                  }}
+                >
+                  {!isGroupExpanded && (
+                  <EllipsisNameCell
+                    value={firstResource}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                    showAvatar={true} 
+                  />
+                  )}
+                  {!isGroupExpanded && (
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        backgroundColor: '#E9EFF8',
+                        color: '#000',
+                        padding: '0 4px',
+                        fontSize: 12,
+                        borderRadius: 4,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      +{resources_set.length - 1}
+                    </span>
+                  )}
+                </div>
+              );
+            }else if(resources_set.length === 1) {
+              const firstResource = resources_set[0];
+              return !isGroupExpanded ? (
+                <EllipsisNameCell
+                  value={resources_set[0]}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                  showAvatar={true}
+                />
+              ) : null;
+            }
+            return resources_set.length ? (
+              <EllipsisNameCell
+                value={resources_set[0]}
+                showAddIcon={false}
+                isFormatWithK={isFormatWithK}
+              showAvatar={true} 
+              />
+            ) : null;
+          }
+          const allocationsCount = params.row?.resource_count?.length || 0;
+          if (value) {
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CellWithMenu
+                  params={params}
+                  handleAddClick={handleAddClick}
+                  handleCloneClick={handleCloneClick}
+                  handleTranferClick={handleTranferClick}
+                  isFormatWithK={isFormatWithK}
+                  handleOpenHistory={handleOpenHistory}
+              >
+                <EllipsisNameCell
+                  value={value}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                  showAvatar={true}
+                />
+              </CellWithMenu>
+                {allocationsCount > 1 && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      background: '#E9EFF8',
+                      color: '#000',
+                      padding: '0 4px',
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{allocationsCount - 1}
+                  </span>
+                )}
+              </div>
+            );
+          }
+
+          return null;
         },
       },
       ...(allColumns?.slice(1) || []),
