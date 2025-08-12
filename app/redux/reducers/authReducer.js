@@ -117,7 +117,7 @@ const authSlice = createSlice({
       .addCase(confirmSignUp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-         state.otpVerified = false;
+        state.otpVerified = false;
       })
       //resend otp
       .addCase(resendConfirmationCode.pending, state => {

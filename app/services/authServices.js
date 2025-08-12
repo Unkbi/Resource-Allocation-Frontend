@@ -1,6 +1,12 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../utils/apiClient';
-import { clearToken, saveRefreshToken, saveToken } from '../utils/authUtils';
+import {
+  clearAuth,
+  clearToken,
+  saveRefreshToken,
+  saveToken,
+  saveUserId,
+} from '../utils/authUtils';
 
 // Login User
 export const loginUser = createAsyncThunk(
@@ -12,7 +18,12 @@ export const loginUser = createAsyncThunk(
         password: credentials.password,
       });
       const data = response.data;
-      saveToken(data.id_Token);
+      const token =
+        data.userId && data.sessionId
+          ? `${data.userId}/${data.sessionId}`
+          : data.id_Token;
+      saveToken(token);
+      saveUserId(data.userId);
       saveRefreshToken(data.refresh_token);
       return data;
     } catch (error) {
@@ -26,10 +37,12 @@ export const loginUser = createAsyncThunk(
 );
 
 // Get User
-export const getUser = createAsyncThunk('auth/getUser', async () => {
+export const getUser = createAsyncThunk('auth/getUser', async userId => {
   try {
-    const response = await axiosInstance.post('/get-user');
-    return response.data.result;
+    const response = await axiosInstance.post('/agentlang_auth/getUser', {
+      userId,
+    });
+    return response.data;
   } catch (error) {
     return 'User not found';
   }
@@ -61,7 +74,7 @@ export const confirmSignUp = createAsyncThunk(
 
 // Logout User
 export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
-  clearToken();
+  clearAuth();
   return;
 });
 
@@ -112,4 +125,3 @@ export const resendConfirmationCode = createAsyncThunk(
     }
   }
 );
-

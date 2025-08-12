@@ -120,6 +120,7 @@ import {
 } from '@/app/redux/actions/rbacActions';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 const initialValuesMap = {
   add_project: {
@@ -329,6 +330,7 @@ const AllocationForm = () => {
   );
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
   const { startDate, endDate } = calendarDate || {};
@@ -1004,21 +1006,21 @@ const AllocationForm = () => {
               values.Project.includes(project.Id)
             ) || [];
 
-            if (
-              filteredProjects.some(p => !p.AllowOvertime) &&
-              values.AllocationEntered > 1.0
-            ) {
-              dispatch(
-                showToastAction(
-                  true,
-                  'Allocation cannot exceed 1.0 for projects that do not allow overtime.',
-                  'error',
-                  4000
-                )
-              );
-              dispatch(closeDialog());
-              return;
-            }
+          if (
+            filteredProjects.some(p => !p.AllowOvertime) &&
+            values.AllocationEntered > 1.0
+          ) {
+            dispatch(
+              showToastAction(
+                true,
+                'Allocation cannot exceed 1.0 for projects that do not allow overtime.',
+                'error',
+                4000
+              )
+            );
+            dispatch(closeDialog());
+            return;
+          }
 
           const warningMessages = [];
           const errorMessages = [];
@@ -1095,7 +1097,6 @@ const AllocationForm = () => {
                     `Total allocation for week ${weekKey} exceeds 1.5 (${newFinalTotal.toFixed(2)}).`
                   );
                 }
-                
 
                 if (
                   allocation &&
@@ -1502,10 +1503,7 @@ const AllocationForm = () => {
             );
             dispatch(closeDialog());
           } else {
-            const userId = getUserIdFromEmail(
-              resources?.result || [],
-              user?.Email
-            );
+            const userId = getUserIdFromEmail(resources?.result || [], email);
             // Create a new view.
             const newView = {
               isDefault: values.isDefault,

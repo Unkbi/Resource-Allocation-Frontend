@@ -41,9 +41,9 @@ export const confirmSignUpUser = data => async dispatch => {
   }
 };
 
-export const getUserData = () => async dispatch => {
+export const getUserData = userId => async dispatch => {
   try {
-    await dispatch(getUser());
+    await dispatch(getUser(userId));
   } catch (error) {
     console.error('get user failed:', error);
   }

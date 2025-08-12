@@ -72,6 +72,7 @@ import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 export default function AllocationGrid({
   groupBy,
@@ -129,6 +130,7 @@ export default function AllocationGrid({
     } ?? {}
   );
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
   const { splitView, splitViewCurrentProject } = useSelector(
@@ -417,7 +419,7 @@ export default function AllocationGrid({
   }, [currentView.ColumnsVisible]);
 
   useEffect(() => {
-    if (user?.Email && resources?.result) {
+    if (email && resources?.result) {
       if (currentView?.Filters) {
         setFilterModel({
           items:
@@ -434,7 +436,7 @@ export default function AllocationGrid({
       // If not, then update myTeam to allTeams
       if (currentView?.Filters !== null && currentView?.MyTeam) {
         const allocationManagerName = getResourceFromEmail(
-          user?.Email,
+          email,
           resources?.result || []
         )?.FullName;
 
@@ -452,7 +454,7 @@ export default function AllocationGrid({
       // If not, then update myProjects to allProjects
       if (currentView?.Filters !== null && currentView?.MyProjects) {
         const projectManager = getResourceFromEmail(
-          user?.Email,
+          email,
           resources?.result || []
         );
 
@@ -471,12 +473,12 @@ export default function AllocationGrid({
         );
       }
     }
-  }, [currentView?.Filters, user?.Email, resources?.result]);
+  }, [currentView?.Filters, user, email, resources?.result]);
 
   useEffect(() => {
-    if (user?.Email && resources?.result) {
+    if (email && resources?.result) {
       const allocationManagerName = getResourceFromEmail(
-        user?.Email,
+        email,
         resources?.result || []
       )?.FullName;
 
@@ -506,13 +508,10 @@ export default function AllocationGrid({
         );
       }
     }
-  }, [currentView?.MyTeam, user?.Email, resources?.result]);
+  }, [currentView?.MyTeam, user, email, resources?.result]);
 
   useEffect(() => {
-    const projectManager = getResourceFromEmail(
-      user?.Email,
-      resources?.result || []
-    );
+    const projectManager = getResourceFromEmail(email, resources?.result || []);
 
     const projectManagerName = projectManager
       ? `${projectManager?.FullName}`.trim()

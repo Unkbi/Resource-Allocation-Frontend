@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Box, styled } from '@mui/material';
 import SideBar from './components/Shared/Sidebar/Sidebar';
 import Header from './components/Shared/Header/Header';
-import { getToken } from './utils/authUtils';
+import { getToken, getUserId } from './utils/authUtils';
 import { PUBLIC_ROUTES } from './constants/constants';
 import { getUserData } from './redux/actions/authActions';
 import { useDispatch, useSelector } from 'react-redux';
@@ -22,15 +22,16 @@ const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
 })(({ theme, isLoggedIn, sidebarExpanded }) => {
   return {
-  background: '#fff',
-  marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
+    background: '#fff',
+    marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
     paddingTop: `${isLoggedIn ? '31px' : '0'}`,
-  transition: 'margin-left 0.3s ease-in-out',
+    transition: 'margin-left 0.3s ease-in-out',
   };
 });
 
 export default function LayoutClient({ children }) {
   const isLoggedIn = getToken();
+  const userId = getUserId();
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -97,26 +98,26 @@ export default function LayoutClient({ children }) {
       !isLoggedIn &&
       !isPublicRoute &&
       !pathname.startsWith('/login')
-        ) {
+    ) {
       router.replace(`/login?redirect=${encodedUrl}`);
     }
   }, [isLoggedIn, isPublicRoute, router, isClient]);
 
   useEffect(() => {
     if (!isClient) return;
-    if (isLoggedIn) {
-    setIsUserLoginIn(isLoggedIn);
-    dispatch(getUserData());
-    if (!teams?.result?.length) {
-      dispatch(fetchAllTeams());
-    }
-    if (!projects?.result?.length) {
-      dispatch(fetchAllProjects());
-    }
-    if (!resources?.result?.length) {
-      dispatch(fetchAllResources());
-    }
-    if (!portfolios?.result?.length) {
+    if (isLoggedIn && userId) {
+      setIsUserLoginIn(isLoggedIn);
+      dispatch(getUserData(userId));
+      if (!teams?.result?.length) {
+        dispatch(fetchAllTeams());
+      }
+      if (!projects?.result?.length) {
+        dispatch(fetchAllProjects());
+      }
+      if (!resources?.result?.length) {
+        dispatch(fetchAllResources());
+      }
+      if (!portfolios?.result?.length) {
         dispatch({
           type: FETCH_PORTFOLIOS,
           payload: {},
