@@ -70,7 +70,7 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
 
   useEffect(() => {
     if (initialData) {
-      const filteredProject = projects?.result
+      const filteredProject = projects
         ?.filter(project => initialData.Project?.includes(project.Name))
         .map(projects => projects.Id);
       const filteredResource = resources?.result
@@ -88,7 +88,7 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
   }, [initialData, projects]);
 
   useEffect(() => {
-    const avaiableProjects = projects?.result?.map(project => ({
+    const avaiableProjects = projects?.map(project => ({
       value: project.Id,
       label: project.Name,
     }));

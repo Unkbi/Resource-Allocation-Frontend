@@ -57,14 +57,14 @@ const CloneResourceForm = ({ formikProps, setFormValue }) => {
       : [];
 
   const selectedProjects = Array.isArray(values?.Project)
-  ? projects?.result?.filter((proj) => values?.Project?.includes(proj.Id))
+  ? projects?.filter((proj) => values?.Project?.includes(proj.Id))
   : [initialData?.Project];
   const projectNames = selectedProjects?.map((proj) => proj.Name) || [];
 
   useEffect(() => {
     if (initialData) {
       const filteredProjectIds =
-        projects?.result
+        projects
           ?.filter((project) => initialData.Project?.includes(project.Name))
           ?.map((project) => project.Id) || [];
 

@@ -624,7 +624,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [allApiSuccess, setAllApiSuccess] = useState(false);
   const { portfolios } = useSelector(state => state.portfolios);
 
-  const projectsLoaded = Array.isArray(projects?.result ?? projects);
+  const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources?.result ?? resources);
   const teamsLoaded = Array.isArray(teams?.result ?? teams);
   const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
@@ -919,7 +919,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       const currentResource = resources?.result?.find(r => r.Email === email);
       const projectsIAmProjectManager = getProjectsIamProjectManager(
         currentResource?.Id,
-        projects?.result || []
+        projects || []
       );
 
       if (

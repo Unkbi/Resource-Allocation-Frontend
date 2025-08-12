@@ -61,7 +61,7 @@ export default function Allocation({ startDate, endDate }) {
     if (
       settingsParam &&
       (teams?.result?.length ?? 0) > 0 &&
-      (projects?.result?.length ?? 0) > 0 &&
+      (projects?.length ?? 0) > 0 &&
       (resources?.result?.length ?? 0) > 0
     ) {
       try {

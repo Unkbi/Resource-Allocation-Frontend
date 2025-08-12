@@ -68,17 +68,17 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
   const { teams } = useSelector((state: any) => state.teams);
   const { portfolios } = useSelector((state: any) => state.portfolios);
 
- const projectsLoaded = Array.isArray(projects?.result ?? projects);
+ const projectsLoaded = Array.isArray(projects);
  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
  const teamsLoaded = Array.isArray(teams?.result ?? teams);
  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
 
-  const allDataLoaded =
-    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+  // const allDataLoaded =
+  //   projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
 
-    useEffect(() => {
-      setAllApiSuccess(allDataLoaded);
-    }, [projects, resources, teams, portfolios]);
+  //   useEffect(() => {
+  //     setAllApiSuccess(allDataLoaded);
+  //   }, [projects, resources, teams, portfolios]);
 
   const handleAddMenuToggle = () => {
     setOpenAddMenu(prev => !prev);
@@ -132,7 +132,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
             className="AddIcon"
             onClick={handleAddMenuToggle}
             ref={anchorRefAdd}
-            disabled={!allApiSuccess}
+            // disabled={!allApiSuccess}
             sx={{
               display: 'flex',
               alignItems: 'center',

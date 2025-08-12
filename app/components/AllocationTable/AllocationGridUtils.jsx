@@ -85,7 +85,7 @@ const CellWithMenu = ({
   );
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allProjects = useSelector(
-    state => state.projects.projects?.result || []
+    state => state.projects.projects || []
   );
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
@@ -664,7 +664,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
@@ -809,7 +809,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {

@@ -684,7 +684,7 @@ export default function AllocationGrid({
             getAllRowsForView(viewId),
             allocationTheme,
             type,
-            projects?.result,
+            projects,
             isCellEditable
           );
           const showTooltip =
@@ -1413,7 +1413,7 @@ export default function AllocationGrid({
           getAllRowsForView(viewId),
           allocationTheme,
           type,
-          projects?.result,
+          projects,
           isCellEditable,
           groupBy
         );

@@ -823,7 +823,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       );
       const projectsIAmProjectManager = getProjectsIamProjectManager(
         currentResource?.Id,
-        projects?.result || []
+        projects || []
       );
 
       if (view.includes('Project') && projectsIAmProjectManager.length === 0) {

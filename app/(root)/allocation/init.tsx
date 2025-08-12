@@ -80,7 +80,7 @@ export default function AllocationInit() {
     if (!teams?.result?.length) {
       dispatch(fetchAllTeams());
     }
-    if (!projects?.result?.length) {
+    if (!projects?.length) {
       dispatch(fetchAllProjects());
     }
     if (!resources?.result?.length) {
@@ -112,7 +112,7 @@ export default function AllocationInit() {
   useEffect(() => {
     if (
       (teams?.result?.length ?? 0) > 0 &&
-      (projects?.result?.length ?? 0) > 0 &&
+      (projects?.length ?? 0) > 0 &&
       (resources?.result?.length ?? 0) > 0 &&
       (allResourcesDetail?.length ?? 0) > 0 &&
       allAllocations?.length === 0
@@ -122,7 +122,7 @@ export default function AllocationInit() {
         type: 'FETCH_ALL_ALLOCATIONS_INIT',
         payload: {
           teams: teams?.result,
-          projects: projects?.result,
+          projects: projects,
           resources: resources?.result,
           portfolios: portfolios,
           allResourcesDetail: allResourcesDetail,
@@ -136,7 +136,7 @@ export default function AllocationInit() {
   useEffect(() => {
     if (
       (teams?.result?.length ?? 0) > 0 &&
-      (projects?.result?.length ?? 0) > 0 &&
+      (projects?.length ?? 0) > 0 &&
       (resources?.result?.length ?? 0) > 0 &&
       (allResourcesDetail?.length ?? 0) > 0
     ) {
@@ -145,7 +145,7 @@ export default function AllocationInit() {
         type: 'FETCH_ALL_ALLOCATIONS',
         payload: {
           teams: teams?.result,
-          projects: projects?.result,
+          projects: projects,
           resources: resources?.result,
           portfolios: portfolios,
           allResourcesDetail: allResourcesDetail,
