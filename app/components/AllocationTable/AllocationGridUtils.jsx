@@ -1289,20 +1289,26 @@ export const getCellClassName = (
           parseISO(project.StartDate) <= parseISO(currentWeekData?.period) &&
           parseISO(project.EndDate) >= parseISO(currentWeekData?.period);
         if (isWithinProjectDateRange && project.Type) {
-          return `firstGroupsRow project-type-${project.Type.toLowerCase().split(' ').join('_')}`;
+          const isTopLevelProject =
+            params.rowNode.depth === 0 || groupBy === 'project';
+          const prefix = isTopLevelProject
+            ? 'firstGroupsRow'
+            : 'secondGroupsRow';
+          return `${prefix} project-type-${project.Type.toLowerCase().replace(/\s+/g, '_')}`;
         }
       }
     }
   }
   if (params.rowNode?.type === 'group') {
-    return params.rowNode?.groupingField === 'teams' ||
-      params.rowNode?.groupingField === 'organisationName' ||
-      params.rowNode?.groupingField === 'portfolioName' ||
-      (groupBy === 'resource' &&
-        params.rowNode?.groupingField === 'resource') ||
-      (groupBy === 'project' && params.rowNode?.groupingField === 'project')
-      ? 'firstGroupsRow'
-      : 'secondGroupsRow';
+    const isFirstGroup =
+      params.rowNode.depth === 0 &&
+      (params.rowNode?.groupingField === 'teams' ||
+        params.rowNode?.groupingField === 'organisationName' ||
+        params.rowNode?.groupingField === 'portfolioName' ||
+        (groupBy === 'resource' &&
+          params.rowNode?.groupingField === 'resource') ||
+        (groupBy === 'project' && params.rowNode?.groupingField === 'project'));
+    return isFirstGroup ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
     if (type === 'cost') {
