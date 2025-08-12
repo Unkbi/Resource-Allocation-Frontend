@@ -700,7 +700,7 @@ const AllocationForm = () => {
                 return;
               }
 
-              const newTeamId = response.payload?.result?.Id;
+              const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
                 dispatch(setHighlightedRowId(newTeamId));
@@ -747,11 +747,9 @@ const AllocationForm = () => {
         });
 
         postData = {
-          'ResourceAllocation.Core/Team': {
-            Name: cleanedValues.Name?.trim(),
-            AllocationManager: cleanedValues.AllocationManager,
-            Status: cleanedValues.Status,
-          },
+          Name: cleanedValues.Name?.trim(),
+          AllocationManager: cleanedValues.AllocationManager,
+          Status: cleanedValues.Status,
         };
 
         try {
