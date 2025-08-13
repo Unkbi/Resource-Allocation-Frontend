@@ -544,22 +544,21 @@ const AllocationForm = () => {
           const today = new Date().toISOString().split('T')[0]; // default to today
           cleanedValues.StartDate = today;
         }
-       postData = {
-         Id: null,
-         Name: cleanedValues.Name,
-         Description: cleanedValues.Description || '',
-         Type: cleanedValues.Type || '',
-         Budget: cleanedValues.Budget || 0,
-         ProjectSponsor: cleanedValues.ProjectSponsor || null,
-         ProjectManager: cleanedValues.ProjectManager || null,
-         PortfolioId: cleanedValues.PortfolioId || null,
-         Status: cleanedValues.Status || 'Active',
-         Location: cleanedValues.Location || '',
-         StartDate: cleanedValues.StartDate,
-         EndDate: cleanedValues.EndDate || null,
-         BudgetCurrency: cleanedValues.BudgetCurrency || 'USD',
-         AllowOvertime: cleanedValues.AllowOvertime === 'Yes',
-       };
+        postData = {
+          Name: cleanedValues.Name,
+          Description: cleanedValues.Description || '',
+          Type: cleanedValues.Type || '',
+          Budget: cleanedValues.Budget || 0,
+          ProjectSponsor: cleanedValues.ProjectSponsor || null,
+          ProjectManager: cleanedValues.ProjectManager || null,
+          PortfolioId: cleanedValues.PortfolioId || null,
+          Status: cleanedValues.Status || 'Active',
+          Location: cleanedValues.Location || '',
+          StartDate: cleanedValues.StartDate,
+          EndDate: cleanedValues.EndDate || null,
+          BudgetCurrency: cleanedValues.BudgetCurrency || 'USD',
+          AllowOvertime: cleanedValues.AllowOvertime === 'Yes',
+        };
         try {
           dispatch(addProject(postData))
             .then(async response => {
@@ -738,11 +737,9 @@ const AllocationForm = () => {
         });
 
         postData = {
-         
-            Name: cleanedValues.Name?.trim(),
-            AllocationManager: cleanedValues.AllocationManager,
-            Status: cleanedValues.Status,
-      
+          Name: cleanedValues.Name?.trim(),
+          AllocationManager: cleanedValues.AllocationManager,
+          Status: cleanedValues.Status,
         };
 
         try {
@@ -993,9 +990,8 @@ const AllocationForm = () => {
             values.EndDate || values.endDate
           );
           const filteredProjects =
-            projects?.filter(project =>
-              values.Project.includes(project.Id)
-            ) || [];
+            projects?.filter(project => values.Project.includes(project.Id)) ||
+            [];
 
           if (
             filteredProjects.some(p => !p.AllowOvertime) &&
@@ -2896,9 +2892,7 @@ const AllocationForm = () => {
             }).join(', ')}
             &nbsp; - &nbsp;
             {pendingTransferData?.values?.Project?.map(projectId => {
-              const project = projects?.find(
-                proj => proj.Id === projectId
-              );
+              const project = projects?.find(proj => proj.Id === projectId);
               return project?.Name || 'Unknown Project';
             }).join(', ')}
             .
