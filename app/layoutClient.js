@@ -111,7 +111,7 @@ export default function LayoutClient({ children }) {
       if (!teams?.length) {
         dispatch(fetchAllTeams());
       }
-      if (!projects?.result?.length) {
+      if (!projects?.length) {
         dispatch(fetchAllProjects());
       }
       if (!resources?.result?.length) {

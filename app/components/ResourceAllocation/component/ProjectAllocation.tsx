@@ -185,7 +185,7 @@ export default function ProjectAllocation({
 
   const handleEditProject = (params: SplitViewParams) => {
     const data = modifyData(
-      (projects?.result ?? []).filter(project => project.Name === params.value)
+      (projects ?? []).filter(project => project.Name === params.value)
     );
     dispatch(
       openDialog({
@@ -200,7 +200,7 @@ export default function ProjectAllocation({
 
   const handleOpenSplitView = (params: SplitViewParams) => {
     const data = modifyData(
-      (projects?.result ?? []).filter(project => project.Name === params.value)
+      (projects ?? []).filter(project => project.Name === params.value)
     );
     dispatch(setSplitView(true));
     dispatch(setSplitViewCurrentProject(data?.[0] || {}));
@@ -251,7 +251,7 @@ export default function ProjectAllocation({
 
   const handleOpenHistory = (params: SplitViewParams) => {
     const data = modifyData(
-      (projects?.result ?? []).filter(project => project.Name === params.value)
+      (projects ?? []).filter(project => project.Name === params.value)
     );
 
     dispatch(
@@ -310,7 +310,7 @@ export default function ProjectAllocation({
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
         const row = api.getRow(rowNode.id);
-        const projectType = projects?.result?.find(
+        const projectType = projects?.find(
           project => project.Name === value
         )?.Type;
 

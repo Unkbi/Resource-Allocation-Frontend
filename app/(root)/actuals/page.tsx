@@ -72,7 +72,6 @@ export default function ActualsPage() {
   const handleConfirmed = () => {
     if (
       projects &&
-      'result' in projects &&
       resources &&
       'result' in resources &&
       user &&
@@ -117,7 +116,7 @@ export default function ActualsPage() {
             )
         )
         .map(tabData => ({
-          Project: projects?.result?.find(
+          Project: projects?.find(
             (project: any) => project.Name === tabData.project
           )?.Id,
           ActualsEntered: formateToFloat(tabData.actuals),
@@ -275,7 +274,7 @@ export default function ActualsPage() {
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
     }
-    if (!projects?.result?.length) {
+    if (!projects?.length) {
       dispatch(fetchAllProjects());
     }
   }, []);

@@ -139,7 +139,7 @@ export default function Project() {
   );
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [rows, setRows] = useState(projects?.result || null);
+  const [rows, setRows] = useState(projects || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
@@ -160,10 +160,10 @@ export default function Project() {
   }, [updating]);
 
   useEffect(() => {
-    if (projects?.result?.length) {
+    if (projects?.length) {
       if (portfolios?.length) {
         setRows(
-          projects?.result?.map(project => ({
+          projects?.map(project => ({
             ...project,
             Portfolio: project.PortfolioId
               ? portfolios.find(p => p.Id === project.PortfolioId)?.Name || ''
@@ -171,7 +171,7 @@ export default function Project() {
           }))
         );
       } else {
-        setRows(projects?.result);
+        setRows(projects);
       }
     }
   }, [projects, portfolios]);
@@ -196,20 +196,37 @@ export default function Project() {
     setPortfolioRows(portfolios);
   }, [portfolios]);
 
+  // const modifyData = data => {
+  //   if (data) {
+  //     return data.map(item => {
+  //       return {
+  //         ...item,
+  //         id: item.Id,
+  //         ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+  //           ?.FullName,
+  //         ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+  //           ?.FullName,
+  //       };
+  //     });
+  //   }
+  //   return [];
+  // };
+
   const modifyData = data => {
-    if (data) {
-      return data.map(item => {
-        return {
-          ...item,
-          id: item.Id,
-          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
-            ?.FullName,
-          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
-            ?.FullName,
-        };
-      });
-    }
-    return [];
+    if (!data) return [];
+
+    return data.map(item => {
+      const project = item.Project || item; 
+
+      return {
+        ...project, 
+        id: project.Id, 
+        ProjectSponsor: getResourceFromUid(project.ProjectSponsor, allResources)
+          ?.FullName,
+        ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
+          ?.FullName,
+      };
+    });
   };
 
   const modifyPortfolioData = data => {
@@ -329,8 +346,8 @@ export default function Project() {
       try {
         const { Id, Name } = portfolioDelete;
         if (
-          projects?.result &&
-          projects?.result?.some(
+          projects &&
+          projects?.some(
             p =>
               p.PortfolioId === Id &&
               !['Requested', 'Paused', 'Cancelled', 'Completed'].includes(

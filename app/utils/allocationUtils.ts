@@ -616,7 +616,7 @@ export const getFormattedAllocationsForUpdate = (
   teams: Team[],
   teamsResources: Record<string, Resource[]>,
   allResourcesDetail: AllResourceDetail[],
-  projects: ApiResponse<Project[]>,
+  projects: Project[],
   resources: ApiResponse<Resource[]>,
   splitView: boolean,
   bottomTeamAllocationGrid: GridApi,
@@ -689,7 +689,7 @@ export const getFormattedAllocationsForUpdate = (
         teams || [],
         teamsResources,
         allResourcesDetail || [],
-        projects?.result || [],
+        projects || [],
         resources?.result || [],
         allocation
       );

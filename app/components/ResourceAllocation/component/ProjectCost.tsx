@@ -70,7 +70,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       type: 'FETCH_ALLOCATIONS_COST',
       payload: {
         teams: teams,
-        projects: projects?.result,
+        projects: projects,
         resources: resources?.result,
         startDate: startDate,
         endDate: endDate,
@@ -136,7 +136,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        const projectType = projects?.result?.find(
+        const projectType = projects?.find(
           project => project.Name === value
         )?.Type;
         if (isGridTreeNode && rowNode.children) {
@@ -171,7 +171,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
           !isNaN(value) && value !== null
             ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
             : null;
-        const project: Project | undefined = projects?.result?.find(
+        const project: Project | undefined = projects?.find(
           // @ts-ignore
           (project: Project) => project.Name === params?.rowNode?.groupingKey
         );
