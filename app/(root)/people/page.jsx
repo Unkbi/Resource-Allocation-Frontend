@@ -1203,10 +1203,13 @@ export default function Resources() {
             loading={employeeRatesLoading}
             columns={employeeRatesColumns}
             rows={
-              employeeRates?.map(emp => ({
-                ...emp,
-                id: emp.__Id__,
-              })) || []
+              employeeRates?.map(emp => {
+                const rate = emp.EmployeeRate ?? emp; 
+                return {
+                  ...rate,
+                  id: rate.Id,
+                };
+              }) || []
             }
             apiRef={apiRef}
             value={value}

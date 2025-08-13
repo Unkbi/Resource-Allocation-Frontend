@@ -1799,7 +1799,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response?.Id));
           })
           .catch(error => {
             console.error('Failed to add rate:', error);
@@ -1839,7 +1839,7 @@ const AllocationForm = () => {
           dispatch({
             type: 'UPDATE_EMPLOYEE_RATES',
             payload: {
-              id: initialData.__Id__,
+              id: initialData.Id,
               updatedFields,
               resolve,
               reject,
@@ -1857,7 +1857,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.result[0].__Id__));
+            dispatch(setHighlightedRowId(response.Id));
           })
           .catch(error => {
             console.error('Failed to update rate:', error);
