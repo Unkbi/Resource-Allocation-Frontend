@@ -112,7 +112,6 @@ export default function AllocationInit() {
   useEffect(() => {
     if (
       (teams?.length ?? 0) > 0 &&
-      (projects?.length ?? 0) > 0 &&
       (resources?.result?.length ?? 0) > 0 &&
       (allResourcesDetail?.length ?? 0) > 0 &&
       allAllocations?.length === 0

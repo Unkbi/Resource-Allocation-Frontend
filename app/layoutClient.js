@@ -117,7 +117,7 @@ export default function LayoutClient({ children }) {
       if (!resources?.result?.length) {
         dispatch(fetchAllResources());
       }
-      if (!portfolios?.result?.length) {
+      if (!portfolios?.length) {
         dispatch({
           type: FETCH_PORTFOLIOS,
           payload: {},
