@@ -97,7 +97,7 @@ export default function FlatAllocation({
           filteredResources = removeResourcesWithNoTeams(
             injectBlankRows(
               getAllProjectViewRows() as AllAllocations[],
-              teams?.result || [],
+              teams || [],
               // @ts-ignore
               teamsResources,
               allResourcesDetail,

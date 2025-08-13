@@ -50,7 +50,7 @@ export interface CalendarDate {
 }
 
 export interface TeamState {
-  teams: ApiResponse<Team[]> | null;
+  teams: Team[] | null;
   resources: AllocationGridCell[] | null;
   allAllocations: ApiResponse<Allocation[]> | {} | null;
   teamAllocations: ApiResponse<Allocation[]> | {} | null;

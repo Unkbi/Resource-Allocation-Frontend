@@ -330,7 +330,7 @@ function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
     let allTeams: Team[] = teams;
     if (!teams || teams.length === 0) {
       const response = yield call(fetchAllTeamsForSaga);
-      allTeams = response?.result;
+      allTeams = response;
     }
 
     const teamResults = yield all(

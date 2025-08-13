@@ -60,7 +60,7 @@ export default function Allocation({ startDate, endDate }) {
     // Only after fetching resources, projects, and teams should the deeplinked settings be processed.
     if (
       settingsParam &&
-      (teams?.result?.length ?? 0) > 0 &&
+      (teams?.length ?? 0) > 0 &&
       (projects?.length ?? 0) > 0 &&
       (resources?.result?.length ?? 0) > 0
     ) {

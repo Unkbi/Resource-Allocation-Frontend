@@ -261,7 +261,7 @@ export const AddRowIcon = ({
   const { teams, teamsResources } = useSelector(state => state.teams);
   const { resources } = useSelector(state => state.resources);
 
-  let teamsId = teams?.result?.find(team => team_name == team.Name)?.Id;
+  let teamsId = teams?.find(team => team_name == team.Name)?.Id;
 
   const defaultProps = {
     options:

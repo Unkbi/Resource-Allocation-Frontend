@@ -79,7 +79,7 @@ const CellWithMenu = ({
   const dispatch = useDispatch();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteParams, setDeleteParams] = useState(null);
-  const allTeams = useSelector(state => state.teams.teams?.result || []);
+  const allTeams = useSelector(state => state.teams.teams || []);
   const allResources = useSelector(
     state => state.resources.resources?.result || []
   );
@@ -1179,7 +1179,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     // Get unique teams for teams and teamsId to avoid duplicate teams
     let unique_teams = {};
     let teams_with_name = {};
-    teams?.result?.forEach(team => {
+    teams?.forEach(team => {
       teams_with_name[team?.Name] = team?.Id;
     });
 

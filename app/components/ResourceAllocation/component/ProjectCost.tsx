@@ -69,7 +69,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     dispatch({
       type: 'FETCH_ALLOCATIONS_COST',
       payload: {
-        teams: teams?.result,
+        teams: teams,
         projects: projects,
         resources: resources?.result,
         startDate: startDate,

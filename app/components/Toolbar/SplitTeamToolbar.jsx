@@ -588,7 +588,7 @@ const SplitTeamToolbar = memo(
     };
 
     const TeamOptions =
-      teams?.result?.map(team => ({
+      teams?.map(team => ({
         label: team.Name,
         value: team.Id,
       })) || [];

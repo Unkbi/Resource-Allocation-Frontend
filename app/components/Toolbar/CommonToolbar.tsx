@@ -67,11 +67,10 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
   const { projects } = useSelector((state: any) => state.projects);
   const { teams } = useSelector((state: any) => state.teams);
   const { portfolios } = useSelector((state: any) => state.portfolios);
-
- const projectsLoaded = Array.isArray(projects);
- const resourcesLoaded = Array.isArray(resources?.result ?? resources);
- const teamsLoaded = Array.isArray(teams?.result ?? teams);
- const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
+  const projectsLoaded = Array.isArray(projects);
+  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
+  const teamsLoaded = Array.isArray(teams ?? teams);
+  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
 
   // const allDataLoaded =
   //   projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
@@ -132,6 +131,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
             className="AddIcon"
             onClick={handleAddMenuToggle}
             ref={anchorRefAdd}
+            // Temporary disabled state for testing
             // disabled={!allApiSuccess}
             sx={{
               display: 'flex',
@@ -254,7 +254,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
             borderBottom: '1px solid rgba(206, 220, 233, 0.50)',
           }}
         >
-        {children ?? null}
+          {children ?? null}
         </Box>
 
         <Box

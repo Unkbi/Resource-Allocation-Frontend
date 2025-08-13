@@ -73,7 +73,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
     dispatch({
       type: 'FETCH_ALLOCATIONS_COST',
       payload: {
-        teams: teams?.result,
+        teams: teams,
         projects: projects,
         resources: resources?.result,
         startDate: startDate,
@@ -103,7 +103,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
     ) {
       // Find the team by name in the teams array
       const teamName = params.rowNode.groupingKey;
-      const team = teams?.result?.find(t => t.Name === teamName);
+      const team = teams?.find(t => t.Name === teamName);
       return team;
     }
     return null;
