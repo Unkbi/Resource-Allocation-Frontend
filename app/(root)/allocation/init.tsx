@@ -111,8 +111,6 @@ export default function AllocationInit() {
 
   useEffect(() => {
     if (
-      (teams?.result?.length ?? 0) > 0 &&
-      (projects?.length ?? 0) > 0 &&
       (teams?.length ?? 0) > 0 &&
       (projects?.length ?? 0) > 0 &&
       (resources?.result?.length ?? 0) > 0 &&
@@ -123,8 +121,6 @@ export default function AllocationInit() {
       dispatch({
         type: 'FETCH_ALL_ALLOCATIONS_INIT',
         payload: {
-          teams: teams?.result,
-          projects: projects,
           teams: teams,
           projects: projects,
           resources: resources?.result,

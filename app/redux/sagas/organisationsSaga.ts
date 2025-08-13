@@ -23,7 +23,7 @@ function* fetchOrganisationsSaga(): Generator<any, void, any> {
 
     const responses = yield call(fetchAllOrganisations);
 
-    yield put(setOrganisations(responses?.result));
+    yield put(setOrganisations(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch organisations : ', error);
   } finally {
