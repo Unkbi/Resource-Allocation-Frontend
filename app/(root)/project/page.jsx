@@ -216,11 +216,11 @@ export default function Project() {
     if (!data) return [];
 
     return data.map(item => {
-      const project = item.Project || item; 
+      const project = item.Project || item;
 
       return {
-        ...project, 
-        id: project.Id, 
+        ...project,
+        id: project.Id,
         ProjectSponsor: getResourceFromUid(project.ProjectSponsor, allResources)
           ?.FullName,
         ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
@@ -230,17 +230,19 @@ export default function Project() {
   };
 
   const modifyPortfolioData = data => {
-    if (data) {
-      return data.map(item => ({
-        id: item.Id,
-        Id: item.Id,
-        SidebarColor: item.SidebarColor,
-        Name: item.Name,
-        Description: item.Description,
-        Status: item.Status,
-      }));
-    }
-    return [];
+    if (!data) return [];
+
+    return data.map(item => {
+      const p = item.Portfolio || item;
+      return {
+        id: p.Id,
+        Id: p.Id,
+        SidebarColor: p.SidebarColor,
+        Name: p.Name,
+        Description: p.Description,
+        Status: p.Status || 'Active',
+      };
+    });
   };
 
   useEffect(() => {

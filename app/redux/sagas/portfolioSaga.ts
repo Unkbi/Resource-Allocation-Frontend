@@ -19,7 +19,7 @@ function* fetchPortfolioSaga(): Generator<any, void, any> {
 
     const responses = yield call(fetchPortfolios);
 
-    yield put(setPortfolios(responses?.result));
+    yield put(setPortfolios(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch Portfolios : ', error);
   } finally {
