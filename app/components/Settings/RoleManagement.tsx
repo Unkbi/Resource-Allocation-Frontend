@@ -43,10 +43,10 @@ import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
 const tabMenuNames = [
-  'role-management',
   'role-assignments',
-  'privilege-management',
+  'role-management',
   'privilege-assignments',
+  'privilege-management',
 ];
 const baseURLAccessManagement = '/settings?menu=access-management';
 const StyledMenu = styled(Menu)(({ theme }) => ({
@@ -133,24 +133,24 @@ const commonTabSx = {
 
 const tabConfig = [
   {
-    label: 'Role Management',
-    value: 'role-management',
-    icon: '/images/icons/roleManage.svg',
-  },
-  {
     label: 'Role Assignments',
     value: 'role-assignments',
     icon: '/images/icons/roleAssign.svg',
   },
   {
-    label: 'Privilege Management',
-    value: 'privilege-management',
-    icon: '/images/icons/privilegeManage.svg',
+    label: 'Role Management',
+    value: 'role-management',
+    icon: '/images/icons/roleManage.svg',
   },
   {
     label: 'Privilege Assignments',
     value: 'privilege-assignments',
     icon: '/images/icons/privilegeAssign.svg',
+  },
+  {
+    label: 'Privilege Management',
+    value: 'privilege-management',
+    icon: '/images/icons/privilegeManage.svg',
   },
 ];
 
@@ -165,7 +165,7 @@ const TabHeader = ({
     sx={{
       boxShadow: 1,
       display: 'flex',
-      justifyContent: 'space-evenly',
+      justifyContent: 'flex-start',
       width: '100%',
       backgroundColor: '#fff',
       height: '59px',
@@ -859,7 +859,7 @@ export default function RoleManagementPage() {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add New Role"
+          buttonLabel="Add Role"
           columns={rolesColumns}
           renderMenu={renderRoleMenu}
           apiRef={apiRef}
