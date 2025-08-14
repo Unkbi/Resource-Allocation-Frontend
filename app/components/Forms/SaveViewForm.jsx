@@ -430,7 +430,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     if (values?.showBy && email) {
       const allocationManagerName = getResourceFromEmail(
         email,
-        resources?.result || []
+        resources || []
       )?.FullName;
 
       if (values.showBy === 'MyTeams') {
@@ -452,10 +452,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         return;
       }
 
-      const projectManager = getResourceFromEmail(
-        email,
-        resources?.result || []
-      );
+      const projectManager = getResourceFromEmail(email, resources || []);
 
       const projectManagerName = projectManager
         ? `${projectManager?.FullName}`.trim()
@@ -486,17 +483,14 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     if (values?.showBy === 'MyTeams' && email) {
       const allocationManagerName = getResourceFromEmail(
         email,
-        resources?.result || []
+        resources || []
       )?.FullName;
 
       if (!isMyTeamsValid(allocationManagerName, values.filters)) {
         setFieldValue('showBy', 'AllTeams');
       }
     } else if (values?.showBy === 'MyProject' && email) {
-      const projectManager = getResourceFromEmail(
-        email,
-        resources?.result || []
-      );
+      const projectManager = getResourceFromEmail(email, resources || []);
 
       const projectManagerName = projectManager
         ? `${projectManager?.FullName}`.trim()
