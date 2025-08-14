@@ -30,7 +30,12 @@ import {
 } from '@/app/services/teamServices';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { setAllTeamsResources } from '../reducers/teamsReducer';
-import { Allocation, GetAllCostForPeriodResponse, Resource } from '@/app/types';
+import {
+  Allocation,
+  AllResourceDetail,
+  GetAllCostForPeriodResponse,
+  Resource,
+} from '@/app/types';
 import {
   setCost,
   setDataProcessing as setCostDataProcessing,
@@ -38,8 +43,17 @@ import {
 import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
-  const { projects, teams, resources, startDate, endDate, resolve, reject } =
-    action.payload;
+  const {
+    projects,
+    teams,
+    resources,
+    portfolios,
+    allResourcesDetail,
+    startDate,
+    endDate,
+    resolve,
+    reject,
+  } = action.payload;
   try {
     yield put(setDataProcessing(true));
 
@@ -56,14 +70,11 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     const teamResults = yield all(
       teams.map((team: any) =>
         call(function* () {
-          const resourcesPostData = {
-            'ResourceAllocation.Core/GetTeamResources': { TeamId: team.Id },
+          const resourcesResult = {
+            result: allResourcesDetail
+              .filter((r: AllResourceDetail) => r.Team?.Id === team?.Id)
+              .map((r: AllResourceDetail) => r.Resource),
           };
-          //@ts-ignore
-          const resourcesResult = yield call(
-            fetchResourcesAgainstTeamsForSaga,
-            resourcesPostData
-          );
 
           return { resourcesResult, team };
         })
@@ -94,7 +105,8 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
-      teamResourceObject,
+      portfolios || [],
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -103,6 +115,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamResourceObject,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -200,6 +213,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamResourceObject,
+      [],
       startDate,
       endDate
     );
@@ -223,6 +237,8 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
     teams,
     projects,
     resources,
+    portfolios,
+    allResourcesDetail,
     teamsResources,
     startDate,
     endDate,
@@ -264,7 +280,8 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
-      teamsResources,
+      portfolios || [],
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -273,6 +290,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       formattedAllocations,
       teams,
       teamsResources,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -294,6 +312,8 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
     teams,
     projects,
     resources,
+    portfolios,
+    allResourcesDetail,
     teamsResources,
     startDate,
     endDate,
@@ -334,7 +354,8 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
-      teamsResources,
+      portfolios || [],
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -394,6 +415,8 @@ function* updateResourceAllocationsSaga(
     teams,
     projects,
     resources,
+    portfolios,
+    allResourcesDetail,
     teamsResources,
     startDate,
     endDate,
@@ -435,7 +458,8 @@ function* updateResourceAllocationsSaga(
       teams,
       projects,
       resources,
-      teamsResources,
+      portfolios,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -444,6 +468,7 @@ function* updateResourceAllocationsSaga(
       formattedAllocations,
       teams,
       teamsResources,
+      allResourcesDetail || [],
       startDate,
       endDate
     );
@@ -490,13 +515,13 @@ export function* TransferAllocationsSaga(
 }
 
 export function* allAllocationsSaga() {
-  yield takeLeading('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
+  yield takeLatest('FETCH_ALL_ALLOCATIONS_INIT', fetchAllAllocationsSaga); //This is for the inital Load.
   yield takeLatest('FETCH_ALL_ALLOCATIONS', fetchAllAllocationsSaga); // This is for subsequent fetch. Ex : Date Shift.
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
   yield takeLatest('FETCH_ALLOCATIONS_COST', fetchAllocationsCostSaga);
-  yield takeLatest('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
-  yield takeLatest('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
+  yield takeEvery('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
+  yield takeEvery('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
   yield takeLatest(
     'UPDATE_RESOURCE_ALLOCATIONS',
     updateResourceAllocationsSaga

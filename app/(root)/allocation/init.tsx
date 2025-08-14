@@ -14,6 +14,9 @@ import { resetAllocations } from '@/app/redux/reducers/allAllocationsReducer';
 import { ApiResponse, Resource, Team } from '@/app/types';
 import { generateDateWeekMath } from '@/app/utils/common';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 
 interface TopContentProps {
   startDate: string;
@@ -37,10 +40,17 @@ export default function AllocationInit() {
     (state: RootState) => state.allocationView
   );
   const { teams } = useSelector((state: RootState) => state.teams);
+  const { organisations } = useSelector(
+    (state: RootState) => state.organisations
+  );
   const { projects } = useSelector((state: RootState) => state.projects);
   // @ts-ignore
   const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
     (state: RootState) => state.resources
+  );
+  const { portfolios } = useSelector((state: RootState) => state.portfolios);
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
   );
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
@@ -76,6 +86,24 @@ export default function AllocationInit() {
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
     }
+    if (!portfolios?.length) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
+    }
+    if (!organisations?.length) {
+      dispatch({
+        type: FETCH_ORGANISATIONS,
+        payload: {},
+      });
+    }
+    if (!allResourcesDetail?.length) {
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
+    }
     if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
       dispatch(fetchAllocationTheme());
     }
@@ -86,6 +114,7 @@ export default function AllocationInit() {
       (teams?.result?.length ?? 0) > 0 &&
       (projects?.result?.length ?? 0) > 0 &&
       (resources?.result?.length ?? 0) > 0 &&
+      (allResourcesDetail?.length ?? 0) > 0 &&
       allAllocations?.length === 0
     ) {
       dispatch(resetAllocations());
@@ -95,18 +124,21 @@ export default function AllocationInit() {
           teams: teams?.result,
           projects: projects?.result,
           resources: resources?.result,
+          portfolios: portfolios,
+          allResourcesDetail: allResourcesDetail,
           startDate: currentViewStartDate,
           endDate: currentViewEndDate,
         },
       });
     }
-  }, [teams, projects, resources]);
+  }, [teams, projects, resources, allResourcesDetail]);
 
   useEffect(() => {
     if (
       (teams?.result?.length ?? 0) > 0 &&
       (projects?.result?.length ?? 0) > 0 &&
-      (resources?.result?.length ?? 0) > 0
+      (resources?.result?.length ?? 0) > 0 &&
+      (allResourcesDetail?.length ?? 0) > 0
     ) {
       dispatch(resetAllocations());
       dispatch({
@@ -115,6 +147,8 @@ export default function AllocationInit() {
           teams: teams?.result,
           projects: projects?.result,
           resources: resources?.result,
+          portfolios: portfolios,
+          allResourcesDetail: allResourcesDetail,
           startDate: currentView?.isDynamicRange
             ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
             : currentView?.isFixedRange

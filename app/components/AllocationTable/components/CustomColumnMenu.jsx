@@ -114,7 +114,10 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
 
   return (
     <>
-      {(field === '__row_group_by_columns_group_teams__' || field === '__row_group_by_columns_group__') && (
+      {(field === '__row_group_by_columns_group_teams__' ||
+        field === '__row_group_by_columns_group_organisationName__' ||
+        field === '__row_group_by_columns_group__' ||
+        field === '__row_group_by_columns_group_portfolioName__') && (
         <>
           <MenuItem onClick={handleToggleTeams}>
             <ListItemIcon>
@@ -126,52 +129,86 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
                   ? 'Collapse All Projects'
                   : view === 'Project Cost'
                     ? 'Collapse All Projects'
-                    : 'Collapse All Teams'
+                    : view === 'Portfolio'
+                      ? 'Collapse All Portfolios'
+                      : view === 'Organisations'
+                        ? 'Collapse All Organisations'
+                        : view === 'Resources'
+                          ? 'Collapse All Resources'
+                          : 'Collapse All Teams'
                 : view === 'Project'
                   ? 'Expand All Projects'
                   : view === 'Project Cost'
                     ? 'Expand All Projects'
-                    : 'Expand All Teams'}
+                    : view === 'Portfolio'
+                      ? 'Expand All Portfolios'
+                      : view === 'Organisations'
+                        ? 'Expand All Organisations'
+                        : view === 'Resources'
+                          ? 'Expand All Resources'
+                          : 'Expand All Teams'}
             </ListItemText>
           </MenuItem>
 
-          {(view === 'Teams' || view === 'Teams Cost') && field === '__row_group_by_columns_group_teams__' && (
-            <MenuItem onClick={handleToggleResources}>
-              <ListItemIcon>
-                <PersonIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>
-                {resourcesExpanded
-                  ? 'Collapse All Resources'
-                  : 'Expand All Resources'}
-              </ListItemText>
-            </MenuItem>
-          )}
+          {(view === 'Teams' ||
+            view === 'Organisations' ||
+            view === 'Teams Cost' ||
+            view === 'Portfolio') &&
+            (field === '__row_group_by_columns_group_teams__' ||
+              field === '__row_group_by_columns_group_organisationName__' ||
+              field === '__row_group_by_columns_group_portfolioName__') && (
+              <MenuItem onClick={handleToggleResources}>
+                <ListItemIcon>
+                  <PersonIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>
+                  {resourcesExpanded
+                    ? view === 'Portfolio'
+                      ? 'Collapse All Projects'
+                      : 'Collapse All Resources'
+                    : view === 'Portfolio'
+                      ? 'Expand All Projects'
+                      : 'Expand All Resources'}
+                </ListItemText>
+              </MenuItem>
+            )}
         </>
       )}
 
-      {field === '__row_group_by_columns_group_resource__' && (view === 'Teams' || view === 'Teams Cost') && (
-        <MenuItem onClick={handleToggleResources}>
-          <ListItemIcon>
-            <PersonIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>
-            {resourcesExpanded
-              ? 'Collapse All Resources'
-              : 'Expand All Resources'}
-          </ListItemText>
-        </MenuItem>
-      )}
+      {(field === '__row_group_by_columns_group_resource__' ||
+        field === '__row_group_by_columns_group_project__') &&
+        (view === 'Teams' ||
+          view === 'Teams Cost' ||
+          view === 'Organisations' ||
+          view === 'Portfolio') && (
+          <MenuItem onClick={handleToggleResources}>
+            <ListItemIcon>
+              <PersonIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>
+              {resourcesExpanded
+                ? view === 'Portfolio'
+                  ? 'Collapse All Projects'
+                  : 'Collapse All Resources'
+                : view === 'Portfolio'
+                  ? 'Expand All Projects'
+                  : 'Expand All Resources'}
+            </ListItemText>
+          </MenuItem>
+        )}
     </>
   );
-}
+};
 export const CustomColumnMenu = props => {
   const { apiRef, ...otherProps } = props;
   const field = props.colDef?.field;
   const showUserItem =
     field === '__row_group_by_columns_group_teams__' ||
+    field === '__row_group_by_columns_group_organisationName__' ||
     field === '__row_group_by_columns_group__' ||
-    field === '__row_group_by_columns_group_resource__';
+    field === '__row_group_by_columns_group_resource__' ||
+    field === '__row_group_by_columns_group_portfolioName__' ||
+    field === '__row_group_by_columns_group_project__';
 
   return (
     <StyledPopper

@@ -25,7 +25,7 @@ interface StyledListItemProps {
 const PageContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
-  height: 'calc(100vh - 54px)',
+  height: 'calc(100vh - 31px)',
   backgroundColor: '#ffffff',
   fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
 });
@@ -73,6 +73,7 @@ const ContentHeader = styled(Box)({
   padding: '16px 32px',
   borderBottom: '1px solid #e0e0e0',
   backgroundColor: '#ffffff',
+  height:'96px'
 });
 
 const ScrollableContent = styled(Box)(({ theme }: ThemeProps) => ({

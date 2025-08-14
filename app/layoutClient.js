@@ -15,15 +15,17 @@ import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
 import { fetchAllTeams } from './redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from './redux/actions/fetchProjectsAction';
 import { fetchAllResources } from './redux/actions/fetchResourcesAction';
+import { fetchPortfolios } from './services/prorfolioServices';
+import { FETCH_PORTFOLIOS } from './redux/actions/portfolioActions';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
 })(({ theme, isLoggedIn, sidebarExpanded }) => {
   return {
-    background: '#fff',
-    marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
-    paddingTop: `${isLoggedIn ? '52px' : '0'}`,
-    transition: 'margin-left 0.3s ease-in-out',
+  background: '#fff',
+  marginLeft: isLoggedIn ? (sidebarExpanded ? '276px' : '74px') : '0',
+    paddingTop: `${isLoggedIn ? '31px' : '0'}`,
+  transition: 'margin-left 0.3s ease-in-out',
   };
 });
 
@@ -36,11 +38,14 @@ export default function LayoutClient({ children }) {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+
   const { open } = useSelector(state => state.toast);
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
   const { teams } = useSelector(state => state.teams);
+  const { portfolios } = useSelector(state => state.portfolios);
+
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
   useEffect(() => {
     setIsClient(true);
@@ -83,15 +88,16 @@ export default function LayoutClient({ children }) {
 
   useEffect(() => {
     if (!isClient) return;
+    const search = searchParams.toString();
+    const fullUrl = search ? `${pathname}?${search}` : pathname;
+    const encodedUrl = encodeURIComponent(fullUrl);
     if (isLoggedIn && isPublicRoute) {
       router.replace('/dashboard');
     } else if (
       !isLoggedIn &&
       !isPublicRoute &&
       !pathname.startsWith('/login')
-    ) {
-      const fullUrl = `${pathname}?${searchParams.toString()}`;
-      const encodedUrl = encodeURIComponent(fullUrl);
+        ) {
       router.replace(`/login?redirect=${encodedUrl}`);
     }
   }, [isLoggedIn, isPublicRoute, router, isClient]);
@@ -99,19 +105,28 @@ export default function LayoutClient({ children }) {
   useEffect(() => {
     if (!isClient) return;
     if (isLoggedIn) {
-      setIsUserLoginIn(isLoggedIn);
-      dispatch(getUserData());
-      if (!teams?.result?.length) {
-        dispatch(fetchAllTeams());
-      }
-      if (!projects?.result?.length) {
-        dispatch(fetchAllProjects());
-      }
-      if (!resources?.result?.length) {
-        dispatch(fetchAllResources());
+    setIsUserLoginIn(isLoggedIn);
+    dispatch(getUserData());
+    if (!teams?.result?.length) {
+      dispatch(fetchAllTeams());
+    }
+    if (!projects?.result?.length) {
+      dispatch(fetchAllProjects());
+    }
+    if (!resources?.result?.length) {
+      dispatch(fetchAllResources());
+    }
+    if (!portfolios?.result?.length) {
+        dispatch({
+          type: FETCH_PORTFOLIOS,
+          payload: {},
+        });
       }
     }
   }, [dispatch, isLoggedIn, isClient]);
+
+  if (!isClient) return null;
+  if (!isLoggedIn && !isPublicRoute) return null;
 
   return (
     <>

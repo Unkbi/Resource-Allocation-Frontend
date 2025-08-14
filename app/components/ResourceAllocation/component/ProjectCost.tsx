@@ -6,7 +6,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import AllocationGrid from '../../AllocationTable/AllocationGrid';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Project } from '@/app/types';
@@ -209,11 +209,12 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectSponsor || ''} />
         ) : null;
       },
     },
@@ -222,7 +223,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -238,7 +239,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -254,7 +255,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -270,7 +271,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Resource Work Location',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -286,7 +287,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Resource Location Category',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -302,7 +303,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -318,7 +319,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -334,7 +335,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -350,7 +351,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Resource Role',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -366,7 +367,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -382,7 +383,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -398,7 +399,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Average Weekly Hours',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -414,7 +415,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Contractor Hourly Rate',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -430,7 +431,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerName: 'Contractor Hourly Rate Currency',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -450,11 +451,12 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectManager ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectManager || ''} />
         ) : null;
       },
     },
@@ -466,11 +468,12 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStatus ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStatus || ''} />
         ) : null;
       },
     },
@@ -482,11 +485,12 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectLocation ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectLocation || ''} />
         ) : null;
       },
     },
@@ -498,11 +502,12 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectType ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectType || ''} />
         ) : null;
       },
     },
@@ -514,6 +519,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -532,6 +538,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
@@ -549,11 +556,12 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCurrency ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectCurrency || ''} />
         ) : null;
       },
     },
@@ -565,11 +573,12 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStartDate || ''} />
         ) : null;
       },
     },
@@ -585,7 +594,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectEndDate || ''} />
         ) : null;
       },
     },
@@ -597,7 +606,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box sx={{ height: 'calc(100vh - 31px)', width: '100%' }}>
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
