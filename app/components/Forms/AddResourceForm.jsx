@@ -92,14 +92,11 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       return { value: resource.Id, label: resource.FullName };
     });
   const organisationListOptions =
-    organisations?.map(item => {
-      const orgData = item.Organization || item;
-      return {
-        value: orgData?.Id,
-        label: orgData?.Name,
-      };
-    }) || [];
-    
+    organisations?.map(org => ({
+      value: org.Id,
+      label: org.Name,
+    })) || [];
+
   const teamListOptions =
     teams?.map(team => ({
       value: team.Id,
