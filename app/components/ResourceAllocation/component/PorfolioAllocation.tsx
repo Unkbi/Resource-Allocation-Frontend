@@ -46,11 +46,7 @@ export default function PortfolioAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const dispatch: AppDispatch = useDispatch();
   const { setRows, ready } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
@@ -91,7 +87,7 @@ export default function PortfolioAllocation({
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
-            _resources?.result || []
+            _resources || []
           )?.FullName,
         }));
 
@@ -119,8 +115,10 @@ export default function PortfolioAllocation({
     const isGridTreeNode = 'children' in rowNode;
     if (isGridTreeNode && rowNode.children) return null;
     const resourceId = params.row.resourceId;
-    if (_resources.result && resourceId) {
-      return _resources.result.find(res => res.Id === resourceId) || null;
+    if (_resources && resourceId) {
+      return (
+        (_resources as Resource[])?.find(res => res.Id === resourceId) || null
+      );
     }
     return null;
   };

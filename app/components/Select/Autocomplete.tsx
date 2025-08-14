@@ -41,7 +41,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
   const { touched, errors, setFieldValue, setFieldTouched } = formikProps;
   const [open, setOpen] = useState(false);
 
-  const selectedOption = options.find(opt => opt.value === value) || null;
+  const selectedOption = options?.find(opt => opt.value === value) || null;
   const hasError = touched[name] && errors[name] && !value;
 
   return (

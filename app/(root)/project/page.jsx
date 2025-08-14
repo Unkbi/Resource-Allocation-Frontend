@@ -35,7 +35,6 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { useRouter } from 'next/navigation';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
@@ -45,6 +44,7 @@ import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -143,7 +143,7 @@ export default function Project() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
-  const allResources = resources.result || [];
+  const allResources = resources || [];
   const [value, setValue] = useState('project');
   const { portfolios } = useSelector(state => state.portfolios);
   const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
@@ -177,8 +177,11 @@ export default function Project() {
   }, [projects, portfolios]);
 
   useEffect(() => {
-    if (!resources?.result?.length) {
-      dispatch(fetchAllResources());
+    if (!resources?.length) {
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
     }
     if (!portfolios?.length) {
       dispatch({
@@ -216,11 +219,11 @@ export default function Project() {
     if (!data) return [];
 
     return data.map(item => {
-      const project = item.Project || item; 
+      const project = item.Project || item;
 
       return {
-        ...project, 
-        id: project.Id, 
+        ...project,
+        id: project.Id,
         ProjectSponsor: getResourceFromUid(project.ProjectSponsor, allResources)
           ?.FullName,
         ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
@@ -655,8 +658,8 @@ export default function Project() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleOpenDialog('Edit Project', 'edit_project', params.row),
-                  handleMenuClose();
+                (handleOpenDialog('Edit Project', 'edit_project', params.row),
+                  handleMenuClose());
               }}
               sx={menuItemStyle}
             >

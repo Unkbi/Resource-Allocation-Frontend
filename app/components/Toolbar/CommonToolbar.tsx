@@ -68,9 +68,9 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
   const { teams } = useSelector((state: any) => state.teams);
   const { portfolios } = useSelector((state: any) => state.portfolios);
   const projectsLoaded = Array.isArray(projects);
-  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
-  const teamsLoaded = Array.isArray(teams ?? teams);
-  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
+  const resourcesLoaded = Array.isArray(resources);
+  const teamsLoaded = Array.isArray(teams);
+  const portfoliosLoaded = Array.isArray(portfolios);
 
   // const allDataLoaded =
   //   projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;

@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import TeamAllocation from '@/app/components/ResourceAllocation/component/TeamAllocation';
 import ProjectAllocation from '@/app/components/ResourceAllocation/component/ProjectAllocation';
 import { useEffect } from 'react';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import {
   fetchAllSavedViews,
@@ -27,6 +26,7 @@ import OrganisationAllocation from '@/app/components/ResourceAllocation/componen
 import ResourceAllocation from '@/app/components/ResourceAllocation/component/ResourceAllocation';
 import FlatAllocation from '@/app/components/ResourceAllocation/component/FlatAllocation';
 import { getUserAttributes } from '@/app/utils/authUtils';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -42,14 +42,14 @@ export default function Allocation({ startDate, endDate }) {
   const settingsParam = searchParams.get('settings');
 
   useEffect(() => {
-    dispatch(fetchAllResources());
+    dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     dispatch(fetchAllProjects());
     dispatch(fetchAllocationTheme());
   }, []);
 
   useEffect(() => {
     if (user && email) {
-      const userId = getUserIdFromEmail(resources?.result || [], email);
+      const userId = getUserIdFromEmail(resources || [], email);
       if (userId) {
         dispatch(fetchUsersSavedViews(userId));
       }
@@ -62,7 +62,7 @@ export default function Allocation({ startDate, endDate }) {
       settingsParam &&
       (teams?.length ?? 0) > 0 &&
       (projects?.length ?? 0) > 0 &&
-      (resources?.result?.length ?? 0) > 0
+      (resources?.length ?? 0) > 0
     ) {
       try {
         const parsedSettings = JSON.parse(

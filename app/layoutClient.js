@@ -14,9 +14,9 @@ import MuiXLicense from './components/MuiLicence/MuiLicenceKey';
 import { CustomSnackbar } from './components/Snackbar/CustomSnackbar';
 import { fetchAllTeams } from './redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from './redux/actions/fetchProjectsAction';
-import { fetchAllResources } from './redux/actions/fetchResourcesAction';
 import { fetchPortfolios } from './services/prorfolioServices';
 import { FETCH_PORTFOLIOS } from './redux/actions/portfolioActions';
+import { FETCH_ALL_RESOURCES_DETAIL } from './redux/actions/allResourcesDetailAction';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -114,10 +114,13 @@ export default function LayoutClient({ children }) {
       if (!projects?.length) {
         dispatch(fetchAllProjects());
       }
-      if (!resources?.result?.length) {
-        dispatch(fetchAllResources());
+      if (!resources?.length) {
+        dispatch({
+          type: FETCH_ALL_RESOURCES_DETAIL,
+          payload: {},
+        });
       }
-      if (!portfolios?.result?.length) {
+      if (!portfolios?.length) {
         dispatch({
           type: FETCH_PORTFOLIOS,
           payload: {},

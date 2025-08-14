@@ -108,16 +108,12 @@ export default function ProjectAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectName, setMenuProjectName] = useState<string>('');
-  const allResources = _resources.result || [];
+  const allResources = _resources || [];
   const {
     setRows,
     ready,
@@ -160,7 +156,7 @@ export default function ProjectAllocation({
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
-            _resources?.result || []
+            _resources || []
           )?.FullName,
         }));
 
@@ -274,8 +270,10 @@ export default function ProjectAllocation({
     const isGridTreeNode = 'children' in rowNode;
     if (isGridTreeNode && rowNode.children) return null;
     const resourceId = params.row.resourceId;
-    if (_resources.result && resourceId) {
-      return _resources.result.find(res => res.Id === resourceId) || null;
+    if (_resources && resourceId) {
+      return (
+        (_resources as Resource[]).find(res => res.Id === resourceId) || null
+      );
     }
     return null;
   };
@@ -656,7 +654,7 @@ export default function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStatus || ""} />
+          <EllipsisNameCell value={firstChild.projectStatus || ''} />
         ) : null;
       },
     },
