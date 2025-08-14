@@ -10,8 +10,6 @@ const initialState: PortfolioState = {
 const portfolioSlice = createSlice({
   name: 'portfolios',
   initialState,
-  // portfolio reducers
-  // 
   reducers: {
     setPortfolios: (state, action) => {
       state.portfolios = action.payload;
