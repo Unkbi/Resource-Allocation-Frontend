@@ -1899,7 +1899,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response.Id));
           })
           .catch(error => {
             console.error('Failed to add portfolio:', error);
@@ -1949,7 +1949,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.Id));
+          dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
           console.error('Failed to update portfolio:', error);

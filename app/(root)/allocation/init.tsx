@@ -112,8 +112,6 @@ export default function AllocationInit() {
     if (
       (teams?.length ?? 0) > 0 &&
       (projects?.length ?? 0) > 0 &&
-      (teams?.length ?? 0) > 0 &&
-      (projects?.length ?? 0) > 0 &&
       (resources?.length ?? 0) > 0 &&
       (allResourcesDetail?.length ?? 0) > 0 &&
       allAllocations?.length === 0

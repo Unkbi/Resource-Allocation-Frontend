@@ -627,7 +627,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources);
   const teamsLoaded = Array.isArray(teams);
-  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
+  const portfoliosLoaded = Array.isArray(portfolios);
 
   const allDataLoaded =
     projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;

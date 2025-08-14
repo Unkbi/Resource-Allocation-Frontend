@@ -10,7 +10,10 @@ export const fetchPortfolios = async () => {
 
 export const createPortfolio = async (newData: any) => {
   const payload = {
-    'ResourceAllocation.Core/Portfolio': newData,
+    Name: newData.Name,
+    Description: newData.Description,
+    Status: newData.Status,
+    SidebarColor: newData.SidebarColor, 
   };
   const response = await axiosInstance.post(
     `${API_PROJECT_PORTFOLIO}/Portfolio`,
@@ -24,7 +27,10 @@ export const updatePortfolio = async (
   updatedFields: any
 ) => {
   const payload = {
-    'ResourceAllocation.Core/Portfolio': updatedFields,
+    Name: updatedFields.Name,
+    Description: updatedFields.Description,
+    Status: updatedFields.Status,
+    SidebarColor: updatedFields.SidebarColor,
   };
   const response = await axiosInstance.put(
     `${API_PROJECT_PORTFOLIO}/Portfolio/${portfolioId}`,
