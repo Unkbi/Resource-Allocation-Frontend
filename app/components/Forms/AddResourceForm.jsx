@@ -95,6 +95,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       value: org.Id,
       label: org.Name,
     })) || [];
+
   const teamListOptions =
     teams?.map(team => ({
       value: team.Id,
