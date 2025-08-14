@@ -772,7 +772,7 @@ export default function Resources() {
                       setDeleteDialogOpen(true);
                       handleMenuClose();
                       setRatesDelete({
-                        id: params.row.__Id__,
+                        id: params.row.Id,
                         WorkLocation: params.row.WorkLocation,
                         HRLevel: params.row.HRLevel,
                       });
