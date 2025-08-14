@@ -117,7 +117,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   useEffect(() => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
-      console.log('R initialData:', initialData);
 
       const matchedTeam = teams?.result?.find(
         team => team.Name === initialData.Team

@@ -45,8 +45,6 @@ const OrganisationsTable = ({
   value,
   onChange = () => {},
 }: OrganisationsTableProps) => {
-  console.log('OrganisationsTable — rows:', rows);
-  console.log('OrganisationsTable — loading:', loading);
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (

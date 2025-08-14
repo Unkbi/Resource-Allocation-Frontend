@@ -908,7 +908,6 @@ useEffect(() => {
 
                 <MenuItem
                   onClick={() => {
-                    console.log("look here ", params)
                     setDeleteDialogOpen(true);
                     handleMenuClose();
                     setDeleteTarget({
@@ -1072,9 +1071,6 @@ useEffect(() => {
   ]);
 
   const handleConfirmDelete = async () => {
-
-    console.log('handleConfirmDelete called with value:', value);
-    console.log('deleteTarget:', deleteTarget);
     if (!deleteTarget.id) {
       setDeleteDialogOpen(false);
       setDeleteTarget({ id: '', name: '' });

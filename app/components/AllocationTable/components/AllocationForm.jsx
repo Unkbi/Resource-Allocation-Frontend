@@ -2031,7 +2031,6 @@ const AllocationForm = () => {
             Status: cleanedValues.Status,
           },
         };
-        console.log('Updating with ID:', initialData);
         try {
           const result = await dispatch(
             updateOrganization({

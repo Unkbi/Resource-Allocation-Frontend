@@ -381,7 +381,6 @@ function* updateResourceTeamSaga(action: any): Generator<any, void, any> {
     yield put(setTeamsDataProcessing(true));
     const response = yield call(postTeamResource, action.payload);
     // Optionally, you can dispatch a success action here
-    console.log("updating TEamsdsf")
     // yield put({ type: 'UPDATE_RESOURCE_TEAM_SUCCESS', payload: response });
   } catch (err) {
     console.error('Saga: Failed to update resource team', err);
