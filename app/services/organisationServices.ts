@@ -14,7 +14,6 @@ export const createOrganisation = async (newData: any) => {
   const payload = {
     'ResourceAllocation.Core/Organization': newData,
   };
-  console.log("Payload being sent:", payload);
   const response = await axiosInstance.post(
     `${API_PROJECT_PORTFOLIO}/Organization`,
     payload
