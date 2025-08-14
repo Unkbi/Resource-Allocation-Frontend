@@ -50,7 +50,7 @@ const EllipsisNameCell: React.FC<EllipsisNameCellProps> = ({
     };
   }, [value]);
 
-  const safeValue = value ?? 'N/A';
+  const safeValue = value ? value : '';
 
   const content = (
     <div

@@ -53,7 +53,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
-  PORTFOLIO_DISPLAY_NAME,
+  PORTFOLIO_DISPLAY_NAME_PLURAL,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
@@ -577,9 +577,15 @@ const TeamsCostIcon = () => (
   <img src="images/icons/teamsCostIcon.svg" alt="teams cost" />
 );
 
+const OrganisationIcon = () => (
+  <img src="images/icons/organisationView.svg" alt="organisation" />
+);
+
 const PortfolioIcon = () => (
   <img src="/images/icons/portfolio.svg" alt="portfolio" />
 );
+
+const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 
 const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const dispatch = useDispatch();
@@ -612,6 +618,20 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const [openAddMenu, setOpenAddMenu] = React.useState(false);
   const anchorRefAdd = React.useRef(null);
   const anchorRef = React.useRef(null);
+  const [allApiSuccess, setAllApiSuccess] = useState(false);
+  const { portfolios } = useSelector(state => state.portfolios);
+
+  const projectsLoaded = Array.isArray(projects?.result ?? projects);
+  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
+  const teamsLoaded = Array.isArray(teams?.result ?? teams);
+  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
+
+  const allDataLoaded =
+    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+
+  useEffect(() => {
+    setAllApiSuccess(allDataLoaded);
+  }, [projects, resources, teams, portfolios]);
 
   const handleViewClick = event => {
     setAnchorEl(event.currentTarget);
@@ -641,6 +661,18 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
     },
     {
+      name: 'Organisations',
+      icon: <OrganisationIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
+      name: 'Resources',
+      icon: <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
+      name: 'Flat',
+      icon: <FlatIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    },
+    {
       name: 'Project',
       icon: <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
     },
@@ -648,14 +680,15 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       name: 'Portfolio',
       icon: <PortfolioIcon sx={{ fontSize: 20, color: '#344665' }} />,
     },
-    {
-      name: 'Project Cost',
-      icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
-    },
-    {
-      name: 'Teams Cost',
-      icon: <TeamsCostIcon sx={{ fontSize: 20, color: '#344665' }} />,
-    },
+    //Commenting two dropdown views , Project and Teams Cost
+    // {
+    //   name: 'Project Cost',
+    //   icon: <MonetizationOnIcon sx={{ fontSize: 20, color: '#5D6979' }} />,
+    // },
+    // {
+    //   name: 'Teams Cost',
+    //   icon: <TeamsCostIcon sx={{ fontSize: 20, color: '#344665' }} />,
+    // },
     // 'Organizations'
   ];
   const [active, setActive] = useState(false);
@@ -867,7 +900,13 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         teams?.result || []
       );
 
-      if (view.includes('Teams') && teamsIAmAllocationManager.length === 0) {
+      if (
+        (view.includes('Teams') ||
+          view.includes('Organisations') ||
+          view.includes('Resources') ||
+          view.includes('Flat')) &&
+        teamsIAmAllocationManager.length === 0
+      ) {
         setPopOverAnchorEl(myTeamsButtonRef.current);
         setTimeout(() => setPopOverAnchorEl(null), 2000);
         return;
@@ -892,7 +931,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       }
     }
 
-    if (view.includes('Teams')) {
+    if (
+      view.includes('Teams') ||
+      view.includes('Organisations') ||
+      view.includes('Resources')
+    ) {
       dispatch(updateCurrentView({ MyTeam: isMine }));
     } else if (view.includes('Project') || view.includes('Portfolio')) {
       dispatch(updateCurrentView({ MyProjects: isMine }));
@@ -1065,6 +1108,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               className="AddIcon"
               onClick={handleAddMenuToggle}
               ref={anchorRefAdd}
+              disabled={!allApiSuccess}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1201,10 +1245,14 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   currentView?.GroupBy === 'Project'
                     ? 'Projects'
                     : currentView?.GroupBy === 'Portfolio'
-                      ? PORTFOLIO_DISPLAY_NAME
+                      ? PORTFOLIO_DISPLAY_NAME_PLURAL
                       : currentView?.GroupBy === 'Project Cost'
-                        ? 'Projects Cost'
-                        : currentView?.GroupBy || 'Teams'
+                        ? 'Projects'
+                        : currentView?.GroupBy === 'Teams Cost'
+                          ? 'Teams'
+                          : currentView?.GroupBy === 'Organisations'
+                            ? 'Organizations'
+                            : currentView?.GroupBy || 'Teams'
                 }
                 onChange={handleViewChange}
                 className="projectDropdown"
@@ -1221,11 +1269,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <MenuItemContent>
                     {viewOptions.find(
                       option => option.name === currentView?.GroupBy
-                    )?.icon || (
-                      <MonetizationOnIcon
-                        sx={{ fontSize: 20, color: '#5D6979' }}
-                      />
-                    )}
+                    )?.icon ||
+                      (currentView?.GroupBy === 'Teams Cost' ? (
+                        <PeopleIcon sx={{ fontSize: 20, color: '#5D6979' }} />
+                      ) : (
+                        <FolderIcon sx={{ fontSize: 20, color: '#5D6979' }} />
+                      ))}
                     <Typography
                       sx={{
                         color: '#5D6979',
@@ -1248,7 +1297,11 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       ? 'Projects'
                       : option.name === 'Project Cost'
                         ? 'Projects Cost'
-                        : option.name}
+                        : option.name === 'Organisations'
+                          ? 'Organizations'
+                          : option.name === 'Portfolio'
+                            ? PORTFOLIO_DISPLAY_NAME_PLURAL
+                            : option.name}
                   </StyledMenuItem>
                 ))}
               </StyledSelect>
@@ -1338,7 +1391,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       </Typography>
                     </Popover>
                   </>
-                ) : view.includes('Teams') ? (
+                ) : view.includes('Teams') ||
+                  view.includes('Organisations') ||
+                  view.includes('Resources') ||
+                  view.includes('Flat') ? (
                   <>
                     <TooltipButton
                       msg="My Teams"
@@ -1530,7 +1586,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 <Button
                   disabled={
                     currentView.GroupBy.includes('Cost') ||
-                    currentView.GroupBy === 'Portfolio' ||
                     isObjectEqual(
                       savedViews.find(view => view.Id === selectedView),
                       currentView
@@ -1639,7 +1694,12 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 size="small"
                 checked={currentView?.GroupBy.includes('Cost')}
                 onChange={handleAllocationCostSwitch}
-                disabled={currentView?.GroupBy === 'Portfolio'}
+                disabled={
+                  currentView?.GroupBy === 'Portfolio' ||
+                  currentView?.GroupBy === 'Organisations' ||
+                  currentView?.GroupBy === 'Resources' ||
+                  currentView?.GroupBy === 'Flat'
+                }
               />
               <Typography
                 sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
@@ -1699,11 +1759,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   <Typography variant="body2">
                     <span>● Green</span> = match
                     <br />
-                    <span>● Yellow</span> = actuals
-                    are lower
+                    <span>● Yellow</span> = actuals are lower
                     <br />
-                    <span>● Red</span> = actuals are
-                    higher than planned.
+                    <span>● Red</span> = actuals are higher than planned.
                   </Typography>
                 </Box>
               }
@@ -1745,7 +1803,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     flexShrink: 0,
                     borderRadius: '6px',
                     border: '1px solid #E2E8F0',
-                    background: '#FFF',
                     boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
                     '.MuiButton-startIcon': { marginRight: '0px' },
                     '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
@@ -1769,25 +1826,27 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
             />
           </GridToolbarContainer>
 
-          <IconButton
-            size="small"
-            onClick={handleShareDeepLink}
-            sx={{
-              width: '41px',
-              height: '36px',
-              padding: '20px 10px 20px 12px',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '6px',
-              flexshrink: 0,
-              borderRadius: '6px',
-              border: '1px solid #E2E8F0',
-              background: '#FFF',
-              boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-            }}
-          >
-            <img src="/images/icons/newShareIcon.svg" alt="share" />
-          </IconButton>
+          <Tooltip title={'Share View'}>
+            <IconButton
+              size="small"
+              onClick={handleShareDeepLink}
+              sx={{
+                width: '41px',
+                height: '36px',
+                padding: '20px 10px 20px 12px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                flexshrink: 0,
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                background: '#FFF',
+                boxShadow: ' 0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+              }}
+            >
+              <img src="/images/icons/newShareIcon.svg" alt="share" />
+            </IconButton>
+          </Tooltip>
 
           <GridToolbarContainer
             ref={setFilterButtonEl}
@@ -1816,7 +1875,6 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     flexShrink: 0,
                     borderRadius: '6px',
                     border: '1px solid #E2E8F0',
-                    backgroundColor: '#FFF',
                     boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
                     '& .MuiButton-startIcon': {
                       marginRight: '0px',
@@ -1829,39 +1887,40 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               }}
             />
           </GridToolbarContainer>
-          <IconButton
-            size="small"
-            onClick={() =>
-              handleOpenDialog('View History', 'open_history', '', {
-                Resource: null,
-                Project: null,
-                StartDate: startDate,
-                EndDate: endDate,
-              })
-            }
-            sx={{
-              width: '41px',
-              height: '1px',
-              padding: '21px 12px 19px 12px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '6px',
-              flexShrink: 0,
-              borderRadius: '6px',
-              border: '1px solid #E2E8F0',
-              background: '#FFF',
-              boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-            }}
-          >
-            <img
-              src="/images/icons/newHistoryIcon(2).svg"
-              alt="History"
-              height="21px"
-              width="21px"
-            />
-          </IconButton>
-
+          <Tooltip title={'History'}>
+            <IconButton
+              size="small"
+              onClick={() =>
+                handleOpenDialog('View History', 'open_history', '', {
+                  Resource: null,
+                  Project: null,
+                  StartDate: startDate,
+                  EndDate: endDate,
+                })
+              }
+              sx={{
+                width: '41px',
+                height: '1px',
+                padding: '21px 12px 19px 12px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0,
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                background: '#FFF',
+                boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+              }}
+            >
+              <img
+                src="/images/icons/newHistoryIcon(2).svg"
+                alt="History"
+                height="21px"
+                width="21px"
+              />
+            </IconButton>
+          </Tooltip>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <CustomExport />
           </Box>

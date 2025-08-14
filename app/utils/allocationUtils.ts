@@ -11,6 +11,7 @@ import {
   Allocation,
   AllocationGridCell,
   AllocationGridCellData,
+  AllResourceDetail,
   ApiResponse,
   CostAllocation,
   Portfolio,
@@ -22,6 +23,7 @@ import {
 } from '../types';
 import {
   generateAllWeeks,
+  getAllocationManagerFromPath,
   getMondayOfWeek,
   getResourceFromUid,
   getTeamForResource,
@@ -169,7 +171,7 @@ export function formatAllAllocations(
   projects: Project[],
   resources: Resource[],
   portfolios: Portfolio[],
-  teamResources: Record<string, Resource[]>, // UPDATED TYPE
+  allResourcesDetail: AllResourceDetail[],
   startDate: string,
   endDate: string
 ) {
@@ -178,25 +180,17 @@ export function formatAllAllocations(
   }
   const weeks = getWeeksInRange(startDate, endDate);
 
-  // Build a lookup map from resource ID to team
-  const resourceIdToTeam = new Map<string, Team>();
-
-  for (const [teamId, teamResourceList] of Object.entries(teamResources)) {
-    const team = teams.find(t => t.Id === teamId); // find the team based on teamId
-    if (!team) continue; // skip if team not found
-
-    for (const res of teamResourceList) {
-      resourceIdToTeam.set(res.Id, team);
-    }
-  }
-
   const grouped = new Map<string, any>();
 
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
-    const resource = resources.find(r => r.Id === alloc.Resource);
-    const team = resourceIdToTeam.get(alloc.Resource);
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
+    const resourceDetails = allResourcesDetail?.find(
+      r => r?.Resource?.Id === alloc.Resource
+    );
+    const resource = resourceDetails?.Resource;
+    const team = resourceDetails?.Team;
+    const organisation = resourceDetails?.Organization;
 
     const key = `${alloc.Resource}-${team?.Id}-${alloc.Project}`;
 
@@ -228,7 +222,7 @@ export function formatAllAllocations(
         projectEndDate: project?.EndDate || null,
         projectDescription: project?.Description || null,
         portfolioId: portfolio ? portfolio?.Id : null,
-        portfolioName: portfolio ? portfolio?.Name : 'default',
+        portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
         portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
         portfolioDescription: portfolio ? portfolio?.Description || null : null,
         portfolioStatus: portfolio ? portfolio?.Status || null : null,
@@ -246,6 +240,9 @@ export function formatAllAllocations(
           resource?.ContractorHourlyRateCurrency || null,
         averageWeeklyHours: resource?.AverageWeeklyHours || null,
         resourceStatus: resource?.Status || null,
+        organisationId: organisation?.Id,
+        organisationName: organisation?.Name,
+        organisationStatus: organisation?.Status,
         totalEffort: 0,
       };
 
@@ -286,6 +283,7 @@ export function injectBlankRows(
   allocations: AllAllocations[],
   teams: Team[],
   teamsResources: Record<string, Resource[]>,
+  allResourcesDetail: AllResourceDetail[],
   StartDate?: string,
   EndDate?: string
 ) {
@@ -303,6 +301,9 @@ export function injectBlankRows(
     const teamRes = teamsResources?.[team.Id] || [];
     teamRes.forEach(resource => {
       const key = `${team.Name}___${resource.Id}`;
+      const organisation = allResourcesDetail?.find(
+        r => r.Resource?.Id === resource.Id
+      )?.Organization;
       if (!existingKeys.has(key)) {
         extraRows.push({
           id: `team/${team.Name}-resource/${resource.FullName}`,
@@ -325,6 +326,9 @@ export function injectBlankRows(
           portfolioSidebarColor: '',
           portfolioDescription: '',
           portfolioStatus: '',
+          organisationId: organisation?.Id,
+          organisationName: organisation?.Name,
+          organisationStatus: organisation?.Status,
           email: resource?.Email || null,
           phoneNumber: resource?.PhoneNumber || null,
           resourceStartDate: resource?.StartDate || null,
@@ -501,6 +505,8 @@ export const generateEmptyRow = (
   endDate: string,
   teams: Team[],
   teamResources: Record<string, Resource[]>,
+  allResourcesDetail: AllResourceDetail[],
+  portfolios: Portfolio[] | null,
   projects: Project[] | null,
   resources: Resource[],
   allocation: Allocation
@@ -520,7 +526,11 @@ export const generateEmptyRow = (
 
   const team = resourceIdToTeam.get(allocation.Resource);
   const project = projects?.find(p => p.Id === allocation.Project);
+  const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
   const resource = resources.find(r => r.Id === allocation.Resource);
+  const organisation = allResourcesDetail.find(
+    r => r?.Resource?.Id === allocation.Resource
+  )?.Organization;
   let key;
   if (project) {
     key = `${allocation.Resource}-${team?.Id}-${allocation.Project}`;
@@ -536,11 +546,23 @@ export const generateEmptyRow = (
     resourceType: resource?.Type || null,
     teams: team?.Name || null,
     teamStatus: team?.Status || null,
-    teamAllocationManager: team?.AllocationManager || null,
+    teamAllocationManager:
+      getAllocationManagerFromPath(team?.AllocationManager, resources || [])
+        ?.FullName || null,
+    organisationId: organisation?.Id || null,
+    organisationName: organisation?.Name || null,
+    organisationStatus: organisation?.Status || null,
+    portfolioId: portfolio ? portfolio?.Id : null,
+    portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
+    portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
+    portfolioDescription: portfolio ? portfolio?.Description || null : null,
+    portfolioStatus: portfolio ? portfolio?.Status || null : null,
     project: project?.Name || allocation.ProjectName || null,
     projectId: project?.Id || allocation.Project || null,
-    projectSponsor: project?.ProjectSponsor || null,
-    projectManager: project?.ProjectManager || null,
+    projectSponsor:
+      getResourceFromUid(project?.ProjectSponsor, resources)?.FullName || null,
+    projectManager:
+      getResourceFromUid(project?.ProjectManager, resources)?.FullName || null,
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,
@@ -600,6 +622,8 @@ export const getFormattedAllocationsForUpdate = (
   allocationsUpdated: Allocation[],
   teams: ApiResponse<Team[]>,
   teamsResources: Record<string, Resource[]>,
+  allResourcesDetail: AllResourceDetail[],
+  portfolios: Portfolio[] | null,
   projects: ApiResponse<Project[]>,
   resources: ApiResponse<Resource[]>,
   splitView: boolean,
@@ -672,6 +696,8 @@ export const getFormattedAllocationsForUpdate = (
         endDate,
         teams?.result || [],
         teamsResources,
+        allResourcesDetail || [],
+        portfolios || null,
         projects?.result || [],
         resources?.result || [],
         allocation

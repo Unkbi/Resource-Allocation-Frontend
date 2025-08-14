@@ -14,12 +14,18 @@ import {
 } from '@/app/redux/actions/allocationViewAction';
 import { getUserIdFromEmail } from '@/app/utils/common';
 import { useSearchParams } from 'next/navigation';
-import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
+import {
+  changeView,
+  updateCurrentView,
+} from '@/app/redux/reducers/allocationViewReducer';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import ProjectCost from '@/app/components/ResourceAllocation/component/ProjectCost';
 import TeamsCost from '@/app/components/ResourceAllocation/component/TeamsCost';
 import PortfolioAllocation from '@/app/components/ResourceAllocation/component/PorfolioAllocation';
+import OrganisationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
+import ResourceAllocation from '@/app/components/ResourceAllocation/component/ResourceAllocation';
+import FlatAllocation from '@/app/components/ResourceAllocation/component/FlatAllocation';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -59,6 +65,9 @@ export default function Allocation({ startDate, endDate }) {
           decompressFromEncodedURIComponent(settingsParam)
         );
 
+        if (parsedSettings?.GroupBy) {
+          dispatch(changeView(parsedSettings?.GroupBy));
+        }
         dispatch(updateCurrentView(parsedSettings));
       } catch (e) {
         console.error('Failed to parse settings:', e);
@@ -77,6 +86,14 @@ export default function Allocation({ startDate, endDate }) {
           );
         case 'Teams':
           return <TeamAllocation startDate={startDate} endDate={endDate} />;
+        case 'Organisations':
+          return (
+            <OrganisationAllocation startDate={startDate} endDate={endDate} />
+          );
+        case 'Resources':
+          return <ResourceAllocation startDate={startDate} endDate={endDate} />;
+        case 'Flat':
+          return <FlatAllocation startDate={startDate} endDate={endDate} />;
         case 'Project Cost':
           return <ProjectCost startDate={startDate} endDate={endDate} />;
         case 'Teams Cost':

@@ -14,8 +14,17 @@ function* fetchDashboardChartSaga(action: { payload: ChartParams }) {
       bucket,
     }).toString();
 
-    const res: Response = yield call(fetch, `/api/report/${queryKey}?${queryParams}`);
+    const res: Response = yield call(
+      fetch,
+      `/api/report/${queryKey}?${queryParams}`
+    );
     const data: any[] = yield res.json();
+
+    if (!res.ok) {
+      // @ts-ignore
+      throw new Error(`Error fetching chart data: ${data?.error}`);
+    }
+
     yield put(setDashboardChart({ chartKey, data }));
   } catch (err) {
     console.error(`Dashboard chart fetch failed for ${chartKey}`, err);

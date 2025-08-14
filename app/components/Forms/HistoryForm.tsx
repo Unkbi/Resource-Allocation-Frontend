@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useSelector } from "react-redux"
 import {
   Box,
@@ -67,13 +67,15 @@ const getAvatarColorHSL = (initials: string) => {
 
 const INITIAL_ITEMS_COUNT = 5
 
-export default function HistoryForm({ historyData }: { historyData: ActivityItem[]}) {
+export default function HistoryForm({ historyData, historyStatus }: { historyData: ActivityItem[], historyStatus: string }) {
   const [showAll, setShowAll] = useState(false)
   const [isExpanding, setIsExpanding] = useState(false)
   const displayedItems = useMemo(() => {
     if (showAll) return historyData
     return historyData.slice(0, INITIAL_ITEMS_COUNT)
   }, [historyData, showAll])
+  const [isLoading, setIsLoading] = useState(true)
+  const [showNoHistory, setShowNoHistory] = useState(false)
 
   const hasMoreItems = historyData.length > INITIAL_ITEMS_COUNT
   const remainingCount = historyData.length - INITIAL_ITEMS_COUNT
@@ -93,7 +95,25 @@ export default function HistoryForm({ historyData }: { historyData: ActivityItem
     })
   }
 
-  const isLoading = historyData.length === 0
+  useEffect(() => {
+    if (historyStatus === "no-data") {
+        setIsLoading(false)
+        setShowNoHistory(true)
+    } else {
+      setIsLoading(historyStatus !== "loaded")
+      setShowNoHistory(false)
+    }
+  }, [historyData])
+
+  if (showNoHistory) {
+    return (
+      <Box sx={{ width: "100%", maxWidth: 600, bgcolor: "background.paper", p: 3, textAlign: "center" }}>
+        <Typography variant="body2" color="text.secondary">
+          No history found.
+        </Typography>
+      </Box>
+    )
+  }
   const skeletonCount = 5
 
   return (

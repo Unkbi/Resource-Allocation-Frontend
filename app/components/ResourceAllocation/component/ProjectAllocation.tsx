@@ -128,14 +128,15 @@ export default function ProjectAllocation({
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
-  const { getAllRowsForView } = useAllGridRowsByView();
+  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      const allTempRows = getAllRowsForView('temp');
+      const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
         setRows(allTempRows || []);
+        setRowsForView('projectAllocationtemp', []);
       } else {
         if (!loading && getAllTeamViewRows().length > 0) {
           filteredResources = removeResourcesWithNoProjects(
@@ -146,7 +147,7 @@ export default function ProjectAllocation({
               getAllTeamViewRows() as AllAllocations[]
             )
           );
-        } else if (loading && allAllocations) {
+        } else if (allAllocations) {
           filteredResources = removeResourcesWithNoProjects(
             allAllocations || []
           );
@@ -368,11 +369,18 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.portfolioName ?? 'N/A'} />
+          <EllipsisNameCell
+            value={
+              firstChild.portfolioName === 'zzzzz'
+                ? ''
+                : (firstChild.portfolioName ?? '')
+            }
+          />
         ) : null;
       },
     },
@@ -384,11 +392,12 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectSponsor ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectSponsor || ''} />
         ) : null;
       },
     },
@@ -397,7 +406,7 @@ export default function ProjectAllocation({
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -413,7 +422,7 @@ export default function ProjectAllocation({
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -429,7 +438,7 @@ export default function ProjectAllocation({
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -445,7 +454,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -461,7 +470,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -477,7 +486,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -493,7 +502,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -509,7 +518,7 @@ export default function ProjectAllocation({
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -525,7 +534,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Role',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -541,7 +550,7 @@ export default function ProjectAllocation({
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -557,7 +566,7 @@ export default function ProjectAllocation({
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -573,7 +582,7 @@ export default function ProjectAllocation({
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -589,7 +598,7 @@ export default function ProjectAllocation({
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -605,7 +614,7 @@ export default function ProjectAllocation({
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -625,11 +634,12 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectManager ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectManager || ''} />
         ) : null;
       },
     },
@@ -641,11 +651,12 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStatus ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStatus || ""} />
         ) : null;
       },
     },
@@ -656,12 +667,13 @@ export default function ProjectAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
+      sortable: false,
       isEditable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectLocation ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectLocation || ''} />
         ) : null;
       },
     },
@@ -673,11 +685,12 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectType ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectType || ''} />
         ) : null;
       },
     },
@@ -688,6 +701,7 @@ export default function ProjectAllocation({
       type: 'boolean',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
+      sortable: false,
       isEditable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
@@ -706,6 +720,7 @@ export default function ProjectAllocation({
       type: 'string ',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
+      sortable: false,
       isEditable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
@@ -724,11 +739,12 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectCurrency ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectCurrency || ''} />
         ) : null;
       },
     },
@@ -740,11 +756,12 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectStartDate || ''} />
         ) : null;
       },
     },
@@ -756,11 +773,12 @@ export default function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate ?? 'N/A'} />
+          <EllipsisNameCell value={firstChild.projectEndDate || ''} />
         ) : null;
       },
     },

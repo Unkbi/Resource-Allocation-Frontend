@@ -28,7 +28,7 @@ export interface Resource {
 export interface AllResourceDetail {
   Resource: Resource | null;
   Team: Team | null;
-  Organisation: Organisation | null;
+  Organization: Organisation | null;
 }
 
 export interface AllResourcesDetailState {

@@ -83,6 +83,7 @@ const CellWithMenu = ({
   const allResources = useSelector(
     state => state.resources.resources?.result || []
   );
+  const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allProjects = useSelector(
     state => state.projects.projects?.result || []
   );
@@ -268,8 +269,10 @@ const CellWithMenu = ({
                 : '',
             allTeams,
             teamsResources,
+            allResourcesDetail,
             null,
-            allResources.filter(resource => resource.Id === row.resourceId),
+            null,
+            allResources,
             {
               ProjectName: row?.project || '',
               Id: '',
@@ -285,6 +288,15 @@ const CellWithMenu = ({
 
           updateRowsForView(
             'teamAllocation',
+            [emptyRow].map(r => ({
+              ...r,
+              project: null,
+              projectId: null,
+              hasAllocation: false,
+            }))
+          );
+          updateRowsForView(
+            'bottomTeam',
             [emptyRow].map(r => ({
               ...r,
               project: null,
@@ -449,7 +461,7 @@ export const getInitialState = (
 ) => ({
   rowGrouping: {
     model:
-      groupBy === 'teams'
+      groupBy === 'teams' || groupBy === 'organisationName'
         ? [groupBy, 'resource']
         : groupBy === 'portfolioName'
           ? ['portfolioName', 'project']
@@ -595,9 +607,9 @@ export const getFinalColumns = (
     );
   };
 
-  if (groupBy === 'organization') {
+  if (groupBy === 'organization' || groupBy === '') {
     return allColumns || [];
-  } else if (groupBy === 'teams') {
+  } else if (groupBy === 'teams' || groupBy === 'organisationName') {
     return [
       ...(allColumns?.slice(0, 1) || []),
       {
@@ -606,7 +618,7 @@ export const getFinalColumns = (
         width: 201,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const value = params.value;
@@ -732,13 +744,158 @@ export const getFinalColumns = (
           }
 
           return projects_set.length ? (
-            <EllipsisNameCell value={projects_set[0]} showAddIcon={false} />
+            <EllipsisNameCell
+              value={isGroupExpanded ? '' : projects_set[0]}
+              showAddIcon={false}
+            />
           ) : (
             ''
           );
         },
       },
       ...(allColumns?.slice(1) || []),
+    ];
+  } else if (groupBy === 'resource') {
+    return [
+      {
+        field: 'resource',
+        headerName: 'Resource Name',
+        width: 201,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: true,
+        primaryColumn: true,
+        renderCell: params => {
+          const value = params.value;
+          const resourceCount = params.row?.resource_count?.length || 0;
+          return value ? (
+            <CellWithMenu
+              params={params}
+              handleAddClick={handleAddClick}
+              isFormatWithK={isFormatWithK}
+              // handleCloneClick={handleCloneClick}
+              // handleTranferClick={handleTranferClick}
+              handleOpenHistory={handleOpenHistory}
+            />
+          ) : null;
+        },
+      },
+      {
+        field: 'project',
+        headerName: 'Project',
+        width: 200,
+        headerClassName: 'secondary-header',
+        cellClassName: 'secondary-cell',
+        sortable: groupBy == 'project' ? true : false,
+        primaryColumn: true,
+        renderCell: params => {
+          const allocationsOfAddedResource =
+            Array.isArray(teamAllocations.result) &&
+            teamAllocations.result.filter(
+              resource => resource.Resource === params.row.resourceId
+            );
+          const uniqueProjectNames = [
+            ...new Set(
+              (Array.isArray(allocationsOfAddedResource) &&
+                allocationsOfAddedResource.map(item => item.ProjectName)) ||
+                []
+            ),
+          ];
+          const isGroupExpanded = params.rowNode.childrenExpanded;
+          if (params.row.hasProject && !params.row.project) {
+            return (
+              <AddRowButton
+                row={params.row}
+                teamsId={params.row.teamsId}
+                project={params.row.project}
+                handleAddRow={handleAddProject}
+                buttonName="Add Project"
+                resourceProjects={projects?.result.filter(
+                  item => !uniqueProjectNames?.includes(item.Name)
+                )}
+                onClick={event => {
+                  setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId);
+                }}
+              />
+            );
+          }
+          if (params.value) {
+            return (
+              <CellWithMenu
+                params={params}
+                handleAddClick={handleAddClick}
+                handleCloneClick={handleCloneClick}
+                handleTranferClick={handleTranferClick}
+                handleOpenHistory={handleOpenHistory}
+                isFormatWithK={isFormatWithK}
+              >
+                <EllipsisNameCell
+                  value={params.value}
+                  showAddIcon
+                  onAddClick={() => handleAddClick(params)}
+                  isFormatWithK={isFormatWithK}
+                />
+              </CellWithMenu>
+            );
+          }
+
+          const projects_set = [
+            ...new Set(
+              params?.rowNode?.children?.map(
+                child => params.api.getRow(child)?.project
+              )
+            ),
+          ].filter(Boolean);
+
+          if (projects_set.length > 1) {
+            const firstProject = projects_set?.[0];
+
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  minWidth: 0,
+                  width: '100%',
+                  gap: 8,
+                }}
+              >
+                {!isGroupExpanded && (
+                  <EllipsisNameCell
+                    value={firstProject}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                  />
+                )}
+                {!isGroupExpanded && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      backgroundColor: '#E9EFF8',
+                      color: '#000',
+                      paddingRight: 4,
+                      paddingLeft: 4,
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{projects_set.length - 1}
+                  </span>
+                )}
+              </div>
+            );
+          }
+
+          return projects_set.length ? (
+            <EllipsisNameCell value={''} showAddIcon={false} />
+          ) : (
+            ''
+          );
+        },
+      },
+      ...(allColumns || []),
     ];
   } else if (groupBy === 'project') {
     return [
@@ -773,37 +930,89 @@ export const getFinalColumns = (
       ...(allColumns?.slice(0, 1) || []),
       {
         field: 'project',
-        headerName: 'Project Name',
+        headerName: 'Project',
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
         renderCell: params => {
-          const { rowNode } = params;
-          const firstChild = getFirstChild(params);
-          const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-          if (isGridTreeNode && rowNode.children) {
-            return firstChild ? (
-              <>
-                <EllipsisNameCell value={firstChild.project ?? 'N/A'} />
-                <span
-                  style={{
-                    flexShrink: 0,
-                    background: '#E9EFF8',
-                    color: '#000',
-                    paddingRight: 4,
-                    paddingLeft: 4,
-                    fontSize: 12,
-                    borderRadius: 4,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  +{rowNode?.children?.length}
-                </span>
-              </>
-            ) : null;
+          const isParent = params.rowNode?.children?.length;
+          const isGroupExpanded = params.rowNode?.childrenExpanded;
+
+          if (params.value) {
+            return (
+              <CellWithMenu
+                params={params}
+                handleAddClick={handleAddClick}
+                handleCloneClick={handleCloneClick}
+                handleTranferClick={handleTranferClick}
+                isFormatWithK={isFormatWithK}
+                handleOpenHistory={handleOpenHistory}
+              >
+                <EllipsisNameCell
+                value={params.value}
+                showAddIcon={false}
+                isFormatWithK={isFormatWithK}
+                showAvatar={false}
+              />
+              </CellWithMenu>
+            );
           }
+          const projects_set = [
+          ...new Set(
+            params?.rowNode?.children?.map(
+              child => params.api.getRow(child)?.project
+            )
+          ),
+        ].filter(Boolean);
+
+          if (projects_set.length > 1) {
+            const firstProject = projects_set?.[0];
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  minWidth: 0,
+                  width: '100%',
+                  gap: 8,
+                }}
+              >
+                {!isGroupExpanded && (
+                  <EllipsisNameCell
+                    value={firstProject}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                    showAvatar={false}
+                  />
+                )}
+                {!isGroupExpanded && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      backgroundColor: '#E9EFF8',
+                      color: '#000',
+                      paddingRight: 4,
+                      paddingLeft: 4,
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{projects_set.length - 1}
+                  </span>
+                )}
+              </div>
+            );
+          }
+          return projects_set.length ? (
+           <EllipsisNameCell
+            value={projects_set[0]}
+            showAddIcon={false}
+            showAvatar={false}
+          />
+          ) : null;
         },
       },
       {
@@ -811,22 +1020,121 @@ export const getFinalColumns = (
         headerName: 'Resource',
         width: 200,
         headerClassName: 'secondary-header',
-        cellClassName: 'secondary-cell',
         sortable: false,
         primaryColumn: true,
         cellClassName: () =>
-          groupBy === 'project' ? 'common-NonEditableCells' : '',
+          groupBy === 'project' ? 'common-NonEditableCells' : 'secondary-cell',
         renderCell: params => {
-          return params.value ? (
-            <CellWithMenu
-              params={params}
-              handleAddClick={handleAddClick}
-              handleCloneClick={handleCloneClick}
-              handleTranferClick={handleTranferClick}
-              isFormatWithK={isFormatWithK}
-              handleOpenHistory={handleOpenHistory}
-            />
-          ) : null;
+          const { rowNode, value } = params;
+          const isParent = rowNode?.children?.length;
+          const isGroupExpanded = rowNode?.childrenExpanded;
+
+        if (isParent) {
+          const resources_set = [
+            ...new Set(
+              rowNode.children?.map(
+                child => params.api.getRow(child)?.resource || ''
+              )
+            ),
+          ].filter(Boolean);
+
+            if (resources_set.length > 1) {
+              const firstResource = resources_set[0];
+
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    minWidth: 0,
+                    width: '100%',
+                    gap: 8,
+                  }}
+                >
+                  {!isGroupExpanded && (
+                  <EllipsisNameCell
+                    value={firstResource}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                    showAvatar={true} 
+                  />
+                  )}
+                  {!isGroupExpanded && (
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        backgroundColor: '#E9EFF8',
+                        color: '#000',
+                        padding: '0 4px',
+                        fontSize: 12,
+                        borderRadius: 4,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      +{resources_set.length - 1}
+                    </span>
+                  )}
+                </div>
+              );
+            }else if(resources_set.length === 1) {
+              const firstResource = resources_set[0];
+              return !isGroupExpanded ? (
+                <EllipsisNameCell
+                  value={resources_set[0]}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                  showAvatar={true}
+                />
+              ) : null;
+            }
+            return resources_set.length ? (
+              <EllipsisNameCell
+                value={resources_set[0]}
+                showAddIcon={false}
+                isFormatWithK={isFormatWithK}
+              showAvatar={true} 
+              />
+            ) : null;
+          }
+          const allocationsCount = params.row?.resource_count?.length || 0;
+          if (value) {
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CellWithMenu
+                  params={params}
+                  handleAddClick={handleAddClick}
+                  handleCloneClick={handleCloneClick}
+                  handleTranferClick={handleTranferClick}
+                  isFormatWithK={isFormatWithK}
+                  handleOpenHistory={handleOpenHistory}
+              >
+                <EllipsisNameCell
+                  value={value}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                  showAvatar={true}
+                />
+              </CellWithMenu>
+                {allocationsCount > 1 && (
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      background: '#E9EFF8',
+                      color: '#000',
+                      padding: '0 4px',
+                      fontSize: 12,
+                      borderRadius: 4,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    +{allocationsCount - 1}
+                  </span>
+                )}
+              </div>
+            );
+          }
+
+          return null;
         },
       },
       ...(allColumns?.slice(1) || []),
@@ -840,6 +1148,8 @@ export const groupPage = groupBy => {
     teams: 'Team Name',
     portfolioName: 'Portfolio Name',
     organization: 'Organization Name',
+    organisationName: 'Organization Name',
+    resource: 'Resource',
   };
   return groupPages[groupBy];
 };
@@ -859,7 +1169,8 @@ export const getCellClassName = (
   allocationTheme = [],
   type = 'allocation',
   allProjects = [],
-  isCellEditable
+  isCellEditable,
+  groupBy = ''
 ) => {
   if (params?.field === 'totalEffort') {
     if (
@@ -886,6 +1197,7 @@ export const getCellClassName = (
       type !== 'cost' &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
+        params.rowNode?.groupingField === 'organisationName' ||
         params.rowNode?.groupingField === 'resource')
     ) {
       const groupKey = params.rowNode.groupingKey;
@@ -893,6 +1205,10 @@ export const getCellClassName = (
 
       if (params.rowNode?.groupingField === 'teams') {
         projectRows = updatedRows.filter(row => row.teams === groupKey);
+      } else if (params.rowNode?.groupingField === 'organisationName') {
+        projectRows = updatedRows.filter(
+          row => row.organisationName === groupKey
+        );
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
@@ -901,7 +1217,6 @@ export const getCellClassName = (
         projectRows.map(item => item.resourceId)
       );
       const totalRows = uniqueProjectRows.size;
-
       const aggregatedValue = projectRows.reduce((sum, row) => {
         const weekValue = row[params.field];
         const numericValue =
@@ -940,7 +1255,8 @@ export const getCellClassName = (
         const base = `allocation-theme-${matchingRange.id}`;
         const groupClass =
           params.rowNode?.groupingField === 'teams' ||
-          params.rowNode?.groupingField === 'portfolioName'
+          params.rowNode?.groupingField === 'portfolioName' ||
+          params.rowNode?.groupingField === 'organisationName'
             ? base
             : `${base}-secondGroup`;
         let nonEditableClass = '';
@@ -973,18 +1289,26 @@ export const getCellClassName = (
           parseISO(project.StartDate) <= parseISO(currentWeekData?.period) &&
           parseISO(project.EndDate) >= parseISO(currentWeekData?.period);
         if (isWithinProjectDateRange && project.Type) {
-          return `firstGroupsRow project-type-${project.Type.toLowerCase().split(' ').join('_')}`;
+          const isTopLevelProject =
+            params.rowNode.depth === 0 || groupBy === 'project';
+          const prefix = isTopLevelProject
+            ? 'firstGroupsRow'
+            : 'secondGroupsRow';
+          return `${prefix} project-type-${project.Type.toLowerCase().replace(/\s+/g, '_')}`;
         }
       }
     }
   }
-
   if (params.rowNode?.type === 'group') {
-    return params.rowNode?.groupingField === 'teams' ||
-      // params.rowNode?.groupingField === 'project' ||
-      params.rowNode?.groupingField === 'portfolioName'
-      ? 'firstGroupsRow'
-      : 'secondGroupsRow';
+    const isFirstGroup =
+      params.rowNode.depth === 0 &&
+      (params.rowNode?.groupingField === 'teams' ||
+        params.rowNode?.groupingField === 'organisationName' ||
+        params.rowNode?.groupingField === 'portfolioName' ||
+        (groupBy === 'resource' &&
+          params.rowNode?.groupingField === 'resource') ||
+        (groupBy === 'project' && params.rowNode?.groupingField === 'project'));
+    return isFirstGroup ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
     if (type === 'cost') {
@@ -1002,7 +1326,12 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     totalEffort: calculateTotalEffort(row),
   }));
 
-  if (groupBy === 'project' || groupBy === 'portfolioName') {
+  if (
+    groupBy === 'project' ||
+    groupBy === 'portfolioName' ||
+    groupBy === 'organisationName' ||
+    groupBy === 'resource'
+  ) {
     return rowsWithTotalEffort;
   } else if (groupBy === 'teams') {
     // Get unique teams for teams and teamsId to avoid duplicate teams

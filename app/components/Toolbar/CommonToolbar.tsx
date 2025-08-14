@@ -1,4 +1,4 @@
-import React, { memo, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import {
   Box,
   IconButton,
@@ -14,6 +14,9 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import { useSelector } from 'react-redux';
+import { showToast } from '@/app/redux/reducers/toastReducer';
+
 interface CommonToolbarProps {
   children?: React.ReactNode;
 }
@@ -58,7 +61,24 @@ const menuItems = [
 const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
   const dispatch = useDispatch();
   const [openAddMenu, setOpenAddMenu] = useState(false);
+  const [allApiSuccess, setAllApiSuccess] = useState(false);
   const anchorRefAdd = useRef<HTMLButtonElement>(null);
+  const { resources } = useSelector((state: any) => state.resources);
+  const { projects } = useSelector((state: any) => state.projects);
+  const { teams } = useSelector((state: any) => state.teams);
+  const { portfolios } = useSelector((state: any) => state.portfolios);
+
+  const projectsLoaded = Array.isArray(projects?.result ?? projects);
+  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
+  const teamsLoaded = Array.isArray(teams?.result ?? teams);
+  const portfoliosLoaded = Array.isArray(portfolios?.result ?? portfolios);
+
+  const allDataLoaded =
+    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+
+  useEffect(() => {
+    setAllApiSuccess(allDataLoaded);
+  }, [projects, resources, teams, portfolios]);
 
   const handleAddMenuToggle = () => {
     setOpenAddMenu(prev => !prev);
@@ -112,6 +132,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
             className="AddIcon"
             onClick={handleAddMenuToggle}
             ref={anchorRefAdd}
+            disabled={!allApiSuccess}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -122,7 +143,9 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
               marginTop: '3px',
               padding: '2px',
               borderRadius: '8px',
-              '&:hover': { backgroundColor: '#20232D' },
+              '&:hover': {
+                backgroundColor: allApiSuccess ? '#20232D' : '#A0A0A0',
+              },
             }}
           >
             {openAddMenu ? (
