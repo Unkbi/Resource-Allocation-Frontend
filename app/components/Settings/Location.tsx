@@ -127,12 +127,12 @@ const tabConfig = [
   {
     label: 'Locations',
     value: 'location',
-    icon: '/images/icons/globe_location_pin.svg',
+    icon: '/images/icons/LocationIcon.svg',
   },
   {
     label: 'Location Group',
     value: 'location-group',
-    icon: '/images/icons/globe_location_pin.svg',
+    icon: '/images/icons/LocationGroupIcon.svg',
   }
 ];
 
