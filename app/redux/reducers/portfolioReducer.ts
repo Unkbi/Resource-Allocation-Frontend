@@ -1,4 +1,5 @@
 import { PortfolioState } from '@/app/types/portfolioTypes';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: PortfolioState = {
@@ -12,7 +13,7 @@ const portfolioSlice = createSlice({
   initialState,
   reducers: {
     setPortfolios: (state, action) => {
-      state.portfolios = action.payload;
+      state.portfolios = formatAPIResponse('Portfolio', action.payload);
     },
     clearPortfolios: state => {
       state.portfolios = [];

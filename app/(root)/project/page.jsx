@@ -230,19 +230,17 @@ export default function Project() {
   };
 
   const modifyPortfolioData = data => {
-    if (!data) return [];
-
-    return data.map(item => {
-      const p = item.Portfolio || item;
-      return {
-        id: p.Id,
-        Id: p.Id,
-        SidebarColor: p.SidebarColor,
-        Name: p.Name,
-        Description: p.Description,
-        Status: p.Status || 'Active',
-      };
-    });
+    if (data) {
+      return data.map(item => ({
+        id: item.Id,
+        Id: item.Id,
+        SidebarColor: item.SidebarColor,
+        Name: item.Name,
+        Description: item.Description,
+        Status: item.Status,
+      }));
+    }
+    return [];
   };
 
   useEffect(() => {
@@ -657,8 +655,8 @@ export default function Project() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleOpenDialog('Edit Project', 'edit_project', params.row),
-                  handleMenuClose();
+                (handleOpenDialog('Edit Project', 'edit_project', params.row),
+                  handleMenuClose());
               }}
               sx={menuItemStyle}
             >

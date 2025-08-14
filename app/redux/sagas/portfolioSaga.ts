@@ -1,4 +1,4 @@
-import { call, put, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import {
   CREATE_PORTFOLIOS,
   DELETE_PORTFOLIOS,
@@ -71,7 +71,7 @@ function* deletePortfolioSaga(action: any): Generator<any, void, any> {
 }
 
 export function* portfolioSaga() {
-  yield takeEvery(FETCH_PORTFOLIOS, fetchPortfolioSaga);
+  yield takeLatest(FETCH_PORTFOLIOS, fetchPortfolioSaga);
   yield takeEvery(CREATE_PORTFOLIOS, createPortfolioSaga);
   yield takeEvery(UPDATE_PORTFOLIOS, updatePortfolioSaga);
   yield takeEvery(DELETE_PORTFOLIOS, deletePortfolioSaga);
