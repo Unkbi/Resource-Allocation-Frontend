@@ -26,6 +26,7 @@ import {
   addRatesValidationSchema,
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
+  addOrganizationValidationSchema,
   addRoleValidationSchema,
   assignRoleValidationSchema,
   addPrivilegeValidationSchema,
@@ -108,6 +109,12 @@ import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
+import AddOrganizationForm from '../../Forms/addOrganization';
+import {
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+} from '@/app/redux/actions/organizationsAction';
+
 import AddRoleForm from '../../Forms/AddRoleForm';
 import AssignRoleForm from '../../Forms/AssignRoleForm';
 import {
@@ -342,6 +349,7 @@ const AllocationForm = () => {
   const [HistoryData, setHistoryData] = useState([]);
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
+  const { organizations } = useSelector(state => state.organisations);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -359,6 +367,7 @@ const AllocationForm = () => {
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
   const topProjectAllocationGrid = useAllocationGrid('topProject');
   const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
+
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
@@ -427,6 +436,8 @@ const AllocationForm = () => {
         return assignPrivilegeValidationSchema;
       case 'edit_privilege_assignment':
         return assignPrivilegeValidationSchema;
+      case 'add_organization':
+        return addOrganizationValidationSchema(organizations);
       default:
         return null;
     }
@@ -1909,7 +1920,6 @@ const AllocationForm = () => {
         postData = {
           ...cleanedValues,
         };
-
         new Promise((resolve, reject) => {
           dispatch({
             type: 'CREATE_PORTFOLIOS',
@@ -1938,6 +1948,54 @@ const AllocationForm = () => {
               showToast({
                 open: true,
                 message: 'Failed to add portfolio.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+
+      case 'add_organization':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        postData = {
+          ...cleanedValues,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_ORGANISATION,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Organization added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to add organization:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add organization.',
                 type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -2769,6 +2827,15 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+
+      case 'add_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+
       case 'add_role':
         return (
           <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />

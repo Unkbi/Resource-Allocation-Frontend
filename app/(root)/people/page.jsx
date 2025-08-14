@@ -1,5 +1,6 @@
 'use client';
 import ResourceTable from '@/app/components/Resources/ResourceTable';
+import OrganisationsTable from '@/app/components/Resources/OrganisationTable';
 import { Box, styled } from '@mui/system';
 import {
   IconButton,
@@ -23,6 +24,9 @@ import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
+
+import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+
 import {
   deleteTeam,
   getAllTeams,
@@ -164,6 +168,9 @@ export default function Resources() {
   const { resources, updating, loading } = useSelector(
     state => state.resources
   );
+
+  const { organisations } = useSelector(state => state.organisations);
+
   const { allResourcesDetail, loading: allResourcesDetailLoading } =
     useSelector(state => state.allResourcesDetail);
   const { teams, dataProcessing } = useSelector(state => state.teams);
@@ -188,14 +195,26 @@ export default function Resources() {
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab');
-  const [value, setValue] = useState(initialTab || 'resource');
-  useEffect(() => {
-    const newTab = searchParams.get('tab');
-    if (newTab && newTab !== value) {
-      setValue(newTab);
-    }
-  }, [searchParams]);
+  // const initialTab = searchParams.get('tab');
+  // const [value, setValue] = useState(initialTab || 'resource');
+  // useEffect(() => {
+  //   const newTab = searchParams.get('tab');
+  //   if (newTab && newTab !== value) {
+  //     setValue(newTab);
+  //   }
+  // }, [searchParams]);
+const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'];
+const initialTab = searchParams.get('tab');
+const [value, setValue] = useState(
+  VALID_TABS.includes(initialTab) ? initialTab : 'resource'
+);
+
+useEffect(() => {
+  const newTab = searchParams.get('tab');
+  if (newTab && VALID_TABS.includes(newTab) && newTab !== value) {
+    setValue(newTab);
+  }
+}, [searchParams]);
 
   const columns = [
     {
@@ -795,6 +814,118 @@ export default function Resources() {
     },
   ];
 
+  const organizationColumns = [
+  {
+    field: 'name',
+    headerName: 'Organization Name',
+    minWidth: 290,
+    maxWidth: 500,
+    headerAlign: 'left',
+    hideable: false,
+    renderCell: params => {
+      const handleNameClick = () => {
+        handleOpenDialog('Edit Organization', 'edit_organization', params.row);
+      };
+
+      return (
+        <Box sx={{ display: 'flex', alignItems: 'left' }}>
+          <Box
+            onClick={handleNameClick}
+            sx={{
+              display: 'inline-block',
+              width: '100%',
+              color: '#152E75',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              paddingLeft: '32px',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            {params.value}
+          </Box>
+        </Box>
+      );
+    },
+  },
+  {
+    field: 'status',
+    headerName: 'Status',
+    width: 170,
+    flex: 1,
+    sortable: true,
+    filterable: true,
+    headerAlign: 'left',
+    renderCell: params => {
+      const status = params.value;
+      return (
+        status && (
+          <Box
+            sx={{
+              paddingLeft: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <StatusPill status={status}>{status}</StatusPill>
+            <Box>
+              <IconButton
+                size="small"
+                onClick={e => handleMenuClick(e, params.row.id)}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl) && selectedRow === params.row.id}
+                onClose={handleMenuClose}
+                anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              >
+                <MenuItem
+                  onClick={() => {
+                    handleMenuClose();
+                    handleOpenDialog(
+                      'Edit Organization',
+                      'edit_organization',
+                      params.row
+                    );
+                  }}
+                  sx={menuItemStyle}
+                >
+                  <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                  Edit
+                </MenuItem>
+
+                <MenuItem
+                  onClick={() => {
+                    setDeleteDialogOpen(true);
+                    handleMenuClose();
+                    setDeleteTarget({
+                      id: params.row.Id,
+                      name: params.row.Organization,
+                      type: 'Organization',
+                    });
+                  }}
+                  sx={menuItemStyle}
+                >
+                  <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                  Delete
+                </MenuItem>
+              </Menu>
+            </Box>
+          </Box>
+        )
+      );
+    },
+  },
+];
+
   const managerMap = useMemo(() => {
     const map = {};
     if (resources?.result) {
@@ -834,6 +965,9 @@ export default function Resources() {
         type: FETCH_EMPLOYEE_RATES,
         payload: {},
       });
+    }
+    if (!organisations || organisations.length === 0) {
+    dispatch({ type: FETCH_ORGANISATIONS });
     }
   }, []);
 
@@ -1195,6 +1329,21 @@ export default function Resources() {
                 },
               },
             }}
+          />
+        );
+      case 'organizations':
+        return (
+          <OrganisationsTable
+            loading={loading}
+            columns={organizationColumns}
+            rows={organisations.map((org, index) => ({
+              id: org.id || index,
+              name: org.Name,
+              status: org.Status,
+            }))}
+            apiRef={apiRef}
+            value={value}       
+            onChange={onChange}
           />
         );
       case 'rates':
