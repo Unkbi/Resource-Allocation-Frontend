@@ -189,8 +189,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
 
   useEffect(() => {
     if (!organisations || organisations.length === 0) {
-      //dispatched Fetch when add resources is opened
-      // why are we fetching organisations here? 
       dispatch({
         type: FETCH_ORGANISATIONS,
         payload: {},
