@@ -11,6 +11,7 @@ import {
   IconButton,
   TextField,
   styled,
+  Autocomplete,
 } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 import StyledLabel from '../Label/StyledLabel';
@@ -36,21 +37,28 @@ import {
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import {
+  DEFAULT_VISIBLE_PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_PROJECTS_COLUMNS,
   DEFAULT_VISIBLE_TEAMS_COLUMNS,
 } from '@/app/redux/reducers/allocationViewReducer';
 
-const getColumnLabel = column => {
+const getColumnLabel = (column, groupBy = '') => {
   const columnLabels = {
     __row_group_by_columns_group_teams__: 'Team Name',
+    __row_group_by_columns_group_organisationName__: 'Organization Name',
     __row_group_by_columns_group_resource__: 'Resource',
-    __row_group_by_columns_group__: 'Project Name',
+    __row_group_by_columns_group__:
+      groupBy === 'Resources' ? 'Resource Name' : 'Project Name',
+    __row_group_by_columns_group_project__: 'Project Name',
+    __row_group_by_columns_group_portfolioName__: 'Portfolio',
     totalEffort: 'Total Effort',
+    organisationName: 'Organization Name',
     resource: 'Resource',
     project: 'Project',
     teams: 'Team',
     teamStatus: 'Team Status',
     teamAllocationManager: 'Allocation Manager',
+    organisationStatus: 'Organization Status',
     resourceType: 'Resource Type',
     projectSponsor: 'Project Sponsor',
     projectManager: 'Project Manager',
@@ -64,7 +72,7 @@ const getColumnLabel = column => {
     projectEndDate: 'Project End Date',
     Email: 'Email',
     PhoneNumber: 'Phone Number',
-    Department: 'Organization',
+    Department: 'Department',
     WorkLocation: 'Resource Work Location',
     LocationCategory: 'Resource Location Category',
     Type: 'Resource Type',
@@ -78,7 +86,7 @@ const getColumnLabel = column => {
     ContractorHourlyRateCurrency: 'Contractor Hourly Rate Currency',
     email: 'Email',
     phoneNumber: 'Phone Number',
-    department: 'Organization',
+    department: 'department',
     hrLevel: 'HR Level',
     role: 'Resource Role',
     workLocation: 'Resource Work Location',
@@ -133,6 +141,32 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   const { user } = useSelector(state => state.user);
   const { resources } = useSelector(state => state.resources);
 
+  const commonAutocompleteStyles = {
+    '& .MuiInputBase-root': { fontSize: '12px' },
+    '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
+    '& input': { fontSize: '12px' },
+    '& .MuiAutocomplete-popper': { fontSize: '12px' },
+    '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
+  };
+
+  const commonSlotProps = {
+    popper: {
+      modifiers: [
+        {
+          name: 'preventOverflow',
+          options: {
+            boundary: 'window',
+          },
+        },
+      ],
+    },
+    paper: {
+      sx: {
+        fontSize: '12px',
+      },
+    },
+  };
+
   const columnOptions =
     values?.groupBy === 'Teams'
       ? columns.team.map(column => ({
@@ -140,11 +174,69 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
           value: column,
           label: getColumnLabel(column),
         }))
-      : columns.project.map(column => ({
-          id: column,
-          value: column,
-          label: getColumnLabel(column),
-        }));
+      : values?.groupBy === 'Organisations'
+        ? columns.organisationName.map(column => ({
+            id: column,
+            value: column,
+            label: getColumnLabel(column),
+          }))
+        : values?.groupBy === 'Resources'
+          ? columns.resource.map(column => ({
+              id: column,
+              value: column,
+              label: getColumnLabel(column, values?.groupBy),
+            }))
+          : values?.groupBy === 'Portfolio'
+            ? columns.portfolioName.map(column => ({
+                id: column,
+                value: column,
+                label: getColumnLabel(column),
+              }))
+            : values?.groupBy === 'Project'
+              ? columns.project.map(column => ({
+                  id: column,
+                  value: column,
+                  label: getColumnLabel(column),
+                }))
+              : columns['']?.map(column => ({
+                  id: column,
+                  value: column,
+                  label: getColumnLabel(column),
+                }));
+
+  // All possible viewBys
+  const viewByOptions = [
+    {
+      value: 'Teams',
+      label: 'Teams*',
+      extraInfo: 'Group by Resources, then by Teams',
+    },
+    {
+      value: 'Organisations',
+      label: 'Organizations*',
+      extraInfo: 'Group by Resources, then by Organizations',
+    },
+    {
+      value: 'Resources',
+      label: 'Resources*',
+      extraInfo: 'Group by Resources',
+    },
+    {
+      value: 'Project',
+      label: 'Projects*',
+      extraInfo: 'Group by Projects',
+    },
+    {
+      value: 'Portfolio',
+      label: 'Portfolios*',
+      extraInfo: 'Group by Projects, then by Portfolios',
+    },
+    {
+      value: 'Flat',
+      label: 'Flat*',
+      extraInfo: 'No Grouping',
+    },
+  ];
 
   // All possible opetrators. Static.
   const operatorOptions = [
@@ -202,8 +294,8 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     setFieldValue('showColumns', value);
   };
 
-  const handleGroupByChange = e => {
-    const { value } = e.target;
+  const handleGroupByChange = newValue => {
+    const { value } = newValue;
     setFieldValue('groupBy', value);
 
     setFieldValue('showBy', value === 'Teams' ? 'AllTeams' : 'AllProject');
@@ -211,7 +303,9 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       'showColumns',
       value === 'Teams'
         ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-        : DEFAULT_VISIBLE_PROJECTS_COLUMNS
+        : value === 'Portfolio'
+          ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
+          : DEFAULT_VISIBLE_PROJECTS_COLUMNS
     );
     setFieldValue('filters', []);
   };
@@ -297,7 +391,10 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     const initialData = {
       groupBy: currentView?.GroupBy || 'Teams',
       showBy:
-        currentView?.GroupBy === 'Teams'
+        currentView?.GroupBy === 'Teams' ||
+        currentView?.GroupBy === 'Organisations' ||
+        currentView?.GroupBy === 'Resources' ||
+        currentView?.GroupBy === 'Flat'
           ? currentView?.MyTeam
             ? 'MyTeams'
             : 'AllTeams'
@@ -356,7 +453,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       );
 
       const projectManagerName = projectManager
-        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        ? `${projectManager?.FullName}`.trim()
         : '';
 
       if (values.showBy === 'MyProject') {
@@ -397,7 +494,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       );
 
       const projectManagerName = projectManager
-        ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+        ? `${projectManager?.FullName}`.trim()
         : '';
 
       if (!isMyProjectsValid(projectManagerName, values.filters)) {
@@ -415,6 +512,15 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     fontSize: '14px',
   }));
 
+  const StyledExtraInfoText = styled(Typography)(({ theme }) => ({
+    color: '#D24546',
+    fontFamily: 'Open Sans',
+    fontSize: '10px',
+    fontStyle: 'italic',
+    fontWeight: '400',
+    lineHeight: '180%',
+  }));
+
   const handleDateField = (StartDate, EndDate) => {
     const currentDate = new Date();
     const { weekMinus, weekPlus } = calculateWeekRanges(
@@ -429,26 +535,45 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     <Box>
       {/* Group By */}
       <StyledContainer>
-        <StyledLabel>Group By</StyledLabel>
-        <RadioGroup
-          name="groupBy"
-          value={values?.groupBy || 'Teams'}
-          onChange={handleGroupByChange}
-          onBlur={handleBlur}
-          row
-          sx={{ gap: 2 }}
-        >
-          <FormControlLabel
-            value="Teams"
-            control={<Radio size="small" />}
-            label={<StyledOptionsLabel>Teams</StyledOptionsLabel>}
-          />
-          <FormControlLabel
-            value="Project"
-            control={<Radio size="small" />}
-            label={<StyledOptionsLabel>Project</StyledOptionsLabel>}
-          />
-        </RadioGroup>
+        <StyledLabel>View By</StyledLabel>
+        <Autocomplete
+          sx={commonAutocompleteStyles}
+          size="small"
+          options={viewByOptions || []}
+          disableClearable
+          getOptionLabel={option => option?.label || ''}
+          value={viewByOptions.find(option => option.value === values.groupBy)}
+          onChange={(event, newValue) => {
+            handleGroupByChange(newValue);
+          }}
+          slotProps={commonSlotProps}
+          renderInput={params => (
+            <TextField
+              {...params}
+              placeholder="Select View By"
+              variant="outlined"
+              error={
+                formikProps.touched.groupBy &&
+                Boolean(formikProps.errors.groupBy)
+              }
+              helperText={
+                formikProps.touched.groupBy && formikProps.errors.groupBy
+              }
+              FormHelperTextProps={{
+                sx: {
+                  fontSize: '12px',
+                  textAlign: 'left',
+                  marginLeft: '0px',
+                },
+              }}
+            />
+          )}
+        />
+        {values.groupBy && (
+          <StyledExtraInfoText>
+            {`* ${viewByOptions?.find(option => option.value === values.groupBy)?.extraInfo}`}
+          </StyledExtraInfoText>
+        )}
         {showError('groupBy')}
       </StyledContainer>
       <Box sx={{ borderTop: '1px solid #E5E7EB', my: 2 }} />
@@ -456,7 +581,10 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
       {/* Show by */}
       <StyledContainer>
         <StyledLabel>Quick Filter</StyledLabel>
-        {values?.groupBy === 'Teams' ? (
+        {values?.groupBy === 'Teams' ||
+        values?.groupBy === 'Organisations' ||
+        values?.groupBy === 'Resources' ||
+        values?.groupBy === 'Flat' ? (
           <RadioGroup
             name="showBy"
             value={values?.showBy || 'MyTeams'}

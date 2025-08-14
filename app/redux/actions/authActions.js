@@ -1,20 +1,28 @@
 import { updateSignup } from '../reducers/authReducer';
-import { confirmForgotPassword, confirmSignUp, forgotPassword, getUser, loginUser, logoutUser, signupUser } from './../../services/authServices';
+import {
+  confirmForgotPassword,
+  confirmSignUp,
+  forgotPassword,
+  getUser,
+  loginUser,
+  logoutUser,
+  resendConfirmationCode,
+  signupUser,
+} from '../../services/authServices.js';
 
-export const performLogin = (credentials) => async (dispatch) => {
+export const performLogin = credentials => async dispatch => {
   try {
-    await dispatch(loginUser(credentials)).unwrap(); 
+    await dispatch(loginUser(credentials)).unwrap();
   } catch (error) {
     console.log('Login failed:', error);
   }
 };
 
-export const performLogout = () => (dispatch) => {
+export const performLogout = () => dispatch => {
   dispatch(logoutUser());
 };
 
-
-export const signUp = (data, email) => async (dispatch) => {
+export const signUp = (data, email) => async dispatch => {
   try {
     const response = await dispatch(signupUser(data)).unwrap();
     if (response.status === 'ok') {
@@ -25,16 +33,15 @@ export const signUp = (data, email) => async (dispatch) => {
   }
 };
 
-export const confirmSignUpUser = (data) => async (dispatch) => {
+export const confirmSignUpUser = data => async dispatch => {
   try {
     const response = await dispatch(confirmSignUp(data)).unwrap();
-    console.log('confirm signup:', response);
   } catch (error) {
     console.error('confirm signup failed:', error);
   }
 };
 
-export const getUserData = () => async (dispatch) => {
+export const getUserData = () => async dispatch => {
   try {
     await dispatch(getUser());
   } catch (error) {
@@ -43,20 +50,35 @@ export const getUserData = () => async (dispatch) => {
 };
 
 // Forgot Password Action
-export const performForgotPassword = (email) => async (dispatch) => {
+export const performForgotPassword = email => async dispatch => {
   try {
-   await dispatch(forgotPassword(email)).unwrap();
+    await dispatch(forgotPassword(email)).unwrap();
   } catch (error) {
     console.error('Forgot password request failed:', error);
   }
 };
 
 // Confirm Forgot Password Action
-export const performResetPassword = (data) => async (dispatch) => {
+export const performResetPassword = data => async dispatch => {
   try {
     const response = await dispatch(confirmForgotPassword(data)).unwrap();
-    console.log('Password reset successful:', response);
+    return response;
   } catch (error) {
     console.error('Password reset failed:', error);
+  }
+};
+
+export const resendOtp = email => async dispatch => {
+  try {
+    const response = await dispatch(
+      resendConfirmationCode({
+        'Agentlang.Kernel.Identity/ResendConfirmationCode': {
+          Username: email,
+        },
+      })
+    ).unwrap();
+  } catch (error) {
+    console.error('OTP resend failed:', error);
+    throw error;
   }
 };

@@ -10,6 +10,8 @@ export interface Allocation {
   ResourceName: string | null;
   AllocationEntered: number;
   Project: string;
+  ActualsEntered: number;
+  Notes: string | null;
 }
 
 export interface GetAllAllocationsForPeriodPayload {
@@ -23,6 +25,8 @@ export interface AllocationGridCellData {
   allocationId: string | null;
   period: string | null;
   value: number | null;
+  actuals?: number | null; // Actuals for the cell
+  notes?: string | null; // Notes for the cell
 }
 
 export interface AllocationGridCell {
@@ -85,13 +89,18 @@ export interface AllocationGridView {
 export interface AllColumns {
   team: string[];
   project: string[];
+  portfolioName: string[];
   project_cost: string[];
+  organisationName: string[];
+  resource: string[];
+  '': string[];
 }
 
 export interface AllocationGridViewState {
   view: string | null;
   splitView: boolean;
   splitViewCurrentProject: ProjectsTableRow | null;
+  showActuals: boolean;
   loading: boolean;
   error: string | null;
   columns: AllColumns;

@@ -15,6 +15,7 @@ export interface Project {
   EndDate: string | null;
   Budget: number | null;
   Location: string | null;
+  PortfolioId: string | null;
   __parent__: string | null;
   Status: string | null;
 }

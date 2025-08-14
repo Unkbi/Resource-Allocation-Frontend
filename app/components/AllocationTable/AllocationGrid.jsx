@@ -20,6 +20,8 @@ import {
   isMyProjectsValid,
   isMyTeamsValid,
   getTeamForResource,
+  isCurrentOrPastWeek,
+  isCurrentWeek,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -56,7 +58,8 @@ import {
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
 } from '@/app/constants/constants';
-import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
+// import CustomToolbar from '../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../Toolbar/CustomAllocationToolbar';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { showToastAction } from '@/app/redux/actions/toastAction';
@@ -67,6 +70,8 @@ import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
+import { CommentTooltip } from './components/AllocationCommentTooltip';
+import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 
 export default function AllocationGrid({
   groupBy,
@@ -83,9 +88,11 @@ export default function AllocationGrid({
   columnsFilterable = true,
   type = '',
   viewId = 'main',
+  showActuals = false,
+  rowGroupingColumnMode = 'single',
 }) {
   const apiRef = useGridApiRef();
-  const { setApiRef } = useDataGrid();
+  const { setApiRef, getApiRef } = useDataGrid();
   const mainAllocationGrid = useAllocationGrid('main');
   const teamAllocationGrid = useAllocationGrid('teamAllocation');
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
@@ -109,6 +116,7 @@ export default function AllocationGrid({
   const { teams, teamsResources, teamAllocations } = useSelector(
     state => state.teams
   );
+  const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const [rowModesModel, setRowModesModel] = useState({});
   const [cellSelectionModel, setCellSelectionModel] = useState({});
@@ -235,24 +243,29 @@ export default function AllocationGrid({
     allWeeks.forEach(weekKey => {
       const period = getMondayOfWeek(weekKey, new Date());
       const value = row[weekKey];
-
       if (value && typeof value === 'object' && 'value' in value) {
         normalized[weekKey] = {
           allocationId: value.allocationId || null,
           value: value.value,
           period: period,
+          notes: value.notes || '',
+          actuals: value.actuals || null,
         };
       } else if (value !== undefined) {
         normalized[weekKey] = {
           allocationId: null,
           value,
           period,
+          notes: '',
+          actuals: null,
         };
       } else {
         normalized[weekKey] = {
           allocationId: null,
           value: null,
           period,
+          notes: '',
+          actuals: null,
         };
       }
     });
@@ -265,6 +278,12 @@ export default function AllocationGrid({
     if (apiRef.current) {
       setApiRef(viewId || 'main', apiRef.current);
     }
+
+    return () => {
+      if (getApiRef(viewId)) {
+        setApiRef(viewId + 'temp', getApiRef(viewId)); // This is to keep inSync if other views are using the same apiRef
+      }
+    };
   }, [apiRef, setApiRef, viewId]);
 
   useEffect(() => {
@@ -285,7 +304,10 @@ export default function AllocationGrid({
 
   useEffect(() => {
     try {
-      if (groupBy === 'teams' && expandRowId?.length) {
+      if (
+        (groupBy === 'teams' || groupBy === 'organisationName') &&
+        expandRowId?.length
+      ) {
         expandRowId.forEach(rowId => {
           const row = apiRef.current.getRow(rowId);
           if (row) {
@@ -382,7 +404,7 @@ export default function AllocationGrid({
     if (columnsFilterable && currentView?.ColumnsVisible && groupBy) {
       const updatedModel = {
         ...columnVisibilityModel,
-        ..._columns[groupBy === 'teams' ? 'team' : groupBy].reduce(
+        ..._columns[groupBy === 'teams' ? 'team' : groupBy]?.reduce(
           (acc, column) => {
             acc[column] = currentView.ColumnsVisible.includes(column);
             return acc;
@@ -435,7 +457,7 @@ export default function AllocationGrid({
         );
 
         const projectManagerName = projectManager
-          ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+          ? `${projectManager?.FullName}`.trim()
           : '';
 
         if (isMyProjectsValid(projectManagerName, currentView?.Filters)) {
@@ -493,7 +515,7 @@ export default function AllocationGrid({
     );
 
     const projectManagerName = projectManager
-      ? `${projectManager?.FirstName} ${projectManager?.LastName}`.trim()
+      ? `${projectManager?.FullName}`.trim()
       : '';
     if (currentView?.MyProjects) {
       const updatedFilters = getUpdatedFiltersOnMyProjectsAllProjects(
@@ -671,25 +693,60 @@ export default function AllocationGrid({
             cellClass.split(' ').includes('non-editable-darker');
 
           const value = params.formattedValue ?? '';
-
-          return showTooltip ? (
-            <Tooltip
-              title="This resource is inactive for this period. Allocation not allowed."
-              arrow
-              placement="top"
-            >
-              <span
-                style={{
-                  display: 'inline-block',
+          const cellData = params.row[params.field];
+          const notes = cellData?.notes || '';
+          const actuals = cellData?.actuals || null;
+          const period = cellData?.period;
+          const isFutureWeek =
+            period &&
+            !isCurrentWeek(parseISO(period)) &&
+            !isCurrentOrPastWeek(parseISO(period));
+          const cellContent = (() => {
+            if (showTooltip) {
+              return (
+                <Tooltip
+                  title="This resource is inactive for this period. Allocation not allowed."
+                  arrow
+                  placement="top"
+                >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '100%',
+                      cursor: 'not-allowed',
+                    }}
+                  >
+                    {'' || <>&nbsp;</>}
+                  </span>
+                </Tooltip>
+              );
+            }
+            if (isFutureWeek || !editable) {
+              return <span>{value}</span>;
+            }
+            return (
+              <Box
+                sx={{
                   width: '100%',
-                  cursor: 'not-allowed',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  justifyContent: 'center',
+                  position: 'relative',
                 }}
               >
-                {'' || <>&nbsp;</>}
-              </span>
-            </Tooltip>
-          ) : (
-            <span>{value}</span>
+                {showActuals && params.rowNode?.type !== 'group' ? (
+                  <AllocationCellWithActuals params={cellData} />
+                ) : (
+                  <span>{value}</span>
+                )}
+              </Box>
+            );
+          })();
+          return (
+            <CommentTooltip notes={notes} actuals={actuals}>
+              {cellContent}
+            </CommentTooltip>
           );
         },
       };
@@ -700,12 +757,27 @@ export default function AllocationGrid({
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
     '__row_group_by_columns_group_teams__',
+    '__row_group_by_columns_group_organisationName__',
     '__row_group_by_columns_group_resource__',
+    '__row_group_by_columns_group_project__',
+    '__row_group_by_columns_group_portfolioName__',
     ...columns.map(col => col.field),
     ...finalColumns
-      .filter(i => i.field === 'resource' && groupBy === 'project')
+      .filter(
+        i =>
+          i.field === 'resource' &&
+          (groupBy === 'project' || groupBy === 'portfolioName')
+      )
       .map(col => col.field),
-    ...finalColumns.filter(i => i.field === 'project').map(col => col.field),
+    ...finalColumns
+      .filter(
+        i =>
+          i.field === 'project' &&
+          (groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource')
+      )
+      .map(col => col.field),
   ];
 
   const getTogglableColumns = columns =>
@@ -787,6 +859,8 @@ export default function AllocationGrid({
       const deleteList = [];
       const updateList = [];
       let allUpdatedRows = [];
+      const projectOvertimeAllowed = oldRow.projectOvertimeAllowed;
+
       keys.map(key => {
         // Handle Delete Case
         if (
@@ -804,6 +878,19 @@ export default function AllocationGrid({
             Period: oldRow[key]?.period,
             AllocationEntered: null,
           });
+        }
+
+        if (!projectOvertimeAllowed && newRow[key] > 1.0) {
+          newRow[key] = oldRow[key]?.value;
+          dispatch(
+            showToastAction(
+              true,
+              `Project ${oldRow.project} does not allow overtime. Max allocation is 1.0.`,
+              'error',
+              4000
+            )
+          );
+          return;
         }
 
         // Verify Updated Values total allocation for resource is not greater than 2.0
@@ -964,6 +1051,7 @@ export default function AllocationGrid({
               allocationsUpdated,
               teams,
               teamsResources,
+              allResourcesDetail,
               projects,
               resources,
               splitView,
@@ -1076,7 +1164,11 @@ export default function AllocationGrid({
               return false;
             }
           }
-          if (groupBy === 'teams') {
+          if (
+            groupBy === 'teams' ||
+            groupBy === 'organisationName' ||
+            groupBy === 'resource'
+          ) {
             // Previously selected team
             const currentResourceSelected = apiRef.current.getRow(
               selectedCells[0].id
@@ -1104,7 +1196,9 @@ export default function AllocationGrid({
       if (Object.keys(newModel)[0].startsWith('auto-generated')) {
         if (
           apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
-          'teams'
+            'teams' ||
+          apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
+            'organisationName'
         ) {
           setCellSelectionModel({});
           return;
@@ -1196,9 +1290,29 @@ export default function AllocationGrid({
         __row_group_by_columns_group_resource__: true,
         project: true,
       },
+      organisationName: {
+        __row_group_by_columns_group_organisationName__: true,
+        __row_group_by_columns_group_resource__: true,
+        project: true,
+      },
+      resource: {
+        __row_group_by_columns_group__: true,
+        project: true,
+      },
       project: {
         resource: true,
         __row_group_by_columns_group__: true,
+      },
+      portfolioName: {
+        __row_group_by_columns_group_portfolioName__: true,
+        __row_group_by_columns_group_project__: true,
+        resource: true,
+      },
+      '': {
+        organisationName: true,
+        teams: true,
+        resource: true,
+        project: true,
       },
     };
     let updatedModel = {
@@ -1215,9 +1329,9 @@ export default function AllocationGrid({
         }, {}),
         ...updatedModel,
       };
-    } else if (groupBy === 'project') {
+    } else {
       updatedModel = {
-        ..._columns['project'].reduce((acc, column) => {
+        ..._columns[groupBy].reduce((acc, column) => {
           acc[column] = true;
           return acc;
         }, {}),
@@ -1265,13 +1379,17 @@ export default function AllocationGrid({
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}
-      onRowClick={groupBy === 'teams' ? onRowClick : () => null}
+      onRowClick={
+        groupBy === 'teams' || groupBy === 'organisationName'
+          ? onRowClick
+          : () => null
+      }
       apiRef={apiRef}
       groupBy={groupBy}
       loading={loading}
       disableRowSelectionOnClick
       initialState={initialState}
-      rowGroupingColumnMode={groupBy === 'teams' ? 'multiple' : 'single'}
+      rowGroupingColumnMode={rowGroupingColumnMode}
       columnHeaderHeight={30}
       columnGroupHeaderHeight={22}
       columnGroupingModel={generateColumnGroupingModel(
@@ -1297,7 +1415,8 @@ export default function AllocationGrid({
           allocationTheme,
           type,
           projects?.result,
-          isCellEditable
+          isCellEditable,
+          groupBy
         );
         // const editable = isCellEditable(params);
         // if (!editable) {

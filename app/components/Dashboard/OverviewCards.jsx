@@ -78,8 +78,8 @@ export default function Overview({
   }, [activeProjects, activeResources, actualsConfirmed, totalResourceCost,allocationPercentage]);
 
   return (
-    <Box mb={3} mt={3}>
-      <Grid container spacing={2} justifyContent="center" marginLeft={0}>
+    <Box m={3}>
+      <Grid container spacing={2} justifyContent="center" alignItems="center">
         {overview.map((item, idx) => (
           <Grid
             item

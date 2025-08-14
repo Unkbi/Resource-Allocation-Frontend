@@ -1,7 +1,8 @@
 'use client';
 import ProjectTable from '@/app/components/Projects/Table/ProjectTable';
-import { Box, styled } from '@mui/system';
+import { Box, display, styled } from '@mui/system';
 import {
+  Button,
   IconButton,
   Menu,
   MenuItem,
@@ -40,6 +41,10 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
 import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { parseISO } from 'date-fns';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -139,6 +144,13 @@ export default function Project() {
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
   const allResources = resources.result || [];
+  const [value, setValue] = useState('project');
+  const { portfolios } = useSelector(state => state.portfolios);
+  const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
+  const [portfolioDelete, setPortfolioDelete] = useState({
+    Id: '',
+    Name: '',
+  });
 
   useEffect(() => {
     if (!updating) {
@@ -148,14 +160,41 @@ export default function Project() {
   }, [updating]);
 
   useEffect(() => {
-    setRows(projects?.result);
-  }, [projects]);
+    if (projects?.result?.length) {
+      if (portfolios?.length) {
+        setRows(
+          projects?.result?.map(project => ({
+            ...project,
+            Portfolio: project.PortfolioId
+              ? portfolios.find(p => p.Id === project.PortfolioId)?.Name || ''
+              : '',
+          }))
+        );
+      } else {
+        setRows(projects?.result);
+      }
+    }
+  }, [projects, portfolios]);
 
   useEffect(() => {
     if (!resources?.result?.length) {
       dispatch(fetchAllResources());
     }
+    if (!portfolios?.length) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    dispatch({ type: FETCH_PORTFOLIOS });
+  }, []);
+
+  useEffect(() => {
+    setPortfolioRows(portfolios);
+  }, [portfolios]);
 
   const modifyData = data => {
     if (data) {
@@ -169,6 +208,20 @@ export default function Project() {
             ?.FullName,
         };
       });
+    }
+    return [];
+  };
+
+  const modifyPortfolioData = data => {
+    if (data) {
+      return data.map(item => ({
+        id: item.Id,
+        Id: item.Id,
+        SidebarColor: item.SidebarColor,
+        Name: item.Name,
+        Description: item.Description,
+        Status: item.Status,
+      }));
     }
     return [];
   };
@@ -214,61 +267,114 @@ export default function Project() {
     return () => clearTimeout(timeout);
   }, [projects, highlightedRowId]);
 
-  const handleConfirmDelete = async projectId => {
-    dispatch(
-      showToast({
-        open: true,
-        message: 'Checking for active allocations',
-        type: 'info',
-        position: 'bottom-left',
-        autoHideTimer: 1000,
-      })
-    );
-    try {
-      const postData = {
-        'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-          Project: projectId,
-          StartDate: '2000-01-01',
-          EndDate: '2032-01-01',
-        },
-      };
-      const response = await fetchProjectAllocationsForSaga(postData);
-      if (!response.result || response.result.length === 0) {
-        await dispatch(deleteProject(projectId)).unwrap();
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Project deleted successfully',
-            type: 'success',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-        dispatch(fetchAllProjects());
-      } else {
-        dispatch(
-          showToast({
-            open: true,
-            message: 'Cannot delete project with active allocations',
-            type: 'error',
-            position: 'bottom-left',
-            autoHideTimer: 4000,
-          })
-        );
-      }
-    } catch (error) {
+  const handleConfirmDelete = async id => {
+    if (value === 'project') {
       dispatch(
         showToast({
           open: true,
-          message: 'Failed to delete project',
-          type: 'error',
+          message: 'Checking for active allocations',
+          type: 'info',
           position: 'bottom-left',
           autoHideTimer: 1000,
         })
       );
-    } finally {
-      setDeleteDialogOpen(false); 
-      setProjectToDelete(null);
+      try {
+        const postData = {
+          'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
+            Project: id,
+            StartDate: '2000-01-01',
+            EndDate: '2032-01-01',
+          },
+        };
+        const response = await fetchProjectAllocationsForSaga(postData);
+        if (!response.result || response.result.length === 0) {
+          await dispatch(deleteProject(id)).unwrap();
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Project deleted successfully',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(fetchAllProjects());
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Cannot delete project with active allocations',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+      } catch (error) {
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to delete project',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 1000,
+          })
+        );
+      } finally {
+        setDeleteDialogOpen(false);
+        setProjectToDelete(null);
+      }
+    }
+    if (value === 'portfolio') {
+      try {
+        const { Id, Name } = portfolioDelete;
+        if (
+          projects?.result &&
+          projects?.result?.some(
+            p =>
+              p.PortfolioId === Id &&
+              !['Requested', 'Paused', 'Cancelled', 'Completed'].includes(
+                p.Status
+              )
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message:
+                'This Portfolio contains active projects. Please unassign these projects or update their statuses to inactive before proceeding.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          await dispatch({ type: 'DELETE_PORTFOLIOS', payload: id });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Portfolio deleted successfully',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch({ type: 'FETCH_PORTFOLIOS' });
+        }
+      } catch (error) {
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to delete portfolio',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 1000,
+          })
+        );
+      } finally {
+        setDeleteDialogOpen(false);
+        setPortfolioDelete({ Id: '', Name: '' });
+      }
     }
   };
   const handleCancelDelete = () => {
@@ -421,6 +527,20 @@ export default function Project() {
       minWidth: 150,
     },
     {
+      field: 'Portfolio',
+      headerName: PORTFOLIO_DISPLAY_NAME,
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        return (
+          <EllipsisNameCell
+            showAvatar={false}
+            value={params?.row?.Portfolio || ''}
+          />
+        );
+      },
+    },
+    {
       field: 'AllowOvertime',
       headerName: 'Allow Overtime',
       flex: 1,
@@ -443,7 +563,7 @@ export default function Project() {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = new Date(parseISO(params.value));
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -459,7 +579,7 @@ export default function Project() {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = new Date(parseISO(params.value));
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -555,6 +675,154 @@ export default function Project() {
     },
   ];
 
+  const portfolioColumns = [
+    {
+      field: 'Name',
+      headerName: 'Portfolio Name',
+      minWidth: 230,
+      hideable: false,
+      renderCell: params => {
+        const handleNameClick = () => {
+          handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+        };
+        {
+          params.row?.Name;
+        }
+        return (
+          <Box
+            onClick={handleNameClick}
+            sx={{
+              display: 'inline-block',
+              maxWidth: '100%',
+              color: '#152E75',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            <EllipsisNameCell showAvatar={false} value={params.value} />
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'Description',
+      headerName: 'Portfolio Description',
+      minWidth: 300,
+      renderCell: params => {
+        const description = params.value;
+        return description ? (
+          <EllipsisNameCell showAvatar={false} value={description} />
+        ) : (
+          ''
+        );
+      },
+    },
+    {
+      field: 'SidebarColor',
+      headerName: 'Sidebar Color',
+      minWidth: 130,
+      renderCell: params => {
+        const color = params.value;
+        return color ? (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '4px',
+                backgroundColor: color,
+                border: '1px solid #ccc',
+              }}
+            />
+          </Box>
+        ) : null;
+      },
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      width: 170,
+      flex: 1,
+      sortable: true,
+      filterable: true,
+      hideable: false,
+      headerAlign: 'left',
+      renderCell: params => {
+        const status = params.value;
+        return (
+          status && (
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <StatusPill status={status}>{status}</StatusPill>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      handleOpenDialog(
+                        'Edit Portfolio',
+                        'edit_portfolio',
+                        params.row
+                      );
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  <MenuItem
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setPortfolioDelete(params.row);
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </Box>
+            </Box>
+          )
+        );
+      },
+    },
+  ];
+
   const handleMenuClick = (event, id) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(id);
@@ -565,6 +833,53 @@ export default function Project() {
     setSelectedRow(null);
   };
 
+  const onChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
+  const renderTable = () => {
+    switch (value) {
+      case 'project':
+        return (
+          <ProjectTable
+            loading={loading || resourceLoading}
+            columns={columns}
+            rows={modifyData(rows)}
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
+        );
+
+      case 'portfolio':
+        return (
+          <ProjectTable
+            loading={loading || resourceLoading}
+            columns={portfolioColumns}
+            rows={modifyPortfolioData(portfolioRows)}
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
+        );
+
+      case 'businessImpact':
+        return (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          ></Box>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -573,19 +888,24 @@ export default function Project() {
         height: '100%',
       }}
     >
-      <ProjectTable
-        loading={loading || resourceLoading}
-        columns={columns}
-        rows={modifyData(rows)}
-        apiRef={apiRef}
-      />
+      {renderTable()}
       <ConfirmDialog
         open={deleteDialogOpen}
-        onConfirm={() => handleConfirmDelete(projectToDelete.Id)}
+        onConfirm={() =>
+          handleConfirmDelete(
+            value === 'project' ? projectToDelete?.Id : portfolioDelete?.Id
+          )
+        }
         onCancel={handleCancelDelete}
-        title="Are you sure you want to delete this project?"
+        title={
+          value === 'project'
+            ? 'Are you sure you want to delete this project?'
+            : 'Are you sure you want to delete this portfolio?'
+        }
       >
-        This will permanently delete the project.
+        {value === 'project'
+          ? 'This will permanently delete the project.'
+          : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
       </ConfirmDialog>
     </Box>
   );

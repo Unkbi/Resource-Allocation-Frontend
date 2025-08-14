@@ -17,6 +17,7 @@ import {
   endOfWeek,
   endOfISOWeek,
   isValid,
+  isBefore,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -627,6 +628,13 @@ export function isCurrentWeek(date) {
   const startOfCurrentWeek = startOfISOWeek(today, { weekStartsOn: 1 });
   const startOfDateWeek = startOfISOWeek(date, { weekStartsOn: 1 });
   return isSameWeek(startOfCurrentWeek, startOfDateWeek, { weekStartsOn: 1 });
+}
+
+export function isCurrentOrPastWeek(date) {
+  const today = new Date();
+  return (
+    isCurrentWeek(date) || isBefore(startOfISOWeek(date), startOfISOWeek(today))
+  );
 }
 
 export function formateToFloat(value) {

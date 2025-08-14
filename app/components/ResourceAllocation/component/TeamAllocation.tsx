@@ -10,17 +10,15 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
-import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+// import CustomToolbar from '../../Toolbar/CustomToolbarUpdated';
+import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import {
-  getCombinedAllocation,
-  injectBlankRows,
-  normalizeRow,
-} from '@/app/utils/allocationUtils';
+import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
+import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -59,6 +57,9 @@ export default function TeamAllocation({
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
   );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   ) as {
@@ -66,7 +67,7 @@ export default function TeamAllocation({
     loading?: boolean;
     error?: string;
   };
-  const { currentView } = useSelector(
+  const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
   const { allAllocations, loading, dataProcessing } = useSelector(
@@ -79,37 +80,45 @@ export default function TeamAllocation({
   } = useAllocationGrid('teamAllocation');
   const { getAllRows: getAllProjectViewRows } =
     useAllocationGrid('projectAllocation');
+  const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
     if (ready) {
       let filteredResources;
-      if (!loading && getAllProjectViewRows().length > 0) {
-        filteredResources = removeResourcesWithNoTeams(
-          injectBlankRows(
-            getAllProjectViewRows() as AllAllocations[],
-            teams?.result || [],
-            // @ts-ignore
-            teamsResources,
-            startDate,
-            endDate
-          )
-        );
-      } else if (loading && allAllocations) {
-        filteredResources = removeResourcesWithNoTeams(allAllocations || []);
-        dispatch(setLoading(false));
+      const allTempRows = getAllRowsForView('teamAllocationtemp');
+      if (!loading && allTempRows?.length > 0) {
+        setRows(allTempRows || []);
+        setRowsForView('teamAllocationtemp', []);
+      } else {
+        if (!loading && getAllProjectViewRows().length > 0) {
+          filteredResources = removeResourcesWithNoTeams(
+            injectBlankRows(
+              getAllProjectViewRows() as AllAllocations[],
+              teams?.result || [],
+              // @ts-ignore
+              teamsResources,
+              allResourcesDetail,
+              startDate,
+              endDate
+            )
+          );
+        } else if (allAllocations) {
+          filteredResources = removeResourcesWithNoTeams(allAllocations || []);
+          dispatch(setLoading(false));
+        }
+
+        const formattedResources = filteredResources?.map(allocation => ({
+          ...allocation,
+          totalEffort: calculateTotalEffort(normalizeRow(allocation)),
+          hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
+          teamAllocationManager: getAllocationManagerFromPath(
+            allocation?.teamAllocationManager,
+            _resources?.result || []
+          )?.FullName,
+        }));
+
+        setRows(formattedResources || []);
       }
-
-      const formattedResources = filteredResources?.map(allocation => ({
-        ...allocation,
-        totalEffort: calculateTotalEffort(normalizeRow(allocation)),
-        hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
-        teamAllocationManager: getAllocationManagerFromPath(
-          allocation?.teamAllocationManager,
-          _resources?.result || []
-        )?.FullName,
-      }));
-
-      setRows(formattedResources || []);
     }
   }, [ready, allAllocations]);
 
@@ -188,7 +197,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
@@ -203,7 +212,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -216,7 +225,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -229,7 +238,7 @@ export default function TeamAllocation({
       width: 100,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -242,7 +251,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -255,7 +264,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -268,7 +277,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -281,7 +290,7 @@ export default function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -294,7 +303,7 @@ export default function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -307,7 +316,7 @@ export default function TeamAllocation({
       width: 190,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -320,7 +329,7 @@ export default function TeamAllocation({
       width: 195,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -335,7 +344,7 @@ export default function TeamAllocation({
       width: 260,
       type: 'string',
       isEditable: 'false',
-      sortable: 'false',
+      sortable: false,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
@@ -369,7 +378,7 @@ export default function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team ? <EllipsisNameCell value={team?.Status ?? 'N/A'} /> : null;
+        return team ? <EllipsisNameCell value={team?.Status || ''} /> : null;
       },
     },
     {
@@ -542,7 +551,7 @@ export default function TeamAllocation({
               getAllocationManagerFromPath(
                 team?.AllocationManager,
                 _resources?.result || []
-              )?.FullName ?? 'N/A'
+              )?.FullName || ''
             }
           />
         ) : null;
@@ -575,7 +584,9 @@ export default function TeamAllocation({
 
   return (
     <>
-      <Box sx={{ height: 'calc(100vh - 54px)', width: '100%' }}>
+      <Box
+        sx={{ height: 'calc(100vh - 31px)', width: '100%', paddingTop: '0px' }}
+      >
         <AllocationGrid
           loading={dataProcessing}
           groupBy="teams"
@@ -625,6 +636,8 @@ export default function TeamAllocation({
           }}
           NoRowsOverlay={NoRowsOverlay}
           viewId="teamAllocation"
+          showActuals={showActuals}
+          rowGroupingColumnMode="multiple"
         />
         {!allAllocations && !dataProcessing && (
           <div

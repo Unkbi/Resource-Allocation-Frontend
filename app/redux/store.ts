@@ -19,6 +19,8 @@ import highlightedRowReducer from './reducers/highlightedRowReducer';
 import dashboardReducer from './reducers/dashboardReducer';
 import employeeRatesReducer from './reducers/employeeRatesReducer';
 import allResourcesDetailReducer from './reducers/allResourcesDetailReducer';
+import portfolioReducer from './reducers/portfolioReducer';
+import rbacReducer from './reducers/rbacReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -42,7 +44,9 @@ export const makeStore = () => {
       allocationsCost: allocationsCostReducer,
       dashboard: dashboardReducer,
       employeeRates: employeeRatesReducer,
-      allResourcesDetail:allResourcesDetailReducer,
+      allResourcesDetail: allResourcesDetailReducer,
+      portfolios: portfolioReducer,
+      rbac: rbacReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({
