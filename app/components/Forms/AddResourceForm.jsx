@@ -40,7 +40,6 @@ import {
   getResourceIdByEmail,
 } from '@/app/utils/allocationUtils';
 import { addDays, addWeeks, format } from 'date-fns';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { parseISO } from 'date-fns';
 import StyledAutocomplete from '../Select/Autocomplete';
 
@@ -88,7 +87,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
 
   const resourceListOptions =
     resources &&
-    resources?.result?.map(resource => {
+    resources?.map(resource => {
       return { value: resource.Id, label: resource.FullName };
     });
   const organisationListOptions =
@@ -214,7 +213,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     formikProps.setFieldValue('EndDate', formattedEndDate);
     if (formType !== 'edit_resource') return;
     try {
-      const resourceId = getResourceIdByEmail(resources.result, values.Email);
+      const resourceId = getResourceIdByEmail(resources, values.Email);
       if (!resourceId) {
         console.error('Resource ID not found for email:', values.Email);
         return;
@@ -246,7 +245,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const formattedEndDate = dayjs(formikProps.values.EndDate).format(
       'YYYY-MM-DD'
     );
-    const resourceId = getResourceIdByEmail(resources.result, values.Email);
+    const resourceId = getResourceIdByEmail(resources, values.Email);
     if (!resourceId) {
       console.error('Resource ID not found for email:', values.Email);
       return;

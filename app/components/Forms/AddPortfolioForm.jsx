@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';

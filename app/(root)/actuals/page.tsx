@@ -18,7 +18,6 @@ import {
   getUserIdFromEmail,
   isCurrentWeek,
 } from '@/app/utils/common';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import {
   setActualAllocationsStatus,
   setCalendarDate,
@@ -32,6 +31,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { getUserAttributes } from '@/app/utils/authUtils';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 export default function ActualsPage() {
   const dispatch: AppDispatch = useDispatch();
@@ -70,17 +70,8 @@ export default function ActualsPage() {
   };
 
   const handleConfirmed = () => {
-    if (
-      projects &&
-      resources &&
-      'result' in resources &&
-      user &&
-      email
-    ) {
-      const userId = getUserIdFromEmail(
-        ('result' in resources && resources?.result) || [],
-        email
-      );
+    if (projects && resources && user && email) {
+      const userId = getUserIdFromEmail(resources || [], email);
 
       const allData = apiRef.current
         .getAllRowIds()
@@ -232,11 +223,8 @@ export default function ActualsPage() {
   };
 
   useEffect(() => {
-    if (resources && 'result' in resources && user && email) {
-      const userId = getUserIdFromEmail(
-        ('result' in resources && resources?.result) || [],
-        email
-      );
+    if (resources && user && email) {
+      const userId = getUserIdFromEmail(resources || [], email);
       dispatch({
         type: GET_ACTUAL_ALLOCATIONS,
         payload: {
@@ -271,8 +259,8 @@ export default function ActualsPage() {
 
   useEffect(() => {
     // @ts-ignore
-    if (!resources?.result?.length) {
-      dispatch(fetchAllResources());
+    if (!resources?.length) {
+      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     }
     if (!projects?.length) {
       dispatch(fetchAllProjects());

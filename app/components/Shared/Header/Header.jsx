@@ -25,7 +25,6 @@ import CloseIcon from '@mui/icons-material/Close'; // Close icon import
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import Skeleton from '@mui/material/Skeleton';
 import {
   COMPANY_DEFAULT_VIEW,
@@ -34,6 +33,7 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { getUserAttributes } from '@/app/utils/authUtils';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const MainAppBar = styled(AppBar, {
   shouldForwardProp: prop => prop !== 'sidebarExpanded',
@@ -115,7 +115,10 @@ const Header = ({ sidebarExpanded }) => {
       dispatch(fetchAllProjects());
     }
     if (resources === null) {
-      dispatch(fetchAllResources());
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
     }
   }, [projects, resources]);
 

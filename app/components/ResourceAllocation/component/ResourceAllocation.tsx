@@ -61,11 +61,7 @@ export default function ResourceAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -112,7 +108,7 @@ export default function ResourceAllocation({
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
-            _resources?.result || []
+            _resources || []
           )?.FullName,
         }));
 
@@ -140,7 +136,7 @@ export default function ResourceAllocation({
       params.rowNode.groupingField === 'resource'
     ) {
       const resourceName = params.rowNode.groupingKey;
-      const resource = _resources?.result?.find(
+      const resource = (_resources as Resource[])?.find(
         r => r.FullName === resourceName
       );
       return resource || null;
@@ -536,18 +532,20 @@ export default function ResourceAllocation({
     return allocations.filter(
       allocation =>
         allocation.teams &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.EndDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.EndDate
           ? new Date(
-              _resources?.result?.find(
+              (_resources as Resource[])?.find(
                 res => res.Id === allocation.resourceId
               )?.EndDate
             ) >= new Date(startDate)
           : true) &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.StartDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.StartDate
           ? new Date(
-              _resources?.result?.find(
+              (_resources as Resource[])?.find(
                 res => res.Id === allocation.resourceId
               )?.StartDate
             ) <= new Date(endDate)

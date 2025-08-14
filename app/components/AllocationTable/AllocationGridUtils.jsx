@@ -80,13 +80,9 @@ const CellWithMenu = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteParams, setDeleteParams] = useState(null);
   const allTeams = useSelector(state => state.teams.teams || []);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allResources = useSelector(state => state.resources.resources || []);
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
-  const allProjects = useSelector(
-    state => state.projects.projects || []
-  );
+  const allProjects = useSelector(state => state.projects.projects || []);
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
@@ -492,9 +488,7 @@ export const getFinalColumns = (
   isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allResources = useSelector(state => state.resources.resources || []);
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -668,8 +662,8 @@ export const getFinalColumns = (
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
-                  setSelectedTeam(params.row.teams),
-                    setSelectedResourceId(params.row.resourceId);
+                  (setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId));
                 }}
               />
             );
@@ -813,8 +807,8 @@ export const getFinalColumns = (
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
-                  setSelectedTeam(params.row.teams),
-                    setSelectedResourceId(params.row.resourceId);
+                  (setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId));
                 }}
               />
             );

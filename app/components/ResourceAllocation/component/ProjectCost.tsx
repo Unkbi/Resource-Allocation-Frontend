@@ -43,7 +43,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
   // @ts-ignore
-  const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
+  const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
   );
   const { setRows, ready } = useAllocationGrid('main');
@@ -58,7 +58,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
         hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
         teamAllocationManager: getAllocationManagerFromPath(
           allocation?.teamAllocationManager,
-          _resources?.result || []
+          _resources || []
         )?.FullName,
       }));
       setRows(formattedResources || []);
@@ -71,7 +71,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       payload: {
         teams: teams,
         projects: projects,
-        resources: resources?.result,
+        resources: resources,
         startDate: startDate,
         endDate: endDate,
       },
@@ -80,11 +80,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -116,8 +112,10 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     const isGridTreeNode = 'children' in rowNode;
     if (isGridTreeNode && rowNode.children) return null;
     const resourceId = params.row.resourceId;
-    if (_resources.result && resourceId) {
-      return _resources.result.find(res => res.Id === resourceId) || null;
+    if (_resources && resourceId) {
+      return (
+        (_resources as Resource[]).find(res => res.Id === resourceId) || null
+      );
     }
     return null;
   };

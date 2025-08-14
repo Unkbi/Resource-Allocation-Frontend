@@ -1,4 +1,3 @@
-import { ApiResponse } from '.';
 import { AllocationGridCell } from './allocationTypes';
 
 export interface Project {
