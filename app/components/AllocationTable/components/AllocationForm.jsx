@@ -26,6 +26,7 @@ import {
   addRatesValidationSchema,
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
+  addOrganizationValidationSchema,
   addRoleValidationSchema,
   assignRoleValidationSchema,
   addPrivilegeValidationSchema,
@@ -87,7 +88,11 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
-import { createTeam, updateTeam } from '@/app/services/teamServices';
+import {
+  createTeam,
+  updateTeam,
+  updateOrganization,
+} from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import AddTeamForm from '../../Forms/AddTeamForm';
@@ -108,6 +113,14 @@ import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
+import AddOrganizationForm from '../../Forms/addOrganizationForm';
+import {
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+  FETCH_ORGANISATIONS,
+  UPDATE_ORGANISATION,
+} from '@/app/redux/actions/organizationsAction';
+
 import AddRoleForm from '../../Forms/AddRoleForm';
 import AssignRoleForm from '../../Forms/AssignRoleForm';
 import {
@@ -118,6 +131,7 @@ import {
   UPDATE_PRIVILEGE,
   UPDATE_PRIVILEGEASSIGNMENT,
 } from '@/app/redux/actions/rbacActions';
+import { fetchAllOrganisations } from '@/app/services/organisationServices';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
@@ -360,6 +374,7 @@ const AllocationForm = () => {
   const [HistoryData, setHistoryData] = useState([]);
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
+  const { organizations } = useSelector(state => state.organisations);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -377,6 +392,7 @@ const AllocationForm = () => {
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
   const topProjectAllocationGrid = useAllocationGrid('topProject');
   const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
+
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
@@ -445,6 +461,8 @@ const AllocationForm = () => {
         return assignPrivilegeValidationSchema;
       case 'edit_privilege_assignment':
         return assignPrivilegeValidationSchema;
+      case 'add_organization':
+        return addOrganizationValidationSchema(organizations);
       default:
         return null;
     }
@@ -481,8 +499,8 @@ const AllocationForm = () => {
     );
   };
 
-  const handleOnAdd = resources => {
-    const rowIds = resources?.reduce((acc, resource) => {
+  const handleOnAdd = (resources, projects = []) => {
+    let rowIds = resources?.reduce((acc, resource) => {
       const organisation = allResourcesDetail.find(
         r => r.Resource.Id === resource.Id
       )?.Organization;
@@ -492,6 +510,15 @@ const AllocationForm = () => {
         `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
       ];
     }, []);
+    rowIds = projects.reduce((acc, project) => {
+      const portfolio = portfolios.find(p => p.Id === project.PortfolioId) ?? {
+        Name: 'zzzzz',
+      };
+      return [
+        ...acc,
+        `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`,
+      ];
+    }, rowIds);
     dispatch(setExpandRowId(rowIds));
   };
 
@@ -1295,6 +1322,7 @@ const AllocationForm = () => {
                   teams,
                   teamsResources,
                   allResourcesDetail,
+                  portfolios,
                   projects,
                   resources,
                   splitView,
@@ -1407,7 +1435,7 @@ const AllocationForm = () => {
                   )
                 );
               }
-              handleOnAdd(new_resources);
+              handleOnAdd(new_resources, filteredProjects);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);
             }
           );
@@ -1917,7 +1945,6 @@ const AllocationForm = () => {
         postData = {
           ...cleanedValues,
         };
-
         new Promise((resolve, reject) => {
           dispatch({
             type: 'CREATE_PORTFOLIOS',
@@ -1955,7 +1982,112 @@ const AllocationForm = () => {
           .finally(() => {
             dispatch(closeDialog());
           });
+        break;
+      case 'add_organization':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
 
+        postData = {
+          ...cleanedValues,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_ORGANISATION,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Organization added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
+          })
+          .catch(error => {
+            console.error('Failed to add organization:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add organization.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+        break;
+      case 'edit_organization':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const postData = {
+          'ResourceAllocation.Core/Organization': {
+            Name: cleanedValues.Name?.trim(),
+            Status: cleanedValues.Status,
+          },
+        };
+        try {
+          const result = await dispatch(
+            updateOrganization({
+              postData,
+              organizationId: initialData.Id,
+            })
+          );
+
+          dispatch(setHighlightedRowId(initialData.Id));
+
+          if (result.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update organization.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
+
+          const updated = result?.payload?.result;
+          dispatch(setHighlightedRowId(updated?.Id || updated?.__Id__));
+          dispatch({ type: FETCH_ORGANISATIONS });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Organization updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+        } catch (e) {
+          console.error('Failed to update organization:', e);
+        }
         break;
 
       case 'edit_portfolio': {
@@ -2791,6 +2923,29 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+
+      case 'add_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+
       case 'add_role':
         return (
           <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />

@@ -43,6 +43,8 @@ export * from './rbacTypes';
 //Location-settings related types
 export * from './locationTypes';
 
+export * from './organisationTypes';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;

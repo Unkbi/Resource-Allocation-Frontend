@@ -46,6 +46,8 @@ import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
 
+import { CREATE_ORGANISATION, DELETE_ORGANISATION, UPDATE_ORGANISATION } from '@/app/redux/actions/organizationsAction';
+
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
   alignItems: 'center',
@@ -132,6 +134,20 @@ const AddAllocationIcon = () => (
 export default function Project() {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
+
+  useEffect(() => {
+  
+  new Promise((resolve, reject) => {
+  })
+    .then((res) => {
+      console.log('✅ Organisation created successfully:', res);
+    })
+    .catch((err) => {
+      console.error('❌ Failed to create organisation:', err);
+    });
+}, [dispatch]);
+
+
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
   const { resources, loading: resourceLoading } = useSelector(

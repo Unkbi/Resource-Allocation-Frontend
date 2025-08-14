@@ -5,9 +5,8 @@ import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
-import StyledAutocomplete from '../Select/Autocomplete';
 
-const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
+const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
@@ -41,26 +40,24 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
   }, []);
 
   useEffect(() => {
-    if (initialData) {
-      const rowData = {
-        Name: initialData.Team || '',
-        AllocationManager:
-          resources.result.find(
-            res => res.__path__ === initialData.AllocationManager
-          )?.__path__ || '', 
-        Status: initialData.Status || 'Active',
-      };
+  if (initialData) {
+    const normalizedData = {
+      Id: initialData.id || '',
+      Name: initialData.Name || '',
+      Status: initialData.Status || 'Active',
+      // add other fields as needed
+    };
+    setFormValue(normalizedData);
+    resetForm({ values: normalizedData });
+    setTouched({});
+  }
+}, [initialData, resources]);
 
-      setFormValue(rowData);
-      resetForm({ values: rowData });
-      setTouched({});
-    }
-  }, [initialData, resources]);
 
   return (
     <Box>
       <StyledLabel>
-        Team Name <span style={{ color: 'red' }}>*</span>
+        Organization Name <span style={{ color: 'red' }}>*</span>
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
@@ -78,35 +75,23 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
 
-      <Box sx={{ pb: 2 }}>
-        <StyledLabel sx={{ flex: 1 }}>
-          Team Allocation Manager
-        </StyledLabel>
-        <StyledAutocomplete
-          name="AllocationManager"
-          label="Team Allocation Manager"
-          options={resourceListOptions}
-          value={values.AllocationManager || ''}
-          formikProps={formikProps} 
-          fullWidth
-        />
-      </Box>
-
       <Box sx={{ flex: 1 }}>
         <StyledLabel>
           Status <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <StyledAutocomplete
+        <CustomSelect
           name="Status"
-          label="Status"
           options={statusOptions}
           value={values.Status || ''}
-          formikProps={formikProps}
-          fullWidth
+          onChange={handleChange}
+          onBlur={handleBlur}
+          width="100%"
+          error={touched.Status && Boolean(errors.Status)}
+          helperText={errors.Status}
         />
       </Box>
     </Box>
   );
 };
 
-export default AddTeamForm;
+export default AddOrganizationForm;
