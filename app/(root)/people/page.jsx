@@ -1202,7 +1202,7 @@ export default function Resources() {
             rows={
               employeeRates?.map(emp => ({
                 ...emp,
-                id: emp.__Id__,
+                id: emp.Id,
               })) || []
             }
             apiRef={apiRef}

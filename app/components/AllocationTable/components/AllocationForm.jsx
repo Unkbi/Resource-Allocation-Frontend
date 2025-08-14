@@ -1794,7 +1794,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response?.Id));
+            dispatch(setHighlightedRowId(id));
           })
           .catch(error => {
             console.error('Failed to add rate:', error);
@@ -1852,7 +1852,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.Id));
+            dispatch(setHighlightedRowId(response?.[0]?.Id));
           })
           .catch(error => {
             console.error('Failed to update rate:', error);
