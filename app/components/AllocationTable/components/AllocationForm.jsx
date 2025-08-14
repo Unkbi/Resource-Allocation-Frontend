@@ -26,7 +26,7 @@ import {
   addRatesValidationSchema,
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
-  addOrganizationValidationSchema
+  addOrganizationValidationSchema,
   addRoleValidationSchema,
   assignRoleValidationSchema,
   addPrivilegeValidationSchema,
@@ -110,8 +110,10 @@ import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 import AddOrganizationForm from '../../Forms/addOrganization';
-import { CREATE_ORGANISATION, DELETE_ORGANISATION } from '@/app/redux/actions/organizationsAction';
-import { type } from 'os';
+import {
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+} from '@/app/redux/actions/organizationsAction';
 
 import AddRoleForm from '../../Forms/AddRoleForm';
 import AssignRoleForm from '../../Forms/AssignRoleForm';
@@ -365,7 +367,7 @@ const AllocationForm = () => {
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
   const topProjectAllocationGrid = useAllocationGrid('topProject');
   const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
-  
+
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
@@ -418,7 +420,7 @@ const AllocationForm = () => {
         return addPortfolioValidationSchema(portfolios);
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios, initialData.Name || '');
-            case 'add_role':
+      case 'add_role':
         return addRoleValidationSchema;
       case 'edit_role':
         return addRoleValidationSchema;
@@ -536,7 +538,7 @@ const AllocationForm = () => {
   const handleSubmit = async (
     values,
     { setSubmitting, setErrors, validateForm }
-    ) => {
+  ) => {
     const errors = await validateForm(values);
     if (Object.keys(errors).length > 0) {
       setErrors(errors);
@@ -1957,52 +1959,52 @@ const AllocationForm = () => {
           });
 
       case 'add_organization':
-      Object.keys(cleanedValues).forEach(key => {
-        if (cleanedValues[key] === '') {
-          cleanedValues[key] = null;
-        }
-      });
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
 
-          postData = {
-            ...cleanedValues,
-          };
-          new Promise((resolve, reject) => {
-            dispatch({
-              type: CREATE_ORGANISATION,
-              payload: {
-                postData,
-                resolve,
-                reject,
-              },
-            });
+        postData = {
+          ...cleanedValues,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_ORGANISATION,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Organization added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response.result.__Id__));
           })
-            .then(response => {
-              dispatch(
-                showToast({
-                  open: true,
-                  message: 'Organization added successfully.',
-                  type: 'success',
-                  position: 'bottom-left',
-                  autoHideTimer: 4000,
-                })
-              );
-              dispatch(setHighlightedRowId(response.result.__Id__));
-            })
-            .catch(error => {
-              console.error('Failed to add organization:', error);
-              dispatch(
-                showToast({
-                  open: true,
-                  message: 'Failed to add organization.',
-                  type: 'error',
-                  position: 'bottom-left',
-                  autoHideTimer: 4000,
-                })
-              );
-            })
-            .finally(() => {
-              dispatch(closeDialog());
-            });
+          .catch(error => {
+            console.error('Failed to add organization:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add organization.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
 
         break;
 
@@ -2825,16 +2827,15 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
-      
+
       case 'add_organization':
         return (
           <AddOrganizationForm
             formikProps={formikProps}
             setFormValue={setFormValue}
-      />
+          />
         );
 
-      
       case 'add_role':
         return (
           <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />
