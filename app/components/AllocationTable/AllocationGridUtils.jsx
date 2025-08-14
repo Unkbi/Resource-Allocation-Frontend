@@ -334,16 +334,16 @@ const CellWithMenu = ({
   };
 
   const menuItems = [
-    {
-      label: 'Clone',
-      icon: <ContentCopyIcon fontSize="small" />,
-      func: () => handleCloneClick(params),
-    },
-    {
-      label: 'Transfer',
-      icon: <SwapHorizIcon fontSize="small" />,
-      func: () => handleTranferClick(params),
-    },
+    // {
+    //   label: 'Clone',
+    //   icon: <ContentCopyIcon fontSize="small" />,
+    //   func: () => handleCloneClick(params),
+    // },
+    // {
+    //   label: 'Transfer',
+    //   icon: <SwapHorizIcon fontSize="small" />,
+    //   func: () => handleTranferClick(params),
+    // },
     {
       label: 'History',
       icon: <HistoryIcon fontSize="small" />,
@@ -669,8 +669,8 @@ export const getFinalColumns = (
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
-                  setSelectedTeam(params.row.teams),
-                    setSelectedResourceId(params.row.resourceId);
+                  (setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId));
                 }}
               />
             );
@@ -814,8 +814,8 @@ export const getFinalColumns = (
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
-                  setSelectedTeam(params.row.teams),
-                    setSelectedResourceId(params.row.resourceId);
+                  (setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId));
                 }}
               />
             );
@@ -951,21 +951,21 @@ export const getFinalColumns = (
                 handleOpenHistory={handleOpenHistory}
               >
                 <EllipsisNameCell
-                value={params.value}
-                showAddIcon={false}
-                isFormatWithK={isFormatWithK}
-                showAvatar={false}
-              />
+                  value={params.value}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                  showAvatar={false}
+                />
               </CellWithMenu>
             );
           }
           const projects_set = [
-          ...new Set(
-            params?.rowNode?.children?.map(
-              child => params.api.getRow(child)?.project
-            )
-          ),
-        ].filter(Boolean);
+            ...new Set(
+              params?.rowNode?.children?.map(
+                child => params.api.getRow(child)?.project
+              )
+            ),
+          ].filter(Boolean);
 
           if (projects_set.length > 1) {
             const firstProject = projects_set?.[0];
@@ -1007,11 +1007,11 @@ export const getFinalColumns = (
             );
           }
           return projects_set.length ? (
-           <EllipsisNameCell
-            value={projects_set[0]}
-            showAddIcon={false}
-            showAvatar={false}
-          />
+            <EllipsisNameCell
+              value={projects_set[0]}
+              showAddIcon={false}
+              showAvatar={false}
+            />
           ) : null;
         },
       },
@@ -1029,14 +1029,14 @@ export const getFinalColumns = (
           const isParent = rowNode?.children?.length;
           const isGroupExpanded = rowNode?.childrenExpanded;
 
-        if (isParent) {
-          const resources_set = [
-            ...new Set(
-              rowNode.children?.map(
-                child => params.api.getRow(child)?.resource || ''
-              )
-            ),
-          ].filter(Boolean);
+          if (isParent) {
+            const resources_set = [
+              ...new Set(
+                rowNode.children?.map(
+                  child => params.api.getRow(child)?.resource || ''
+                )
+              ),
+            ].filter(Boolean);
 
             if (resources_set.length > 1) {
               const firstResource = resources_set[0];
@@ -1052,12 +1052,12 @@ export const getFinalColumns = (
                   }}
                 >
                   {!isGroupExpanded && (
-                  <EllipsisNameCell
-                    value={firstResource}
-                    showAddIcon={false}
-                    isFormatWithK={isFormatWithK}
-                    showAvatar={true} 
-                  />
+                    <EllipsisNameCell
+                      value={firstResource}
+                      showAddIcon={false}
+                      isFormatWithK={isFormatWithK}
+                      showAvatar={true}
+                    />
                   )}
                   {!isGroupExpanded && (
                     <span
@@ -1076,7 +1076,7 @@ export const getFinalColumns = (
                   )}
                 </div>
               );
-            }else if(resources_set.length === 1) {
+            } else if (resources_set.length === 1) {
               const firstResource = resources_set[0];
               return !isGroupExpanded ? (
                 <EllipsisNameCell
@@ -1092,7 +1092,7 @@ export const getFinalColumns = (
                 value={resources_set[0]}
                 showAddIcon={false}
                 isFormatWithK={isFormatWithK}
-              showAvatar={true} 
+                showAvatar={true}
               />
             ) : null;
           }
@@ -1107,14 +1107,14 @@ export const getFinalColumns = (
                   handleTranferClick={handleTranferClick}
                   isFormatWithK={isFormatWithK}
                   handleOpenHistory={handleOpenHistory}
-              >
-                <EllipsisNameCell
-                  value={value}
-                  showAddIcon={false}
-                  isFormatWithK={isFormatWithK}
-                  showAvatar={true}
-                />
-              </CellWithMenu>
+                >
+                  <EllipsisNameCell
+                    value={value}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                    showAvatar={true}
+                  />
+                </CellWithMenu>
                 {allocationsCount > 1 && (
                   <span
                     style={{
