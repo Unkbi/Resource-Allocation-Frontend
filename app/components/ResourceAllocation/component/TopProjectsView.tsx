@@ -74,6 +74,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -84,6 +85,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -104,6 +106,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
     },
     {
       field: 'projectLocation',
@@ -123,6 +126,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -133,6 +137,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -153,6 +158,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {
@@ -173,6 +179,7 @@ export default function TopProjectsView({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
+      sortable: false,
       primaryColumn: true,
     },
     {

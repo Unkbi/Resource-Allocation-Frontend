@@ -42,6 +42,7 @@ import {
 import { addDays, addWeeks, format } from 'date-fns';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { parseISO } from 'date-fns';
+import StyledAutocomplete from '../Select/Autocomplete';
 
 const warningTextStyle = {
   color: '#B44536',
@@ -165,7 +166,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     };
 
     loadAndSetForm();
-  }, [initialData?.Id]);
+  }, [initialData?.Id, organisations, teams]);
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -190,8 +191,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
 
   useEffect(() => {
     if (!organisations || organisations.length === 0) {
-      //dispatched Fetch when add resources is opened
-      // why are we fetching organisations here? 
       dispatch({
         type: FETCH_ORGANISATIONS,
         payload: {},
@@ -448,16 +447,14 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledLabel>
             Organization <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
-          <CustomSelect
+          <StyledAutocomplete
             name="Organisation"
-            width={'100%'}
+            label="Organization"
             placeholder="Enter organization"
             value={values.Organisation || ''}
             options={organisationListOptions}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={touched.Organisation && Boolean(errors.Organisation)}
-            helperText={touched.Organisation && errors.Organisation}
+            formikProps={formikProps}
+            fullWidth
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -511,24 +508,23 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledLabel>
             Resource Type <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
-          <CustomSelect
+          <StyledAutocomplete
             name="Type"
-            options={typeOptions}
-            width={'100%'}
+            label="Type"
+            placeholder="Select type"
             value={values.Type || ''}
-            onChange={e => {
+            options={typeOptions}
+            formikProps={formikProps}
+            fullWidth
+            onChange={(event, newValue) => {
               if (
-                e.target.value !== 'Contractor - FT' ||
-                e.target.value !== 'Contractor - PT'
+                newValue !== 'Contractor - FT' &&
+                newValue !== 'Contractor - PT'
               ) {
                 formikProps.setFieldValue('ContractorHourlyRate', null);
                 formikProps.setFieldValue('AverageWeeklyHours', null);
               }
-              handleChange(e);
             }}
-            onBlur={handleBlur}
-            error={touched.Type && Boolean(errors.Type)}
-            helperText={formikProps.errors.Type}
           />
         </Box>
       </Box>
@@ -603,31 +599,27 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <StyledLabel sx={{ flex: 1 }}>
           Team <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <CustomSelect
+        <StyledAutocomplete
           name="Team"
+          label="Team"
+          placeholder="Select team"
           options={teamListOptions}
           value={values.Team || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          width={'100%'}
-          error={touched.Team && Boolean(errors.Team)}
-          helperText={formikProps.errors.Team}
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel sx={{ flex: 1 }}>
-          Manager <span style={{ color: 'red' }}>*</span>
-        </StyledLabel>
-        <CustomSelect
+        <StyledLabel sx={{ flex: 1 }}>Manager</StyledLabel>
+        <StyledAutocomplete
           name="Manager"
+          label="Manager"
+          placeholder="Select manager"
           options={resourceListOptions}
           value={values.Manager || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          width={'100%'}
-          error={touched.Manager && Boolean(errors.Manager)}
-          helperText={formikProps.errors.Manager}
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
 

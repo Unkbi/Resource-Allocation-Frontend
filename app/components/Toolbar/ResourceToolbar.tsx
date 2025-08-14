@@ -13,10 +13,10 @@ const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'] as const;
 
 interface ResourceToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
-  value: 'resource' | 'teams' | 'rates'| 'organizations';
+  value: 'resource' | 'teams' | 'rates' | 'organizations';
   onChange: (
     event: SyntheticEvent,
-    newValue: 'resource' | 'teams' | 'rates'| 'organizations'
+    newValue: 'resource' | 'teams' | 'rates' | 'organizations'
   ) => void;
 }
 
@@ -130,11 +130,9 @@ const ResourceToolbar = ({
 }: ResourceToolbarProps) => {
   const dispatch = useDispatch();
 
-console.log('Current tab value:', value);
-if (!VALID_TABS.includes(value)) {
+  if (!VALID_TABS.includes(value)) {
     return null; // or a fallback UI
-  } 
-
+  }
 
   const handleAddRate = () => {
     dispatch(
@@ -147,7 +145,6 @@ if (!VALID_TABS.includes(value)) {
       })
     );
   };
-  
 
   return (
     <CommonToolbar>
@@ -182,7 +179,11 @@ if (!VALID_TABS.includes(value)) {
           >
             <Tab value="resource" label="Resources" sx={tabTypographyStyle} />
             <Tab value="teams" label="Teams" sx={tabTypographyStyle} />
-            <Tab value="organizations" label="Organizations" sx={tabTypographyStyle} />
+            <Tab
+              value="organizations"
+              label="Organizations"
+              sx={tabTypographyStyle}
+            />
             <Tab value="rates" label="Rates" sx={tabTypographyStyle} />
           </Tabs>
         </Box>

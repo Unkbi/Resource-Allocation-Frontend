@@ -4,10 +4,8 @@ import {
  DELETE_ORGANISATION,
  FETCH_ORGANISATIONS,
  UPDATE_ORGANISATION,
-//  FETCH_ORGANISATIONS_RESOURCES,
 } from '../actions/organizationsAction';
 import {
- setAllOrganisationsResources,
  setLoading,
  setOrganisations,
 } from '../reducers/organisationsReducer';
@@ -16,12 +14,7 @@ import {
  createOrganisation,
  updateOrganisation,
  deleteOrganisation,
- // fetchResourcesAgainstOrganizationsForSaga,
- // updateOrganizationForResourceSaga,
 } from '@/app/services/organisationServices';
-import { Organisation } from '@/app/types/organisationTypes';
-import { Resource } from '@/app/types';
-import { ResourceOrganizationPayload } from '@/app/types/organisationTypes';
 
 // loading all orgs
 function* fetchOrganisationsSaga(): Generator<any, void, any> {
@@ -29,7 +22,6 @@ function* fetchOrganisationsSaga(): Generator<any, void, any> {
   // setting the loading in reducer
    yield put(setLoading(true));
    const responses = yield call(fetchAllOrganisations);
-   console.log(responses.result)
    yield put(setOrganisations(responses?.result));
  } catch (error) {
    console.error('Saga error, Failed to fetch organisations : ', error);
@@ -44,7 +36,6 @@ function* createOrganisationSaga(action: any): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     // API post 
-    console.log('Creating org with:', postData)
     const response = yield call(createOrganisation, postData);
     yield call(fetchOrganisationsSaga);
     if (resolve) resolve(response);

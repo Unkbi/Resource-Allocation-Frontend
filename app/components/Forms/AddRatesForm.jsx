@@ -9,6 +9,7 @@ import { useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import { useDispatch } from 'react-redux';
+import StyledAutocomplete from '../Select/Autocomplete';
 
 const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -108,16 +109,17 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
           <StyledLabel>
             Is Active <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
-          <CustomSelect
+          <StyledAutocomplete
             name="Status"
+            label="Status"
             placeholder="Select"
-            width={'100%'}
             options={statusOptions}
             value={values.Status || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={touched.Status && Boolean(errors.Status)}
-            helperText={touched.Status && formikProps.errors.Status}
+            formikProps={formikProps}
+            required
+            FormHelperTextProps={{
+              style: { marginLeft: 0, marginTop: 4 },
+            }}
           />
         </Box>
       </Box>
@@ -164,21 +166,16 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
           <StyledLabel>
             Currency <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
-          <CustomSelect
+          <StyledAutocomplete
             name="HourlyRateCurrency"
-            placeholder="Select Currency"
-            width={'100%'}
+            label="Currency"
             options={currencyOptions}
-            value={values.HourlyRateCurrency || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={
-              touched.HourlyRateCurrency && Boolean(errors.HourlyRateCurrency)
-            }
-            helperText={
-              touched.HourlyRateCurrency &&
-              formikProps.errors.HourlyRateCurrency
-            }
+            value={values.HourlyRateCurrency}
+            formikProps={formikProps}
+            required
+            FormHelperTextProps={{
+              style: { marginLeft: 0, marginTop: 4 },
+            }}
           />
         </Box>
       </Box>

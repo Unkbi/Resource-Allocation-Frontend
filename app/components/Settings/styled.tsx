@@ -73,6 +73,7 @@ const ContentHeader = styled(Box)({
   padding: '16px 32px',
   borderBottom: '1px solid #e0e0e0',
   backgroundColor: '#ffffff',
+  height:'96px'
 });
 
 const ScrollableContent = styled(Box)(({ theme }: ThemeProps) => ({
