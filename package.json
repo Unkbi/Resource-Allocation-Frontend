@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"tsc --noEmit --watch\" \"next dev --turbopack\"",
+    "dev": "concurrently \"tsc --noEmit --watch\" \"next dev \"",
     "build": "tsc --noEmit && next build",
     "start": "tsc --noEmit && next start",
     "lint": "next lint",

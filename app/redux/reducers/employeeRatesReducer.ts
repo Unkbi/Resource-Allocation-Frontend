@@ -1,4 +1,5 @@
 import { EmployeeRatesState } from '@/app/types/employeeRatesTypes';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: EmployeeRatesState = {
@@ -12,7 +13,7 @@ const employeeRatesSlice = createSlice({
   initialState,
   reducers: {
     setEmployeeRates: (state, action) => {
-      state.employeeRates = action.payload;
+      state.employeeRates = formatAPIResponse("EmployeeRate", action.payload);
     },
     clearEmployeeRates: state => {
       state.employeeRates = [];

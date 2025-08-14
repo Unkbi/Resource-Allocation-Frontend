@@ -776,7 +776,7 @@ export default function Resources() {
                       setDeleteDialogOpen(true);
                       handleMenuClose();
                       setRatesDelete({
-                        id: params.row.__Id__,
+                        id: params.row.Id,
                         WorkLocation: params.row.WorkLocation,
                         HRLevel: params.row.HRLevel,
                       });
@@ -1203,13 +1203,10 @@ export default function Resources() {
             loading={employeeRatesLoading}
             columns={employeeRatesColumns}
             rows={
-              employeeRates?.map(emp => {
-                const rate = emp.EmployeeRate ?? emp; 
-                return {
-                  ...rate,
-                  id: rate.Id,
-                };
-              }) || []
+              employeeRates?.map(emp => ({
+                ...emp,
+                id: emp.__Id__,
+              })) || []
             }
             apiRef={apiRef}
             value={value}
