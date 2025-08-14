@@ -1794,7 +1794,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(id));
+            dispatch(setHighlightedRowId(response?.EmployeeRate?.Id));
           })
           .catch(error => {
             console.error('Failed to add rate:', error);
