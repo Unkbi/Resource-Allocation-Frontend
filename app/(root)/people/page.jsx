@@ -25,7 +25,11 @@ import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 
+import { DELETE_ORGANISATION } from '@/app/redux/actions/organizationsAction';
+
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+
+
 
 import {
   deleteTeam,
@@ -169,7 +173,7 @@ export default function Resources() {
     state => state.resources
   );
 
-  const { organisations } = useSelector(state => state.organisations);
+  const { organisations, loading: allOrganizationsLoading } = useSelector(state => state.organisations);
 
   const { allResourcesDetail, loading: allResourcesDetailLoading } =
     useSelector(state => state.allResourcesDetail);
@@ -816,7 +820,7 @@ useEffect(() => {
 
   const organizationColumns = [
   {
-    field: 'name',
+    field: 'Name',
     headerName: 'Organization Name',
     minWidth: 290,
     maxWidth: 500,
@@ -852,7 +856,7 @@ useEffect(() => {
     },
   },
   {
-    field: 'status',
+    field: 'Status',
     headerName: 'Status',
     width: 170,
     flex: 1,
@@ -908,8 +912,8 @@ useEffect(() => {
                     handleMenuClose();
                     setDeleteTarget({
                       id: params.row.Id,
-                      name: params.row.Organization,
-                      type: 'Organization',
+                      name: params.row.Name,
+                      type: 'organizations',
                     });
                   }}
                   sx={menuItemStyle}
@@ -1149,6 +1153,45 @@ useEffect(() => {
           setDeleteTarget({ id: '', name: '', type: '' });
         }
         break;
+
+
+        case 'organizations':
+          try {
+            dispatch({
+              type: DELETE_ORGANISATION,
+              payload: { id: deleteTarget.id },
+            });
+
+            dispatch({
+              type: FETCH_ORGANISATIONS,
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Organization deleted successfully',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+
+            setDeleteDialogOpen(false);
+            setDeleteTarget({ id: '', name: '' });
+          } catch (error) {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to delete organization',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            console.error('Error deleting organization:', error);
+          }
+        break;
+
       case 'resource':
         dispatch(
           showToast({
@@ -1334,12 +1377,13 @@ useEffect(() => {
       case 'organizations':
         return (
           <OrganisationsTable
-            loading={loading}
+            loading={allOrganizationsLoading}
             columns={organizationColumns}
             rows={organisations.map((org, index) => ({
-              id: org.id || index,
-              name: org.Name,
-              status: org.Status,
+              Id: org.Id,
+              id: org.Id,
+              Name: org.Name,
+              Status: org.Status,
             }))}
             apiRef={apiRef}
             value={value}       

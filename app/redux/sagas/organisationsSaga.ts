@@ -8,7 +8,7 @@ import {
 import {
  setLoading,
  setOrganisations,
-} from '../reducers/oraganisationsReducer';
+} from '../reducers/organisationsReducer';
 import {
  fetchAllOrganisations,
  createOrganisation,

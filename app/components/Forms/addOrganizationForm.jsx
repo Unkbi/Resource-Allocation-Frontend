@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
-import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction'; 
 
 const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
-  const { organizations } = useSelector(state => state.organisations);
+  const { resources } = useSelector(state => state.resources);
+
   const {
     values,
     handleChange,
@@ -21,27 +22,37 @@ const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
     setTouched,
   } = formikProps;
 
+  const resourceListOptions =
+    resources?.result?.map(resource => ({
+      value: resource.__path__,
+      label: resource.FullName,
+    })) || [];
+
   const statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Inactive', label: 'Inactive' },
   ];
 
   useEffect(() => {
-    dispatch({ type: FETCH_ORGANISATIONS });
-  }, [dispatch]);
+    if (!resources || !resources?.result) {
+      dispatch(fetchAllResources());
+    }
+  }, []);
 
   useEffect(() => {
-    if (initialData) {
-      const rowData = {
-        Name: initialData.Name || '',
-        Status: initialData.Status || 'Active',
-      };
+  if (initialData) {
+    const normalizedData = {
+      Id: initialData.id || '',
+      Name: initialData.Name || '',
+      Status: initialData.Status || 'Active',
+      // add other fields as needed
+    };
+    setFormValue(normalizedData);
+    resetForm({ values: normalizedData });
+    setTouched({});
+  }
+}, [initialData, resources]);
 
-      setFormValue(rowData);
-      resetForm({ values: rowData });
-      setTouched({});
-    }
-  }, [initialData]);
 
   return (
     <Box>
@@ -51,7 +62,7 @@ const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Name"
-          placeholder="Enter organization name"
+          placeholder="Enter team name"
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={e => {
@@ -64,7 +75,7 @@ const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
         />
       </Box>
 
-      <Box sx={{ flex: 1, pb: 2 }}>
+      <Box sx={{ flex: 1 }}>
         <StyledLabel>
           Status <span style={{ color: 'red' }}>*</span>
         </StyledLabel>

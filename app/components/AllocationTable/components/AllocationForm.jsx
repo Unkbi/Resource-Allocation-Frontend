@@ -88,7 +88,11 @@ import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
-import { createTeam, updateTeam } from '@/app/services/teamServices';
+import {
+  createTeam,
+  updateTeam,
+  updateOrganization,
+} from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import AddTeamForm from '../../Forms/AddTeamForm';
@@ -109,10 +113,12 @@ import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
-import AddOrganizationForm from '../../Forms/addOrganization';
+import AddOrganizationForm from '../../Forms/addOrganizationForm';
 import {
   CREATE_ORGANISATION,
   DELETE_ORGANISATION,
+  FETCH_ORGANISATIONS,
+  UPDATE_ORGANISATION,
 } from '@/app/redux/actions/organizationsAction';
 
 import AddRoleForm from '../../Forms/AddRoleForm';
@@ -125,6 +131,7 @@ import {
   UPDATE_PRIVILEGE,
   UPDATE_PRIVILEGEASSIGNMENT,
 } from '@/app/redux/actions/rbacActions';
+import { fetchAllOrganisations } from '@/app/services/organisationServices';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
 
@@ -1957,8 +1964,13 @@ const AllocationForm = () => {
           .finally(() => {
             dispatch(closeDialog());
           });
-
+        break;
       case 'add_organization':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
@@ -2005,7 +2017,59 @@ const AllocationForm = () => {
           .finally(() => {
             dispatch(closeDialog());
           });
+        break;
+      case 'edit_organization':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
 
+        const postData = {
+          'ResourceAllocation.Core/Organization': {
+            Name: cleanedValues.Name?.trim(),
+            Status: cleanedValues.Status,
+          },
+        };
+        try {
+          const result = await dispatch(
+            updateOrganization({
+              postData,
+              organizationId: initialData.Id,
+            })
+          );
+
+          dispatch(setHighlightedRowId(initialData.Id));
+
+          if (result.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update organization.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
+
+          const updated = result?.payload?.result;
+          dispatch(setHighlightedRowId(updated?.Id || updated?.__Id__));
+          dispatch({ type: FETCH_ORGANISATIONS });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Organization updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+        } catch (e) {
+          console.error('Failed to update organization:', e);
+        }
         break;
 
       case 'edit_portfolio': {
@@ -2829,6 +2893,20 @@ const AllocationForm = () => {
         );
 
       case 'add_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_organization':
         return (
           <AddOrganizationForm
             formikProps={formikProps}
