@@ -7,11 +7,11 @@ import { useSelector } from 'react-redux';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
 import { useDispatch } from 'react-redux';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { DATE_FORMAT, PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import StyledAutocomplete from '../Select/Autocomplete';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -29,7 +29,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
-    resources?.result?.map(resource => ({
+    resources?.map(resource => ({
       value: resource.Id,
       label: resource.FullName,
     })) || [];
@@ -43,8 +43,11 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       })) || [];
 
   useEffect(() => {
-    if (!resources || !resources?.result) {
-      dispatch(fetchAllResources());
+    if (!resources) {
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
     }
     if (!portfolios) {
       dispatch({
@@ -60,15 +63,13 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
         ProjectSponsor:
-          resources?.result?.find(
-            res => res.FullName === initialData.ProjectSponsor
-          )?.Id || '',
-        AllowOvertime: initialData.AllowOvertime ? 'Yes': 'No',
+          resources?.find(res => res.FullName === initialData.ProjectSponsor)
+            ?.Id || '',
+        AllowOvertime: initialData.AllowOvertime ? 'Yes' : 'No',
         Location: initialData.Location || '',
         ProjectManager:
-          resources?.result?.find(
-            res => res.FullName === initialData.ProjectManager
-          )?.Id || '',
+          resources?.find(res => res.FullName === initialData.ProjectManager)
+            ?.Id || '',
         Name: initialData.Name || '',
         PortfolioId: initialData.PortfolioId || '',
         Type: initialData.Type || '',
@@ -117,14 +118,13 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
 
   const handleEndDateChange = newDate => {
     if (!newDate || !newDate.isValid?.()) {
-      formikProps.setFieldValue('EndDate', null); 
+      formikProps.setFieldValue('EndDate', null);
       return;
     }
 
     const formattedEndDate = newDate.format(DATE_FORMAT.toUpperCase());
     formikProps.setFieldValue('EndDate', formattedEndDate);
   };
-  
 
   return (
     <Box>

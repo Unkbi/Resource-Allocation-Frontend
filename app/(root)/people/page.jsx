@@ -22,7 +22,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { closeDialog, openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomAvatar from '@/app/components/Avatar/CustomAvatar';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import {
   deleteTeam,
   getAllTeams,
@@ -523,10 +522,7 @@ export default function Resources() {
       minWidth: 290,
       renderCell: params => {
         const manager =
-          resources &&
-          'result' in resources &&
-          getAllocationManagerFromPath(params.value, resources.result);
-
+          resources && getAllocationManagerFromPath(params.value, resources);
         if (!manager?.FullName) return <span>&nbsp;</span>;
         return (
           <Box
@@ -797,8 +793,8 @@ export default function Resources() {
 
   const managerMap = useMemo(() => {
     const map = {};
-    if (resources?.result) {
-      resources.result.forEach(res => {
+    if (resources) {
+      resources.forEach(res => {
         map[res.Id] = res.FullName;
       });
     }
@@ -807,7 +803,6 @@ export default function Resources() {
 
   useEffect(() => {
     if (!updating) {
-      dispatch(fetchAllResources());
       dispatch(fetchAllTeams());
       dispatch({
         type: FETCH_ALL_RESOURCES_DETAIL,
@@ -1046,7 +1041,10 @@ export default function Resources() {
                 autoHideTimer: 2000,
               })
             );
-            dispatch(fetchAllResources());
+            dispatch({
+              type: FETCH_ALL_RESOURCES_DETAIL,
+              payload: {},
+            });
             dispatch({
               type: FETCH_ALL_RESOURCES_DETAIL,
               payload: {},
@@ -1075,7 +1073,6 @@ export default function Resources() {
                 autoHideTimer: 2000,
               })
             );
-            dispatch(fetchAllResources());
             dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
           } else {
             dispatch(

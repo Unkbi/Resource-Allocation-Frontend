@@ -82,7 +82,6 @@ import {
   updateResource,
 } from '@/app/services/resourceServices';
 import { postTeamResource } from '@/app/services/teamServices';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
@@ -1040,7 +1039,7 @@ const AllocationForm = () => {
                 }
 
                 //Check if Allocation is within the range of StartDate and EndDate of resource
-                const resourceDetails = resources?.result?.find(
+                const resourceDetails = resources?.find(
                   res => res.Id === resource
                 );
                 const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
@@ -1162,20 +1161,18 @@ const AllocationForm = () => {
               `Updating allocation for ${
                 Array.isArray(values.Resource)
                   ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.result?.find(
+                      const resource = resources?.find(
                         r => r.Id === resourceId
                       );
                       if (!resource) return acc;
                       return (
                         acc +
-                        resources?.result?.find(
-                          resource => resource.Id === resourceId
-                        )?.FullName +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
                         ', '
                       );
                     }, '').slice(0, -2)
-                  : resources?.result?.find(r => r.Id === values.Resource)
-                      ?.FullName
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }...`,
               'info'
             )
@@ -1388,20 +1385,18 @@ const AllocationForm = () => {
               `Failed to create allocation for ${
                 Array.isArray(values.Resource)
                   ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.result?.find(
+                      const resource = resources?.find(
                         r => r.Id === resourceId
                       );
                       if (!resource) return acc;
                       return (
                         acc +
-                        resources?.result?.find(
-                          resource => resource.Id === resourceId
-                        )?.FullName +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
                         ', '
                       );
                     }, '').slice(0, -2)
-                  : resources?.result?.find(r => r.Id === values.Resource)
-                      ?.FullName
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }`,
               'error',
               4000
@@ -1488,7 +1483,7 @@ const AllocationForm = () => {
             );
             dispatch(closeDialog());
           } else {
-            const userId = getUserIdFromEmail(resources?.result || [], email);
+            const userId = getUserIdFromEmail(resources || [], email);
             // Create a new view.
             const newView = {
               isDefault: values.isDefault,
@@ -1586,7 +1581,7 @@ const AllocationForm = () => {
       case 'clone_resource':
         try {
           const sourceResourceName = initialData?.Resource;
-          const sourceResourceId = resources?.result?.find(
+          const sourceResourceId = resources?.find(
             res => res.FullName === sourceResourceName
           )?.Id;
 
@@ -2308,7 +2303,7 @@ const AllocationForm = () => {
     try {
       const { values, initialData } = pendingTransferData;
       const sourceResourceName = initialData?.Resource;
-      const sourceResourceId = resources?.result?.find(
+      const sourceResourceId = resources?.find(
         res => res.FullName === sourceResourceName
       )?.Id;
 
@@ -2883,9 +2878,7 @@ const AllocationForm = () => {
           >
             Are you sure you want to transfer this allocation to &nbsp;
             {pendingTransferData?.values?.Resource?.map(resourceId => {
-              const resource = resources?.result?.find(
-                res => res.Id === resourceId
-              );
+              const resource = resources?.find(res => res.Id === resourceId);
               return resource?.FullName || 'Unknown Resource';
             }).join(', ')}
             &nbsp; - &nbsp;

@@ -61,7 +61,7 @@ export const fetchAllTeams = () => async (dispatch: AppDispatch) => {
 
 const formatAllocations = (
   data: ApiResponse<Allocation[]>,
-  resources: ApiResponse<Resource[]>,
+  resources: Resource[],
   teamId: string,
   teamName: string,
   teamStatus: string | null,
@@ -71,11 +71,11 @@ const formatAllocations = (
 ) => {
   const allocationsData = data.result;
   const allocationMap = new Map();
-  const resourcesData = resources.result;
+  const resourcesData = resources;
 
   if (Array.isArray(allocationsData) && allocationsData.length === 0) {
     let obj: AllocationGridCell[] = [];
-    if (resources?.result?.length === 0) {
+    if (resources?.length === 0) {
       obj = [
         {
           id: teamId,
@@ -94,8 +94,8 @@ const formatAllocations = (
         },
       ];
     } else {
-      if (Array.isArray(resources.result) && resources?.result.length !== 0) {
-        const uniqueRecords = removeDuplicateResources(resources?.result);
+      if (Array.isArray(resources) && resources.length !== 0) {
+        const uniqueRecords = removeDuplicateResources(resources);
 
         if (uniqueRecords.length > 0) {
           obj = uniqueRecords.map(resource => ({
@@ -129,8 +129,8 @@ const formatAllocations = (
       const formattedDate = format(periodDate, DATE_FORMAT);
 
       const matchingTeamResource =
-        Array.isArray(resources?.result) &&
-        resources?.result.find(
+        Array.isArray(resources) &&
+        resources.find(
           team =>
             team.FullName === allocation.ResourceName ||
             team.Id === allocation.Resource

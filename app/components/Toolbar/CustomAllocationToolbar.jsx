@@ -625,8 +625,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const { portfolios } = useSelector(state => state.portfolios);
 
   const projectsLoaded = Array.isArray(projects);
-  const resourcesLoaded = Array.isArray(resources?.result ?? resources);
-  const teamsLoaded = Array.isArray(teams ?? teams);
+  const resourcesLoaded = Array.isArray(resources);
+  const teamsLoaded = Array.isArray(teams);
   const portfoliosLoaded = Array.isArray(portfolios);
 
   const allDataLoaded =
@@ -899,7 +899,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     if (isMine && email) {
       const teamsIAmAllocationManager = getTeamsIamAllocationManager(
         email,
-        resources?.result || [],
+        resources || [],
         teams || []
       );
 
@@ -916,7 +916,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       }
 
       // Check if the user is a project manager in any of the projects
-      const currentResource = resources?.result?.find(r => r.Email === email);
+      const currentResource = resources?.find(r => r.Email === email);
       const projectsIAmProjectManager = getProjectsIamProjectManager(
         currentResource?.Id,
         projects || []

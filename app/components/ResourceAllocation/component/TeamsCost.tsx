@@ -35,16 +35,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
   // @ts-ignore
-  const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
+  const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -62,7 +58,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
         hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
         teamAllocationManager: getAllocationManagerFromPath(
           allocation?.teamAllocationManager,
-          _resources?.result || []
+          _resources || []
         )?.FullName,
       }));
       setRows(formattedResources);
@@ -75,7 +71,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       payload: {
         teams: teams,
         projects: projects,
-        resources: resources?.result,
+        resources: resources,
         startDate: startDate,
         endDate: endDate,
       },
@@ -115,7 +111,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       params.rowNode.groupingField === 'resource'
     ) {
       const resourceName = params.rowNode.groupingKey;
-      const resource = _resources?.result?.find(
+      const resource = (_resources as Resource[])?.find(
         r => r.FullName === resourceName
       );
       return resource || null;
@@ -510,7 +506,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
             value={
               getAllocationManagerFromPath(
                 team?.AllocationManager,
-                _resources?.result || []
+                _resources || []
               )?.FullName || ''
             }
           />
