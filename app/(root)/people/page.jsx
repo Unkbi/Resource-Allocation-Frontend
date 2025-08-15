@@ -29,8 +29,6 @@ import { DELETE_ORGANISATION } from '@/app/redux/actions/organizationsAction';
 
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 
-
-
 import {
   deleteTeam,
   getAllTeams,
@@ -54,6 +52,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
+import { StatusPill } from '@/app/components/Settings/styled';
 
 const demoResources = {
   result: [
@@ -104,54 +103,54 @@ const PersonContainer = styled('div')(() => ({
   justifyContent: 'flex-start',
 }));
 
-const StatusPill = styled('div')(({ theme, status }) => {
-  let backgroundColor, textColor;
-  switch (status) {
-    case 'Active':
-      backgroundColor = '#4B9F471A';
-      textColor = '#4B9F47';
-      break;
-    case 'Proposed':
-      backgroundColor = '#5041AB1A';
-      textColor = '#5041AB';
-      break;
-    case 'Approved':
-      backgroundColor = '#2772F01A';
-      textColor = '#2772F0';
-      break;
-    case 'Paused':
-      backgroundColor = '#E6521F1A';
-      textColor = '#E6521F';
-      break;
-    case 'Completed':
-      backgroundColor = '#F5B5441A';
-      textColor = '#F5B544';
-      break;
-    case 'Inactive':
-      backgroundColor = '#FCF0ED';
-      textColor = '#C73732';
-      break;
-    default:
-      backgroundColor = '#e0e0e0';
-      textColor = '#6c757d';
-  }
+// const StatusPill = styled('div')(({ theme, status }) => {
+//   let backgroundColor, textColor;
+//   switch (status) {
+//     case 'Active':
+//       backgroundColor = '#4B9F471A';
+//       textColor = '#4B9F47';
+//       break;
+//     case 'Proposed':
+//       backgroundColor = '#5041AB1A';
+//       textColor = '#5041AB';
+//       break;
+//     case 'Approved':
+//       backgroundColor = '#2772F01A';
+//       textColor = '#2772F0';
+//       break;
+//     case 'Paused':
+//       backgroundColor = '#E6521F1A';
+//       textColor = '#E6521F';
+//       break;
+//     case 'Completed':
+//       backgroundColor = '#F5B5441A';
+//       textColor = '#F5B544';
+//       break;
+//     case 'Inactive':
+//       backgroundColor = '#FCF0ED';
+//       textColor = '#C73732';
+//       break;
+//     default:
+//       backgroundColor = '#e0e0e0';
+//       textColor = '#6c757d';
+//   }
 
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '4px',
-    fontFamily: theme.typography.fontFamily,
-    fontsize: '12px',
-    fontStyle: 'normal',
-    fontweight: 400,
-    lineheight: '16px',
-    width: '86px',
-    height: '28px',
-    backgroundColor,
-    color: textColor,
-  };
-});
+//   return {
+//     display: 'inline-flex',
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     borderRadius: '4px',
+//     fontFamily: theme.typography.fontFamily,
+//     fontsize: '12px',
+//     fontStyle: 'normal',
+//     fontweight: 400,
+//     lineheight: '16px',
+//     width: '86px',
+//     height: '28px',
+//     backgroundColor,
+//     color: textColor,
+//   };
+// });
 
 const menuItemStyle = {
   '&:hover': {
@@ -173,7 +172,9 @@ export default function Resources() {
     state => state.resources
   );
 
-  const { organisations, loading: allOrganizationsLoading } = useSelector(state => state.organisations);
+  const { organisations, loading: allOrganizationsLoading } = useSelector(
+    state => state.organisations
+  );
 
   const { allResourcesDetail, loading: allResourcesDetailLoading } =
     useSelector(state => state.allResourcesDetail);
@@ -207,18 +208,18 @@ export default function Resources() {
   //     setValue(newTab);
   //   }
   // }, [searchParams]);
-const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'];
-const initialTab = searchParams.get('tab');
-const [value, setValue] = useState(
-  VALID_TABS.includes(initialTab) ? initialTab : 'resource'
-);
+  const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'];
+  const initialTab = searchParams.get('tab');
+  const [value, setValue] = useState(
+    VALID_TABS.includes(initialTab) ? initialTab : 'resource'
+  );
 
-useEffect(() => {
-  const newTab = searchParams.get('tab');
-  if (newTab && VALID_TABS.includes(newTab) && newTab !== value) {
-    setValue(newTab);
-  }
-}, [searchParams]);
+  useEffect(() => {
+    const newTab = searchParams.get('tab');
+    if (newTab && VALID_TABS.includes(newTab) && newTab !== value) {
+      setValue(newTab);
+    }
+  }, [searchParams]);
 
   const columns = [
     {
@@ -436,60 +437,69 @@ useEffect(() => {
         const status = params.value;
         return (
           status && (
-            <>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+              }}
+            >
               <StatusPill status={status}>{status}</StatusPill>
-              <IconButton
-                size="small"
-                onClick={e => handleMenuClick(e, params.row.id)}
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl) && selectedRow === params.row.id}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                sx={{
-                  width: 350,
-                  height: 175,
-                  flexShrink: 0,
-                  paddingTop: '2px',
-                  paddingBottom: '4px',
-                }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    handleMenuClose();
-                    handleOpenDialog(
-                      'Edit Resource',
-                      'edit_resource',
-                      params.row
-                    );
-                  }}
-                  sx={menuItemStyle}
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
                 >
-                  <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                  Edit
-                </MenuItem>
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
 
-                <MenuItem
-                  onClick={() => {
-                    setDeleteDialogOpen(true);
-                    handleMenuClose();
-                    setDeleteTarget({
-                      id: params.row.Id,
-                      name: params.row.FullName,
-                    });
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  sx={{
+                    width: 350,
+                    height: 175,
+                    flexShrink: 0,
+                    paddingTop: '2px',
+                    paddingBottom: '4px',
                   }}
-                  sx={menuItemStyle}
                 >
-                  <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                  Delete
-                </MenuItem>
-              </Menu>
-            </>
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      handleOpenDialog(
+                        'Edit Resource',
+                        'edit_resource',
+                        params.row
+                      );
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  <MenuItem
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setDeleteTarget({
+                        id: params.row.Id,
+                        name: params.row.FullName,
+                      });
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </Box>
+            </Box>
           )
         );
       },
@@ -831,104 +841,104 @@ useEffect(() => {
         handleOpenDialog('Edit Organization', 'edit_organization', params.row);
       };
 
-      return (
-        <Box sx={{ display: 'flex', alignItems: 'left' }}>
-          <Box
-            onClick={handleNameClick}
-            sx={{
-              display: 'inline-block',
-              width: '100%',
-              color: '#152E75',
-              cursor: 'pointer',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              paddingLeft: '32px',
-              '&:hover': {
-                textDecoration: 'underline',
-              },
-            }}
-          >
-            {params.value}
-          </Box>
-        </Box>
-      );
-    },
-  },
-  {
-    field: 'Status',
-    headerName: 'Status',
-    width: 170,
-    flex: 1,
-    sortable: true,
-    filterable: true,
-    headerAlign: 'left',
-    renderCell: params => {
-      const status = params.value;
-      return (
-        status && (
-          <Box
-            sx={{
-              paddingLeft: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <StatusPill status={status}>{status}</StatusPill>
-            <Box>
-              <IconButton
-                size="small"
-                onClick={e => handleMenuClick(e, params.row.id)}
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl) && selectedRow === params.row.id}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-              >
-                <MenuItem
-                  onClick={() => {
-                    handleMenuClose();
-                    handleOpenDialog(
-                      'Edit Organization',
-                      'edit_organization',
-                      params.row
-                    );
-                  }}
-                  sx={menuItemStyle}
-                >
-                  <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                  Edit
-                </MenuItem>
-
-                <MenuItem
-                  onClick={() => {
-                    setDeleteDialogOpen(true);
-                    handleMenuClose();
-                    setDeleteTarget({
-                      id: params.row.Id,
-                      name: params.row.Name,
-                      type: 'organizations',
-                    });
-                  }}
-                  sx={menuItemStyle}
-                >
-                  <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                  Delete
-                </MenuItem>
-              </Menu>
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'left' }}>
+            <Box
+              onClick={handleNameClick}
+              sx={{
+                display: 'inline-block',
+                width: '100%',
+                color: '#152E75',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                paddingLeft: '32px',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              {params.value}
             </Box>
           </Box>
-        )
-      );
+        );
+      },
     },
-  },
-];
+    {
+      field: 'Status',
+      headerName: 'Status',
+      width: 170,
+      flex: 1,
+      sortable: true,
+      filterable: true,
+      headerAlign: 'left',
+      renderCell: params => {
+        const status = params.value;
+        return (
+          status && (
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <StatusPill status={status}>{status}</StatusPill>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={e => handleMenuClick(e, params.row.id)}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedRow === params.row.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      handleOpenDialog(
+                        'Edit Organization',
+                        'edit_organization',
+                        params.row
+                      );
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Edit
+                  </MenuItem>
+
+                  <MenuItem
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                      handleMenuClose();
+                      setDeleteTarget({
+                        id: params.row.Id,
+                        name: params.row.Name,
+                        type: 'organizations',
+                      });
+                    }}
+                    sx={menuItemStyle}
+                  >
+                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                    Delete
+                  </MenuItem>
+                </Menu>
+              </Box>
+            </Box>
+          )
+        );
+      },
+    },
+  ];
 
   const managerMap = useMemo(() => {
     const map = {};
@@ -971,7 +981,7 @@ useEffect(() => {
       });
     }
     if (!organisations || organisations.length === 0) {
-    dispatch({ type: FETCH_ORGANISATIONS });
+      dispatch({ type: FETCH_ORGANISATIONS });
     }
   }, []);
 
@@ -1154,42 +1164,41 @@ useEffect(() => {
         }
         break;
 
+      case 'organizations':
+        try {
+          dispatch({
+            type: DELETE_ORGANISATION,
+            payload: { id: deleteTarget.id },
+          });
 
-        case 'organizations':
-          try {
-            dispatch({
-              type: DELETE_ORGANISATION,
-              payload: { id: deleteTarget.id },
-            });
+          dispatch({
+            type: FETCH_ORGANISATIONS,
+          });
 
-            dispatch({
-              type: FETCH_ORGANISATIONS,
-            });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Organization deleted successfully',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
 
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Organization deleted successfully',
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-
-            setDeleteDialogOpen(false);
-            setDeleteTarget({ id: '', name: '' });
-          } catch (error) {
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Failed to delete organization',
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-            console.error('Error deleting organization:', error);
-          }
+          setDeleteDialogOpen(false);
+          setDeleteTarget({ id: '', name: '' });
+        } catch (error) {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to delete organization',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          console.error('Error deleting organization:', error);
+        }
         break;
 
       case 'resource':
@@ -1386,7 +1395,7 @@ useEffect(() => {
               Status: org.Status,
             }))}
             apiRef={apiRef}
-            value={value}       
+            value={value}
             onChange={onChange}
           />
         );

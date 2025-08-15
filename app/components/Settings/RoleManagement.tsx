@@ -41,6 +41,7 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import { StatusPill } from './styled';
 
 const tabMenuNames = [
   'role-management',
@@ -55,22 +56,6 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
     width: '120px',
   },
-}));
-
-const StatusPill = styled('div')(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '4px',
-  fontFamily: theme.typography.fontFamily,
-  fontSize: '12px',
-  fontStyle: 'normal',
-  fontWeight: 400,
-  lineHeight: '16px',
-  width: '86px',
-  height: '28px',
-  backgroundColor: '#4B9F471A',
-  color: '#4B9F47',
 }));
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -458,7 +443,7 @@ export default function RoleManagementPage() {
       sortable: false,
       filterable: true,
       hideable: false,
-      renderCell: () => <StatusPill>Active</StatusPill>,
+      renderCell: () => <StatusPill status='Active'>Active</StatusPill>,
     },
     {
       field: 'actions',
@@ -539,7 +524,7 @@ export default function RoleManagementPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: () => <StatusPill>Active</StatusPill>,
+      renderCell: () => <StatusPill status='Active'>Active</StatusPill>,
     },
     {
       field: 'actions',
