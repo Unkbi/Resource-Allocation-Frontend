@@ -120,6 +120,8 @@ import {
 } from '@/app/redux/actions/rbacActions';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
+import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
+import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 
 const initialValuesMap = {
   add_project: {
@@ -265,6 +267,26 @@ const initialValuesMap = {
     Status: 'Active',
     Description: '',
     SidebarColor: '#000000',
+  },
+  add_project_type: {
+    Name: '',
+    ProjectTypeGroup: '',
+    Description: '',
+    Color: '',
+    Status: 'Active',
+  },
+  edit_project_type: {
+    Name: '',
+    ProjectTypeGroup: '',
+    Description: '',
+    Color: '',
+    Status: 'Active',
+  },
+  add_project_type_group: {
+    Name: '',
+  },
+  edit_project_type_group: {
+    Name: '',
   },
   add_role: {
     Name: '',
@@ -2046,6 +2068,22 @@ const AllocationForm = () => {
             });
         }
         break;
+      case 'add_project_type': {
+        //add project type
+        break;
+      }
+      case 'edit_project_type': {
+        //Edit project type
+        break;
+      }
+      case 'add_project_type_group': {
+        //add project type group
+        break;
+      }
+      case 'edit_project_type_group': {
+        //edit project type group
+        break;
+      }
 
       case 'assign_role':
         {
@@ -2819,7 +2857,34 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
-
+      case 'add_project_type':
+        return (
+          <AddProjectTypesForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_project_type':
+        return (
+          <AddProjectTypesForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_project_type_group':
+        return (
+          <AddProjectTypesGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_project_type_group':
+        return (
+          <AddProjectTypesGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       default:
         return <div>No form selected</div>;
     }
