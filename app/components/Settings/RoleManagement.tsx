@@ -443,7 +443,7 @@ export default function RoleManagementPage() {
 
   const rolesColumns = [
     {
-      field: 'Name',
+      field: 'name',
       headerName: 'Role Name',
       flex: 1,
       headerClassName: 'custom-header',
@@ -471,14 +471,14 @@ export default function RoleManagementPage() {
           <IconButton
             onClick={e => {
               setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.Name);
+              setMenuRoleId(params.row.name);
             }}
             size="small"
           >
             <MoreHorizontal sx={{ fontSize: 20 }} />
           </IconButton>
           <Typography sx={commonCellStyle}>
-            {params.row.Name && renderRoleMenu(params.row.Name)}
+            {params.row.name && renderRoleMenu(params.row.name)}
           </Typography>
         </>
       ),
@@ -496,7 +496,7 @@ export default function RoleManagementPage() {
       <StyledMenuItem
         disabled
         onClick={() => {
-          const role = roles.find(r => r.Name === id);
+          const role = roles.find(r => r.name === id);
           if (role) {
             handleEditRole(role);
           }

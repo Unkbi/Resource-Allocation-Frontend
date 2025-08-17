@@ -1,5 +1,5 @@
 export interface Role {
-  Name: string;
+  name: string;
   __path__: string | null;
   __parent__: string | null;
 }

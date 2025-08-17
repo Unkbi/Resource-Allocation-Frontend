@@ -45,7 +45,7 @@ function* fetchRolesSaga(): Generator<any, void, any> {
 
     const responses = yield call(fetchRoles);
 
-    yield put(setRoles(responses?.result));
+    yield put(setRoles(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch Roles : ', error);
   } finally {

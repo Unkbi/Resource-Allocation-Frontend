@@ -400,7 +400,7 @@ export const addPortfolioValidationSchema = (
 };
 
 export const addRoleValidationSchema = Yup.object({
-  Name: Yup.string()
+  name: Yup.string()
     .required('Role Name is required')
     .max(90, 'Reached Max Characters')
     .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word

@@ -11,7 +11,7 @@ export const fetchRoles = async () => {
 
 export const createRole = async (newData: any) => {
   const payload = {
-    'Agentlang.Kernel.Rbac/Role': newData,
+    name: newData.name,
   };
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/Role`,
