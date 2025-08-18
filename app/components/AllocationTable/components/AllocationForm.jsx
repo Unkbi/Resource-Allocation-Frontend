@@ -2745,7 +2745,7 @@ const AllocationForm = () => {
                     ? (nextLog.AllocationEnteredLast ?? '')
                     : (AllocationEntered ?? '');
                 } else if (log.Action?.toLowerCase() === 'update') {
-                  action = 'Update';
+                  action = 'Updated';
                   fromVersion = log.AllocationEnteredLast ?? '';
                   toVersion = nextLog
                     ? (nextLog.AllocationEnteredLast ?? '')

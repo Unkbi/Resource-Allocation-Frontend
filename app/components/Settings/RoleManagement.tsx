@@ -443,7 +443,7 @@ export default function RoleManagementPage() {
       sortable: false,
       filterable: true,
       hideable: false,
-      renderCell: () => <StatusPill status='Active'>Active</StatusPill>,
+      renderCell: () => <StatusPill status="Active">Active</StatusPill>,
     },
     {
       field: 'actions',
@@ -524,7 +524,7 @@ export default function RoleManagementPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: () => <StatusPill status='Active'>Active</StatusPill>,
+      renderCell: () => <StatusPill status="Active">Active</StatusPill>,
     },
     {
       field: 'actions',
@@ -635,9 +635,15 @@ export default function RoleManagementPage() {
           U: { bg: '#FEF3C7', text: '#92400E' },
           D: { bg: '#FEE2E2', text: '#991B1B' },
         };
-
+        const order = ['C', 'R', 'U', 'D'];
         const actions = params.row.Actions || [];
-
+        const desiredOrder = actions
+          .slice()
+          .sort(
+            (a: any, b: any) =>
+              order.indexOf(actionLetterMap[a.toLowerCase()]) -
+              order.indexOf(actionLetterMap[b.toLowerCase()])
+          );
         return (
           <Box
             sx={{
@@ -648,7 +654,7 @@ export default function RoleManagementPage() {
               paddingTop: '12px',
             }}
           >
-            {actions.map((action: string) => {
+            {desiredOrder.map((action: string) => {
               const key = actionLetterMap[action.toLowerCase().trim()] || '';
               const color = actionColorMap[key];
               return (
