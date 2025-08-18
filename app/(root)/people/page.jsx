@@ -1045,18 +1045,12 @@ export default function Resources() {
               type: FETCH_ALL_RESOURCES_DETAIL,
               payload: {},
             });
-            dispatch({
-              type: FETCH_ALL_RESOURCES_DETAIL,
-              payload: {},
-            });
             return;
           }
           const postData = {
-            'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-              TeamId: teamId,
-              StartDate: '2000-01-01',
-              EndDate: '2032-01-01',
-            },
+            TeamId: teamId,
+            StartDate: '2000-01-01',
+            EndDate: '2032-01-01',
           };
           const response = await fetchTeamAllocationsForSaga(postData);
           const resourceAllocations = (response.result || []).filter(

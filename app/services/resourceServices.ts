@@ -85,15 +85,13 @@ export const createResourceWithTeamAndOrg = createAsyncThunk(
   ) => {
     try {
       const payload = {
-        'ResourceAllocation.Core/CreateResource': {
-          Resource: resourceData,
-          Team: teamId,
-          Organization: organizationId,
-        },
+        Resource: resourceData,
+        Team: teamId,
+        Organization: organizationId,
       };
 
       const response = await axiosInstance.post(
-        `/api/ResourceAllocation.Core/CreateResource`,
+        `${API_PROJECT_PORTFOLIO}/CreateResource`,
         payload
       );
 

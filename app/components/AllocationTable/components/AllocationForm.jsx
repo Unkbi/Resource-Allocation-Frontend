@@ -773,33 +773,31 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': {
-            FirstName: cleanedValues.FirstName,
-            StartDate: cleanedValues.StartDate,
-            LocationCategory: cleanedValues.LocationCategory,
-            Email: cleanedValues.Email,
-            Manager: cleanedValues.Manager,
-            LastName: cleanedValues.LastName,
-            ContractorHourlyRateCurrency:
-              cleanedValues.ContractorHourlyRateCurrency,
-            AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
-            Department: cleanedValues.Department,
-            Type: cleanedValues.Type,
-            EndDate: cleanedValues.EndDate,
-            Role: cleanedValues.Role,
-            FullName:
-              cleanedValues.FirstName?.trim() +
-              ' ' +
-              cleanedValues.LastName?.trim(),
-            Status: cleanedValues.Status,
-            ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
-            HRLevel: cleanedValues.HRLevel,
-            PhoneNumber: cleanedValues.PhoneNumber,
-            WorkLocation: cleanedValues.WorkLocation,
-            ...(cleanedValues.PreferredFirstName
-              ? { PreferredFirstName: cleanedValues.PreferredFirstName }
-              : {}),
-          },
+          FirstName: cleanedValues.FirstName,
+          StartDate: cleanedValues.StartDate,
+          LocationCategory: cleanedValues.LocationCategory,
+          Email: cleanedValues.Email,
+          Manager: cleanedValues.Manager,
+          LastName: cleanedValues.LastName,
+          ContractorHourlyRateCurrency:
+            cleanedValues.ContractorHourlyRateCurrency,
+          AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
+          Department: cleanedValues.Department,
+          Type: cleanedValues.Type,
+          EndDate: cleanedValues.EndDate,
+          Role: cleanedValues.Role,
+          FullName:
+            cleanedValues.FirstName?.trim() +
+            ' ' +
+            cleanedValues.LastName?.trim(),
+          Status: cleanedValues.Status,
+          ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
+          HRLevel: cleanedValues.HRLevel,
+          PhoneNumber: cleanedValues.PhoneNumber,
+          WorkLocation: cleanedValues.WorkLocation,
+          ...(cleanedValues.PreferredFirstName
+            ? { PreferredFirstName: cleanedValues.PreferredFirstName }
+            : {}),
         };
         try {
           const result = await dispatch(
@@ -821,7 +819,8 @@ const AllocationForm = () => {
             );
             return;
           }
-          const newResource = result?.payload?.result;
+          const newResource =
+            result?.payload?.OrganizationResource?.Resource?.Resource;
           const newResourceId = newResource?.Id ?? null;
 
           if (newResourceId) {
@@ -857,14 +856,11 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': {
-            ...cleanedValues,
-            EndDate:
-              cleanedValues.EndDate === undefined ||
-              cleanedValues.EndDate === ''
-                ? null
-                : cleanedValues.EndDate,
-          },
+          ...cleanedValues,
+          EndDate:
+            cleanedValues.EndDate === undefined || cleanedValues.EndDate === ''
+              ? null
+              : cleanedValues.EndDate,
         };
 
         try {
@@ -937,10 +933,8 @@ const AllocationForm = () => {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
-                'ResourceAllocation.Core/ChangeTeamResource': {
-                  Resource: initialData.Id,
-                  Team: teamOrgData.teamId,
-                },
+                Resource: initialData.Id,
+                Team: teamOrgData.teamId,
               },
             });
           }
@@ -953,10 +947,8 @@ const AllocationForm = () => {
             await dispatch({
               type: 'UPDATE_RESOURCE_ORGANISATION',
               payload: {
-                'ResourceAllocation.Core/ChangeTeamOrganization': {
-                  Resource: initialData.Id,
-                  Organization: teamOrgData.organisationId,
-                },
+                Resource: initialData.Id,
+                Organization: teamOrgData.organisationId,
               },
             });
           }

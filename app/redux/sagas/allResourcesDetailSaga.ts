@@ -18,7 +18,7 @@ interface APIResponsePreFormated {
     Team: Team | null;
   } | null;
   Organization: {
-    Organisation: Organisation | null;
+    Organization: Organisation | null;
   } | null;
 }
 
@@ -31,8 +31,8 @@ function* fetchAllResourcesDetailSaga(): Generator<any, void, any> {
     let formatedResponse = formatAPIResponse('ResourceDetail', responses);
     formatedResponse = formatedResponse.map((item: APIResponsePreFormated) => ({
       Resource: item?.Resource?.Resource || null,
-      Team: item?.Team || null,
-      Organisation: item?.Organization || null,
+      Team: item?.Team?.Team || null,
+      Organization: item?.Organization?.Organization || null,
     }));
 
     yield put(setAllResourcesDetail(formatedResponse));
