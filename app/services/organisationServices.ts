@@ -1,5 +1,8 @@
 import { API_PROJECT_PORTFOLIO } from '../constants/constants';
-import { GetOrganizationResourcesPayload,ResourceOrganizationPayload } from '../types/organisationTypes';
+import {
+  GetOrganizationResourcesPayload,
+  ResourceOrganizationPayload,
+} from '../types/organisationTypes';
 import axiosInstance from '../utils/apiClient';
 
 export const fetchAllOrganisations = async () => {
@@ -23,10 +26,8 @@ export const updateOrganizationForResourceSaga = async (
   postData: ResourceOrganizationPayload
 ) => {
   const response = await axiosInstance.post(
-    `${API_PROJECT_PORTFOLIO}/ChangeTeamOrganization`,
+    `${API_PROJECT_PORTFOLIO}/ChangeOrganizationResource`,
     postData
   );
   return response.data;
 };
-
- 
