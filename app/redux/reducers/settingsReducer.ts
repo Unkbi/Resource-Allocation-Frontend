@@ -1,6 +1,7 @@
 // settingsReducer.ts
 import { addAllocationTheme, getAllocationTheme, updateAllocationThemes } from '@/app/services/settingServices';
 import { AllocationRange, ParentEntry } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface ThemeState {
@@ -14,7 +15,7 @@ const initialState: ThemeState = {
   allocationTheme: [
     {
       id: "1",
-      __Id__: "",
+      __id__: "",
       From: '0.0',
       To: '0.0',
       Label: 'No Allocation',
@@ -32,7 +33,7 @@ const settings = createSlice({
   initialState,
   reducers: {
     updateAllocationTheme: (state, action: PayloadAction<AllocationRange[]>) => {
-      state.allocationTheme = action.payload;
+      state.allocationTheme = formatAPIResponse('AllocationRangeSetting',action.payload);
     }},
   extraReducers: (builder) => {
     builder
@@ -43,16 +44,16 @@ const settings = createSlice({
       })
       .addCase(getAllocationTheme.fulfilled, (state, action) => {
         state.loading = false;
-        if (!Array.isArray(action.payload.result)) {
-          console.error('Unexpected data structure:', action.payload.result);
+        if (!Array.isArray(action.payload)) {
+          console.error('Unexpected data structure:', action.payload);
           return;
         }
-        const result: ParentEntry[] = action.payload.result;
+        const result: ParentEntry[] = action.payload;
         
         state.allocationTheme = result.flatMap((parentEntry: ParentEntry) =>
           parentEntry.AllocationRanges?.map(apiRange => ({
             id: apiRange.Id,
-            __Id__: parentEntry.__Id__,
+            __id__: parentEntry.__id__,
             Label: apiRange.Label,
             From: apiRange.From,
             To: apiRange.To,
@@ -81,7 +82,7 @@ const settings = createSlice({
         if (state.allocationTheme) {
           state.allocationTheme.push({
             id: newRange.Id,
-            __Id__: newParentEntry.__Id__,
+            __id__: newParentEntry.__id__,
             Label: newRange.Label,
             From: newRange.From,
             To: newRange.To,
@@ -112,12 +113,12 @@ const settings = createSlice({
           const index = state.allocationTheme.findIndex(
             range => 
               range.id === updatedRange.Id &&
-              range.__Id__ === updatedParentEntry.__Id__
+              range.__id__ === updatedParentEntry.__id__
           );
           if (index !== -1) {
             state.allocationTheme[index] = {
               id: updatedRange.Id,
-              __Id__: updatedParentEntry.__Id__,
+              __id__: updatedParentEntry.__id__,
               Label: updatedRange.Label,
               From: updatedRange.From,
               To: updatedRange.To,

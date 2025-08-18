@@ -25,9 +25,7 @@ export const addAllocationTheme = createAsyncThunk(
   async (postData: AllocationRangePayload[], { rejectWithValue }) => {
     try {
       const formattedPayload = {
-        "ResourceAllocation.Core/AllocationRangeSetting": {
-          "AllocationRanges": postData
-        }
+          AllocationRanges: postData ,
       };
       const response = await axiosInstance.post(
         `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting`,
