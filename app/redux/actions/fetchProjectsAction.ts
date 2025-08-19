@@ -134,11 +134,9 @@ export const fetchAllProjectAllocations =
       dispatch(setDataProcessing(true));
       const allocationPromises = projects.map(async project => {
         const postData: GetProjectAllocationsForPeriodPayload = {
-          'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-            Project: project.Id,
-            StartDate: StartDate,
-            EndDate: EndDate,
-          },
+          Project: project.Id,
+          StartDate: StartDate,
+          EndDate: EndDate,
         };
         try {
           const result = await dispatch(getProjectAllocations(postData));

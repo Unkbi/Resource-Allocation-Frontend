@@ -13,7 +13,7 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/agentlang_auth/login', {
+      const response = await axiosInstance.post('/agentlang.auth/login', {
         email: credentials.email,
         password: credentials.password,
       });
@@ -39,7 +39,7 @@ export const loginUser = createAsyncThunk(
 // Get User
 export const getUser = createAsyncThunk('auth/getUser', async userId => {
   try {
-    const response = await axiosInstance.post('/agentlang_auth/getUser', {
+    const response = await axiosInstance.post('/agentlang.auth/getUser', {
       userId,
     });
     return response.data;

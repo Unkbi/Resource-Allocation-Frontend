@@ -300,14 +300,12 @@ export default function Project() {
       );
       try {
         const postData = {
-          'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-            Project: id,
-            StartDate: '2000-01-01',
-            EndDate: '2032-01-01',
-          },
+          Project: id,
+          StartDate: '2000-01-01',
+          EndDate: '2032-01-01',
         };
         const response = await fetchProjectAllocationsForSaga(postData);
-        if (!response.result || response.result.length === 0) {
+        if (!response || response.length === 0) {
           await dispatch(deleteProject(id)).unwrap();
           dispatch(
             showToast({

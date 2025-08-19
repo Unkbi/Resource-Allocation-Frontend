@@ -58,10 +58,8 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     yield put(setDataProcessing(true));
 
     const postData = {
-      'ResourceAllocation.Core/GetAllAllocationsForPeriod': {
-        StartDate: getMondayOfISO(startDate),
-        EndDate: getMondayOfISO(endDate),
-      },
+      StartDate: getMondayOfISO(startDate),
+      EndDate: getMondayOfISO(endDate),
     };
 
     const responses = yield call(fetchAllAllocations, postData);
@@ -101,7 +99,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     }
 
     const formattedAllocations = formatAllAllocations(
-      responses.result,
+      responses,
       teams,
       projects,
       resources,
@@ -137,15 +135,14 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 }
 
 function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
-  const { projects, teams, resources, startDate, endDate } = action.payload;
+  const { projects, teams, resources, allResourcesDetail, startDate, endDate } =
+    action.payload;
   try {
     yield put(setCostDataProcessing(true));
 
     const postData = {
-      'ResourceAllocation.Core/GetAllCostForPeriod': {
-        StartDate: getMondayOfISO(startDate),
-        EndDate: getMondayOfISO(endDate),
-      },
+      StartDate: getMondayOfISO(startDate),
+      EndDate: getMondayOfISO(endDate),
     };
 
     const responses = yield call(fetchAllAllocationCosts, postData);
@@ -154,14 +151,11 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
     const teamResults = yield all(
       teams.map((team: any) =>
         call(function* () {
-          const resourcesPostData = {
-            'ResourceAllocation.Core/GetTeamResources': { TeamId: team.Id },
+          const resourcesResult = {
+            result: allResourcesDetail
+              .filter((r: AllResourceDetail) => r.Team?.Id === team?.Id)
+              .map((r: AllResourceDetail) => r.Resource),
           };
-          //@ts-ignore
-          const resourcesResult = yield call(
-            fetchResourcesAgainstTeamsForSaga,
-            resourcesPostData
-          );
 
           return { resourcesResult, team };
         })
@@ -188,7 +182,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
     }
 
     const formatResponses =
-      responses?.result.map((res: GetAllCostForPeriodResponse) => ({
+      responses?.map((res: GetAllCostForPeriodResponse) => ({
         ProjectName: res.ProjectName || null,
         Id: res.__Id__,
         Period: res.Period,
@@ -232,6 +226,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
 }
 
 function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
+  // Not being used in application.
   const {
     teamIds,
     teams,
@@ -375,10 +370,8 @@ function* updatedBulkAllocationSaga(action: any): Generator<any, void, any> {
   const { resourceId, allocList, resolve, reject } = action.payload;
   try {
     const postData = {
-      'ResourceAllocation.Core/RangeAllocationUpsert': {
-        Resource: resourceId,
-        AllocsList: allocList,
-      },
+      Resource: resourceId,
+      AllocsList: allocList,
     };
 
     const response = yield call(bulkUpdateAllocations, postData);
@@ -393,10 +386,8 @@ function* deleteBulkAllocationSaga(action: any): Generator<any, void, any> {
   const { resourceId, allocList, resolve, reject } = action.payload;
   try {
     const postData = {
-      'ResourceAllocation.Core/RangeAllocationDelete': {
-        Resource: resourceId,
-        AllocsList: allocList,
-      },
+      Resource: resourceId,
+      AllocsList: allocList,
     };
 
     const response = yield call(bulkDeleteAllocations, postData);
