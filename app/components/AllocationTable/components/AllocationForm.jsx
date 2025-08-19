@@ -1703,6 +1703,7 @@ const AllocationForm = () => {
           }
 
           try {
+            console.log("paypay", payload)
             // Run in parallel per group type
             await Promise.all([
               ...actionGroups.PUT.map(payload =>
@@ -2426,6 +2427,7 @@ const AllocationForm = () => {
       }
 
       try {
+        console.log("paypay", payload)
         // Run in parallel per group type
         await Promise.all([
           ...actionGroups.PUT.map(payload =>
