@@ -933,9 +933,10 @@ export default function Resources() {
   ]);
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget.id) {
+    if (!deleteTarget.id && !ratesDelete.id) {
       setDeleteDialogOpen(false);
       setDeleteTarget({ id: '', name: '' });
+      setRatesDelete({ id: '', WorkLocation: '', HRLevel: '' });
       return;
     }
 
