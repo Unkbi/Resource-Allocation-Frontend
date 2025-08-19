@@ -178,11 +178,9 @@ export interface AllAllocationsState {
 }
 
 export interface ActualAllocationsForPeriodPayload {
-  'ResourceAllocation.Core/GetActualizedAllocationsByPeriod': {
     Resource: string;
     StartDate: string;
     EndDate: string;
-  };
 }
 
 export interface ConfirmActuals {
@@ -191,12 +189,10 @@ export interface ConfirmActuals {
 }
 
 export interface ConfirmActualAllocationsForPeriodRequest {
-  'ResourceAllocation.Core/ConfirmActualsEntered': {
     Resource: string;
     Period: string;
     Status: string;
     Actuals: ConfirmActuals[];
-  };
 }
 
 export interface ActualAllocations {
