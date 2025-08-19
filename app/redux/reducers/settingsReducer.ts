@@ -1,6 +1,11 @@
 // settingsReducer.ts
-import { addAllocationTheme, getAllocationTheme, updateAllocationThemes } from '@/app/services/settingServices';
+import {
+  addAllocationTheme,
+  getAllocationTheme,
+  updateAllocationThemes,
+} from '@/app/services/settingServices';
 import { AllocationRange, ParentEntry } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface ThemeState {
@@ -13,14 +18,14 @@ interface ThemeState {
 const initialState: ThemeState = {
   allocationTheme: [
     {
-      id: "1",
-      __Id__: "",
+      id: '1',
+      __id__: '',
       From: '0.0',
       To: '0.0',
       Label: 'No Allocation',
       Color: '#847ODE',
       DarkColor: '#8470DE',
-    }, 
+    },
   ],
   loading: false,
   error: null,
@@ -31,33 +36,41 @@ const settings = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    updateAllocationTheme: (state, action: PayloadAction<AllocationRange[]>) => {
+    updateAllocationTheme: (
+      state,
+      action: PayloadAction<AllocationRange[]>
+    ) => {
       state.allocationTheme = action.payload;
-    }},
-  extraReducers: (builder) => {
+    },
+  },
+  extraReducers: builder => {
     builder
       // Handle getAllocationTheme
-      .addCase(getAllocationTheme.pending, (state) => {
+      .addCase(getAllocationTheme.pending, state => {
         state.loading = true;
         state.error = null;
       })
       .addCase(getAllocationTheme.fulfilled, (state, action) => {
         state.loading = false;
-        if (!Array.isArray(action.payload.result)) {
+        if (!Array.isArray(action.payload)) {
           console.error('Unexpected data structure:', action.payload.result);
           return;
         }
-        const result: ParentEntry[] = action.payload.result;
-        
+        const formattedResponse = formatAPIResponse(
+          'AllocationRangeSetting',
+          action.payload
+        );
+        const result: ParentEntry[] = formattedResponse;
+
         state.allocationTheme = result.flatMap((parentEntry: ParentEntry) =>
           parentEntry.AllocationRanges?.map(apiRange => ({
             id: apiRange.Id,
-            __Id__: parentEntry.__Id__,
+            __id__: parentEntry.__id__,
             Label: apiRange.Label,
             From: apiRange.From,
             To: apiRange.To,
             Color: apiRange.Color,
-            DarkColor: apiRange.DarkColor
+            DarkColor: apiRange.DarkColor,
           }))
         );
       })
@@ -67,7 +80,7 @@ const settings = createSlice({
       })
 
       // Handle addAllocationTheme
-      .addCase(addAllocationTheme.pending, (state) => {
+      .addCase(addAllocationTheme.pending, state => {
         state.loading = true;
         state.updating = true;
         state.error = null;
@@ -75,18 +88,21 @@ const settings = createSlice({
       .addCase(addAllocationTheme.fulfilled, (state, action) => {
         state.loading = false;
         state.updating = false;
-        const newParentEntry = action.payload.result[0];
+        const newParentEntry = formatAPIResponse(
+          'AllocationRangeSetting',
+          action.payload
+        )[0];
         const newRange = newParentEntry.AllocationRanges[0];
-        
+
         if (state.allocationTheme) {
           state.allocationTheme.push({
             id: newRange.Id,
-            __Id__: newParentEntry.__Id__,
+            __id__: newParentEntry.__id__,
             Label: newRange.Label,
             From: newRange.From,
             To: newRange.To,
             Color: newRange.Color,
-            DarkColor: newRange.DarkColor
+            DarkColor: newRange.DarkColor,
           });
         }
       })
@@ -97,7 +113,7 @@ const settings = createSlice({
       })
 
       // Handle updateAllocationTheme
-      .addCase(updateAllocationThemes.pending, (state) => {
+      .addCase(updateAllocationThemes.pending, state => {
         state.loading = true;
         state.updating = true;
         state.error = null;
@@ -105,24 +121,27 @@ const settings = createSlice({
       .addCase(updateAllocationThemes.fulfilled, (state, action) => {
         state.loading = false;
         state.updating = false;
-        const updatedParentEntry = action.payload.result[0];
+        const updatedParentEntry = formatAPIResponse(
+          'AllocationRangeSetting',
+          action.payload
+        )[0];
         const updatedRange = updatedParentEntry.AllocationRanges[0];
 
         if (state.allocationTheme) {
           const index = state.allocationTheme.findIndex(
-            range => 
+            range =>
               range.id === updatedRange.Id &&
-              range.__Id__ === updatedParentEntry.__Id__
+              range.__id__ === updatedParentEntry.__id__
           );
           if (index !== -1) {
             state.allocationTheme[index] = {
               id: updatedRange.Id,
-              __Id__: updatedParentEntry.__Id__,
+              __id__: updatedParentEntry.__id__,
               Label: updatedRange.Label,
               From: updatedRange.From,
               To: updatedRange.To,
               Color: updatedRange.Color,
-              DarkColor: updatedRange.DarkColor
+              DarkColor: updatedRange.DarkColor,
             };
           }
         }
@@ -132,7 +151,7 @@ const settings = createSlice({
         state.loading = false;
         state.updating = false;
         state.error = action.payload as string;
-      })
+      });
   },
 });
 
