@@ -119,7 +119,7 @@ import {
 } from '@/app/redux/actions/rbacActions';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
-import { getUserAttributes } from '@/app/utils/authUtils';
+import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
 
 const initialValuesMap = {
   add_project: {
@@ -1228,7 +1228,9 @@ const AllocationForm = () => {
 
           await Promise.all([...allocationPromises, ...deletePromises]).then(
             async response => {
-              if (response && response.length > 0) {
+              if (response && response[0].length > 0) {
+                response = response[0];
+                response = formatAPIResponse('Allocation', response);
                 let allocationsUpdated = [];
                 // handle for bulk Delete different responce
                 if (deleteList.length > 0) {
@@ -1236,12 +1238,12 @@ const AllocationForm = () => {
                 } else {
                   allocationsUpdated = response.reduce((arr, res) => {
                     // Check if result exists and is an array before spreading
-                    if (res?.result && Array.isArray(res.result)) {
-                      return [...arr, ...res.result];
+                    if (res && Array.isArray(res)) {
+                      return [...arr, ...res];
                     }
                     // If it's not an array but has a value you want to include
-                    else if (res?.result !== undefined) {
-                      return [...arr, res.result];
+                    else if (res !== undefined) {
+                      return [...arr, res];
                     }
                     // Otherwise just return the accumulator unchanged
                     return arr;
@@ -1630,6 +1632,7 @@ const AllocationForm = () => {
                     allocationId: targetAlloc.allocationId,
                     putData: {
                       'ResourceAllocation.Core/Allocation': {
+                        // Will take care of this wehn I fix Clone API
                         AllocationEntered: sourceAlloc.value,
                       },
                     },
@@ -1642,6 +1645,7 @@ const AllocationForm = () => {
                     resourceId: targetResourceId,
                     postData: {
                       'ResourceAllocation.Core/Allocation': {
+                        // Will take care of this wehn I fix Clone API
                         Resource: targetResourceId,
                         Project: projectId,
                         ProjectName: initialData.Project,
@@ -2346,6 +2350,7 @@ const AllocationForm = () => {
                 allocationId: targetAlloc.allocationId,
                 putData: {
                   'ResourceAllocation.Core/Allocation': {
+                    // Will take care of this wehn I fix Transfer API
                     AllocationEntered: sourceAlloc.value,
                   },
                 },
@@ -2358,6 +2363,7 @@ const AllocationForm = () => {
                 resourceId: targetResourceId,
                 postData: {
                   'ResourceAllocation.Core/Allocation': {
+                    // Will take care of this wehn I fix Transfer API
                     Resource: targetResourceId,
                     Project: projectId,
                     ProjectName: initialData.Project,

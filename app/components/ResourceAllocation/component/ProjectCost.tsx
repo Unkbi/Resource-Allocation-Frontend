@@ -46,6 +46,9 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
   );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const { setRows, ready } = useAllocationGrid('main');
 
   useEffect(() => {
@@ -72,6 +75,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
         teams: teams,
         projects: projects,
         resources: resources,
+        allResourcesDetail: allResourcesDetail,
         startDate: startDate,
         endDate: endDate,
       },
