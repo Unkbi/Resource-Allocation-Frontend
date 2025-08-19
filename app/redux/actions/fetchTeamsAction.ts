@@ -245,151 +245,153 @@ const formatAllocations = (
   return updatedAllocationMap;
 };
 
-export const fetchResourcesAgainstTeams =
-  (teams: Team[], allocations = null, StartDate: string, EndDate: string) =>
-  async (dispatch: AppDispatch) => {
-    try {
-      dispatch(setTeamsDataProcessing(true));
-      let allResources: AllocationGridCell[] = [];
+export const fetchResourcesAgainstTeams = // Only used by Transfer Allocation, not needed.
 
-      const teamPromises = teams.map(async team => {
-        const teamResourcesPostData: GetTeamResourcesPayload = {
-          'ResourceAllocation.Core/GetTeamResources': {
-            TeamId: team.Id,
-          },
-        };
+    (teams: Team[], allocations = null, StartDate: string, EndDate: string) =>
+    async (dispatch: AppDispatch) => {
+      try {
+        dispatch(setTeamsDataProcessing(true));
+        let allResources: AllocationGridCell[] = [];
 
-        const teamAllocationPostData: GetTeamAllocationsForPeriodPayload = {
-          'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-            TeamId: team.Id,
-            StartDate,
-            EndDate,
-          },
-        };
+        const teamPromises = teams.map(async team => {
+          const teamResourcesPostData: GetTeamResourcesPayload = {
+            'ResourceAllocation.Core/GetTeamResources': {
+              TeamId: team.Id,
+            },
+          };
 
-        const resourcesPromise = dispatch(
-          getResourcesAgainstTeams(teamResourcesPostData)
-        )
-          .then(result => ({ status: 'fulfilled', result, team }))
-          .catch(error => ({ status: 'rejected', error, team }));
+          const teamAllocationPostData: GetTeamAllocationsForPeriodPayload = {
+            'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+              TeamId: team.Id,
+              StartDate,
+              EndDate,
+            },
+          };
 
-        const allocationsPromise = dispatch(
-          getTeamAllocations(teamAllocationPostData)
-        )
-          .then(result => ({ status: 'fulfilled', result, team }))
-          .catch(error => ({ status: 'rejected', error, team }));
+          const resourcesPromise = dispatch(
+            getResourcesAgainstTeams(teamResourcesPostData)
+          )
+            .then(result => ({ status: 'fulfilled', result, team }))
+            .catch(error => ({ status: 'rejected', error, team }));
 
-        const [resourcesResult, allocationsResult] = await Promise.all([
-          resourcesPromise,
-          allocationsPromise,
-        ]);
+          const allocationsPromise = dispatch(
+            getTeamAllocations(teamAllocationPostData)
+          )
+            .then(result => ({ status: 'fulfilled', result, team }))
+            .catch(error => ({ status: 'rejected', error, team }));
 
-        return {
-          resourcesResult,
-          allocationsResult,
-          team,
-        };
-      });
+          const [resourcesResult, allocationsResult] = await Promise.all([
+            resourcesPromise,
+            allocationsPromise,
+          ]);
 
-      const results = await Promise.allSettled(teamPromises);
-      const allResourceResults: TeamResourceResponse[] = [];
-      results.forEach(result => {
-        if (result.status === 'rejected') {
-          console.error('Failed to fetch data for team:', result.reason);
-          return;
-        }
-        const resrouceResults = result.value?.resourcesResult;
-        if (
-          resrouceResults &&
-          resrouceResults.status === 'fulfilled' &&
-          'result' in resrouceResults
-        ) {
-          const resource = resrouceResults?.result?.payload?.result;
-          allResourceResults.push({
-            id: resrouceResults?.team?.Id,
-            teamStatus: resrouceResults?.status,
-            teamAllocationManager: resrouceResults?.team?.AllocationManager,
-            resource: resource,
-          });
-        }
-      });
-      dispatch(setAllTeamsResources(allResourceResults));
+          return {
+            resourcesResult,
+            allocationsResult,
+            team,
+          };
+        });
 
-      const preload_result: Array<{
-        status: 'fulfilled' | 'rejected';
-        value?: any;
-        reason?: any;
-      }> = [];
-      if (allocations && results?.length === 1) {
-        Object.keys(allocations)?.forEach(key => {
-          if (key === teams[0].Id) {
-            preload_result.push(results[0]);
-          } else {
-            preload_result.push({
-              status: 'fulfilled',
-              value: allocations[key],
+        const results = await Promise.allSettled(teamPromises);
+        const allResourceResults: TeamResourceResponse[] = [];
+        results.forEach(result => {
+          if (result.status === 'rejected') {
+            console.error('Failed to fetch data for team:', result.reason);
+            return;
+          }
+          const resrouceResults = result.value?.resourcesResult;
+          if (
+            resrouceResults &&
+            resrouceResults.status === 'fulfilled' &&
+            'result' in resrouceResults
+          ) {
+            const resource = resrouceResults?.result?.payload?.result;
+            allResourceResults.push({
+              id: resrouceResults?.team?.Id,
+              teamStatus: resrouceResults?.status,
+              teamAllocationManager: resrouceResults?.team?.AllocationManager,
+              resource: resource,
             });
           }
         });
-      }
+        dispatch(setAllTeamsResources(allResourceResults));
 
-      const iterator =
-        allocations && preload_result?.length ? preload_result : results;
-      Array.isArray(iterator) &&
-        iterator.forEach(item => {
-          if (item.status === 'fulfilled') {
-            const { resourcesResult, allocationsResult, team } = item?.value;
-            dispatch(
-              setAllocations({
-                team_id: team.Id,
-                value: { resourcesResult, allocationsResult, team },
-              })
-            );
-            if (
-              resourcesResult.status === 'fulfilled' &&
-              allocationsResult.status === 'fulfilled'
-            ) {
-              const formattedAllocations = formatAllocations(
-                allocationsResult.result.payload,
-                resourcesResult.result.payload,
-                team.Id,
-                team.Name,
-                team.Status,
-                team.AllocationManager,
-                StartDate,
-                EndDate
-              );
-
-              const final = formattedAllocations.filter(
-                data => data.teams === team.Name
-              );
-              allResources = [...allResources, ...final];
+        const preload_result: Array<{
+          status: 'fulfilled' | 'rejected';
+          value?: any;
+          reason?: any;
+        }> = [];
+        if (allocations && results?.length === 1) {
+          Object.keys(allocations)?.forEach(key => {
+            if (key === teams[0].Id) {
+              preload_result.push(results[0]);
+            } else {
+              preload_result.push({
+                status: 'fulfilled',
+                value: allocations[key],
+              });
             }
-          } else {
-            console.error('Failed to fetch data for team:', item?.reason);
-          }
-        });
+          });
+        }
 
-      Array.isArray(allResources) &&
-        allResources.sort((a, b) => {
-          const resourceA = a.resource?.toLowerCase() || '';
-          const resourceB = b.resource?.toLowerCase() || '';
-          return resourceA.localeCompare(resourceB);
-        });
-      if (allResources.length > 0) {
-        dispatch(updateResources(allResources));
+        const iterator =
+          allocations && preload_result?.length ? preload_result : results;
+        Array.isArray(iterator) &&
+          iterator.forEach(item => {
+            if (item.status === 'fulfilled') {
+              const { resourcesResult, allocationsResult, team } = item?.value;
+              dispatch(
+                setAllocations({
+                  team_id: team.Id,
+                  value: { resourcesResult, allocationsResult, team },
+                })
+              );
+              if (
+                resourcesResult.status === 'fulfilled' &&
+                allocationsResult.status === 'fulfilled'
+              ) {
+                const formattedAllocations = formatAllocations(
+                  allocationsResult.result.payload,
+                  resourcesResult.result.payload,
+                  team.Id,
+                  team.Name,
+                  team.Status,
+                  team.AllocationManager,
+                  StartDate,
+                  EndDate
+                );
+
+                const final = formattedAllocations.filter(
+                  data => data.teams === team.Name
+                );
+                allResources = [...allResources, ...final];
+              }
+            } else {
+              console.error('Failed to fetch data for team:', item?.reason);
+            }
+          });
+
+        Array.isArray(allResources) &&
+          allResources.sort((a, b) => {
+            const resourceA = a.resource?.toLowerCase() || '';
+            const resourceB = b.resource?.toLowerCase() || '';
+            return resourceA.localeCompare(resourceB);
+          });
+        if (allResources.length > 0) {
+          dispatch(updateResources(allResources));
+        }
+      } catch (error) {
+        console.error(
+          'Error fetching resources and allocations for teams:',
+          error
+        );
+      } finally {
+        dispatch(setTeamsDataProcessing(false));
       }
-    } catch (error) {
-      console.error(
-        'Error fetching resources and allocations for teams:',
-        error
-      );
-    } finally {
-      dispatch(setTeamsDataProcessing(false));
-    }
-  };
+    };
 
 export const fetchAllAllocations = () => async (dispatch: AppDispatch) => {
+  // Not being used currently in application
   try {
     const postData = {
       'ResourceAllocation.Core/GetAllAllocationsForPeriod': {

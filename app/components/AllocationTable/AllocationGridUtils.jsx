@@ -167,7 +167,7 @@ const CellWithMenu = ({
       })
     )
       .then(response => {
-        if (!response?.result) {
+        if (!response) {
           dispatch(
             showToast({
               open: true,

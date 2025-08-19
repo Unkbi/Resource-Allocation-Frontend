@@ -41,6 +41,9 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -72,6 +75,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
         teams: teams,
         projects: projects,
         resources: resources,
+        allResourcesDetail: allResourcesDetail,
         startDate: startDate,
         endDate: endDate,
       },

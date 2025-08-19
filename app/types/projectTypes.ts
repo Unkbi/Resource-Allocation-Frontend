@@ -33,9 +33,7 @@ export interface ProjectState {
 }
 
 export interface GetProjectAllocationsForPeriodPayload {
-  'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-    Project: string;
-    StartDate: string;
-    EndDate: string;
-  };
+  Project: string;
+  StartDate: string;
+  EndDate: string;
 }
