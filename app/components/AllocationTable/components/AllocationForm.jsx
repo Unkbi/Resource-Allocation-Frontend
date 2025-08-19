@@ -3037,6 +3037,10 @@ const AllocationForm = () => {
       case 'add_project_type':
         return (
           <AddProjectTypesForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'add_location':
         return (
           <AddLocationForm
@@ -3047,6 +3051,10 @@ const AllocationForm = () => {
       case 'edit_project_type':
         return (
           <AddProjectTypesForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'edit_location':
         return (
           <AddLocationForm
@@ -3057,6 +3065,10 @@ const AllocationForm = () => {
       case 'add_project_type_group':
         return (
           <AddProjectTypesGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'add_location_group':
         return (
           <AddLocationGroupForm
@@ -3067,6 +3079,10 @@ const AllocationForm = () => {
       case 'edit_project_type_group':
         return (
           <AddProjectTypesGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       case 'edit_location_group':
         return (
           <AddLocationGroupForm
