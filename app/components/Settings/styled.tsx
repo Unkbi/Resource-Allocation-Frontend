@@ -198,7 +198,7 @@ const ColorPickerContainer = styled(Box)({
   display: 'flex',
   width: '100%',
   height: '100%',
-  justifyContent: 'center',
+  justifyContent: 'start',
   alignItems: 'center',
 });
 

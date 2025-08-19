@@ -134,6 +134,8 @@ import {
 import { fetchAllOrganisations } from '@/app/services/organisationServices';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
+import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
+import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 
@@ -281,6 +283,26 @@ const initialValuesMap = {
     Status: 'Active',
     Description: '',
     SidebarColor: '#000000',
+  },
+  add_project_type: {
+    Name: '',
+    ProjectTypeGroup: '',
+    Description: '',
+    Color: '',
+    Status: 'Active',
+  },
+  edit_project_type: {
+    Name: '',
+    ProjectTypeGroup: '',
+    Description: '',
+    Color: '',
+    Status: 'Active',
+  },
+  add_project_type_group: {
+    Name: '',
+  },
+  edit_project_type_group: {
+    Name: '',
   },
   add_role: {
     Name: '',
@@ -2186,6 +2208,22 @@ const AllocationForm = () => {
             });
         }
         break;
+      case 'add_project_type': {
+        //add project type
+        break;
+      }
+      case 'edit_project_type': {
+        //Edit project type
+        break;
+      }
+      case 'add_project_type_group': {
+        //add project type group
+        break;
+      }
+      case 'edit_project_type_group': {
+        //edit project type group
+        break;
+      }
 
       case 'assign_role':
         {
@@ -2996,6 +3034,9 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+      case 'add_project_type':
+        return (
+          <AddProjectTypesForm
       case 'add_location':
         return (
           <AddLocationForm
@@ -3003,6 +3044,9 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+      case 'edit_project_type':
+        return (
+          <AddProjectTypesForm
       case 'edit_location':
         return (
           <AddLocationForm
@@ -3010,6 +3054,9 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+      case 'add_project_type_group':
+        return (
+          <AddProjectTypesGroupForm
       case 'add_location_group':
         return (
           <AddLocationGroupForm
@@ -3017,6 +3064,9 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+      case 'edit_project_type_group':
+        return (
+          <AddProjectTypesGroupForm
       case 'edit_location_group':
         return (
           <AddLocationGroupForm

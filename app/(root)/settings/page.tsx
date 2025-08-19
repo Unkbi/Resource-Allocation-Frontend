@@ -32,6 +32,7 @@ import {
   updateAllocationThemeAction,
 } from '@/app/redux/actions/settingsAction';
 import RoleManagement from '@/app/components/Settings/RoleManagement';
+import ProjectSetting from '@/app/components/Settings/ProjectSettings';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
@@ -187,6 +188,15 @@ const SettingsPanel = () => {
             icon: '',
             content: <RoleManagement />,
             description: 'Comprehensive role and privilege management system',
+          },
+          {
+            id: 'project-setting',
+            title: 'Project Setting',
+            headerText: 'Project Settings',
+            icon: '',
+            content: <ProjectSetting />,
+            description:
+              'Manage project types and their categories for your organization',
           },
           {
             id: 'allocation-setting',
