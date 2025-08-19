@@ -41,7 +41,7 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import { StatusPill } from './styled';
+import { StatusPill, commonTabSx } from './styled';
 
 const tabMenuNames = [
   'role-assignments',
@@ -91,31 +91,6 @@ const commonCellStyle = {
   height: '100%',
 };
 
-const commonTabSx = {
-  color: '#4B5563',
-  textTransform: 'none',
-  borderRadius: 0,
-  px: 3,
-  textAlign: 'center',
-  fontFamily: 'Open Sans',
-  fontSize: '14px',
-  fontStyle: 'normal',
-  fontWeight: 600,
-  lineHeight: '24px',
-  '&.Mui-selected': {
-    background: 'transparent',
-    color: '#2563EB',
-    boxShadow: 'none',
-    borderBottom: '2px solid #3b82f6',
-    textAlign: 'center',
-    fontFamily: 'Open Sans',
-    fontSize: '14px',
-    fontStyle: 'normal',
-    fontWeight: 600,
-    lineHeight: '24px',
-  },
-};
-
 const tabConfig = [
   {
     label: 'Role Assignments',
@@ -161,38 +136,38 @@ const TabHeader = ({
       value={tab}
       onChange={(_, v) => setTab(v)}
       sx={{
-        width: 'fit-content',
-        marginLeft: '20px',
-        marginRight: '20px',
-        background: 'transparent',
-        '& .MuiTabs-flexContainer': {
-          gap: 1.5,
-        },
-        '& .MuiTabs-indicator': {
-          backgroundColor: '#2563EB',
-        },
-        '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(33%) sepia(93%) saturate(1554%) hue-rotate(197deg) brightness(100%) contrast(101%)',
-        },
+      width: 'fit-content',
+      marginLeft: '20px',
+      marginRight: '20px',
+      background: 'transparent',
+      '& .MuiTabs-flexContainer': {
+        gap: 1.5,
+      },
+      '& .MuiTabs-indicator': {
+        backgroundColor: '#152E75',
+      },
+      '& .Mui-selected .tab-icon': {
+        filter:
+        'brightness(0) saturate(100%) invert(21%) sepia(82%) saturate(1192%) hue-rotate(197deg) brightness(97%) contrast(101%)',
+      },
       }}
     >
       {tabConfig.map(({ label, value, icon }) => (
-        <Tab
-          key={value}
-          icon={
-            <img
-              src={icon}
-              alt={label}
-              style={{ width: 21, height: 16, marginRight: 6 }}
-              className="tab-icon"
-            />
-          }
-          iconPosition="start"
-          label={label}
-          value={value}
-          sx={commonTabSx}
+      <Tab
+        key={value}
+        icon={
+        <img
+          src={icon}
+          alt={label}
+          style={{ width: 21, height: 16, marginRight: 6 }}
+          className="tab-icon"
         />
+        }
+        iconPosition="start"
+        label={label}
+        value={value}
+        sx={commonTabSx}
+      />
       ))}
     </Tabs>
   </Box>
