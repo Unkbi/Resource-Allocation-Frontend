@@ -280,7 +280,7 @@ export default function Project() {
       );
       try {
         const postData = {
-          'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
+          'ResourceAllocation.Core/GetProjectAllocations': {
             Project: id,
             StartDate: '2000-01-01',
             EndDate: '2032-01-01',
@@ -638,8 +638,8 @@ export default function Project() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleOpenDialog('Edit Project', 'edit_project', params.row),
-                  handleMenuClose();
+                (handleOpenDialog('Edit Project', 'edit_project', params.row),
+                  handleMenuClose());
               }}
               sx={menuItemStyle}
             >
