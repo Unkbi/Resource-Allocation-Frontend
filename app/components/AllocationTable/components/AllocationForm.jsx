@@ -134,6 +134,8 @@ import {
 import { fetchAllOrganisations } from '@/app/services/organisationServices';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
+import AddLocationForm from '../../Forms/AddLocationForm';
+import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 
 const initialValuesMap = {
   add_project: {
@@ -324,6 +326,22 @@ const initialValuesMap = {
   edit_privilege_assignment: {
     Role: '',
     Privilege: '',
+  },
+  add_location: {
+    Location: '',
+    LocationGroup: '',
+    Status: 'Active',
+  },
+  edit_location: {
+    Location: '',
+    LocationGroup: '',
+    Status: '',
+  },
+  add_location_group: {
+    LocationGroup: '',
+  },
+  edit_location_group: {
+    LocationGroup: '',
   },
 };
 
@@ -2442,6 +2460,20 @@ const AllocationForm = () => {
         }
         return;
       }
+      case 'add_location': {
+        console.log('add_location');
+      }
+      case 'edit_location': {
+        console.log('edit_location');
+      }
+      case 'add_location_group': {
+        console.log('add_location_group');
+      }
+      case 'edit_location_group':
+        {
+          console.log('edit_location_group');
+        }
+        break;
 
       default:
         return;
@@ -2964,7 +2996,34 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
-
+      case 'add_location':
+        return (
+          <AddLocationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_location':
+        return (
+          <AddLocationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_location_group':
+        return (
+          <AddLocationGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_location_group':
+        return (
+          <AddLocationGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       default:
         return <div>No form selected</div>;
     }

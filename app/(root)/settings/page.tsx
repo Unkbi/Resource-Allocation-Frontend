@@ -34,6 +34,7 @@ import {
 import RoleManagement from '@/app/components/Settings/RoleManagement';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import Location from '@/app/components/Settings/Location';
 
 interface MenuItem {
   id: string;
@@ -202,6 +203,14 @@ const SettingsPanel = () => {
               />
             ),
             description: 'It is a color theme for organization view',
+          },
+          {
+            id: 'location-setting',
+            title: 'Location',
+            headerText: 'Location Settings',
+            icon: '',
+            content: <Location />,
+            description: 'Lorem ipsum',
           },
           {
             id: 'theme',
