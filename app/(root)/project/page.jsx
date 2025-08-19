@@ -47,7 +47,11 @@ import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
 import { StatusPill } from '@/app/components/Settings/styled';
 
-import { CREATE_ORGANISATION, DELETE_ORGANISATION, UPDATE_ORGANISATION } from '@/app/redux/actions/organizationsAction';
+import {
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+  UPDATE_ORGANISATION,
+} from '@/app/redux/actions/organizationsAction';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -91,17 +95,14 @@ export default function Project() {
   const apiRef = useGridApiRef();
 
   useEffect(() => {
-  
-  new Promise((resolve, reject) => {
-  })
-    .then((res) => {
-      console.log('✅ Organisation created successfully:', res);
-    })
-    .catch((err) => {
-      console.error('❌ Failed to create organisation:', err);
-    });
-}, [dispatch]);
-
+    new Promise((resolve, reject) => {})
+      .then(res => {
+        console.log('✅ Organisation created successfully:', res);
+      })
+      .catch(err => {
+        console.error('❌ Failed to create organisation:', err);
+      });
+  }, [dispatch]);
 
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
@@ -251,7 +252,7 @@ export default function Project() {
       );
       try {
         const postData = {
-          'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
+          'ResourceAllocation.Core/GetProjectAllocations': {
             Project: id,
             StartDate: '2000-01-01',
             EndDate: '2032-01-01',
@@ -609,8 +610,8 @@ export default function Project() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleOpenDialog('Edit Project', 'edit_project', params.row),
-                  handleMenuClose();
+                (handleOpenDialog('Edit Project', 'edit_project', params.row),
+                  handleMenuClose());
               }}
               sx={menuItemStyle}
             >
