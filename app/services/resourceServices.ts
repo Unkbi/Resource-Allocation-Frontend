@@ -60,9 +60,9 @@ export const deleteResource = createAsyncThunk<
   { rejectValue: string }
 >('/resource/delete', async (resourceId, { rejectWithValue }) => {
   try {
-    await axiosInstance.delete(
-      `${API_PROJECT_PORTFOLIO}/Resource/${resourceId}`
-    );
+    await axiosInstance.post(`${API_PROJECT_PORTFOLIO}/DeleteResource`, {
+      Id: resourceId,
+    });
     return resourceId;
   } catch (error: any) {
     return rejectWithValue(error.response?.data || 'Failed to delete resource');
