@@ -23,13 +23,13 @@ const fetchActualAllocationsForPeriodSagaFunction = function* (
   yield put(setDataProcessing(true));
   try {
     const postData: ActualAllocationsForPeriodPayload = {
-        Resource: resource,
-        StartDate: startDate,
-        EndDate: endDate,
+      Resource: resource,
+      StartDate: startDate,
+      EndDate: endDate,
     };
     const response = yield fetchActualAllocationsForPeriod(postData);
 
-    yield put(setActualAllocations(response.result));
+    yield put(setActualAllocations(response));
   } catch (error) {
     console.error('Error fetching actual allocations:', error);
   } finally {
@@ -43,10 +43,10 @@ const confirmActualAllocationsForPeriodSagaFunction = function* (
   const { resource, period, status, actuals, resolve, reject } = action.payload;
   try {
     const postData: ConfirmActualAllocationsForPeriodRequest = {
-        Resource: resource,
-        Period: period,
-        Status: status,
-        Actuals: actuals,
+      Resource: resource,
+      Period: period,
+      Status: status,
+      Actuals: actuals,
     };
     const response = yield confirmActualsEnteredForPeriod(postData);
     // Notify if async operation is completed
