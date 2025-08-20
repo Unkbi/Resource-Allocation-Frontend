@@ -1053,7 +1053,7 @@ export default function Resources() {
             EndDate: '2032-01-01',
           };
           const response = await fetchTeamAllocationsForSaga(postData);
-          const resourceAllocations = (response.result || []).filter(
+          const resourceAllocations = (response || []).filter(
             allocation => allocation.Resource === deleteTarget.id
           );
           if (resourceAllocations.length === 0) {
