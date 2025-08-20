@@ -53,7 +53,7 @@ const settings = createSlice({
       .addCase(getAllocationTheme.fulfilled, (state, action) => {
         state.loading = false;
         if (!Array.isArray(action.payload)) {
-          console.error('Unexpected data structure:', action.payload.result);
+          console.error('Unexpected data structure:', action.payload);
           return;
         }
         const formattedResponse = formatAPIResponse(
