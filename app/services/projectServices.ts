@@ -86,7 +86,7 @@ export const fetchProjectAllocationsForSaga = async (
   postData: GetProjectAllocationsForPeriodPayload
 ) => {
   const response = await axiosInstance.post(
-    `${API_PROJECT_PORTFOLIO}/GetProjectAllocationsForPeriod`,
+    `${API_PROJECT_PORTFOLIO}/GetProjectAllocations`,
     postData
   );
   return response.data;
