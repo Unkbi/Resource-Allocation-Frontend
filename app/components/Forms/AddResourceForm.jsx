@@ -27,7 +27,6 @@ import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
-  getResourceDetail,
 } from '@/app/services/teamServices';
 import dayjs from 'dayjs';
 import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';

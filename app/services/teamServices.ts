@@ -119,6 +119,7 @@ export const fetchResourceAllocationsForSaga = async (
 };
 
 export const getResourceDetail = createAsyncThunk(
+  // Not used in the application currently
   'resource/getResourceDetail',
   async (resourceId: string, { rejectWithValue }) => {
     try {
