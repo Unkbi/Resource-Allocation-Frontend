@@ -592,7 +592,7 @@ const AllocationForm = () => {
 
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
-                dispatch(setSplitViewCurrentProject(response.payload.result));
+                dispatch(setSplitViewCurrentProject(response.payload.Project));
                 dispatch(closeDialog());
                 router.replace('/allocation');
                 return;
