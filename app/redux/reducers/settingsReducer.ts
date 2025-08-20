@@ -61,7 +61,6 @@ const settings = createSlice({
           action.payload
         );
         const result: ParentEntry[] = formattedResponse;
-
         state.allocationTheme = result.flatMap((parentEntry: ParentEntry) =>
           parentEntry.AllocationRanges?.map(apiRange => ({
             id: apiRange.Id,
@@ -88,16 +87,13 @@ const settings = createSlice({
       .addCase(addAllocationTheme.fulfilled, (state, action) => {
         state.loading = false;
         state.updating = false;
-        const newParentEntry = formatAPIResponse(
-          'AllocationRangeSetting',
-          action.payload
-        )[0];
+        const newParentEntry = action.payload.AllocationRangeSetting;
         const newRange = newParentEntry.AllocationRanges[0];
 
         if (state.allocationTheme) {
           state.allocationTheme.push({
             id: newRange.Id,
-            __id__: newParentEntry.__id__,
+            __id__: newParentEntry.Id,
             Label: newRange.Label,
             From: newRange.From,
             To: newRange.To,
