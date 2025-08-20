@@ -591,7 +591,7 @@ export default function AllocationGrid({
     };
 
     const allocationsOfAddedResource =
-      Array.isArray(teamAllocations?.result) &&
+      Array.isArray(teamAllocations?.result) && // Sahadev : Unsure of this
       teamAllocations?.result.filter(
         resource => resource.Resource === selectedResourceId
       );

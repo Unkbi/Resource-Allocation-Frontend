@@ -103,7 +103,7 @@ export default function AllocationInit() {
         payload: {},
       });
     }
-    if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
+    if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
     }
   }, []);

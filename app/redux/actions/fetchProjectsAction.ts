@@ -30,7 +30,7 @@ export const fetchAllProjects = () => async (dispatch: AppDispatch) => {
       response &&
       response?.meta?.requestStatus === 'fulfilled' &&
       //@ts-ignore
-      response?.payload?.result?.length === 0
+      response?.payload?.length === 0
     ) {
       dispatch(setAllocationDataProcessing(false));
     }

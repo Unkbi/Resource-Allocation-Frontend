@@ -4,18 +4,17 @@ import { API_PROJECT_PORTFOLIO } from '../constants/constants';
 import { AxiosError } from 'axios';
 import { AllocationRangePayload } from '../types';
 
-
 export const getAllocationTheme = createAsyncThunk(
   '/AllocationRangeSetting/get',
   async () => {
     try {
       const response = await axiosInstance.get(
-        `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting`,
+        `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting`
       );
 
       return response.data;
     } catch (error) {
-      console.error("Error deleting resource:", error);
+      console.error('Error deleting resource:', error);
     }
   }
 );
@@ -25,9 +24,7 @@ export const addAllocationTheme = createAsyncThunk(
   async (postData: AllocationRangePayload[], { rejectWithValue }) => {
     try {
       const formattedPayload = {
-        "ResourceAllocation.Core/AllocationRangeSetting": {
-          "AllocationRanges": postData
-        }
+        AllocationRanges: postData,
       };
       const response = await axiosInstance.post(
         `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting`,
@@ -45,17 +42,18 @@ export const addAllocationTheme = createAsyncThunk(
 export const updateAllocationThemes = createAsyncThunk(
   '/AllocationRangeSetting/update',
   async (
-    { postData,  __Id__ }: { postData: AllocationRangePayload[];  __Id__: string },
+    {
+      postData,
+      __id__,
+    }: { postData: AllocationRangePayload[]; __id__: string },
     { rejectWithValue }
   ) => {
     try {
       const formattedPayload = {
-        "ResourceAllocation.Core/AllocationRangeSetting": {
-          "AllocationRanges": postData
-        }
+        AllocationRanges: postData,
       };
       const response = await axiosInstance.put(
-        `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting/${ __Id__}`,
+        `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting/${__id__}`,
         formattedPayload
       );
       return response.data;
@@ -66,5 +64,3 @@ export const updateAllocationThemes = createAsyncThunk(
     }
   }
 );
-
-

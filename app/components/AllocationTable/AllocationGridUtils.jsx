@@ -638,7 +638,7 @@ export const getFinalColumns = (
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
-            Array.isArray(teamAllocations.result) &&
+            Array.isArray(teamAllocations.result) && // Sahadev : Unsure of this
             teamAllocations.result.filter(
               resource => resource.Resource === params.row.resourceId
             );
