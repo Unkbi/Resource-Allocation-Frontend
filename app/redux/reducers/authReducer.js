@@ -14,7 +14,7 @@ const initialState = {
   user: null,
   token: null,
   loading: false,
-  signupData: '',
+  signupData: null,
   error: null,
   forgotPasswordMessage: null,
   resetPasswordMessage: null,

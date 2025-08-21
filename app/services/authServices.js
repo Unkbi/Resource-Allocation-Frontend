@@ -52,7 +52,7 @@ export const signupUser = createAsyncThunk(
   'auth/signupUser',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/signup', data);
+      const response = await axiosInstance.post('/agentlang.auth/signup', data);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.reason || 'Signup failed');
@@ -64,7 +64,7 @@ export const confirmSignUp = createAsyncThunk(
   'auth/confirmSignUp',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/confirm-sign-up', data);
+      const response = await axiosInstance.post('/agentlang.auth/confirmSignup', data);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.reason || 'Signup failed');
@@ -82,7 +82,7 @@ export const forgotPassword = createAsyncThunk(
   'auth/forgotPassword',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/forgot-password', data);
+      const response = await axiosInstance.post('agentlang.auth/forgotPassword', data);
       return response;
     } catch (error) {
       return rejectWithValue(
@@ -97,7 +97,7 @@ export const confirmForgotPassword = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        '/confirm-forgot-password',
+        'agentlang.auth/confirmForgotPassword',
         data
       );
       return response;

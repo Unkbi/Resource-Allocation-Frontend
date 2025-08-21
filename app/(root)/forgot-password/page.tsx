@@ -178,9 +178,7 @@ export default function ForgotPasswordPage() {
     const handleForgotPassword = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         dispatch(performForgotPassword({
-            'Agentlang.Kernel.Identity/ForgotPassword': {
-                Username: email
-            }
+                email: email
         }));
         setEmail('');
     };
