@@ -572,7 +572,6 @@ export default function AllocationTheme({
       editable: true,
       sortable: false,
       preProcessEditCellProps: params => {
-        console.log(params , "params")
         const { value } = params.props;
         handleLabelChange(params.id as string, value as string);
         return { ...params.props };
