@@ -312,17 +312,17 @@ const SettingsPanel = () => {
       // Not sure if we need to update the state here
       // dispatch(updateAllocationTheme([...allocationRanges]));
       const transformedAllocationRanges = allocationRanges.map(range => {
-        const { __id__, id, ...rest } = range;
+        const {Id, id, ...rest } = range;
         return {
           Id: id,
           ...rest,
         };
       });
-      const itemsWithId = allocationRanges.filter(d => d.__id__);
+      const itemsWithId = allocationRanges.filter(d => d.Id);
       if (itemsWithId.length > 0) {
         const payload = {
           postData: transformedAllocationRanges,
-          __id__: itemsWithId[0]?.__id__,
+          Id: itemsWithId[0]?.Id,
         };
         dispatch(updateAllocationThemeAction(payload)).then(response => {
           if (response?.meta?.requestStatus === 'fulfilled') {
@@ -337,7 +337,7 @@ const SettingsPanel = () => {
           }
         });
       } else {
-        const newItems = allocationRanges.filter(d => !d.__id__);
+        const newItems = allocationRanges.filter(d => !d.Id);
         if (newItems.length > 0) {
           dispatch(addAllocationThemeAction(transformedAllocationRanges));
         }

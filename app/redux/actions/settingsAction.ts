@@ -25,7 +25,7 @@ export const addAllocationThemeAction =
   };
 
 export const updateAllocationThemeAction =
-  (payload: { postData: AllocationRangePayload[]; __id__: string }) =>
+  (payload: { postData: AllocationRangePayload[]; Id: string }) =>
   async (dispatch: AppDispatch) => {
     try {
       const response = await dispatch(updateAllocationThemes(payload));

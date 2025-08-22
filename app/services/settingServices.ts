@@ -44,8 +44,8 @@ export const updateAllocationThemes = createAsyncThunk(
   async (
     {
       postData,
-      __id__,
-    }: { postData: AllocationRangePayload[]; __id__: string },
+      Id,
+    }: { postData: AllocationRangePayload[]; Id: string },
     { rejectWithValue }
   ) => {
     try {
@@ -53,7 +53,7 @@ export const updateAllocationThemes = createAsyncThunk(
         AllocationRanges: postData,
       };
       const response = await axiosInstance.put(
-        `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting/${__id__}`,
+        `${API_PROJECT_PORTFOLIO}/AllocationRangeSetting/${Id}`,
         formattedPayload
       );
       return response.data;

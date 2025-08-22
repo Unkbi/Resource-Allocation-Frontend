@@ -384,7 +384,7 @@ export default function AllocationTheme({
     if (newRange?.length === 0) {
       const newRow: AllocationRange = {
         id: '1',
-        __id__: allocationRangeId,
+        Id: allocationRangeId,
         From: '0.0',
         To: '2.0',
         Label: '',
@@ -429,7 +429,7 @@ export default function AllocationTheme({
       updatedRanges = fixRanges(
         updatedRanges,
         id as string,
-        allocationRanges[0].__id__
+        allocationRanges[0].Id
       );
       onAllocationRangesChange(updatedRanges);
 
@@ -488,7 +488,7 @@ export default function AllocationTheme({
     // Create new row with proper ID
     const newRow: AllocationRange = {
       id: getNextId().toString(),
-      __id__: '',
+      Id: '',
       From: newFrom,
       To: newTo,
       Label: '',
@@ -572,6 +572,7 @@ export default function AllocationTheme({
       editable: true,
       sortable: false,
       preProcessEditCellProps: params => {
+        console.log(params , "params")
         const { value } = params.props;
         handleLabelChange(params.id as string, value as string);
         return { ...params.props };

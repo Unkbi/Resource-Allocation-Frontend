@@ -19,7 +19,7 @@ const initialState: ThemeState = {
   allocationTheme: [
     {
       id: '1',
-      __id__: '',
+      Id: '',
       From: '0.0',
       To: '0.0',
       Label: 'No Allocation',
@@ -64,7 +64,7 @@ const settings = createSlice({
         state.allocationTheme = result.flatMap((parentEntry: ParentEntry) =>
           parentEntry.AllocationRanges?.map(apiRange => ({
             id: apiRange.Id,
-            __id__: parentEntry.__id__,
+            Id: parentEntry.Id,
             Label: apiRange.Label,
             From: apiRange.From,
             To: apiRange.To,
@@ -93,7 +93,7 @@ const settings = createSlice({
         if (state.allocationTheme) {
           state.allocationTheme.push({
             id: newRange.Id,
-            __id__: newParentEntry.Id,
+            Id: newParentEntry.Id,
             Label: newRange.Label,
             From: newRange.From,
             To: newRange.To,
@@ -127,12 +127,12 @@ const settings = createSlice({
           const index = state.allocationTheme.findIndex(
             range =>
               range.id === updatedRange.Id &&
-              range.__id__ === updatedParentEntry.__id__
+              range.Id === updatedParentEntry.Id
           );
           if (index !== -1) {
             state.allocationTheme[index] = {
               id: updatedRange.Id,
-              __id__: updatedParentEntry.__id__,
+              Id: updatedParentEntry.Id,
               Label: updatedRange.Label,
               From: updatedRange.From,
               To: updatedRange.To,
