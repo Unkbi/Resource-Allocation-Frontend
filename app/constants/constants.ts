@@ -221,7 +221,7 @@ export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DISPLAY_DATE_FORMAT = 'MMM yyyy';
 
 export const API_PROJECT_PORTFOLIO = '/Resource';
-export const API_AGENTLANG_KERNEL_RBAC = '/agentlang_auth';
+export const API_AGENTLANG_KERNEL_RBAC = '/agentlang.auth';
 
 export const PUBLIC_ROUTES = [
   '/login',

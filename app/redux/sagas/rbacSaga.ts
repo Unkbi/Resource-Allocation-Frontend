@@ -128,7 +128,7 @@ function* fetchPrivilegesSaga(): Generator<any, void, any> {
 
     const responses = yield call(fetchPrivileges);
 
-    yield put(setPrivileges(responses?.result));
+    yield put(setPrivileges(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch Privileges : ', error);
   } finally {
