@@ -201,7 +201,7 @@ const SettingsPanel = () => {
           {
             id: 'allocation-setting',
             title: 'Allocation Setting',
-            headerText: 'Color Theme: Teams View',
+            headerText: 'Allocation Settings',
             icon: '',
             content: (
               <AllocationTheme

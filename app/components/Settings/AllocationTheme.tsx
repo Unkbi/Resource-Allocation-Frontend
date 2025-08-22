@@ -77,6 +77,10 @@ export default function AllocationTheme({
   const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
   );
+  const [maxAllocationWarning, setMaxAllocationWarning] =
+    React.useState<number>(0.0);
+  const [maxAllocationError, setMaxAllocationError] =
+    React.useState<number>(0.0);
   const dispatch: AppDispatch = useDispatch();
 
   // Get currently used colors
@@ -634,6 +638,204 @@ export default function AllocationTheme({
               footer: CustomFooterComponent,
             }}
           />
+        </Box>
+
+        {/* Alert Threshold Section */}
+        <Box
+          sx={{
+            mt: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            width: '100%',
+          }}
+        >
+          <StyledTableHeader>Alerts Threshold</StyledTableHeader>
+          <Box
+            sx={{
+              borderRadius: '8px',
+              background: '#FBFBFB',
+              p: 3,
+              ml: 2,
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 3,
+            }}
+          >
+            {/* Max Allocation Warning */}
+            <Box>
+              <Box
+                sx={{
+                  mb: 2,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: 400,
+                    fontSize: '15px',
+                    color: '#444',
+                    mb: 1,
+                  }}
+                >
+                  Max Allocation Warning
+                </Typography>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 2 }}
+                >
+                  <TextField
+                    type="number"
+                    size="small"
+                    placeholder="0.0"
+                    value={
+                      maxAllocationWarning === 0 ? '' : maxAllocationWarning
+                    }
+                    onChange={e => {
+                      let val = e.target.value;
+                      if (/^\d*\.?\d{0,1}$/.test(val)) {
+                        setMaxAllocationWarning(parseFloat(val) || 0.0);
+                      }
+                    }}
+                    sx={{
+                      background: '#fff',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                        height: 36,
+                        width: 129,
+                        fontSize: '15px',
+                        color: '#888',
+                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                          {
+                            WebkitAppearance: 'none',
+                            margin: 0,
+                          },
+                        '& input[type="number"]': {
+                          MozAppearance: 'textfield',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: '#FFFBEB',
+                    borderRadius: 2,
+                    px: 1.5,
+                    py: 0.5,
+                  }}
+                >
+                  <img
+                    src="/images/icons/WarningIcon.svg"
+                    alt="Error"
+                    style={{ width: 14, height: 14, marginRight: 6 }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: '12px',
+                      color: '#92400E',
+                      fontWeight: 400,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Warning for max allowed allocation level (
+                    {maxAllocationWarning.toFixed(1)})
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Max Allocation Error */}
+            <Box>
+              <Box
+                sx={{
+                  mb: 2,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: '15px',
+                    color: '#444',
+                    mb: 1,
+                  }}
+                >
+                  Max Allocation Error
+                </Typography>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 2 }}
+                >
+                  <TextField
+                    type="number"
+                    size="small"
+                    placeholder="0.0"
+                    value={maxAllocationError === 0 ? '' : maxAllocationError}
+                    onChange={e => {
+                      let val = e.target.value;
+                      if (/^\d*\.?\d{0,1}$/.test(val)) {
+                        setMaxAllocationError(parseFloat(val) || 0.0);
+                      }
+                    }}
+                    sx={{
+                      background: '#fff',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                        height: 36,
+                        width: 129,
+                        fontSize: '15px',
+                        color: '#888',
+                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                          {
+                            WebkitAppearance: 'none',
+                            margin: 0,
+                          },
+                        '& input[type="number"]': {
+                          MozAppearance: 'textfield',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    bgcolor: '#FEF2F2',
+                    borderRadius: 2,
+                    px: 1.5,
+                    py: 0.5,
+                  }}
+                >
+                  <img
+                    src="/images/icons/ErrorIcon.svg"
+                    alt="Error"
+                    style={{ width: 14, height: 14, marginRight: 6 }}
+                  />
+                  <Typography
+                    sx={{
+                      color: '#d32f2f',
+                      fontSize: '12px',
+                      fontWeight: 400,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Error message will be displayed.
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
         </Box>
       </ContentPaper>
     </MainContent>
