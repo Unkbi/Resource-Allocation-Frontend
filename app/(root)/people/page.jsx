@@ -631,7 +631,7 @@ export default function Resources() {
                   <MenuItem
                     onClick={() => {
                       setDeleteDialogOpen(true);
-                      handleMenuClose();
+                      handleMenuClose();    
                       setDeleteTarget({
                         id: params.row.Id,
                         name: params.row.Team,
@@ -1081,12 +1081,13 @@ export default function Resources() {
   ]);
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget.id) {
-      setDeleteDialogOpen(false);
-      setDeleteTarget({ id: '', name: '' });
-      return;
-    }
+  if (!deleteTarget.id) {
+    setDeleteDialogOpen(false);
+    setDeleteTarget({ id: '', name: '', type: '' });
+    return;
+  }
 
+  try {
     switch (value) {
       case 'rates':
         try {
@@ -1121,23 +1122,23 @@ export default function Resources() {
 
       case 'teams':
         const teamId = deleteTarget.id;
-        // Look through AllResourceDetails
-        try {
-          if (
-            allResourcesDetail.find(resource => resource?.Team?.Id === teamId)
-          ) {
-            dispatch(
-              showToast({
-                open: true,
-                message: `Cannot delete a team with resources, please reassign and try again.`,
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          } else {
-            dispatch(deleteTeam(teamId));
-            dispatch(fetchAllTeams());
+       // Look through AllResourceDetails
+        if (
+          allResourcesDetail.find(resource => resource?.Team?.Id === teamId)
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete a team with resources, please reassign and try again.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          try {
+            await dispatch(deleteTeam(teamId)).unwrap();
+            await dispatch(fetchAllTeams());
             dispatch(
               showToast({
                 open: true,
@@ -1147,20 +1148,17 @@ export default function Resources() {
                 autoHideTimer: 1000,
               })
             );
+          } catch (error) {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to delete team',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
           }
-        } catch (error) {
-          dispatch(
-            showToast({
-              open: true,
-              message: 'Failed to delete resource',
-              type: 'error',
-              position: 'bottom-left',
-              autoHideTimer: 4000,
-            })
-          );
-        } finally {
-          setDeleteDialogOpen(false);
-          setDeleteTarget({ id: '', name: '', type: '' });
         }
         break;
 
@@ -1239,40 +1237,40 @@ export default function Resources() {
             });
             return;
           }
-          const postData = {
-            'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-              TeamId: teamId,
-              StartDate: '2000-01-01',
-              EndDate: '2032-01-01',
-            },
-          };
-          const response = await fetchTeamAllocationsForSaga(postData);
-          const resourceAllocations = (response.result || []).filter(
-            allocation => allocation.Resource === deleteTarget.id
-          );
+            const postData = {
+              'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
+                TeamId: teamId,
+                StartDate: '2000-01-01',
+                EndDate: '2032-01-01',
+              },
+            };
+            const response = await fetchTeamAllocationsForSaga(postData);
+            const resourceAllocations = (response.result || []).filter(
+              allocation => allocation.Resource === deleteTarget.id
+            );
           if (resourceAllocations.length === 0) {
             await dispatch(deleteResource(deleteTarget.id)).unwrap();
-            dispatch(
-              showToast({
-                open: true,
+              dispatch(
+                showToast({
+                  open: true,
                 message: 'Resource deleted successfully',
                 type: 'success',
-                position: 'bottom-left',
+                  position: 'bottom-left',
                 autoHideTimer: 2000,
-              })
-            );
+                })
+              );
             dispatch(fetchAllResources());
             dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
           } else {
-            dispatch(
-              showToast({
-                open: true,
+          dispatch(
+            showToast({
+              open: true,
                 message: 'Cannot delete resource with active allocations',
                 type: 'error',
-                position: 'bottom-left',
+              position: 'bottom-left',
                 autoHideTimer: 4000,
-              })
-            );
+            })
+          );
           }
         } catch (error) {
           dispatch(
@@ -1284,9 +1282,6 @@ export default function Resources() {
               autoHideTimer: 4000,
             })
           );
-        } finally {
-          setDeleteDialogOpen(false);
-          setDeleteTarget({ id: '', name: '' });
         }
         break;
 
@@ -1294,7 +1289,11 @@ export default function Resources() {
         alert(`unhandled delete for ${value}`);
         break;
     }
-  };
+  } finally {
+    setDeleteDialogOpen(false);
+    setDeleteTarget({ id: '', name: '', type: '' });
+  }
+};
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
