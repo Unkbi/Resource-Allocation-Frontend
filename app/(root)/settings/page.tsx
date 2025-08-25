@@ -309,8 +309,8 @@ const SettingsPanel = () => {
       }
       setOriginalAllocationRanges([...allocationRanges]);
       setHasUnsavedChanges(false);
-      // Not sure if we need to update the state here
-      // dispatch(updateAllocationTheme([...allocationRanges]));
+      // This Updates the local State, Warning: State will be modified after API Success.
+      dispatch(updateAllocationTheme([...allocationRanges]));
       const transformedAllocationRanges = allocationRanges.map(range => {
         const { __id__, id, ...rest } = range;
         return {

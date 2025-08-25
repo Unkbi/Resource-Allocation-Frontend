@@ -11,6 +11,7 @@ export interface AllocationRange {
 // Define the type for a ParentEntry
 export interface ParentEntry {
   __id__: string;
+  Id: string;
   AllocationRanges: {
     Id: string;
     Label: string;
