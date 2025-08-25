@@ -64,7 +64,7 @@ const settings = createSlice({
         state.allocationTheme = result.flatMap((parentEntry: ParentEntry) =>
           parentEntry.AllocationRanges?.map(apiRange => ({
             id: apiRange.Id,
-            __id__: parentEntry.__id__,
+            __id__: parentEntry.Id, // Allocation Range id is maintianed internally as __id__ and APIs as Id.
             Label: apiRange.Label,
             From: apiRange.From,
             To: apiRange.To,
@@ -88,18 +88,12 @@ const settings = createSlice({
         state.loading = false;
         state.updating = false;
         const newParentEntry = action.payload.AllocationRangeSetting;
-        const newRange = newParentEntry.AllocationRanges[0];
-
         if (state.allocationTheme) {
-          state.allocationTheme.push({
-            id: newRange.Id,
-            __id__: newParentEntry.Id,
-            Label: newRange.Label,
-            From: newRange.From,
-            To: newRange.To,
-            Color: newRange.Color,
-            DarkColor: newRange.DarkColor,
-          });
+          // We modify the __id__ of all the ranges to the newly created ParentEntry Id
+          state.allocationTheme = state.allocationTheme.map(range => ({
+            ...range,
+            __id__: newParentEntry.Id, // Allocation Range id is maintianed internally as __id__ and APIs as Id.
+          }));
         }
       })
       .addCase(addAllocationTheme.rejected, (state, action) => {
@@ -127,12 +121,12 @@ const settings = createSlice({
           const index = state.allocationTheme.findIndex(
             range =>
               range.id === updatedRange.Id &&
-              range.__id__ === updatedParentEntry.__id__
+              range.__id__ === updatedParentEntry.Id // Allocation Range id is maintianed internally as __id__ and APIs as Id.
           );
           if (index !== -1) {
             state.allocationTheme[index] = {
               id: updatedRange.Id,
-              __id__: updatedParentEntry.__id__,
+              __id__: updatedParentEntry.Id, // Allocation Range id is maintianed internally as __id__ and APIs as Id.
               Label: updatedRange.Label,
               From: updatedRange.From,
               To: updatedRange.To,
