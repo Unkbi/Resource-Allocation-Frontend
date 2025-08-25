@@ -267,7 +267,7 @@ const initialValuesMap = {
     SidebarColor: '#000000',
   },
   add_role: {
-    Name: '',
+    name: '',
   },
   edit_role: {
     Name: '',
@@ -1992,7 +1992,7 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
-              dispatch(setHighlightedRowId(response.result?.Name));
+              dispatch(setHighlightedRowId(response?.Role.name));
             })
             .catch(error => {
               console.error('Failed to add role:', error);

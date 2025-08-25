@@ -1,4 +1,5 @@
 import { RBACState } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: RBACState = {
@@ -15,7 +16,7 @@ const rbacSlice = createSlice({
   initialState,
   reducers: {
     setRoles: (state, action) => {
-      state.roles = action.payload;
+      state.roles = formatAPIResponse('Role',action.payload);
     },
     clearRoles: state => {
       state.roles = [];
@@ -24,7 +25,7 @@ const rbacSlice = createSlice({
       const updatedRoles = action.payload;
       if (!state.roles) return;
       const index = state.roles.findIndex(
-        role => role.Name === updatedRoles.Name
+        role => role.name === updatedRoles.Name
       );
       if (index !== -1) {
         state.roles[index] = {
