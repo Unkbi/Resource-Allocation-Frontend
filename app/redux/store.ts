@@ -21,6 +21,7 @@ import employeeRatesReducer from './reducers/employeeRatesReducer';
 import allResourcesDetailReducer from './reducers/allResourcesDetailReducer';
 import portfolioReducer from './reducers/portfolioReducer';
 import rbacReducer from './reducers/rbacReducer';
+import allSettingsReducer from './reducers/allSettingsReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -47,6 +48,7 @@ export const makeStore = () => {
       allResourcesDetail: allResourcesDetailReducer,
       portfolios: portfolioReducer,
       rbac: rbacReducer,
+      allSettings: allSettingsReducer,
     },
     middleware: getDefaultMiddleware =>
       getDefaultMiddleware({

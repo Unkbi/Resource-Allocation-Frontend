@@ -40,6 +40,12 @@ export * from './employeeRatesTypes';
 // RBAC-related Types
 export * from './rbacTypes';
 
+// All Settings Types
+export * from './allSettingsType';
+
+// Project Types Types
+export * from './projectTypesType';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;
