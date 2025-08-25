@@ -36,6 +36,7 @@ import ProjectSetting from '@/app/components/Settings/ProjectSettings';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
+import UserManagement from '@/app/components/Settings/UserManagement';
 
 interface MenuItem {
   id: string;
@@ -181,6 +182,14 @@ const SettingsPanel = () => {
       {
         name: 'Admin Settings',
         items: [
+          {
+            id: 'user-management',
+            title: 'User Management',
+            headerText: 'User Management',
+            icon: '',
+            content: <UserManagement />,
+            description: 'Easily add and manage your users and resources in one place.',
+          },
           {
             id: 'access-management',
             title: 'Access Management',
