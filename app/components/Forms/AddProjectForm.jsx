@@ -12,6 +12,7 @@ import StyledAutocomplete from '../Select/Autocomplete';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -26,6 +27,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { projectTypes } = useSelector(state => state.allSettings);
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
@@ -42,6 +44,12 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         label: portfolio.Name,
       })) || [];
 
+  const projectTypeOptions =
+    projectTypes?.map(pt => ({
+      value: pt.Id,
+      label: pt.Name,
+    })) || [];
+
   useEffect(() => {
     if (!resources) {
       dispatch({
@@ -54,6 +62,9 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         type: FETCH_PORTFOLIOS,
         payload: {},
       });
+    }
+    if (!projectTypes) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
     }
   }, []);
 
@@ -72,7 +83,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             ?.Id || '',
         Name: initialData.Name || '',
         PortfolioId: initialData.PortfolioId || '',
-        Type: initialData.Type || '',
+        Type: projectTypes?.find(pT => pT.Name === initialData.Type)?.Id || '',
         Status: initialData.Status || 'Active',
         Budget: initialData.Budget || 0,
       };
@@ -82,13 +93,6 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     }
   }, [initialData]);
 
-  const projectTypeOptions = [
-    { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB' }, //(Run-th-business)
-    { value: 'CTB', label: 'CTB' },
-    { value: 'STB', label: 'STB' },
-    { value: 'Ongoing', label: 'Ongoing' },
-  ];
   const allowOverTimeOptions = [
     { value: 'Yes', label: 'Yes' },
     { value: 'No', label: 'No' },

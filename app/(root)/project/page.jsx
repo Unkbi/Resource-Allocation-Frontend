@@ -45,6 +45,7 @@ import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -137,6 +138,7 @@ export default function Project() {
   const { resources, loading: resourceLoading } = useSelector(
     state => state.resources
   );
+  const { projectTypes } = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(projects || null);
@@ -189,6 +191,12 @@ export default function Project() {
         payload: {},
       });
     }
+    if (!projectTypes?.length) {
+      dispatch({
+        type: FETCH_PROJECT_TYPES,
+        payload: {},
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -228,6 +236,10 @@ export default function Project() {
           ?.FullName,
         ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
           ?.FullName,
+        Type:
+          projectTypes?.find(pt => pt.Id === project.Type)?.Name ||
+          project.Type ||
+          '',
       };
     });
   };
