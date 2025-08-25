@@ -195,10 +195,8 @@ export default function SignUpOtpPage(){
         }
 
         dispatch(confirmSignUpUser({
-            'Agentlang.Kernel.Identity/ConfirmSignUp': {
-                Username: signupData,
-                ConfirmationCode: otp.join(""),
-            }
+             email: (signupData as any)?.email,       
+             confirmationCode: otp.join(""),
         }));
     };
 
@@ -266,7 +264,7 @@ useEffect(() => {
                             Verify with OTP
                         </Typography>
                         <Typography className='subHeadingText'>
-                            We've sent a verification code to {signupData}
+                            We've sent a verification code to {(signupData as any)?.email}
                         </Typography>
             <Box component="form" onSubmit={handleVerifyOtp} sx={{ mt: 2 }}>
               <Box
