@@ -2015,7 +2015,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response?.Organization?.Id));
           })
           .catch(error => {
             console.error('Failed to add organization:', error);
@@ -2041,10 +2041,8 @@ const AllocationForm = () => {
         });
 
         const postData = {
-          'ResourceAllocation.Core/Organization': {
-            Name: cleanedValues.Name?.trim(),
-            Status: cleanedValues.Status,
-          },
+          Name: cleanedValues.Name?.trim(),
+          Status: cleanedValues.Status,
         };
         try {
           const result = await dispatch(

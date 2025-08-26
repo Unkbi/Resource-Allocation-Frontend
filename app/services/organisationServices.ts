@@ -24,9 +24,7 @@ export const fetchResourcesAgainstOrganisationsForSaga = async (
 };
 
 export const createOrganisation = async (newData: any) => {
-  const payload = {
-    'ResourceAllocation.Core/Organization': newData,
-  };
+  const payload = newData;
   const response = await axiosInstance.post(
     `${API_PROJECT_PORTFOLIO}/Organization`,
     payload
@@ -48,9 +46,7 @@ export const updateOrganisation = async (
   organisationId: string,
   updatedFields: any
 ) => {
-  const payload = {
-    'ResourceAllocation.Core/Organization': updatedFields,
-  };
+  const payload = updatedFields;
   const response = await axiosInstance.put(
     `${API_PROJECT_PORTFOLIO}/Organization/${organisationId}`,
     payload
