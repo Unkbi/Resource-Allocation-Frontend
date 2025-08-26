@@ -2022,10 +2022,10 @@ const AllocationForm = () => {
 
           const postData = {
             ...cleanedValues,
-            Assignee: cleanedValues.Assignee?.Email || null,
+            // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
             Name: values.Role
-              ? `${values.Role}-${cleanedValues.Assignee?.Email}`
+              ? `${values.Role}-${cleanedValues.Assignee?.id}`
               : null,
           };
 
@@ -2075,14 +2075,15 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const actionsArray = Object.entries(cleanedValues.Actions || {})
-          .filter(([_, isChecked]) => isChecked)
-          .map(([action]) => action.toLowerCase());
+        const { Name, Resource, Actions } = cleanedValues;
 
         const postData = {
-          Name: cleanedValues.Name,
-          Resource: cleanedValues.Resource,
-          Actions: actionsArray,
+          id: cleanedValues.Name,
+          resourceFqName: cleanedValues.Resource,
+          c: cleanedValues.Actions?.Create || false,
+          r: cleanedValues.Actions?.Read || false,
+          u: cleanedValues.Actions?.Update || false,
+          d: cleanedValues.Actions?.Delete || false,
         };
 
         new Promise((resolve, reject) => {
@@ -2105,7 +2106,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result?.Name));
+            dispatch(setHighlightedRowId(response.result?.id));
           })
           .catch(error => {
             console.error('Failed to add privilege:', error);
@@ -2134,14 +2135,15 @@ const AllocationForm = () => {
         if (Array.isArray(cleanedValues.Resource)) {
           cleanedValues.Resource = cleanedValues.Resource[0] || null;
         }
-        const actionsArray = Object.entries(cleanedValues.Actions || {})
-          .filter(([_, isChecked]) => isChecked)
-          .map(([action]) => action.toLowerCase());
 
+        const { Name, Resource, Actions } = cleanedValues;
         const updatedFields = {
-          Name: cleanedValues.Name,
-          Resource: cleanedValues.Resource,
-          Actions: actionsArray,
+          id: cleanedValues.Name,
+          resourceFqName: cleanedValues.Resource,
+          c: cleanedValues.Actions?.Create || false,
+          r: cleanedValues.Actions?.Read || false,
+          u: cleanedValues.Actions?.Update || false,
+          d: cleanedValues.Actions?.Delete || false,
         };
 
         try {
@@ -2149,7 +2151,7 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                name: cleanedValues.Name,
+                id: cleanedValues.Name,
                 updatedFields,
                 resolve,
                 reject,

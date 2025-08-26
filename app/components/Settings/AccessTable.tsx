@@ -90,7 +90,7 @@ export default function AccessTable({
         <DataGrid
           rows={data}
           columns={columns}
-          getRowId={row => row.name}
+          getRowId={row => row.name || row.id}
           disableColumnMenu
           hideFooter
           disableRowSelectionOnClick

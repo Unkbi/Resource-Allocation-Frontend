@@ -601,15 +601,14 @@ export default function RoleManagementPage() {
 
   const privilegesColumns = [
     {
-      field: 'Name',
+      field: 'id',
       headerName: 'Privilege Name',
       flex: 1.5,
       renderCell: (params: any) => {
         const value = params.value || '';
-        const prefix = 'priv_ResourceAllocation.Core_';
-        const displayValue = value.includes(prefix)
-          ? value.split(prefix).pop()
-          : value;
+        const displayValue = value.includes('_permission')
+      ? value.split('_permission')[0] +"_"+ value.split('/')[1]
+      : value;
 
         return (
           <Typography sx={{ ...commonCellStyle }}>{displayValue}</Typography>
@@ -617,7 +616,7 @@ export default function RoleManagementPage() {
       },
     },
     {
-      field: 'Resource',
+      field: 'resourceFqName',
       headerName: 'Entity',
       flex: 1,
       renderCell: (params: any) => {
@@ -628,79 +627,79 @@ export default function RoleManagementPage() {
         return <Typography sx={commonCellStyle}>{lastPart}</Typography>;
       },
     },
-    {
-      field: 'Actions',
-      headerName: 'Actions',
-      flex: 0.75,
-      renderCell: (params: any) => {
-        const actionLetterMap: Record<string, string> = {
-          create: 'C',
-          read: 'R',
-          update: 'U',
-          delete: 'D',
-          c: 'C',
-          r: 'R',
-          u: 'U',
-          d: 'D',
-        };
+  {
+  field: 'Actions',
+  headerName: 'Actions',
+  flex: 0.75,
+  renderCell: (params: any) => {
+    const actionLetterMap: Record<string, string> = {
+      c: 'C',
+      r: 'R',
+      u: 'U',
+      d: 'D',
+    };
 
-        const actionColorMap: Record<string, { bg: string; text: string }> = {
-          C: { bg: '#DBEAFE', text: '#1E40AF' },
-          R: { bg: '#D1FAE5', text: '#065F46' },
-          U: { bg: '#FEF3C7', text: '#92400E' },
-          D: { bg: '#FEE2E2', text: '#991B1B' },
-        };
+    const actionColorMap: Record<string, { bg: string; text: string }> = {
+      C: { bg: '#DBEAFE', text: '#1E40AF' },
+      R: { bg: '#D1FAE5', text: '#065F46' },
+      U: { bg: '#FEF3C7', text: '#92400E' },
+      D: { bg: '#FEE2E2', text: '#991B1B' },
+    };
 
-        const actions = params.row.Actions || [];
+    const actions: string[] = [];
+    if (params.row.c) actions.push('c');
+    if (params.row.r) actions.push('r');
+    if (params.row.u) actions.push('u');
+    if (params.row.d) actions.push('d');
 
-        return (
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 0.7,
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              paddingTop: '12px',
-            }}
-          >
-            {actions.map((action: string) => {
-              const key = actionLetterMap[action.toLowerCase().trim()] || '';
-              const color = actionColorMap[key];
-              return (
-                <Box
-                  key={action}
-                  sx={{
-                    display: 'flex',
-                    width: '23.44px',
-                    height: '24px',
-                    padding: '4px 7.44px 4px 8px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexDirection: 'column',
-                    flexShrink: 0,
-                    borderRadius: '4px',
-                    backgroundColor: color?.bg || '#FFF',
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontFamily: 'Open Sans',
-                      fontSize: '12px',
-                      fontStyle: 'normal',
-                      fontWeight: 400,
-                      lineHeight: '16px',
-                      color: color?.text || '#111827',
-                    }}
-                  >
-                    {key}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
-        );
-      },
-    },
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 0.7,
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          paddingTop: '12px',
+        }}
+      >
+        {actions.map(action => {
+          const key = actionLetterMap[action];
+          const color = actionColorMap[key];
+          return (
+            <Box
+              key={action}
+              sx={{
+                display: 'flex',
+                width: '23.44px',
+                height: '24px',
+                padding: '4px 7.44px 4px 8px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column',
+                flexShrink: 0,
+                borderRadius: '4px',
+                backgroundColor: color?.bg || '#FFF',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: 'Open Sans',
+                  fontSize: '12px',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: '16px',
+                  color: color?.text || '#111827',
+                }}
+              >
+                {key}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  },
+},
     {
       field: 'actions',
       headerName: 'Manage',
@@ -712,14 +711,14 @@ export default function RoleManagementPage() {
           <IconButton
             onClick={e => {
               setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.Name);
+              setMenuRoleId(params.row.id);
             }}
             size="small"
           >
             <MoreHorizontal sx={{ fontSize: 20 }} />
           </IconButton>
           <Typography sx={commonCellStyle}>
-            {params.row.Name && renderprivilegeMenu(params.row.Name)}{' '}
+            {params.row.id && renderprivilegeMenu(params.row.id)}{' '}
           </Typography>
         </>
       ),
@@ -740,7 +739,8 @@ export default function RoleManagementPage() {
       headerName: 'Privilege',
       flex: 1,
       renderCell: (params: any) => {
-        const fullPrivilege = params.value || '';
+        const fullPrivilege = 
+        params.value || '';
         const displayValue = fullPrivilege.replace(
           'priv_ResourceAllocation.Core_',
           ''
@@ -774,17 +774,17 @@ export default function RoleManagementPage() {
     },
   ];
 
-  const renderprivilegeMenu = (Name: string) => (
+  const renderprivilegeMenu = (id: string) => (
     <StyledMenu
       anchorEl={anchorEl}
-      open={menuRoleId === Name}
+      open={menuRoleId === id}
       onClose={() => setMenuRoleId(null)}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
       <StyledMenuItem
         onClick={() => {
-          const privilege = privileges.find(r => r.Name === Name);
+          const privilege = privileges.find(r => r.id === id);
           if (privilege) {
             handleEditPrivilege(privilege);
           }
@@ -796,7 +796,7 @@ export default function RoleManagementPage() {
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
-          handleDeletePrivilege(Name);
+          handleDeletePrivilege(id);
           setMenuRoleId(null);
         }}
       >
