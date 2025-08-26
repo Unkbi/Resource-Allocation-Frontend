@@ -399,6 +399,38 @@ export const addPortfolioValidationSchema = (
   });
 };
 
+// org schema
+export const addOrganizationValidationSchema = (
+  organizations: any[] = [],
+  initialName = ''
+) => {
+  const organizationNames = Array.isArray(organizations)
+    ? organizations.map(org => org.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Organization name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Organization name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          )
+            return true;
+          return !organizationNames.includes(value.toLowerCase().trim());
+        }
+      ),
+    Status: Yup.string()
+      .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
+      .required('Status is required'),
+  });
+};
+
 export const addRoleValidationSchema = Yup.object({
   Name: Yup.string()
     .required('Role Name is required')

@@ -40,6 +40,11 @@ export * from './employeeRatesTypes';
 // RBAC-related Types
 export * from './rbacTypes';
 
+//Location-settings related types
+export * from './locationTypes';
+
+export * from './organisationTypes';
+
 // All Settings Types
 export * from './allSettingsType';
 

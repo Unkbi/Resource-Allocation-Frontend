@@ -506,6 +506,7 @@ export const generateEmptyRow = (
   teams: Team[],
   teamResources: Record<string, Resource[]>,
   allResourcesDetail: AllResourceDetail[],
+  portfolios: Portfolio[] | null,
   projects: Project[] | null,
   resources: Resource[],
   allocation: Allocation
@@ -525,6 +526,7 @@ export const generateEmptyRow = (
 
   const team = resourceIdToTeam.get(allocation.Resource);
   const project = projects?.find(p => p.Id === allocation.Project);
+  const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
   const resource = resources.find(r => r.Id === allocation.Resource);
   const organisation = allResourcesDetail.find(
     r => r?.Resource?.Id === allocation.Resource
@@ -550,6 +552,11 @@ export const generateEmptyRow = (
     organisationId: organisation?.Id || null,
     organisationName: organisation?.Name || null,
     organisationStatus: organisation?.Status || null,
+    portfolioId: portfolio ? portfolio?.Id : null,
+    portfolioName: portfolio ? portfolio?.Name : 'zzzzz',
+    portfolioSidebarColor: portfolio ? portfolio?.SidebarColor : null,
+    portfolioDescription: portfolio ? portfolio?.Description || null : null,
+    portfolioStatus: portfolio ? portfolio?.Status || null : null,
     project: project?.Name || allocation.ProjectName || null,
     projectId: project?.Id || allocation.Project || null,
     projectSponsor:
@@ -616,6 +623,7 @@ export const getFormattedAllocationsForUpdate = (
   teams: Team[],
   teamsResources: Record<string, Resource[]>,
   allResourcesDetail: AllResourceDetail[],
+  portfolios: Portfolio[] | null,
   projects: Project[],
   resources: Resource[],
   splitView: boolean,
@@ -689,6 +697,7 @@ export const getFormattedAllocationsForUpdate = (
         teams || [],
         teamsResources,
         allResourcesDetail || [],
+        portfolios || null,
         projects || [],
         resources || [],
         allocation
