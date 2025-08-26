@@ -29,6 +29,7 @@ interface AccessTableProps {
   apiRef?: any;
   loading?: boolean;
   checkboxSelection?: boolean;
+  setMode?: () => void;
 }
 
 export default function AccessTable({
@@ -47,26 +48,15 @@ export default function AccessTable({
   apiRef,
   loading = false,
   checkboxSelection = false,
+  setMode,
 }: AccessTableProps) {
   const [search, setSearch] = useState('');
   const [gridView, setGridView] = useState<'grid' | 'list'>('grid');
-
-  const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>([]);
-
-  const selectedRows = useMemo(() => {
-    if (!selectionModel?.length) return [];
-    const ids = new Set(selectionModel.map(id => String(id)));
-    return (filteredRows || []).filter(row =>
-      ids.has(String(row.id ?? row.Name ?? JSON.stringify(row)))
-    );
-  }, [selectionModel]);
-
-  const handleShowSelected = () => {
-    // eslint-disable-next-line no-console
-    console.log('Selected rows:', selectedRows);
-  };
-
-  
+  const [selectedRows, setSelectedRows] = useState<any[]>([]);
+  const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>(
+    []
+  );
+  const [showToolbar, setShowToolbar] = useState(false);
 
   const filteredRows = useMemo(() => {
     if (!search) return data || [];
@@ -78,161 +68,269 @@ export default function AccessTable({
       );
     });
   }, [data, search]);
+
+  // This will be called whenever selection changes
+  const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
+    if (newSelection.length > 0) {
+      setShowToolbar(true);
+    } else {
+      setShowToolbar(false);
+    }
+
+    setSelectionModel(newSelection);
+    const ids = new Set(newSelection.map(id => String(id)));
+    const selected = (filteredRows || []).filter(row =>
+      ids.has(String(row.id ?? row.Name ?? JSON.stringify(row)))
+    );
+    setSelectedRows(selected);
+  };
+
   return (
     <Box
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
     >
       {checkboxSelection ? (
-        <Box
-          px={2}
-          py={2}
-          display="flex"
-          alignItems="center"
-          gap={2}
-          sx={{ borderBottom: '0.667px solid #E5E7EB' }}
-        >
-          <StyledInput
-            as={TextField}
-            name="Location"  
-            size="small"
-            placeholder="Search by Name /or email"
-            value={search}
-            sx={{ width: 230 }}
-            onChange={e => setSearch(e.target.value)}
-          />
-
+        showToolbar ? (
+          // Selection action toolbar when rows are selected
           <Box
-            sx={{ display: 'flex', alignItems: 'center', ml: 'auto', gap: 1 }}
+            px={2}
+            py={2}
+            display="flex"
+            alignItems="center"
+            gap={2}
+            sx={{ borderBottom: '0.667px solid #E5E7EB' }}
           >
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-              sx={{
-                height: 36,
-                width: '1px',
-                backgroundColor: '#E2E8F0',
-                mx: 1.5,
-              }}
-              />
-              <IconButton
-              size="small"
-              color={gridView === 'grid' ? 'primary' : 'default'}
-              onClick={() => setGridView('grid')}
-              sx={{
-                minWidth: 'unset',
-                width: '41px',
-                height: '36px',
-                padding: '20px 10px 20px 10px',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '6px',
-                flexShrink: 0,
-                borderRadius: '6px',
-                border: '1px solid #E2E8F0',
-                boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-                '.MuiButton-startIcon': { marginRight: '0px' },
-                '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
-                '& .MuiBadge-root svg': { display: 'none' },
-              }}
-              >
-              <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
-              </IconButton>
-
-              <IconButton
-              size="small"
-              color={gridView === 'list' ? 'primary' : 'default'}
-              onClick={() => setGridView('list')}
-              sx={{
-                minWidth: 'unset',
-                width: '41px',
-                height: '36px',
-                padding: '20px 17px 20px 17px',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '6px',
-                flexShrink: 0,
-                borderRadius: '6px',
-                border: '1px solid #E2E8F0',
-                boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-                '& .MuiButton-startIcon': {
-                marginRight: '0px',
-                },
-                '& .MuiButton-endIcon': {
-                marginLeft: '0px',
-                },
-              }}
-              >
-              <img src="images/icons/newColumnIcon.svg" alt="columns" />
-              </IconButton>
-              <Box
-              sx={{
-                height: 36,
-                width: '1px',
-                backgroundColor: '#E2E8F0',
-                mx: 1.5,
-              }}
-              />
-            </Box>
-            <Button
-              variant="contained"
-              onClick={e => {
-                setAnchorEl(e.currentTarget);
-                setMenuId('add-dropdown');
-              }}
-              sx={{
-                height: 40,
-                borderRadius: 2,
-                background: '#152E75',
-                color: '#FFF',
-                textTransform: 'none',
-                fontSize: 14,
-                fontWeight: 600,
-                px: 2,
-              }}
-              endIcon={<ArrowDropDownIcon />}
+            <Typography
+              sx={{ color: '#152E75', fontWeight: 700, fontSize: 13 }}
             >
-              {buttonLabel}
-            </Button>
-            {anchorEl && menuId === 'add-dropdown' && (
-              <Box
+              {selectedRows.length} Resources selected
+            </Typography>
+
+            <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+              <Button
+                variant="contained"
+                onClick={() => onAdd()}
                 sx={{
-                  position: 'absolute',
-                  top: anchorEl.getBoundingClientRect().bottom + window.scrollY,
-                  left: anchorEl.getBoundingClientRect().left + window.scrollX,
-                  zIndex: 1300,
-                  background: '#fff',
-                  boxShadow: 3,
+                  height: 36,
                   borderRadius: 1,
-                  width: 123,
-                  py: 1,
+                  background: '#152E75',
+                  color: '#FFF',
+                  textTransform: 'none',
+                  fontSize: 12,
+                  fontWeight: 700,
                 }}
               >
-                <Button
-                  // fullWidth
-                  sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
-                  onClick={() => {
-                    setMenuId(null);
-                    setAnchorEl(null);
-                    onAdd(); // Option 1
-                  }}
-                >
-                  From resource list
-                </Button>
-                <Button
-                  // fullWidth
-                  sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
-                  onClick={() => {
-                    setMenuId(null);
-                    setAnchorEl(null);
-                    // Option 2 handler here
-                  }}
-                >
-                  New user
-                </Button>
-              </Box>
-            )}
+                Add User
+              </Button>
+
+              <Button
+                variant="contained"
+                onClick={() => console.log('Send Invite', selectedRows)}
+                sx={{
+                  height: 36,
+                  borderRadius: 1,
+                  background: '#152E75',
+                  color: '#FFF',
+                  textTransform: 'none',
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                Send Invite
+              </Button>
+
+              <Button
+                variant="contained"
+                onClick={() => console.log('Re-Send Invite', selectedRows)}
+                sx={{
+                  height: 36,
+                  borderRadius: 1,
+                  background: '#152E75',
+                  color: '#FFF',
+                  textTransform: 'none',
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                Re-Send Invite
+              </Button>
+
+              <Button
+                variant="contained"
+                onClick={() => console.log('Deactivate', selectedRows)}
+                sx={{
+                  height: 36,
+                  borderRadius: 1,
+                  borderColor: '#152E75',
+                  color: '#FFF',
+                  textTransform: 'none',
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                Deactivate User
+              </Button>
+            </Box>
           </Box>
-        </Box>
+        ) : (
+          // Default toolbar when no rows selected
+          <Box
+            px={2}
+            py={2}
+            display="flex"
+            alignItems="center"
+            gap={2}
+            sx={{ borderBottom: '0.667px solid #E5E7EB' }}
+          >
+            <StyledInput
+              as={TextField}
+              name="Location"
+              size="small"
+              placeholder="Search by Name /or email"
+              value={search}
+              sx={{ width: 230 }}
+              onChange={e => setSearch(e.target.value)}
+            />
+
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', ml: 'auto', gap: 1 }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    height: 36,
+                    width: '1px',
+                    backgroundColor: '#E2E8F0',
+                    mx: 1.5,
+                  }}
+                />
+                <IconButton
+                  size="small"
+                  color={gridView === 'grid' ? 'primary' : 'default'}
+                  onClick={() => setGridView('grid')}
+                  sx={{
+                    minWidth: 'unset',
+                    width: '41px',
+                    height: '36px',
+                    padding: '20px 10px 20px 10px',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flexShrink: 0,
+                    borderRadius: '6px',
+                    border: '1px solid #E2E8F0',
+                    boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                    '.MuiButton-startIcon': { marginRight: '0px' },
+                    '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
+                    '& .MuiBadge-root svg': { display: 'none' },
+                  }}
+                >
+                  <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
+                </IconButton>
+
+                <IconButton
+                  size="small"
+                  color={gridView === 'list' ? 'primary' : 'default'}
+                  onClick={() => setGridView('list')}
+                  sx={{
+                    minWidth: 'unset',
+                    width: '41px',
+                    height: '36px',
+                    padding: '20px 17px 20px 17px',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flexShrink: 0,
+                    borderRadius: '6px',
+                    border: '1px solid #E2E8F0',
+                    boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                    '& .MuiButton-startIcon': {
+                      marginRight: '0px',
+                    },
+                    '& .MuiButton-endIcon': {
+                      marginLeft: '0px',
+                    },
+                  }}
+                >
+                  <img src="images/icons/newColumnIcon.svg" alt="columns" />
+                </IconButton>
+                <Box
+                  sx={{
+                    height: 36,
+                    width: '1px',
+                    backgroundColor: '#E2E8F0',
+                    mx: 1.5,
+                  }}
+                />
+              </Box>
+              <Button
+                variant="contained"
+                onClick={e => {
+                  if (anchorEl && menuId === 'add-dropdown') {
+                    setMenuId(null);
+                    setAnchorEl(null);
+                    return;
+                  }
+                  setAnchorEl(e.currentTarget);
+                  setMenuId('add-dropdown');
+                }}
+                sx={{
+                  height: 40,
+                  borderRadius: 2,
+                  background: '#152E75',
+                  color: '#FFF',
+                  textTransform: 'none',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  px: 2,
+                }}
+                endIcon={title === 'Users' ? <ArrowDropDownIcon /> : null}
+              >
+                {buttonLabel}
+              </Button>
+              {anchorEl && menuId === 'add-dropdown' && title === 'Users' && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top:
+                      anchorEl.getBoundingClientRect().bottom + window.scrollY,
+                    left:
+                      anchorEl.getBoundingClientRect().left + window.scrollX,
+                    zIndex: 1300,
+                    background: '#fff',
+                    boxShadow: 3,
+                    borderRadius: 1,
+                    width: 123,
+                    py: 1,
+                  }}
+                >
+                  <Button
+                    // fullWidth
+                    sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
+                    onClick={() => {
+                      setMenuId(null);
+                      setAnchorEl(null);
+                      setMode?.();
+                    }}
+                  >
+                    From resource list
+                  </Button>
+                  <Button
+                    // fullWidth
+                    sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
+                    onClick={() => {
+                      setMenuId(null);
+                      setAnchorEl(null);
+                      onAdd();
+                    }}
+                  >
+                    New user
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        )
       ) : (
         <Box
           display="flex"
@@ -283,6 +381,8 @@ export default function AccessTable({
           disableColumnMenu
           hideFooter
           disableRowSelectionOnClick
+          rowSelectionModel={selectionModel}
+          onRowSelectionModelChange={handleSelectionChange}
           autoHeight
           apiRef={apiRef}
           loading={loading}

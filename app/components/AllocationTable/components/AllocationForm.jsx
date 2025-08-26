@@ -138,6 +138,7 @@ import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
 import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
+import AddUserForm from '../../Forms/AddUserForm';
 
 const initialValuesMap = {
   add_project: {
@@ -364,6 +365,18 @@ const initialValuesMap = {
   },
   edit_location_group: {
     LocationGroup: '',
+  },
+  add_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
+  },
+  edit_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
   },
 };
 
@@ -3086,6 +3099,20 @@ const AllocationForm = () => {
       case 'edit_location_group':
         return (
           <AddLocationGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_user':
+        return (
+          <AddUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_user':
+        return (
+          <AddUserForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

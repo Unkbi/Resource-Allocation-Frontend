@@ -186,111 +186,97 @@ export default function UserManagementPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('users');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [menuUserId, setMenuUserId] = useState<string | null>(
+  const [menuUserId, setMenuUserId] = useState<string | null>(null);
+  const [deletingUsers, setDeletingUsers] = useState<string | null>(null);
+  const [deletingResources, setDeletingResources] = useState<string | null>(
     null
   );
-  const [deletingProjectTypes, setDeletingProjectTypes] = useState<
-    string | null
-  >(null);
-  const [deletingProjectTypesGroup, setDeletingProjectTypesGroup] = useState<
-    string | null
-  >(null);
-  
-const UsersData: any[] = [
+
+  const UsersData: any[] = [
     {
-        id: 'u1',
-        Name: 'Emily Carter',
-        email: 'jane.doe@company.com',
-        department: 'Finance',
-        organization: 'Smith Inc.',
-        resourceLink: 'Active',
-        status: 'Active',
+      id: 'u1',
+      Name: 'Emily Carter',
+      email: 'jane.doe@company.com',
+      resourceLink: 'Active',
+      status: 'Active',
     },
     {
-        id: 'u2',
-        Name: 'Rajesh Kumar',
-        email: 'rajesh.kumar@company.com',
-        department: 'Engineering',
-        organization: 'Copeland and Sons',
-        resourceLink: 'Active',
-        status: 'Inactive',
+      id: 'u2',
+      Name: 'Rajesh Kumar',
+      email: 'rajesh.kumar@company.com',
+      resourceLink: 'Active',
+      status: 'Inactive',
     },
     {
-        id: 'u3',
-        Name: 'Samantha Lee',
-        email: 'samantha.lee@company.com',
-        department: 'Customer Support',
-        organization: 'Smith Inc.',
-        resourceLink: 'NA',
-        status: 'Invited',
+      id: 'u3',
+      Name: 'Samantha Lee',
+      email: 'samantha.lee@company.com',
+      resourceLink: 'NA',
+      status: 'Invited',
     },
     {
-        id: 'u4',
-        Name: 'Michael Thompson',
-        email: 'michael.thompson@company.com',
-        department: 'Devops',
-        organization: 'Copeland and Sons',
-        resourceLink: 'Active',
-        status: 'Invited',
+      id: 'u4',
+      Name: 'Michael Thompson',
+      email: 'michael.thompson@company.com',
+      resourceLink: 'Active',
+      status: 'Invited',
     },
     {
-        id: 'u5',
-        Name: 'Jessica Taylor',
-        email: 'jessica.taylor@company.com',
-        department: 'Admin',
-        organization: 'Copeland and Sons',
-        resourceLink: 'NA',
-        status: 'Inactive',
+      id: 'u5',
+      Name: 'Jessica Taylor',
+      email: 'jessica.taylor@company.com',
+      resourceLink: 'NA',
+      status: 'Inactive',
     },
-];
-     
-const ResourcesData: any[] = [
+  ];
+
+  const ResourcesData: any[] = [
     {
-        id: 'r1',
-        Name: 'Emily Carter',
-        email: 'jane.doe@company.com',
-        accessLevel: 'Admin',
-        location: 'Los Angeles, USA',
-        resourceStatus: 'Active',
-        userStatus: 'Active',
+      id: 'r1',
+      Name: 'Emily Carter',
+      email: 'jane.doe@company.com',
+      accessLevel: 'Admin',
+      location: 'Los Angeles, USA',
+      resourceStatus: 'Active',
+      userStatus: 'Active',
     },
     {
-        id: 'r2',
-        Name: 'Rajesh Kumar',
-        email: 'rajesh.kumar@company.com',
-        accessLevel: 'Allocation Manager',
-        location: 'Chicago, USA',
-        resourceStatus: 'Active',
-        userStatus: 'In-active',
+      id: 'r2',
+      Name: 'Rajesh Kumar',
+      email: 'rajesh.kumar@company.com',
+      accessLevel: 'Allocation Manager',
+      location: 'Chicago, USA',
+      resourceStatus: 'Active',
+      userStatus: 'In-active',
     },
     {
-        id: 'r3',
-        Name: 'Samantha Lee',
-        email: 'samantha.lee@company.com',
-        accessLevel: 'Allocation Manager',
-        location: 'Chicago, USA',
-        resourceStatus: 'Active',
-        userStatus: 'Active',
+      id: 'r3',
+      Name: 'Samantha Lee',
+      email: 'samantha.lee@company.com',
+      accessLevel: 'Allocation Manager',
+      location: 'Chicago, USA',
+      resourceStatus: 'Active',
+      userStatus: 'Active',
     },
     {
-        id: 'r4',
-        Name: 'Michael Thompson',
-        email: 'michael.thompson@company.com',
-        accessLevel: 'General User',
-        location: 'Chicago, USA',
-        resourceStatus: 'Active',
-        userStatus: 'Invited',
+      id: 'r4',
+      Name: 'Michael Thompson',
+      email: 'michael.thompson@company.com',
+      accessLevel: 'General User',
+      location: 'Chicago, USA',
+      resourceStatus: 'Active',
+      userStatus: 'Invited',
     },
     {
-        id: 'r5',
-        Name: 'Jessica Taylor',
-        email: 'jessica.taylor@company.com',
-        accessLevel: 'Allocation Manager',
-        location: 'Chicago, USA',
-        resourceStatus: 'Active',
-        userStatus: 'Active',
+      id: 'r5',
+      Name: 'Jessica Taylor',
+      email: 'jessica.taylor@company.com',
+      accessLevel: 'Allocation Manager',
+      location: 'Chicago, USA',
+      resourceStatus: 'Active',
+      userStatus: 'Active',
     },
-];
+  ];
   const loading = false;
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
@@ -333,8 +319,7 @@ const ResourcesData: any[] = [
           );
           if (rowIndex === -1) return;
 
-          const focusColumn =
-            tab === 'users' ? 'email' : 'resource';
+          const focusColumn = tab === 'users' ? 'Name' : 'resource';
 
           apiRef.current.scrollToIndexes({ rowIndex });
           apiRef.current.setCellFocus(highlightedRowId, focusColumn);
@@ -359,64 +344,64 @@ const ResourcesData: any[] = [
     return () => clearTimeout(timeout);
   }, [highlightedRowId, UsersData, tab]);
 
-  const handleAddNewProjectTypesGroup = () => {
+  const handleAddNewResources = () => {
     dispatch(
       openDialog({
-        title: 'Add Project Type Group',
+        title: 'Add Resource',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
-        formType: 'add_project_type_group',
+        formType: 'add_resource',
       })
     );
   };
 
-  const handleEditProjectTypesGroup = (assignment: any) => {
+  const handleEditResources = (assignment: any) => {
     dispatch(
       openDialog({
-        title: 'Edit Project Type Group',
+        title: 'Edit Resource',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
-        formType: 'edit_project_type_group',
+        formType: 'edit_resource',
         initialData: assignment,
       })
     );
   };
 
-  const handleDeleteProjectTypesGroup = (Name: string) => {
-    setDeletingProjectTypesGroup(Name);
+  const handleDeleteResources = (Name: string) => {
+    setDeletingResources(Name);
     setIsDialogOpen(true);
   };
 
-  const handleAddNewProjectTypes = () => {
+  const handleAddNewUsers = () => {
     dispatch(
       openDialog({
-        title: 'Add Project Type',
+        title: 'Add User',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
-        formType: 'add_project_type',
+        formType: 'add_user',
       })
     );
   };
 
-  const handleEditProjectTypes = (assignment: any) => {
+  const handleEditUser = (assignment: any) => {
     dispatch(
       openDialog({
-        title: 'Edit Project Type',
+        title: 'Edit User',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
-        formType: 'edit_project_type',
+        formType: 'edit_user',
         initialData: assignment,
       })
     );
   };
 
-  const handleDeleteProjectTypes = (Name: string) => {
-    setDeletingProjectTypes(Name);
+  const handleDeleteUser = (Name: string) => {
+    setDeletingUsers(Name);
     setIsDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!deletingProjectTypes || !deletingProjectTypesGroup) return;
+    if (!deletingUsers || !deletingResources) return;
     try {
       if (tab === 'users') {
         //delete action
@@ -426,8 +411,8 @@ const ResourcesData: any[] = [
     } catch (error) {
       console.error('Delete failed:', error);
     } finally {
-      setDeletingProjectTypes(null);
-      setDeletingProjectTypesGroup(null);
+      setDeletingUsers(null);
+      setDeletingResources(null);
       setIsDialogOpen(false);
     }
   };
@@ -447,22 +432,6 @@ const ResourcesData: any[] = [
       flex: 1,
       renderCell: (params: any) => (
         <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
-      ),
-    },
-    {
-      field: 'department',
-      headerName: 'Department',
-      flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
-    },
-    {
-      field: 'organization',
-      headerName: 'Organization',
-      flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
       ),
     },
     {
@@ -497,7 +466,7 @@ const ResourcesData: any[] = [
             <MoreHorizontal sx={{ fontSize: 20 }} />
           </IconButton>
           <Typography sx={commonCellStyle}>
-            {params.row.Name && renderProjectTypesMenu(params.row.Name)}
+            {params.row.Name && renderUsersMenu(params.row.Name)}
           </Typography>
         </>
       ),
@@ -569,14 +538,14 @@ const ResourcesData: any[] = [
             <MoreHorizontal sx={{ fontSize: 20 }} />
           </IconButton>
           <Typography sx={commonCellStyle}>
-            {params.row.Name && ProjectTypesGroupMenu(params.row.Name)}
+            {params.row.Name && renderResourcesMenu(params.row.Name)}
           </Typography>
         </>
       ),
     },
   ];
 
-  const renderProjectTypesMenu = (id: string) => (
+  const renderUsersMenu = (id: string) => (
     <StyledMenu
       anchorEl={anchorEl}
       open={menuUserId === id}
@@ -586,9 +555,9 @@ const ResourcesData: any[] = [
     >
       <StyledMenuItem
         onClick={() => {
-          const assignment = UsersData.find(r => r);
+          const assignment = UsersData.find(r => r.Name === id);
           if (assignment) {
-            handleEditProjectTypes(assignment);
+            handleEditUser(assignment);
           }
           setMenuUserId(null);
         }}
@@ -598,7 +567,7 @@ const ResourcesData: any[] = [
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
-          handleDeleteProjectTypes(id);
+          handleDeleteUser(id);
           setMenuUserId(null);
         }}
       >
@@ -608,7 +577,7 @@ const ResourcesData: any[] = [
     </StyledMenu>
   );
 
-  const ProjectTypesGroupMenu = (id: string) => (
+  const renderResourcesMenu = (id: string) => (
     <StyledMenu
       anchorEl={anchorEl}
       open={menuUserId === id}
@@ -620,7 +589,7 @@ const ResourcesData: any[] = [
         onClick={() => {
           const assignment = ResourcesData.find(r => r.Name === id);
           if (assignment) {
-            handleEditProjectTypesGroup(assignment);
+            handleEditResources(assignment);
           }
           setMenuUserId(null);
         }}
@@ -630,7 +599,7 @@ const ResourcesData: any[] = [
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
-          handleDeleteProjectTypesGroup(id);
+          handleDeleteResources(id);
           setMenuUserId(null);
         }}
       >
@@ -656,18 +625,19 @@ const ResourcesData: any[] = [
           title="Users"
           data={UsersData}
           checkboxSelection={true}
-          onAdd={handleAddNewProjectTypes}
-          onEdit={handleEditProjectTypes}
-          onDelete={handleDeleteProjectTypes}
+          onAdd={handleAddNewUsers}
+          onEdit={handleEditUser}
+          onDelete={handleDeleteUser}
           menuId={menuUserId}
           setMenuId={setMenuUserId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
           buttonLabel="Add User"
-          renderMenu={renderProjectTypesMenu}
+          renderMenu={renderUsersMenu}
           columns={UsersPageColumns}
           apiRef={apiRef}
           loading={loading}
+          setMode={() => setTab('resources')}
         />
       )}
       {tab === 'resources' && (
@@ -675,15 +645,15 @@ const ResourcesData: any[] = [
           title="Resources"
           data={ResourcesData}
           checkboxSelection={true}
-          onAdd={handleAddNewProjectTypesGroup}
-          onEdit={handleEditProjectTypesGroup}
-          onDelete={handleDeleteProjectTypesGroup}
+          onAdd={handleAddNewResources}
+          onEdit={handleEditResources}
+          onDelete={handleDeleteResources}
           menuId={menuUserId}
           setMenuId={setMenuUserId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
           buttonLabel="Add Resource"
-          renderMenu={ProjectTypesGroupMenu}
+          renderMenu={renderResourcesMenu}
           columns={ResourcesColumns}
           apiRef={apiRef}
           loading={loading}
@@ -697,10 +667,10 @@ const ResourcesData: any[] = [
         title="Alert"
       >
         Are you sure you want to delete{' '}
-        {deletingProjectTypes || deletingProjectTypesGroup
-          ? tab === 'project-types'
-            ? `the project type "${deletingProjectTypes}"`
-            : `project type group "${deletingProjectTypesGroup}"`
+        {deletingUsers || deletingResources
+          ? tab === 'users'
+            ? `the user "${deletingUsers}"`
+            : `resource "${deletingResources}"`
           : 'this item'}
         ?
       </ConfirmDialog>

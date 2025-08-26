@@ -17,3 +17,10 @@ export interface User {
   LastName: string;
   Email: string;
 }
+
+export interface UserFormValues {
+  FirstName: string | null;
+  LastName: string | null;
+  Email: string | null;
+  Role: string | null;
+}
