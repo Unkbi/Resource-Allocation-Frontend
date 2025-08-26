@@ -133,6 +133,7 @@ export default function AllocationGrid({
   const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
+  const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
@@ -307,7 +308,9 @@ export default function AllocationGrid({
   useEffect(() => {
     try {
       if (
-        (groupBy === 'teams' || groupBy === 'organisationName') &&
+        (groupBy === 'teams' ||
+          groupBy === 'organisationName' ||
+          groupBy === 'portfolioName') &&
         expandRowId?.length
       ) {
         expandRowId.forEach(rowId => {
@@ -1050,6 +1053,7 @@ export default function AllocationGrid({
               teams,
               teamsResources,
               allResourcesDetail,
+              portfolios,
               projects,
               resources,
               splitView,

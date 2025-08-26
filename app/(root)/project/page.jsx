@@ -44,6 +44,13 @@ import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
+import { StatusPill } from '@/app/components/Settings/styled';
+
+import {
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+  UPDATE_ORGANISATION,
+} from '@/app/redux/actions/organizationsAction';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
@@ -67,52 +74,6 @@ const PersonContainer = styled('div')(() => ({
   justifyContent: 'flex-start',
 }));
 
-const StatusPill = styled('div')(({ theme, status }) => {
-  let backgroundColor, textColor;
-
-  switch (status) {
-    case 'Active':
-      backgroundColor = '#4B9F471A';
-      textColor = '#4B9F47';
-      break;
-    case 'Proposed':
-      backgroundColor = '#5041AB1A';
-      textColor = '#5041AB';
-      break;
-    case 'Approved':
-      backgroundColor = '#2772F01A';
-      textColor = '#2772F0';
-      break;
-    case 'Paused':
-      backgroundColor = '#E6521F1A';
-      textColor = '#E6521F';
-      break;
-    case 'Completed':
-      backgroundColor = '#F5B5441A';
-      textColor = '#F5B544';
-      break;
-    default:
-      backgroundColor = '#e0e0e0';
-      textColor = '#6c757d';
-  }
-
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '4px',
-    fontFamily: theme.typography.fontFamily,
-    fontsize: '12px',
-    fontStyle: 'normal',
-    fontweight: 400,
-    lineheight: '16px',
-    width: '86px',
-    height: '28px',
-    backgroundColor,
-    color: textColor,
-  };
-});
-
 const menuItemStyle = {
   '&:hover': {
     backgroundColor: '#142B51B2',
@@ -133,6 +94,17 @@ const AddAllocationIcon = () => (
 export default function Project() {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
+
+  useEffect(() => {
+    new Promise((resolve, reject) => {})
+      .then(res => {
+        console.log('✅ Organisation created successfully:', res);
+      })
+      .catch(err => {
+        console.error('❌ Failed to create organisation:', err);
+      });
+  }, [dispatch]);
+
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
   const { resources, loading: resourceLoading } = useSelector(

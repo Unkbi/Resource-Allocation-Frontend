@@ -781,6 +781,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           ? '#FFF3E0'
           : '#F7FBFF'),
     },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_project__"] .MuiAvatar-root`]:
+      {
+        display: 'none !important',
+      },
     //  '& .MuiDataGrid-row:hover': {
     //   backgroundColor: 'inherit !important',
     //   },
