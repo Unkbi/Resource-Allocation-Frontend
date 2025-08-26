@@ -72,8 +72,8 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
   const teamsLoaded = Array.isArray(teams);
   const portfoliosLoaded = Array.isArray(portfolios);
 
-  // const allDataLoaded =
-  //   projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+  const allDataLoaded =
+    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
 
   useEffect(() => {
     setAllApiSuccess(allDataLoaded);
