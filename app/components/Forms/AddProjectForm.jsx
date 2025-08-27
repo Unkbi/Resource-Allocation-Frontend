@@ -51,20 +51,23 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     })) || [];
 
   useEffect(() => {
-    if (!resources) {
+    if (!resources.length) {
       dispatch({
         type: FETCH_ALL_RESOURCES_DETAIL,
         payload: {},
       });
     }
-    if (!portfolios) {
+    if (!portfolios.length) {
       dispatch({
         type: FETCH_PORTFOLIOS,
         payload: {},
       });
     }
-    if (!projectTypes) {
-      dispatch({ type: FETCH_PROJECT_TYPES });
+    if (!projectTypes.length) {
+      dispatch({
+        type: FETCH_PROJECT_TYPES,
+        payload: {},
+      });
     }
   }, []);
 
