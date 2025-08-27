@@ -873,16 +873,14 @@ export const getResourceAllocationsForPeriod = async (
   }
 
   const postData = {
-    'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
-      Resource: resourceId,
-      StartDate: startDate,
-      EndDate: '2099-08-31',
-    },
+    Resource: resourceId,
+    StartDate: startDate,
+    EndDate: '2099-08-31',
   };
 
   try {
     const result = await fetchResourceAllocationsForSaga(postData);
-    return result?.result ?? [];
+    return result ?? [];
   } catch (error) {
     console.error('Error fetching resource allocations:', error);
     return [];

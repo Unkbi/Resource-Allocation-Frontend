@@ -421,11 +421,9 @@ function* updateResourceAllocationsSaga(
       ResourceId.map((ResourceId: string) =>
         call(function* () {
           const postData = {
-            'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
-              Resource: ResourceId,
-              StartDate: getMondayOfISO(startDate),
-              EndDate: getMondayOfISO(endDate),
-            },
+            Resource: ResourceId,
+            StartDate: getMondayOfISO(startDate),
+            EndDate: getMondayOfISO(endDate),
           };
           // @ts-ignore
           const result = yield call(fetchTeamAllocationsForSaga, postData);
@@ -483,12 +481,10 @@ export function* TransferAllocationsSaga(
     const { ResourceFrom, ResourceTo, StartDate, EndDate, resolve, reject } =
       action.payload;
     const postData = {
-      'ResourceAllocation.Core/TransferAllocations': {
-        ResourceFrom,
-        ResourceTo,
-        StartDate,
-        EndDate,
-      },
+      ResourceFrom,
+      ResourceTo,
+      StartDate,
+      EndDate,
     };
     const response = yield call(fetchTransferAllocationsForSaga, postData);
     if (response?.error) {

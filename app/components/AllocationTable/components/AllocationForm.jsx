@@ -935,8 +935,8 @@ const AllocationForm = () => {
           let teamAllocationManagerId = null;
           if (selectedTeam?.AllocationManager) {
             const raw = selectedTeam.AllocationManager;
-            teamAllocationManagerId = raw.includes(',')
-              ? raw.split(',')[1]
+            teamAllocationManagerId = raw.includes('/')
+              ? raw.split('/')[1]
               : raw;
           }
           if (!teamAllocationManagerId) {
