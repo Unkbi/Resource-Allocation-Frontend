@@ -573,7 +573,7 @@ export default function OrganisationAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team && _resources && 'result' in _resources ? (
+        return team && _resources ? (
           <EllipsisNameCell
             value={
               getAllocationManagerFromPath(
