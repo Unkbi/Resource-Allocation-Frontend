@@ -14,6 +14,7 @@ import {
   AllocationGridViewState,
   GetUsersSavedViewsResponse,
 } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice } from '@reduxjs/toolkit';
 
 export const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
@@ -396,29 +397,32 @@ const viewSlice = createSlice({
       })
       .addCase(getUsersSavedViews.fulfilled, (state, action) => {
         state.loading = false;
+        const response = formatAPIResponse(
+          'UserAllocationView',
+          action.payload
+        );
         let formatedView: AllocationGridView[] = [];
-        if (action.payload?.result?.length > 0) {
-          formatedView = action.payload.result.map(
-            (view: GetUsersSavedViewsResponse) => ({
-              Id: view.__Id__,
-              UserId: view.UserId,
-              Name: view.Name,
-              Description: view.Description,
-              isDefault: view.isDefault,
-              isProjectDefault: false,
-              GroupBy: view.GroupBy,
-              MyTeam: view.ShowBy === 'MyTeams',
-              MyProjects: view.ShowBy === 'MyProject',
-              ColumnsVisible: view.Columns,
-              StartDate: view.StartDate,
-              EndDate: view.EndDate,
-              isFixedRange: view.isFixedRange,
-              isDynamicRange: view.isDynamicRange,
-              WeekPlus: view.WeekPlus,
-              WeekMinus: view.WeekMinus,
-              Filters: view.Filters,
-            })
-          );
+
+        if (response?.length > 0) {
+          formatedView = response.map((view: GetUsersSavedViewsResponse) => ({
+            Id: view.Id,
+            UserId: view.UserId,
+            Name: view.Name,
+            Description: view.Description,
+            isDefault: view.isDefault,
+            isProjectDefault: false,
+            GroupBy: view.GroupBy,
+            MyTeam: view.ShowBy === 'MyTeams',
+            MyProjects: view.ShowBy === 'MyProject',
+            ColumnsVisible: view.Columns,
+            StartDate: view.StartDate,
+            EndDate: view.EndDate,
+            isFixedRange: view.isFixedRange,
+            isDynamicRange: view.isDynamicRange,
+            WeekPlus: view.WeekPlus,
+            WeekMinus: view.WeekMinus,
+            Filters: view.Filters,
+          }));
         }
         state.savedViews = [...formatedView, COMPANY_DEFAULT_VIEW];
       })
@@ -433,9 +437,9 @@ const viewSlice = createSlice({
       })
       .addCase(addAllocationView.fulfilled, (state, action) => {
         state.loading = false;
-        const newView = action.payload?.result;
+        const newView = action.payload?.UserAllocationView;
         const formatedView: AllocationGridView = {
-          Id: newView.__Id__,
+          Id: newView.Id,
           UserId: newView.UserId,
           Name: newView.Name,
           Description: newView.Description,
@@ -471,9 +475,11 @@ const viewSlice = createSlice({
       .addCase(updateAllocationView.fulfilled, (state, action) => {
         state.loading = false;
         const updatedView =
-          action.payload?.result.length > 0 ? action.payload?.result[0] : null;
+          action.payload?.UserAllocationView?.length > 0
+            ? action.payload?.UserAllocationView[0]
+            : null;
         const formatedView: AllocationGridView = {
-          Id: updatedView?.__Id__,
+          Id: updatedView?.Id,
           UserId: updatedView?.UserId,
           Name: updatedView?.Name,
           Description: updatedView?.Description,
@@ -494,7 +500,7 @@ const viewSlice = createSlice({
 
         // Update saved View list.
         state.savedViews = state.savedViews.map(view => {
-          if (view.Id === updatedView?.__Id__) {
+          if (view.Id === updatedView?.Id) {
             return {
               ...view,
               ...formatedView,
@@ -504,7 +510,7 @@ const viewSlice = createSlice({
         });
 
         // Update current view if it is the same as updated view.
-        if (updatedView?.__Id__ === state.currentView.Id) {
+        if (updatedView?.Id === state.currentView.Id) {
           state.currentView = {
             ...state.currentView,
             ...formatedView,
@@ -523,13 +529,15 @@ const viewSlice = createSlice({
       .addCase(deleteAllocationView.fulfilled, (state, action) => {
         state.loading = false;
         const deletedView =
-          action.payload?.result.length > 0 ? action.payload?.result[0] : null;
+          action.payload?.UserAllocationView?.length > 0
+            ? action.payload?.UserAllocationView[0]
+            : null;
         if (deletedView) {
-          if (deletedView?.__Id__ === state.currentView.Id) {
+          if (deletedView?.Id === state.currentView.Id) {
             state.currentView = COMPANY_DEFAULT_VIEW;
           }
           state.savedViews = state.savedViews.filter(
-            view => view.Id !== deletedView.__Id__
+            view => view.Id !== deletedView.Id
           );
         }
       })
