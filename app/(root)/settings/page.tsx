@@ -204,13 +204,7 @@ const SettingsPanel = () => {
             headerText: 'Allocation Settings',
             icon: '',
             content: (
-              <AllocationTheme
-                allocationRanges={allocationRanges}
-                onAllocationRangesChange={setAllocationRanges}
-                onDataChanged={() => setHasUnsavedChanges(true)}
-                validationErrors={validationErrors}
-                setValidationErrors={setValidationErrors}
-              />
+              <AllocationTheme />
             ),
             description: 'It is a color theme for organization view',
           },
@@ -309,70 +303,6 @@ const SettingsPanel = () => {
     }
   }, [activeItem?.id]);
 
-  const handleSaveChanges = () => {
-    if (activeItem?.id === 'allocation-setting' || activeItem?.id === 'theme') {
-      // Validate ranges before saving
-      const errors = validateRanges(allocationRanges);
-      const hasErrors = Object.keys(errors).length > 0;
-
-      if (hasErrors) {
-        Object.entries(errors).forEach(([rangeId, error]) => {
-          dispatch(
-            showToast({
-              message: `${error.message}`,
-              type: 'error',
-            })
-          );
-        });
-        return;
-      }
-      setOriginalAllocationRanges([...allocationRanges]);
-      setHasUnsavedChanges(false);
-      dispatch(updateAllocationTheme([...allocationRanges]));
-      const transformedAllocationRanges = allocationRanges.map(range => {
-        const { __Id__, id, ...rest } = range;
-        return {
-          Id: id,
-          ...rest,
-        };
-      });
-      const itemsWithId = allocationRanges.filter(d => d.__Id__);
-      if (itemsWithId.length > 0) {
-        const payload = {
-          postData: transformedAllocationRanges,
-          __Id__: itemsWithId[0]?.__Id__,
-        };
-        dispatch(updateAllocationThemeAction(payload)).then(response => {
-          if (response?.meta?.requestStatus === 'fulfilled') {
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Allocation theme updated successfully',
-                type: 'success',
-                autoHideTimer: 4000,
-              })
-            );
-          }
-        });
-      } else {
-        const newItems = allocationRanges.filter(d => !d.__Id__);
-        if (newItems.length > 0) {
-          dispatch(addAllocationThemeAction(transformedAllocationRanges));
-        }
-      }
-    }
-  };
-
-  const handleCancel = () => {
-    // Restore original data
-    if (activeItem?.id === 'allocation-setting' || activeItem?.id === 'theme') {
-      setAllocationRanges([...originalAllocationRanges]);
-      setValidationErrors({});
-    }
-
-    setHasUnsavedChanges(false);
-  };
-
   return (
     <PageContainer>
       <BodyContainer>
@@ -436,26 +366,6 @@ const SettingsPanel = () => {
             </Typography>
           </ContentHeader>
           <ScrollableContent>{activeItem?.content}</ScrollableContent>
-          {activeItem?.id === 'allocation-setting' && (
-            <ContentFooter>
-              <BottomActions>
-                <CancelButton
-                  variant="outlined"
-                  onClick={handleCancel}
-                  disabled={!hasUnsavedChanges}
-                >
-                  Cancel
-                </CancelButton>
-                <SaveButton
-                  variant="contained"
-                  onClick={handleSaveChanges}
-                  disabled={!hasUnsavedChanges}
-                >
-                  Save Changes
-                </SaveButton>
-              </BottomActions>
-            </ContentFooter>
-          )}
         </ContentContainer>
       </BodyContainer>
     </PageContainer>
