@@ -529,10 +529,11 @@ const viewSlice = createSlice({
       })
       .addCase(deleteAllocationView.fulfilled, (state, action) => {
         state.loading = false;
-        const deletedView =
-          action.payload?.UserAllocationView?.length > 0
-            ? action.payload?.UserAllocationView[0]
-            : null;
+        const response = formatAPIResponse(
+          'UserAllocationView',
+          action.payload
+        );
+        const deletedView = response?.length > 0 ? response[0] : null;
         if (deletedView) {
           if (deletedView?.Id === state.currentView.Id) {
             state.currentView = COMPANY_DEFAULT_VIEW;
