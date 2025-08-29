@@ -474,10 +474,11 @@ const viewSlice = createSlice({
       })
       .addCase(updateAllocationView.fulfilled, (state, action) => {
         state.loading = false;
-        const updatedView =
-          action.payload?.UserAllocationView?.length > 0
-            ? action.payload?.UserAllocationView[0]
-            : null;
+        const response = formatAPIResponse(
+          'UserAllocationView',
+          action.payload
+        );
+        const updatedView = response?.length > 0 ? response[0] : null;
         const formatedView: AllocationGridView = {
           Id: updatedView?.Id,
           UserId: updatedView?.UserId,
