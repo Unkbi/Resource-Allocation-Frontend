@@ -13,6 +13,7 @@ import { performLogout } from '@/app/redux/actions/authActions';
 import { Button } from '@mui/material';
 import EllipsisNameCell from '../../ResourceAllocation/component/EllipsisNameCell';
 import CustomAvatar from '../../Avatar/CustomAvatar';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 const MainBox = styled(Box, {
   shouldForwardProp: prop => prop !== 'sidebarExpanded',
@@ -103,7 +104,11 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
   const dispatch = useDispatch();
   const anchorRef = useRef(null);
   const { user } = useSelector(state => state.user);
-
+  const {
+    email = '',
+    given_name: firstName = '',
+    family_name: lastName = '',
+  } = getUserAttributes(user, []) || {};
   const handleToggle = () => {
     setOpen(prevOpen => !prevOpen);
   };
@@ -372,8 +377,8 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
                 {/* <img src={"/images/icons/profile.svg"} className="profle-img" alt='' /> */}
                 <CustomAvatar
                   value={
-                    user && user.FirstName && user.LastName
-                      ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
+                    user && firstName && lastName
+                      ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
                       : ''
                   }
                   showFullName={false}
@@ -427,8 +432,8 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
                             >
                               <EllipsisNameCell
                                 value={
-                                  user && user.FirstName && user.LastName
-                                    ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
+                                  user && firstName && lastName
+                                    ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
                                     : ''
                                 }
                               />
@@ -446,7 +451,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
                                 width: '100%',
                               }}
                             >
-                              <EllipsisNameCell value={user?.Email || ''} />
+                              <EllipsisNameCell value={email || ''} />
                             </Box>
                           </Box>
 

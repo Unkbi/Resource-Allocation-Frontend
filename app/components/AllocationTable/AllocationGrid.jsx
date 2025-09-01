@@ -72,6 +72,7 @@ import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
+import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
 
 export default function AllocationGrid({
   groupBy,
@@ -129,6 +130,7 @@ export default function AllocationGrid({
     } ?? {}
   );
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
   const { portfolios } = useSelector(state => state.portfolios);
@@ -295,7 +297,7 @@ export default function AllocationGrid({
       hasAllocation: calculateTotalEffort(normalizeRow(row)) > 0,
       teamAllocationManager: getAllocationManagerFromPath(
         row?.teamAllocationManager,
-        resources?.result || []
+        resources || []
       )?.FullName,
     }));
     setUpdatedRows(updatedRows);
@@ -420,7 +422,7 @@ export default function AllocationGrid({
   }, [currentView.ColumnsVisible]);
 
   useEffect(() => {
-    if (user?.Email && resources?.result) {
+    if (email && resources) {
       if (currentView?.Filters) {
         setFilterModel({
           items:
@@ -437,8 +439,8 @@ export default function AllocationGrid({
       // If not, then update myTeam to allTeams
       if (currentView?.Filters !== null && currentView?.MyTeam) {
         const allocationManagerName = getResourceFromEmail(
-          user?.Email,
-          resources?.result || []
+          email,
+          resources || []
         )?.FullName;
 
         if (isMyTeamsValid(allocationManagerName, currentView?.Filters)) {
@@ -454,10 +456,7 @@ export default function AllocationGrid({
       // Check if myProjects is selected, if yes, then check if filters match with myProjects
       // If not, then update myProjects to allProjects
       if (currentView?.Filters !== null && currentView?.MyProjects) {
-        const projectManager = getResourceFromEmail(
-          user?.Email,
-          resources?.result || []
-        );
+        const projectManager = getResourceFromEmail(email, resources || []);
 
         const projectManagerName = projectManager
           ? `${projectManager?.FullName}`.trim()
@@ -474,13 +473,13 @@ export default function AllocationGrid({
         );
       }
     }
-  }, [currentView?.Filters, user?.Email, resources?.result]);
+  }, [currentView?.Filters, user, email, resources]);
 
   useEffect(() => {
-    if (user?.Email && resources?.result) {
+    if (email && resources) {
       const allocationManagerName = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
+        email,
+        resources || []
       )?.FullName;
 
       if (currentView?.MyTeam) {
@@ -509,13 +508,10 @@ export default function AllocationGrid({
         );
       }
     }
-  }, [currentView?.MyTeam, user?.Email, resources?.result]);
+  }, [currentView?.MyTeam, user, email, resources]);
 
   useEffect(() => {
-    const projectManager = getResourceFromEmail(
-      user?.Email,
-      resources?.result || []
-    );
+    const projectManager = getResourceFromEmail(email, resources || []);
 
     const projectManagerName = projectManager
       ? `${projectManager?.FullName}`.trim()
@@ -598,7 +594,7 @@ export default function AllocationGrid({
     };
 
     const allocationsOfAddedResource =
-      Array.isArray(teamAllocations?.result) &&
+      Array.isArray(teamAllocations?.result) && // Sahadev : Unsure of this
       teamAllocations?.result.filter(
         resource => resource.Resource === selectedResourceId
       );
@@ -688,7 +684,7 @@ export default function AllocationGrid({
             getAllRowsForView(viewId),
             allocationTheme,
             type,
-            projects?.result,
+            projects,
             isCellEditable
           );
           const showTooltip =
@@ -1030,7 +1026,9 @@ export default function AllocationGrid({
 
       await Promise.all([...allocationPromises, ...deletePromises]).then(
         async response => {
-          if (response && response.length > 0) {
+          if (response && response[0].length > 0) {
+            response = response[0];
+            response = formatAPIResponse('Allocation', response);
             let allocationsUpdated = [];
             // handle for bulk Delete different responce
             if (deleteList.length > 0) {
@@ -1038,12 +1036,12 @@ export default function AllocationGrid({
             } else {
               allocationsUpdated = response.reduce((arr, res) => {
                 // Check if result exists and is an array before spreading
-                if (res?.result && Array.isArray(res.result)) {
-                  return [...arr, ...res.result];
+                if (res && Array.isArray(res)) {
+                  return [...arr, ...res];
                 }
                 // If it's not an array but has a value you want to include
-                else if (res?.result !== undefined) {
-                  return [...arr, res.result];
+                else if (res !== undefined) {
+                  return [...arr, res];
                 }
                 // Otherwise just return the accumulator unchanged
                 return arr;
@@ -1418,7 +1416,7 @@ export default function AllocationGrid({
           getAllRowsForView(viewId),
           allocationTheme,
           type,
-          projects?.result,
+          projects,
           isCellEditable,
           groupBy
         );

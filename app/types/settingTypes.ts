@@ -1,9 +1,6 @@
-import { ApiResponse } from '.';
-import { AllocationGridCell } from './allocationTypes';
-
 export interface AllocationRange {
   id: string;
-  __Id__: string;
+  __id__: string;
   From: string;
   To: string;
   Label: string;
@@ -11,9 +8,10 @@ export interface AllocationRange {
   DarkColor: string;
 }
 
-// Define the type for a ParentEntry 
+// Define the type for a ParentEntry
 export interface ParentEntry {
-  __Id__: string;
+  __id__: string;
+  Id: string;
   AllocationRanges: {
     Id: string;
     Label: string;

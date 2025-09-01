@@ -1,6 +1,4 @@
-import { call, put, takeEvery } from 'redux-saga/effects';
-
-// all Actions
+import { call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import {
   CREATE_PORTFOLIOS,
   DELETE_PORTFOLIOS,
@@ -23,9 +21,8 @@ function* fetchPortfolioSaga(): Generator<any, void, any> {
     yield put(setLoading(true));
     // calling fetchPortfolio from services to get all the portfolios
     const responses = yield call(fetchPortfolios);
-    // updating portfolios state using response 
-    // the dispatch type is type: 'portfolios/setPortfolios'
-    yield put(setPortfolios(responses?.result));
+
+    yield put(setPortfolios(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch Portfolios : ', error);
   } finally {
@@ -38,7 +35,7 @@ function* createPortfolioSaga(action: any): Generator<any, void, any> {
   const { postData, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    // API post 
+    // API post
     const response = yield call(createPortfolio, postData);
     // skips the middleware and calls the saga fucntion
     yield call(fetchPortfolioSaga);
@@ -82,7 +79,7 @@ function* deletePortfolioSaga(action: any): Generator<any, void, any> {
 }
 // attaching actions to watchers
 export function* portfolioSaga() {
-  yield takeEvery(FETCH_PORTFOLIOS, fetchPortfolioSaga);
+  yield takeLatest(FETCH_PORTFOLIOS, fetchPortfolioSaga);
   yield takeEvery(CREATE_PORTFOLIOS, createPortfolioSaga);
   yield takeEvery(UPDATE_PORTFOLIOS, updatePortfolioSaga);
   yield takeEvery(DELETE_PORTFOLIOS, deletePortfolioSaga);

@@ -45,7 +45,7 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
-          options={resources.result}
+          options={resources}
           getOptionLabel={(option: Resource) =>
             option.FullName || option.FirstName || ''
           }

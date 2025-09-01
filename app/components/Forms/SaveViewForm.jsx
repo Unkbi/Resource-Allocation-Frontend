@@ -42,6 +42,7 @@ import {
   DEFAULT_VISIBLE_PROJECTS_COLUMNS,
   DEFAULT_VISIBLE_TEAMS_COLUMNS,
 } from '@/app/redux/reducers/allocationViewReducer';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 const getColumnLabel = (column, groupBy = '') => {
   const columnLabels = {
@@ -142,6 +143,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     formikProps;
   const { columns, currentView } = useSelector(state => state.allocationView);
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
 
   const commonAutocompleteStyles = {
@@ -425,10 +427,10 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   }, []);
 
   useEffect(() => {
-    if (values?.showBy) {
+    if (values?.showBy && email) {
       const allocationManagerName = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
+        email,
+        resources || []
       )?.FullName;
 
       if (values.showBy === 'MyTeams') {
@@ -450,10 +452,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         return;
       }
 
-      const projectManager = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
-      );
+      const projectManager = getResourceFromEmail(email, resources || []);
 
       const projectManagerName = projectManager
         ? `${projectManager?.FullName}`.trim()
@@ -481,20 +480,17 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   }, [values.showBy]);
 
   useEffect(() => {
-    if (values?.showBy === 'MyTeams') {
+    if (values?.showBy === 'MyTeams' && email) {
       const allocationManagerName = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
+        email,
+        resources || []
       )?.FullName;
 
       if (!isMyTeamsValid(allocationManagerName, values.filters)) {
         setFieldValue('showBy', 'AllTeams');
       }
-    } else if (values?.showBy === 'MyProject') {
-      const projectManager = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
-      );
+    } else if (values?.showBy === 'MyProject' && email) {
+      const projectManager = getResourceFromEmail(email, resources || []);
 
       const projectManagerName = projectManager
         ? `${projectManager?.FullName}`.trim()

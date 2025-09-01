@@ -564,7 +564,7 @@ export default function AllocationTheme() {
     if (newRange?.length === 0) {
       const newRow: AllocationRange = {
         id: '1',
-        __Id__: allocationRangeId,
+        __id__: allocationRangeId,
         From: '0.0',
         To: '2.0',
         Label: '',
@@ -609,7 +609,7 @@ export default function AllocationTheme() {
       updatedRanges = fixRanges(
         updatedRanges,
         id as string,
-        allocationRanges[0].__Id__
+        allocationRanges[0].__id__
       );
       setAllocationRanges(updatedRanges);
 
@@ -668,7 +668,7 @@ export default function AllocationTheme() {
     // Create new row with proper ID
     const newRow: AllocationRange = {
       id: getNextId().toString(),
-      __Id__: '',
+      __id__: '',
       From: newFrom,
       To: newTo,
       Label: '',

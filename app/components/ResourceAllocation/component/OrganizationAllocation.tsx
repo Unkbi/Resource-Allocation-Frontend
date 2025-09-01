@@ -65,11 +65,7 @@ export default function OrganisationAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -97,7 +93,7 @@ export default function OrganisationAllocation({
           filteredResources = removeResourcesWithNoTeams(
             injectBlankRows(
               getAllProjectViewRows() as AllAllocations[],
-              teams?.result || [],
+              teams || [],
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
@@ -116,7 +112,7 @@ export default function OrganisationAllocation({
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
-            _resources?.result || []
+            _resources || []
           )?.FullName,
         }));
 
@@ -146,7 +142,7 @@ export default function OrganisationAllocation({
     ) {
       // Find the team by name in the teams array
       const teamName = params.rowNode.groupingKey;
-      const team = teams?.result?.find(t => t.Name === teamName);
+      const team = teams?.find(t => t.Name === teamName);
       return team;
     }
     return null;
@@ -173,7 +169,7 @@ export default function OrganisationAllocation({
       params.rowNode.groupingField === 'resource'
     ) {
       const resourceName = params.rowNode.groupingKey;
-      const resource = _resources?.result?.find(
+      const resource = (_resources as Resource[])?.find(
         r => r.FullName === resourceName
       );
       return resource || null;
@@ -577,12 +573,12 @@ export default function OrganisationAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team && _resources && 'result' in _resources ? (
+        return team && _resources ? (
           <EllipsisNameCell
             value={
               getAllocationManagerFromPath(
                 team?.AllocationManager,
-                _resources?.result || []
+                _resources || []
               )?.FullName || ''
             }
           />
@@ -595,18 +591,20 @@ export default function OrganisationAllocation({
     return allocations.filter(
       allocation =>
         allocation.teams &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.EndDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.EndDate
           ? new Date(
-              _resources?.result?.find(
+              (_resources as Resource[])?.find(
                 res => res.Id === allocation.resourceId
               )?.EndDate
             ) >= new Date(startDate)
           : true) &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.StartDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.StartDate
           ? new Date(
-              _resources?.result?.find(
+              (_resources as Resource[])?.find(
                 res => res.Id === allocation.resourceId
               )?.StartDate
             ) <= new Date(endDate)

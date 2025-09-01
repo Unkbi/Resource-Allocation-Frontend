@@ -27,7 +27,6 @@ import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
-  getResourceDetail,
 } from '@/app/services/teamServices';
 import dayjs from 'dayjs';
 import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';
@@ -40,7 +39,6 @@ import {
   getResourceIdByEmail,
 } from '@/app/utils/allocationUtils';
 import { addDays, addWeeks, format } from 'date-fns';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { parseISO } from 'date-fns';
 import StyledAutocomplete from '../Select/Autocomplete';
 
@@ -88,7 +86,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
 
   const resourceListOptions =
     resources &&
-    resources?.result?.map(resource => {
+    resources?.map(resource => {
       return { value: resource.Id, label: resource.FullName };
     });
   const organisationListOptions =
@@ -96,8 +94,9 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       value: org.Id,
       label: org.Name,
     })) || [];
+
   const teamListOptions =
-    teams?.result?.map(team => ({
+    teams?.map(team => ({
       value: team.Id,
       label: team.Name,
     })) || [];
@@ -118,9 +117,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
 
-      const matchedTeam = teams?.result?.find(
-        team => team.Name === initialData.Team
-      );
+      const matchedTeam = teams?.find(team => team.Name === initialData.Team);
       const matchedOrg = organisations?.find(
         org => org.Name === initialData.Organization
       );
@@ -216,7 +213,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     formikProps.setFieldValue('EndDate', formattedEndDate);
     if (formType !== 'edit_resource') return;
     try {
-      const resourceId = getResourceIdByEmail(resources.result, values.Email);
+      const resourceId = getResourceIdByEmail(resources, values.Email);
       if (!resourceId) {
         console.error('Resource ID not found for email:', values.Email);
         return;
@@ -248,7 +245,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const formattedEndDate = dayjs(formikProps.values.EndDate).format(
       'YYYY-MM-DD'
     );
-    const resourceId = getResourceIdByEmail(resources.result, values.Email);
+    const resourceId = getResourceIdByEmail(resources, values.Email);
     if (!resourceId) {
       console.error('Resource ID not found for email:', values.Email);
       return;

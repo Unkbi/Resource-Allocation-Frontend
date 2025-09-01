@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
 import StyledAutocomplete from '../Select/Autocomplete';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
   const dispatch = useDispatch();
@@ -24,7 +24,7 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
   } = formikProps;
 
   const resourceListOptions =
-    resources?.result?.map(resource => ({
+    resources?.map(resource => ({
       value: resource.__path__,
       label: resource.FullName,
     })) || [];
@@ -35,8 +35,8 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
   ];
 
   useEffect(() => {
-    if (!resources || !resources?.result) {
-      dispatch(fetchAllResources());
+    if (!resources) {
+      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     }
   }, []);
 
@@ -45,9 +45,8 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
       const rowData = {
         Name: initialData.Team || '',
         AllocationManager:
-          resources.result.find(
-            res => res.__path__ === initialData.AllocationManager
-          )?.__path__ || '', 
+          resources?.find(res => res.__path__ === initialData.AllocationManager)
+            ?.__path__ || '',
         Status: initialData.Status || 'Active',
       };
 
@@ -79,15 +78,13 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel sx={{ flex: 1 }}>
-          Team Allocation Manager
-        </StyledLabel>
+        <StyledLabel sx={{ flex: 1 }}>Team Allocation Manager</StyledLabel>
         <StyledAutocomplete
           name="AllocationManager"
           label="Team Allocation Manager"
           options={resourceListOptions}
           value={values.AllocationManager || ''}
-          formikProps={formikProps} 
+          formikProps={formikProps}
           fullWidth
         />
       </Box>

@@ -14,7 +14,7 @@ function* fetchEmployeeRatesSaga(): Generator<any, void, any> {
 
     const responses = yield call(fetchEmployeeRates);
 
-    yield put(setEmployeeRates(responses?.result));
+    yield put(setEmployeeRates(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch Employee Rates : ', error);
   } finally {

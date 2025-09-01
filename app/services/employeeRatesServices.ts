@@ -10,7 +10,13 @@ export const fetchEmployeeRates = async () => {
 
 export const createEmployeeRates = async (newData: any) => {
   const payload = {
-    'ResourceAllocation.Core/EmployeeRate': newData,
+    HRLevel: newData.HRLevel,
+    WorkLocation: newData.WorkLocation,
+    HourlyRate: newData.HourlyRate,
+    ValidityStartDate: newData.ValidityStartDate,
+    ValidityEndDate: newData.ValidityEndDate,
+    HourlyRateCurrency: newData.HourlyRateCurrency,
+    Status: newData.Status,
   };
   const response = await axiosInstance.post(
     `${API_PROJECT_PORTFOLIO}/EmployeeRate`,
@@ -24,7 +30,13 @@ export const updateEmployeeRates = async (
   updatedFields: any
 ) => {
   const payload = {
-    'ResourceAllocation.Core/EmployeeRate': updatedFields,
+    HRLevel: updatedFields.HRLevel,
+    WorkLocation: updatedFields.WorkLocation,
+    HourlyRate: updatedFields.HourlyRate,
+    ValidityStartDate: updatedFields.ValidityStartDate,
+    ValidityEndDate: updatedFields.ValidityEndDate,
+    HourlyRateCurrency: updatedFields.HourlyRateCurrency,
+    Status: updatedFields.Status,
   };
   const response = await axiosInstance.put(
     `${API_PROJECT_PORTFOLIO}/EmployeeRate/${rateId}`,

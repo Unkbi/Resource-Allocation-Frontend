@@ -12,6 +12,7 @@ import {
 } from '@/app/services/teamServices';
 import { generateTMinusOneStartEndDate } from '@/app/utils/common';
 import { Resource, TeamState } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 
 const initialState: TeamState = {
   teams: null,
@@ -62,7 +63,10 @@ const teamsSlice = createSlice({
       })
       .addCase(getAllTeams.fulfilled, (state, action) => {
         state.loading = false;
-        state.teams = action.payload;
+        state.teams = formatAPIResponse(
+          'Team',
+          action.payload as string | null
+        );
       })
       .addCase(getAllTeams.rejected, (state, action) => {
         state.loading = false;

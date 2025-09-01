@@ -35,16 +35,15 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
   // @ts-ignore
-  const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
+  const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const { currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -62,7 +61,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
         hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
         teamAllocationManager: getAllocationManagerFromPath(
           allocation?.teamAllocationManager,
-          _resources?.result || []
+          _resources || []
         )?.FullName,
       }));
       setRows(formattedResources);
@@ -73,9 +72,10 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
     dispatch({
       type: 'FETCH_ALLOCATIONS_COST',
       payload: {
-        teams: teams?.result,
-        projects: projects?.result,
-        resources: resources?.result,
+        teams: teams,
+        projects: projects,
+        resources: resources,
+        allResourcesDetail: allResourcesDetail,
         startDate: startDate,
         endDate: endDate,
       },
@@ -103,7 +103,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
     ) {
       // Find the team by name in the teams array
       const teamName = params.rowNode.groupingKey;
-      const team = teams?.result?.find(t => t.Name === teamName);
+      const team = teams?.find(t => t.Name === teamName);
       return team;
     }
     return null;
@@ -115,7 +115,7 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       params.rowNode.groupingField === 'resource'
     ) {
       const resourceName = params.rowNode.groupingKey;
-      const resource = _resources?.result?.find(
+      const resource = (_resources as Resource[])?.find(
         r => r.FullName === resourceName
       );
       return resource || null;
@@ -505,12 +505,12 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
-        return team && _resources && 'result' in _resources ? (
+        return team && _resources ? (
           <EllipsisNameCell
             value={
               getAllocationManagerFromPath(
                 team?.AllocationManager,
-                _resources?.result || []
+                _resources || []
               )?.FullName || ''
             }
           />
