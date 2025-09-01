@@ -115,8 +115,7 @@ const TabHeader = ({
           backgroundColor: '#152E75',
         },
         '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(21%) sepia(82%) saturate(1192%) hue-rotate(197deg) brightness(97%) contrast(101%)',
+          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
         },
       }}
     >

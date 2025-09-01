@@ -93,7 +93,7 @@ const commonTabSx = {
   lineHeight: '24px',
   '&.Mui-selected': {
     background: 'transparent',
-    color: '#2563EB',
+    color: '#152E75',
     boxShadow: 'none',
     borderBottom: '2px solid #3b82f6',
     textAlign: 'center',
@@ -164,11 +164,10 @@ const TabHeader = ({
           gap: 1.5,
         },
         '& .MuiTabs-indicator': {
-          backgroundColor: '#2563EB',
+          backgroundColor: '#152E75',
         },
         '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(33%) sepia(93%) saturate(1554%) hue-rotate(197deg) brightness(100%) contrast(101%)',
+          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
         },
       }}
     >
