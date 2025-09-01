@@ -1491,7 +1491,7 @@ const AllocationForm = () => {
         }
         break;
 
-      case 'name_view':
+     case 'name_view':
         try {
           if (values.id) {
             // Update the view.
@@ -1501,7 +1501,7 @@ const AllocationForm = () => {
               isDefault: values.isDefault,
               ...(values?.dateRangeType !== undefined && {
                 // Conditionally add properties
-                isDynamicRange: values.dateRangeType === 'dynamic',
+                 isDynamicRange: values.dateRangeType === 'dynamic',
               }),
               ...(values?.dateRangeType !== undefined && {
                 isFixedRange: values.dateRangeType === 'fixed',
@@ -1530,7 +1530,7 @@ const AllocationForm = () => {
               ...(values?.filters !== undefined && {
                 Filters: values.filters,
               }),
-            };
+      };
 
             // PUT request.
             dispatch(updateUsersSavedViewAction(values.id, updatedView));
@@ -1546,7 +1546,21 @@ const AllocationForm = () => {
             dispatch(closeDialog());
           } else {
             const userId = getUserIdFromEmail(resources || [], email);
-            // Create a new view.
+
+          if (!userId) {
+             dispatch(
+              showToast({
+              open: true,
+              message:
+                'Save views require a user resource. Create a resource with this email to enable saving views.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 5000,
+            })
+          );
+          return;
+        }
+
             const newView = {
               isDefault: values.isDefault,
               isDynamicRange:
