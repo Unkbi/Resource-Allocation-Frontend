@@ -51,9 +51,8 @@ import {
   fetchAllocationTheme,
   updateAllocationThemeAction,
 } from '@/app/redux/actions/settingsAction';
-import { set } from 'date-fns';
 
-const baseURLAccessManagement = '/settings?menu=allocation-settiings';
+const baseURLAccessManagement = '/settings?menu=allocation-setting';
 interface ColorPair {
   pastel: string;
   dark: string;
