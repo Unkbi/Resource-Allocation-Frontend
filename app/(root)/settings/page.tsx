@@ -36,6 +36,7 @@ import ProjectSetting from '@/app/components/Settings/ProjectSettings';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
+import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 
 interface MenuItem {
   id: string;
@@ -143,10 +144,20 @@ const SettingsPanel = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (scalarSettings === null) {
+      // Sahadev : This is temporary, we will pobably need to call AllSettings API here.
+      dispatch({
+        type: FETCH_ALL_SETTINGS,
+        payload: {},
+      });
+    }
     dispatch(fetchAllocationTheme());
   }, []);
 
