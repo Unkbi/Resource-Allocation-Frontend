@@ -810,17 +810,17 @@ export default function AllocationTheme() {
       setHasUnsavedChanges(false);
       dispatch(updateAllocationTheme([...allocationRanges]));
       const transformedAllocationRanges = allocationRanges.map(range => {
-        const { __Id__, id, ...rest } = range;
+        const { __id__, id, ...rest } = range;
         return {
           Id: id,
           ...rest,
         };
       });
-      const itemsWithId = allocationRanges.filter(d => d.__Id__);
+      const itemsWithId = allocationRanges.filter(d => d.__id__);
       if (itemsWithId.length > 0) {
         const payload = {
           postData: transformedAllocationRanges,
-          __Id__: itemsWithId[0]?.__Id__,
+          __id__: itemsWithId[0]?.__id__,
         };
         dispatch(updateAllocationThemeAction(payload)).then(response => {
           if (response?.meta?.requestStatus === 'fulfilled') {
@@ -835,7 +835,7 @@ export default function AllocationTheme() {
           }
         });
       } else {
-        const newItems = allocationRanges.filter(d => !d.__Id__);
+        const newItems = allocationRanges.filter(d => !d.__id__);
         if (newItems.length > 0) {
           dispatch(addAllocationThemeAction(transformedAllocationRanges));
         }
