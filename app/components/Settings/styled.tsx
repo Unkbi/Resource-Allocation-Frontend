@@ -301,6 +301,9 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
   borderRadius: '0px',
   borderRight: 'none',
   borderLeft: 'none',
+  '& .MuiDataGrid-main': {
+    borderRight: '1px solid #DDE1E4'
+  },
   '& .MuiDataGrid-columnHeaders': {
     '& .MuiDataGrid-columnHeader': {
       borderRight: '1px solid #DDE1E4',
