@@ -1,7 +1,9 @@
 import { RBACState } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: RBACState = {
+  user:  null,
   roles: [],
   roleAssignments: [],
   privileges: [],
@@ -15,7 +17,7 @@ const rbacSlice = createSlice({
   initialState,
   reducers: {
     setRoles: (state, action) => {
-      state.roles = action.payload;
+      state.roles = formatAPIResponse('Role',action.payload);
     },
     clearRoles: state => {
       state.roles = [];
@@ -24,7 +26,7 @@ const rbacSlice = createSlice({
       const updatedRoles = action.payload;
       if (!state.roles) return;
       const index = state.roles.findIndex(
-        role => role.Name === updatedRoles.Name
+        role => role.name === updatedRoles.Name
       );
       if (index !== -1) {
         state.roles[index] = {
@@ -53,7 +55,7 @@ const rbacSlice = createSlice({
       }
     },
     setPrivileges: (state, action) => {
-      state.privileges = action.payload;
+      state.privileges = formatAPIResponse("Permission" ,action.payload);
     },
     clearPrivileges: state => {
       state.privileges = [];
@@ -62,7 +64,7 @@ const rbacSlice = createSlice({
       const updatedPrivilege = action.payload;
       if (!state.privileges) return;
       const index = state.privileges.findIndex(
-        privilege => privilege.Name === updatedPrivilege.Name
+        privilege => privilege.id === updatedPrivilege.id
       );
       if (index !== -1) {
         state.privileges[index] = {
@@ -96,6 +98,9 @@ const rbacSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload;
     },
+    setUser: (state, action) => {
+      state.user = formatAPIResponse("User",action.payload);
+    }
   },
 });
 
@@ -114,5 +119,6 @@ export const {
   updatePrivilegeAssignments,
   setLoading,
   setError,
+  setUser
 } = rbacSlice.actions;
 export default rbacSlice.reducer;

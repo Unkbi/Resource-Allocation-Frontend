@@ -1,5 +1,5 @@
 export interface Role {
-  Name: string;
+  name: string;
   __path__: string | null;
   __parent__: string | null;
 }
@@ -12,11 +12,11 @@ export interface RoleAssignment {
   __parent__: string | null;
 }
 
-export type PrivilegeActions = 'create' | 'read' | 'update' | 'delete';
+export type PrivilegeActions = 'c' | 'r' | 'u' | 'd';
 export interface Privilege {
   Actions: PrivilegeActions[];
-  Name: string;
-  Resource: string[] | null;
+  id: string;
+  resourceFqName: string[] | null;
   __path__: string | null;
   __parent__: string | null;
 }
@@ -29,7 +29,17 @@ export interface PrivilegeAssignment {
   __parent__: string | null;
 }
 
+export interface UserRbac {
+  id: string; 
+  email: string;
+  firstName: string;
+  lastName: string;
+  __path__: string | null;
+  __parent__: string | null;
+}
+
 export interface RBACState {
+  user: UserRbac[] | null;
   roles: Role[];
   roleAssignments: RoleAssignment[];
   privileges: Privilege[];
