@@ -1492,23 +1492,23 @@ const AllocationForm = () => {
         break;
 
      case 'name_view':
-  try {
-    if (values.id) {
+        try {
+          if (values.id) {
             // Update the view.
-      const updatedView = {
-        Name: values.name,
-        Description: values.description,
-        isDefault: values.isDefault,
-        ...(values?.dateRangeType !== undefined && {
+            const updatedView = {
+              Name: values.name,
+              Description: values.description,
+              isDefault: values.isDefault,
+              ...(values?.dateRangeType !== undefined && {
                 // Conditionally add properties
-          isDynamicRange: values.dateRangeType === 'dynamic',
+                 isDynamicRange: values.dateRangeType === 'dynamic',
               }),
               ...(values?.dateRangeType !== undefined && {
-          isFixedRange: values.dateRangeType === 'fixed',
-        }),
-        ...(values?.startDate !== undefined && {
-           StartDate: values.startDate,
-          }),
+                isFixedRange: values.dateRangeType === 'fixed',
+              }),
+              ...(values?.startDate !== undefined && {
+                StartDate: values.startDate,
+              }),
               ...(values?.endDate !== undefined && {
                 EndDate: values.endDate,
               }),
@@ -1533,74 +1533,74 @@ const AllocationForm = () => {
       };
 
             // PUT request.
-      dispatch(updateUsersSavedViewAction(values.id, updatedView));
-      dispatch(
-        showToast({
-          open: true,
-          message: `View "${values.name}" updated successfully`,
-          type: 'success',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-      dispatch(closeDialog());
-    } else {
-      const userId = getUserIdFromEmail(resources || [], email);
+            dispatch(updateUsersSavedViewAction(values.id, updatedView));
+            dispatch(
+              showToast({
+                open: true,
+                message: `View "${values.name}" updated successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(closeDialog());
+          } else {
+            const userId = getUserIdFromEmail(resources || [], email);
 
-      if (!userId) {
-        dispatch(
-          showToast({
-            open: true,
-            message:
-              'Save views require a user resource. Create a resource with this email to enable saving views.',
-            type: 'error',
-            position: 'bottom-left',
-            autoHideTimer: 5000,
-          })
-        );
-        return;
-      }
+          if (!userId) {
+             dispatch(
+              showToast({
+              open: true,
+              message:
+                'Save views require a user resource. Create a resource with this email to enable saving views.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 5000,
+            })
+          );
+          return;
+        }
 
-      const newView = {
-        isDefault: values.isDefault,
-        isDynamicRange:
-          values.dateRangeType === undefined
-            ? undefined
-            : values.dateRangeType === 'dynamic',
-        isFixedRange:
-          values.dateRangeType === undefined
-            ? undefined
-            : values.dateRangeType === 'fixed',
-        StartDate: values.startDate !== '' ? values.startDate : null,
-        EndDate: values.endDate !== '' ? values.endDate : null,
-        WeekPlus: values.dynamicDateRangeAdd,
-        WeekMinus: values.dynamicDateRangeSubtract,
-        GroupBy: values.groupBy,
-        Columns: values.showColumns,
-        ShowBy: values.showBy,
-        Name: values.name,
-        Description: values.description,
-        Filters: values.filters,
-        UserId: userId,
-      };
+            const newView = {
+              isDefault: values.isDefault,
+              isDynamicRange:
+                values.dateRangeType === undefined
+                  ? undefined
+                  : values.dateRangeType === 'dynamic',
+              isFixedRange:
+                values.dateRangeType === undefined
+                  ? undefined
+                  : values.dateRangeType === 'fixed',
+              StartDate: values.startDate !== '' ? values.startDate : null,
+              EndDate: values.endDate !== '' ? values.endDate : null,
+              WeekPlus: values.dynamicDateRangeAdd,
+              WeekMinus: values.dynamicDateRangeSubtract,
+              GroupBy: values.groupBy,
+              Columns: values.showColumns,
+              ShowBy: values.showBy,
+              Name: values.name,
+              Description: values.description,
+              Filters: values.filters,
+              UserId: userId,
+            };
 
             // POST request to save the view.
-      dispatch(addUsersSavedViewAction(newView));
-      dispatch(
-        showToast({
-          open: true,
-          message: `New view "${values.name}" created successfully`,
-          type: 'success',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-      dispatch(closeDialog());
-    }
-  } catch (e) {
-    console.error('Error saving view:', e);
-  }
-  break;
+            dispatch(addUsersSavedViewAction(newView));
+            dispatch(
+              showToast({
+                open: true,
+                message: `New view "${values.name}" created successfully`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(closeDialog());
+          }
+        } catch (e) {
+          console.error('Error saving view:', e);
+        }
+        break;
 
       case 'save_view':
         try {
