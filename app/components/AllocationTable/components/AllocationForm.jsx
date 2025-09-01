@@ -83,7 +83,6 @@ import {
   updateResource,
 } from '@/app/services/resourceServices';
 import { postTeamResource } from '@/app/services/teamServices';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
@@ -138,6 +137,7 @@ import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
 import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
+import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
 
 const initialValuesMap = {
   add_project: {
@@ -305,7 +305,7 @@ const initialValuesMap = {
     Name: '',
   },
   add_role: {
-    Name: '',
+    name: '',
   },
   edit_role: {
     Name: '',
@@ -383,6 +383,7 @@ const AllocationForm = () => {
   );
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
   const { startDate, endDate } = calendarDate || {};
@@ -554,7 +555,7 @@ const AllocationForm = () => {
       });
     });
 
-    teams?.result?.forEach(team => {
+    teams?.forEach(team => {
       if (team?.Id == new_user?.teamId) {
         new_user = { team: team, ...new_user };
       }
@@ -610,27 +611,19 @@ const AllocationForm = () => {
           cleanedValues.StartDate = today;
         }
         postData = {
-          'ResourceAllocation.Core/Project': {
-            ...cleanedValues,
-            Budget: cleanedValues.Budget || 0,
-            Description: 'string',
-            EndDate:
-              cleanedValues.EndDate === '' ? null : cleanedValues.EndDate,
-            StartDate: cleanedValues.StartDate,
-            ProjectSponsor:
-              cleanedValues.ProjectSponsor === ''
-                ? null
-                : cleanedValues.ProjectSponsor,
-            ProjectManager:
-              cleanedValues.ProjectManager === ''
-                ? null
-                : cleanedValues.ProjectManager,
-            PortfolioId:
-              cleanedValues.PortfolioId === ''
-                ? null
-                : cleanedValues.PortfolioId,
-            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
-          },
+          Name: cleanedValues.Name,
+          Description: cleanedValues.Description || '',
+          Type: cleanedValues.Type || '',
+          Budget: cleanedValues.Budget || 0,
+          ProjectSponsor: cleanedValues.ProjectSponsor || null,
+          ProjectManager: cleanedValues.ProjectManager || null,
+          PortfolioId: cleanedValues.PortfolioId || null,
+          Status: cleanedValues.Status || 'Active',
+          Location: cleanedValues.Location || '',
+          StartDate: cleanedValues.StartDate,
+          EndDate: cleanedValues.EndDate || null,
+          BudgetCurrency: cleanedValues.BudgetCurrency || 'USD',
+          AllowOvertime: cleanedValues.AllowOvertime === 'Yes',
         };
         try {
           dispatch(addProject(postData))
@@ -647,8 +640,7 @@ const AllocationForm = () => {
                 );
                 return;
               }
-
-              const newProjectId = response.payload?.result?.Id;
+              const newProjectId = response.payload?.Project?.Id;
               if (newProjectId) {
                 await dispatch(fetchAllProjects());
                 dispatch(
@@ -667,7 +659,7 @@ const AllocationForm = () => {
 
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
-                dispatch(setSplitViewCurrentProject(response.payload.result));
+                dispatch(setSplitViewCurrentProject(response.payload.Project));
                 dispatch(closeDialog());
                 router.replace('/allocation');
                 return;
@@ -698,25 +690,24 @@ const AllocationForm = () => {
 
       case 'edit_project':
         postData = {
-          'ResourceAllocation.Core/Project': {
-            ...cleanedValues,
-            Budget: cleanedValues.Budget || 0,
-            Description: 'string',
-            ProjectSponsor:
-              cleanedValues.ProjectSponsor === ''
-                ? null
-                : cleanedValues.ProjectSponsor,
-            ProjectManager:
-              cleanedValues.ProjectManager === ''
-                ? null
-                : cleanedValues.ProjectManager,
-            PortfolioId:
-              cleanedValues.PortfolioId === ''
-                ? null
-                : cleanedValues.PortfolioId,
-            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
-          },
+          Id: initialData.Id,
+          Name: cleanedValues.Name,
+          Description: cleanedValues.Description || '',
+          Type: cleanedValues.Type || '',
+          Budget: cleanedValues.Budget || 0,
+          ProjectSponsor: cleanedValues.ProjectSponsor || null,
+          ProjectManager: cleanedValues.ProjectManager || null,
+          PortfolioId: cleanedValues.PortfolioId || null,
+          Status: cleanedValues.Status || 'Active',
+          Location: cleanedValues.Location || '',
+          StartDate: cleanedValues.StartDate,
+          EndDate: cleanedValues.EndDate || null,
+          BudgetCurrency: cleanedValues.BudgetCurrency || 'USD',
+          AllowOvertime:
+            cleanedValues.AllowOvertime === true ||
+            cleanedValues.AllowOvertime === 'Yes',
         };
+
         try {
           dispatch(updateProject({ postData, projectId: initialData.Id })).then(
             async response => {
@@ -765,7 +756,7 @@ const AllocationForm = () => {
                 return;
               }
 
-              const newTeamId = response.payload?.result?.Id;
+              const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
                 dispatch(setHighlightedRowId(newTeamId));
@@ -812,11 +803,9 @@ const AllocationForm = () => {
         });
 
         postData = {
-          'ResourceAllocation.Core/Team': {
-            Name: cleanedValues.Name?.trim(),
-            AllocationManager: cleanedValues.AllocationManager,
-            Status: cleanedValues.Status,
-          },
+          Name: cleanedValues.Name?.trim(),
+          AllocationManager: cleanedValues.AllocationManager,
+          Status: cleanedValues.Status,
         };
 
         try {
@@ -851,33 +840,31 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': {
-            FirstName: cleanedValues.FirstName,
-            StartDate: cleanedValues.StartDate,
-            LocationCategory: cleanedValues.LocationCategory,
-            Email: cleanedValues.Email,
-            Manager: cleanedValues.Manager,
-            LastName: cleanedValues.LastName,
-            ContractorHourlyRateCurrency:
-              cleanedValues.ContractorHourlyRateCurrency,
-            AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
-            Department: cleanedValues.Department,
-            Type: cleanedValues.Type,
-            EndDate: cleanedValues.EndDate,
-            Role: cleanedValues.Role,
-            FullName:
-              cleanedValues.FirstName?.trim() +
-              ' ' +
-              cleanedValues.LastName?.trim(),
-            Status: cleanedValues.Status,
-            ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
-            HRLevel: cleanedValues.HRLevel,
-            PhoneNumber: cleanedValues.PhoneNumber,
-            WorkLocation: cleanedValues.WorkLocation,
-            ...(cleanedValues.PreferredFirstName
-              ? { PreferredFirstName: cleanedValues.PreferredFirstName }
-              : {}),
-          },
+          FirstName: cleanedValues.FirstName,
+          StartDate: cleanedValues.StartDate,
+          LocationCategory: cleanedValues.LocationCategory,
+          Email: cleanedValues.Email,
+          Manager: cleanedValues.Manager,
+          LastName: cleanedValues.LastName,
+          ContractorHourlyRateCurrency:
+            cleanedValues.ContractorHourlyRateCurrency,
+          AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
+          Department: cleanedValues.Department,
+          Type: cleanedValues.Type,
+          EndDate: cleanedValues.EndDate,
+          Role: cleanedValues.Role,
+          FullName:
+            cleanedValues.FirstName?.trim() +
+            ' ' +
+            cleanedValues.LastName?.trim(),
+          Status: cleanedValues.Status,
+          ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
+          HRLevel: cleanedValues.HRLevel,
+          PhoneNumber: cleanedValues.PhoneNumber,
+          WorkLocation: cleanedValues.WorkLocation,
+          ...(cleanedValues.PreferredFirstName
+            ? { PreferredFirstName: cleanedValues.PreferredFirstName }
+            : {}),
         };
         try {
           const result = await dispatch(
@@ -899,7 +886,8 @@ const AllocationForm = () => {
             );
             return;
           }
-          const newResource = result?.payload?.result;
+          const newResource =
+            result?.payload?.OrganizationResource?.Resource?.Resource;
           const newResourceId = newResource?.Id ?? null;
 
           if (newResourceId) {
@@ -935,25 +923,20 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': {
-            ...cleanedValues,
-            EndDate:
-              cleanedValues.EndDate === undefined ||
-              cleanedValues.EndDate === ''
-                ? null
-                : cleanedValues.EndDate,
-          },
+          ...cleanedValues,
+          EndDate:
+            cleanedValues.EndDate === undefined || cleanedValues.EndDate === ''
+              ? null
+              : cleanedValues.EndDate,
         };
 
         try {
-          const selectedTeam = teams.result.find(
-            team => team.Id === values.Team
-          );
+          const selectedTeam = teams?.find(team => team.Id === values.Team);
           let teamAllocationManagerId = null;
           if (selectedTeam?.AllocationManager) {
             const raw = selectedTeam.AllocationManager;
-            teamAllocationManagerId = raw.includes(',')
-              ? raw.split(',')[1]
+            teamAllocationManagerId = raw.includes('/')
+              ? raw.split('/')[1]
               : raw;
           }
           if (!teamAllocationManagerId) {
@@ -1017,10 +1000,8 @@ const AllocationForm = () => {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
-                'ResourceAllocation.Core/ChangeTeamResource': {
-                  Resource: initialData.Id,
-                  Team: teamOrgData.teamId,
-                },
+                Resource: initialData.Id,
+                Team: teamOrgData.teamId,
               },
             });
           }
@@ -1033,10 +1014,8 @@ const AllocationForm = () => {
             await dispatch({
               type: 'UPDATE_RESOURCE_ORGANISATION',
               payload: {
-                'ResourceAllocation.Core/ChangeTeamOrganization': {
-                  Resource: initialData.Id,
-                  Organization: teamOrgData.organisationId,
-                },
+                Resource: initialData.Id,
+                Organization: teamOrgData.organisationId,
               },
             });
           }
@@ -1067,9 +1046,8 @@ const AllocationForm = () => {
             values.EndDate || values.endDate
           );
           const filteredProjects =
-            projects?.result?.filter(project =>
-              values.Project.includes(project.Id)
-            ) || [];
+            projects?.filter(project => values.Project.includes(project.Id)) ||
+            [];
 
           if (
             filteredProjects.some(p => !p.AllowOvertime) &&
@@ -1120,7 +1098,7 @@ const AllocationForm = () => {
                 }
 
                 //Check if Allocation is within the range of StartDate and EndDate of resource
-                const resourceDetails = resources?.result?.find(
+                const resourceDetails = resources?.find(
                   res => res.Id === resource
                 );
                 const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
@@ -1242,20 +1220,18 @@ const AllocationForm = () => {
               `Updating allocation for ${
                 Array.isArray(values.Resource)
                   ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.result?.find(
+                      const resource = resources?.find(
                         r => r.Id === resourceId
                       );
                       if (!resource) return acc;
                       return (
                         acc +
-                        resources?.result?.find(
-                          resource => resource.Id === resourceId
-                        )?.FullName +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
                         ', '
                       );
                     }, '').slice(0, -2)
-                  : resources?.result?.find(r => r.Id === values.Resource)
-                      ?.FullName
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }...`,
               'info'
             )
@@ -1319,7 +1295,9 @@ const AllocationForm = () => {
 
           await Promise.all([...allocationPromises, ...deletePromises]).then(
             async response => {
-              if (response && response.length > 0) {
+              if (response && response[0].length > 0) {
+                response = response[0];
+                response = formatAPIResponse('Allocation', response);
                 let allocationsUpdated = [];
                 // handle for bulk Delete different responce
                 if (deleteList.length > 0) {
@@ -1327,12 +1305,12 @@ const AllocationForm = () => {
                 } else {
                   allocationsUpdated = response.reduce((arr, res) => {
                     // Check if result exists and is an array before spreading
-                    if (res?.result && Array.isArray(res.result)) {
-                      return [...arr, ...res.result];
+                    if (res && Array.isArray(res)) {
+                      return [...arr, ...res];
                     }
                     // If it's not an array but has a value you want to include
-                    else if (res?.result !== undefined) {
-                      return [...arr, res.result];
+                    else if (res !== undefined) {
+                      return [...arr, res];
                     }
                     // Otherwise just return the accumulator unchanged
                     return arr;
@@ -1469,20 +1447,18 @@ const AllocationForm = () => {
               `Failed to create allocation for ${
                 Array.isArray(values.Resource)
                   ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.result?.find(
+                      const resource = resources?.find(
                         r => r.Id === resourceId
                       );
                       if (!resource) return acc;
                       return (
                         acc +
-                        resources?.result?.find(
-                          resource => resource.Id === resourceId
-                        )?.FullName +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
                         ', '
                       );
                     }, '').slice(0, -2)
-                  : resources?.result?.find(r => r.Id === values.Resource)
-                      ?.FullName
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }`,
               'error',
               4000
@@ -1515,7 +1491,7 @@ const AllocationForm = () => {
         }
         break;
 
-      case 'name_view':
+     case 'name_view':
         try {
           if (values.id) {
             // Update the view.
@@ -1525,7 +1501,7 @@ const AllocationForm = () => {
               isDefault: values.isDefault,
               ...(values?.dateRangeType !== undefined && {
                 // Conditionally add properties
-                isDynamicRange: values.dateRangeType === 'dynamic',
+                 isDynamicRange: values.dateRangeType === 'dynamic',
               }),
               ...(values?.dateRangeType !== undefined && {
                 isFixedRange: values.dateRangeType === 'fixed',
@@ -1554,7 +1530,7 @@ const AllocationForm = () => {
               ...(values?.filters !== undefined && {
                 Filters: values.filters,
               }),
-            };
+      };
 
             // PUT request.
             dispatch(updateUsersSavedViewAction(values.id, updatedView));
@@ -1569,11 +1545,22 @@ const AllocationForm = () => {
             );
             dispatch(closeDialog());
           } else {
-            const userId = getUserIdFromEmail(
-              resources?.result || [],
-              user?.Email
-            );
-            // Create a new view.
+            const userId = getUserIdFromEmail(resources || [], email);
+
+          if (!userId) {
+             dispatch(
+              showToast({
+              open: true,
+              message:
+                'Save views require a user resource. Create a resource with this email to enable saving views.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 5000,
+            })
+          );
+          return;
+        }
+
             const newView = {
               isDefault: values.isDefault,
               isDynamicRange:
@@ -1670,7 +1657,7 @@ const AllocationForm = () => {
       case 'clone_resource':
         try {
           const sourceResourceName = initialData?.Resource;
-          const sourceResourceId = resources?.result?.find(
+          const sourceResourceId = resources?.find(
             res => res.FullName === sourceResourceName
           )?.Id;
 
@@ -1727,6 +1714,7 @@ const AllocationForm = () => {
                     allocationId: targetAlloc.allocationId,
                     putData: {
                       'ResourceAllocation.Core/Allocation': {
+                        // Will take care of this wehn I fix Clone API
                         AllocationEntered: sourceAlloc.value,
                       },
                     },
@@ -1739,6 +1727,7 @@ const AllocationForm = () => {
                     resourceId: targetResourceId,
                     postData: {
                       'ResourceAllocation.Core/Allocation': {
+                        // Will take care of this wehn I fix Clone API
                         Resource: targetResourceId,
                         Project: projectId,
                         ProjectName: initialData.Project,
@@ -1883,7 +1872,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response?.EmployeeRate?.Id));
           })
           .catch(error => {
             console.error('Failed to add rate:', error);
@@ -1923,7 +1912,7 @@ const AllocationForm = () => {
           dispatch({
             type: 'UPDATE_EMPLOYEE_RATES',
             payload: {
-              id: initialData.__Id__,
+              id: initialData.Id,
               updatedFields,
               resolve,
               reject,
@@ -1941,7 +1930,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.result[0].__Id__));
+            dispatch(setHighlightedRowId(response?.[0]?.Id));
           })
           .catch(error => {
             console.error('Failed to update rate:', error);
@@ -1987,7 +1976,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response.Id));
           })
           .catch(error => {
             console.error('Failed to add portfolio:', error);
@@ -2040,7 +2029,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response?.Organization?.Id));
           })
           .catch(error => {
             console.error('Failed to add organization:', error);
@@ -2066,10 +2055,8 @@ const AllocationForm = () => {
         });
 
         const postData = {
-          'ResourceAllocation.Core/Organization': {
-            Name: cleanedValues.Name?.trim(),
-            Status: cleanedValues.Status,
-          },
+          Name: cleanedValues.Name?.trim(),
+          Status: cleanedValues.Status,
         };
         try {
           const result = await dispatch(
@@ -2142,7 +2129,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.Id));
+          dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
           console.error('Failed to update portfolio:', error);
@@ -2189,7 +2176,7 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
-              dispatch(setHighlightedRowId(response.result?.Name));
+              dispatch(setHighlightedRowId(response?.Role.name));
             })
             .catch(error => {
               console.error('Failed to add role:', error);
@@ -2235,10 +2222,10 @@ const AllocationForm = () => {
 
           const postData = {
             ...cleanedValues,
-            Assignee: cleanedValues.Assignee?.Email || null,
+            // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
             Name: values.Role
-              ? `${values.Role}-${cleanedValues.Assignee?.Email}`
+              ? `${values.Role}-${cleanedValues.Assignee?.id}`
               : null,
           };
 
@@ -2288,14 +2275,15 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
-        const actionsArray = Object.entries(cleanedValues.Actions || {})
-          .filter(([_, isChecked]) => isChecked)
-          .map(([action]) => action.toLowerCase());
+        const { Name, Resource, Actions } = cleanedValues;
 
         const postData = {
-          Name: cleanedValues.Name,
-          Resource: cleanedValues.Resource,
-          Actions: actionsArray,
+          id: cleanedValues.Name,
+          resourceFqName: cleanedValues.Resource,
+          c: cleanedValues.Actions?.Create || false,
+          r: cleanedValues.Actions?.Read || false,
+          u: cleanedValues.Actions?.Update || false,
+          d: cleanedValues.Actions?.Delete || false,
         };
 
         new Promise((resolve, reject) => {
@@ -2318,7 +2306,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result?.Name));
+            dispatch(setHighlightedRowId(response.result?.id));
           })
           .catch(error => {
             console.error('Failed to add privilege:', error);
@@ -2347,14 +2335,15 @@ const AllocationForm = () => {
         if (Array.isArray(cleanedValues.Resource)) {
           cleanedValues.Resource = cleanedValues.Resource[0] || null;
         }
-        const actionsArray = Object.entries(cleanedValues.Actions || {})
-          .filter(([_, isChecked]) => isChecked)
-          .map(([action]) => action.toLowerCase());
 
+        const { Name, Resource, Actions } = cleanedValues;
         const updatedFields = {
-          Name: cleanedValues.Name,
-          Resource: cleanedValues.Resource,
-          Actions: actionsArray,
+          id: cleanedValues.Name,
+          resourceFqName: cleanedValues.Resource,
+          c: cleanedValues.Actions?.Create || false,
+          r: cleanedValues.Actions?.Read || false,
+          u: cleanedValues.Actions?.Update || false,
+          d: cleanedValues.Actions?.Delete || false,
         };
 
         try {
@@ -2362,7 +2351,7 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                name: cleanedValues.Name,
+                id: cleanedValues.Name,
                 updatedFields,
                 resolve,
                 reject,
@@ -2526,7 +2515,7 @@ const AllocationForm = () => {
     try {
       const { values, initialData } = pendingTransferData;
       const sourceResourceName = initialData?.Resource;
-      const sourceResourceId = resources?.result?.find(
+      const sourceResourceId = resources?.find(
         res => res.FullName === sourceResourceName
       )?.Id;
 
@@ -2577,6 +2566,7 @@ const AllocationForm = () => {
                 allocationId: targetAlloc.allocationId,
                 putData: {
                   'ResourceAllocation.Core/Allocation': {
+                    // Will take care of this wehn I fix Transfer API
                     AllocationEntered: sourceAlloc.value,
                   },
                 },
@@ -2589,6 +2579,7 @@ const AllocationForm = () => {
                 resourceId: targetResourceId,
                 postData: {
                   'ResourceAllocation.Core/Allocation': {
+                    // Will take care of this wehn I fix Transfer API
                     Resource: targetResourceId,
                     Project: projectId,
                     ProjectName: initialData.Project,
@@ -3179,16 +3170,12 @@ const AllocationForm = () => {
           >
             Are you sure you want to transfer this allocation to &nbsp;
             {pendingTransferData?.values?.Resource?.map(resourceId => {
-              const resource = resources?.result?.find(
-                res => res.Id === resourceId
-              );
+              const resource = resources?.find(res => res.Id === resourceId);
               return resource?.FullName || 'Unknown Resource';
             }).join(', ')}
             &nbsp; - &nbsp;
             {pendingTransferData?.values?.Project?.map(projectId => {
-              const project = projects?.result?.find(
-                proj => proj.Id === projectId
-              );
+              const project = projects?.find(proj => proj.Id === projectId);
               return project?.Name || 'Unknown Project';
             }).join(', ')}
             .

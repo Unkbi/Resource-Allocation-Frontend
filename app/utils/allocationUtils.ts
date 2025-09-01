@@ -620,12 +620,12 @@ export const getCombinedAllocation = (
 
 export const getFormattedAllocationsForUpdate = (
   allocationsUpdated: Allocation[],
-  teams: ApiResponse<Team[]>,
+  teams: Team[],
   teamsResources: Record<string, Resource[]>,
   allResourcesDetail: AllResourceDetail[],
   portfolios: Portfolio[] | null,
-  projects: ApiResponse<Project[]>,
-  resources: ApiResponse<Resource[]>,
+  projects: Project[],
+  resources: Resource[],
   splitView: boolean,
   bottomTeamAllocationGrid: GridApi,
   teamAllocationGrid: GridApi,
@@ -635,7 +635,7 @@ export const getFormattedAllocationsForUpdate = (
   return allocationsUpdated?.reduce((acc: Record<string, any>, allocation) => {
     const team = getTeamForResource(
       allocation?.Resource,
-      teams?.result,
+      teams,
       teamsResources
     );
     const weekKey = getWeekNumber(parseISO(allocation?.Period));
@@ -694,12 +694,12 @@ export const getFormattedAllocationsForUpdate = (
       const emptyRow = generateEmptyRow(
         startDate,
         endDate,
-        teams?.result || [],
+        teams || [],
         teamsResources,
         allResourcesDetail || [],
         portfolios || null,
-        projects?.result || [],
-        resources?.result || [],
+        projects || [],
+        resources || [],
         allocation
       );
       acc = {
@@ -873,16 +873,14 @@ export const getResourceAllocationsForPeriod = async (
   }
 
   const postData = {
-    'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
-      Resource: resourceId,
-      StartDate: startDate,
-      EndDate: '2099-08-31',
-    },
+    Resource: resourceId,
+    StartDate: startDate,
+    EndDate: '2099-08-31',
   };
 
   try {
     const result = await fetchResourceAllocationsForSaga(postData);
-    return result?.result ?? [];
+    return result ?? [];
   } catch (error) {
     console.error('Error fetching resource allocations:', error);
     return [];

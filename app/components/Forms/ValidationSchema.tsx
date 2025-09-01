@@ -23,8 +23,8 @@ export const addProjectValidationSchema = (
   projects: ProjectsPayload = {},
   initialName = ''
 ) => {
-  const projectNames = Array.isArray(projects?.result)
-    ? projects.result.map(project => project.Name?.toLowerCase().trim())
+  const projectNames = Array.isArray(projects)
+    ? projects?.map(project => project.Name?.toLowerCase().trim())
     : [];
 
   return Yup.object({
@@ -199,7 +199,7 @@ export function getProjectRangeWarnings(
   const { Project: selectedIds, StartDate, EndDate } = values;
 
   if (
-    Array.isArray(projects?.result) &&
+    Array.isArray(projects) &&
     selectedIds?.length &&
     StartDate &&
     EndDate
@@ -207,7 +207,7 @@ export function getProjectRangeWarnings(
     const allocationStart = stripTime(new Date(StartDate));
     const allocationEnd = stripTime(new Date(EndDate));
 
-    const selectedProjects = projects.result.filter(p =>
+    const selectedProjects = projects.filter(p =>
       selectedIds.includes(p.Id)
     );
 
@@ -432,7 +432,7 @@ export const addOrganizationValidationSchema = (
 };
 
 export const addRoleValidationSchema = Yup.object({
-  Name: Yup.string()
+  name: Yup.string()
     .required('Role Name is required')
     .max(90, 'Reached Max Characters')
     .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word

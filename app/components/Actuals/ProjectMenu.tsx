@@ -97,7 +97,7 @@ const ProjectMenu = ({
     .map((row) => row.project);
 
   const filteredProjects = useMemo(() => {
-    const projectList = Array.isArray(projects?.result) ? projects.result : [];
+    const projectList = Array.isArray(projects) ? projects : [];
     return projectList.filter(project =>
       project.Name.toLowerCase().includes(searchValue.toLowerCase()) &&
       !selectedProjects.some(p => p.Id === project.Id) &&

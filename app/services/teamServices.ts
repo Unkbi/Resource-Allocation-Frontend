@@ -16,6 +16,7 @@ export const getAllTeams = createAsyncThunk('/team', async () => {
   return response.data;
 });
 
+// This is obsolete and not used in the application anymore.
 export const getResourcesAgainstTeams = createAsyncThunk(
   '/team/resources',
   async (postData: GetTeamResourcesPayload, { rejectWithValue }) => {
@@ -118,6 +119,7 @@ export const fetchResourceAllocationsForSaga = async (
 };
 
 export const getResourceDetail = createAsyncThunk(
+  // Not used in the application currently
   'resource/getResourceDetail',
   async (resourceId: string, { rejectWithValue }) => {
     try {
@@ -157,11 +159,9 @@ export const createTeam = createAsyncThunk(
   ) => {
     try {
       const payload = {
-        'ResourceAllocation.Core/Team': {
-          Name,
-          AllocationManager,
-          Status,
-        },
+        Name,
+        AllocationManager,
+        Status,
       };
 
       const response = await axiosInstance.post(

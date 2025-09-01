@@ -151,12 +151,12 @@ export const AddRowButton = ({
       buttonName === 'Add Project'
         ? resourceProjects
         : view === 'Project'
-          ? resources.result.filter(
+          ? resources.filter(
               resource => !mergedResources.includes(resource.Id)
             ) || []
           : teamsResources?.[teamsId]?.length
             ? teamsResources?.[teamsId]
-            : resources?.result || [],
+            : resources || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
@@ -191,7 +191,7 @@ export const AddRowButton = ({
   };
   return (
     <MainBox onKeyDown={handleKeyDown}>
-      {isSearchMode && resources?.result.length > 0 ? (
+      {isSearchMode && resources.length > 0 ? (
         <Autocomplete
           {...defaultProps}
           id="open-on-focus"
@@ -261,7 +261,7 @@ export const AddRowIcon = ({
   const { teams, teamsResources } = useSelector(state => state.teams);
   const { resources } = useSelector(state => state.resources);
 
-  let teamsId = teams?.result?.find(team => team_name == team.Name)?.Id;
+  let teamsId = teams?.find(team => team_name == team.Name)?.Id;
 
   const defaultProps = {
     options:
@@ -269,7 +269,7 @@ export const AddRowIcon = ({
         ? resourceProjects
         : teamsResources?.[teamsId]?.length
           ? teamsResources?.[teamsId]
-          : resources?.result || [],
+          : resources || [],
     getOptionLabel: option =>
       buttonName === 'Add Project' ? option.Name : option.FullName,
   };
@@ -303,7 +303,7 @@ export const AddRowIcon = ({
       }}
       onKeyDown={handleKeyDown}
     >
-      {isSearchMode && resources?.result.length > 0 ? (
+      {isSearchMode && resources.length > 0 ? (
         <Autocomplete
           {...defaultProps}
           id="open-on-focus"

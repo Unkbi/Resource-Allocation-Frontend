@@ -1,33 +1,31 @@
-import { all, call, put, takeEvery,takeLatest } from 'redux-saga/effects';
+import { all, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import {
- CREATE_ORGANISATION,
- DELETE_ORGANISATION,
- FETCH_ORGANISATIONS,
- UPDATE_ORGANISATION,
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+  FETCH_ORGANISATIONS,
+  UPDATE_ORGANISATION,
 } from '../actions/organizationsAction';
+import { setLoading, setOrganisations } from '../reducers/organisationsReducer';
 import {
- setLoading,
- setOrganisations,
-} from '../reducers/organisationsReducer';
-import {
- fetchAllOrganisations,
- createOrganisation,
- updateOrganisation,
- deleteOrganisation,
+  fetchAllOrganisations,
+  createOrganisation,
+  updateOrganisation,
+  deleteOrganisation,
 } from '@/app/services/organisationServices';
 
 // loading all orgs
 function* fetchOrganisationsSaga(): Generator<any, void, any> {
- try {
-  // setting the loading in reducer
-   yield put(setLoading(true));
-   const responses = yield call(fetchAllOrganisations);
-   yield put(setOrganisations(responses?.result));
- } catch (error) {
-   console.error('Saga error, Failed to fetch organisations : ', error);
- } finally {
-   yield put(setLoading(false));
- }
+  try {
+    yield put(setLoading(true));
+
+    const responses = yield call(fetchAllOrganisations);
+
+    yield put(setOrganisations(responses));
+  } catch (error) {
+    console.error('Saga error, Failed to fetch organisations : ', error);
+  } finally {
+    yield put(setLoading(false));
+  }
 }
 
 function* createOrganisationSaga(action: any): Generator<any, void, any> {
@@ -35,7 +33,7 @@ function* createOrganisationSaga(action: any): Generator<any, void, any> {
   const { postData, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    // API post 
+    // API post
     const response = yield call(createOrganisation, postData);
     yield call(fetchOrganisationsSaga);
     if (resolve) resolve(response);
@@ -46,7 +44,6 @@ function* createOrganisationSaga(action: any): Generator<any, void, any> {
     yield put(setLoading(false));
   }
 }
-
 
 function* updateOrganisationSaga(action: any): Generator<any, void, any> {
   // deconstructed action
@@ -68,7 +65,7 @@ function* updateOrganisationSaga(action: any): Generator<any, void, any> {
 function* deleteOrganisationSaga(action: any): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
-    const {id} = action.payload;
+    const { id } = action.payload;
     yield call(deleteOrganisation, id);
     yield call(fetchOrganisationsSaga);
   } catch (error) {
@@ -79,9 +76,8 @@ function* deleteOrganisationSaga(action: any): Generator<any, void, any> {
 }
 
 export function* organizationsSaga() {
- yield takeEvery(FETCH_ORGANISATIONS, fetchOrganisationsSaga);
- yield takeEvery(CREATE_ORGANISATION, createOrganisationSaga)
- yield takeEvery(UPDATE_ORGANISATION, updateOrganisationSaga)
- yield takeEvery(DELETE_ORGANISATION, deleteOrganisationSaga)
+  yield takeEvery(FETCH_ORGANISATIONS, fetchOrganisationsSaga);
+  yield takeEvery(CREATE_ORGANISATION, createOrganisationSaga);
+  yield takeEvery(UPDATE_ORGANISATION, updateOrganisationSaga);
+  yield takeEvery(DELETE_ORGANISATION, deleteOrganisationSaga);
 }
-

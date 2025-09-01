@@ -125,7 +125,7 @@ export interface GetUsersSavedViewsResponse {
   Columns: string[] | null;
   UserId: string | null;
   ShowBy: string | null;
-  __Id__: string | null;
+  Id: string | null;
   Name: string | null;
   __path__: string | null;
   Description: string | null;
@@ -178,11 +178,9 @@ export interface AllAllocationsState {
 }
 
 export interface ActualAllocationsForPeriodPayload {
-  'ResourceAllocation.Core/GetActualizedAllocationsByPeriod': {
-    Resource: string;
-    StartDate: string;
-    EndDate: string;
-  };
+  Resource: string;
+  StartDate: string;
+  EndDate: string;
 }
 
 export interface ConfirmActuals {
@@ -191,12 +189,10 @@ export interface ConfirmActuals {
 }
 
 export interface ConfirmActualAllocationsForPeriodRequest {
-  'ResourceAllocation.Core/ConfirmActualsEntered': {
-    Resource: string;
-    Period: string;
-    Status: string;
-    Actuals: ConfirmActuals[];
-  };
+  Resource: string;
+  Period: string;
+  Status: string;
+  Actuals: ConfirmActuals[];
 }
 
 export interface ActualAllocations {

@@ -65,11 +65,7 @@ export default function FlatAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -97,7 +93,7 @@ export default function FlatAllocation({
           filteredResources = removeResourcesWithNoTeams(
             injectBlankRows(
               getAllProjectViewRows() as AllAllocations[],
-              teams?.result || [],
+              teams || [],
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
@@ -116,7 +112,7 @@ export default function FlatAllocation({
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
-            _resources?.result || []
+            _resources || []
           )?.FullName,
         }));
 
@@ -565,18 +561,20 @@ export default function FlatAllocation({
     return allocations.filter(
       allocation =>
         allocation.teams &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.EndDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.EndDate
           ? new Date(
-              _resources?.result?.find(
+              (_resources as Resource[])?.find(
                 res => res.Id === allocation.resourceId
               )?.EndDate
             ) >= new Date(startDate)
           : true) &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.StartDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.StartDate
           ? new Date(
-              _resources?.result?.find(
+              (_resources as Resource[])?.find(
                 res => res.Id === allocation.resourceId
               )?.StartDate
             ) <= new Date(endDate)

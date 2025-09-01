@@ -49,20 +49,18 @@ const AddPrivilegeForm = ({
 
   useEffect(() => {
     if (initialData) {
-      const actionArray: string[] = initialData.Actions || [];
-
       const actionObject: Record<ActionType, boolean> = {
-        Create: actionArray.includes('create'),
-        Read: actionArray.includes('read'),
-        Update: actionArray.includes('update'),
-        Delete: actionArray.includes('delete'),
+        Create: initialData.c ?? false,
+        Read:   initialData.r ?? false,
+        Update: initialData.u ?? false,
+        Delete: initialData.d ?? false,
       };
 
       const rowData: PrivilegeFormValues = {
-        Name: initialData.Name || '',
-        Resource: Array.isArray(initialData.Resource)
-          ? initialData.Resource[0] || ''
-          : initialData.Resource || '',
+        Name: initialData.id || '',
+        Resource: Array.isArray(initialData.resourceFqName)
+          ? initialData.resourceFqName[0] || ''
+          : initialData.resourceFqName || '',
         Actions: actionObject,
       };
       setFormValue(rowData);
@@ -86,7 +84,7 @@ const AddPrivilegeForm = ({
   const resourceOptions: string[] = Array.from(
     new Set(
       privileges.map((r: any) =>
-        Array.isArray(r.Resource) ? r.Resource[0] : r.Resource
+        Array.isArray(r.resourceFqName) ? r.resourceFqName[0] : r.resourceFqName
       )
     )
   );

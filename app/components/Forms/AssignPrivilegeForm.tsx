@@ -70,10 +70,10 @@ const AssignPrivilegeForm = ({
           sx={commonAutocompleteStyles}
           size="small"
           options={roles}
-          getOptionLabel={(option: Role) => option.Name}
-          value={roles.find(r => r.Name === values.Role) || null}
+          getOptionLabel={(option: Role) => option.name}
+          value={roles.find(r => r.name === values.Role) || null}
           onChange={(_event, newValue) =>
-            setFieldValue('Role', newValue?.Name || '')
+            setFieldValue('Role', newValue?.name || '')
           }
           renderInput={params => (
             <TextField
@@ -100,13 +100,13 @@ const AssignPrivilegeForm = ({
           size="small"
           options={privileges}
           getOptionLabel={(option: Privilege) => {
-            const name = option?.Name || '';
+            const name = option?.id || '';
             const prefix = 'priv_ResourceAllocation.Core_';
             return name.startsWith(prefix) ? name.slice(prefix.length) : name;
           }}
-          value={privileges.find(p => p.Name === values.Privilege) || null}
+          value={privileges.find(p => p.id === values.Privilege) || null}
           onChange={(_event, newValue) =>
-            setFieldValue('Privilege', newValue?.Name || '')
+            setFieldValue('Privilege', newValue?.id || '')
           }
           renderInput={params => (
             <TextField

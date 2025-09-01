@@ -3,11 +3,11 @@
 import { Box, TextField, Autocomplete } from '@mui/material';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
-import { Resource, Role } from '@/app/types';
+import { Role, UserRbac, } from '@/app/types';
 import { FormikProps } from 'formik';
 
 interface FormValues {
-  Assignee: Resource | null;
+  Assignee: UserRbac | null;
   Role: string;
   Status: string;
   [key: string]: any;
@@ -20,8 +20,9 @@ interface AssignRoleFormProps {
 const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const { resources } = useSelector((state: any) => state.resources);
   const roles: Role[] = useSelector((state: any) => state.rbac.roles);
+  const user: UserRbac[] = useSelector((state: any) => state.rbac.user) 
+
 
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -45,15 +46,13 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
-          options={resources.result}
-          getOptionLabel={(option: Resource) =>
-            option.FullName || option.FirstName || ''
-          }
+          options={user}
+          getOptionLabel={(option: UserRbac) =>
+            option.id || option.email || ''     
+          }  //Adding id/email to show in the dropdown for now as there is not firstname or lastname
           value={values.Assignee || null}
           onChange={handleAutocompleteChange('Assignee')}
-          isOptionEqualToValue={(option, value) =>
-            option?.Email === value?.Email
-          }
+          isOptionEqualToValue={(option, value) => option?.id === value?.id}
           renderInput={params => (
             <TextField
               {...params}
@@ -77,7 +76,7 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
-          options={roles.map(r => r.Name)}
+          options={roles.map(r => r.name)}
           value={values.Role || ''}
           onChange={handleAutocompleteChange('Role')}
           renderInput={params => (

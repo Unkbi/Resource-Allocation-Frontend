@@ -62,7 +62,7 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
         </StyledLabel>
         <StyledInput
           as={TextField}
-          name="Name"
+          name="name"
           placeholder="Enter Role"
           fullWidth
           onChange={e => {
@@ -70,9 +70,9 @@ const AddRoleForm = ({ formikProps, setFormValue }) => {
             setRoleName(e.target.value);
           }}
           onBlur={handleBlur}
-          value={values.Name || ''}
-          error={touched.Name && Boolean(errors.Name)}
-          helperText={touched.Name && errors.Name}
+          value={values.name || ''}
+          error={touched.name && Boolean(errors.name)}
+          helperText={touched.name && errors.name}
         />
       </Box>
 

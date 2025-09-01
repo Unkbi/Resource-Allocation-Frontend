@@ -35,7 +35,6 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { useRouter } from 'next/navigation';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
@@ -52,6 +51,8 @@ import {
   DELETE_ORGANISATION,
   UPDATE_ORGANISATION,
 } from '@/app/redux/actions/organizationsAction';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -109,13 +110,14 @@ export default function Project() {
   const { resources, loading: resourceLoading } = useSelector(
     state => state.resources
   );
+  const { projectTypes } = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [rows, setRows] = useState(projects?.result || null);
+  const [rows, setRows] = useState(projects || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
-  const allResources = resources.result || [];
+  const allResources = resources || [];
   const [value, setValue] = useState('project');
   const { portfolios } = useSelector(state => state.portfolios);
   const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
@@ -132,10 +134,10 @@ export default function Project() {
   }, [updating]);
 
   useEffect(() => {
-    if (projects?.result?.length) {
+    if (projects?.length) {
       if (portfolios?.length) {
         setRows(
-          projects?.result?.map(project => ({
+          projects?.map(project => ({
             ...project,
             Portfolio: project.PortfolioId
               ? portfolios.find(p => p.Id === project.PortfolioId)?.Name || ''
@@ -143,18 +145,27 @@ export default function Project() {
           }))
         );
       } else {
-        setRows(projects?.result);
+        setRows(projects);
       }
     }
   }, [projects, portfolios]);
 
   useEffect(() => {
-    if (!resources?.result?.length) {
-      dispatch(fetchAllResources());
+    if (!resources?.length) {
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
     }
     if (!portfolios?.length) {
       dispatch({
         type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
+    }
+    if (!projectTypes?.length) {
+      dispatch({
+        type: FETCH_PROJECT_TYPES,
         payload: {},
       });
     }
@@ -168,20 +179,41 @@ export default function Project() {
     setPortfolioRows(portfolios);
   }, [portfolios]);
 
+  // const modifyData = data => {
+  //   if (data) {
+  //     return data.map(item => {
+  //       return {
+  //         ...item,
+  //         id: item.Id,
+  //         ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+  //           ?.FullName,
+  //         ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+  //           ?.FullName,
+  //       };
+  //     });
+  //   }
+  //   return [];
+  // };
+
   const modifyData = data => {
-    if (data) {
-      return data.map(item => {
-        return {
-          ...item,
-          id: item.Id,
-          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
-            ?.FullName,
-          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
-            ?.FullName,
-        };
-      });
-    }
-    return [];
+    if (!data) return [];
+
+    return data.map(item => {
+      const project = item.Project || item;
+
+      return {
+        ...project,
+        id: project.Id,
+        ProjectSponsor: getResourceFromUid(project.ProjectSponsor, allResources)
+          ?.FullName,
+        ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
+          ?.FullName,
+        Type:
+          projectTypes?.find(pt => pt.Id === project.Type)?.Name ||
+          project.Type ||
+          '',
+      };
+    });
   };
 
   const modifyPortfolioData = data => {
@@ -252,14 +284,12 @@ export default function Project() {
       );
       try {
         const postData = {
-          'ResourceAllocation.Core/GetProjectAllocations': {
-            Project: id,
-            StartDate: '2000-01-01',
-            EndDate: '2032-01-01',
-          },
+          Project: id,
+          StartDate: '2000-01-01',
+          EndDate: '2032-01-01',
         };
         const response = await fetchProjectAllocationsForSaga(postData);
-        if (!response.result || response.result.length === 0) {
+        if (!response || response.length === 0) {
           await dispatch(deleteProject(id)).unwrap();
           dispatch(
             showToast({
@@ -301,8 +331,8 @@ export default function Project() {
       try {
         const { Id, Name } = portfolioDelete;
         if (
-          projects?.result &&
-          projects?.result?.some(
+          projects &&
+          projects?.some(
             p =>
               p.PortfolioId === Id &&
               !['Requested', 'Paused', 'Cancelled', 'Completed'].includes(

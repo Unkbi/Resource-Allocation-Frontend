@@ -807,8 +807,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     if (isMine) {
       const teamsIAmAllocationManager = getTeamsIamAllocationManager(
         user?.Email,
-        resources?.result || [],
-        teams?.result || []
+        resources || [],
+        teams || []
       );
 
       if (view.includes('Teams') && teamsIAmAllocationManager.length === 0) {
@@ -818,12 +818,10 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       }
 
       // Check if the user is a project manager in any of the projects
-      const currentResource = resources?.result?.find(
-        r => r.Email === user?.Email
-      );
+      const currentResource = resources?.find(r => r.Email === user?.Email);
       const projectsIAmProjectManager = getProjectsIamProjectManager(
         currentResource?.Id,
-        projects?.result || []
+        projects || []
       );
 
       if (view.includes('Project') && projectsIAmProjectManager.length === 0) {

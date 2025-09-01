@@ -185,7 +185,7 @@ export default function Resources() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(allResourcesDetail || null);
-  const [teamRows, setTeamRows] = useState(teams?.result || null);
+  const [teamRows, setTeamRows] = useState(teams || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState({
     id: '',
@@ -556,10 +556,7 @@ export default function Resources() {
       minWidth: 290,
       renderCell: params => {
         const manager =
-          resources &&
-          'result' in resources &&
-          getAllocationManagerFromPath(params.value, resources.result);
-
+          resources && getAllocationManagerFromPath(params.value, resources);
         if (!manager?.FullName) return <span>&nbsp;</span>;
         return (
           <Box
@@ -809,7 +806,7 @@ export default function Resources() {
                       setDeleteDialogOpen(true);
                       handleMenuClose();
                       setRatesDelete({
-                        id: params.row.__Id__,
+                        id: params.row.Id,
                         WorkLocation: params.row.WorkLocation,
                         HRLevel: params.row.HRLevel,
                       });
@@ -829,17 +826,21 @@ export default function Resources() {
   ];
 
   const organizationColumns = [
-  {
-    field: 'Name',
-    headerName: 'Organization Name',
-    minWidth: 290,
-    maxWidth: 500,
-    headerAlign: 'left',
-    hideable: false,
-    renderCell: params => {
-      const handleNameClick = () => {
-        handleOpenDialog('Edit Organization', 'edit_organization', params.row);
-      };
+    {
+      field: 'Name',
+      headerName: 'Organization Name',
+      minWidth: 290,
+      maxWidth: 500,
+      headerAlign: 'left',
+      hideable: false,
+      renderCell: params => {
+        const handleNameClick = () => {
+          handleOpenDialog(
+            'Edit Organization',
+            'edit_organization',
+            params.row
+          );
+        };
 
         return (
           <Box sx={{ display: 'flex', alignItems: 'left' }}>
@@ -942,8 +943,8 @@ export default function Resources() {
 
   const managerMap = useMemo(() => {
     const map = {};
-    if (resources?.result) {
-      resources.result.forEach(res => {
+    if (resources) {
+      resources.forEach(res => {
         map[res.Id] = res.FullName;
       });
     }
@@ -952,7 +953,6 @@ export default function Resources() {
 
   useEffect(() => {
     if (!updating) {
-      dispatch(fetchAllResources());
       dispatch(fetchAllTeams());
       dispatch({
         type: FETCH_ALL_RESOURCES_DETAIL,
@@ -967,11 +967,11 @@ export default function Resources() {
   }, [allResourcesDetail]);
 
   useEffect(() => {
-    setTeamRows(teams?.result);
+    setTeamRows(teams);
   }, [teams]);
 
   useEffect(() => {
-    if (!teams || teams?.result?.length === 0) {
+    if (!teams || teams?.length === 0) {
       dispatch(fetchAllTeams());
     }
     if (!employeeRates || employeeRates?.length === 0) {
@@ -1081,7 +1081,7 @@ export default function Resources() {
   ]);
 
   const handleConfirmDelete = async () => {
-    if (!deleteTarget.id  && !ratesDelete.id) {
+    if (!deleteTarget.id && !ratesDelete.id) {
       setDeleteDialogOpen(false);
       setDeleteTarget({ id: '', name: '' });
       setRatesDelete({ id: '', WorkLocation: '', HRLevel: '' });
@@ -1233,7 +1233,6 @@ export default function Resources() {
                 autoHideTimer: 2000,
               })
             );
-            dispatch(fetchAllResources());
             dispatch({
               type: FETCH_ALL_RESOURCES_DETAIL,
               payload: {},
@@ -1241,14 +1240,12 @@ export default function Resources() {
             return;
           }
           const postData = {
-            'ResourceAllocation.Core/GetTeamAllocationsForPeriod': {
-              TeamId: teamId,
-              StartDate: '2000-01-01',
-              EndDate: '2032-01-01',
-            },
+            TeamId: teamId,
+            StartDate: '2000-01-01',
+            EndDate: '2032-01-01',
           };
           const response = await fetchTeamAllocationsForSaga(postData);
-          const resourceAllocations = (response.result || []).filter(
+          const resourceAllocations = (response || []).filter(
             allocation => allocation.Resource === deleteTarget.id
           );
           if (resourceAllocations.length === 0) {
@@ -1262,7 +1259,6 @@ export default function Resources() {
                 autoHideTimer: 2000,
               })
             );
-            dispatch(fetchAllResources());
             dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
           } else {
             dispatch(
@@ -1408,7 +1404,7 @@ export default function Resources() {
             rows={
               employeeRates?.map(emp => ({
                 ...emp,
-                id: emp.__Id__,
+                id: emp.Id,
               })) || []
             }
             apiRef={apiRef}
