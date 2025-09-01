@@ -72,12 +72,12 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(({ children }) => {
   const teamsLoaded = Array.isArray(teams);
   const portfoliosLoaded = Array.isArray(portfolios);
 
-  // const allDataLoaded =
-  //   projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
+  const allDataLoaded =
+    projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
 
-  //   useEffect(() => {
-  //     setAllApiSuccess(allDataLoaded);
-  //   }, [projects, resources, teams, portfolios]);
+  useEffect(() => {
+    setAllApiSuccess(allDataLoaded);
+  }, [projects, resources, teams, portfolios]);
 
   const handleAddMenuToggle = () => {
     setOpenAddMenu(prev => !prev);
