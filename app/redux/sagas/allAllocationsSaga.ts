@@ -41,6 +41,7 @@ import {
   setDataProcessing as setCostDataProcessing,
 } from '../reducers/AllocationsCostReducer';
 import { fetchAllAllocationCosts } from '@/app/services/allocationCostServices';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 
 function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
   const {
@@ -145,7 +146,8 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       EndDate: getMondayOfISO(endDate),
     };
 
-    const responses = yield call(fetchAllAllocationCosts, postData);
+    let responses = yield call(fetchAllAllocationCosts, postData);
+    responses = formatAPIResponse('AllocationCost', responses);
 
     // Got your response now, format the data to have a combination of teams and projects data.
     const teamResults = yield all(
@@ -184,9 +186,9 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
     const formatResponses =
       responses?.map((res: GetAllCostForPeriodResponse) => ({
         ProjectName: res.ProjectName || null,
-        Id: res.__Id__,
+        Id: res.__path__?.split('/')[1] || null,
         Period: res.Period,
-        Resource: res.ResourceRef?.split(',')[1] || null,
+        Resource: res.ResourceRef?.split('/')[1] || null,
         Duration: res.Duration || null,
         ResourceName: res.ResourceName || null,
         Cost: res.PlannedCost || 0,
