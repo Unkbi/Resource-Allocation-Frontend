@@ -37,3 +37,26 @@ export const deleteProjectType = async (id: string) => {
   );
   return response.data;
 };
+
+export const addProjectTypeGroups = async (postData: any) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup`,
+    postData
+  );
+  return response.data;
+};
+
+export const updateProjectTypeGroups = async (postData: any, id: string) => {
+  const response = await axiosInstance.put(
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`,
+    postData
+  );
+  return response.data;
+};
+
+export const deleteProjectTypeGroups = async (id: string) => {
+  const response = await axiosInstance.delete(
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`
+  );
+  return response.data;
+};
