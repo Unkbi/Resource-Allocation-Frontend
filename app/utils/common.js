@@ -444,6 +444,10 @@ export const getResourceFromUid = (uid, resources) => {
   return resources.find(resource => resource.Id === uid);
 };
 
+export const getUserFromUid = (uid, users) => {
+  return users.find(user => user.id === uid);
+};
+
 export const getAllocationManagerFromPath = (
   allocationManager_Path,
   resources
