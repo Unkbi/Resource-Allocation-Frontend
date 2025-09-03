@@ -52,7 +52,7 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
     const { status, data } = error.response;
 
-    // 🔴 Handle backend "token expired" on 500
+    // Handle backend "token expired" on 500
     if (
       status === 500 &&
       (data?.toLowerCase().includes('token has expired') ||
@@ -74,7 +74,7 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(new Error('Session expired'));
     }
 
-    // 🔑 Handle normal 401 retry/refresh flow
+    // Handle normal 401 retry/refresh flow
     if (status === 401) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
 
