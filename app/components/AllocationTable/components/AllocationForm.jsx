@@ -1567,6 +1567,7 @@ const AllocationForm = () => {
                   autoHideTimer: 5000,
                 })
               );
+              dispatch(closeDialog());
               return;
             }
 
