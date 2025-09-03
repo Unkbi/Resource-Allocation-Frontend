@@ -6,6 +6,8 @@ import {
   clearAuth,
   saveRefreshToken,
 } from './authUtils';
+import { getStore } from '../redux/store';
+import { showToast } from '../redux/reducers/toastReducer';
 
 const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const MAX_RETRIES = 3;
@@ -46,10 +48,34 @@ axiosInstance.interceptors.response.use(
       console.error('No response received from API', error);
       return Promise.reject(error);
     }
-    const originalRequest = error.config;
 
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    const originalRequest = error.config;
+    const { status, data } = error.response;
+
+    // 🔴 Handle backend "token expired" on 500
+    if (
+      status === 500 &&
+      (data?.toLowerCase().includes('token has expired') ||
+        data?.toLowerCase().includes('no active session') ||
+        data?.toLowerCase().includes('session verification failed'))
+    ) {
+      clearAuth();
+      if (typeof window !== 'undefined') {
+        getStore()?.dispatch(
+          showToast({
+            open: true,
+            message: 'Session expired. Log in to continue.',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+      }
+      return Promise.reject(new Error('Session expired'));
+    }
+
+    // 🔑 Handle normal 401 retry/refresh flow
+    if (status === 401) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
 
       if (originalRequest._retryCount > MAX_RETRIES) {
@@ -70,7 +96,6 @@ axiosInstance.interceptors.response.use(
 
       try {
         const refreshToken = getRefreshToken();
-
         if (!refreshToken) {
           clearAuth();
           return Promise.reject(error);
