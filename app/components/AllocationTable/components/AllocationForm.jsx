@@ -2850,8 +2850,8 @@ const AllocationForm = () => {
                   fromVersion:
                     fromVersion !== undefined ? String(fromVersion) : '',
                   toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: `${modifingUserDetails?.FirstName || ''} ${
-                    modifingUserDetails?.LastName || ''
+                  byUser: `${modifingUserDetails?.firstName || ''} ${
+                    modifingUserDetails?.lastName || ''
                   }`,
                   _timestampRaw: Math.floor(
                     new Date(log.Timestamp)?.getTime() / 1000
