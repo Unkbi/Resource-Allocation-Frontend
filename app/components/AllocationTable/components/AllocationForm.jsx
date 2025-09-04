@@ -2025,7 +2025,7 @@ const AllocationForm = () => {
             // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
             Name: values.Role
-              ? `${values.Role}-${cleanedValues.Assignee?.id}`
+              ? `${cleanedValues.Assignee?.id}`
               : null,
           };
 

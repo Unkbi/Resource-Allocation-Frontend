@@ -35,8 +35,11 @@ const rbacSlice = createSlice({
         };
       }
     },
-    setRoleAssignments: (state, action) => {
-      state.roleAssignments = action.payload;
+   setRoleAssignments: (state, action) => {
+    const normalized = action.payload.map((item: any) =>
+      item.UserRole ? item.UserRole : item
+     );
+        state.roleAssignments = normalized;
     },
     clearRoleAssignments: state => {
       state.roleAssignments = [];
@@ -45,7 +48,7 @@ const rbacSlice = createSlice({
       const updatedRoleAssignment = action.payload;
       if (!state.roleAssignments) return;
       const index = state.roleAssignments.findIndex(
-        assignment => assignment.Name === updatedRoleAssignment.Name
+        assignment => assignment.Role === updatedRoleAssignment.Role
       );
       if (index !== -1) {
         state.roleAssignments[index] = {
@@ -74,7 +77,10 @@ const rbacSlice = createSlice({
       }
     },
     setPrivilegeAssignments: (state, action) => {
-      state.privilegeAssignments = action.payload;
+     const normalized = action.payload.map((item: any) =>
+      item.RolePermission ? item.RolePermission : item
+      );
+      state.privilegeAssignments = normalized;
     },
     clearPrivilegeAssignments: state => {
       state.privilegeAssignments = [];

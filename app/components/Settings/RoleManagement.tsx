@@ -30,12 +30,14 @@ import {
   FETCH_PRIVILEGES,
   FETCH_ROLES,
   FETCH_ROLESASSIGNMENTS,
+  GET_USER,
 } from '@/app/redux/actions/rbacActions';
 import {
   Privilege,
   PrivilegeAssignment,
   Role,
   RoleAssignment,
+  UserRbac,
 } from '@/app/types';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
@@ -220,16 +222,15 @@ export default function RoleManagementPage() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuRoleId, setMenuRoleId] = useState<string | null>(null);
   const [deletingRole, setDeletingRole] = useState<string | null>(null);
+  const [deletingAssignment, setDeletingAssignment] = useState<{ User: string; Role: string } | null>(null);
+  const [deletingPrivilegeAssignment, setDeletingPrivilegeAssignment] = useState<{ Role: string; Permission: string } | null>(null);
   const roles: Role[] = useSelector((state: any) => state.rbac.roles);
-  const roleAssignments: RoleAssignment[] = useSelector(
-    (state: any) => state.rbac.roleAssignments
-  );
+  const roleAssignments = useSelector((state: any) => state.rbac.roleAssignments);
+  const user: UserRbac[] = useSelector((state: any) => state.rbac.user) 
   const privileges: Privilege[] = useSelector(
     (state: any) => state.rbac.privileges
   );
-  const privilegeAssignments: PrivilegeAssignment[] = useSelector(
-    (state: any) => state.rbac.privilegeAssignments
-  );
+  const privilegeAssignments = useSelector((state: any) => state.rbac.privilegeAssignments);  
   const loading = useSelector((state: any) => state.rbac.loading);
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
@@ -244,6 +245,10 @@ export default function RoleManagementPage() {
       setTab(tabParam);
     }
   }, []);
+
+  useEffect(() => {
+    dispatch({ type: GET_USER });
+  }, [dispatch]);
 
   useEffect(() => {
     if (tab === 'role-management') {
@@ -399,29 +404,30 @@ export default function RoleManagementPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDeletePrivilegeAssignment = (Name: string) => {
-    setDeletingRole(Name);
+  const handleDeletePrivilegeAssignment = (Role:string ,Permission:string) => {
+    setDeletingPrivilegeAssignment({Role,Permission });
     setIsDialogOpen(true);
-  };
+  }
 
   const handleDeleteRole = (Name: string) => {
     setDeletingRole(Name);
     setIsDialogOpen(true);
   };
 
-  const handleDeleteRoleAssignment = (Name: string) => {
-    setDeletingRole(Name);
-    setIsDialogOpen(true);
-  };
+  const handleDeleteRoleAssignment = (User: string, Role: string) => {
+  setDeletingAssignment({User,Role });
+  setIsDialogOpen(true);
+ };
 
   const handleConfirmDelete = async () => {
-    if (!deletingRole) return;
+    if (!deletingRole && !deletingAssignment && !deletingPrivilegeAssignment) return;
     try {
       if (tab === 'role-management') {
         await dispatch({ type: DELETE_ROLE, payload: deletingRole });
         dispatch({ type: FETCH_ROLES });
       } else if (tab === 'role-assignments') {
-        await dispatch({ type: DELETE_ROLESASSIGNMENT, payload: deletingRole });
+        if (!deletingAssignment) return;
+        await dispatch({ type: DELETE_ROLESASSIGNMENT, payload: deletingAssignment });
         dispatch({ type: FETCH_ROLESASSIGNMENTS });
       } else if (tab === 'privilege-management') {
         await dispatch({ type: DELETE_PRIVILEGE, payload: deletingRole });
@@ -429,7 +435,7 @@ export default function RoleManagementPage() {
       } else if (tab === 'privilege-assignments') {
         await dispatch({
           type: DELETE_PRIVILEGEASSIGNMENT,
-          payload: deletingRole,
+          payload: deletingPrivilegeAssignment,
         });
         dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
       }
@@ -523,17 +529,27 @@ export default function RoleManagementPage() {
       field: 'Role',
       headerName: 'Role',
       flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
-      ),
+      renderCell: (params: any) => {
+        const role = params.value?.replace("agentlang.auth$Role/", "") || "";
+        return (
+        <Typography sx={{ ...commonCellStyle }}>{role}</Typography>
+      );
+    },
     },
     {
-      field: 'Assignee',
+      field: 'User',
       headerName: 'Assigned User',
       flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
+     renderCell: (params: any) => {
+      const value = params.value;
+      const userId = value?.includes('/') ? value.split('/').pop() : value;
+      const matchedUser = user?.find((u) => u.id === userId);
+      const displayValue = matchedUser
+        ? `${matchedUser.firstName} ${matchedUser.lastName}`
+        : userId;
+
+      return <Typography sx={commonCellStyle}>{displayValue}</Typography>;
+    },
     },
     {
       field: 'Status',
@@ -552,24 +568,24 @@ export default function RoleManagementPage() {
           <IconButton
             onClick={e => {
               setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.Name);
+              setMenuRoleId(params.row.Role);
             }}
             size="small"
           >
             <MoreHorizontal sx={{ fontSize: 20 }} />
           </IconButton>
           <Typography sx={commonCellStyle}>
-            {params.row.Name && renderAssignmentMenu(params.row.Name)}
+            {params.row.Role && renderAssignmentMenu(params.row)}
           </Typography>
         </>
       ),
     },
   ];
 
-  const renderAssignmentMenu = (id: string) => (
+  const renderAssignmentMenu = (row: any) => (
     <StyledMenu
       anchorEl={anchorEl}
-      open={menuRoleId === id}
+      open={menuRoleId === row.Role}
       onClose={() => setMenuRoleId(null)}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
@@ -577,7 +593,7 @@ export default function RoleManagementPage() {
       <StyledMenuItem
         disabled
         onClick={() => {
-          const assignment = roleAssignments.find(r => r.Name === id);
+          const assignment = roleAssignments.find((r: any) => r.__path__ === row.__path__);
           if (assignment) {
             handleEditRoleAssignment(assignment);
           }
@@ -589,7 +605,7 @@ export default function RoleManagementPage() {
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
-          handleDeleteRoleAssignment(id);
+          handleDeleteRoleAssignment(row.User, row.Role);
           setMenuRoleId(null);
         }}
       >
@@ -606,12 +622,8 @@ export default function RoleManagementPage() {
       flex: 1.5,
       renderCell: (params: any) => {
         const value = params.value || '';
-        const displayValue = value.includes('_permission')
-      ? value.split('_permission')[0] +"_"+ value.split('/')[1]
-      : value;
-
         return (
-          <Typography sx={{ ...commonCellStyle }}>{displayValue}</Typography>
+          <Typography sx={{ ...commonCellStyle }}>{value}</Typography>
         );
       },
     },
@@ -730,23 +742,21 @@ export default function RoleManagementPage() {
       field: 'Role',
       headerName: 'Role',
       flex: 0.5,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
+      renderCell: (params: any) => {
+      const roleName = params.value?.split('/')[1]; 
+      return <Typography sx={commonCellStyle}>{roleName}</Typography>;
+    },
     },
     {
-      field: 'Privilege',
+      field: 'Permission',
       headerName: 'Privilege',
       flex: 1,
       renderCell: (params: any) => {
         const fullPrivilege = 
         params.value || '';
-        const displayValue = fullPrivilege.replace(
-          'priv_ResourceAllocation.Core_',
-          ''
-        );
+         const privilegeName = fullPrivilege?.split('Permission/')[1] || fullPrivilege;
 
-        return <Typography sx={commonCellStyle}>{displayValue}</Typography>;
+        return <Typography sx={commonCellStyle}>{privilegeName}</Typography>;
       },
     },
     {
@@ -760,14 +770,14 @@ export default function RoleManagementPage() {
           <IconButton
             onClick={e => {
               setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.Name);
+              setMenuRoleId(params.row.Role);
             }}
             size="small"
           >
             <MoreHorizontal sx={{ fontSize: 20 }} />
           </IconButton>
           <Typography sx={commonCellStyle}>
-            {params.row.Name && renderPrivilegeAssignmentMenu(params.row.Name)}{' '}
+            {params.row.Role && renderPrivilegeAssignmentMenu(params.row)}{' '}
           </Typography>
         </>
       ),
@@ -805,17 +815,17 @@ export default function RoleManagementPage() {
       </StyledMenuItem>
     </StyledMenu>
   );
-  const renderPrivilegeAssignmentMenu = (Name: string) => (
+  const renderPrivilegeAssignmentMenu = (row: any) => (
     <StyledMenu
       anchorEl={anchorEl}
-      open={menuRoleId === Name}
+      open={menuRoleId === row.Role}
       onClose={() => setMenuRoleId(null)}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
       <StyledMenuItem
         onClick={() => {
-          const assignment = privilegeAssignments.find(r => r.Name === Name);
+          const assignment = privilegeAssignments.find((r: any) => r.Role === row.Role && r.Permission === row.Permission);
           if (assignment) {
             handleEditPrivilegeAssignments(assignment);
           }
@@ -827,7 +837,7 @@ export default function RoleManagementPage() {
       </StyledMenuItem>
       <StyledMenuItem
         onClick={() => {
-          handleDeletePrivilegeAssignment(Name);
+          handleDeletePrivilegeAssignment(row.Role, row.Permission);
           setMenuRoleId(null);
         }}
       >
@@ -872,7 +882,12 @@ export default function RoleManagementPage() {
           data={roleAssignments}
           onAdd={handleAddNewRoleAssignment}
           onEdit={handleEditRoleAssignment}
-          onDelete={handleDeleteRoleAssignment}
+          onDelete={(id: string) => {
+            const assignment = roleAssignments.find((r: any) => r.__path__ === id);
+            if (assignment) {
+              handleDeleteRoleAssignment(assignment.User, assignment.Role);
+            }
+          }}
           menuId={menuRoleId}
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
@@ -908,7 +923,9 @@ export default function RoleManagementPage() {
           data={privilegeAssignments}
           onAdd={handleAddNewPrivilegeAssignment}
           onEdit={handleEditPrivilegeAssignments}
-          onDelete={handleDeletePrivilegeAssignment}
+          onDelete={(row: any) => {
+             handleDeletePrivilegeAssignment(row.Role, row.Permission);
+            }}
           menuId={menuRoleId}
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
@@ -928,25 +945,18 @@ export default function RoleManagementPage() {
         title="Alert"
       >
         Are you sure you want to delete{' '}
-        {deletingRole
-          ? tab === 'role-management'
-            ? `the Role "${deletingRole}"`
-            : tab === 'role-assignments'
-              ? `Role Assignment for "${deletingRole}"`
-              : tab === 'privilege-management'
-                ? `the Privilege "${deletingRole}"`
-                : tab === 'privilege-assignments'
-                  ? `Privilege Assignment for "${
-                      privilegeAssignments
-                        .find(p => p.Name === deletingRole)
-                        ?.Privilege?.replace(
-                          'priv_ResourceAllocation.Core_',
-                          ''
-                        ) || deletingRole
-                    }"`
-                  : `this item`
-          : 'this item'}
-        ?
+        {tab === 'role-management' && deletingRole
+        ? `the Role "${deletingRole.replace('agentlang.auth$Role/', '')}"`
+        : tab === 'role-assignments' && deletingAssignment
+         ? `Role Assignment of "${deletingAssignment.User.replace('agentlang.auth$User/', '')}" 
+         with Role "${deletingAssignment.Role.replace('agentlang.auth$Role/', '')}"`
+         : tab === 'privilege-management' && deletingRole
+         ? `the Privilege "${deletingRole}"`
+          : tab === 'privilege-assignments' && deletingPrivilegeAssignment
+          ? `Privilege Assignment of Role "${deletingPrivilegeAssignment.Role.replace('agentlang.auth$Role/', '')}" 
+             for Privilege "${deletingPrivilegeAssignment.Permission.replace('agentlang.auth$Permission/', '')}"`
+               : `this item`}
+               ?
       </ConfirmDialog>
     </div>
   );
