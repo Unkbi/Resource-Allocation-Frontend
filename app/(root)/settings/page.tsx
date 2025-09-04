@@ -32,8 +32,10 @@ import {
   updateAllocationThemeAction,
 } from '@/app/redux/actions/settingsAction';
 import RoleManagement from '@/app/components/Settings/RoleManagement';
+import ProjectSetting from '@/app/components/Settings/ProjectSettings';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import Location from '@/app/components/Settings/Location';
 
 interface MenuItem {
   id: string;
@@ -188,6 +190,15 @@ const SettingsPanel = () => {
             description: 'Comprehensive role and privilege management system',
           },
           {
+            id: 'project-setting',
+            title: 'Project Setting',
+            headerText: 'Project Settings',
+            icon: '',
+            content: <ProjectSetting />,
+            description:
+              'Manage project types and their categories for your organization',
+          },
+          {
             id: 'allocation-setting',
             title: 'Allocation Setting',
             headerText: 'Color Theme: Teams View',
@@ -202,6 +213,14 @@ const SettingsPanel = () => {
               />
             ),
             description: 'It is a color theme for organization view',
+          },
+          {
+            id: 'location-setting',
+            title: 'Location',
+            headerText: 'Location Settings',
+            icon: '',
+            content: <Location />,
+            description: 'Lorem ipsum',
           },
           {
             id: 'theme',

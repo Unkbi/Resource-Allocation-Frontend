@@ -88,10 +88,12 @@ export const getUsersSavedViews = createAsyncThunk(
   '/views/getUsersSavedViews',
   async (payload, { rejectWithValue }) => {
     try {
-      const userid =
-        payload['ResourceAllocation.Core/UserAllocationView'].UserId;
-      const response = await axiosInstance.get(
-        `${API_PROJECT_PORTFOLIO}/UserAllocationView?UserId="${userid}"`
+      const userid = payload.UserId;
+      const response = await axiosInstance.post(
+        `${API_PROJECT_PORTFOLIO}/GetUserAllocationView`,
+        {
+          UserId: userid,
+        }
       );
       return response.data;
     } catch (error) {
@@ -181,9 +183,7 @@ export const fetchHistory = async payload => {
   let response;
   response = await axiosInstance.post(
     `${API_PROJECT_PORTFOLIO}/GetAllocationHistory`,
-    {
-      'ResourceAllocation.Core/GetAllocationHistory': payload,
-    }
+    payload
   );
   return response.data;
 };

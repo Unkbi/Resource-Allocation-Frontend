@@ -69,7 +69,6 @@ export default function AccessTable({
         </Typography>
         <Button
           variant="contained"
-          startIcon={<AddIcon sx={{ fontSize: '16px' }} />}
           onClick={onAdd}
           sx={{
             height: 40,

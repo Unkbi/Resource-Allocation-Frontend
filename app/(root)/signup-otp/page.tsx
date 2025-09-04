@@ -223,8 +223,25 @@ export default function SignUpOtpPage(){
      e.preventDefault();
      dispatch(resendOtp(signupData));
    };
-
-
+   
+   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+     e.preventDefault();
+     const pasteData = e.clipboardData
+       .getData('text')
+       .replace(/\D/g, '')
+       .slice(0, 6); 
+     if (!pasteData) return;
+     const newOtp = [...otp];
+     pasteData.split('').forEach((digit, idx) => {
+       if (idx < 6) {
+         newOtp[idx] = digit;
+       }
+     });
+     setOtp(newOtp);
+     const lastIndex = Math.min(pasteData.length - 1, 5);
+     inputRefs.current[lastIndex]?.focus();
+   };
+    
 useEffect(() => {
   const normalizedError = String(error || '');
   if (otpVerified && !loading && !error) {
@@ -280,6 +297,7 @@ useEffect(() => {
                     key={index}
                     variant="outlined"
                     value={digit}
+                    onPaste={handlePaste}
                     onChange={e => handleChange(index, e)}
                     onKeyDown={e => handleKeyDown(index, e)}
                     inputProps={{

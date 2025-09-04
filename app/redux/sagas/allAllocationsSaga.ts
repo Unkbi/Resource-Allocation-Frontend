@@ -421,11 +421,9 @@ function* updateResourceAllocationsSaga(
       ResourceId.map((ResourceId: string) =>
         call(function* () {
           const postData = {
-            'ResourceAllocation.Core/GetResourceAllocationsForPeriod': {
-              Resource: ResourceId,
-              StartDate: getMondayOfISO(startDate),
-              EndDate: getMondayOfISO(endDate),
-            },
+            Resource: ResourceId,
+            StartDate: getMondayOfISO(startDate),
+            EndDate: getMondayOfISO(endDate),
           };
           // @ts-ignore
           const result = yield call(fetchTeamAllocationsForSaga, postData);
@@ -483,12 +481,10 @@ export function* TransferAllocationsSaga(
     const { ResourceFrom, ResourceTo, StartDate, EndDate, resolve, reject } =
       action.payload;
     const postData = {
-      'ResourceAllocation.Core/TransferAllocations': {
-        ResourceFrom,
-        ResourceTo,
-        StartDate,
-        EndDate,
-      },
+      ResourceFrom,
+      ResourceTo,
+      StartDate,
+      EndDate,
     };
     const response = yield call(fetchTransferAllocationsForSaga, postData);
     if (response?.error) {
@@ -511,8 +507,8 @@ export function* allAllocationsSaga() {
   yield takeLatest('UPDATE_TEAM_ALLOCATIONS', updateTeamAllocationsSaga);
   yield takeLatest('UPDATE_PROJECT_ALLOCATIONS', updateProjectAllocationsSaga);
   yield takeLatest('FETCH_ALLOCATIONS_COST', fetchAllocationsCostSaga);
-  yield takeLatest('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
-  yield takeLatest('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
+  yield takeEvery('UPDATE_BULK_ALLOCATIONS', updatedBulkAllocationSaga);
+  yield takeEvery('DELETE_BULK_ALLOCATIONS', deleteBulkAllocationSaga);
   yield takeLatest(
     'UPDATE_RESOURCE_ALLOCATIONS',
     updateResourceAllocationsSaga
