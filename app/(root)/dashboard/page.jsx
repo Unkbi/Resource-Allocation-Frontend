@@ -554,17 +554,7 @@ export default function ExecutiveDashboardPage() {
                             dimensions.width < 400 ? 12 : 14
                           ),
                           color:
-                            item._type === 'RTB'
-                              ? '#0080FF'
-                              : item._type === 'Key Initiative'
-                                ? '#00C9A7'
-                                : item._type === 'Ongoing'
-                                  ? '#FFC233'
-                                  : item._type === 'STB'
-                                    ? '#FF884D'
-                                    : item._type === 'CTB'
-                                      ? '#FFB6B6'
-                                      : undefined,
+                            item.Color || undefined,
                         })
                       ),
                       innerRadius: 0,
