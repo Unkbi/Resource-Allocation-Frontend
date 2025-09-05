@@ -560,10 +560,25 @@ export default function RoleManagementPage() {
       field: 'Role',
       headerName: 'Role',
       flex: 1,
-      renderCell: (params: any) => {
-        const role = params.value?.replace('agentlang.auth$Role/', '') || '';
-        return <Typography sx={{ ...commonCellStyle }}>{role}</Typography>;
-      },
+      renderCell : (params: any) => {
+         const handleNameClick = () => {
+          handleAddNewRoleAssignment();
+        };
+       const role = params.value?.replace('agentlang.auth$Role/', '') || ''; 
+        return (
+          <Box
+          onClick={handleNameClick}
+          sx={{...commonCellStyle ,
+            cursor: 'pointer', 
+            '&:hover': {
+            textDecoration: 'underline',
+          }, 
+        }}
+        >
+          <EllipsisNameCell value={role} showAvatar={false} />
+          </Box>
+          );
+         }
     },
     {
       field: 'User',
