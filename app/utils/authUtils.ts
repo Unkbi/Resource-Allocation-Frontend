@@ -2,7 +2,7 @@ import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from 'lz-string';
-import { LoginUser } from '../types';
+import { LoginUser, UserRbac } from '../types';
 
 // Save access token to localStorage
 export const saveToken = (token: string): null => {
@@ -148,4 +148,15 @@ export const formatAPIResponse = (keyToRemove: string, response: any) => {
     return response.map(item => item[keyToRemove]);
   }
   return response;
+};
+
+export const getUserDisplayName = (userId: string, users: UserRbac[]) => {
+  const cleanId = userId.replace('agentlang.auth$User/', '');
+  const matchedUser = users.find(u => u.id === cleanId);
+
+  if (!matchedUser) return cleanId; 
+
+  return matchedUser.firstName && matchedUser.lastName
+    ? `${matchedUser.firstName} ${matchedUser.lastName}`
+    : matchedUser.email || cleanId;
 };

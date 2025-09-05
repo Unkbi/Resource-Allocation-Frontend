@@ -37,9 +37,10 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
   };
 
     useEffect(() => {
-      dispatch({ type: GET_USER });
-    }, [dispatch]);
-
+    if (!user || user.length === 0) {
+    dispatch({ type: GET_USER });
+    }
+    },[dispatch,user]);
   const handleAutocompleteChange =
     (field: string) => (_event: any, newValue: any) => {
       setFieldValue(field, newValue || '');
