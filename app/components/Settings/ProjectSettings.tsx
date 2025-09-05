@@ -24,6 +24,7 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import { StatusPill, commonTabSx } from './styled';
 
 const tabMenuNames = ['project-types', 'project-types-group'];
 const baseURLAccessManagement = '/settings?menu=access-management';
@@ -33,22 +34,6 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
     width: '120px',
   },
-}));
-
-const StatusPill = styled('div')(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '4px',
-  fontFamily: theme.typography.fontFamily,
-  fontSize: '12px',
-  fontStyle: 'normal',
-  fontWeight: 400,
-  lineHeight: '16px',
-  width: '86px',
-  height: '28px',
-  backgroundColor: '#4B9F471A',
-  color: '#4B9F47',
 }));
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -82,31 +67,6 @@ const commonCellStyle = {
   display: 'flex',
   alignItems: 'center',
   height: '100%',
-};
-
-const commonTabSx = {
-  color: '#4B5563',
-  textTransform: 'none',
-  borderRadius: 0,
-  px: 3,
-  textAlign: 'center',
-  fontFamily: 'Open Sans',
-  fontSize: '14px',
-  fontStyle: 'normal',
-  fontWeight: 600,
-  lineHeight: '24px',
-  '&.Mui-selected': {
-    background: 'transparent',
-    color: '#2563EB',
-    boxShadow: 'none',
-    borderBottom: '2px solid #3b82f6',
-    textAlign: 'center',
-    fontFamily: 'Open Sans',
-    fontSize: '14px',
-    fontStyle: 'normal',
-    fontWeight: 600,
-    lineHeight: '24px',
-  },
 };
 
 const tabConfig = [
@@ -152,11 +112,10 @@ const TabHeader = ({
           gap: 1.5,
         },
         '& .MuiTabs-indicator': {
-          backgroundColor: '#2563EB',
+          backgroundColor: '#152E75',
         },
         '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(33%) sepia(93%) saturate(1554%) hue-rotate(197deg) brightness(100%) contrast(101%)',
+          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
         },
       }}
     >
@@ -453,7 +412,7 @@ export default function ProjectSettingPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: () => <StatusPill>Active</StatusPill>,
+      renderCell: () => <StatusPill status="Active">Active</StatusPill>,
     },
     {
       field: 'actions',

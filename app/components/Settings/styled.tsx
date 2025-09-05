@@ -301,6 +301,9 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
   borderRadius: '0px',
   borderRight: 'none',
   borderLeft: 'none',
+  '& .MuiDataGrid-main': {
+    borderRight: '1px solid #DDE1E4'
+  },
   '& .MuiDataGrid-columnHeaders': {
     '& .MuiDataGrid-columnHeader': {
       borderRight: '1px solid #DDE1E4',
@@ -404,6 +407,31 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
 }
 });
 
+const commonTabSx = {
+  color: '#4B5563',
+  textTransform: 'none',
+  borderRadius: 0,
+  px: 3,
+  textAlign: 'center',
+  fontFamily: 'Open Sans',
+  fontSize: '14px',
+  fontStyle: 'normal',
+  fontWeight: 600,
+  lineHeight: '24px',
+  '&.Mui-selected': {
+    background: 'transparent',
+    color: '#152E75',
+    boxShadow: 'none',
+    borderBottom: '2px solid #152E75',
+    textAlign: 'center',
+    fontFamily: 'Open Sans',
+    fontSize: '14px',
+    fontStyle: 'normal',
+    fontWeight: 600,
+    lineHeight: '24px',
+  },
+};
+
 export {
   PageContainer,
   Header,
@@ -435,4 +463,5 @@ export {
   DeleteButton,
   StyledTableHeader,
   StatusPill,
+  commonTabSx
 };

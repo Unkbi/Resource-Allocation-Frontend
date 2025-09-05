@@ -25,6 +25,8 @@ import allSettingsReducer from './reducers/allSettingsReducer';
 
 const sagaMiddleware = createSagaMiddleware();
 
+let storeInstance: ReturnType<typeof configureStore> | null = null;
+
 export const makeStore = () => {
   const store = configureStore({
     reducer: {
@@ -56,10 +58,13 @@ export const makeStore = () => {
         serializableCheck: false,
       }).concat(sagaMiddleware),
   });
-// attaching all of our saga through rootSaga
+  // attaching all of our saga through rootSaga
   sagaMiddleware.run(rootSaga);
+
+  storeInstance = store;
   return store;
 };
 
 export type RootState = ReturnType<ReturnType<typeof makeStore>['getState']>;
 export type AppDispatch = ReturnType<typeof makeStore>['dispatch'];
+export const getStore = () => storeInstance;

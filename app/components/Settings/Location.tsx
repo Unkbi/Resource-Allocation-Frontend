@@ -27,19 +27,14 @@ import {
   FETCH_ROLES,
   FETCH_ROLESASSIGNMENTS,
 } from '@/app/redux/actions/rbacActions';
-import {
-  Location,
-  LocationGroup,
-} from '@/app/types';
+import { Location, LocationGroup } from '@/app/types';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import { StatusPill, commonTabSx } from './styled';
 
-const tabMenuNames = [
-  'location',
-  'location-group'
-];
+const tabMenuNames = ['location', 'location-group'];
 const baseURLAccessManagement = '/settings?menu=access-management';
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -47,22 +42,6 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
     width: '120px',
   },
-}));
-
-const StatusPill = styled('div')(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '4px',
-  fontFamily: theme.typography.fontFamily,
-  fontSize: '12px',
-  fontStyle: 'normal',
-  fontWeight: 400,
-  lineHeight: '16px',
-  width: '86px',
-  height: '28px',
-  backgroundColor: '#4B9F471A',
-  color: '#4B9F47',
 }));
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -98,31 +77,6 @@ const commonCellStyle = {
   height: '100%',
 };
 
-const commonTabSx = {
-  color: '#4B5563',
-  textTransform: 'none',
-  borderRadius: 0,
-  px: 3,
-  textAlign: 'center',
-  fontFamily: 'Open Sans',
-  fontSize: '14px',
-  fontStyle: 'normal',
-  fontWeight: 600,
-  lineHeight: '24px',
-  '&.Mui-selected': {
-    background: 'transparent',
-    color: '#2563EB',
-    boxShadow: 'none',
-    borderBottom: '2px solid #3b82f6',
-    textAlign: 'center',
-    fontFamily: 'Open Sans',
-    fontSize: '14px',
-    fontStyle: 'normal',
-    fontWeight: 600,
-    lineHeight: '24px',
-  },
-};
-
 const tabConfig = [
   {
     label: 'Locations',
@@ -133,7 +87,7 @@ const tabConfig = [
     label: 'Location Group',
     value: 'location-group',
     icon: '/images/icons/LocationGroupIcon.svg',
-  }
+  },
 ];
 
 const TabHeader = ({
@@ -166,11 +120,10 @@ const TabHeader = ({
           gap: 1.5,
         },
         '& .MuiTabs-indicator': {
-          backgroundColor: '#2563EB',
+          backgroundColor: '#152E75',
         },
         '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(33%) sepia(93%) saturate(1554%) hue-rotate(197deg) brightness(100%) contrast(101%)',
+          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
         },
       }}
     >
@@ -202,16 +155,18 @@ export default function RoleManagementPage() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuRoleId, setMenuRoleId] = useState<string | null>(null);
   const [deletingLocation, setDeletingLocation] = useState<string | null>(null);
-  const [deletingLocationGroup, setDeletingLocationGroup] = useState<string | null>(null);
-  const roles=[];
+  const [deletingLocationGroup, setDeletingLocationGroup] = useState<
+    string | null
+  >(null);
+  const roles = [];
   const locationData: Location[] = [];
-//   [{ Location: 'New York', LocationGroup: 'East Coast', Status: 'Active' },
-//   { Location: 'San Francisco', LocationGroup: 'West Coast', Status: 'Active' },
-//   { Location: 'London', LocationGroup: 'EMEA', Status: 'Inactive' },
-//   { Location: 'Bangalore', LocationGroup: 'APAC', Status: 'Active' },
-//   { Location: 'Berlin', LocationGroup: 'EMEA', Status: 'Active' },
-// ];
-const locationGroupData: LocationGroup[] = [];
+  //   [{ Location: 'New York', LocationGroup: 'East Coast', Status: 'Active' },
+  //   { Location: 'San Francisco', LocationGroup: 'West Coast', Status: 'Active' },
+  //   { Location: 'London', LocationGroup: 'EMEA', Status: 'Inactive' },
+  //   { Location: 'Bangalore', LocationGroup: 'APAC', Status: 'Active' },
+  //   { Location: 'Berlin', LocationGroup: 'EMEA', Status: 'Active' },
+  // ];
+  const locationGroupData: LocationGroup[] = [];
   const loading = useSelector((state: any) => state.rbac.loading);
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
@@ -306,35 +261,34 @@ const locationGroupData: LocationGroup[] = [];
     setDeletingLocationGroup(Name);
     setIsDialogOpen(true);
   };
-  
+
   const handleAddNewLocation = () => {
-      dispatch(
-        openDialog({
-          title: 'Add Location',
-          submitButtonText: 'Save',
-          cancelButtonText: 'Cancel',
-          formType: 'add_location',
-        })
-      );
-    };
-  
-    const handleEditLocation = (assignment: Location) => {
-      dispatch(
-        openDialog({
-          title: 'Edit Location',
-          submitButtonText: 'Save',
-          cancelButtonText: 'Cancel',
-          formType: 'edit_location',
-          initialData: assignment,
-        })
-      );
-    };
-  
-  
-    const handleDeleteLocation = (Name: string) => {
-      setDeletingLocation(Name);
-      setIsDialogOpen(true);
-    };
+    dispatch(
+      openDialog({
+        title: 'Add Location',
+        submitButtonText: 'Save',
+        cancelButtonText: 'Cancel',
+        formType: 'add_location',
+      })
+    );
+  };
+
+  const handleEditLocation = (assignment: Location) => {
+    dispatch(
+      openDialog({
+        title: 'Edit Location',
+        submitButtonText: 'Save',
+        cancelButtonText: 'Cancel',
+        formType: 'edit_location',
+        initialData: assignment,
+      })
+    );
+  };
+
+  const handleDeleteLocation = (Name: string) => {
+    setDeletingLocation(Name);
+    setIsDialogOpen(true);
+  };
 
   const handleConfirmDelete = async () => {
     if (!deletingLocation || !deletingLocationGroup) return;
@@ -343,7 +297,10 @@ const locationGroupData: LocationGroup[] = [];
         await dispatch({ type: DELETE_ROLE, payload: deletingLocation });
         dispatch({ type: FETCH_ROLES });
       } else if (tab === 'location-group') {
-        await dispatch({ type: DELETE_ROLESASSIGNMENT, payload: deletingLocationGroup });
+        await dispatch({
+          type: DELETE_ROLESASSIGNMENT,
+          payload: deletingLocationGroup,
+        });
         dispatch({ type: FETCH_ROLESASSIGNMENTS });
       }
     } catch (error) {
@@ -356,54 +313,54 @@ const locationGroupData: LocationGroup[] = [];
   };
 
   const LocationPageColumns = [
-      {
-        field: 'Location',
-        headerName: 'Location',
-        flex: 1,
-        renderCell: (params: any) => (
-          <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
-        ),
-      },
-      {
-        field: 'LocationGroup ',
-        headerName: 'Location Group',
-        flex: 1,
-        renderCell: (params: any) => (
-          <Typography sx={commonCellStyle}>{params.value}</Typography>
-        ),
-      },
-      {
-        field: 'Status',
-        headerName: 'Status',
-        flex: 1,
-        renderCell: () => <StatusPill>Active</StatusPill>,
-      },
-      {
-        field: 'actions',
-        headerName: 'Actions',
-        flex: 0,
-        sortable: false,
-        filterable: false,
-        renderCell: (params: any) => (
-          <>
-            <IconButton
-              onClick={e => {
-                setAnchorEl(e.currentTarget);
-                setMenuRoleId(params.row.Name);
-              }}
-              size="small"
-            >
-              <MoreHorizontal sx={{ fontSize: 20 }} />
-            </IconButton>
-            <Typography sx={commonCellStyle}>
-              {params.row.Name && renderLocationMenu(params.row.Name)}
-            </Typography>
-          </>
-        ),
-      },
-    ];
+    {
+      field: 'Location',
+      headerName: 'Location',
+      flex: 1,
+      renderCell: (params: any) => (
+        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+      ),
+    },
+    {
+      field: 'LocationGroup ',
+      headerName: 'Location Group',
+      flex: 1,
+      renderCell: (params: any) => (
+        <Typography sx={commonCellStyle}>{params.value}</Typography>
+      ),
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      flex: 1,
+      renderCell: () => <StatusPill status="Active">Active</StatusPill>,
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      flex: 0,
+      sortable: false,
+      filterable: false,
+      renderCell: (params: any) => (
+        <>
+          <IconButton
+            onClick={e => {
+              setAnchorEl(e.currentTarget);
+              setMenuRoleId(params.row.Name);
+            }}
+            size="small"
+          >
+            <MoreHorizontal sx={{ fontSize: 20 }} />
+          </IconButton>
+          <Typography sx={commonCellStyle}>
+            {params.row.Name && renderLocationMenu(params.row.Name)}
+          </Typography>
+        </>
+      ),
+    },
+  ];
 
-    const LocationGroupColumns = [
+  const LocationGroupColumns = [
     {
       field: 'Location Group',
       headerName: 'Location Group',
@@ -438,38 +395,38 @@ const locationGroupData: LocationGroup[] = [];
   ];
 
   const renderLocationMenu = (id: string) => (
-      <StyledMenu
-        anchorEl={anchorEl}
-        open={menuRoleId === id}
-        onClose={() => setMenuRoleId(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+    <StyledMenu
+      anchorEl={anchorEl}
+      open={menuRoleId === id}
+      onClose={() => setMenuRoleId(null)}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+    >
+      <StyledMenuItem
+        onClick={() => {
+          const assignment = locationData.find(r => r.Location === id);
+          if (assignment) {
+            handleEditLocation(assignment);
+          }
+          setMenuRoleId(null);
+        }}
       >
-        <StyledMenuItem
-          onClick={() => {
-            const assignment = locationData.find(r => r.Location === id);
-            if (assignment) {
-              handleEditLocation(assignment);
-            }
-            setMenuRoleId(null);
-          }}
-        >
-          <Pencil sx={{ mr: 1, fontSize: 18 }} />
-          Edit
-        </StyledMenuItem>
-        <StyledMenuItem
-          onClick={() => {
-            handleDeleteLocation(id);
-            setMenuRoleId(null);
-          }}
-        >
-          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-          Delete
-        </StyledMenuItem>
-      </StyledMenu>
-    );
+        <Pencil sx={{ mr: 1, fontSize: 18 }} />
+        Edit
+      </StyledMenuItem>
+      <StyledMenuItem
+        onClick={() => {
+          handleDeleteLocation(id);
+          setMenuRoleId(null);
+        }}
+      >
+        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+        Delete
+      </StyledMenuItem>
+    </StyledMenu>
+  );
 
-     const locationGroupMenu = (id: string) => (
+  const locationGroupMenu = (id: string) => (
     <StyledMenu
       anchorEl={anchorEl}
       open={menuRoleId === id}
@@ -511,21 +468,21 @@ const locationGroupData: LocationGroup[] = [];
 
       {tab === 'location' && (
         <AccessTable
-                  title="Locations"
-                  data={locationData}
-                  onAdd={handleAddNewLocation}
-                  onEdit={handleEditLocation}
-                  onDelete={handleDeleteLocation}
-                  menuId={menuRoleId}
-                  setMenuId={setMenuRoleId}
-                  anchorEl={anchorEl}
-                  setAnchorEl={setAnchorEl}
-                  buttonLabel="Add Location"
-                  renderMenu={renderLocationMenu}
-                  columns={LocationPageColumns}
-                  apiRef={apiRef}
-                  loading={loading}
-                />
+          title="Locations"
+          data={locationData}
+          onAdd={handleAddNewLocation}
+          onEdit={handleEditLocation}
+          onDelete={handleDeleteLocation}
+          menuId={menuRoleId}
+          setMenuId={setMenuRoleId}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
+          buttonLabel="Add Location"
+          renderMenu={renderLocationMenu}
+          columns={LocationPageColumns}
+          apiRef={apiRef}
+          loading={loading}
+        />
       )}
       {tab === 'location-group' && (
         <AccessTable
@@ -553,7 +510,7 @@ const locationGroupData: LocationGroup[] = [];
         title="Alert"
       >
         Are you sure you want to delete{' '}
-        {deletingLocation || deletingLocationGroup 
+        {deletingLocation || deletingLocationGroup
           ? tab === 'location'
             ? `the location "${deletingLocation}"`
             : `location group "${deletingLocationGroup}"`
