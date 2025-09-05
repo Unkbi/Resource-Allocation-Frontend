@@ -111,11 +111,11 @@ export const confirmForgotPassword = createAsyncThunk(
 
 export const resendConfirmationCode = createAsyncThunk(
   'auth/resendConfirmationCode',
-  async (data, { rejectWithValue }) => {
+  async (email, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        '/resend-confirmation-code',
-        data
+        '/agentlang.auth/resendConfirmationCode',
+        { email }
       );
       return response.data;
     } catch (error) {

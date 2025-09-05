@@ -7,3 +7,56 @@ export const fetchProjectTypes = async () => {
   );
   return response.data;
 };
+
+export const fetchProjectTypeGroups = async () => {
+  const response = await axiosInstance.get(
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup`
+  );
+  return response.data;
+};
+
+export const addProjectType = async (postData: any) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/ProjectType`,
+    postData
+  );
+  return response.data;
+};
+
+export const updateProjectType = async (postData: any, id: string) => {
+  const response = await axiosInstance.put(
+    `${API_PROJECT_PORTFOLIO}/ProjectType/${id}`,
+    postData
+  );
+  return response.data;
+};
+
+export const deleteProjectType = async (id: string) => {
+  const response = await axiosInstance.delete(
+    `${API_PROJECT_PORTFOLIO}/ProjectType/${id}`
+  );
+  return response.data;
+};
+
+export const addProjectTypeGroups = async (postData: any) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup`,
+    postData
+  );
+  return response.data;
+};
+
+export const updateProjectTypeGroups = async (postData: any, id: string) => {
+  const response = await axiosInstance.put(
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`,
+    postData
+  );
+  return response.data;
+};
+
+export const deleteProjectTypeGroups = async (id: string) => {
+  const response = await axiosInstance.delete(
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`
+  );
+  return response.data;
+};

@@ -115,11 +115,13 @@ const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel, viewOnl
     cancelButtonText,
   } = dialogState;
 
-  const handleClose = () => {
+  const handleClose = (event, reason) => {
+    if (reason && reason === 'backdropClick') {
+      return;
+    }
     dispatch(closeDialog());
     onCancel();
   };
-
   return (
     <React.Fragment>
       <StyledDialog open={isOpen} onClose={handleClose}>

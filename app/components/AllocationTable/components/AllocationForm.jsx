@@ -46,6 +46,7 @@ import {
   getUpdatedTotalWeeklyAllocation,
   isResourceWithinDate,
   getMondayOfISO,
+  getUserFromUid,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -127,6 +128,7 @@ import {
   CREATE_PRIVILEGEASSIGNMENT,
   CREATE_ROLE,
   CREATE_ROLESASSIGNMENT,
+  GET_USER,
   UPDATE_PRIVILEGE,
   UPDATE_PRIVILEGEASSIGNMENT,
 } from '@/app/redux/actions/rbacActions';
@@ -398,6 +400,7 @@ const AllocationForm = () => {
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
   const { organizations } = useSelector(state => state.organisations);
+  const { user: allUsers } = useSelector(state => state.rbac);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -495,6 +498,12 @@ const AllocationForm = () => {
       setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
     }
   }, [formType]);
+
+  useEffect(() => {
+    if (!allUsers?.length) {
+      dispatch({ type: GET_USER });
+    }
+  }, []);
 
   const handleScrollAndFocus = (resources, period, projects) => {
     const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
@@ -1546,7 +1555,22 @@ const AllocationForm = () => {
             dispatch(closeDialog());
           } else {
             const userId = getUserIdFromEmail(resources || [], email);
-            // Create a new view.
+
+            if (!userId) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message:
+                    'Save views require a user resource. Create a resource with this email to enable saving views.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 5000,
+                })
+              );
+              dispatch(closeDialog());
+              return;
+            }
+
             const newView = {
               isDefault: values.isDefault,
               isDynamicRange:
@@ -2691,21 +2715,27 @@ const AllocationForm = () => {
         try {
           setHistoryData([]);
           setHistoryStatus('loading');
-          const response = await fetchHistory(initialData);
+          let response = await fetchHistory(initialData);
           if (response?.error) {
             console.error('Failed to fetch history:', response.error);
             return;
           }
 
           // If result is empty, return immediately
-          if (response?.result === null && response?.status === 'not-found') {
+          if (response === null) {
             setHistoryStatus('no-data');
             setHistoryData([]);
             return;
           }
 
+          response = formatAPIResponse('AllocationHistoryOut', response).map(
+            item => ({
+              ...item,
+              ChangesLog: formatAPIResponse('ChangesLog', item.ChangesLog),
+            })
+          );
           const formattedHistory = [];
-          (response && response.result ? response.result : [])
+          (response ? response : [])
             .filter(
               item =>
                 Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
@@ -2781,6 +2811,7 @@ const AllocationForm = () => {
                 let action = '';
                 let fromVersion = '';
                 let toVersion = '';
+                const modifingUserDetails = getUserFromUid(log.User, allUsers);
 
                 // Find the next log entry if it exists
                 const nextLog = ChangesLog[logIdx + 1];
@@ -2812,13 +2843,19 @@ const AllocationForm = () => {
                   projectName: ProjectName,
                   weekNumber: weekNumber ? Number(weekNumber) : undefined,
                   date: getDateString(Period),
-                  timestamp: getRelativeTime(log.Timestamp),
+                  timestamp: getRelativeTime(
+                    Math.floor(new Date(log.Timestamp)?.getTime() / 1000)
+                  ),
                   action,
                   fromVersion:
                     fromVersion !== undefined ? String(fromVersion) : '',
                   toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: getUserName(log.User),
-                  _timestampRaw: log.Timestamp, // Add raw timestamp for sorting
+                  byUser: `${modifingUserDetails?.firstName || ''} ${
+                    modifingUserDetails?.lastName || ''
+                  }`,
+                  _timestampRaw: Math.floor(
+                    new Date(log.Timestamp)?.getTime() / 1000
+                  ), // Add raw timestamp for sorting
                 });
               });
             });

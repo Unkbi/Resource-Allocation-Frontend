@@ -74,15 +74,10 @@ export const performResetPassword = data => async dispatch => {
   }
 };
 
-export const resendOtp = email => async dispatch => {
+export const resendOtp = signupData => async dispatch => {
   try {
-    const response = await dispatch(
-      resendConfirmationCode({
-        'Agentlang.Kernel.Identity/ResendConfirmationCode': {
-          Username: email,
-        },
-      })
-    ).unwrap();
+    const response = await dispatch(resendConfirmationCode(signupData.email)).unwrap();
+    return response; 
   } catch (error) {
     console.error('OTP resend failed:', error);
     throw error;

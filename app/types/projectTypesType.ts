@@ -10,3 +10,20 @@ export interface ProjectType {
   __path__: string | null;
   __parent__: string | null;
 }
+
+export interface ProjectTypeGroup {
+  Id: string;
+  Name: string | null;
+  __path__: string | null;
+  __parent__: string | null;
+}
+
+export interface AddProjectTypePayload {
+  Name: string;
+  Description: string | null;
+  Color: string;
+  Status: string;
+  AllowAllocation: boolean;
+  AllowActuals: boolean;
+  Group: string;
+}

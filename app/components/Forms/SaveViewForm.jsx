@@ -38,8 +38,11 @@ import {
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import {
+  DEFAULT_VISIBLE_FLAT_COLUMNS,
+  DEFAULT_VISIBLE_ORGANISATION_COLUMNS,
   DEFAULT_VISIBLE_PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+  DEFAULT_VISIBLE_RESOURCES_COLUMNS,
   DEFAULT_VISIBLE_TEAMS_COLUMNS,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { getUserAttributes } from '@/app/utils/authUtils';
@@ -303,14 +306,25 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     const { value } = newValue;
     setFieldValue('groupBy', value);
 
-    setFieldValue('showBy', value === 'Teams' ? 'AllTeams' : 'AllProject');
+    setFieldValue(
+      'showBy',
+      ['Teams', 'Organisations', 'Resources', 'Flat'].includes(value)
+        ? 'AllTeams'
+        : 'AllProject'
+    );
     setFieldValue(
       'showColumns',
       value === 'Teams'
         ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-        : value === 'Portfolio'
-          ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
-          : DEFAULT_VISIBLE_PROJECTS_COLUMNS
+        : value === 'Organisations'
+          ? DEFAULT_VISIBLE_ORGANISATION_COLUMNS
+          : value === 'Resources'
+            ? DEFAULT_VISIBLE_RESOURCES_COLUMNS
+            : value === 'Portfolio'
+              ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
+              : value === 'Project'
+                ? DEFAULT_VISIBLE_PROJECTS_COLUMNS
+                : DEFAULT_VISIBLE_FLAT_COLUMNS
     );
     setFieldValue('filters', []);
   };
