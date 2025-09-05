@@ -198,18 +198,11 @@ export function getProjectRangeWarnings(
   const warnings: string[] = [];
   const { Project: selectedIds, StartDate, EndDate } = values;
 
-  if (
-    Array.isArray(projects) &&
-    selectedIds?.length &&
-    StartDate &&
-    EndDate
-  ) {
+  if (Array.isArray(projects) && selectedIds?.length && StartDate && EndDate) {
     const allocationStart = stripTime(new Date(StartDate));
     const allocationEnd = stripTime(new Date(EndDate));
 
-    const selectedProjects = projects.filter(p =>
-      selectedIds.includes(p.Id)
-    );
+    const selectedProjects = projects.filter(p => selectedIds.includes(p.Id));
 
     selectedProjects.forEach(({ Name, StartDate: pSD, EndDate: pED }) => {
       if (!pSD || !pED) return;
@@ -477,3 +470,65 @@ export const assignPrivilegeValidationSchema = Yup.object({
   Role: Yup.string().required('Role is required'),
   Privilege: Yup.string().required('Privilege is required'),
 });
+
+export const addProjectTypeGroupValidationSchema = (
+  projectTypeGroups: any[] = [],
+  initialName = ''
+) => {
+  const projectTypeGroupNames = Array.isArray(projectTypeGroups)
+    ? projectTypeGroups.map(ptg => ptg.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Project Type Group name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Project Type Group name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          )
+            return true;
+          return !projectTypeGroupNames.includes(value.toLowerCase().trim());
+        }
+      ),
+  });
+};
+
+export const addProjectTypeValidationSchema = (
+  projectTypes: any[] = [],
+  initialName = ''
+) => {
+  const projectTypeNames = Array.isArray(projectTypes)
+    ? projectTypes.map(pt => pt.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Project Type Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Project Type Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedInitial = initialName.toLowerCase().trim();
+          if (initialName && trimmedValue === trimmedInitial) {
+            return true; // Allow same name when editing
+          }
+          return !projectTypeNames.includes(trimmedValue);
+        }
+      ),
+    Status: Yup.string()
+      .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
+      .required('Status is required'),
+    ProjectTypeGroup: Yup.string().required('Project Type Group is required'),
+    Description: Yup.string().nullable(),
+    Color: Yup.string().required('Color is required'),
+  });
+};

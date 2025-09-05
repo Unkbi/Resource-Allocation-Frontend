@@ -25,6 +25,7 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
+import { DELETE_PROJECT_TYPE, DELETE_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
 
 const tabMenuNames = ['project-types', 'project-types-group'];
 const baseURLAccessManagement = '/settings?menu=access-management';
@@ -154,61 +155,10 @@ export default function ProjectSettingPage() {
   const [deletingProjectTypesGroup, setDeletingProjectTypesGroup] = useState<
     string | null
   >(null);
-  // Dummy data for demonstration
-  const ProjectTypesData: any[] = [
-    {
-      id: '1',
-      projectTypes: 'Internal',
-      projectTypesGroup: 'Group A',
-      description: 'Internal projects',
-      Color: '#FADCB9',
-      Status: 'Active',
-      Name: 'Internal',
-    },
-    {
-      id: '2',
-      projectTypes: 'Client',
-      projectTypesGroup: 'Group B',
-      description: 'Client projects',
-      Color: '#D9F1B7',
-      Status: 'Active',
-      Name: 'Client',
-    },
-    {
-      id: '3',
-      projectTypes: 'R&D',
-      projectTypesGroup: 'Group C',
-      description: 'Research and Development',
-      Color: '#B2D0FF',
-      Status: 'Inactive',
-      Name: 'R&D',
-    },
-    {
-      id: '4',
-      projectTypes: 'Migration',
-      projectTypesGroup: 'Group D',
-      description: 'Migration projects',
-      Color: '#FBB7AE',
-      Status: 'Active',
-      Name: 'Migration',
-    },
-    {
-      id: '5',
-      projectTypes: 'Support',
-      projectTypesGroup: 'Group E',
-      description: 'Support projects',
-      Color: '#C1F0F5',
-      Status: 'Active',
-      Name: 'Support',
-    },
-  ];
-  const ProjectTypesGroupData: any[] = [
-    { id: 'g1', projectTypeGroup: 'Group A', Name: 'Group A' },
-    { id: 'g2', projectTypeGroup: 'Group B', Name: 'Group B' },
-    { id: 'g3', projectTypeGroup: 'Group C', Name: 'Group C' },
-    { id: 'g4', projectTypeGroup: 'Group D', Name: 'Group D' },
-    { id: 'g5', projectTypeGroup: 'Group E', Name: 'Group E' },
-  ];
+  const {projectTypes, projectTypeGroups} = useSelector((state: any) => state.allSettings);
+  const [ProjectTypesData, setProjectTypesData] = useState<any[]>([]);
+  const [ProjectTypesGroupData, setProjectTypesGroupData] = useState<any[]>([]);
+  
   const loading = false;
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
@@ -225,17 +175,41 @@ export default function ProjectSettingPage() {
   }, []);
 
   useEffect(() => {
-    if (tab === 'ProjectTypes') {
-      // Fetch project types data
-    }
-    if (tab === 'project-types-group') {
-      // Fetch project types group data
-    }
+      const formattedData = projectTypes?.map((projectType: any, index: number) => {
+        
+        const projectTypeGroup = projectTypeGroups?.find(
+          (group: any) => group.Id === projectType.Group
+        );
+        
+        return {
+          id: projectType.Id || (index + 1).toString(),
+          projectTypes: projectType.Name || '',
+          projectTypesGroup: projectTypeGroup?.Name || '',
+          description: projectType.Description || '',
+          Color: projectType.Color || '',
+          Status: projectType.Status || 'Active',
+          Name: projectType.Name || '',
+        };
+      }) || [];
+
+      const formattedGroupData = projectTypeGroups?.map((group: any, index: number) => {
+        return {
+          id: group.Id || (index + 1).toString(),
+          projectTypeGroup: group.Name || '',
+          Name: group.Name || '',
+        };
+      }) || [];
+
+      setProjectTypesData(formattedData);
+      setProjectTypesGroupData(formattedGroupData);
+  }, [ projectTypes, projectTypeGroups]);
+
+  useEffect(() => {
     if (tabMenuNames.includes(tab)) {
       const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
       router.replace(newUrl);
     }
-  }, [tab, dispatch]);
+  }, [tab]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
@@ -334,12 +308,23 @@ export default function ProjectSettingPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!deletingProjectTypes || !deletingProjectTypesGroup) return;
+    if (!deletingProjectTypes && !deletingProjectTypesGroup) return;
     try {
-      if (tab === 'project-types') {
-        //delete action
-      } else if (tab === 'project-types-group') {
-        //delete action
+      if (tab === 'project-types' && deletingProjectTypes) {
+        dispatch({
+          type: DELETE_PROJECT_TYPE,
+          payload:{
+            projectTypeId: projectTypes.find((e:any)=>{ return e.Name === deletingProjectTypes })?.Id
+          }
+        });
+      } else if (tab === 'project-types-group' && deletingProjectTypesGroup) {
+        
+        dispatch({
+          type: DELETE_PROJECT_TYPE_GROUPS,
+          payload: {
+            projectTypeGroupId: projectTypeGroups.find((e:any)=>{ return e.Name === deletingProjectTypesGroup })?.Id
+          }
+        });
       }
     } catch (error) {
       console.error('Delete failed:', error);
@@ -483,7 +468,7 @@ export default function ProjectSettingPage() {
     >
       <StyledMenuItem
         onClick={() => {
-          const assignment = ProjectTypesData.find(r => r);
+          const assignment = ProjectTypesData.find(r => r.Name === id);
           if (assignment) {
             handleEditProjectTypes(assignment);
           }

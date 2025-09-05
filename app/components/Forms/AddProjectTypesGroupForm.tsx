@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, TextField, Autocomplete } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 export interface ProjectTypeGroup {
@@ -13,14 +13,29 @@ import { StyledInput } from '../Input/StyledInput';
 
 interface AddProjectTypesGroupForm {
   formikProps: FormikProps<ProjectTypeGroup>;
+  setFormValue: (value: ProjectTypeGroup) => void;
 }
 
 const AddProjectTypesGroupForm = ({
   formikProps,
+  setFormValue = () => {},
 }: AddProjectTypesGroupForm) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const [projectTypeGroupName, setProjectTypeGroupName] = useState('');
+  const { initialData } = useSelector(
+    (state: any) => state.globalDialog.formState
+  );
+
+  useEffect(() => {
+    if (initialData) {
+      const rowData = {
+        Name: initialData.Name,
+      };
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
+    }
+  }, [initialData]);
 
   return (
     <Box>
@@ -35,7 +50,7 @@ const AddProjectTypesGroupForm = ({
           fullWidth
           onChange={e => {
             handleChange(e);
-            setProjectTypeGroupName(e.target.value);
+            setFieldValue('Name', e.target.value);
           }}
           onBlur={handleBlur}
           value={values.Name || ''}
