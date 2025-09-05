@@ -5,7 +5,6 @@ import {
   Button,
   Typography,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 
 
@@ -89,7 +88,6 @@ export default function AccessTable({
         <DataGrid
           rows={data}
           columns={columns}
-          getRowId={row => row.name || row.id}
           disableColumnMenu
           hideFooter
           disableRowSelectionOnClick

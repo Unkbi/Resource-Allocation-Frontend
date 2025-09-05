@@ -5,8 +5,7 @@ export interface Role {
 }
 
 export interface RoleAssignment {
-  Assignee: string;
-  Name: string;
+  User: string; 
   Role: string;
   __path__: string | null;
   __parent__: string | null;
@@ -23,7 +22,6 @@ export interface Privilege {
 
 export interface PrivilegeAssignment {
   Privilege: string;
-  Name: string;
   Role: string;
   __path__: string | null;
   __parent__: string | null;

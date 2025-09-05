@@ -5,6 +5,9 @@ import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { Role, UserRbac, } from '@/app/types';
 import { FormikProps } from 'formik';
+import { GET_USER } from '@/app/redux/actions/rbacActions';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 
 interface FormValues {
   Assignee: UserRbac | null;
@@ -22,6 +25,7 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
     formikProps;
   const roles: Role[] = useSelector((state: any) => state.rbac.roles);
   const user: UserRbac[] = useSelector((state: any) => state.rbac.user) 
+  const dispatch = useDispatch();
 
 
   const commonAutocompleteStyles = {
@@ -32,6 +36,11 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
     '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
   };
 
+    useEffect(() => {
+    if (!user || user.length === 0) {
+    dispatch({ type: GET_USER });
+    }
+    },[dispatch,user]);
   const handleAutocompleteChange =
     (field: string) => (_event: any, newValue: any) => {
       setFieldValue(field, newValue || '');
@@ -47,9 +56,10 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
           sx={commonAutocompleteStyles}
           size="small"
           options={user}
-          getOptionLabel={(option: UserRbac) =>
-            option.id || option.email || ''     
-          }  //Adding id/email to show in the dropdown for now as there is not firstname or lastname
+          getOptionLabel={(option: UserRbac) => {
+          const name = [option?.firstName, option?.lastName].filter(Boolean).join(' ');
+          return name || option?.email || '';
+           }}
           value={values.Assignee || null}
           onChange={handleAutocompleteChange('Assignee')}
           isOptionEqualToValue={(option, value) => option?.id === value?.id}
