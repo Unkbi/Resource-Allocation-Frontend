@@ -45,6 +45,7 @@ import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill } from './styled';
 import { getUserDisplayName } from '@/app/utils/authUtils';
+import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 
 const tabMenuNames = [
   'role-assignments',
@@ -458,10 +459,25 @@ export default function RoleManagementPage() {
       headerName: 'Role Name',
       flex: 1,
       headerClassName: 'custom-header',
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
-    },
+      renderCell: (params: any) => {
+         const handleNameClick = () => {
+            handleEditRole(params.row);
+        };
+        return (
+          <Box
+          onClick={handleNameClick}
+          sx={{...commonCellStyle ,
+            cursor: 'pointer', 
+            '&:hover': {
+            textDecoration: 'underline',
+          }, 
+        }}
+        >
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+          </Box>
+          );
+         }
+      },
     {
       field: 'Status',
       headerName: 'Status',
@@ -535,11 +551,24 @@ export default function RoleManagementPage() {
       headerName: 'Role',
       flex: 1,
       renderCell: (params: any) => {
+         const handleNameClick = () => {
+          handleAddNewRoleAssignment();
+        };
         const role = params.value?.replace("agentlang.auth$Role/", "") || "";
         return (
-        <Typography sx={{ ...commonCellStyle }}>{role}</Typography>
-      );
-    },
+          <Box
+          onClick={handleNameClick}
+          sx={{...commonCellStyle ,
+            cursor: 'pointer', 
+            '&:hover': {
+            textDecoration: 'underline',
+          }, 
+        }}
+        >
+          <EllipsisNameCell value={role} showAvatar={false} />
+          </Box>
+          );
+         }
     },
     {
       field: 'User',
@@ -626,11 +655,23 @@ export default function RoleManagementPage() {
       headerName: 'Privilege Name',
       flex: 1.5,
       renderCell: (params: any) => {
-        const value = params.value || '';
+         const handleNameClick = () => {
+            handleEditPrivilege(params.row);
+        };
         return (
-          <Typography sx={{ ...commonCellStyle }}>{value}</Typography>
-        );
-      },
+          <Box
+          onClick={handleNameClick}
+          sx={{...commonCellStyle ,
+            cursor: 'pointer', 
+            '&:hover': {
+            textDecoration: 'underline',
+          }, 
+        }}
+        >
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+          </Box>
+          );
+        }
     },
     {
       field: 'resourceFqName',
@@ -748,9 +789,24 @@ export default function RoleManagementPage() {
       headerName: 'Role',
       flex: 0.5,
       renderCell: (params: any) => {
-      const roleName = params.value?.split('/')[1]; 
-      return <Typography sx={commonCellStyle}>{roleName}</Typography>;
-    },
+         const handleNameClick = () => {
+          handleAddNewPrivilegeAssignment();
+        };
+       const roleName = params.value?.split('/')[1]; 
+        return (
+          <Box
+          onClick={handleNameClick}
+          sx={{...commonCellStyle ,
+            cursor: 'pointer', 
+            '&:hover': {
+            textDecoration: 'underline',
+          }, 
+        }}
+        >
+          <EllipsisNameCell value={roleName} showAvatar={false} />
+          </Box>
+          );
+         }
     },
     {
       field: 'Permission',
