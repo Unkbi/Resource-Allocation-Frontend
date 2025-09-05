@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { performLogin } from '@/app/redux/actions/authActions';
+import type { RootState, AppDispatch } from '@/app/redux/store';
 import {
   Box,
   Typography,
@@ -15,7 +16,6 @@ import {
   CircularProgress,
   styled,
 } from '@mui/material';
-import { useSearchParams } from 'next/navigation';
 import { getToken } from '@/app/utils/authUtils';
 
 const MainBox = styled(Box)(({ theme }) => ({
@@ -119,7 +119,6 @@ const MainBox = styled(Box)(({ theme }) => ({
       fontWeight: '700',
       color: '#757575',
       fontSize: '15px',
-      fontWeight: '700',
       marginBottom: '20px',
       textAlign: 'center',
       position: 'relative',
@@ -129,7 +128,6 @@ const MainBox = styled(Box)(({ theme }) => ({
         background: '#fff',
       },
       '&::before': {
-        background: 'rgb(255,255,255)',
         background:
           'linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(224,224,224,1) 15%, rgba(255,255,255,1) 50%, rgba(224,224,224,1) 85%, rgba(255,255,255,1) 100%)',
         width: '100%',
@@ -178,20 +176,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
-  const { loading, error, user } = useSelector(state => state.user);
+  const { loading, error, user } = useSelector(
+    (state: RootState) => state.user
+  );
   const isLoggedIn = getToken();
   const router = useRouter();
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const googleAuthUrl = process.env.NEXT_PUBLIC_GOOGLE_AUTH_URL;
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect');
-  const handleLogin = e => {
+  const handleLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     dispatch(
       performLogin({
         email: email,
         password: password,
-      })
+      }) as any
     );
   };
 
