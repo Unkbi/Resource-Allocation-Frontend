@@ -21,7 +21,7 @@ export interface Privilege {
 }
 
 export interface PrivilegeAssignment {
-  Privilege: string;
+  Permission :string;
   Role: string;
   __path__: string | null;
   __parent__: string | null;

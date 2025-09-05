@@ -11,7 +11,7 @@ import { useDispatch } from 'react-redux';
 
 interface AssignPrivilegeFormValues {
   Role: string;
-  Privilege: string;
+  Permission: string;
 }
 
 interface AssignPrivilegeFormProps {
@@ -46,7 +46,7 @@ const AssignPrivilegeForm = ({
     if (initialData) {
       const rowData: AssignPrivilegeFormValues = {
         Role: initialData.Role || '',
-        Privilege: initialData.Privilege || '',
+        Permission: initialData.Permission || '',
       };
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
@@ -101,10 +101,10 @@ const AssignPrivilegeForm = ({
           options={privileges}
           getOptionLabel={(option: Privilege) => {
             const name = option?.id || '';
-            const prefix = 'priv_ResourceAllocation.Core_';
+            const prefix = 'agentlang.auth$Permission';
             return name.startsWith(prefix) ? name.slice(prefix.length) : name;
           }}
-          value={privileges.find(p => p.id === values.Privilege) || null}
+          value={privileges.find(p => p.id === values.Permission) || null}
           onChange={(_event, newValue) =>
             setFieldValue('Privilege', newValue?.id || '')
           }
@@ -113,10 +113,10 @@ const AssignPrivilegeForm = ({
               {...params}
               placeholder="Select Privilege"
               variant="outlined"
-              error={touched.Privilege && Boolean(errors.Privilege)}
+              error={touched.Permission && Boolean(errors.Permission)}
               helperText={
-                touched.Privilege && typeof errors.Privilege === 'string'
-                  ? errors.Privilege
+                touched.Permission && typeof errors.Permission === 'string'
+                  ? errors.Permission
                   : undefined
               }
               FormHelperTextProps={{
