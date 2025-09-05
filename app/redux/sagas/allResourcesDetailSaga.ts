@@ -29,7 +29,7 @@ function* fetchAllResourcesDetailSaga(): Generator<any, void, any> {
     const responses = yield call(fetchAllResourcesDetail);
 
     let formatedResponse = formatAPIResponse('ResourceDetail', responses);
-    formatedResponse = formatedResponse.map((item: APIResponsePreFormated) => ({
+    formatedResponse = formatedResponse?.map((item: APIResponsePreFormated) => ({
       Resource: item?.Resource?.Resource || null,
       Team: item?.Team?.Team || null,
       Organization: item?.Organization?.Organization || null,
@@ -37,7 +37,7 @@ function* fetchAllResourcesDetailSaga(): Generator<any, void, any> {
 
     yield put(setAllResourcesDetail(formatedResponse));
 
-    const resources = formatedResponse.map(
+    const resources = formatedResponse?.map(
       (item: AllResourceDetail) => item.Resource
     );
     yield put(setResources(resources));

@@ -90,7 +90,7 @@ function* fetchRoleAssignmentsSaga(): Generator<any, void, any> {
 
     const responses = yield call(fetchRoleAssignments);
 
-    yield put(setRoleAssignments(responses?.result));
+    yield put(setRoleAssignments(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch Role Assignments : ', error);
   } finally {
@@ -116,8 +116,8 @@ function* createRoleAssignmentSaga(action: any): Generator<any, void, any> {
 function* deleteRoleAssignmentSaga(action: any): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
-    const name = action.payload;
-    yield call(deleteRoleAssignment, name);
+    const { User, Role } = action.payload;
+    yield call(deleteRoleAssignment,User,Role);
     yield call(fetchRoleAssignmentsSaga);
   } catch (error) {
     console.error('Saga error, Failed to delete Role Assignment : ', error);
@@ -193,7 +193,7 @@ function* fetchPrivilegeAssignmentsSaga(): Generator<any, void, any> {
 
     const responses = yield call(fetchPrivilegeAssignments);
 
-    yield put(setPrivilegeAssignments(responses?.result));
+    yield put(setPrivilegeAssignments(responses));
   } catch (error) {
     console.error(
       'Saga error, Failed to fetch Privilege Assignments : ',
@@ -253,8 +253,8 @@ function* deletePrivilegeAssignmentSaga(
 ): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
-    const name = action.payload;
-    yield call(deletePrivilegeAssignment, name);
+    const { Role, Permission } = action.payload;
+    yield call(deletePrivilegeAssignment, Role, Permission);
     yield call(fetchPrivilegeAssignmentsSaga);
   } catch (error) {
     console.error(
