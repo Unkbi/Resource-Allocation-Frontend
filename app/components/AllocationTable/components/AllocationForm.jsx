@@ -2040,6 +2040,12 @@ const AllocationForm = () => {
               })
             );
             dispatch(setHighlightedRowId(response?.Organization?.Id));
+            if (pathname !== '/people?tab=organizations') {
+                  router.replace('/people?tab=organizations');
+                } else {
+                  dispatch(closeDialog());
+                }
+
           })
           .catch(error => {
             console.error('Failed to add organization:', error);
