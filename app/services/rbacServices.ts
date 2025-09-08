@@ -31,8 +31,8 @@ export const deleteRole = async (Name: string) => {
  * RoleAssignment
  */
 export const fetchRoleAssignments = async () => {
-  const response = await axiosInstance.get(
-    `${API_AGENTLANG_KERNEL_RBAC}/RoleAssignment`
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/ListUserRoles`
   );
   return response.data;
 };
@@ -49,9 +49,13 @@ export const createRoleAssignment = async (newData: any) => {
   return response.data;
 };
 
-export const deleteRoleAssignment = async (Name: string) => {
-  const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/RoleAssignment/${Name}`
+export const deleteRoleAssignment = async (Role :string , User:string) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/DeleteUserRole`,
+    {
+      User,
+      Role,
+    }
   );
   return response.data;
 };
@@ -105,18 +109,20 @@ export const deletePrivilege = async (id: string) => {
  * PrivilegeAssignment
  */
 export const fetchPrivilegeAssignments = async () => {
-  const response = await axiosInstance.get(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment`
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/ListRolePermissions`
   );
   return response.data;
 };
 
 export const createPrivilegeAssignment = async (newData: any) => {
-  const payload = {
-    'Agentlang.Kernel.Rbac/PrivilegeAssignment': newData,
+  // NOT WORKNG RIGHT NOW - backend issue
+   const payload = {
+   roleName: "*",
+   permissionId: "agentlang.auth$Permission/*_permission_Resource/Team",
   };
   const response = await axiosInstance.post(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment`,
+    `${API_AGENTLANG_KERNEL_RBAC}/AddPermissionToRole`,
     payload
   );
   return response.data;
@@ -136,9 +142,10 @@ export const updatePrivilegeAssignment = async (
   return response.data;
 };
 
-export const deletePrivilegeAssignment = async (Name: string) => {
-  const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment/${Name}`
+export const deletePrivilegeAssignment = async (Role :string , Permission :string) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/DeleteRolePermission`,
+    { Role, Permission }
   );
   return response.data;
 };

@@ -348,11 +348,11 @@ const initialValuesMap = {
   },
   assign_privilege: {
     Role: '',
-    Privilege: '',
+    Permission: '',
   },
   edit_privilege_assignment: {
     Role: '',
-    Privilege: '',
+    Permission: '',
   },
   add_location: {
     Location: '',
@@ -2231,7 +2231,7 @@ const AllocationForm = () => {
             // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
             Name: values.Role
-              ? `${values.Role}-${cleanedValues.Assignee?.id}`
+              ? `${cleanedValues.Assignee?.id}`
               : null,
           };
 
@@ -2400,7 +2400,7 @@ const AllocationForm = () => {
         const postData = {
           ...cleanedValues,
           Role: values.Role || null,
-          Privilege: values.Privilege || null,
+          Permission: values.Permission || null,
         };
         new Promise((resolve, reject) => {
           dispatch({
@@ -2450,7 +2450,7 @@ const AllocationForm = () => {
 
         const updatedFields = {
           Role: values.Role || null,
-          Privilege: values.Privilege || null,
+          Permission: values.Permission || null,
         };
 
         try {
