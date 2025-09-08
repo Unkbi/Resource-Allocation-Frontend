@@ -6,11 +6,18 @@ import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { withRBAC } from '../HOC/withRBAC';
 
-const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
+const AddTeamForm = ({
+  formType,
+  formikProps,
+  setFormValue = () => {},
+  permissions,
+}) => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
+  const [readOnly, setReadOnly] = React.useState(true);
 
   const {
     values,
@@ -35,10 +42,14 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
   ];
 
   useEffect(() => {
-    if (!resources) {
+    setReadOnly(
+      (formType === 'edit_team' && !permissions['Team']?.u) ||
+        (formType === 'add_team' && !permissions['Team']?.c)
+    );
+    if (!readOnly && !resources) {
       dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     }
-  }, []);
+  }, [readOnly]);
 
   useEffect(() => {
     if (initialData) {
@@ -63,6 +74,8 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           name="Name"
           placeholder="Enter team name"
           value={values.Name || ''}
@@ -80,6 +93,7 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>Team Allocation Manager</StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
           name="AllocationManager"
           label="Team Allocation Manager"
           options={resourceListOptions}
@@ -94,6 +108,7 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
           Status <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
           name="Status"
           label="Status"
           options={statusOptions}
@@ -106,4 +121,4 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
   );
 };
 
-export default AddTeamForm;
+export default withRBAC(AddTeamForm, ['Team']);

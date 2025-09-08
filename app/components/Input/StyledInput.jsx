@@ -2,7 +2,7 @@ import { FormHelperText, styled, TextField, Box } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 export const StyledInput = styled(TextField)(
-  ({ theme, width, margin, padding, height, error }) => ({
+  ({ readOnly, theme, width, margin, padding, height, error }) => ({
     '& .MuiOutlinedInput-root': {
       borderRadius: '4px',
       height: height || '36px',
@@ -12,8 +12,20 @@ export const StyledInput = styled(TextField)(
         borderColor: '#D6DCE1',
       },
       '&.Mui-disabled': {
-        backgroundColor: '#E5E7EB !important',
-        color: '#6B7280',
+        backgroundColor: readOnly
+          ? theme.palette.readonly.main
+          : '#E5E7EB !important',
+        '& .MuiInputBase-input': {
+          borderColor: readOnly
+            ? 'rgba(214, 220, 225, 1) !important'
+            : '#D6DCE1 !important',
+          color: readOnly
+            ? theme.palette.readonly.contrastText
+            : '#6B7280 !important',
+          WebkitTextFillColor: readOnly
+            ? theme.palette.readonly.contrastText
+            : '#6B7280 !important',
+        },
       },
     },
     '& fieldset': {

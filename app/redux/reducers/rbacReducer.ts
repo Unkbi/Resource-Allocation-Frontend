@@ -4,6 +4,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: RBACState = {
   user: null,
+  loginUserPrivileges: null,
   roles: [],
   roleAssignments: [],
   privileges: [],
@@ -16,6 +17,9 @@ const rbacSlice = createSlice({
   name: 'RBAC',
   initialState,
   reducers: {
+    setLoginUpserPrivileges: (state, action) => {
+      state.loginUserPrivileges = action.payload;
+    },
     setRoles: (state, action) => {
       state.roles = formatAPIResponse('Role', action.payload);
     },
@@ -112,6 +116,7 @@ const rbacSlice = createSlice({
 });
 
 export const {
+  setLoginUpserPrivileges,
   setRoles,
   clearRoles,
   updateRoles,
