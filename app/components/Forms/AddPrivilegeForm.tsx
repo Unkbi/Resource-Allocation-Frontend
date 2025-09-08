@@ -33,11 +33,11 @@ const AddPrivilegeForm = ({
 }: AddPrivilegeFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, errors, touched } =
     formikProps;
-  const privileges = useSelector((state: any) => state.rbac.privileges);
   const [privilegeName, setPrivilegeName] = useState('');
   const { initialData } = useSelector(
     (state: any) => state.globalDialog.formState
   );
+  const meta = useSelector((state: any) => state.rbac.meta);
 
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -81,13 +81,10 @@ const AddPrivilegeForm = ({
       ? formikProps.errors.Actions
       : undefined;
 
-  const resourceOptions: string[] = Array.from(
-    new Set(
-      privileges.map((r: any) =>
-        Array.isArray(r.resourceFqName) ? r.resourceFqName[0] : r.resourceFqName
-      )
-    )
-  );
+  const resourceEntities = meta?.entities?.Resource ?? [];
+  const authEntities = meta?.entities?.['agentlang.auth'] ?? [];
+  const allEntities = [...resourceEntities, ...authEntities];
+  const resourceOptions: string[] = allEntities.map((entity: any) => entity.fqName);
 
   return (
     <Box>

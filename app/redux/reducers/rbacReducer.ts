@@ -9,6 +9,7 @@ const initialState: RBACState = {
   roleAssignments: [],
   privileges: [],
   privilegeAssignments: [],
+  meta: null,
   loading: true,
   error: false,
 };
@@ -103,6 +104,9 @@ const rbacSlice = createSlice({
         };
       }
     },
+    setMeta : (state, action) => {
+      state.meta = action.payload;
+    },
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
@@ -132,5 +136,6 @@ export const {
   setLoading,
   setError,
   setUser,
+  setMeta,
 } = rbacSlice.actions;
 export default rbacSlice.reducer;

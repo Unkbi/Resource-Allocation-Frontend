@@ -7,6 +7,7 @@ import {
   deletePrivilegeAssignment,
   deleteRole,
   deleteRoleAssignment,
+  fetchMeta,
   fetchPrivilegeAssignments,
   fetchPrivileges,
   fetchRoleAssignments,
@@ -19,6 +20,7 @@ import { call, put, select, take, takeEvery } from 'redux-saga/effects';
 import {
   setLoading,
   setLoginUpserPrivileges,
+  setMeta,
   setPrivilegeAssignments,
   setPrivileges,
   setRoleAssignments,
@@ -42,6 +44,7 @@ import {
   UPDATE_PRIVILEGEASSIGNMENT,
   GET_USER,
   GET_USER_AND_PRIVILEGES,
+  GET_META,
 } from '../actions/rbacActions';
 import { getUser } from '@/app/services/authServices';
 import { buildLoginUserPrivileges } from '@/app/utils/authUtils';
@@ -328,6 +331,18 @@ function* getUserAndPrivilegesSaga(action: any): Generator<any, void, any> {
   }
 }
 
+function* getMetaSaga(): Generator<any, void, any> {
+  try {
+    yield put(setLoading(true));
+    const responses = yield call(fetchMeta);
+    yield put(setMeta(responses));
+  } catch (error) {
+    console.error('Saga error, Failed to fetch Meta : ', error);
+  } finally {
+    yield put(setLoading(false));
+  }
+}
+
 export function* rbacSaga() {
   yield takeEvery(FETCH_ROLES, fetchRolesSaga);
   yield takeEvery(CREATE_ROLE, createRoleSaga);
@@ -345,4 +360,5 @@ export function* rbacSaga() {
   yield takeEvery(DELETE_PRIVILEGEASSIGNMENT, deletePrivilegeAssignmentSaga);
   yield takeEvery(GET_USER, getUserSaga);
   yield takeEvery(GET_USER_AND_PRIVILEGES, getUserAndPrivilegesSaga);
+  yield takeEvery(GET_META, getMetaSaga);
 }
