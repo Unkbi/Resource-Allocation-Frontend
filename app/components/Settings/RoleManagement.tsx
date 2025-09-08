@@ -30,6 +30,7 @@ import {
   FETCH_PRIVILEGES,
   FETCH_ROLES,
   FETCH_ROLESASSIGNMENTS,
+  GET_META,
   GET_USER,
 } from '@/app/redux/actions/rbacActions';
 import {
@@ -208,6 +209,14 @@ export default function RoleManagementPage() {
   const apiRef = useGridApiRef();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const meta = useSelector((state: any) => state.rbac.meta);
+
+
+  useEffect(() => {
+    if (!meta) {
+      dispatch({ type: GET_META });
+    }
+  }, [dispatch, meta]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');

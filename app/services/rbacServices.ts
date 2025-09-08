@@ -49,7 +49,7 @@ export const createRoleAssignment = async (newData: any) => {
   return response.data;
 };
 
-export const deleteRoleAssignment = async (Role :string , User:string) => {
+export const deleteRoleAssignment = async (User :string , Role:string) => {
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/DeleteUserRole`,
     {
@@ -116,10 +116,9 @@ export const fetchPrivilegeAssignments = async () => {
 };
 
 export const createPrivilegeAssignment = async (newData: any) => {
-  // NOT WORKNG RIGHT NOW - backend issue
    const payload = {
-   roleName: "*",
-   permissionId: "agentlang.auth$Permission/*_permission_Resource/Team",
+   roleName: newData.Role,
+   permissionId: newData.Permission,
   };
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/AddPermissionToRole`,
@@ -160,5 +159,10 @@ export const fetchEntities = async () => {
 
 export const fetchUser = async () => {
   const response = await axiosInstance.get(`${API_AGENTLANG_KERNEL_RBAC}/User`);
+  return response.data;
+}
+
+export const fetchMeta = async () => {
+  const response = await axiosInstance.get(`/meta`);
   return response.data;
 }
