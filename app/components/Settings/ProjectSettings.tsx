@@ -341,7 +341,13 @@ export default function ProjectSettingPage() {
       headerName: 'Project Type',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <Typography onClick={() => handleEditProjectTypes(params.row)} sx={{ ...commonCellStyle, cursor: 'pointer',
+                  '&:hover': {
+                  textDecoration: 'underline',
+                }, 
+              }}>
+                {params.value}
+              </Typography>
       ),
     },
     {
@@ -397,7 +403,7 @@ export default function ProjectSettingPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: () => <StatusPill status="Active">Active</StatusPill>,
+      renderCell: (params: any) => <StatusPill status={params.value}>{params.value}</StatusPill>,
     },
     {
       field: 'actions',
@@ -430,7 +436,13 @@ export default function ProjectSettingPage() {
       headerName: 'Project Type Group',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <Typography onClick={() => handleEditProjectTypesGroup(params.row)} sx={{ ...commonCellStyle, cursor: 'pointer',
+                  '&:hover': {
+                  textDecoration: 'underline',
+                }, 
+              }}>
+                {params.value}
+              </Typography>
       ),
     },
     {
