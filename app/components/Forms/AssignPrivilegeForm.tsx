@@ -106,7 +106,7 @@ const AssignPrivilegeForm = ({
           }}
           value={privileges.find(p => p.id === values.Permission) || null}
           onChange={(_event, newValue) =>
-            setFieldValue('Privilege', newValue?.id || '')
+            setFieldValue('Permission', newValue?.id || '')
           }
           renderInput={params => (
             <TextField
