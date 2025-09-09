@@ -31,6 +31,8 @@ import {
   assignRoleValidationSchema,
   addPrivilegeValidationSchema,
   assignPrivilegeValidationSchema,
+  addProjectTypeValidationSchema,
+  addProjectTypeGroupValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -140,6 +142,7 @@ import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import { ADD_PROJECT_TYPE, UPDATE_PROJECT_TYPE, ADD_PROJECT_TYPE_GROUPS, UPDATE_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
 
 const initialValuesMap = {
   add_project: {
@@ -402,6 +405,7 @@ const AllocationForm = () => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { organizations } = useSelector(state => state.organisations);
   const { user: allUsers } = useSelector(state => state.rbac);
+  const { projectTypeGroups, projectTypes } = useSelector(state => state.allSettings);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -490,6 +494,14 @@ const AllocationForm = () => {
         return assignPrivilegeValidationSchema;
       case 'add_organization':
         return addOrganizationValidationSchema(organizations);
+      case 'add_project_type':
+        return addProjectTypeValidationSchema(projectTypes);
+      case 'edit_project_type':
+        return addProjectTypeValidationSchema(projectTypes, initialData?.Name || '');
+      case 'add_project_type_group':
+        return addProjectTypeGroupValidationSchema(projectTypeGroups);
+      case 'edit_project_type_group':
+        return addProjectTypeGroupValidationSchema(projectTypeGroups, initialData?.Name || '');
       default:
         return null;
     }
@@ -2212,22 +2224,6 @@ const AllocationForm = () => {
             });
         }
         break;
-      case 'add_project_type': {
-        //add project type
-        break;
-      }
-      case 'edit_project_type': {
-        //Edit project type
-        break;
-      }
-      case 'add_project_type_group': {
-        //add project type group
-        break;
-      }
-      case 'edit_project_type_group': {
-        //edit project type group
-        break;
-      }
 
       case 'assign_role':
         {
@@ -2502,6 +2498,209 @@ const AllocationForm = () => {
         }
         return;
       }
+
+      case 'add_project_type':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+          const postData = {
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+            Color: cleanedValues.Color,
+            Status: cleanedValues.Status,
+            Group:
+              projectTypeGroups.find(group => {
+                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
+              })?.Id || null,
+          };
+          try {
+            const response = await new Promise((resolve, reject) => {
+              dispatch({
+                type: ADD_PROJECT_TYPE,
+                payload: {
+                  postData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Project Type updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response?.Id));
+            dispatch(closeDialog());
+          } catch (error) {
+            console.error('Failed to update project type:', error);
+            const message =
+              error?.response?.data?.exception ||
+              'Failed to update project type.';
+            dispatch(
+              showToast({
+                open: true,
+                message: message,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        }
+        break;
+      case 'edit_project_type':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+          const postData = {
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+            Color: cleanedValues.Color,
+            Status: cleanedValues.Status,
+
+            Group:
+              projectTypeGroups.find(group => {
+                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
+              })?.Id || null,
+          };
+          try {
+            const response = await new Promise((resolve, reject) => {
+              dispatch({
+                type: UPDATE_PROJECT_TYPE,
+                payload: {
+                  projectTypeId: initialData?.id,
+                  postData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Project Type updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response?.Id));
+            dispatch(closeDialog());
+          } catch (error) {
+            console.error('Failed to update project type:', error);
+            const message =
+              error?.response?.data?.exception ||
+              'Failed to update project type.';
+            dispatch(
+              showToast({
+                open: true,
+                message: message,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        }
+        break;
+      case 'add_project_type_group': {
+        try {
+          const postData = { ...cleanedValues };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: ADD_PROJECT_TYPE_GROUPS,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Project Type Group added successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response?.Id));
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to add project type group:', error);
+          const message =
+            error?.response?.data?.exception ||
+            'Failed to add project type group.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'edit_project_type_group': {
+        try {
+          const postData = { ...cleanedValues };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_PROJECT_TYPE_GROUPS,
+              payload: {
+                projectTypeGroupId: initialData?.id,
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Project Type Group updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response?.Id));
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update project type group:', error);
+          const message =
+            error?.response?.data?.exception ||
+            'Failed to update project type group.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
       case 'add_location': {
         console.log('add_location');
       }
