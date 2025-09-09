@@ -994,7 +994,7 @@ SELECT
     rcu."CostCurrency" AS Currency
 FROM public.resource_allocationcost rcu
 JOIN active_resource ar ON ar.resource_id = rcu."ResourceRef"
-WHERE rcu."Project" BETWEEN '${startDate}' AND '${endDate}'
+WHERE rcu."Period" BETWEEN '${startDate}' AND '${endDate}'
 GROUP BY rcu."CostCurrency";`,
 
   allocationPercentage: (
