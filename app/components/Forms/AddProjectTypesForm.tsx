@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, TextField, Autocomplete } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { MuiColorInput } from 'mui-color-input';
@@ -18,13 +18,15 @@ export interface ProjectType {
 
 interface AddProjectTypesForm {
   formikProps: FormikProps<ProjectType>;
+  setFormValue: (value: ProjectType) => void;
 }
 
-const AddProjectTypesForm = ({ formikProps }: AddProjectTypesForm) => {
+const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjectTypesForm) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const [projectTypeName, setProjectTypeName] = useState('');
   const [projectTypeGroupName, setProjectTypeGroupName] = useState([]);
+  const { initialData } = useSelector((state: any) => state.globalDialog.formState);
+  const { projectTypeGroups } = useSelector((state: any) => state.allSettings);
   const [description, setDescription] = useState('');
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -34,9 +36,30 @@ const AddProjectTypesForm = ({ formikProps }: AddProjectTypesForm) => {
     '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
   };
 
+  useEffect(() => {
+    setProjectTypeGroupName(projectTypeGroups || []);
+    
+    if (initialData) {
+      const rowData = {
+        Name: initialData.Name || '',
+        ProjectTypeGroup: initialData.projectTypesGroup || '',
+        Description: initialData.description || '',
+        Status: initialData.Status || 'Active',
+        Color: initialData.Color || '#CCE0FF',
+      };
+       setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});     
+    }
+  }, [initialData, projectTypeGroups]);
+
   const handleAutocompleteChange =
     (field: string) => (_event: any, newValue: any) => {
-      setFieldValue(field, newValue || '');
+      if (field === 'ProjectTypeGroup') {
+        setFieldValue(field, newValue?.Name || '');
+      } else {
+        setFieldValue(field, newValue || '');
+      }
     };
 
   return (
@@ -50,14 +73,11 @@ const AddProjectTypesForm = ({ formikProps }: AddProjectTypesForm) => {
           name="Name"
           placeholder="Enter Name"
           fullWidth
-          onChange={e => {
-            handleChange(e);
-            setProjectTypeName(e.target.value);
-          }}
+          onChange={handleChange}
           onBlur={handleBlur}
           value={values.Name || ''}
           error={touched.Name && Boolean(errors.Name)}
-          //   helperText={touched.Name && errors.Name}
+          helperText={touched.Name && errors.Name}
         />
       </Box>
 
@@ -70,19 +90,28 @@ const AddProjectTypesForm = ({ formikProps }: AddProjectTypesForm) => {
           sx={commonAutocompleteStyles}
           size="small"
           options={projectTypeGroupName}
-          value={values.ProjectTypeGroup || ''}
+          getOptionLabel={(option: any) => option.Name || ''}
+          value={
+            projectTypeGroupName.find(
+              (group: any) => group.Name === values.ProjectTypeGroup
+            ) || null
+          }
           onChange={handleAutocompleteChange('ProjectTypeGroup')}
+          onBlur={() => formikProps.setFieldTouched('ProjectTypeGroup', true)}
           renderInput={params => (
             <TextField
               {...params}
+              name="ProjectTypeGroup"
               placeholder="Select Group"
               variant="outlined"
               error={
                 touched.ProjectTypeGroup && Boolean(errors.ProjectTypeGroup)
               }
               helperText={touched.ProjectTypeGroup && errors.ProjectTypeGroup}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
+              slotProps={{
+                formHelperText: {
+                  sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
+                },
               }}
             />
           )}
@@ -91,7 +120,7 @@ const AddProjectTypesForm = ({ formikProps }: AddProjectTypesForm) => {
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          Description <span style={{ color: 'red' }}>*</span>
+          Description
         </StyledLabel>
         <StyledCommentInput
           as={TextField}
@@ -143,7 +172,7 @@ const AddProjectTypesForm = ({ formikProps }: AddProjectTypesForm) => {
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Status</StyledLabel>
+        <StyledLabel>Status  <span style={{ color: 'red' }}>*</span></StyledLabel>
         <Autocomplete
           disableClearable
           sx={commonAutocompleteStyles}
@@ -154,12 +183,13 @@ const AddProjectTypesForm = ({ formikProps }: AddProjectTypesForm) => {
           renderInput={params => (
             <TextField
               {...params}
-              placeholder="Select Status"
-              variant="outlined"
+              name="Status"
               error={touched.Status && Boolean(errors.Status)}
               helperText={touched.Status && errors.Status}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
+              slotProps={{
+                formHelperText: {
+                  sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
+                },
               }}
             />
           )}
