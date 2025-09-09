@@ -1,7 +1,8 @@
 import { FormHelperText, styled, TextField, Box } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { TextFieldProps } from '@mui/material/TextField';
 
-export const StyledInput = styled(TextField)(
+export const BaseStyledInput = styled(TextField)(
   ({ readOnly, theme, width, margin, padding, height, error }) => ({
     '& .MuiOutlinedInput-root': {
       borderRadius: '4px',
@@ -124,3 +125,18 @@ export const StyledFormInfoText = styled(({ children, ...props }) => (
     display: 'inline',
   },
 }));
+
+export const StyledInput = props => {
+  const { disabled, value, placeholder, ...rest } = props;
+
+  const effectivePlaceholder = disabled && !value ? '' : placeholder;
+
+  return (
+    <BaseStyledInput
+      {...rest}
+      disabled={disabled}
+      value={value}
+      placeholder={effectivePlaceholder}
+    />
+  );
+};

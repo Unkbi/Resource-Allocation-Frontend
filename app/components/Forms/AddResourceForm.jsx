@@ -41,6 +41,7 @@ import {
 import { addDays, addWeeks, format } from 'date-fns';
 import { parseISO } from 'date-fns';
 import StyledAutocomplete from '../Select/Autocomplete';
+import { withRBAC } from '../HOC/withRBAC';
 
 const warningTextStyle = {
   color: '#B44536',
@@ -65,7 +66,12 @@ const reviewLinkStyle = {
   textDecorationLine: 'underline',
 };
 
-const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
+const AddResourceForm = ({
+  formikProps,
+  setFormValue,
+  onValuesChange,
+  permissions,
+}) => {
   const {
     values,
     handleChange,
@@ -83,6 +89,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   const { formType } = useSelector(state => state.globalDialog.formState);
   const [showWarning, setShowWarning] = useState(false);
   const [shareLink, setShareLink] = useState('');
+  const [readOnly, setReadOnly] = useState(true);
 
   const resourceListOptions =
     resources &&
@@ -101,6 +108,13 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       label: team.Name,
     })) || [];
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_resource' && !permissions['Resource']?.u) ||
+        (formType === 'add_resource' && !permissions['Resource']?.c)
+    );
+  }, [readOnly]);
 
   useEffect(() => {
     const firstNameToUse =
@@ -317,6 +331,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             First Name <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="FirstName"
             placeholder="Enter first name"
             value={values.FirstName || ''}
@@ -335,6 +351,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Last Name <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="LastName"
             placeholder="Enter last name"
             value={values.LastName || ''}
@@ -353,6 +371,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <StyledLabel>Preferred First Name</StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           name="PreferredFirstName"
           placeholder="Enter preferred first name"
           value={values.PreferredFirstName || ''}
@@ -374,6 +394,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           name="Email"
           placeholder="Enter email"
           value={values.Email || ''}
@@ -397,6 +419,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <Box sx={{ flex: 1, width: '50%' }}>
           <StyledLabel>Phone Number</StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="PhoneNumber"
             placeholder="Enter phone number"
             value={values.PhoneNumber || ''}
@@ -413,6 +437,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <Box sx={{ flex: 1 }}>
           <StyledLabel>Department</StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Department"
             width={'100%'}
             placeholder="Enter Department"
@@ -444,6 +470,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Organization <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledAutocomplete
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Organisation"
             label="Organization"
             placeholder="Enter organization"
@@ -458,6 +486,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Role <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Role"
             placeholder="Enter role"
             value={values.Role || ''}
@@ -485,6 +515,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <Box sx={{ width: '50%' }}>
           <StyledLabel>HR Level</StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="HRLevel"
             placeholder="Enter level"
             value={values.HRLevel || ''}
@@ -505,6 +537,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Resource Type <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledAutocomplete
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Type"
             label="Type"
             placeholder="Select type"
@@ -540,6 +574,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <Box sx={{ flex: 1 }}>
             <StyledLabel>Hourly Rate</StyledLabel>
             <StyledInput
+              disabled={readOnly}
+              readOnly={readOnly}
               type="number"
               name="ContractorHourlyRate"
               placeholder="Enter rate"
@@ -570,6 +606,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <Box sx={{ flex: 1 }}>
             <StyledLabel>Avg. Weekly Hrs</StyledLabel>
             <StyledInput
+              disabled={readOnly}
+              readOnly={readOnly}
               type="number"
               name="AverageWeeklyHours"
               placeholder="Enter hours"
@@ -596,6 +634,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           Team <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
           name="Team"
           label="Team"
           placeholder="Select team"
@@ -609,6 +648,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>Manager</StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
           name="Manager"
           label="Manager"
           placeholder="Select manager"
@@ -629,6 +669,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         }}
       >
         <CustomDatePicker
+          readOnly={readOnly}
           name="StartDate"
           value={formikProps.values.StartDate || null}
           formikProps={formikProps}
@@ -645,6 +686,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           isRequired={false}
         />
         <CustomDatePicker
+          readOnly={readOnly}
           name="EndDate"
           value={formikProps.values.EndDate || null}
           onChange={handleEndDateChange}
@@ -683,6 +725,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <Box sx={{ flex: 1 }}>
         <StyledLabel>Work Location</StyledLabel>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           name="WorkLocation"
           placeholder="Enter location"
           value={values.WorkLocation || ''}
@@ -774,4 +818,4 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   );
 };
 
-export default AddResourceForm;
+export default withRBAC(AddResourceForm, ['Resource']);

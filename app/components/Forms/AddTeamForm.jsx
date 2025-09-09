@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
@@ -17,7 +17,7 @@ const AddTeamForm = ({
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
-  const [readOnly, setReadOnly] = React.useState(true);
+  const [readOnly, setReadOnly] = useState(true);
 
   const {
     values,
