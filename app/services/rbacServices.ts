@@ -127,16 +127,10 @@ export const createPrivilegeAssignment = async (newData: any) => {
   return response.data;
 };
 
-export const updatePrivilegeAssignment = async (
-  Name: string,
-  updatedFields: any
-) => {
-  const payload = {
-    'Agentlang.Kernel.Rbac/PrivilegeAssignment': updatedFields,
-  };
-  const response = await axiosInstance.put(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment/${Name}`,
-    payload
+export const updatePrivilegeAssignment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdatePermissionAssignment`,
+    updatedFields
   );
   return response.data;
 };

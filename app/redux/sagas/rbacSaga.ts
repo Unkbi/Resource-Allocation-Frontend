@@ -230,12 +230,11 @@ function* createPrivilegeAssignmentSaga(
 function* updatePrivilegeAssignmentSaga(
   action: any
 ): Generator<any, void, any> {
-  const { name, updatedFields, resolve, reject } = action.payload;
+  const {updatedFields, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
     const response = yield call(
       updatePrivilegeAssignment,
-      name,
       updatedFields
     );
     yield call(fetchPrivilegeAssignmentsSaga);

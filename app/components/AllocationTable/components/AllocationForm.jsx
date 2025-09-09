@@ -2455,8 +2455,9 @@ const AllocationForm = () => {
         });
 
         const updatedFields = {
-          Role: values.Role || null,
-          Permission: values.Permission || null,
+          rolePermission: initialData.__path__,
+          permissionId: values.Permission,
+          roleName: values.Role,
         };
 
         try {
@@ -2464,7 +2465,6 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGEASSIGNMENT,
               payload: {
-                name: initialData?.Name,
                 updatedFields,
                 resolve,
                 reject,
@@ -2481,7 +2481,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.Name));
+          dispatch(setHighlightedRowId(response.result?.roleName));
           dispatch(closeDialog());
         } catch (error) {
           const message =
