@@ -11,18 +11,17 @@ import {
   GridToolbarProps,
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
+import { JSXElementConstructor, useState } from 'react';
+import { Team } from '@/app/types';
 import { Box } from '@mui/material';
-import { useState, JSXElementConstructor } from 'react';
-
-import { Organisation } from '@/app/types';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
-interface OrganisationsTableProps {
+interface RatesTableProps {
   columns: GridColDef[];
-  rows: Organisation[];
+  rows: Team[];
   loading: boolean;
   apiRef: React.RefObject<GridApi>;
-  value: string;
+  value: String;
   onChange: any;
   permissions: Record<string, CrudPermissions>;
 }
@@ -39,7 +38,7 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
   );
 }
 
-const OrganisationsTable = ({
+const RatesTable = ({
   columns,
   rows,
   loading,
@@ -47,28 +46,32 @@ const OrganisationsTable = ({
   value,
   onChange = () => {},
   permissions,
-}: OrganisationsTableProps) => {
+}: RatesTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+        height: 'calc(100vh - 31px)',
+      }}
+    >
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Organization'].r ? rows : []}
-        loading={loading}
+        rows={permissions['EmployeeRate'].r ? rows : []}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
+        loading={loading}
         initialState={{
           sorting: {
-            sortModel: [{ field: 'Name', sort: 'asc' }],
+            sortModel: [{ field: 'Team', sort: 'asc' }],
           },
           columns: {
             columnVisibilityModel: {
-              Status: true,
-              // You can optionally hide fields like:
-              // CreatedDate: false,
-              // Owner: false,
+              Team: true,
             },
           },
         }}
@@ -82,9 +85,9 @@ const OrganisationsTable = ({
           toolbarColumns: '',
         }}
         sx={{
-          height: '95vh',
+          height: '100vh',
           '& .MuiDataGrid-columnHeader': {
-            padding: '0 16px',
+            padding: '0 46px',
             borderRight: 'none',
           },
           '& .MuiDataGrid-footer': {
@@ -102,7 +105,7 @@ const OrganisationsTable = ({
             placement: 'bottom-end',
           },
           toolbar: {
-            // @ts-ignore
+            //@ts-ignore
             setFilterButtonEl,
             value: value,
             onChange: onChange,
@@ -113,7 +116,7 @@ const OrganisationsTable = ({
           },
           filterPanel: {
             columnsSort: 'asc',
-            // @ts-ignore
+            //@ts-ignore
             className: 'filterPopup',
             filterFormProps: {
               columnInputProps: {
@@ -143,4 +146,4 @@ const OrganisationsTable = ({
   );
 };
 
-export default withRBAC(OrganisationsTable, ['Organization']);
+export default withRBAC(RatesTable, ['EmployeeRate']);

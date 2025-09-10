@@ -8,6 +8,7 @@ import {
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import CommonToolbar from './CommonToolbar';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'] as const;
 
@@ -18,6 +19,7 @@ interface ResourceToolbarProps {
     event: SyntheticEvent,
     newValue: 'resource' | 'teams' | 'rates' | 'organizations'
   ) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const commonButtonStyles = {
@@ -127,6 +129,7 @@ const ResourceToolbar = ({
   setFilterButtonEl,
   value,
   onChange,
+  permissions,
 }: ResourceToolbarProps) => {
   const dispatch = useDispatch();
 
@@ -247,7 +250,7 @@ const ResourceToolbar = ({
               style={{ height: '36px', width: '36px' }}
             />
             {/* <ActionButton src="/images/icons/upload.svg" alt="upload" /> */}
-            {value === 'rates' && (
+            {permissions['EmployeeRate'].c && value === 'rates' && (
               <Button
                 variant="contained"
                 color="primary"
@@ -264,4 +267,4 @@ const ResourceToolbar = ({
   );
 };
 
-export default ResourceToolbar;
+export default withRBAC(ResourceToolbar, ['EmployeeRate']);

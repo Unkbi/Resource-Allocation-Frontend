@@ -46,10 +46,10 @@ const AddTeamForm = ({
       (formType === 'edit_team' && !permissions['Team']?.u) ||
         (formType === 'add_team' && !permissions['Team']?.c)
     );
-    if (!readOnly && !resources) {
+    if (!resources) {
       dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     }
-  }, [readOnly]);
+  }, []);
 
   useEffect(() => {
     if (initialData) {

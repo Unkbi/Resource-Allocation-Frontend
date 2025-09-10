@@ -54,6 +54,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 import { StatusPill } from '@/app/components/Settings/styled';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
+import RatesTable from '@/app/components/Resources/RatesTable';
 
 const demoResources = {
   result: [
@@ -700,7 +701,16 @@ function Resources({ permissions }) {
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog('Edit Rate', 'edit_rates', params.row);
+          permissions['EmployeeRate']?.u
+            ? handleOpenDialog('Edit Rate', 'edit_rates', params.row)
+            : handleOpenDialog(
+                `Rate: ${params.value}`,
+                'edit_rates',
+                params.row,
+                {
+                  readOnly: true,
+                }
+              );
         };
         return (
           <Box
@@ -810,6 +820,7 @@ function Resources({ permissions }) {
           status && (
             <Box
               sx={{
+                height: '100%',
                 paddingLeft: '20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -817,49 +828,60 @@ function Resources({ permissions }) {
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog('Edit Rate', 'edit_rates', params.row);
-                    }}
-                    sx={menuItemStyle}
+              {(permissions['EmployeeRate']?.u ||
+                permissions['EmployeeRate']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
                   >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
 
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setRatesDelete({
-                        id: params.row.Id,
-                        WorkLocation: params.row.WorkLocation,
-                        HRLevel: params.row.HRLevel,
-                      });
-                    }}
-                    sx={menuItemStyle}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                   >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </Box>
+                    {permissions['EmployeeRate']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Rate',
+                            'edit_rates',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['EmployeeRate']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setRatesDelete({
+                            id: params.row.Id,
+                            WorkLocation: params.row.WorkLocation,
+                            HRLevel: params.row.HRLevel,
+                          });
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -877,11 +899,20 @@ function Resources({ permissions }) {
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog(
-            'Edit Organization',
-            'edit_organization',
-            params.row
-          );
+          permissions['Organization']?.u
+            ? handleOpenDialog(
+                'Edit Organization',
+                'edit_organization',
+                params.row
+              )
+            : handleOpenDialog(
+                `Organization: ${params.value}`,
+                'edit_organization',
+                params.row,
+                {
+                  readOnly: true,
+                }
+              );
         };
 
         return (
@@ -922,6 +953,7 @@ function Resources({ permissions }) {
           status && (
             <Box
               sx={{
+                height: '100%',
                 paddingLeft: '20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -929,53 +961,60 @@ function Resources({ permissions }) {
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog(
-                        'Edit Organization',
-                        'edit_organization',
-                        params.row
-                      );
-                    }}
-                    sx={menuItemStyle}
+              {(permissions['Organization']?.u ||
+                permissions['Organization']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
                   >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
 
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setDeleteTarget({
-                        id: params.row.Id,
-                        name: params.row.Name,
-                        type: 'organizations',
-                      });
-                    }}
-                    sx={menuItemStyle}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                   >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </Box>
+                    {permissions['Organization']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Organization',
+                            'edit_organization',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['Organization']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setDeleteTarget({
+                            id: params.row.Id,
+                            name: params.row.Name,
+                            type: 'organizations',
+                          });
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -1441,7 +1480,7 @@ function Resources({ permissions }) {
         );
       case 'rates':
         return (
-          <TeamsTable
+          <RatesTable
             loading={employeeRatesLoading}
             columns={employeeRatesColumns}
             rows={
@@ -1487,4 +1526,9 @@ function Resources({ permissions }) {
   );
 }
 
-export default withRBAC(Resources, ['Resource', 'Team', 'Organization']);
+export default withRBAC(Resources, [
+  'Resource',
+  'Team',
+  'Organization',
+  'EmployeeRate',
+]);

@@ -22,12 +22,17 @@ export const BaseStyledInput = styled(TextField)(
             : '#D6DCE1 !important',
           color: readOnly
             ? theme.palette.readonly.contrastText
-            : '#6B7280 !important',
+            : 'currentColor !important',
           WebkitTextFillColor: readOnly
             ? theme.palette.readonly.contrastText
-            : '#6B7280 !important',
+            : 'currentColor !important',
         },
       },
+    },
+    '& .MuiInputBase-adornedStart': {
+      color: readOnly
+        ? theme.palette.readonly?.contrastText
+        : 'currentColor !important',
     },
     '& fieldset': {
       borderColor: error ? theme.palette.error.main : '#D6DCE1',

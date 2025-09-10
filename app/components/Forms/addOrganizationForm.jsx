@@ -1,15 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
+import { withRBAC } from '../HOC/withRBAC';
+import StyledAutocomplete from '../Select/Autocomplete';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
-const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
+const AddOrganizationForm = ({
+  formikProps,
+  setFormValue = () => {},
+  permissions,
+}) => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
+  const [readOnly, setReadOnly] = useState(true);
+  const { formType } = useSelector(state => state.globalDialog.formState);
 
   const {
     values,
@@ -34,25 +43,28 @@ const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
   ];
 
   useEffect(() => {
-    if (!resources || !resources?.result) {
-      dispatch(fetchAllResources());
+    setReadOnly(
+      (formType === 'edit_organization' && !permissions['Organization']?.u) ||
+        (formType === 'add_organization' && !permissions['Organization']?.c)
+    );
+    if (!resources.length) {
+      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     }
   }, []);
 
   useEffect(() => {
-  if (initialData) {
-    const normalizedData = {
-      Id: initialData.id || '',
-      Name: initialData.Name || '',
-      Status: initialData.Status || 'Active',
-      // add other fields as needed
-    };
-    setFormValue(normalizedData);
-    resetForm({ values: normalizedData });
-    setTouched({});
-  }
-}, [initialData, resources]);
-
+    if (initialData) {
+      const normalizedData = {
+        Id: initialData.id || '',
+        Name: initialData.Name || '',
+        Status: initialData.Status || 'Active',
+        // add other fields as needed
+      };
+      setFormValue(normalizedData);
+      resetForm({ values: normalizedData });
+      setTouched({});
+    }
+  }, [initialData, resources]);
 
   return (
     <Box>
@@ -61,6 +73,8 @@ const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           name="Name"
           placeholder="Enter team name"
           value={values.Name || ''}
@@ -79,19 +93,22 @@ const AddOrganizationForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>
           Status <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <CustomSelect
+        <StyledAutocomplete
+          disabled={readOnly}
           name="Status"
+          label="Status"
+          placeholder="Select"
           options={statusOptions}
           value={values.Status || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          width="100%"
-          error={touched.Status && Boolean(errors.Status)}
-          helperText={errors.Status}
+          formikProps={formikProps}
+          required
+          FormHelperTextProps={{
+            style: { marginLeft: 0, marginTop: 4 },
+          }}
         />
       </Box>
     </Box>
   );
 };
 
-export default AddOrganizationForm;
+export default withRBAC(AddOrganizationForm, ['Organization']);
