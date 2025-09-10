@@ -154,7 +154,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>{PORTFOLIO_DISPLAY_NAME}</StyledLabel>
         <StyledAutocomplete
           name="PortfolioId"
-          label="Select Portfolio Name"
+          label={`Select ${PORTFOLIO_DISPLAY_NAME} Name`}
           options={portfolioOptions}
           value={values.PortfolioId}
           formikProps={formikProps}
