@@ -300,7 +300,7 @@ export default function RoleManagementPage() {
   const handleAddNewRole = () => {
     dispatch(
       openDialog({
-        title: 'Add New Role',
+        title: 'Add Role',
         submitButtonText: 'Create Role',
         cancelButtonText: 'Cancel',
         formType: 'add_role',
@@ -347,7 +347,7 @@ export default function RoleManagementPage() {
   const handleAddNewPrivilege = () => {
     dispatch(
       openDialog({
-        title: 'Add New Privilege',
+        title: 'Add Privilege',
         submitButtonText: 'Create Privilege',
         cancelButtonText: 'Cancel',
         formType: 'add_privilege',
