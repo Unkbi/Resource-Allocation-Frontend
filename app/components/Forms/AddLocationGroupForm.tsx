@@ -3,12 +3,9 @@
 import { useEffect, useState } from 'react';
 import { TextField, Box, Autocomplete } from '@mui/material';
 import StyledLabel from '../Label/StyledLabel';
-import {
-  StyledInput,
-} from '../Input/StyledInput';
+import { StyledInput } from '../Input/StyledInput';
 import { useSelector, useDispatch } from 'react-redux';
 import { FormikProps } from 'formik';
-
 
 interface FormValues {
   LocationGroup: string;
@@ -20,10 +17,10 @@ interface AddLocationGroupFormProps {
 }
 
 const AddLocationGroupForm = ({ formikProps }: AddLocationGroupFormProps) => {
-  const { values, handleChange, handleBlur, setFieldValue,touched,errors} = formikProps;
+  const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
+    formikProps;
   const dispatch = useDispatch();
   const [locationGroupName, setLocationGroupName] = useState('');
-
 
   return (
     <Box>
@@ -36,17 +33,20 @@ const AddLocationGroupForm = ({ formikProps }: AddLocationGroupFormProps) => {
           name="LocationGroup"
           placeholder="Enter Name"
           fullWidth
-          onChange={e => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
             setLocationGroupName(e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
           value={values.LocationGroup || ''}
           error={touched.LocationGroup && Boolean(errors.LocationGroup)}
           helperText={touched.LocationGroup && errors.LocationGroup}
         />
       </Box>
-
     </Box>
   );
 };

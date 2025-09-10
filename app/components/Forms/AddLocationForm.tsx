@@ -4,7 +4,7 @@ import { Box, TextField, Autocomplete } from '@mui/material';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
-import { Location,LocationGroup } from '@/app/types';
+import { Location, LocationGroup } from '@/app/types';
 import { FormikProps } from 'formik';
 import {
   StyledCommentInput,
@@ -28,7 +28,7 @@ const AddLocationForm = ({ formikProps }: AddLocationFormProps) => {
     formikProps;
   const { resources } = useSelector((state: any) => state.resources);
   // const roles: Role[] = useSelector((state: any) => state.rbac.roles);
-  const location_group : any = [];
+  const location_group: any = [];
   const [locationName, setLocationName] = useState('');
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -50,19 +50,23 @@ const AddLocationForm = ({ formikProps }: AddLocationFormProps) => {
           Location Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
-                  as={TextField}
-                  name="Location"
-                  placeholder="Enter Name "
-                  fullWidth
-                  onChange={e => {
-                    handleChange(e);
-                    setLocationName(e.target.value);
-                  }}
-                  onBlur={handleBlur}
-                  value={values.Location || ''}
-                  error={touched.Location && Boolean(errors.Location)}
-                  helperText={touched.Location && errors.Location}
-                />
+          as={TextField}
+          name="Location"
+          placeholder="Enter Name "
+          fullWidth
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            handleChange(e);
+            setLocationName(e.target.value);
+          }}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
+          value={values.Location || ''}
+          error={touched.Location && Boolean(errors.Location)}
+          helperText={touched.Location && errors.Location}
+        />
       </Box>
 
       <Box sx={{ pb: 2 }}>
