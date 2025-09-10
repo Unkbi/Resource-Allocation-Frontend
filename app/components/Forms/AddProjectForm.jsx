@@ -142,6 +142,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Name"
+          placeholder="Enter Project Name"
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -153,7 +154,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>{PORTFOLIO_DISPLAY_NAME}</StyledLabel>
         <StyledAutocomplete
           name="PortfolioId"
-          // label={PORTFOLIO_DISPLAY_NAME}
+          label="Select Portfolio Name"
           options={portfolioOptions}
           value={values.PortfolioId}
           formikProps={formikProps}
@@ -163,7 +164,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>Project Sponsor</StyledLabel>
         <StyledAutocomplete
           name="ProjectSponsor"
-          // label="Project Sponsor"
+          label="Select Project Sponsor"
           options={resourceTypeOptions}
           value={values.ProjectSponsor}
           formikProps={formikProps}
@@ -175,6 +176,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           type="number"
           name="Budget"
           value={values.Budget || ''}
+          placeholder="Enter Budget"
           onChange={e => {
             const input = e.target.value;
             const parsed = input === '' ? null : Number(input);
@@ -197,7 +199,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>Project Manager</StyledLabel>
         <StyledAutocomplete
           name="ProjectManager"
-          // label="Project Manager"
+          label="Select Project Manager"
           options={resourceTypeOptions}
           value={values.ProjectManager}
           formikProps={formikProps}
@@ -208,6 +210,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Location"
+          placeholder="Enter Location"
           value={values.Location || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -231,7 +234,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="Type"
-            // label="Type"
+            label="Select Type"
             options={projectTypeOptions}
             value={values.Type}
             formikProps={formikProps}
@@ -244,7 +247,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="AllowOvertime"
-            // label="Allow Overtime"
+            label="Select Allow Overtime"
             options={allowOverTimeOptions}
             value={values.AllowOvertime}
             formikProps={formikProps}
