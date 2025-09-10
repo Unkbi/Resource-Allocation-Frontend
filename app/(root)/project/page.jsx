@@ -98,10 +98,10 @@ export default function Project() {
   useEffect(() => {
     new Promise((resolve, reject) => {})
       .then(res => {
-        console.log('✅ Organisation created successfully:', res);
+        console.log(' Organisation created successfully:', res);
       })
       .catch(err => {
-        console.error('❌ Failed to create organisation:', err);
+        console.error(' Failed to create organisation:', err);
       });
   }, [dispatch]);
 

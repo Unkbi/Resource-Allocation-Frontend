@@ -49,6 +49,15 @@ export const createRoleAssignment = async (newData: any) => {
   return response.data;
 };
 
+export const updateRoleAssigment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdateRoleAssignment`,
+    updatedFields
+  );
+  return response.data;
+}
+
+
 export const deleteRoleAssignment = async (User :string , Role:string) => {
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/DeleteUserRole`,

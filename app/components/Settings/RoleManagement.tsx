@@ -331,14 +331,16 @@ export default function RoleManagementPage() {
     );
   };
 
-  const handleEditRoleAssignment = (assignment: RoleAssignment) => {
+  const handleEditRoleAssignment = (row: RoleAssignment) => {
+   const roleName = row.Role?.split('/')[1] || row.Role;
+   const userId = row.User?.split('/')[1] || row.User;
     dispatch(
       openDialog({
         title: 'Edit Role Assignment',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_role_assignment',
-        initialData: assignment,
+        initialData:  { ...row, Role: roleName, User: userId }
       })
     );
   };
@@ -557,9 +559,24 @@ export default function RoleManagementPage() {
       headerName: 'Role',
       flex: 1,
       renderCell: (params: any) => {
-        const role = params.value?.replace('agentlang.auth$Role/', '') || '';
-        return <Typography sx={{ ...commonCellStyle }}>{role}</Typography>;
-      },
+         const handleNameClick = () => {
+            handleEditRoleAssignment(params.row);
+        };
+         const role = params.value?.replace('agentlang.auth$Role/', '') || '';
+          return (
+          <Box
+          onClick={handleNameClick}
+          sx={{...commonCellStyle ,
+            cursor: 'pointer', 
+            '&:hover': {
+            textDecoration: 'underline',
+          }, 
+        }}
+        >
+          <EllipsisNameCell value={role} showAvatar={false} />
+          </Box>
+          );
+        }
     },
     {
       field: 'User',
@@ -616,7 +633,6 @@ export default function RoleManagementPage() {
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
       <StyledMenuItem
-        disabled
         onClick={() => {
           const assignment = roleAssignments.find(
             (r: any) => r.__path__ === row.__path__
