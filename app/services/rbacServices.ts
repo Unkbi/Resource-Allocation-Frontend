@@ -126,8 +126,8 @@ export const fetchPrivilegeAssignments = async () => {
 
 export const createPrivilegeAssignment = async (newData: any) => {
    const payload = {
-   roleName: newData.Role,
-   permissionId: newData.Permission,
+   roleName: newData.roleName,
+   permissionId: newData.permissionId,
   };
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/AddPermissionToRole`,
