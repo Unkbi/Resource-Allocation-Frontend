@@ -57,7 +57,7 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Name"
-          placeholder={`Enter ${PORTFOLIO_DISPLAY_NAME.toLowerCase()} name`}
+          placeholder={`Enter ${PORTFOLIO_DISPLAY_NAME} Name`}
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={e => {

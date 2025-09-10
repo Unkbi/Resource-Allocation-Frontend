@@ -64,7 +64,7 @@ const AddTeamForm = ({ formikProps, setFormValue = () => {} }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Name"
-          placeholder="Enter team name"
+          placeholder="Enter Team Name"
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={e => {
