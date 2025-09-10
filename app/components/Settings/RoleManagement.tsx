@@ -211,7 +211,6 @@ export default function RoleManagementPage() {
   const searchParams = useSearchParams();
   const meta = useSelector((state: any) => state.rbac.meta);
 
-
   useEffect(() => {
     if (!meta) {
       dispatch({ type: GET_META });
@@ -332,15 +331,15 @@ export default function RoleManagementPage() {
   };
 
   const handleEditRoleAssignment = (row: RoleAssignment) => {
-   const roleName = row.Role?.split('/')[1] || row.Role;
-   const userId = row.User?.split('/')[1] || row.User;
+    const roleName = row.Role?.split('/')[1] || row.Role;
+    const userId = row.User?.split('/')[1] || row.User;
     dispatch(
       openDialog({
         title: 'Edit Role Assignment',
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_role_assignment',
-        initialData:  { ...row, Role: roleName, User: userId }
+        initialData: { ...row, Role: roleName, User: userId },
       })
     );
   };
@@ -377,11 +376,10 @@ export default function RoleManagementPage() {
     );
   };
 
-  const handleEditPrivilegeAssignments = (
-    row: PrivilegeAssignment
-  ) => {
-  const roleName = row.Role?.split('/')[1] || row.Role;
-  const permissionName = row.Permission?.split('Permission/')[1] || row.Permission;
+  const handleEditPrivilegeAssignments = (row: PrivilegeAssignment) => {
+    const roleName = row.Role?.split('/')[1] || row.Role;
+    const permissionName =
+      row.Permission?.split('Permission/')[1] || row.Permission;
     dispatch(
       openDialog({
         title: 'Edit Privilege Assignment',
@@ -528,7 +526,7 @@ export default function RoleManagementPage() {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
+      {/* <StyledMenuItem
         disabled
         onClick={() => {
           const role = roles.find(r => r.name === id);
@@ -540,7 +538,7 @@ export default function RoleManagementPage() {
       >
         <Pencil sx={{ mr: 1, fontSize: 18 }} />
         Edit
-      </StyledMenuItem>
+      </StyledMenuItem> */}
       <StyledMenuItem
         onClick={() => {
           handleDeleteRole(id);
@@ -559,24 +557,25 @@ export default function RoleManagementPage() {
       headerName: 'Role',
       flex: 1,
       renderCell: (params: any) => {
-         const handleNameClick = () => {
-            handleEditRoleAssignment(params.row);
+        const handleNameClick = () => {
+          handleEditRoleAssignment(params.row);
         };
-         const role = params.value?.replace('agentlang.auth$Role/', '') || '';
-          return (
+        const role = params.value?.replace('agentlang.auth$Role/', '') || '';
+        return (
           <Box
-          onClick={handleNameClick}
-          sx={{...commonCellStyle ,
-            cursor: 'pointer', 
-            '&:hover': {
-            textDecoration: 'underline',
-          }, 
-        }}
-        >
-          <EllipsisNameCell value={role} showAvatar={false} />
+            onClick={handleNameClick}
+            sx={{
+              ...commonCellStyle,
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            <EllipsisNameCell value={role} showAvatar={false} />
           </Box>
-          );
-        }
+        );
+      },
     },
     {
       field: 'User',
@@ -665,22 +664,23 @@ export default function RoleManagementPage() {
       flex: 1.5,
       renderCell: (params: any) => {
         const handleNameClick = () => {
-            handleEditPrivilege(params.row);
+          handleEditPrivilege(params.row);
         };
         return (
           <Box
-          onClick={handleNameClick}
-          sx={{...commonCellStyle ,
-            cursor: 'pointer', 
-            '&:hover': {
-            textDecoration: 'underline',
-          }, 
-        }}
-        >
-          <EllipsisNameCell value={params.value} showAvatar={false} />
+            onClick={handleNameClick}
+            sx={{
+              ...commonCellStyle,
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            <EllipsisNameCell value={params.value} showAvatar={false} />
           </Box>
-          );
-        }
+        );
+      },
     },
     {
       field: 'resourceFqName',
@@ -801,21 +801,22 @@ export default function RoleManagementPage() {
         const handleNameClick = () => {
           handleEditPrivilegeAssignments(params.row);
         };
-       const roleName = params.value?.split('/')[1]; 
+        const roleName = params.value?.split('/')[1];
         return (
           <Box
-          onClick={handleNameClick}
-          sx={{...commonCellStyle ,
-            cursor: 'pointer', 
-            '&:hover': {
-            textDecoration: 'underline',
-          }, 
-        }}
-        >
-          <EllipsisNameCell value={roleName} showAvatar={false} />
+            onClick={handleNameClick}
+            sx={{
+              ...commonCellStyle,
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            <EllipsisNameCell value={roleName} showAvatar={false} />
           </Box>
-          );
-         }
+        );
+      },
     },
     {
       field: 'Permission',
