@@ -15,6 +15,7 @@ import {
   fetchUser,
   updatePrivilege,
   updatePrivilegeAssignment,
+  updateRoleAssigment,
 } from '@/app/services/rbacServices';
 import { call, put, select, take, takeEvery } from 'redux-saga/effects';
 import {
@@ -45,6 +46,7 @@ import {
   GET_USER,
   GET_USER_AND_PRIVILEGES,
   GET_META,
+  UPDATE_ROLESASSIGNMENT,
 } from '../actions/rbacActions';
 import { getUser } from '@/app/services/authServices';
 import { buildLoginUserPrivileges } from '@/app/utils/authUtils';
@@ -114,6 +116,21 @@ function* createRoleAssignmentSaga(action: any): Generator<any, void, any> {
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to create Role Assignment : ', error);
+    if (reject) reject(error);
+  } finally {
+    yield put(setLoading(false));
+  }
+}
+
+function* updateRoleAssignmentSaga(action: any): Generator<any, void, any> {
+  const { updatedFields, resolve, reject } = action.payload;
+  try {
+    yield put(setLoading(true));
+    const response = yield call(updateRoleAssigment, updatedFields);
+    yield call(fetchRoleAssignmentsSaga);
+    if (resolve) resolve(response);
+  } catch (error) {
+    console.error('Saga error, Failed to update Role Assignment : ', error);
     if (reject) reject(error);
   } finally {
     yield put(setLoading(false));
@@ -229,10 +246,10 @@ function* createPrivilegeAssignmentSaga(
 function* updatePrivilegeAssignmentSaga(
   action: any
 ): Generator<any, void, any> {
-  const { name, updatedFields, resolve, reject } = action.payload;
+  const { updatedFields, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
-    const response = yield call(updatePrivilegeAssignment, name, updatedFields);
+    const response = yield call(updatePrivilegeAssignment, updatedFields);
     yield call(fetchPrivilegeAssignmentsSaga);
     if (resolve) resolve(response);
   } catch (error) {
@@ -349,6 +366,7 @@ export function* rbacSaga() {
   yield takeEvery(DELETE_ROLE, deleteRoleSaga);
   yield takeEvery(FETCH_ROLESASSIGNMENTS, fetchRoleAssignmentsSaga);
   yield takeEvery(CREATE_ROLESASSIGNMENT, createRoleAssignmentSaga);
+  yield takeEvery(UPDATE_ROLESASSIGNMENT, updateRoleAssignmentSaga);
   yield takeEvery(DELETE_ROLESASSIGNMENT, deleteRoleAssignmentSaga);
   yield takeEvery(FETCH_PRIVILEGES, fetchPrivilegesSaga);
   yield takeEvery(CREATE_PRIVILEGE, createPrivilegeSaga);

@@ -133,6 +133,7 @@ import {
   GET_USER,
   UPDATE_PRIVILEGE,
   UPDATE_PRIVILEGEASSIGNMENT,
+  UPDATE_ROLESASSIGNMENT,
 } from '@/app/redux/actions/rbacActions';
 import { fetchAllOrganisations } from '@/app/services/organisationServices';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
@@ -2279,7 +2280,54 @@ const AllocationForm = () => {
             });
         }
         break;
-
+      case 'edit_role_assignment':  {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const updatedFields = {
+          userRole : initialData.__path__,
+          userId : values.Assignee?.id || null, 
+          roleName: values.Role,
+        };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_ROLESASSIGNMENT,
+              payload: {
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Role assignment updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.userId));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            'Failed to update role assignment.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
       case 'add_privilege': {
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
@@ -2454,8 +2502,9 @@ const AllocationForm = () => {
         });
 
         const updatedFields = {
-          Role: values.Role || null,
-          Permission: values.Permission || null,
+          rolePermission: initialData.__path__,
+          permissionId: values.Permission,
+          roleName: values.Role,
         };
 
         try {
@@ -2463,7 +2512,6 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGEASSIGNMENT,
               payload: {
-                name: initialData?.Name,
                 updatedFields,
                 resolve,
                 reject,
@@ -2480,7 +2528,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.Name));
+          dispatch(setHighlightedRowId(response.result?.roleName));
           dispatch(closeDialog());
         } catch (error) {
           const message =
