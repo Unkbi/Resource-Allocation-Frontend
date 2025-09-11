@@ -1137,7 +1137,7 @@ export default function Resources() {
               })
             );
           } else {
-            dispatch(deleteTeam(teamId));
+            dispatch(deleteTeam({teamId}));
             dispatch(fetchAllTeams());
             dispatch(
               showToast({

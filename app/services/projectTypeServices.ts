@@ -31,9 +31,12 @@ export const updateProjectType = async (postData: any, id: string) => {
   return response.data;
 };
 
-export const deleteProjectType = async (id: string) => {
+export const deleteProjectType = async (id: string,hardDelete: boolean = true) => {
   const response = await axiosInstance.delete(
-    `${API_PROJECT_PORTFOLIO}/ProjectType/${id}`
+    `${API_PROJECT_PORTFOLIO}/ProjectType/${id}`,
+    {
+       params: { purge: hardDelete },
+    }
   );
   return response.data;
 };
@@ -54,9 +57,12 @@ export const updateProjectTypeGroups = async (postData: any, id: string) => {
   return response.data;
 };
 
-export const deleteProjectTypeGroups = async (id: string) => {
+export const deleteProjectTypeGroups = async (id: string,hardDelete: boolean = true) => {
   const response = await axiosInstance.delete(
-    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`,
+    {
+      params: { purge: hardDelete },
+    } 
   );
   return response.data;
 };

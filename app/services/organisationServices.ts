@@ -54,9 +54,12 @@ export const updateOrganisation = async (
   return response.data;
 };
 
-export const deleteOrganisation = async (organisationId: string) => {
+export const deleteOrganisation = async (organisationId: string,hardDelete: boolean = true) => {
   const response = await axiosInstance.delete(
-    `${API_PROJECT_PORTFOLIO}/Organization/${organisationId}`
+    `${API_PROJECT_PORTFOLIO}/Organization/${organisationId}`,
+    {
+     params: { hardDelete },
+    }
   );
   return response.data;
 };
