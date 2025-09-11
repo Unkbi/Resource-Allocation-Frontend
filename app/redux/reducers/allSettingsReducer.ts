@@ -10,6 +10,8 @@ const initialState: AllSettings = {
   allocationTheme: [],
   projectTypes: [],
   projectTypeGroups: [],
+  location: [],
+  locationGroups: [],
   scalarSettings: null,
   loading: false,
   error: null,
@@ -27,6 +29,14 @@ const allSettingsSlice = createSlice({
       state.projectTypeGroups = formatAPIResponse(
         'ProjectTypeGroup',
         action.payload.ProjectTypeGroup || []
+      );
+      state.location = formatAPIResponse(
+        'Location',
+        action.payload.Location || []
+      );
+      state.locationGroups = formatAPIResponse(
+        'LocationGroup',
+        action.payload.LocationGroup || []
       );
 
       const scalarSettingArr = formatAPIResponse(
@@ -79,6 +89,47 @@ const allSettingsSlice = createSlice({
         };
       }
     },
+    setLocation: (state, action) => {
+      state.location = formatAPIResponse('Location', action.payload);
+    },
+    clearLocation: state => {
+      state.location = [];
+    },
+    updateLocation: (state, action) => {
+      const updatedLocation = action.payload;
+      if (!state.location) return;
+      const index = state.location.findIndex(
+        location => location.Id === updatedLocation.Id
+      );
+      if (index !== -1) {
+        state.location[index] = {
+          ...state.location[index],
+          ...updatedLocation,
+        };
+      }
+    },
+    setLocationGroup: (state, action) => {
+      state.locationGroups = formatAPIResponse(
+        'LocationGroup',
+        action.payload
+      );
+    },
+    clearLocationGroups: state => {
+      state.locationGroups = [];
+    },
+    updateLocationGroup: (state, action) => {
+      const updatedLocationGroup = action.payload;
+      if (!state.locationGroups) return;
+      const index = state.locationGroups.findIndex(
+        locationGroup => locationGroup.Id === updatedLocationGroup.Id
+      );
+      if (index !== -1) {
+        state.locationGroups[index] = {
+          ...state.locationGroups[index],
+          ...updatedLocationGroup,
+        };
+      }
+    },
     setScalarSettings: (state, action) => {
       const newSettings = formatAPIResponse(
         'ScalarSetting',
@@ -118,6 +169,12 @@ export const {
   updateProjectTypeGroup,
   setScalarSettings,
   clearScalarSettings,
+  setLocation,
+  clearLocation,
+  updateLocation,
+  setLocationGroup,
+  clearLocationGroups,
+  updateLocationGroup,
   setLoading,
   setError,
 } = allSettingsSlice.actions;

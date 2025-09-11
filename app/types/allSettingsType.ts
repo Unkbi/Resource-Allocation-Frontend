@@ -1,4 +1,5 @@
 import { ProjectType, ProjectTypeGroup } from './projectTypesType';
+import { Location, LocationGroup } from './locationTypes';
 import { AllocationRange } from './settingTypes';
 
 export interface ScalarSettings {
@@ -16,6 +17,8 @@ export interface AllSettings {
   allocationTheme: AllocationRange[];
   projectTypes: ProjectType[];
   projectTypeGroups: ProjectTypeGroup[];
+  location: Location[];
+  locationGroups: LocationGroup[];
   scalarSettings: ScalarSettings | null;
   loading: boolean;
   error: string | null;
