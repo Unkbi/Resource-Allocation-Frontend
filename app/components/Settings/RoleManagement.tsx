@@ -924,8 +924,7 @@ export default function RoleManagementPage() {
       style={{
         fontFamily: 'open sans',
         padding: '1.5%',
-        backgroundColor: 'rgba(217, 217, 217, 0.27)',
-        // height: 'calc(100vh - 34px)',        
+        backgroundColor: 'rgba(217, 217, 217, 0.27)',        
         boxSizing: 'border-box',
       }}
     >
