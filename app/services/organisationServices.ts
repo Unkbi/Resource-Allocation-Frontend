@@ -54,11 +54,11 @@ export const updateOrganisation = async (
   return response.data;
 };
 
-export const deleteOrganisation = async (organisationId: string) => {
+export const deleteOrganisation = async (organisationId: string,purge: boolean = true) => {
   const response = await axiosInstance.delete(
     `${API_PROJECT_PORTFOLIO}/Organization/${organisationId}`,
     {
-     params: { purge: true },
+     params: { purge },
     }
   );
   return response.data;

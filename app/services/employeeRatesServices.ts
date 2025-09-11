@@ -45,11 +45,11 @@ export const updateEmployeeRates = async (
   return response.data;
 };
 
-export const deleteEmployeeRates = async (rateId: string) => {
+export const deleteEmployeeRates = async (rateId: string,purge: boolean = true) => {
   const response = await axiosInstance.delete(
     `${API_PROJECT_PORTFOLIO}/EmployeeRate/${rateId}`,
     {
-      params : {purge :true} ,
+      params : {purge} ,
     }
   );
   return response.data;

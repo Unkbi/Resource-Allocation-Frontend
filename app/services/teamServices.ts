@@ -194,15 +194,18 @@ export const updateTeam = createAsyncThunk<
 
 export const deleteTeam = createAsyncThunk<
   string,
-  string,
+  string | { teamId: string; purge?: boolean }, 
   { rejectValue: string }
->('/team/delete', async (teamId, { rejectWithValue }) => {
-  try {
+>('/team/delete',async (arg, { rejectWithValue }) => {
+    try {
+      const teamId = typeof arg === 'string' ? arg : arg.teamId;
+      const purge = typeof arg === 'string' ? true  : arg.purge ?? true ;
     await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`, {
-        params: { purge: true }, 
+        params: { purge },
       });
-    return teamId;
-  } catch (error: any) {
+
+      return teamId;
+    } catch (error: any) {
     return rejectWithValue(error.response?.data || 'Failed to delete team');
   }
 });
