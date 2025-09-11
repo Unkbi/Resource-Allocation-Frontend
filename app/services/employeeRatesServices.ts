@@ -49,7 +49,7 @@ export const deleteEmployeeRates = async (rateId: string,hardDelete: boolean = t
   const response = await axiosInstance.delete(
     `${API_PROJECT_PORTFOLIO}/EmployeeRate/${rateId}`,
     {
-      params : {hardDelete} ,
+      params: { purge: hardDelete },
     }
   );
   return response.data;
