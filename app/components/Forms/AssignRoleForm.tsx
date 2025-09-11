@@ -18,14 +18,19 @@ interface FormValues {
 
 interface AssignRoleFormProps {
   formikProps: FormikProps<FormValues>;
+  setFormValue?: (values: FormValues) => void;
 }
 
-const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
+const AssignRoleForm = ({ formikProps , setFormValue = () => {}}: AssignRoleFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
+  const { initialData } = useSelector((state: any) => state.globalDialog.formState);
   const roles: Role[] = useSelector((state: any) => state.rbac.roles);
   const user: UserRbac[] = useSelector((state: any) => state.rbac.user) 
   const dispatch = useDispatch();
+   const roleAssignments = useSelector(
+    (state: any) => state.rbac.roleAssignments
+  );
 
 
   const commonAutocompleteStyles = {
@@ -35,6 +40,23 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
     '& .MuiAutocomplete-popper': { fontSize: '12px' },
     '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
   };
+
+   useEffect(() => {
+    if (initialData) {
+    const userId = initialData.User?.replace("agentlang.auth$User/", "");
+    const roleName = initialData.Role?.split("/")[1] || initialData.Role;
+    const assigneeUser = user.find((u: UserRbac) => u.id === userId) || null;
+    const rowData: FormValues = {
+      Assignee: assigneeUser,
+      Role: roleName || '',
+      Status: initialData.Status || 'Active',
+    };
+    setFormValue(rowData);
+    formikProps.resetForm({ values: rowData });
+    formikProps.setTouched({});
+  }
+}, [initialData, user]);
+
 
     useEffect(() => {
     if (!user || user.length === 0) {
@@ -46,6 +68,9 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
       setFieldValue(field, newValue || '');
     };
 
+    const assignedUserIds = new Set(roleAssignments.map((r :any) => r.User.replace("agentlang.auth$User/", ""))); 
+    const filteredUsers = user.filter(u => !assignedUserIds.has(u.id));
+
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
@@ -55,7 +80,7 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
-          options={user}
+          options={filteredUsers}
           getOptionLabel={(option: UserRbac) => {
           const name = [option?.firstName, option?.lastName].filter(Boolean).join(' ');
           return name || option?.email || '';

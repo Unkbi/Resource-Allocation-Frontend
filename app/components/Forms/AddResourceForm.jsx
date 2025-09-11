@@ -318,7 +318,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledInput
             name="FirstName"
-            placeholder="Enter first name"
+            placeholder="Enter First Name"
             value={values.FirstName || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -336,7 +336,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledInput
             name="LastName"
-            placeholder="Enter last name"
+            placeholder="Enter Last Name"
             value={values.LastName || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -354,7 +354,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="PreferredFirstName"
-          placeholder="Enter preferred first name"
+          placeholder="Enter Preferred First Name"
           value={values.PreferredFirstName || ''}
           onChange={handleChange}
           onBlur={e => {
@@ -375,7 +375,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Email"
-          placeholder="Enter email"
+          placeholder="Enter Email"
           value={values.Email || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -398,7 +398,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledLabel>Phone Number</StyledLabel>
           <StyledInput
             name="PhoneNumber"
-            placeholder="Enter phone number"
+            placeholder="Enter Phone Number"
             value={values.PhoneNumber || ''}
             onChange={e => {
               const numericOnly = e.target.value.replace(/\D/g, '');
@@ -459,7 +459,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledInput
             name="Role"
-            placeholder="Enter role"
+            placeholder="Enter Role"
             value={values.Role || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -486,7 +486,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledLabel>HR Level</StyledLabel>
           <StyledInput
             name="HRLevel"
-            placeholder="Enter level"
+            placeholder="Enter HR Level"
             value={values.HRLevel || ''}
             onChange={e => {
               const input = e.target.value;
@@ -506,7 +506,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="Type"
-            label="Type"
+            label="Select Type"
             placeholder="Select type"
             value={values.Type || ''}
             options={typeOptions}
@@ -597,7 +597,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         </StyledLabel>
         <StyledAutocomplete
           name="Team"
-          label="Team"
+          label="Select Team"
           placeholder="Select team"
           options={teamListOptions}
           value={values.Team || ''}
@@ -610,7 +610,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <StyledLabel sx={{ flex: 1 }}>Manager</StyledLabel>
         <StyledAutocomplete
           name="Manager"
-          label="Manager"
+          label="Select Manager"
           placeholder="Select manager"
           options={resourceListOptions}
           value={values.Manager || ''}

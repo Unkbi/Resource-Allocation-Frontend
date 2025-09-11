@@ -7,6 +7,7 @@ import {
   deletePrivilegeAssignment,
   deleteRole,
   deleteRoleAssignment,
+  fetchMeta,
   fetchPrivilegeAssignments,
   fetchPrivileges,
   fetchRoleAssignments,
@@ -14,10 +15,12 @@ import {
   fetchUser,
   updatePrivilege,
   updatePrivilegeAssignment,
+  updateRoleAssigment,
 } from '@/app/services/rbacServices';
 import { call, put, takeEvery } from 'redux-saga/effects';
 import {
   setLoading,
+  setMeta,
   setPrivilegeAssignments,
   setPrivileges,
   setRoleAssignments,
@@ -39,7 +42,9 @@ import {
   FETCH_ROLESASSIGNMENTS,
   UPDATE_PRIVILEGE,
   UPDATE_PRIVILEGEASSIGNMENT,
-  GET_USER
+  GET_USER,
+  GET_META,
+  UPDATE_ROLESASSIGNMENT
 } from '../actions/rbacActions';
 
 function* fetchRolesSaga(): Generator<any, void, any> {
@@ -107,6 +112,22 @@ function* createRoleAssignmentSaga(action: any): Generator<any, void, any> {
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to create Role Assignment : ', error);
+    if (reject) reject(error);
+  } finally {
+    yield put(setLoading(false));
+  }
+}
+
+function* updateRoleAssignmentSaga(action: any): Generator<any, void, any> {
+  const { updatedFields, resolve, reject } = action.payload;
+  try {
+    yield put(setLoading(true));
+    const response = yield call(updateRoleAssigment, updatedFields);
+    yield call(fetchRoleAssignmentsSaga);
+    if (resolve) resolve(response);
+  }
+  catch (error) {
+    console.error('Saga error, Failed to update Role Assignment : ', error);
     if (reject) reject(error);
   } finally {
     yield put(setLoading(false));
@@ -227,12 +248,11 @@ function* createPrivilegeAssignmentSaga(
 function* updatePrivilegeAssignmentSaga(
   action: any
 ): Generator<any, void, any> {
-  const { name, updatedFields, resolve, reject } = action.payload;
+  const {updatedFields, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
     const response = yield call(
       updatePrivilegeAssignment,
-      name,
       updatedFields
     );
     yield call(fetchPrivilegeAssignmentsSaga);
@@ -280,6 +300,19 @@ function* getUserSaga(): Generator<any, void, any> {
   }
 }
 
+function* getMetaSaga(): Generator<any, void, any> {
+  try {
+    yield put(setLoading(true));
+    const responses = yield call(fetchMeta);
+    yield put(setMeta(responses));
+  }
+  catch (error) {
+    console.error('Saga error, Failed to fetch Meta : ', error);
+  } finally {
+    yield put(setLoading(false));
+  }
+}
+
 
 export function* rbacSaga() {
   yield takeEvery(FETCH_ROLES, fetchRolesSaga);
@@ -287,6 +320,7 @@ export function* rbacSaga() {
   yield takeEvery(DELETE_ROLE, deleteRoleSaga);
   yield takeEvery(FETCH_ROLESASSIGNMENTS, fetchRoleAssignmentsSaga);
   yield takeEvery(CREATE_ROLESASSIGNMENT, createRoleAssignmentSaga);
+  yield takeEvery(UPDATE_ROLESASSIGNMENT, updateRoleAssignmentSaga);
   yield takeEvery(DELETE_ROLESASSIGNMENT, deleteRoleAssignmentSaga);
   yield takeEvery(FETCH_PRIVILEGES, fetchPrivilegesSaga);
   yield takeEvery(CREATE_PRIVILEGE, createPrivilegeSaga);
@@ -297,4 +331,5 @@ export function* rbacSaga() {
   yield takeEvery(UPDATE_PRIVILEGEASSIGNMENT, updatePrivilegeAssignmentSaga);
   yield takeEvery(DELETE_PRIVILEGEASSIGNMENT, deletePrivilegeAssignmentSaga);
   yield takeEvery(GET_USER, getUserSaga);
+  yield takeEvery(GET_META, getMetaSaga);
 }

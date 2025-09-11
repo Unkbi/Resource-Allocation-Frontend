@@ -49,7 +49,16 @@ export const createRoleAssignment = async (newData: any) => {
   return response.data;
 };
 
-export const deleteRoleAssignment = async (Role :string , User:string) => {
+export const updateRoleAssigment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdateRoleAssignment`,
+    updatedFields
+  );
+  return response.data;
+}
+
+
+export const deleteRoleAssignment = async (User :string , Role:string) => {
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/DeleteUserRole`,
     {
@@ -116,10 +125,9 @@ export const fetchPrivilegeAssignments = async () => {
 };
 
 export const createPrivilegeAssignment = async (newData: any) => {
-  // NOT WORKNG RIGHT NOW - backend issue
    const payload = {
-   roleName: "*",
-   permissionId: "agentlang.auth$Permission/*_permission_Resource/Team",
+   roleName: newData.roleName,
+   permissionId: newData.permissionId,
   };
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/AddPermissionToRole`,
@@ -128,16 +136,10 @@ export const createPrivilegeAssignment = async (newData: any) => {
   return response.data;
 };
 
-export const updatePrivilegeAssignment = async (
-  Name: string,
-  updatedFields: any
-) => {
-  const payload = {
-    'Agentlang.Kernel.Rbac/PrivilegeAssignment': updatedFields,
-  };
-  const response = await axiosInstance.put(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment/${Name}`,
-    payload
+export const updatePrivilegeAssignment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdatePermissionAssignment`,
+    updatedFields
   );
   return response.data;
 };
@@ -160,5 +162,10 @@ export const fetchEntities = async () => {
 
 export const fetchUser = async () => {
   const response = await axiosInstance.get(`${API_AGENTLANG_KERNEL_RBAC}/User`);
+  return response.data;
+}
+
+export const fetchMeta = async () => {
+  const response = await axiosInstance.get(`/meta`);
   return response.data;
 }
