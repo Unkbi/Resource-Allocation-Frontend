@@ -84,14 +84,14 @@ export default function AccessTable({
         </Button>
       </Box>
 
-      <Box sx={{ width: '100%' }}>
+
+      <Box sx={{ width: '100%',height : '40vh'}}>
         <DataGrid
           rows={data}
           columns={columns}
           disableColumnMenu
           hideFooter
           disableRowSelectionOnClick
-          autoHeight
           apiRef={apiRef}
           loading={loading}
           sx={{

@@ -921,14 +921,17 @@ export default function RoleManagementPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#f8f9fa] p-8"
       style={{
         fontFamily: 'open sans',
         padding: '1.5%',
         backgroundColor: 'rgba(217, 217, 217, 0.27)',
+        // height: 'calc(100vh - 34px)',        
+        boxSizing: 'border-box',
       }}
     >
       <TabHeader tab={tab} setTab={setTab} />
+
+      <Box sx={{ flex: 1, overflow: 'hidden',height: '63vh' }}>
 
       {tab === 'role-management' && (
         <AccessTable
@@ -1011,6 +1014,7 @@ export default function RoleManagementPage() {
           loading={loading}
         />
       )}
+      </Box>
 
       <ConfirmDialog
         open={isDialogOpen}
