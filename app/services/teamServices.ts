@@ -194,22 +194,21 @@ export const updateTeam = createAsyncThunk<
 
 export const deleteTeam = createAsyncThunk<
   string,
-  string | { teamId: string; purge?: boolean }, 
+  { teamId: string; hardDelete?: boolean },
   { rejectValue: string }
->('/team/delete',async (arg, { rejectWithValue }) => {
+>(
+  '/team/delete',
+  async ({ teamId, hardDelete = true }, { rejectWithValue }) => {
     try {
-      const teamId = typeof arg === 'string' ? arg : arg.teamId;
-      const purge = typeof arg === 'string' ? true  : arg.purge ?? true ;
-    await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`, {
-        params: { purge },
+      await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`, {
+        params: { purge: hardDelete },
       });
-
       return teamId;
     } catch (error: any) {
-    return rejectWithValue(error.response?.data || 'Failed to delete team');
+      return rejectWithValue(error.response?.data || 'Failed to delete team');
+    }
   }
-});
-
+);
 /*
  * Not being used currently in application
  * Uncomment the following code if you want to handle postTeamResource API call

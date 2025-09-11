@@ -46,21 +46,21 @@ export const updateProject = createAsyncThunk(
   }
 );
 
-export const deleteProject = createAsyncThunk(
+export const deleteProject = createAsyncThunk<
+  string, 
+  { projectId: string; hardDelete?: boolean },
+  { rejectValue: any }
+>(
   '/project/delete',
-  async (projectId: string, { rejectWithValue }) => {
+  async ({ projectId, hardDelete = true }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(
-        `${API_PROJECT_PORTFOLIO}/Project/${projectId}`,
-          {
-          params: { purge: true },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        (error as AxiosError).response?.data || 'Failed to delete project'
-      );
+       const response = await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Project/${projectId}`, {
+        params: { purge: hardDelete },
+      });
+
+      return response.data; 
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Failed to delete project');
     }
   }
 );
