@@ -117,6 +117,7 @@ export default function AllocationGrid({
   const { teams, teamsResources, teamAllocations } = useSelector(
     state => state.teams
   );
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const [rowModesModel, setRowModesModel] = useState({});
@@ -137,6 +138,8 @@ export default function AllocationGrid({
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
+  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
   const handleKeyUp = e => {
     if (
@@ -892,7 +895,7 @@ export default function AllocationGrid({
           return;
         }
 
-        // Verify Updated Values total allocation for resource is not greater than 2.0
+        // Verify Updated Values total allocation for resource is not greater than Max_Allocation_Error
         let formattedCellValue = Math.round(newRow[key] * 10) / 10;
 
         const period = oldRow[key]?.period;
@@ -915,11 +918,11 @@ export default function AllocationGrid({
         const currentRowOldValue = oldRow[key]?.value || 0;
         totalForWeek = totalForWeek - currentRowOldValue + value;
 
-        if (totalForWeek > 1.5 && totalForWeek <= 2) {
+        if (totalForWeek > Number(max_allocation_warning) && totalForWeek <= Number(max_allocation_error)) {
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
+              `Allocation for ${key} exceeds ${max_allocation_warning} (${totalForWeek.toFixed(2)}).`,
               'warning',
               4000
             )
@@ -929,7 +932,7 @@ export default function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
+              `Allocation for ${key} exceeds ${max_allocation_error} (${totalForWeek.toFixed(2)}). Update cancelled.`,
               'error',
               4000
             )
