@@ -78,7 +78,7 @@ import {
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { addDays, format, getWeek, max, parseISO } from 'date-fns';
+import { addDays, format, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import {
   addResource,

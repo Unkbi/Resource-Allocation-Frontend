@@ -56,9 +56,6 @@ import {
   UPDATE_SCALAR_SETTING,
 } from '@/app/redux/actions/allSettingsActions';
 import {
-  transformToSettingPayloads,
-  categorizeSettings,
-  batchSettingsUpdate,
   handleOptimizedSettingsSave,
   type SettingsData,
 } from '@/app/utils/settingsUtils';
@@ -644,7 +641,6 @@ export default function AllocationTheme() {
     deletedRowId: string,
     allocationRangeId: string
   ) => {
-    // Init case, not more rows, add new row 0.0 to max_allocation_error
     const newRange = updatedRanges;
     if (newRange?.length === 0) {
       const newRow: AllocationRange = {
@@ -977,7 +973,7 @@ export default function AllocationTheme() {
           dispatch(
             showToast({
               open: true,
-              message: `Alert threshold settings saved successfully (${result.changedCount} fields updated, ${result.skippedCount} unchanged)`,
+              message: `Alert threshold settings saved successfully.`,
               type: 'success',
               autoHideTimer: 4000,
             })
@@ -1032,12 +1028,12 @@ export default function AllocationTheme() {
             addAction: ADD_SCALAR_SETTING,
             supportsBulk: false, // Set to true if your API supports bulk operations
             batchSize: 2,
-            originalSettings: originalSettings, // Pass original UI values for change detection
+            originalSettings: originalSettings,
           }
         );
 
         if (result.changedCount > 0) {
-          // Update original values after successful save
+          
           setOriginalHistorySettings({
             allocationHistoryDuration,
             commentsHistoryDuration,
@@ -1046,7 +1042,7 @@ export default function AllocationTheme() {
           dispatch(
             showToast({
               open: true,
-              message: `Allocation history settings saved successfully (${result.changedCount} fields updated, ${result.skippedCount} unchanged)`,
+              message: `Allocation history settings saved successfully.`,
               type: 'success',
               autoHideTimer: 4000,
             })
@@ -1076,7 +1072,7 @@ export default function AllocationTheme() {
   };
 
   const handleCancel = () => {
-    // Restore original data
+   
     if (tab === 'color-settings') {
       setAllocationRanges([...originalAllocationRanges]);
       setValidationErrors({});
@@ -1155,7 +1151,7 @@ export default function AllocationTheme() {
               gap: 4,
             }}
           >
-            {/* Row: Warning Threshold + Message */}
+            
             <Box
               sx={{
                 width: '100%',
@@ -1164,7 +1160,7 @@ export default function AllocationTheme() {
                 alignItems: 'start',
               }}
             >
-              {/* Left block: numeric warning threshold + helper */}
+             
               <Box sx={{ minWidth: 320 }}>
                 <Box
                   sx={{
@@ -1212,7 +1208,6 @@ export default function AllocationTheme() {
                         height: 36,
                         width: 129,
                         fontSize: '15px',
-                        // color: '#888',
                         '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
                           {
                             WebkitAppearance: 'none',
@@ -1258,7 +1253,7 @@ export default function AllocationTheme() {
                   </Box>
                 </Box>
               </Box>
-              {/* Right block: warning message input */}
+             
               <Box
                 sx={{
                   minWidth: 320,
@@ -1299,8 +1294,6 @@ export default function AllocationTheme() {
                 />
               </Box>
             </Box>
-
-            {/* Row: Error Threshold + Message */}
             <Box
               sx={{
                 width: '100%',
@@ -1309,7 +1302,7 @@ export default function AllocationTheme() {
                 alignItems: 'start',
               }}
             >
-              {/* Left block: numeric error threshold + helper */}
+            
               <Box sx={{ minWidth: 320 }}>
                 <Box
                   sx={{
@@ -1355,7 +1348,6 @@ export default function AllocationTheme() {
                         height: 36,
                         width: 129,
                         fontSize: '15px',
-                        // color: '#888',
                         '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
                           {
                             WebkitAppearance: 'none',
@@ -1401,7 +1393,7 @@ export default function AllocationTheme() {
                   </Box>
                 </Box>
               </Box>
-              {/* Right block: error message input */}
+              
               <Box
                 sx={{
                   minWidth: 320,
@@ -1445,7 +1437,6 @@ export default function AllocationTheme() {
           </Box>
         )}
 
-        {/* Allocation History Section */}
         {tab === 'allocation-history' && (
           <Box
             sx={{
@@ -1456,7 +1447,6 @@ export default function AllocationTheme() {
               width: '100%',
             }}
           >
-            {/* Allocation History Retention */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography
                 sx={{ fontSize: '14px', fontWeight: 600, color: '#4B5563' }}
@@ -1498,7 +1488,6 @@ export default function AllocationTheme() {
               </Box>
             </Box>
 
-            {/* Comments History Retention */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography
                 sx={{ fontSize: '14px', fontWeight: 600, color: '#4B5563' }}
