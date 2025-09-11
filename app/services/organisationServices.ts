@@ -58,7 +58,7 @@ export const deleteOrganisation = async (organisationId: string,hardDelete: bool
   const response = await axiosInstance.delete(
     `${API_PROJECT_PORTFOLIO}/Organization/${organisationId}`,
     {
-     params: { hardDelete },
+      params: { purge: hardDelete },
     }
   );
   return response.data;
