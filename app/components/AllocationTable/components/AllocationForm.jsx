@@ -2452,10 +2452,9 @@ const AllocationForm = () => {
           }
         });
         const postData = {
-          ...cleanedValues,
-          Role: values.Role || null,
-          Permission: values.Permission || null,
-        };
+            roleName: values.Role ? values.Role.split('/').pop() : null,
+            permissionId: values.Permission? values.Permission.split('agentlang.auth$Permission/')[1] : null,
+          };
         new Promise((resolve, reject) => {
           dispatch({
             type: CREATE_PRIVILEGEASSIGNMENT,
@@ -2504,10 +2503,9 @@ const AllocationForm = () => {
 
         const updatedFields = {
           rolePermission: initialData.__path__,
-          permissionId: values.Permission,
-          roleName: values.Role,
+          permissionId: values.Permission? values.Permission.split('agentlang.auth$Permission/')[1] : null,
+          roleName: values.Role ? values.Role.split('/').pop() : null,
         };
-
         try {
           const response = await new Promise((resolve, reject) => {
             dispatch({
