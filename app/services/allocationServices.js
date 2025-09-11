@@ -144,7 +144,10 @@ export const deleteAllocationView = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.delete(
-        `${API_PROJECT_PORTFOLIO}/UserAllocationView/${payload.id}`
+        `${API_PROJECT_PORTFOLIO}/UserAllocationView/${payload.id}`,
+        {
+          params :{purge :true},
+        }
       );
       return response.data;
     } catch (error) {

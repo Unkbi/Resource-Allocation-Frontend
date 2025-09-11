@@ -45,7 +45,10 @@ export const updatePortfolio = async (
 // delete a protfolio
 export const deletePortfolio = async (portfolioId: string) => {
   const response = await axiosInstance.delete(
-    `${API_PROJECT_PORTFOLIO}/Portfolio/${portfolioId}`
+    `${API_PROJECT_PORTFOLIO}/Portfolio/${portfolioId}`,
+    {
+      params: { purge: true },
+    } 
   );
   return response.data;
 };

@@ -33,7 +33,10 @@ export const updateProjectType = async (postData: any, id: string) => {
 
 export const deleteProjectType = async (id: string) => {
   const response = await axiosInstance.delete(
-    `${API_PROJECT_PORTFOLIO}/ProjectType/${id}`
+    `${API_PROJECT_PORTFOLIO}/ProjectType/${id}`,
+    {
+      params : {purge : true } 
+    }
   );
   return response.data;
 };
@@ -56,7 +59,10 @@ export const updateProjectTypeGroups = async (postData: any, id: string) => {
 
 export const deleteProjectTypeGroups = async (id: string) => {
   const response = await axiosInstance.delete(
-    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`
+    `${API_PROJECT_PORTFOLIO}/ProjectTypeGroup/${id}`,
+      {
+      params : {purge : true } 
+    }
   );
   return response.data;
 };

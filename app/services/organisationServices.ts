@@ -56,7 +56,10 @@ export const updateOrganisation = async (
 
 export const deleteOrganisation = async (organisationId: string) => {
   const response = await axiosInstance.delete(
-    `${API_PROJECT_PORTFOLIO}/Organization/${organisationId}`
+    `${API_PROJECT_PORTFOLIO}/Organization/${organisationId}`,
+    {
+     params: { purge: true },
+    }
   );
   return response.data;
 };

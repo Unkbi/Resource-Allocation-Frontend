@@ -51,7 +51,10 @@ export const deleteProject = createAsyncThunk(
   async (projectId: string, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.delete(
-        `${API_PROJECT_PORTFOLIO}/Project/${projectId}`
+        `${API_PROJECT_PORTFOLIO}/Project/${projectId}`,
+          {
+          params: { purge: true },
+        }
       );
       return response.data;
     } catch (error) {
