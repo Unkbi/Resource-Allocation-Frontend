@@ -133,6 +133,7 @@ import {
   GET_USER,
   UPDATE_PRIVILEGE,
   UPDATE_PRIVILEGEASSIGNMENT,
+  UPDATE_ROLESASSIGNMENT,
 } from '@/app/redux/actions/rbacActions';
 import { fetchAllOrganisations } from '@/app/services/organisationServices';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
@@ -142,7 +143,12 @@ import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
-import { ADD_PROJECT_TYPE, UPDATE_PROJECT_TYPE, ADD_PROJECT_TYPE_GROUPS, UPDATE_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
+import {
+  ADD_PROJECT_TYPE,
+  UPDATE_PROJECT_TYPE,
+  ADD_PROJECT_TYPE_GROUPS,
+  UPDATE_PROJECT_TYPE_GROUPS,
+} from '@/app/redux/actions/allSettingsActions';
 
 const initialValuesMap = {
   add_project: {
@@ -404,7 +410,9 @@ const AllocationForm = () => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { organizations } = useSelector(state => state.organisations);
   const { user: allUsers } = useSelector(state => state.rbac);
-  const { projectTypeGroups, projectTypes } = useSelector(state => state.allSettings);
+  const { projectTypeGroups, projectTypes } = useSelector(
+    state => state.allSettings
+  );
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -496,11 +504,17 @@ const AllocationForm = () => {
       case 'add_project_type':
         return addProjectTypeValidationSchema(projectTypes);
       case 'edit_project_type':
-        return addProjectTypeValidationSchema(projectTypes, initialData?.Name || '');
+        return addProjectTypeValidationSchema(
+          projectTypes,
+          initialData?.Name || ''
+        );
       case 'add_project_type_group':
         return addProjectTypeGroupValidationSchema(projectTypeGroups);
       case 'edit_project_type_group':
-        return addProjectTypeGroupValidationSchema(projectTypeGroups, initialData?.Name || '');
+        return addProjectTypeGroupValidationSchema(
+          projectTypeGroups,
+          initialData?.Name || ''
+        );
       default:
         return null;
     }
@@ -1317,7 +1331,7 @@ const AllocationForm = () => {
           await Promise.all([...allocationPromises, ...deletePromises]).then(
             async response => {
               if (response && response[0].length > 0) {
-                response = response[0];
+                response = response.flat();
                 response = formatAPIResponse('Allocation', response);
                 let allocationsUpdated = [];
                 // handle for bulk Delete different responce
@@ -2053,11 +2067,10 @@ const AllocationForm = () => {
             );
             dispatch(setHighlightedRowId(response?.Organization?.Id));
             if (pathname !== '/people?tab=organizations') {
-                  router.replace('/people?tab=organizations');
-                } else {
-                  dispatch(closeDialog());
-                }
-
+              router.replace('/people?tab=organizations');
+            } else {
+              dispatch(closeDialog());
+            }
           })
           .catch(error => {
             console.error('Failed to add organization:', error);
@@ -2236,9 +2249,7 @@ const AllocationForm = () => {
             ...cleanedValues,
             // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
-            Name: values.Role
-              ? `${cleanedValues.Assignee?.id}`
-              : null,
+            Name: values.Role ? `${cleanedValues.Assignee?.id}` : null,
           };
 
           new Promise((resolve, reject) => {
@@ -2280,7 +2291,53 @@ const AllocationForm = () => {
             });
         }
         break;
-
+      case 'edit_role_assignment': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const updatedFields = {
+          userRole: initialData.__path__,
+          userId: values.Assignee?.id || null,
+          roleName: values.Role,
+        };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_ROLESASSIGNMENT,
+              payload: {
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Role assignment updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.userId));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message = 'Failed to update role assignment.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
       case 'add_privilege': {
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
@@ -2404,9 +2461,10 @@ const AllocationForm = () => {
           }
         });
         const postData = {
-          ...cleanedValues,
-          Role: values.Role || null,
-          Permission: values.Permission || null,
+          roleName: values.Role ? values.Role.split('/').pop() : null,
+          permissionId: values.Permission
+            ? values.Permission.split('agentlang.auth$Permission/')[1]
+            : null,
         };
         new Promise((resolve, reject) => {
           dispatch({
@@ -2455,16 +2513,17 @@ const AllocationForm = () => {
         });
 
         const updatedFields = {
-          Role: values.Role || null,
-          Permission: values.Permission || null,
+          rolePermission: initialData.__path__,
+          permissionId: values.Permission
+            ? values.Permission.split('agentlang.auth$Permission/')[1]
+            : null,
+          roleName: values.Role ? values.Role.split('/').pop() : null,
         };
-
         try {
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: UPDATE_PRIVILEGEASSIGNMENT,
               payload: {
-                name: initialData?.Name,
                 updatedFields,
                 resolve,
                 reject,
@@ -2481,7 +2540,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.Name));
+          dispatch(setHighlightedRowId(response.result?.roleName));
           dispatch(closeDialog());
         } catch (error) {
           const message =

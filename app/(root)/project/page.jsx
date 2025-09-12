@@ -98,10 +98,10 @@ export default function Project() {
   useEffect(() => {
     new Promise((resolve, reject) => {})
       .then(res => {
-        console.log('✅ Organisation created successfully:', res);
+        console.log(' Organisation created successfully:', res);
       })
       .catch(err => {
-        console.error('❌ Failed to create organisation:', err);
+        console.error(' Failed to create organisation:', err);
       });
   }, [dispatch]);
 
@@ -290,7 +290,7 @@ export default function Project() {
         };
         const response = await fetchProjectAllocationsForSaga(postData);
         if (!response || response.length === 0) {
-          await dispatch(deleteProject(id)).unwrap();
+          await dispatch(deleteProject({ projectId: id })).unwrap();
           dispatch(
             showToast({
               open: true,

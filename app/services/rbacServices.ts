@@ -20,9 +20,12 @@ export const createRole = async (newData: any) => {
   return response.data;
 };
 
-export const deleteRole = async (Name: string) => {
+export const deleteRole = async (Name: string, hardDelete: boolean = true) => {
   const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/Role/${Name}`
+    `${API_AGENTLANG_KERNEL_RBAC}/Role/${Name}`,
+    {
+      params: { purge: hardDelete }
+    }
   );
   return response.data;
 };
@@ -48,6 +51,15 @@ export const createRoleAssignment = async (newData: any) => {
   );
   return response.data;
 };
+
+export const updateRoleAssigment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdateRoleAssignment`,
+    updatedFields
+  );
+  return response.data;
+}
+
 
 export const deleteRoleAssignment = async (User :string , Role:string) => {
   const response = await axiosInstance.post(
@@ -98,9 +110,10 @@ export const updatePrivilege = async (id: string, updatedFields: any) => {
 };
 
 
-export const deletePrivilege = async (id: string) => {
+export const deletePrivilege = async (id: string, hardDelete: boolean = true) => {
   const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/Permission/${id}`
+    `${API_AGENTLANG_KERNEL_RBAC}/Permission/${id}`,
+    { params: { purge: hardDelete } }
   );
   return response.data;
 };
@@ -117,8 +130,8 @@ export const fetchPrivilegeAssignments = async () => {
 
 export const createPrivilegeAssignment = async (newData: any) => {
    const payload = {
-   roleName: newData.Role,
-   permissionId: newData.Permission,
+   roleName: newData.roleName,
+   permissionId: newData.permissionId,
   };
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/AddPermissionToRole`,
@@ -127,16 +140,10 @@ export const createPrivilegeAssignment = async (newData: any) => {
   return response.data;
 };
 
-export const updatePrivilegeAssignment = async (
-  Name: string,
-  updatedFields: any
-) => {
-  const payload = {
-    'Agentlang.Kernel.Rbac/PrivilegeAssignment': updatedFields,
-  };
-  const response = await axiosInstance.put(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment/${Name}`,
-    payload
+export const updatePrivilegeAssignment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdatePermissionAssignment`,
+    updatedFields
   );
   return response.data;
 };

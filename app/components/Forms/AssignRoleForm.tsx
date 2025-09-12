@@ -18,11 +18,13 @@ interface FormValues {
 
 interface AssignRoleFormProps {
   formikProps: FormikProps<FormValues>;
+  setFormValue?: (values: FormValues) => void;
 }
 
-const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
+const AssignRoleForm = ({ formikProps , setFormValue = () => {}}: AssignRoleFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
+  const { initialData } = useSelector((state: any) => state.globalDialog.formState);
   const roles: Role[] = useSelector((state: any) => state.rbac.roles);
   const user: UserRbac[] = useSelector((state: any) => state.rbac.user) 
   const dispatch = useDispatch();
@@ -38,6 +40,23 @@ const AssignRoleForm = ({ formikProps }: AssignRoleFormProps) => {
     '& .MuiAutocomplete-popper': { fontSize: '12px' },
     '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
   };
+
+   useEffect(() => {
+    if (initialData) {
+    const userId = initialData.User?.replace("agentlang.auth$User/", "");
+    const roleName = initialData.Role?.split("/")[1] || initialData.Role;
+    const assigneeUser = user.find((u: UserRbac) => u.id === userId) || null;
+    const rowData: FormValues = {
+      Assignee: assigneeUser,
+      Role: roleName || '',
+      Status: initialData.Status || 'Active',
+    };
+    setFormValue(rowData);
+    formikProps.resetForm({ values: rowData });
+    formikProps.setTouched({});
+  }
+}, [initialData, user]);
+
 
     useEffect(() => {
     if (!user || user.length === 0) {
