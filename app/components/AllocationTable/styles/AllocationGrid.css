@@ -2,9 +2,10 @@
     box-shadow: none;
 }
 
-.MuiDataGrid-row.child-of-zero-allocation-resource {
+/* Sahadev : Previous solution for hiding empty rows */
+/* .MuiDataGrid-row.child-of-zero-allocation-resource {
   display: none !important;
-}
+} */
 
 .allocation-cell-content {
   width: 100%;

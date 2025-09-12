@@ -1372,6 +1372,14 @@ export default function AllocationGrid({
       isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
+      getRowHeight={(params) => {
+       if(params?.model?.projectId ===""){
+        // Sahadev: really small value, it doesnt accept 0
+        // New solution for hiding empty rows 
+        return .000000000001
+       }
+       return 52 ;
+      }}
       rowModesModel={rowModesModel}
       onRowModesModelChange={handleRowModesModelChange}
       processRowUpdate={handleCellUpdate}
