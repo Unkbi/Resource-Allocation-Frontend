@@ -106,7 +106,6 @@ const projectsSlice = createSlice({
       })
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.loading = false;
-        state.projects = action.payload;
       })
       .addCase(deleteProject.rejected, (state, action) => {
         state.loading = false;

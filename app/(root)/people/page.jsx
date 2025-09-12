@@ -1218,7 +1218,7 @@ function Resources({ permissions }) {
               })
             );
           } else {
-            dispatch(deleteTeam(teamId));
+            dispatch(deleteTeam({teamId}));
             dispatch(fetchAllTeams());
             dispatch(
               showToast({
