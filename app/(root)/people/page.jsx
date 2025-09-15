@@ -217,6 +217,35 @@ function Resources({ permissions }) {
   );
 
   useEffect(() => {
+    const accessMap = [
+      { key: 'Resource', value: 'resource' },
+      { key: 'Team', value: 'teams' },
+      { key: 'Organization', value: 'organizations' },
+      { key: 'EmployeeRate', value: 'rates' },
+    ];
+
+    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+
+    if (accessible.length === 0) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    const tab = searchParams.get('tab');
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tab);
+
+    if (!tab || !VALID_TABS.includes(tab) || !isAccessible) {
+      router.replace(`/people?tab=${firstAccessible}`);
+      return;
+    }
+
+    if (tab !== value) {
+      setValue(tab);
+    }
+  }, []);
+
+  useEffect(() => {
     const newTab = searchParams.get('tab');
     if (newTab && VALID_TABS.includes(newTab) && newTab !== value) {
       setValue(newTab);
@@ -1218,7 +1247,7 @@ function Resources({ permissions }) {
               })
             );
           } else {
-            dispatch(deleteTeam({teamId}));
+            dispatch(deleteTeam({ teamId }));
             dispatch(fetchAllTeams());
             dispatch(
               showToast({
@@ -1421,7 +1450,7 @@ function Resources({ permissions }) {
   const onChange = (event, newValue) => {
     setValue(newValue);
 
-    const tabParam = newValue === 'resource' ? '' : `?tab=${newValue}`;
+    const tabParam = `?tab=${newValue}`;
     const newUrl = `/people${tabParam}`;
     router.replace(newUrl, { scroll: false });
   };
