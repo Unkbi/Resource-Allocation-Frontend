@@ -31,12 +31,12 @@ const allSettingsSlice = createSlice({
         action.payload.ProjectTypeGroup || []
       );
       state.location = formatAPIResponse(
-        'Location',
-        action.payload.Location || []
+        'WorkLocation',
+        action.payload.WorkLocations || []
       );
       state.locationGroups = formatAPIResponse(
-        'LocationGroup',
-        action.payload.LocationGroup || []
+        'WorkLocationGroup',
+        action.payload.WorkLocationGroup || []
       );
 
       const scalarSettingArr = formatAPIResponse(
@@ -90,7 +90,7 @@ const allSettingsSlice = createSlice({
       }
     },
     setLocation: (state, action) => {
-      state.location = formatAPIResponse('Location', action.payload);
+      state.location = formatAPIResponse('WorkLocation', action.payload);
     },
     clearLocation: state => {
       state.location = [];
@@ -110,7 +110,7 @@ const allSettingsSlice = createSlice({
     },
     setLocationGroup: (state, action) => {
       state.locationGroups = formatAPIResponse(
-        'LocationGroup',
+        'WorkLocationGroup',
         action.payload
       );
     },

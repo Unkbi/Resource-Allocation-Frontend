@@ -151,7 +151,7 @@ function* deleteLocationGroupSaga(action: any): Generator<any, void, any> {
   }
 }
 
-export function* locationGroupsSaga() {
+export function* locationSaga() {
   yield takeEvery(FETCH_LOCATION_GROUPS, fetchLocationGroupSaga);
   yield takeEvery(ADD_LOCATION_GROUPS, createLocationGroupSaga);
   yield takeEvery(UPDATE_LOCATION_GROUPS, updateLocationGroupSaga);

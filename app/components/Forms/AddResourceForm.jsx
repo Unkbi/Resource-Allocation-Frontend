@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useDispatch } from 'react-redux';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
@@ -80,9 +81,11 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   const { resources } = useSelector(state => state.resources);
   const { teams } = useSelector(state => state.teams);
   const { organisations } = useSelector(state => state.organisations);
+  const { location } = useSelector(state => state.allSettings);
   const { formType } = useSelector(state => state.globalDialog.formState);
   const [showWarning, setShowWarning] = useState(false);
   const [shareLink, setShareLink] = useState('');
+  const [locationOptions, setLocationOptions] = useState([]);
 
   const resourceListOptions =
     resources &&
@@ -193,6 +196,22 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (!location || location.length === 0) {
+      dispatch({ type: FETCH_LOCATION });
+    }
+  }, [dispatch, location]);
+
+  useEffect(() => {
+    if (location && Array.isArray(location)) {
+      const locationNames = location.map((loc) => ({
+        value: loc.Id,
+        label: loc.Name,
+      })) || [];
+      setLocationOptions(locationNames);
+    }
+  }, [location]);
 
   // Add effect to watch Team and Organisation changes
   useEffect(() => {
@@ -682,19 +701,15 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       </Box>
       <Box sx={{ flex: 1 }}>
         <StyledLabel>Work Location</StyledLabel>
-        <StyledInput
-          name="WorkLocation"
-          placeholder="Enter location"
-          value={values.WorkLocation || ''}
-          onChange={handleChange}
-          onBlur={e => {
-            const trimmedValue = e.target.value.trim();
-            setFieldValue('WorkLocation', trimmedValue);
-            handleBlur(e);
-          }}
-          error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-          helperText={touched.WorkLocation && errors.WorkLocation}
-        />
+        <StyledAutocomplete
+            name="WorkLocation"
+            label="Work Location"
+            placeholder="Enter Location"
+            value={values.WorkLocation || ''}
+            options={locationOptions}
+            formikProps={formikProps}
+            fullWidth
+          />
       </Box>
       <Box>
         {showWarning && (

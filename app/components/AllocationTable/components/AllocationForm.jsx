@@ -33,6 +33,8 @@ import {
   assignPrivilegeValidationSchema,
   addProjectTypeValidationSchema,
   addProjectTypeGroupValidationSchema,
+  addLocationValidationSchema,
+  addLocationGroupValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -149,6 +151,7 @@ import {
   ADD_PROJECT_TYPE_GROUPS,
   UPDATE_PROJECT_TYPE_GROUPS,
 } from '@/app/redux/actions/allSettingsActions';
+import { ADD_LOCATION, UPDATE_LOCATION, UPDATE_LOCATION_GROUPS, ADD_LOCATION_GROUPS } from '@/app/redux/actions/allSettingsActions';
 
 const initialValuesMap = {
   add_project: {
@@ -361,20 +364,20 @@ const initialValuesMap = {
     Permission: '',
   },
   add_location: {
-    Location: '',
+    Name: '',
     LocationGroup: '',
     Status: 'Active',
   },
   edit_location: {
-    Location: '',
+    Name: '',
     LocationGroup: '',
     Status: '',
   },
   add_location_group: {
-    LocationGroup: '',
+    Name: '',
   },
   edit_location_group: {
-    LocationGroup: '',
+    Name: '',
   },
 };
 
@@ -410,7 +413,7 @@ const AllocationForm = () => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { organizations } = useSelector(state => state.organisations);
   const { user: allUsers } = useSelector(state => state.rbac);
-  const { projectTypeGroups, projectTypes } = useSelector(
+  const { projectTypeGroups, projectTypes, location, locationGroups } = useSelector(
     state => state.allSettings
   );
 
@@ -513,6 +516,17 @@ const AllocationForm = () => {
       case 'edit_project_type_group':
         return addProjectTypeGroupValidationSchema(
           projectTypeGroups,
+          initialData?.Name || ''
+        );
+      case 'add_location':
+        return addLocationValidationSchema(location);
+      case 'edit_location':
+        return addLocationValidationSchema(location, initialData?.Name || '');
+      case 'add_location_group':
+        return addLocationGroupValidationSchema(locationGroups);
+      case 'edit_location_group':
+        return addLocationGroupValidationSchema(
+          locationGroups,
           initialData?.Name || ''
         );
       default:
@@ -896,7 +910,7 @@ const AllocationForm = () => {
           ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
           HRLevel: cleanedValues.HRLevel,
           PhoneNumber: cleanedValues.PhoneNumber,
-          WorkLocation: cleanedValues.WorkLocation,
+          WorkLocation: location.find(loc => loc.Id === cleanedValues.WorkLocation)?.Name || '',
           ...(cleanedValues.PreferredFirstName
             ? { PreferredFirstName: cleanedValues.PreferredFirstName }
             : {}),
@@ -2762,19 +2776,189 @@ const AllocationForm = () => {
       }
 
       case 'add_location': {
-        console.log('add_location');
-      }
-      case 'edit_location': {
-        console.log('edit_location');
-      }
-      case 'add_location_group': {
-        console.log('add_location_group');
-      }
-      case 'edit_location_group':
-        {
-          console.log('edit_location_group');
+        try {
+          const postData = { ...cleanedValues };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: ADD_LOCATION,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Location added successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } catch (error) {
+          console.error('Failed to add location:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add location.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
         }
         break;
+      }
+      case 'edit_location': {      
+        try {
+          const postData = { ...cleanedValues };
+          const locationId = initialData?.Id || initialData?.id;
+          
+          if (!locationId) {
+            throw new Error('No location ID found in initialData');
+          }
+          
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_LOCATION,
+              payload: {
+                postData,
+                locationId: locationId,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Location updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } catch (error) {
+          console.error('Failed to update location:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to update location.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'add_location_group': { 
+        try {
+          const postData = { 
+            Name: cleanedValues.Name 
+          };
+          if (!postData.Name || postData.Name.trim() === '') {
+            throw new Error('Location Group Name is required');
+          }
+          
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: ADD_LOCATION_GROUPS,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          }
+          );
+          dispatch(closeDialog());
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Location Group added successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        catch (error) {
+          console.error('Failed to add location group:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add location group.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'edit_location_group':
+        {          
+          try {
+            const postData = { 
+              Name: cleanedValues.Name 
+            };            
+            if (!postData.Name || postData.Name.trim() === '') {
+              throw new Error('Location Group Name is required');
+            }
+            
+            if (!initialData?.Id) {
+              throw new Error('No location group ID found in initialData');
+            }
+            
+            const response = await new Promise((resolve, reject) => {
+              dispatch({
+                type: UPDATE_LOCATION_GROUPS,
+                payload: {
+                  locationGroupId: initialData?.Id,
+                  postData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+            dispatch(closeDialog());
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Location Group updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          } catch (error) {
+            console.error('Failed to update location group:', error);
+            const message =
+              error?.response?.data?.exception ||
+              'Failed to update location group.';
+            dispatch(
+              showToast({
+                open: true,
+                message: message,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+          break;
+        }
 
       default:
         return;

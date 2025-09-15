@@ -22,11 +22,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AccessTable from './AccessTable';
 import {
-  DELETE_ROLE,
-  DELETE_ROLESASSIGNMENT,
-  FETCH_ROLES,
-  FETCH_ROLESASSIGNMENTS,
-} from '@/app/redux/actions/rbacActions';
+  DELETE_LOCATION,
+  DELETE_LOCATION_GROUPS,
+} from '@/app/redux/actions/allSettingsActions';
 import { Location, LocationGroup } from '@/app/types';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
@@ -123,7 +121,8 @@ const TabHeader = ({
           backgroundColor: '#152E75',
         },
         '& .Mui-selected .tab-icon': {
-          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
+          filter:
+            'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
         },
       }}
     >
@@ -159,14 +158,13 @@ export default function RoleManagementPage() {
     string | null
   >(null);
   const roles = [];
-  const locationData: Location[] = [];
-  //   [{ Location: 'New York', LocationGroup: 'East Coast', Status: 'Active' },
-  //   { Location: 'San Francisco', LocationGroup: 'West Coast', Status: 'Active' },
-  //   { Location: 'London', LocationGroup: 'EMEA', Status: 'Inactive' },
-  //   { Location: 'Bangalore', LocationGroup: 'APAC', Status: 'Active' },
-  //   { Location: 'Berlin', LocationGroup: 'EMEA', Status: 'Active' },
-  // ];
-  const locationGroupData: LocationGroup[] = [];
+  const { location, locationGroups } = useSelector(
+    (state: any) => state.allSettings
+  );
+  const [locationData, setLocationData] = useState<Location[]>([]);
+  const [locationGroupData, setLocationGroupData] = useState<LocationGroup[]>(
+    []
+  );
   const loading = useSelector((state: any) => state.rbac.loading);
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
@@ -180,15 +178,32 @@ export default function RoleManagementPage() {
     if (tabParam && tabMenuNames.includes(tabParam)) {
       setTab(tabParam);
     }
-  }, []);
+    if (location && location.length) {
+      const formattedLocation = location.map((loc: any) => {
+        return {
+          id: loc.Id,
+          Id: loc.Id, 
+          Name: loc.Name,
+          LocationGroup: loc.LocationGroup,
+          Status: loc.Status,
+        };
+      });
+      setLocationData(formattedLocation);
+    }
+
+    if (locationGroups && locationGroups.length) {
+      const formattedLocationGroups = locationGroups.map((locGroup: any) => {
+        return {
+          id: locGroup.Id, 
+          Id: locGroup.Id,
+          Name: locGroup.Name,
+        };
+      });
+      setLocationGroupData(formattedLocationGroups);
+    }
+  }, [location, locationGroups]);
 
   useEffect(() => {
-    if (tab === 'location') {
-      // dispatch({ type: FETCH_ROLES });
-    }
-    if (tab === 'location-group') {
-      // dispatch({ type: FETCH_ROLESASSIGNMENTS });
-    }
     if (tabMenuNames.includes(tab)) {
       const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
       router.replace(newUrl);
@@ -209,7 +224,7 @@ export default function RoleManagementPage() {
           );
           if (rowIndex === -1) return;
 
-          const focusColumn = tab === 'location' ? 'Name' : 'Role';
+          const focusColumn = tab === 'location' ? 'Name' : 'Name';
 
           apiRef.current.scrollToIndexes({ rowIndex });
           apiRef.current.setCellFocus(highlightedRowId, focusColumn);
@@ -291,17 +306,24 @@ export default function RoleManagementPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!deletingLocation || !deletingLocationGroup) return;
+    if (!deletingLocation && !deletingLocationGroup) return;
     try {
-      if (tab === 'location') {
-        await dispatch({ type: DELETE_ROLE, payload: deletingLocation });
-        dispatch({ type: FETCH_ROLES });
-      } else if (tab === 'location-group') {
+      if (tab === 'location' && deletingLocation) {
+        let locationid = locationData.find(
+          loc => loc.Name === deletingLocation
+        )?.Id;
         await dispatch({
-          type: DELETE_ROLESASSIGNMENT,
-          payload: deletingLocationGroup,
+          type: DELETE_LOCATION,
+          payload: { locationId: locationid },
         });
-        dispatch({ type: FETCH_ROLESASSIGNMENTS });
+      } else if (tab === 'location-group' && deletingLocationGroup) {
+        let locationGroupid = locationGroupData.find(
+          locG => locG.Name === deletingLocationGroup
+        )?.Id;
+        await dispatch({
+          type: DELETE_LOCATION_GROUPS,
+          payload: { locationGroupId: locationGroupid },
+        });
       }
     } catch (error) {
       console.error('Delete failed:', error);
@@ -314,7 +336,7 @@ export default function RoleManagementPage() {
 
   const LocationPageColumns = [
     {
-      field: 'Location',
+      field: 'Name',
       headerName: 'Location',
       flex: 1,
       renderCell: (params: any) => (
@@ -322,7 +344,7 @@ export default function RoleManagementPage() {
       ),
     },
     {
-      field: 'LocationGroup ',
+      field: 'LocationGroup',
       headerName: 'Location Group',
       flex: 1,
       renderCell: (params: any) => (
@@ -362,7 +384,7 @@ export default function RoleManagementPage() {
 
   const LocationGroupColumns = [
     {
-      field: 'Location Group',
+      field: 'Name',
       headerName: 'Location Group',
       flex: 1,
       renderCell: (params: any) => (
@@ -404,7 +426,7 @@ export default function RoleManagementPage() {
     >
       <StyledMenuItem
         onClick={() => {
-          const assignment = locationData.find(r => r.Location === id);
+          const assignment = locationData.find(r => r.Name === id);
           if (assignment) {
             handleEditLocation(assignment);
           }
@@ -436,8 +458,11 @@ export default function RoleManagementPage() {
     >
       <StyledMenuItem
         onClick={() => {
-          //   handleEditLocationGroup(assignment)
-          // setMenuRoleId(null);
+          const assignment = locationGroupData.find(r => r.Name === id);
+          if (assignment) {
+            handleEditLocationGroup(assignment);
+          }
+          setMenuRoleId(null);
         }}
       >
         <Pencil sx={{ mr: 1, fontSize: 18 }} />
