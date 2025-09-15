@@ -9,6 +9,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import CommonToolbar from './CommonToolbar';
+import { withRBAC } from '../HOC/withRBAC';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -84,7 +85,7 @@ const tabTypographyStyle = {
   },
 };
 
-const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
+const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {},  permissions, }) => {
   const dispatch = useDispatch();
   const handleAddPortfolio = () => {
     dispatch(
@@ -187,7 +188,7 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
                   },
                 }}
               />
-              {value === 'portfolio' && (
+              {permissions['Portfolio']?.c && value === 'portfolio' && (
                 <Button
                   variant="contained"
                   color="primary"
@@ -205,4 +206,4 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
   );
 };
 
-export default ProjectToolbar;
+export default withRBAC(ProjectToolbar,['Portfolio']);

@@ -3130,12 +3130,13 @@ const AllocationForm = () => {
   const getFormComponent = (formType, formikProps) => {
     switch (formType) {
       case 'add_project':
-        return <AddProjectForm formikProps={formikProps} />;
+        return <AddProjectForm formikProps={formikProps} formType={formType} />;
       case 'edit_project':
         return (
           <AddProjectForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+            formType={formType}
           />
         );
       case 'add_team':
@@ -3226,6 +3227,7 @@ const AllocationForm = () => {
           <AddPortfolioForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+            formType={formType}
           />
         );
       case 'edit_portfolio':
@@ -3233,6 +3235,7 @@ const AllocationForm = () => {
           <AddPortfolioForm
             formikProps={formikProps}
             setFormValue={setFormValue}
+            formType={formType}
           />
         );
 

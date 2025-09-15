@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TextField, Box, Typography, Autocomplete } from '@mui/material';
 import CustomSelect from '../Select/CustomSelect';
 import StyledLabel from '../Label/StyledLabel';
@@ -13,8 +13,9 @@ import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import { withRBAC } from '../HOC/withRBAC';
 
-const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
+const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, }) => {
   const {
     values,
     handleChange,
@@ -28,6 +29,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { resources } = useSelector(state => state.resources);
   const { portfolios } = useSelector(state => state.portfolios);
   const { projectTypes } = useSelector(state => state.allSettings);
+  const { formType } = useSelector(state => state.globalDialog.formState);
+  const [readOnly, setReadOnly] = useState(true);
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
@@ -49,6 +52,13 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       value: pt.Id,
       label: pt.Name,
     })) || [];
+
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_project' && !permissions['Project']?.u) ||
+        (formType === 'add_project' && !permissions['Project']?.c)
+    );
+  }, [readOnly]);
 
   useEffect(() => {
     if (!resources.length) {
@@ -142,6 +152,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Name"
+          disabled={readOnly}
+          readOnly={readOnly}
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -153,6 +165,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>{PORTFOLIO_DISPLAY_NAME}</StyledLabel>
         <StyledAutocomplete
           name="PortfolioId"
+          disabled={readOnly}
+          readOnly={readOnly}
           // label={PORTFOLIO_DISPLAY_NAME}
           options={portfolioOptions}
           value={values.PortfolioId}
@@ -162,6 +176,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Project Sponsor</StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
+          readOnly={readOnly}
           name="ProjectSponsor"
           // label="Project Sponsor"
           options={resourceTypeOptions}
@@ -174,6 +190,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           type="number"
           name="Budget"
+          disabled={readOnly}
+          readOnly={readOnly}
           value={values.Budget || ''}
           onChange={e => {
             const input = e.target.value;
@@ -197,6 +215,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>Project Manager</StyledLabel>
         <StyledAutocomplete
           name="ProjectManager"
+          disabled={readOnly}
+          readOnly={readOnly}
           // label="Project Manager"
           options={resourceTypeOptions}
           value={values.ProjectManager}
@@ -208,6 +228,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Location"
+          disabled={readOnly}
+          readOnly={readOnly}
           value={values.Location || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -230,6 +252,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
             Project Type <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledAutocomplete
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Type"
             // label="Type"
             options={projectTypeOptions}
@@ -244,6 +268,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="AllowOvertime"
+            disabled={readOnly}
+            readOnly={readOnly}
             // label="Allow Overtime"
             options={allowOverTimeOptions}
             value={values.AllowOvertime}
@@ -262,6 +288,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
       >
         <CustomDatePicker
           name="StartDate"
+          disabled={readOnly}
+          readOnly={readOnly}
           value={formikProps.values.StartDate || null}
           formikProps={formikProps}
           error={
@@ -280,6 +308,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <CustomDatePicker
           name="EndDate"
           value={formikProps.values.EndDate || null}
+          disabled={readOnly}
+          readOnly={readOnly}
           formikProps={formikProps}
           onChange={handleEndDateChange}
           error={
@@ -301,6 +331,8 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           Status <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
+          readOnly={readOnly}
           name="Status"
           // label="Status"
           options={statusOptions}
@@ -313,4 +345,4 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   );
 };
 
-export default AddProjectForm;
+export default withRBAC(AddProjectForm,['Project']);

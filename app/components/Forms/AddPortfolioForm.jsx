@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
@@ -8,11 +8,14 @@ import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { MuiColorInput } from 'mui-color-input';
 import StyledAutocomplete from '../Select/Autocomplete';
+import { withRBAC } from '../HOC/withRBAC';
 
-const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
+const AddPortfolioForm = ({ formikProps, setFormValue = () => {},permissions}) => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { projects } = useSelector(state => state.projects);
+  const { formType } = useSelector(state => state.globalDialog.formState);
+  const [ readOnly, setReadOnly ] = useState(true);
 
   const {
     values,
@@ -49,6 +52,13 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
     }
   }, [initialData, projects]);
 
+  useEffect(() => {
+      setReadOnly(
+        (formType === 'edit_portfolio' && !permissions['Portfolio']?.u) ||
+          (formType === 'add_portfolio' && !permissions['Portfolio']?.c)
+      );
+    }, [readOnly]);
+
   return (
     <Box>
       <StyledLabel>
@@ -58,6 +68,8 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           name="Name"
           placeholder={`Enter ${PORTFOLIO_DISPLAY_NAME.toLowerCase()} name`}
+           disabled={readOnly}
+          readOnly={readOnly}
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={e => {
@@ -77,6 +89,8 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledAutocomplete
           name="Status"
           label="Status"
+          disabled={readOnly}
+          readOnly={readOnly}
           placeholder="Select status"
           options={statusOptions}
           value={values.Status || ''}
@@ -90,6 +104,8 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           name="Description"
           placeholder="Enter Description "
+          disabled={readOnly}
+          readOnly={readOnly}
           value={values.Description || ''}
           onChange={handleChange}
           onBlur={e => {
@@ -111,8 +127,9 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
             setFieldValue('SidebarColor', e);
           }}
           size="small"
-          sx={{
+          sx={(theme) => ({
             width: '100%',
+
             '& .MuiColorInput-input': {
               width: '100%',
               height: '32px',
@@ -120,14 +137,37 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
               backgroundColor: '#fff',
               border: '1px solid #ccc',
             },
+
             '& .MuiInputBase-input': {
               fontSize: '14px',
             },
-          }}
+            '&.Mui-disabled': {
+            //@ts-ignore
+              backgroundColor: theme.palette.disabledField?.main,
+            '& .MuiInputBase-input': {
+              borderColor: 'rgba(214, 220, 225, 1) !important',
+             //@ts-ignore
+              color: theme.palette.disabledField?.contrastText,
+             //@ts-ignore
+              WebkitTextFillColor: theme.palette.disabledField?.contrastText,
+             },
+           },
+           ...(readOnly && {
+             //@ts-ignore
+              backgroundColor: theme.palette.readonly?.main,
+             '& .MuiInputBase-input': {
+              borderColor: 'rgba(214, 220, 225, 1) !important',
+              //@ts-ignore
+               color: theme.palette.readonly?.contrastText,
+               //@ts-ignore
+                WebkitTextFillColor: theme.palette.readonly?.contrastText,
+             },
+           }),
+        })}
         />
       </Box>
     </Box>
   );
 };
 
-export default AddPortfolioForm;
+export default withRBAC(AddPortfolioForm,['Portfolio']);
