@@ -568,7 +568,7 @@ export const getFinalColumns = (
     dispatch(
       openDialog({
         title: 'Allocation History',
-        cancelButtonText: 'View All History',
+        cancelButtonText: 'Cancel',
         formType: 'open_history',
         initialData:
           params.field === 'project'
