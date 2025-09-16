@@ -1167,7 +1167,6 @@ const AllocationForm = () => {
                 );
                 if (newFinalTotal > Number(max_allocation_error)) {
                   errorMessages.push(
-                    scalarSettings?.Allocation_Error_Message ||
                     `Total allocation for week ${weekKey} exceeds ${max_allocation_error} (${newFinalTotal.toFixed(2)}). Update skipped.`
                   );
                   return null;
@@ -1175,7 +1174,6 @@ const AllocationForm = () => {
 
                 if (newFinalTotal > Number(max_allocation_warning) && newFinalTotal <= Number(max_allocation_error)) {
                   warningMessages.push(
-                    scalarSettings?.Allocation_Warning_Message ||
                     `Total allocation for week ${weekKey} exceeds ${max_allocation_warning} (${newFinalTotal.toFixed(2)}).`
                   );
                 }
@@ -1231,7 +1229,6 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    scalarSettings?.Allocation_Error_Message ||
                     `Total allocation for the multiple selected weeks and/or projects and/or resources exceeds ${max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
@@ -1404,7 +1401,6 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    scalarSettings?.Allocation_Error_Message ||
                     `Total allocation for the multiple selected weeks exceeds ${max_allocation_error}. Please check and try again.`,
                     'error',
                     4000
@@ -1419,7 +1415,6 @@ const AllocationForm = () => {
                 dispatch(
                   showToastAction(
                     true,
-                    scalarSettings?.Allocation_Warning_Message ||
                     `Warning: Total allocation for the multiple selected weeks exceeds ${max_allocation_warning}.`,
                     'warning',
                     4000

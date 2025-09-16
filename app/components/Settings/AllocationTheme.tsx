@@ -211,13 +211,6 @@ export default function AllocationTheme() {
     React.useState<number>(0.0);
   const [maxAllocationError, setMaxAllocationError] =
     React.useState<number>(0.0);
-  // Alert threshold message states
-  const [warningMessage, setWarningMessage] = React.useState<string>(
-    'Allocation for x (resource name) has exceeded the warning threshold.'
-  );
-  const [errorMessage, setErrorMessage] = React.useState<string>(
-    'Allocation for x (resource name) has exceeded the allowed threshold.'
-  );
   // Retention durations (1-9 months)
   const [allocationHistoryDuration, setAllocationHistoryDuration] =
     React.useState<string>('');
@@ -228,10 +221,6 @@ export default function AllocationTheme() {
   const [originalAlertSettings, setOriginalAlertSettings] = React.useState({
     maxAllocationWarning: 0.0,
     maxAllocationError: 0.0,
-    warningMessage:
-      'Allocation for x (resource name) has exceeded the warning threshold.',
-    errorMessage:
-      'Allocation for x (resource name) has exceeded the allowed threshold.',
   });
 
   const [originalHistorySettings, setOriginalHistorySettings] = React.useState({
@@ -285,13 +274,6 @@ export default function AllocationTheme() {
           Number(Number(scalarSettings['Max_Allocation_Error']).toFixed(1))
         );
       }
-      if (scalarSettings['Allocation_Warning_Message'] !== undefined) {
-        setWarningMessage(String(scalarSettings['Allocation_Warning_Message']));
-      }
-      if (scalarSettings['Allocation_Error_Message'] !== undefined) {
-        setErrorMessage(String(scalarSettings['Allocation_Error_Message']));
-      }
-
       // Update original values for change tracking
       setOriginalAlertSettings({
         maxAllocationWarning: Number(
@@ -299,14 +281,6 @@ export default function AllocationTheme() {
         ),
         maxAllocationError: Number(
           scalarSettings['Max_Allocation_Error'] || 0.0
-        ),
-        warningMessage: String(
-          scalarSettings['Allocation_Warning_Message'] ||
-            'Allocation for x (resource name) has exceeded the warning threshold.'
-        ),
-        errorMessage: String(
-          scalarSettings['Allocation_Error_Message'] ||
-            'Allocation for x (resource name) has exceeded the allowed threshold.'
         ),
       });
 
@@ -932,16 +906,12 @@ export default function AllocationTheme() {
 
         // Prepare current settings data
         const currentSettings: SettingsData = {
-          Allocation_Warning_Message: warningMessage,
-          Allocation_Error_Message: errorMessage,
           Max_Allocation_Warning: maxAllocationWarning.toFixed(1),
           Max_Allocation_Error: maxAllocationError.toFixed(1),
         };
 
         // Prepare original settings data for comparison
         const originalSettings: Record<string, any> = {
-          Allocation_Warning_Message: originalAlertSettings.warningMessage,
-          Allocation_Error_Message: originalAlertSettings.errorMessage,
           Max_Allocation_Warning:
             originalAlertSettings.maxAllocationWarning.toFixed(1),
           Max_Allocation_Error:
@@ -966,8 +936,6 @@ export default function AllocationTheme() {
           setOriginalAlertSettings({
             maxAllocationWarning,
             maxAllocationError,
-            warningMessage,
-            errorMessage,
           });
 
           dispatch(
@@ -1079,8 +1047,6 @@ export default function AllocationTheme() {
     } else if (tab === 'alerts-threshold') {
       setMaxAllocationWarning(originalAlertSettings.maxAllocationWarning);
       setMaxAllocationError(originalAlertSettings.maxAllocationError);
-      setWarningMessage(originalAlertSettings.warningMessage);
-      setErrorMessage(originalAlertSettings.errorMessage);
     } else if (tab === 'allocation-history') {
       setAllocationHistoryDuration(
         originalHistorySettings.allocationHistoryDuration
@@ -1253,46 +1219,6 @@ export default function AllocationTheme() {
                   </Box>
                 </Box>
               </Box>
-             
-              <Box
-                sx={{
-                  minWidth: 320,
-                  display: 'flex',
-                  alignItems: 'start',
-                  flexDirection: 'row',
-                  justifyContent: 'space-evenly',
-                  gap: 2,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    color: '#444',
-                    pt: 1,
-                  }}
-                >
-                  Warning message
-                </Typography>
-                <TextField
-                  size="small"
-                  placeholder="Set warning message"
-                  multiline
-                  minRows={3}
-                  value={warningMessage}
-                  onChange={e => {
-                    setWarningMessage(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      width: '200px',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    },
-                  }}
-                />
-              </Box>
             </Box>
             <Box
               sx={{
@@ -1392,46 +1318,6 @@ export default function AllocationTheme() {
                     </Typography>
                   </Box>
                 </Box>
-              </Box>
-              
-              <Box
-                sx={{
-                  minWidth: 320,
-                  display: 'flex',
-                  alignItems: 'start',
-                  flexDirection: 'row',
-                  gap: 2,
-                  justifyContent: 'space-evenly',
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    color: '#444',
-                    pt: 1,
-                  }}
-                >
-                  Error message
-                </Typography>
-                <TextField
-                  size="small"
-                  placeholder="Set error message"
-                  multiline
-                  minRows={3}
-                  value={errorMessage}
-                  onChange={e => {
-                    setErrorMessage(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      width: '200px',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    },
-                  }}
-                />
               </Box>
             </Box>
           </Box>
