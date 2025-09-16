@@ -22,37 +22,12 @@ export function withRBAC<P extends object>(
     // Build a permissions object for each resource
     const permissions = resourceNames.reduce(
       (acc, resource) => {
-        //Sahadev : Added for testing 
-        if(resource =='Portfolio'){
-          acc[resource] = {
-             c: true,
-             r: true,
-             u: false,
-             d: false,
-          }
-        }else if(resource =='Allocation'){
-          acc[resource] = {
-             c: false,
-             r: true,
-             u: false,
-             d: false,
-          }
-        }
-        else{
-         acc[resource] = loginUserPrivileges?.[resource] || {
+        acc[resource] = loginUserPrivileges?.[resource] || {
           c: true,
           r: true,
           u: true,
           d: true,
         };
-      }
-        //Sahadev : Main code
-        // acc[resource] = loginUserPrivileges?.[resource] || {
-        //   c: true,
-        //   r: true,
-        //   u: true,
-        //   d: true,
-        // };
         return acc;
       },
       {} as Record<string, CrudPermissions>
