@@ -189,8 +189,8 @@ export default function LoginPage() {
     e.preventDefault();
     dispatch(
       performLogin({
-        email: email,
-        password: password,
+        email: email.trim(),
+        password: password.trimEnd(),
       }) as any
     );
   };
@@ -258,7 +258,7 @@ export default function LoginPage() {
                 }}
                 fullWidth
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value.trim())}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
