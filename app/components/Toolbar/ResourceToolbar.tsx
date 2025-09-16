@@ -9,8 +9,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import CommonToolbar from './CommonToolbar';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
-
-const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'] as const;
+import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
 
 interface ResourceToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -133,7 +132,7 @@ const ResourceToolbar = ({
 }: ResourceToolbarProps) => {
   const dispatch = useDispatch();
 
-  if (!VALID_TABS.includes(value)) {
+  if (!RESOURCE_PAGE_VALID_TABS.includes(value)) {
     return null; // or a fallback UI
   }
 

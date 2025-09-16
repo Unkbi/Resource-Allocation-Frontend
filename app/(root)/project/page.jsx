@@ -34,7 +34,7 @@ import {
   setSplitViewCurrentProject,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
@@ -42,7 +42,10 @@ import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import {
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_PAGE_VALID_TABS,
+} from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
 import { StatusPill } from '@/app/components/Settings/styled';
 
@@ -53,6 +56,8 @@ import {
 } from '@/app/redux/actions/organizationsAction';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import { withRBAC } from '@/app/components/HOC/withRBAC';
+import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -91,19 +96,10 @@ const AddAllocationIcon = () => (
   <img src="/images/icons/AddAllocation.svg" alt="AddAllocation" />
 );
 
-export default function Project() {
+function Project({ permissions }) {
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
   const apiRef = useGridApiRef();
-
-  useEffect(() => {
-    new Promise((resolve, reject) => {})
-      .then(res => {
-        console.log(' Organisation created successfully:', res);
-      })
-      .catch(err => {
-        console.error(' Failed to create organisation:', err);
-      });
-  }, [dispatch]);
 
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
@@ -119,12 +115,52 @@ export default function Project() {
   const router = useRouter();
   const allResources = resources || [];
   const [value, setValue] = useState('project');
-  const { portfolios } = useSelector(state => state.portfolios);
+  const { portfolios, loading: loadingPortfolio } = useSelector(
+    state => state.portfolios
+  );
   const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
   const [portfolioDelete, setPortfolioDelete] = useState({
     Id: '',
     Name: '',
   });
+
+  useEffect(() => {
+    const accessMap = [
+      { key: 'Project', value: 'project' },
+      { key: 'Portfolio', value: 'portfolio' },
+    ];
+
+    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+
+    if (accessible.length === 0) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    const tab = searchParams.get('tab');
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tab);
+
+    if (!tab || !PROJECT_PAGE_VALID_TABS.includes(tab) || !isAccessible) {
+      router.replace(`/project?tab=${firstAccessible}`);
+      return;
+    }
+
+    if (tab !== value) {
+      setValue(tab);
+    }
+  }, []);
+
+  useEffect(() => {
+    const newTab = searchParams.get('tab');
+    if (
+      newTab &&
+      PROJECT_PAGE_VALID_TABS.includes(newTab) &&
+      newTab !== value
+    ) {
+      setValue(newTab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!updating) {
@@ -384,7 +420,7 @@ export default function Project() {
     setProjectToDelete(null);
   };
 
-  const handleOpenDialog = (title, formType, row) => {
+  const handleOpenDialog = (title, formType, row, dialogOptions = {}) => {
     dispatch(
       openDialog({
         title: title,
@@ -392,6 +428,7 @@ export default function Project() {
         cancelButtonText: 'Cancel',
         formType: formType,
         initialData: row,
+        ...dialogOptions,
       })
     );
   };
@@ -452,7 +489,16 @@ export default function Project() {
       minWidth: 180,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog('Edit Project', 'edit_project', params.row);
+          permissions['Project']?.u
+            ? handleOpenDialog('Edit Project', 'edit_project', params.row)
+            : handleOpenDialog(
+                `Porject: ${params.value}`,
+                'edit_project',
+                params.row,
+                {
+                  readOnly: true,
+                }
+              );
         };
         return (
           <Box
@@ -590,7 +636,15 @@ export default function Project() {
         return '';
       },
     },
-    {
+  ];
+
+  // Actions column will be added only if some Actions can be performed.
+  if (
+    permissions['Project']?.u ||
+    permissions['Project']?.d ||
+    permissions['Allocation']?.c
+  ) {
+    columns.push({
       field: 'actions',
       headerName: 'Action',
       width: 80,
@@ -598,12 +652,16 @@ export default function Project() {
       filterable: false,
       renderCell: params => (
         <>
-          <IconButton
-            size="small"
-            onClick={e => handleMenuClick(e, params.row.id)}
-          >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
+          {(permissions['Project']?.u ||
+            permissions['Project']?.d ||
+            permissions['Allocation']?.c) && (
+            <IconButton
+              size="small"
+              onClick={e => handleMenuClick(e, params.row.id)}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          )}
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl) && selectedRow === params.row.id}
@@ -622,60 +680,66 @@ export default function Project() {
               paddingBottom: '4px',
             }}
           >
-            <MenuItem
-              onClick={() => handleOpenSplitView(params)}
-              sx={menuItemStyle}
-            >
-              <AddAllocationIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-              <Typography
-                sx={{
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#1C2D5F',
-                  paddingLeft: '10px',
+            {permissions['Allocation']?.c && (
+              <MenuItem
+                onClick={() => handleOpenSplitView(params)}
+                sx={menuItemStyle}
+              >
+                <AddAllocationIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: '#1C2D5F',
+                    paddingLeft: '10px',
+                  }}
+                >
+                  Add Allocation
+                </Typography>
+              </MenuItem>
+            )}
+            {permissions['Project']?.u && (
+              <MenuItem
+                onClick={() => {
+                  (handleOpenDialog('Edit Project', 'edit_project', params.row),
+                    handleMenuClose());
                 }}
+                sx={menuItemStyle}
               >
-                Add Allocation
-              </Typography>
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                (handleOpenDialog('Edit Project', 'edit_project', params.row),
-                  handleMenuClose());
-              }}
-              sx={menuItemStyle}
-            >
-              <EditIcon
-                sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
-              />
-              <Typography
-                sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
+                <EditIcon
+                  sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
+                />
+                <Typography
+                  sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
+                >
+                  Edit Project
+                </Typography>
+              </MenuItem>
+            )}
+            {permissions['Project']?.d && (
+              <MenuItem
+                onClick={() => {
+                  setProjectToDelete(params.row);
+                  setDeleteDialogOpen(true);
+                  handleMenuClose();
+                }}
+                sx={menuItemStyle}
               >
-                Edit Project
-              </Typography>
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setProjectToDelete(params.row);
-                setDeleteDialogOpen(true);
-                handleMenuClose();
-              }}
-              sx={menuItemStyle}
-            >
-              <DeleteIcon
-                sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
-              />
-              <Typography
-                sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
-              >
-                Delete Project
-              </Typography>
-            </MenuItem>
+                <DeleteIcon
+                  sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
+                />
+                <Typography
+                  sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
+                >
+                  Delete Project
+                </Typography>
+              </MenuItem>
+            )}
           </Menu>
         </>
       ),
-    },
-  ];
+    });
+  }
 
   const portfolioColumns = [
     {
@@ -685,11 +749,19 @@ export default function Project() {
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+          if (permissions['Portfolio']?.u) {
+            handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+          } else {
+            handleOpenDialog(
+              `Portfolio: ${params.value}`,
+              'edit_portfolio',
+              params.row,
+              {
+                readOnly: true,
+              }
+            );
+          }
         };
-        {
-          params.row?.Name;
-        }
         return (
           <Box
             onClick={handleNameClick}
@@ -772,52 +844,59 @@ export default function Project() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                height: '100%',
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog(
-                        'Edit Portfolio',
-                        'edit_portfolio',
-                        params.row
-                      );
-                    }}
-                    sx={menuItemStyle}
+              {(permissions['Portfolio']?.u || permissions['Portfolio']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
                   >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
 
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setPortfolioDelete(params.row);
-                    }}
-                    sx={menuItemStyle}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                   >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </Box>
+                    {permissions['Portfolio']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Portfolio',
+                            'edit_portfolio',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['Portfolio']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setPortfolioDelete(params.row);
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -837,6 +916,10 @@ export default function Project() {
 
   const onChange = (event, newValue) => {
     setValue(newValue);
+
+    const tabParam = `?tab=${newValue}`;
+    const newUrl = `/project${tabParam}`;
+    router.replace(newUrl, { scroll: false });
   };
 
   const renderTable = () => {
@@ -855,8 +938,8 @@ export default function Project() {
 
       case 'portfolio':
         return (
-          <ProjectTable
-            loading={loading || resourceLoading}
+          <PortfolioTable
+            loading={loadingPortfolio}
             columns={portfolioColumns}
             rows={modifyPortfolioData(portfolioRows)}
             apiRef={apiRef}
@@ -912,3 +995,5 @@ export default function Project() {
     </Box>
   );
 }
+
+export default withRBAC(Project, ['Project', 'Portfolio', 'Allocation']);

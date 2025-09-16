@@ -55,6 +55,7 @@ import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 import { StatusPill } from '@/app/components/Settings/styled';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import RatesTable from '@/app/components/Resources/RatesTable';
+import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
 
 const demoResources = {
   result: [
@@ -202,18 +203,9 @@ function Resources({ permissions }) {
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const router = useRouter();
   const searchParams = useSearchParams();
-  // const initialTab = searchParams.get('tab');
-  // const [value, setValue] = useState(initialTab || 'resource');
-  // useEffect(() => {
-  //   const newTab = searchParams.get('tab');
-  //   if (newTab && newTab !== value) {
-  //     setValue(newTab);
-  //   }
-  // }, [searchParams]);
-  const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'];
   const initialTab = searchParams.get('tab');
   const [value, setValue] = useState(
-    VALID_TABS.includes(initialTab) ? initialTab : 'resource'
+    RESOURCE_PAGE_VALID_TABS.includes(initialTab) ? initialTab : 'resource'
   );
 
   useEffect(() => {
@@ -235,7 +227,7 @@ function Resources({ permissions }) {
     const firstAccessible = accessible[0].value;
     const isAccessible = accessible.some(({ value }) => value === tab);
 
-    if (!tab || !VALID_TABS.includes(tab) || !isAccessible) {
+    if (!tab || !RESOURCE_PAGE_VALID_TABS.includes(tab) || !isAccessible) {
       router.replace(`/people?tab=${firstAccessible}`);
       return;
     }
@@ -247,7 +239,11 @@ function Resources({ permissions }) {
 
   useEffect(() => {
     const newTab = searchParams.get('tab');
-    if (newTab && VALID_TABS.includes(newTab) && newTab !== value) {
+    if (
+      newTab &&
+      RESOURCE_PAGE_VALID_TABS.includes(newTab) &&
+      newTab !== value
+    ) {
       setValue(newTab);
     }
   }, [searchParams]);
