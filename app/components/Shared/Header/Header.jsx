@@ -25,7 +25,6 @@ import CloseIcon from '@mui/icons-material/Close'; // Close icon import
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import AllocationForm from '../../AllocationTable/components/AllocationForm';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import Skeleton from '@mui/material/Skeleton';
 import {
   COMPANY_DEFAULT_VIEW,
@@ -33,6 +32,8 @@ import {
   setSplitViewCurrentProject,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
+import { getUserAttributes } from '@/app/utils/authUtils';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const MainAppBar = styled(AppBar, {
   shouldForwardProp: prop => prop !== 'sidebarExpanded',
@@ -82,6 +83,11 @@ const Header = ({ sidebarExpanded }) => {
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
   const { user } = useSelector(state => state.user);
+  const {
+    email = '',
+    given_name: firstName = '',
+    family_name: lastName = '',
+  } = getUserAttributes(user, []) || {};
   const { splitView } = useSelector(state => state.allocationView);
   const { calendarDate } = useSelector(state => state.allAllocations);
   const anchorRefAdd = React.useRef(null);
@@ -94,10 +100,8 @@ const Header = ({ sidebarExpanded }) => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (user?.FirstName || user?.LastName) {
-        setDisplayName(
-          `${user?.FirstName ?? ''} ${user?.LastName ?? ''}`.trim()
-        );
+      if (firstName || lastName) {
+        setDisplayName(`${firstName ?? ''} ${lastName ?? ''}`.trim());
       } else {
         setDisplayName('User');
       }
@@ -111,7 +115,10 @@ const Header = ({ sidebarExpanded }) => {
       dispatch(fetchAllProjects());
     }
     if (resources === null) {
-      dispatch(fetchAllResources());
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
     }
   }, [projects, resources]);
 

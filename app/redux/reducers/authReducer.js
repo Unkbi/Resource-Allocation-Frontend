@@ -14,7 +14,7 @@ const initialState = {
   user: null,
   token: null,
   loading: false,
-  signupData: '',
+  signupData: null,
   error: null,
   forgotPasswordMessage: null,
   resetPasswordMessage: null,
@@ -117,7 +117,7 @@ const authSlice = createSlice({
       .addCase(confirmSignUp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-         state.otpVerified = false;
+        state.otpVerified = false;
       })
       //resend otp
       .addCase(resendConfirmationCode.pending, state => {

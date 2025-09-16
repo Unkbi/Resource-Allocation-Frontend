@@ -13,10 +13,8 @@ export interface CostAllocation {
 }
 
 export interface GetAllCostForPeriodPayload {
-  'ResourceAllocation.Core/GetAllCostForPeriod': {
-    StartDate: string;
-    EndDate: string;
-  };
+  StartDate: string;
+  EndDate: string;
 }
 
 export interface AllocationsCost {

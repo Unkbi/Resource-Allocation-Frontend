@@ -39,6 +39,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 
 export function* projectsSaga() {
   yield takeLatest('FETCH_PROJECTS_ALLOCATIONS', function* (action) {
+    // Not used in the application currently
     // Cancel teams task if active
     if (sagaTaskRefs.ongoingTeamsTask) {
       yield cancel(sagaTaskRefs.ongoingTeamsTask);

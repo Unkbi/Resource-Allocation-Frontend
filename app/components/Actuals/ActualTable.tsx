@@ -36,7 +36,6 @@ import { isCurrentWeek } from '@/app/utils/common';
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
 
-
 export function formatWeekRangeFromStrings(
   startDate: string | null,
   endDate: string | null
@@ -132,12 +131,11 @@ export default function ActualTable({
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
   >({});
-  const [baselineRows, setBaselineRows] = useState<ActualAllocationTableRow[]>(
-    data
-  );
+  const [baselineRows, setBaselineRows] =
+    useState<ActualAllocationTableRow[]>(data);
 
   useEffect(() => {
-    if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
+    if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
     }
   }, [allocationTheme]);
@@ -182,10 +180,12 @@ export default function ActualTable({
     if (onModificationChange) {
       const isModified =
         rows.length !== baselineRows.length ||
-      rows.some((r, i) => JSON.stringify(r) !== JSON.stringify(baselineRows[i]));
-    onModificationChange?.(isModified);
+        rows.some(
+          (r, i) => JSON.stringify(r) !== JSON.stringify(baselineRows[i])
+        );
+      onModificationChange?.(isModified);
     }
-    }, [rows, baselineRows, onModificationChange]);
+  }, [rows, baselineRows, onModificationChange]);
 
   // Organize rows into sections
   const getOrganizedRows = () => {
@@ -303,8 +303,10 @@ export default function ActualTable({
         newRow.project === 'Personal Time') &&
       (!newRow.actuals || newRow.actuals === 0);
     const commentsInvalid =
-    (isUnplannedProject || newRow.project === 'Other Work' || newRow.project === 'Personal Time') &&
-    (!newRow.comments || !newRow.comments.trim());
+      (isUnplannedProject ||
+        newRow.project === 'Other Work' ||
+        newRow.project === 'Personal Time') &&
+      (!newRow.comments || !newRow.comments.trim());
     setRowValidationErrors(prev => {
       const updated = { ...prev };
 
@@ -479,7 +481,8 @@ export default function ActualTable({
       headerClassName: 'header-comments',
       cellClassName: params =>
         `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
-          params.row.planned === 0 && rowValidationErrors[params.id as string]?.comments &&
+          params.row.planned === 0 &&
+          rowValidationErrors[params.id as string]?.comments &&
           (!params.row.comments || !params.row.comments.trim())
             ? 'comment-error-cell'
             : ''
@@ -698,7 +701,7 @@ export default function ActualTable({
             disableRowSelectionOnClick
             onCellKeyDown={handleCellKeyDown}
             processRowUpdate={handleProcessRowUpdate}
-              getRowClassName={params => {
+            getRowClassName={params => {
               const isLastRow =
                 params?.row?.id ===
                 getOrganizedRows()[getOrganizedRows().length - 1]?.id;

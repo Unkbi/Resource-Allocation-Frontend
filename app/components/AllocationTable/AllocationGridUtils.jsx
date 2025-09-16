@@ -79,14 +79,10 @@ const CellWithMenu = ({
   const dispatch = useDispatch();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteParams, setDeleteParams] = useState(null);
-  const allTeams = useSelector(state => state.teams.teams?.result || []);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allTeams = useSelector(state => state.teams.teams || []);
+  const allResources = useSelector(state => state.resources.resources || []);
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
-  const allProjects = useSelector(
-    state => state.projects.projects?.result || []
-  );
+  const allProjects = useSelector(state => state.projects.projects || []);
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
@@ -171,7 +167,7 @@ const CellWithMenu = ({
       })
     )
       .then(response => {
-        if (!response?.result) {
+        if (!response) {
           dispatch(
             showToast({
               open: true,
@@ -334,16 +330,16 @@ const CellWithMenu = ({
   };
 
   const menuItems = [
-    {
-      label: 'Clone',
-      icon: <ContentCopyIcon fontSize="small" />,
-      func: () => handleCloneClick(params),
-    },
-    {
-      label: 'Transfer',
-      icon: <SwapHorizIcon fontSize="small" />,
-      func: () => handleTranferClick(params),
-    },
+    // {
+    //   label: 'Clone',
+    //   icon: <ContentCopyIcon fontSize="small" />,
+    //   func: () => handleCloneClick(params),
+    // },
+    // {
+    //   label: 'Transfer',
+    //   icon: <SwapHorizIcon fontSize="small" />,
+    //   func: () => handleTranferClick(params),
+    // },
     {
       label: 'History',
       icon: <HistoryIcon fontSize="small" />,
@@ -493,9 +489,7 @@ export const getFinalColumns = (
   isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allResources = useSelector(state => state.resources.resources || []);
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -645,7 +639,7 @@ export const getFinalColumns = (
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
-            Array.isArray(teamAllocations.result) &&
+            Array.isArray(teamAllocations.result) && // Sahadev : Unsure of this
             teamAllocations.result.filter(
               resource => resource.Resource === params.row.resourceId
             );
@@ -665,12 +659,12 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
-                  setSelectedTeam(params.row.teams),
-                    setSelectedResourceId(params.row.resourceId);
+                  (setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId));
                 }}
               />
             );
@@ -810,12 +804,12 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
-                  setSelectedTeam(params.row.teams),
-                    setSelectedResourceId(params.row.resourceId);
+                  (setSelectedTeam(params.row.teams),
+                    setSelectedResourceId(params.row.resourceId));
                 }}
               />
             );
@@ -951,21 +945,21 @@ export const getFinalColumns = (
                 handleOpenHistory={handleOpenHistory}
               >
                 <EllipsisNameCell
-                value={params.value}
-                showAddIcon={false}
-                isFormatWithK={isFormatWithK}
-                showAvatar={false}
-              />
+                  value={params.value}
+                  showAddIcon={false}
+                  isFormatWithK={isFormatWithK}
+                  showAvatar={false}
+                />
               </CellWithMenu>
             );
           }
           const projects_set = [
-          ...new Set(
-            params?.rowNode?.children?.map(
-              child => params.api.getRow(child)?.project
-            )
-          ),
-        ].filter(Boolean);
+            ...new Set(
+              params?.rowNode?.children?.map(
+                child => params.api.getRow(child)?.project
+              )
+            ),
+          ].filter(Boolean);
 
           if (projects_set.length > 1) {
             const firstProject = projects_set?.[0];
@@ -1007,11 +1001,11 @@ export const getFinalColumns = (
             );
           }
           return projects_set.length ? (
-           <EllipsisNameCell
-            value={projects_set[0]}
-            showAddIcon={false}
-            showAvatar={false}
-          />
+            <EllipsisNameCell
+              value={projects_set[0]}
+              showAddIcon={false}
+              showAvatar={false}
+            />
           ) : null;
         },
       },
@@ -1029,14 +1023,14 @@ export const getFinalColumns = (
           const isParent = rowNode?.children?.length;
           const isGroupExpanded = rowNode?.childrenExpanded;
 
-        if (isParent) {
-          const resources_set = [
-            ...new Set(
-              rowNode.children?.map(
-                child => params.api.getRow(child)?.resource || ''
-              )
-            ),
-          ].filter(Boolean);
+          if (isParent) {
+            const resources_set = [
+              ...new Set(
+                rowNode.children?.map(
+                  child => params.api.getRow(child)?.resource || ''
+                )
+              ),
+            ].filter(Boolean);
 
             if (resources_set.length > 1) {
               const firstResource = resources_set[0];
@@ -1052,12 +1046,12 @@ export const getFinalColumns = (
                   }}
                 >
                   {!isGroupExpanded && (
-                  <EllipsisNameCell
-                    value={firstResource}
-                    showAddIcon={false}
-                    isFormatWithK={isFormatWithK}
-                    showAvatar={true} 
-                  />
+                    <EllipsisNameCell
+                      value={firstResource}
+                      showAddIcon={false}
+                      isFormatWithK={isFormatWithK}
+                      showAvatar={true}
+                    />
                   )}
                   {!isGroupExpanded && (
                     <span
@@ -1076,7 +1070,7 @@ export const getFinalColumns = (
                   )}
                 </div>
               );
-            }else if(resources_set.length === 1) {
+            } else if (resources_set.length === 1) {
               const firstResource = resources_set[0];
               return !isGroupExpanded ? (
                 <EllipsisNameCell
@@ -1092,7 +1086,7 @@ export const getFinalColumns = (
                 value={resources_set[0]}
                 showAddIcon={false}
                 isFormatWithK={isFormatWithK}
-              showAvatar={true} 
+                showAvatar={true}
               />
             ) : null;
           }
@@ -1107,14 +1101,14 @@ export const getFinalColumns = (
                   handleTranferClick={handleTranferClick}
                   isFormatWithK={isFormatWithK}
                   handleOpenHistory={handleOpenHistory}
-              >
-                <EllipsisNameCell
-                  value={value}
-                  showAddIcon={false}
-                  isFormatWithK={isFormatWithK}
-                  showAvatar={true}
-                />
-              </CellWithMenu>
+                >
+                  <EllipsisNameCell
+                    value={value}
+                    showAddIcon={false}
+                    isFormatWithK={isFormatWithK}
+                    showAvatar={true}
+                  />
+                </CellWithMenu>
                 {allocationsCount > 1 && (
                   <span
                     style={{
@@ -1337,7 +1331,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     // Get unique teams for teams and teamsId to avoid duplicate teams
     let unique_teams = {};
     let teams_with_name = {};
-    teams?.result?.forEach(team => {
+    teams?.forEach(team => {
       teams_with_name[team?.Name] = team?.Id;
     });
 

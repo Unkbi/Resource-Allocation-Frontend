@@ -3,6 +3,7 @@ import { setDataProcessing } from '../reducers/allAllocationsReducer';
 import { AppDispatch } from '../store';
 
 export const fetchAllResources = () => async (dispatch: AppDispatch) => {
+  // Not used in the application currently
   try {
     const response = await dispatch(getAllResources());
 

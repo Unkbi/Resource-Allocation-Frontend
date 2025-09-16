@@ -38,10 +38,14 @@ import {
 } from '@/app/utils/common';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import {
+  DEFAULT_VISIBLE_FLAT_COLUMNS,
+  DEFAULT_VISIBLE_ORGANISATION_COLUMNS,
   DEFAULT_VISIBLE_PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_PROJECTS_COLUMNS,
+  DEFAULT_VISIBLE_RESOURCES_COLUMNS,
   DEFAULT_VISIBLE_TEAMS_COLUMNS,
 } from '@/app/redux/reducers/allocationViewReducer';
+import { getUserAttributes } from '@/app/utils/authUtils';
 
 const getColumnLabel = (column, groupBy = '') => {
   const columnLabels = {
@@ -142,6 +146,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     formikProps;
   const { columns, currentView } = useSelector(state => state.allocationView);
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
 
   const commonAutocompleteStyles = {
@@ -301,14 +306,25 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     const { value } = newValue;
     setFieldValue('groupBy', value);
 
-    setFieldValue('showBy', value === 'Teams' ? 'AllTeams' : 'AllProject');
+    setFieldValue(
+      'showBy',
+      ['Teams', 'Organisations', 'Resources', 'Flat'].includes(value)
+        ? 'AllTeams'
+        : 'AllProject'
+    );
     setFieldValue(
       'showColumns',
       value === 'Teams'
         ? DEFAULT_VISIBLE_TEAMS_COLUMNS
-        : value === 'Portfolio'
-          ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
-          : DEFAULT_VISIBLE_PROJECTS_COLUMNS
+        : value === 'Organisations'
+          ? DEFAULT_VISIBLE_ORGANISATION_COLUMNS
+          : value === 'Resources'
+            ? DEFAULT_VISIBLE_RESOURCES_COLUMNS
+            : value === 'Portfolio'
+              ? DEFAULT_VISIBLE_PORTFOLIO_COLUMNS
+              : value === 'Project'
+                ? DEFAULT_VISIBLE_PROJECTS_COLUMNS
+                : DEFAULT_VISIBLE_FLAT_COLUMNS
     );
     setFieldValue('filters', []);
   };
@@ -425,10 +441,10 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   }, []);
 
   useEffect(() => {
-    if (values?.showBy) {
+    if (values?.showBy && email) {
       const allocationManagerName = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
+        email,
+        resources || []
       )?.FullName;
 
       if (values.showBy === 'MyTeams') {
@@ -450,10 +466,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
         return;
       }
 
-      const projectManager = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
-      );
+      const projectManager = getResourceFromEmail(email, resources || []);
 
       const projectManagerName = projectManager
         ? `${projectManager?.FullName}`.trim()
@@ -481,20 +494,17 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
   }, [values.showBy]);
 
   useEffect(() => {
-    if (values?.showBy === 'MyTeams') {
+    if (values?.showBy === 'MyTeams' && email) {
       const allocationManagerName = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
+        email,
+        resources || []
       )?.FullName;
 
       if (!isMyTeamsValid(allocationManagerName, values.filters)) {
         setFieldValue('showBy', 'AllTeams');
       }
-    } else if (values?.showBy === 'MyProject') {
-      const projectManager = getResourceFromEmail(
-        user?.Email,
-        resources?.result || []
-      );
+    } else if (values?.showBy === 'MyProject' && email) {
+      const projectManager = getResourceFromEmail(email, resources || []);
 
       const projectManagerName = projectManager
         ? `${projectManager?.FullName}`.trim()

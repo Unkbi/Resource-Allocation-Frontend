@@ -43,8 +43,11 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
   // @ts-ignore
-  const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
+  const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
+  );
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
   );
   const { setRows, ready } = useAllocationGrid('main');
 
@@ -58,7 +61,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
         hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
         teamAllocationManager: getAllocationManagerFromPath(
           allocation?.teamAllocationManager,
-          _resources?.result || []
+          _resources || []
         )?.FullName,
       }));
       setRows(formattedResources || []);
@@ -69,9 +72,10 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     dispatch({
       type: 'FETCH_ALLOCATIONS_COST',
       payload: {
-        teams: teams?.result,
-        projects: projects?.result,
-        resources: resources?.result,
+        teams: teams,
+        projects: projects,
+        resources: resources,
+        allResourcesDetail: allResourcesDetail,
         startDate: startDate,
         endDate: endDate,
       },
@@ -80,11 +84,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -116,8 +116,10 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
     const isGridTreeNode = 'children' in rowNode;
     if (isGridTreeNode && rowNode.children) return null;
     const resourceId = params.row.resourceId;
-    if (_resources.result && resourceId) {
-      return _resources.result.find(res => res.Id === resourceId) || null;
+    if (_resources && resourceId) {
+      return (
+        (_resources as Resource[]).find(res => res.Id === resourceId) || null
+      );
     }
     return null;
   };
@@ -136,7 +138,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        const projectType = projects?.result?.find(
+        const projectType = projects?.find(
           project => project.Name === value
         )?.Type;
         if (isGridTreeNode && rowNode.children) {
@@ -171,7 +173,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
           !isNaN(value) && value !== null
             ? (Math.round(value * 10) / 10).toFixed(1) // Ensures 0 → "0.0" and 1 → "1.0"
             : null;
-        const project: Project | undefined = projects?.result?.find(
+        const project: Project | undefined = projects?.find(
           // @ts-ignore
           (project: Project) => project.Name === params?.rowNode?.groupingKey
         );

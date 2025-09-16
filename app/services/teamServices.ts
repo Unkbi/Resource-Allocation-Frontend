@@ -16,6 +16,7 @@ export const getAllTeams = createAsyncThunk('/team', async () => {
   return response.data;
 });
 
+// This is obsolete and not used in the application anymore.
 export const getResourcesAgainstTeams = createAsyncThunk(
   '/team/resources',
   async (postData: GetTeamResourcesPayload, { rejectWithValue }) => {
@@ -118,6 +119,7 @@ export const fetchResourceAllocationsForSaga = async (
 };
 
 export const getResourceDetail = createAsyncThunk(
+  // Not used in the application currently
   'resource/getResourceDetail',
   async (resourceId: string, { rejectWithValue }) => {
     try {
@@ -157,11 +159,9 @@ export const createTeam = createAsyncThunk(
   ) => {
     try {
       const payload = {
-        'ResourceAllocation.Core/Team': {
-          Name,
-          AllocationManager,
-          Status,
-        },
+        Name,
+        AllocationManager,
+        Status,
       };
 
       const response = await axiosInstance.post(
@@ -194,17 +194,21 @@ export const updateTeam = createAsyncThunk<
 
 export const deleteTeam = createAsyncThunk<
   string,
-  string,
+  { teamId: string; hardDelete?: boolean },
   { rejectValue: string }
->('/team/delete', async (teamId, { rejectWithValue }) => {
-  try {
-    await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`);
-    return teamId;
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data || 'Failed to delete team');
+>(
+  '/team/delete',
+  async ({ teamId, hardDelete = true }, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(`${API_PROJECT_PORTFOLIO}/Team/${teamId}`, {
+        params: { purge: hardDelete },
+      });
+      return teamId;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || 'Failed to delete team');
+    }
   }
-});
-
+);
 /*
  * Not being used currently in application
  * Uncomment the following code if you want to handle postTeamResource API call
@@ -221,3 +225,19 @@ export const postTeamResource = async (postData: TeamResourcePayload) => {
     throw error;
   }
 };
+
+export const updateOrganization = createAsyncThunk<
+  any,
+  { postData: any; organizationId: string },
+  { rejectValue: string }
+>('organization/updateOrganization', async ({ postData, organizationId }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.put(
+      `${API_PROJECT_PORTFOLIO}/Organization/${organizationId}`,
+      postData
+    );
+    return response.data;
+  } catch (error: any) {
+    return rejectWithValue(error?.response?.data || 'Failed to update organization.');
+  }
+});

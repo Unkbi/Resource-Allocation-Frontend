@@ -1,11 +1,14 @@
 import { RBACState } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: RBACState = {
+  user: null,
   roles: [],
   roleAssignments: [],
   privileges: [],
   privilegeAssignments: [],
+  meta: null,
   loading: true,
   error: false,
 };
@@ -15,7 +18,7 @@ const rbacSlice = createSlice({
   initialState,
   reducers: {
     setRoles: (state, action) => {
-      state.roles = action.payload;
+      state.roles = formatAPIResponse('Role', action.payload);
     },
     clearRoles: state => {
       state.roles = [];
@@ -24,7 +27,7 @@ const rbacSlice = createSlice({
       const updatedRoles = action.payload;
       if (!state.roles) return;
       const index = state.roles.findIndex(
-        role => role.Name === updatedRoles.Name
+        role => role.name === updatedRoles.Name
       );
       if (index !== -1) {
         state.roles[index] = {
@@ -34,7 +37,10 @@ const rbacSlice = createSlice({
       }
     },
     setRoleAssignments: (state, action) => {
-      state.roleAssignments = action.payload;
+      const normalized = action.payload.map((item: any) =>
+        item.UserRole ? item.UserRole : item
+      );
+      state.roleAssignments = normalized;
     },
     clearRoleAssignments: state => {
       state.roleAssignments = [];
@@ -43,7 +49,7 @@ const rbacSlice = createSlice({
       const updatedRoleAssignment = action.payload;
       if (!state.roleAssignments) return;
       const index = state.roleAssignments.findIndex(
-        assignment => assignment.Name === updatedRoleAssignment.Name
+        assignment => assignment.Role === updatedRoleAssignment.Role
       );
       if (index !== -1) {
         state.roleAssignments[index] = {
@@ -53,7 +59,7 @@ const rbacSlice = createSlice({
       }
     },
     setPrivileges: (state, action) => {
-      state.privileges = action.payload;
+      state.privileges = formatAPIResponse('Permission', action.payload);
     },
     clearPrivileges: state => {
       state.privileges = [];
@@ -62,7 +68,7 @@ const rbacSlice = createSlice({
       const updatedPrivilege = action.payload;
       if (!state.privileges) return;
       const index = state.privileges.findIndex(
-        privilege => privilege.Name === updatedPrivilege.Name
+        privilege => privilege.id === updatedPrivilege.id
       );
       if (index !== -1) {
         state.privileges[index] = {
@@ -72,7 +78,10 @@ const rbacSlice = createSlice({
       }
     },
     setPrivilegeAssignments: (state, action) => {
-      state.privilegeAssignments = action.payload;
+      const normalized = action.payload.map((item: any) =>
+        item.RolePermission ? item.RolePermission : item
+      );
+      state.privilegeAssignments = normalized;
     },
     clearPrivilegeAssignments: state => {
       state.privilegeAssignments = [];
@@ -81,7 +90,8 @@ const rbacSlice = createSlice({
       const updatedPrivilegeAssignment = action.payload;
       if (!state.privilegeAssignments) return;
       const index = state.privilegeAssignments.findIndex(
-        assignment => assignment.Name === updatedPrivilegeAssignment.Name
+        assignment =>
+          assignment.__path__ === updatedPrivilegeAssignment.__path__
       );
       if (index !== -1) {
         state.privilegeAssignments[index] = {
@@ -90,11 +100,17 @@ const rbacSlice = createSlice({
         };
       }
     },
+    setMeta : (state, action) => {
+      state.meta = action.payload;
+    },
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
     setError: (state, action) => {
       state.error = action.payload;
+    },
+    setUser: (state, action) => {
+      state.user = formatAPIResponse('User', action.payload);
     },
   },
 });
@@ -114,5 +130,7 @@ export const {
   updatePrivilegeAssignments,
   setLoading,
   setError,
+  setUser,
+  setMeta,
 } = rbacSlice.actions;
 export default rbacSlice.reducer;

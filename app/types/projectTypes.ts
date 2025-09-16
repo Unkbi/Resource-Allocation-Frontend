@@ -1,4 +1,3 @@
-import { ApiResponse } from '.';
 import { AllocationGridCell } from './allocationTypes';
 
 export interface Project {
@@ -21,7 +20,7 @@ export interface Project {
 }
 
 export interface ProjectState {
-  projects: ApiResponse<Project[]> | null; //Change this
+  projects: Project[] | null; //Change this
   allocations: AllocationGridCell[];
   loading: boolean;
   dataProcessing: false;
@@ -34,9 +33,7 @@ export interface ProjectState {
 }
 
 export interface GetProjectAllocationsForPeriodPayload {
-  'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-    Project: string;
-    StartDate: string;
-    EndDate: string;
-  };
+  Project: string;
+  StartDate: string;
+  EndDate: string;
 }

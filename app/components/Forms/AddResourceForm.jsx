@@ -27,7 +27,6 @@ import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
-  getResourceDetail,
 } from '@/app/services/teamServices';
 import dayjs from 'dayjs';
 import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';
@@ -40,7 +39,6 @@ import {
   getResourceIdByEmail,
 } from '@/app/utils/allocationUtils';
 import { addDays, addWeeks, format } from 'date-fns';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { parseISO } from 'date-fns';
 import StyledAutocomplete from '../Select/Autocomplete';
 
@@ -88,16 +86,19 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
 
   const resourceListOptions =
     resources &&
-    resources?.result?.map(resource => {
+    resources?.map(resource => {
       return { value: resource.Id, label: resource.FullName };
     });
   const organisationListOptions =
-    organisations?.map(org => ({
-      value: org.Id,
-      label: org.Name,
-    })) || [];
+    organisations
+      ?.filter(org => org.Status === 'Active')
+      .map(org => ({
+        value: org.Id,
+        label: org.Name,
+      })) || [];
+
   const teamListOptions =
-    teams?.result?.map(team => ({
+    teams?.map(team => ({
       value: team.Id,
       label: team.Name,
     })) || [];
@@ -118,9 +119,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
 
-      const matchedTeam = teams?.result?.find(
-        team => team.Name === initialData.Team
-      );
+      const matchedTeam = teams?.find(team => team.Name === initialData.Team);
       const matchedOrg = organisations?.find(
         org => org.Name === initialData.Organization
       );
@@ -216,7 +215,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     formikProps.setFieldValue('EndDate', formattedEndDate);
     if (formType !== 'edit_resource') return;
     try {
-      const resourceId = getResourceIdByEmail(resources.result, values.Email);
+      const resourceId = getResourceIdByEmail(resources, values.Email);
       if (!resourceId) {
         console.error('Resource ID not found for email:', values.Email);
         return;
@@ -248,7 +247,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const formattedEndDate = dayjs(formikProps.values.EndDate).format(
       'YYYY-MM-DD'
     );
-    const resourceId = getResourceIdByEmail(resources.result, values.Email);
+    const resourceId = getResourceIdByEmail(resources, values.Email);
     if (!resourceId) {
       console.error('Resource ID not found for email:', values.Email);
       return;
@@ -321,7 +320,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledInput
             name="FirstName"
-            placeholder="Enter first name"
+            placeholder="Enter First Name"
             value={values.FirstName || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -339,7 +338,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledInput
             name="LastName"
-            placeholder="Enter last name"
+            placeholder="Enter Last Name"
             value={values.LastName || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -357,7 +356,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="PreferredFirstName"
-          placeholder="Enter preferred first name"
+          placeholder="Enter Preferred First Name"
           value={values.PreferredFirstName || ''}
           onChange={handleChange}
           onBlur={e => {
@@ -378,7 +377,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Email"
-          placeholder="Enter email"
+          placeholder="Enter Email"
           value={values.Email || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -401,7 +400,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledLabel>Phone Number</StyledLabel>
           <StyledInput
             name="PhoneNumber"
-            placeholder="Enter phone number"
+            placeholder="Enter Phone Number"
             value={values.PhoneNumber || ''}
             onChange={e => {
               const numericOnly = e.target.value.replace(/\D/g, '');
@@ -462,7 +461,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledInput
             name="Role"
-            placeholder="Enter role"
+            placeholder="Enter Role"
             value={values.Role || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -489,7 +488,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <StyledLabel>HR Level</StyledLabel>
           <StyledInput
             name="HRLevel"
-            placeholder="Enter level"
+            placeholder="Enter HR Level"
             value={values.HRLevel || ''}
             onChange={e => {
               const input = e.target.value;
@@ -509,7 +508,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="Type"
-            label="Type"
+            label="Select Type"
             placeholder="Select type"
             value={values.Type || ''}
             options={typeOptions}
@@ -600,7 +599,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         </StyledLabel>
         <StyledAutocomplete
           name="Team"
-          label="Team"
+          label="Select Team"
           placeholder="Select team"
           options={teamListOptions}
           value={values.Team || ''}
@@ -613,7 +612,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <StyledLabel sx={{ flex: 1 }}>Manager</StyledLabel>
         <StyledAutocomplete
           name="Manager"
-          label="Manager"
+          label="Select Manager"
           placeholder="Select manager"
           options={resourceListOptions}
           value={values.Manager || ''}

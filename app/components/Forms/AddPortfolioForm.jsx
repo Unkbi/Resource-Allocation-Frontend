@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
@@ -58,7 +57,7 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {} }) => {
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Name"
-          placeholder={`Enter ${PORTFOLIO_DISPLAY_NAME.toLowerCase()} name`}
+          placeholder={`Enter ${PORTFOLIO_DISPLAY_NAME} Name`}
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={e => {

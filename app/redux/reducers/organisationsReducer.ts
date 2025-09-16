@@ -1,5 +1,6 @@
 import { Resource } from '@/app/types';
 import { OrganisationState } from '@/app/types/organisationTypes';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: OrganisationState = {
@@ -14,7 +15,7 @@ const organisationsSlice = createSlice({
   initialState,
   reducers: {
     setOrganisations: (state, action) => {
-      state.organisations = action.payload;
+      state.organisations = formatAPIResponse('Organization', action.payload);
     },
     clearOrganisations: state => {
       state.organisations = [];
