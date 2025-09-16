@@ -84,18 +84,18 @@ export default function AccessTable({
         </Button>
       </Box>
 
-      <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%',  height: 'calc(100vh - 355px)' }}>
         <DataGrid
           rows={data}
           columns={columns}
           disableColumnMenu
           hideFooter
           disableRowSelectionOnClick
-          autoHeight
           apiRef={apiRef}
           loading={loading}
           sx={{
             border: 'none',
+            height: '100%',
             '.MuiDataGrid-columnHeaders': {
               color: '#6B7280',
               fontSize: '12px',
