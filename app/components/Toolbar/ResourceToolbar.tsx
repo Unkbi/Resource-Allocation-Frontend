@@ -8,6 +8,7 @@ import {
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import CommonToolbar from './CommonToolbar';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'] as const;
 
@@ -18,6 +19,7 @@ interface ResourceToolbarProps {
     event: SyntheticEvent,
     newValue: 'resource' | 'teams' | 'rates' | 'organizations'
   ) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const commonButtonStyles = {
@@ -127,6 +129,7 @@ const ResourceToolbar = ({
   setFilterButtonEl,
   value,
   onChange,
+  permissions,
 }: ResourceToolbarProps) => {
   const dispatch = useDispatch();
 
@@ -170,22 +173,38 @@ const ResourceToolbar = ({
             flex: '1 0 0',
           }}
         >
-          <Tabs
-            value={value}
-            onChange={onChange}
-            textColor="primary"
-            indicatorColor="primary"
-            aria-label="toolbar tabs"
-          >
-            <Tab value="resource" label="Resources" sx={tabTypographyStyle} />
-            <Tab value="teams" label="Teams" sx={tabTypographyStyle} />
-            <Tab
-              value="organizations"
-              label="Organizations"
-              sx={tabTypographyStyle}
-            />
-            <Tab value="rates" label="Rates" sx={tabTypographyStyle} />
-          </Tabs>
+          {Object.keys(permissions).some(
+            resourceName => permissions[resourceName]?.r
+          ) && (
+            <Tabs
+              value={value}
+              onChange={onChange}
+              textColor="primary"
+              indicatorColor="primary"
+              aria-label="toolbar tabs"
+            >
+              {permissions['Resource'].r && (
+                <Tab
+                  value="resource"
+                  label="Resources"
+                  sx={tabTypographyStyle}
+                />
+              )}
+              {permissions['Team'].r && (
+                <Tab value="teams" label="Teams" sx={tabTypographyStyle} />
+              )}
+              {permissions['Organization'].r && (
+                <Tab
+                  value="organizations"
+                  label="Organizations"
+                  sx={tabTypographyStyle}
+                />
+              )}
+              {permissions['EmployeeRate'].r && (
+                <Tab value="rates" label="Rates" sx={tabTypographyStyle} />
+              )}
+            </Tabs>
+          )}
         </Box>
         <Box className="line" sx={{ marginRight: '10px', height: '64px' }}>
           <img src="/images/icons/LinePeople.svg" />
@@ -247,7 +266,7 @@ const ResourceToolbar = ({
               style={{ height: '36px', width: '36px' }}
             />
             {/* <ActionButton src="/images/icons/upload.svg" alt="upload" /> */}
-            {value === 'rates' && (
+            {permissions['EmployeeRate'].c && value === 'rates' && (
               <Button
                 variant="contained"
                 color="primary"
@@ -264,4 +283,9 @@ const ResourceToolbar = ({
   );
 };
 
-export default ResourceToolbar;
+export default withRBAC(ResourceToolbar, [
+  'Resource',
+  'Team',
+  'Organization',
+  'EmployeeRate',
+]);

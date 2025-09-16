@@ -17,6 +17,13 @@ import { fetchAllProjects } from './redux/actions/fetchProjectsAction';
 import { fetchPortfolios } from './services/prorfolioServices';
 import { FETCH_PORTFOLIOS } from './redux/actions/portfolioActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from './redux/actions/allResourcesDetailAction';
+import {
+  FETCH_PRIVILEGEASSIGNMENTS,
+  FETCH_PRIVILEGES,
+  FETCH_ROLES,
+  FETCH_ROLESASSIGNMENTS,
+  GET_USER_AND_PRIVILEGES,
+} from './redux/actions/rbacActions';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -41,6 +48,13 @@ export default function LayoutClient({ children }) {
   const dispatch = useDispatch();
 
   const { open } = useSelector(state => state.toast);
+  const {
+    roles,
+    roleAssignments,
+    privileges,
+    privilegeAssignments,
+    loginUserPrivileges,
+  } = useSelector(state => state.rbac);
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
   const { teams } = useSelector(state => state.teams);
@@ -107,7 +121,15 @@ export default function LayoutClient({ children }) {
     if (!isClient) return;
     if (isLoggedIn && userId) {
       setIsUserLoginIn(isLoggedIn);
+      // Fetch user data and,
       dispatch(getUserData(userId));
+
+      // Fetch essential login user privileges data
+      if (!loginUserPrivileges) {
+        dispatch({ type: GET_USER_AND_PRIVILEGES, payload: { userId } });
+      }
+
+      // Fetch essential data for the app
       if (!teams?.length) {
         dispatch(fetchAllTeams());
       }

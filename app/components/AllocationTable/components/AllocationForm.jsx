@@ -385,6 +385,7 @@ const AllocationForm = () => {
   );
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
+  const { readOnly } = useSelector(state => state.globalDialog) || false;
   const { projects } = useSelector(state => state.projects);
   const { currentView, splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -3152,11 +3153,19 @@ const AllocationForm = () => {
         );
       case 'add_team':
         return (
-          <AddTeamForm formikProps={formikProps} setFormValue={setFormValue} />
+          <AddTeamForm
+            formType={formType}
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
         );
       case 'edit_team':
         return (
-          <AddTeamForm formikProps={formikProps} setFormValue={setFormValue} />
+          <AddTeamForm
+            formType={formType}
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
         );
       case 'add_resource':
         return (
@@ -3421,7 +3430,7 @@ const AllocationForm = () => {
           isSubmitting={formikProps.isSubmitting}
           isValid={formikProps.isValid}
           onCancel={onCancel}
-          viewOnly={formType === 'open_history'}
+          viewOnly={formType === 'open_history' || readOnly}
         >
           <Box>
             {getFormComponent(formType, {
