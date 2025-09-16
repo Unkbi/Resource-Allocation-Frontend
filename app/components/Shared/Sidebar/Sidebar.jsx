@@ -148,7 +148,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
     Dashboard: true,
     Allocation: true,
     Projects: permissions['Project'].r || permissions['Portfolio'].r,
-    Actuals: true,
+    Actuals: permissions['ActualsStatus'].r,
     People:
       permissions['Resource'].r ||
       permissions['Team'].r ||
@@ -620,4 +620,5 @@ export default withRBAC(Sidebar, [
   'EmployeeRate',
   'Project',
   'Portfolio',
+  'ActualsStatus',
 ]);
