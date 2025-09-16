@@ -260,11 +260,12 @@ const ResourceToolbar = ({
                 },
               }}
             />
-            <ActionButton
+            {/* Commenting out download Icon  */}
+            {/* <ActionButton
               src="/images/icons/newExportPeople.svg"
               alt="download"
               style={{ height: '36px', width: '36px' }}
-            />
+            /> */}
             {/* <ActionButton src="/images/icons/upload.svg" alt="upload" /> */}
             {permissions['EmployeeRate'].c && value === 'rates' && (
               <Button
