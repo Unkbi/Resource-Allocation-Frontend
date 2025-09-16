@@ -292,7 +292,7 @@ function Project({ permissions }) {
         };
         const response = await fetchProjectAllocationsForSaga(postData);
         if (!response || response.length === 0) {
-          await dispatch(deleteProject(id)).unwrap();
+          await dispatch(deleteProject({ projectId: id })).unwrap();
           dispatch(
             showToast({
               open: true,

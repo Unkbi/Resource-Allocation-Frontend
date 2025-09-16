@@ -10,12 +10,16 @@ import { MuiColorInput } from 'mui-color-input';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { withRBAC } from '../HOC/withRBAC';
 
-const AddPortfolioForm = ({ formikProps, setFormValue = () => {},permissions}) => {
+const AddPortfolioForm = ({
+  formikProps,
+  setFormValue = () => {},
+  permissions,
+}) => {
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { projects } = useSelector(state => state.projects);
   const { formType } = useSelector(state => state.globalDialog.formState);
-  const [ readOnly, setReadOnly ] = useState(true);
+  const [readOnly, setReadOnly] = useState(true);
 
   const {
     values,
@@ -53,11 +57,11 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {},permissions}) =
   }, [initialData, projects]);
 
   useEffect(() => {
-      setReadOnly(
-        (formType === 'edit_portfolio' && !permissions['Portfolio']?.u) ||
-          (formType === 'add_portfolio' && !permissions['Portfolio']?.c)
-      );
-    }, [readOnly]);
+    setReadOnly(
+      (formType === 'edit_portfolio' && !permissions['Portfolio']?.u) ||
+        (formType === 'add_portfolio' && !permissions['Portfolio']?.c)
+    );
+  }, [readOnly]);
 
   return (
     <Box>
@@ -68,7 +72,7 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {},permissions}) =
         <StyledInput
           name="Name"
           placeholder={`Enter ${PORTFOLIO_DISPLAY_NAME.toLowerCase()} name`}
-           disabled={readOnly}
+          disabled={readOnly}
           readOnly={readOnly}
           value={values.Name || ''}
           onChange={handleChange}
@@ -127,7 +131,7 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {},permissions}) =
             setFieldValue('SidebarColor', e);
           }}
           size="small"
-          sx={(theme) => ({
+          sx={theme => ({
             width: '100%',
 
             '& .MuiColorInput-input': {
@@ -142,32 +146,32 @@ const AddPortfolioForm = ({ formikProps, setFormValue = () => {},permissions}) =
               fontSize: '14px',
             },
             '&.Mui-disabled': {
-            //@ts-ignore
-              backgroundColor: theme.palette.disabledField?.main,
-            '& .MuiInputBase-input': {
-              borderColor: 'rgba(214, 220, 225, 1) !important',
-             //@ts-ignore
-              color: theme.palette.disabledField?.contrastText,
-             //@ts-ignore
-              WebkitTextFillColor: theme.palette.disabledField?.contrastText,
-             },
-           },
-           ...(readOnly && {
-             //@ts-ignore
-              backgroundColor: theme.palette.readonly?.main,
-             '& .MuiInputBase-input': {
-              borderColor: 'rgba(214, 220, 225, 1) !important',
               //@ts-ignore
-               color: theme.palette.readonly?.contrastText,
-               //@ts-ignore
+              backgroundColor: theme.palette.disabledField?.main,
+              '& .MuiInputBase-input': {
+                borderColor: 'rgba(214, 220, 225, 1) !important',
+                //@ts-ignore
+                color: theme.palette.disabledField?.contrastText,
+                //@ts-ignore
+                WebkitTextFillColor: theme.palette.disabledField?.contrastText,
+              },
+            },
+            ...(readOnly && {
+              //@ts-ignore
+              backgroundColor: theme.palette.readonly?.main,
+              '& .MuiInputBase-input': {
+                borderColor: 'rgba(214, 220, 225, 1) !important',
+                //@ts-ignore
+                color: theme.palette.readonly?.contrastText,
+                //@ts-ignore
                 WebkitTextFillColor: theme.palette.readonly?.contrastText,
-             },
-           }),
-        })}
+              },
+            }),
+          })}
         />
       </Box>
     </Box>
   );
 };
 
-export default withRBAC(AddPortfolioForm,['Portfolio']);
+export default withRBAC(AddPortfolioForm, ['Portfolio']);

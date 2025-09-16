@@ -15,7 +15,11 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '../HOC/withRBAC';
 
-const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, }) => {
+const AddProjectForm = ({
+  formikProps,
+  setFormValue = () => {},
+  permissions,
+}) => {
   const {
     values,
     handleChange,
@@ -152,6 +156,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
         <StyledInput
           as={TextField}
           name="Name"
+          placeholder="Enter Project Name"
           disabled={readOnly}
           readOnly={readOnly}
           value={values.Name || ''}
@@ -167,7 +172,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
           name="PortfolioId"
           disabled={readOnly}
           readOnly={readOnly}
-          // label={PORTFOLIO_DISPLAY_NAME}
+          label={`Select ${PORTFOLIO_DISPLAY_NAME} Name`}
           options={portfolioOptions}
           value={values.PortfolioId}
           formikProps={formikProps}
@@ -179,7 +184,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
           disabled={readOnly}
           readOnly={readOnly}
           name="ProjectSponsor"
-          // label="Project Sponsor"
+          label="Select Project Sponsor"
           options={resourceTypeOptions}
           value={values.ProjectSponsor}
           formikProps={formikProps}
@@ -193,6 +198,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
           disabled={readOnly}
           readOnly={readOnly}
           value={values.Budget || ''}
+          placeholder="Enter Budget"
           onChange={e => {
             const input = e.target.value;
             const parsed = input === '' ? null : Number(input);
@@ -217,7 +223,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
           name="ProjectManager"
           disabled={readOnly}
           readOnly={readOnly}
-          // label="Project Manager"
+          label="Select Project Manager"
           options={resourceTypeOptions}
           value={values.ProjectManager}
           formikProps={formikProps}
@@ -228,6 +234,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
         <StyledInput
           as={TextField}
           name="Location"
+          placeholder="Enter Location"
           disabled={readOnly}
           readOnly={readOnly}
           value={values.Location || ''}
@@ -255,7 +262,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
             disabled={readOnly}
             readOnly={readOnly}
             name="Type"
-            // label="Type"
+            label="Select Type"
             options={projectTypeOptions}
             value={values.Type}
             formikProps={formikProps}
@@ -270,7 +277,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
             name="AllowOvertime"
             disabled={readOnly}
             readOnly={readOnly}
-            // label="Allow Overtime"
+            label="Select Allow Overtime"
             options={allowOverTimeOptions}
             value={values.AllowOvertime}
             formikProps={formikProps}
@@ -345,4 +352,4 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {},  permissions, })
   );
 };
 
-export default withRBAC(AddProjectForm,['Project']);
+export default withRBAC(AddProjectForm, ['Project']);

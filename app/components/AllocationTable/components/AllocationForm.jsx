@@ -143,7 +143,12 @@ import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
-import { ADD_PROJECT_TYPE, UPDATE_PROJECT_TYPE, ADD_PROJECT_TYPE_GROUPS, UPDATE_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
+import {
+  ADD_PROJECT_TYPE,
+  UPDATE_PROJECT_TYPE,
+  ADD_PROJECT_TYPE_GROUPS,
+  UPDATE_PROJECT_TYPE_GROUPS,
+} from '@/app/redux/actions/allSettingsActions';
 
 const initialValuesMap = {
   add_project: {
@@ -406,7 +411,9 @@ const AllocationForm = () => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { organizations } = useSelector(state => state.organisations);
   const { user: allUsers } = useSelector(state => state.rbac);
-  const { projectTypeGroups, projectTypes } = useSelector(state => state.allSettings);
+  const { projectTypeGroups, projectTypes } = useSelector(
+    state => state.allSettings
+  );
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -498,11 +505,17 @@ const AllocationForm = () => {
       case 'add_project_type':
         return addProjectTypeValidationSchema(projectTypes);
       case 'edit_project_type':
-        return addProjectTypeValidationSchema(projectTypes, initialData?.Name || '');
+        return addProjectTypeValidationSchema(
+          projectTypes,
+          initialData?.Name || ''
+        );
       case 'add_project_type_group':
         return addProjectTypeGroupValidationSchema(projectTypeGroups);
       case 'edit_project_type_group':
-        return addProjectTypeGroupValidationSchema(projectTypeGroups, initialData?.Name || '');
+        return addProjectTypeGroupValidationSchema(
+          projectTypeGroups,
+          initialData?.Name || ''
+        );
       default:
         return null;
     }
@@ -1319,7 +1332,7 @@ const AllocationForm = () => {
           await Promise.all([...allocationPromises, ...deletePromises]).then(
             async response => {
               if (response && response[0].length > 0) {
-                response = response[0];
+                response = response.flat();
                 response = formatAPIResponse('Allocation', response);
                 let allocationsUpdated = [];
                 // handle for bulk Delete different responce
@@ -2055,11 +2068,10 @@ const AllocationForm = () => {
             );
             dispatch(setHighlightedRowId(response?.Organization?.Id));
             if (pathname !== '/people?tab=organizations') {
-                  router.replace('/people?tab=organizations');
-                } else {
-                  dispatch(closeDialog());
-                }
-
+              router.replace('/people?tab=organizations');
+            } else {
+              dispatch(closeDialog());
+            }
           })
           .catch(error => {
             console.error('Failed to add organization:', error);
@@ -2280,15 +2292,15 @@ const AllocationForm = () => {
             });
         }
         break;
-      case 'edit_role_assignment':  {
+      case 'edit_role_assignment': {
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
           }
         });
         const updatedFields = {
-          userRole : initialData.__path__,
-          userId : values.Assignee?.id || null, 
+          userRole: initialData.__path__,
+          userId: values.Assignee?.id || null,
           roleName: values.Role,
         };
         try {
@@ -2314,8 +2326,7 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response.result?.userId));
           dispatch(closeDialog());
         } catch (error) {
-          const message =
-            'Failed to update role assignment.';
+          const message = 'Failed to update role assignment.';
           dispatch(
             showToast({
               open: true,
@@ -2451,9 +2462,10 @@ const AllocationForm = () => {
           }
         });
         const postData = {
-          ...cleanedValues,
-          Role: values.Role || null,
-          Permission: values.Permission || null,
+          roleName: values.Role ? values.Role.split('/').pop() : null,
+          permissionId: values.Permission
+            ? values.Permission.split('agentlang.auth$Permission/')[1]
+            : null,
         };
         new Promise((resolve, reject) => {
           dispatch({
@@ -2503,10 +2515,11 @@ const AllocationForm = () => {
 
         const updatedFields = {
           rolePermission: initialData.__path__,
-          permissionId: values.Permission,
-          roleName: values.Role,
+          permissionId: values.Permission
+            ? values.Permission.split('agentlang.auth$Permission/')[1]
+            : null,
+          roleName: values.Role ? values.Role.split('/').pop() : null,
         };
-
         try {
           const response = await new Promise((resolve, reject) => {
             dispatch({

@@ -77,7 +77,7 @@ const AddTeamForm = ({
           disabled={readOnly}
           readOnly={readOnly}
           name="Name"
-          placeholder="Enter team name"
+          placeholder="Enter Team Name"
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={e => {

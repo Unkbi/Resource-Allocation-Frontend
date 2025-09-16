@@ -300,7 +300,7 @@ export default function RoleManagementPage() {
   const handleAddNewRole = () => {
     dispatch(
       openDialog({
-        title: 'Add New Role',
+        title: 'Add Role',
         submitButtonText: 'Create Role',
         cancelButtonText: 'Cancel',
         formType: 'add_role',
@@ -347,7 +347,7 @@ export default function RoleManagementPage() {
   const handleAddNewPrivilege = () => {
     dispatch(
       openDialog({
-        title: 'Add New Privilege',
+        title: 'Add Privilege',
         submitButtonText: 'Create Privilege',
         cancelButtonText: 'Cancel',
         formType: 'add_privilege',
@@ -377,9 +377,8 @@ export default function RoleManagementPage() {
   };
 
   const handleEditPrivilegeAssignments = (row: PrivilegeAssignment) => {
-    const roleName = row.Role?.split('/')[1] || row.Role;
-    const permissionName =
-      row.Permission?.split('Permission/')[1] || row.Permission;
+    const roleName = row.Role ;
+    const permissionName = row.Permission;
     dispatch(
       openDialog({
         title: 'Edit Privilege Assignment',
