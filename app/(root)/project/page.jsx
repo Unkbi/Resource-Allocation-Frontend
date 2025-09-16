@@ -93,7 +93,7 @@ const AddAllocationIcon = () => (
   <img src="/images/icons/AddAllocation.svg" alt="AddAllocation" />
 );
 
- function Project({permissions}) {
+function Project({ permissions }) {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
 
@@ -386,7 +386,7 @@ const AddAllocationIcon = () => (
     setProjectToDelete(null);
   };
 
-  const handleOpenDialog = (title, formType, row,dialogOptions = {}) => {
+  const handleOpenDialog = (title, formType, row, dialogOptions = {}) => {
     dispatch(
       openDialog({
         title: title,
@@ -394,7 +394,7 @@ const AddAllocationIcon = () => (
         cancelButtonText: 'Cancel',
         formType: formType,
         initialData: row,
-         ...dialogOptions
+        ...dialogOptions,
       })
     );
   };
@@ -455,8 +455,9 @@ const AddAllocationIcon = () => (
       minWidth: 180,
       renderCell: params => {
         const handleNameClick = () => {
-          permissions['Project']?.u ?
-          handleOpenDialog('Edit Project', 'edit_project', params.row): handleOpenDialog(
+          permissions['Project']?.u
+            ? handleOpenDialog('Edit Project', 'edit_project', params.row)
+            : handleOpenDialog(
                 `Porject: ${params.value}`,
                 'edit_project',
                 params.row,
@@ -601,103 +602,15 @@ const AddAllocationIcon = () => (
         return '';
       },
     },
-//     {
-//   field: 'actions',
-//   headerName: 'Action',
-//   width: 80,
-//   sortable: false,
-//   filterable: false,
-//   renderCell: params => (
-//     <>
-//       {(permissions['Project']?.u || permissions['Project']?.d ||permissions['Project']?.c) && (
-//         <IconButton
-//           size="small"
-//           onClick={e => handleMenuClick(e, params.row.id)}
-//         >
-//           <MoreVertIcon fontSize="small" />
-//         </IconButton>
-//       )}
-//       <Menu
-//         anchorEl={anchorEl}
-//         open={Boolean(anchorEl) && selectedRow === params.row.id}
-//         onClose={handleMenuClose}
-//         anchorOrigin={{
-//           vertical: 'top',
-//           horizontal: 'left',
-//         }}
-//         transformOrigin={{
-//           vertical: 'top',
-//           horizontal: 'right',
-//         }}
-//         sx={{
-//           flexShrink: 0,
-//           paddingTop: '2px',
-//           paddingBottom: '4px',
-//         }}
-//       >
-//         {permissions['Project']?.c && (
-//           <MenuItem
-//             onClick={() => handleOpenSplitView(params)}
-//             sx={menuItemStyle}
-//           >
-//             <AddAllocationIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-//             <Typography
-//               sx={{
-//                 fontSize: '12px',
-//                 fontWeight: '600',
-//                 color: '#1C2D5F',
-//                 paddingLeft: '10px',
-//               }}
-//             >
-//               Add Allocation
-//             </Typography>
-//           </MenuItem>
-//         )}
-//         {permissions['Project']?.u && (  
-//           <MenuItem
-//             onClick={() => {
-//               handleOpenDialog('Edit Project', 'edit_project', params.row);
-//               handleMenuClose();
-//             }}
-//             sx={menuItemStyle}
-//           >
-//             <EditIcon
-//               sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
-//             />
-//             <Typography
-//               sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
-//             >
-//               Edit Project
-//             </Typography>
-//           </MenuItem>
-//         )}
-//         {permissions['Project']?.d && (
-//           <MenuItem
-//             onClick={() => {
-//               setProjectToDelete(params.row);
-//               setDeleteDialogOpen(true);
-//               handleMenuClose();
-//             }}
-//             sx={menuItemStyle}
-//           >
-//             <DeleteIcon
-//               sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
-//             />
-//             <Typography
-//               sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
-//             >
-//               Delete Project
-//             </Typography>
-//           </MenuItem>
-//         )}
-//       </Menu>
-//     </>
-//   ),
-// },
- ];
+  ];
 
-  if (permissions['Project']?.u || permissions['Project']?.d || permissions['Allocation']?.c) {
-   columns.push({
+  // Actions column will be added only if some Actions can be performed.
+  if (
+    permissions['Project']?.u ||
+    permissions['Project']?.d ||
+    permissions['Allocation']?.c
+  ) {
+    columns.push({
       field: 'actions',
       headerName: 'Action',
       width: 80,
@@ -705,14 +618,16 @@ const AddAllocationIcon = () => (
       filterable: false,
       renderCell: params => (
         <>
-      {(permissions['Project']?.u || permissions['Project']?.d ||permissions['Allocation']?.c) && (
-          <IconButton
-            size="small"
-            onClick={e => handleMenuClick(e, params.row.id)}
-          >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-      )}
+          {(permissions['Project']?.u ||
+            permissions['Project']?.d ||
+            permissions['Allocation']?.c) && (
+            <IconButton
+              size="small"
+              onClick={e => handleMenuClick(e, params.row.id)}
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          )}
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl) && selectedRow === params.row.id}
@@ -731,61 +646,61 @@ const AddAllocationIcon = () => (
               paddingBottom: '4px',
             }}
           >
-        {permissions['Allocation']?.c && (
-            <MenuItem
-              onClick={() => handleOpenSplitView(params)}
-              sx={menuItemStyle}
-            >
-              <AddAllocationIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-              <Typography
-                sx={{
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#1C2D5F',
-                  paddingLeft: '10px',
+            {permissions['Allocation']?.c && (
+              <MenuItem
+                onClick={() => handleOpenSplitView(params)}
+                sx={menuItemStyle}
+              >
+                <AddAllocationIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: '#1C2D5F',
+                    paddingLeft: '10px',
+                  }}
+                >
+                  Add Allocation
+                </Typography>
+              </MenuItem>
+            )}
+            {permissions['Project']?.u && (
+              <MenuItem
+                onClick={() => {
+                  (handleOpenDialog('Edit Project', 'edit_project', params.row),
+                    handleMenuClose());
                 }}
+                sx={menuItemStyle}
               >
-                Add Allocation
-              </Typography>
-            </MenuItem>
-        )}
-        {permissions['Project']?.u && (  
-            <MenuItem
-              onClick={() => {
-                (handleOpenDialog('Edit Project', 'edit_project', params.row),
-                  handleMenuClose());
-              }}
-              sx={menuItemStyle}
-            >
-              <EditIcon
-                sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
-              />
-              <Typography
-                sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
+                <EditIcon
+                  sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
+                />
+                <Typography
+                  sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
+                >
+                  Edit Project
+                </Typography>
+              </MenuItem>
+            )}
+            {permissions['Project']?.d && (
+              <MenuItem
+                onClick={() => {
+                  setProjectToDelete(params.row);
+                  setDeleteDialogOpen(true);
+                  handleMenuClose();
+                }}
+                sx={menuItemStyle}
               >
-                Edit Project
-              </Typography>
-            </MenuItem>
-        )}
-        {permissions['Project']?.d && (   
-            <MenuItem
-              onClick={() => {
-                setProjectToDelete(params.row);
-                setDeleteDialogOpen(true);
-                handleMenuClose();
-              }}
-              sx={menuItemStyle}
-            >
-              <DeleteIcon
-                sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
-              />
-              <Typography
-                sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
-              >
-                Delete Project
-              </Typography>
-            </MenuItem>
-        )}
+                <DeleteIcon
+                  sx={{ fontSize: 18, marginRight: '8px', color: '#1C2D5F' }}
+                />
+                <Typography
+                  sx={{ fontSize: '12px', fontWeight: '600', color: '#1C2D5F' }}
+                >
+                  Delete Project
+                </Typography>
+              </MenuItem>
+            )}
           </Menu>
         </>
       ),
@@ -800,19 +715,19 @@ const AddAllocationIcon = () => (
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-        if (permissions['Portfolio']?.u) {
-          handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
-       } else {
-        handleOpenDialog(
-          `Portfolio: ${params.value}`,
-          'edit_portfolio',
-          params.row,
-           { 
-            readOnly: true
-           }
-        );
-        }
-    };
+          if (permissions['Portfolio']?.u) {
+            handleOpenDialog('Edit Portfolio', 'edit_portfolio', params.row);
+          } else {
+            handleOpenDialog(
+              `Portfolio: ${params.value}`,
+              'edit_portfolio',
+              params.row,
+              {
+                readOnly: true,
+              }
+            );
+          }
+        };
         return (
           <Box
             onClick={handleNameClick}
@@ -895,59 +810,59 @@ const AddAllocationIcon = () => (
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                height :"100%"
+                height: '100%',
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-          {(permissions['Portfolio']?.u || permissions['Portfolio']?.d) && (
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                {permissions['Portfolio']?.u && (
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog(
-                        'Edit Portfolio',
-                        'edit_portfolio',
-                        params.row
-                      );
-                    }}
-                    sx={menuItemStyle}
+              {(permissions['Portfolio']?.u || permissions['Portfolio']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
                   >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
-                )}
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
 
-                {permissions['Portfolio']?.d && (
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setPortfolioDelete(params.row);
-                    }}
-                    sx={menuItemStyle}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                   >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                )}
-                </Menu>
-              </Box>
-          )}
+                    {permissions['Portfolio']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Portfolio',
+                            'edit_portfolio',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['Portfolio']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setPortfolioDelete(params.row);
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -1043,4 +958,4 @@ const AddAllocationIcon = () => (
   );
 }
 
-export default withRBAC(Project , ['Project' ,'Portfolio','Allocation'])
+export default withRBAC(Project, ['Project', 'Portfolio', 'Allocation']);
