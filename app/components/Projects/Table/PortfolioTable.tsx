@@ -3,13 +3,24 @@ import {
   FilterPanelStyles,
   StyledDataGrid,
 } from '../../AllocationTable/styles/StyledDataGrid';
-import { GridColumnMenu, useGridApiRef } from '@mui/x-data-grid-premium';
+import { GridApi, GridColDef, GridColumnMenu, GridColumnMenuProps, GridToolbarProps } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
-import { useState } from 'react';
+import { JSXElementConstructor, useState } from 'react';
 import { Box } from '@mui/material';
-import { withRBAC } from '../../HOC/withRBAC';
+import {  CrudPermissions ,withRBAC } from '../../HOC/withRBAC';
+import { Portfolio } from '@/app/types';
 
-function CustomColumnMenu(props) {
+interface PortfolioTableProps{
+  columns: GridColDef[];
+  rows: Portfolio[];
+  loading: boolean;
+  apiRef: React.RefObject<GridApi>;
+  value: String;
+  onChange: any;
+  permissions: Record<string, CrudPermissions>;
+}
+
+function CustomColumnMenu(props : GridColumnMenuProps) {
   return (
     <GridColumnMenu
       {...props}
@@ -21,16 +32,17 @@ function CustomColumnMenu(props) {
   );
 }
 
-const ProjectTable = ({
+const PortfolioTable = ({
   columns,
   rows,
   loading,
   apiRef,
   value,
   onChange = () => {},
-  permissions ,
-}) => {
+  permissions,
+}: PortfolioTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+
   return (
     <Box
       sx={{
@@ -42,8 +54,8 @@ const ProjectTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Project']?.r ? rows : []}
-        hideFooter={true}
+        rows={permissions['Portfolio']?.r ? rows : []}
+        hideFooter
         loading={loading}
         initialState={{
           sorting: {
@@ -60,7 +72,7 @@ const ProjectTable = ({
           },
         }}
         slots={{
-          toolbar: ProjectToolbar,
+          toolbar: ProjectToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
           columnMenu: CustomColumnMenu,
         }}
         localeText={{
@@ -85,6 +97,7 @@ const ProjectTable = ({
             placement: 'bottom-end',
           },
           toolbar: {
+             //@ts-ignore
             setFilterButtonEl,
             value: value,
             onChange: onChange,
@@ -95,6 +108,7 @@ const ProjectTable = ({
           },
           filterPanel: {
             columnsSort: 'asc',
+             //@ts-ignore
             className: 'filterPopup',
             filterFormProps: {
               columnInputProps: {
@@ -124,4 +138,4 @@ const ProjectTable = ({
   );
 };
 
-export default withRBAC(ProjectTable,['Project']);
+export default withRBAC(PortfolioTable, ['Portfolio']);

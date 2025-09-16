@@ -54,6 +54,7 @@ import {
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
+import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -984,7 +985,7 @@ const AddAllocationIcon = () => (
 
       case 'portfolio':
         return (
-          <ProjectTable
+          <PortfolioTable
             loading={loading || resourceLoading}
             columns={portfolioColumns}
             rows={modifyPortfolioData(portfolioRows)}
