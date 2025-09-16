@@ -355,7 +355,7 @@ export default function RoleManagementPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: () => <StatusPill status="Active">Active</StatusPill>,
+      renderCell: (params: any) => <StatusPill status={params.value}>{params.value}</StatusPill>,
     },
     {
       field: 'actions',
