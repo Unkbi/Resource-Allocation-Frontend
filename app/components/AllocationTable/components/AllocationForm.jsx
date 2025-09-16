@@ -910,7 +910,7 @@ const AllocationForm = () => {
           ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
           HRLevel: cleanedValues.HRLevel,
           PhoneNumber: cleanedValues.PhoneNumber,
-          WorkLocation: location.find(loc => loc.Id === cleanedValues.WorkLocation)?.Name || '',
+          WorkLocation: cleanedValues.WorkLocation,
           ...(cleanedValues.PreferredFirstName
             ? { PreferredFirstName: cleanedValues.PreferredFirstName }
             : {}),
@@ -978,7 +978,6 @@ const AllocationForm = () => {
               ? null
               : cleanedValues.EndDate,
         };
-
         try {
           const selectedTeam = teams?.find(team => team.Id === values.Team);
           let teamAllocationManagerId = null;

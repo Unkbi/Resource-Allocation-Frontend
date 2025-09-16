@@ -126,7 +126,6 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       const matchedOrg = organisations?.find(
         org => org.Name === initialData.Organization
       );
-
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
@@ -208,7 +207,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   useEffect(() => {
     if (location && Array.isArray(location)) {
       const locationNames = location.map((loc) => ({
-        value: loc.Id,
+        value: loc.Name,
         label: loc.Name,
       })) || [];
       setLocationOptions(locationNames);

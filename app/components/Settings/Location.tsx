@@ -182,7 +182,7 @@ export default function RoleManagementPage() {
       const formattedLocation = location.map((loc: any) => {
         return {
           id: loc.Id,
-          Id: loc.Id, 
+          Id: loc.Id,
           Name: loc.Name,
           LocationGroup: loc.LocationGroup,
           Status: loc.Status,
@@ -194,7 +194,7 @@ export default function RoleManagementPage() {
     if (locationGroups && locationGroups.length) {
       const formattedLocationGroups = locationGroups.map((locGroup: any) => {
         return {
-          id: locGroup.Id, 
+          id: locGroup.Id,
           Id: locGroup.Id,
           Name: locGroup.Name,
         };
@@ -340,7 +340,18 @@ export default function RoleManagementPage() {
       headerName: 'Location',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <Typography
+          onClick={() => handleEditLocation(params.row)}
+          sx={{
+            ...commonCellStyle,
+            cursor: 'pointer',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }}
+        >
+          {params.value}
+        </Typography>
       ),
     },
     {
@@ -355,7 +366,9 @@ export default function RoleManagementPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: (params: any) => <StatusPill status={params.value}>{params.value}</StatusPill>,
+      renderCell: (params: any) => (
+        <StatusPill status={params.value}>{params.value}</StatusPill>
+      ),
     },
     {
       field: 'actions',
@@ -388,7 +401,18 @@ export default function RoleManagementPage() {
       headerName: 'Location Group',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <Typography
+          onClick={() => handleEditLocationGroup(params.row)}
+          sx={{
+            ...commonCellStyle,
+            cursor: 'pointer',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }}
+        >
+          {params.value}
+        </Typography>
       ),
     },
     {

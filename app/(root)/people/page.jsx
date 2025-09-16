@@ -53,6 +53,7 @@ import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 import { StatusPill } from '@/app/components/Settings/styled';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 
 const demoResources = {
   result: [
@@ -103,55 +104,6 @@ const PersonContainer = styled('div')(() => ({
   justifyContent: 'flex-start',
 }));
 
-// const StatusPill = styled('div')(({ theme, status }) => {
-//   let backgroundColor, textColor;
-//   switch (status) {
-//     case 'Active':
-//       backgroundColor = '#4B9F471A';
-//       textColor = '#4B9F47';
-//       break;
-//     case 'Proposed':
-//       backgroundColor = '#5041AB1A';
-//       textColor = '#5041AB';
-//       break;
-//     case 'Approved':
-//       backgroundColor = '#2772F01A';
-//       textColor = '#2772F0';
-//       break;
-//     case 'Paused':
-//       backgroundColor = '#E6521F1A';
-//       textColor = '#E6521F';
-//       break;
-//     case 'Completed':
-//       backgroundColor = '#F5B5441A';
-//       textColor = '#F5B544';
-//       break;
-//     case 'Inactive':
-//       backgroundColor = '#FCF0ED';
-//       textColor = '#C73732';
-//       break;
-//     default:
-//       backgroundColor = '#e0e0e0';
-//       textColor = '#6c757d';
-//   }
-
-//   return {
-//     display: 'inline-flex',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     borderRadius: '4px',
-//     fontFamily: theme.typography.fontFamily,
-//     fontsize: '12px',
-//     fontStyle: 'normal',
-//     fontweight: 400,
-//     lineheight: '16px',
-//     width: '86px',
-//     height: '28px',
-//     backgroundColor,
-//     color: textColor,
-//   };
-// });
-
 const menuItemStyle = {
   '&:hover': {
     backgroundColor: '#142B51B2',
@@ -182,6 +134,7 @@ export default function Resources() {
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
+  const {location} = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(allResourcesDetail || null);
@@ -983,6 +936,9 @@ export default function Resources() {
     if (!organisations || organisations.length === 0) {
       dispatch({ type: FETCH_ORGANISATIONS });
     }
+    if(!location || location?.length === 0){
+      dispatch({type: FETCH_LOCATION});
+    }
   }, []);
 
   const modifyData = data => {
@@ -993,6 +949,7 @@ export default function Resources() {
           id: item?.Resource?.Id,
           Team: item?.Team?.Name || '',
           Organization: item?.Organization?.Name || '',
+          WorkLocation: location?.find(loc => loc.Name === item?.Resource?.WorkLocation)?.Name || '',
         };
       });
     }
