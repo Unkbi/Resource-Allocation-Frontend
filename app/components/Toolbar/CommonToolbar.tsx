@@ -23,48 +23,6 @@ interface CommonToolbarProps {
   permissions?: Record<string, CrudPermissions>;
 }
 
-const menuItems = [
-  {
-    icon: '/images/icons/AllocationIcon.svg',
-    alt: 'Allocation Icon',
-    title: 'Update Allocation',
-    type: 'add_allocation',
-    entity: 'Allocation',
-  },
-  {
-    icon: '/images/icons/ProjectIcon.svg',
-    alt: 'Project Icon',
-    title: 'Add Project',
-    type: 'add_project',
-    primarySecondButtonText: 'Add & Allocate Resources',
-    initialData: {
-      Status: 'Active',
-    },
-    entity: 'Project',
-  },
-  {
-    icon: '/images/icons/TeamIcon.svg',
-    alt: 'Team Icon',
-    title: 'Add Team',
-    type: 'add_team',
-    entity: 'Team',
-  },
-  {
-    icon: '/images/icons/ResourceIcon.svg',
-    alt: 'Resource Icon',
-    title: 'Add Resource',
-    type: 'add_resource',
-    entity: 'Resource',
-  },
-  {
-    icon: '/images/icons/corporate_fare.svg',
-    alt: 'Organization Icon',
-    title: 'Add Organization',
-    type: 'add_organization',
-    entity: 'Organization',
-  },
-];
-
 const CommonToolbar: React.FC<CommonToolbarProps> = memo(
   ({ children, permissions }) => {
     const dispatch = useDispatch();
@@ -121,6 +79,51 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
         })
       );
     };
+
+    const menuItems = [
+      {
+        icon: '/images/icons/AllocationIcon.svg',
+        alt: 'Allocation Icon',
+        title: 'Update Allocation',
+        type: 'add_allocation',
+        entity: 'Allocation',
+      },
+      {
+        icon: '/images/icons/ProjectIcon.svg',
+        alt: 'Project Icon',
+        title: 'Add Project',
+        type: 'add_project',
+        primarySecondButtonText:
+          permissions && permissions['Allocation'].c
+            ? 'Add & Allocate Resources'
+            : '',
+        initialData: {
+          Status: 'Active',
+        },
+        entity: 'Project',
+      },
+      {
+        icon: '/images/icons/TeamIcon.svg',
+        alt: 'Team Icon',
+        title: 'Add Team',
+        type: 'add_team',
+        entity: 'Team',
+      },
+      {
+        icon: '/images/icons/ResourceIcon.svg',
+        alt: 'Resource Icon',
+        title: 'Add Resource',
+        type: 'add_resource',
+        entity: 'Resource',
+      },
+      {
+        icon: '/images/icons/corporate_fare.svg',
+        alt: 'Organization Icon',
+        title: 'Add Organization',
+        type: 'add_organization',
+        entity: 'Organization',
+      },
+    ];
 
     return (
       <Box
