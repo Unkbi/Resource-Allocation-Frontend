@@ -1,10 +1,12 @@
-import { call, put, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import {
   CREATE_PORTFOLIOS,
   DELETE_PORTFOLIOS,
   FETCH_PORTFOLIOS,
   UPDATE_PORTFOLIOS,
 } from '../actions/portfolioActions';
+
+// all the API calls being imported from portfolioServices
 import {
   createPortfolio,
   deletePortfolio,
@@ -15,11 +17,12 @@ import { setLoading, setPortfolios } from '../reducers/portfolioReducer';
 
 function* fetchPortfolioSaga(): Generator<any, void, any> {
   try {
+    // changing loading state in porfolio Reducer
     yield put(setLoading(true));
-
+    // calling fetchPortfolio from services to get all the portfolios
     const responses = yield call(fetchPortfolios);
 
-    yield put(setPortfolios(responses?.result));
+    yield put(setPortfolios(responses));
   } catch (error) {
     console.error('Saga error, Failed to fetch Portfolios : ', error);
   } finally {
@@ -28,10 +31,13 @@ function* fetchPortfolioSaga(): Generator<any, void, any> {
 }
 
 function* createPortfolioSaga(action: any): Generator<any, void, any> {
+  // deconstructed action object
   const { postData, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
+    // API post
     const response = yield call(createPortfolio, postData);
+    // skips the middleware and calls the saga fucntion
     yield call(fetchPortfolioSaga);
     if (resolve) resolve(response);
   } catch (error) {
@@ -43,9 +49,11 @@ function* createPortfolioSaga(action: any): Generator<any, void, any> {
 }
 
 function* updatePortfolioSaga(action: any): Generator<any, void, any> {
+  // deconstructed action
   const { id, updatedFields, resolve, reject } = action.payload;
   try {
     yield put(setLoading(true));
+    // parts passed into undate function
     const response = yield call(updatePortfolio, id, updatedFields);
     yield call(fetchPortfolioSaga);
     if (resolve) resolve(response);
@@ -69,9 +77,9 @@ function* deletePortfolioSaga(action: any): Generator<any, void, any> {
     yield put(setLoading(false));
   }
 }
-
+// attaching actions to watchers
 export function* portfolioSaga() {
-  yield takeEvery(FETCH_PORTFOLIOS, fetchPortfolioSaga);
+  yield takeLatest(FETCH_PORTFOLIOS, fetchPortfolioSaga);
   yield takeEvery(CREATE_PORTFOLIOS, createPortfolioSaga);
   yield takeEvery(UPDATE_PORTFOLIOS, updatePortfolioSaga);
   yield takeEvery(DELETE_PORTFOLIOS, deletePortfolioSaga);

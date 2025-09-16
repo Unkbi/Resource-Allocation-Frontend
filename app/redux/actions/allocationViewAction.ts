@@ -32,9 +32,7 @@ export const fetchUsersSavedViews =
   (userId: string) => async (dispatch: AppDispatch) => {
     try {
       const payload = {
-        'ResourceAllocation.Core/UserAllocationView': {
-          UserId: userId,
-        },
+        UserId: userId,
       };
       //@ts-ignore
       await dispatch(getUsersSavedViews(payload));
@@ -49,9 +47,7 @@ export const updateUsersSavedViewAction =
     try {
       const payload = {
         id: id,
-        body: {
-          'ResourceAllocation.Core/UserAllocationView': updatedView,
-        },
+        body: updatedView,
       };
       //@ts-ignore
       await dispatch(updateAllocationView(payload));
@@ -64,9 +60,7 @@ export const addUsersSavedViewAction =
   (newView: any) => async (dispatch: AppDispatch) => {
     try {
       const payload = {
-        body: {
-          'ResourceAllocation.Core/UserAllocationView': newView,
-        },
+        body: newView,
       };
       //@ts-ignore
       await dispatch(addAllocationView(payload));

@@ -26,10 +26,13 @@ import {
   addRatesValidationSchema,
   openHistoryValidationSchema,
   addPortfolioValidationSchema,
+  addOrganizationValidationSchema,
   addRoleValidationSchema,
   assignRoleValidationSchema,
   addPrivilegeValidationSchema,
   assignPrivilegeValidationSchema,
+  addProjectTypeValidationSchema,
+  addProjectTypeGroupValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -45,6 +48,7 @@ import {
   getUpdatedTotalWeeklyAllocation,
   isResourceWithinDate,
   getMondayOfISO,
+  getUserFromUid,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -82,12 +86,15 @@ import {
   updateResource,
 } from '@/app/services/resourceServices';
 import { postTeamResource } from '@/app/services/teamServices';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import { DATE_FORMAT } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
-import { createTeam, updateTeam } from '@/app/services/teamServices';
+import {
+  createTeam,
+  updateTeam,
+  updateOrganization,
+} from '@/app/services/teamServices';
 import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import AddTeamForm from '../../Forms/AddTeamForm';
@@ -108,6 +115,14 @@ import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
+import AddOrganizationForm from '../../Forms/addOrganizationForm';
+import {
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+  FETCH_ORGANISATIONS,
+  UPDATE_ORGANISATION,
+} from '@/app/redux/actions/organizationsAction';
+
 import AddRoleForm from '../../Forms/AddRoleForm';
 import AssignRoleForm from '../../Forms/AssignRoleForm';
 import {
@@ -115,11 +130,25 @@ import {
   CREATE_PRIVILEGEASSIGNMENT,
   CREATE_ROLE,
   CREATE_ROLESASSIGNMENT,
+  GET_USER,
   UPDATE_PRIVILEGE,
   UPDATE_PRIVILEGEASSIGNMENT,
+  UPDATE_ROLESASSIGNMENT,
 } from '@/app/redux/actions/rbacActions';
+import { fetchAllOrganisations } from '@/app/services/organisationServices';
 import AddPrivilegeForm from '../../Forms/AddPrivilegeForm';
 import AssignPrivilegeForm from '../../Forms/AssignPrivilegeForm';
+import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
+import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
+import AddLocationForm from '../../Forms/AddLocationForm';
+import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
+import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import {
+  ADD_PROJECT_TYPE,
+  UPDATE_PROJECT_TYPE,
+  ADD_PROJECT_TYPE_GROUPS,
+  UPDATE_PROJECT_TYPE_GROUPS,
+} from '@/app/redux/actions/allSettingsActions';
 
 const initialValuesMap = {
   add_project: {
@@ -266,8 +295,28 @@ const initialValuesMap = {
     Description: '',
     SidebarColor: '#000000',
   },
-  add_role: {
+  add_project_type: {
     Name: '',
+    ProjectTypeGroup: '',
+    Description: '',
+    Color: '',
+    Status: 'Active',
+  },
+  edit_project_type: {
+    Name: '',
+    ProjectTypeGroup: '',
+    Description: '',
+    Color: '',
+    Status: 'Active',
+  },
+  add_project_type_group: {
+    Name: '',
+  },
+  edit_project_type_group: {
+    Name: '',
+  },
+  add_role: {
+    name: '',
   },
   edit_role: {
     Name: '',
@@ -305,11 +354,27 @@ const initialValuesMap = {
   },
   assign_privilege: {
     Role: '',
-    Privilege: '',
+    Permission: '',
   },
   edit_privilege_assignment: {
     Role: '',
-    Privilege: '',
+    Permission: '',
+  },
+  add_location: {
+    Location: '',
+    LocationGroup: '',
+    Status: 'Active',
+  },
+  edit_location: {
+    Location: '',
+    LocationGroup: '',
+    Status: '',
+  },
+  add_location_group: {
+    LocationGroup: '',
+  },
+  edit_location_group: {
+    LocationGroup: '',
   },
 };
 
@@ -329,6 +394,7 @@ const AllocationForm = () => {
   );
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
   const { startDate, endDate } = calendarDate || {};
@@ -342,6 +408,11 @@ const AllocationForm = () => {
   const [HistoryData, setHistoryData] = useState([]);
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
+  const { organizations } = useSelector(state => state.organisations);
+  const { user: allUsers } = useSelector(state => state.rbac);
+  const { projectTypeGroups, projectTypes } = useSelector(
+    state => state.allSettings
+  );
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -359,6 +430,7 @@ const AllocationForm = () => {
   const projectAllocationGrid = useAllocationGrid('projectAllocation');
   const topProjectAllocationGrid = useAllocationGrid('topProject');
   const bottomTeamAllocationGrid = useAllocationGrid('bottomTeam');
+
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
 
@@ -427,6 +499,22 @@ const AllocationForm = () => {
         return assignPrivilegeValidationSchema;
       case 'edit_privilege_assignment':
         return assignPrivilegeValidationSchema;
+      case 'add_organization':
+        return addOrganizationValidationSchema(organizations);
+      case 'add_project_type':
+        return addProjectTypeValidationSchema(projectTypes);
+      case 'edit_project_type':
+        return addProjectTypeValidationSchema(
+          projectTypes,
+          initialData?.Name || ''
+        );
+      case 'add_project_type_group':
+        return addProjectTypeGroupValidationSchema(projectTypeGroups);
+      case 'edit_project_type_group':
+        return addProjectTypeGroupValidationSchema(
+          projectTypeGroups,
+          initialData?.Name || ''
+        );
       default:
         return null;
     }
@@ -436,6 +524,12 @@ const AllocationForm = () => {
       setFormValue(initialValuesMap[formType] || initialValuesMap.add_project);
     }
   }, [formType]);
+
+  useEffect(() => {
+    if (!allUsers?.length) {
+      dispatch({ type: GET_USER });
+    }
+  }, []);
 
   const handleScrollAndFocus = (resources, period, projects) => {
     const selectedWeeks = period?.flatMap(monday => getWeekNumber(monday));
@@ -496,7 +590,7 @@ const AllocationForm = () => {
       });
     });
 
-    teams?.result?.forEach(team => {
+    teams?.forEach(team => {
       if (team?.Id == new_user?.teamId) {
         new_user = { team: team, ...new_user };
       }
@@ -552,27 +646,19 @@ const AllocationForm = () => {
           cleanedValues.StartDate = today;
         }
         postData = {
-          'ResourceAllocation.Core/Project': {
-            ...cleanedValues,
-            Budget: cleanedValues.Budget || 0,
-            Description: 'string',
-            EndDate:
-              cleanedValues.EndDate === '' ? null : cleanedValues.EndDate,
-            StartDate: cleanedValues.StartDate,
-            ProjectSponsor:
-              cleanedValues.ProjectSponsor === ''
-                ? null
-                : cleanedValues.ProjectSponsor,
-            ProjectManager:
-              cleanedValues.ProjectManager === ''
-                ? null
-                : cleanedValues.ProjectManager,
-            PortfolioId:
-              cleanedValues.PortfolioId === ''
-                ? null
-                : cleanedValues.PortfolioId,
-            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
-          },
+          Name: cleanedValues.Name,
+          Description: cleanedValues.Description || '',
+          Type: cleanedValues.Type || '',
+          Budget: cleanedValues.Budget || 0,
+          ProjectSponsor: cleanedValues.ProjectSponsor || null,
+          ProjectManager: cleanedValues.ProjectManager || null,
+          PortfolioId: cleanedValues.PortfolioId || null,
+          Status: cleanedValues.Status || 'Active',
+          Location: cleanedValues.Location || '',
+          StartDate: cleanedValues.StartDate,
+          EndDate: cleanedValues.EndDate || null,
+          BudgetCurrency: cleanedValues.BudgetCurrency || 'USD',
+          AllowOvertime: cleanedValues.AllowOvertime === 'Yes',
         };
         try {
           dispatch(addProject(postData))
@@ -589,8 +675,7 @@ const AllocationForm = () => {
                 );
                 return;
               }
-
-              const newProjectId = response.payload?.result?.Id;
+              const newProjectId = response.payload?.Project?.Id;
               if (newProjectId) {
                 await dispatch(fetchAllProjects());
                 dispatch(
@@ -609,7 +694,7 @@ const AllocationForm = () => {
 
               if (submitType === 'secondary') {
                 dispatch(setSplitView(true));
-                dispatch(setSplitViewCurrentProject(response.payload.result));
+                dispatch(setSplitViewCurrentProject(response.payload.Project));
                 dispatch(closeDialog());
                 router.replace('/allocation');
                 return;
@@ -640,25 +725,24 @@ const AllocationForm = () => {
 
       case 'edit_project':
         postData = {
-          'ResourceAllocation.Core/Project': {
-            ...cleanedValues,
-            Budget: cleanedValues.Budget || 0,
-            Description: 'string',
-            ProjectSponsor:
-              cleanedValues.ProjectSponsor === ''
-                ? null
-                : cleanedValues.ProjectSponsor,
-            ProjectManager:
-              cleanedValues.ProjectManager === ''
-                ? null
-                : cleanedValues.ProjectManager,
-            PortfolioId:
-              cleanedValues.PortfolioId === ''
-                ? null
-                : cleanedValues.PortfolioId,
-            AllowOvertime: cleanedValues.AllowOvertime === 'Yes' ? true : false,
-          },
+          Id: initialData.Id,
+          Name: cleanedValues.Name,
+          Description: cleanedValues.Description || '',
+          Type: cleanedValues.Type || '',
+          Budget: cleanedValues.Budget || 0,
+          ProjectSponsor: cleanedValues.ProjectSponsor || null,
+          ProjectManager: cleanedValues.ProjectManager || null,
+          PortfolioId: cleanedValues.PortfolioId || null,
+          Status: cleanedValues.Status || 'Active',
+          Location: cleanedValues.Location || '',
+          StartDate: cleanedValues.StartDate,
+          EndDate: cleanedValues.EndDate || null,
+          BudgetCurrency: cleanedValues.BudgetCurrency || 'USD',
+          AllowOvertime:
+            cleanedValues.AllowOvertime === true ||
+            cleanedValues.AllowOvertime === 'Yes',
         };
+
         try {
           dispatch(updateProject({ postData, projectId: initialData.Id })).then(
             async response => {
@@ -707,7 +791,7 @@ const AllocationForm = () => {
                 return;
               }
 
-              const newTeamId = response.payload?.result?.Id;
+              const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
                 dispatch(setHighlightedRowId(newTeamId));
@@ -754,11 +838,9 @@ const AllocationForm = () => {
         });
 
         postData = {
-          'ResourceAllocation.Core/Team': {
-            Name: cleanedValues.Name?.trim(),
-            AllocationManager: cleanedValues.AllocationManager,
-            Status: cleanedValues.Status,
-          },
+          Name: cleanedValues.Name?.trim(),
+          AllocationManager: cleanedValues.AllocationManager,
+          Status: cleanedValues.Status,
         };
 
         try {
@@ -793,33 +875,31 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': {
-            FirstName: cleanedValues.FirstName,
-            StartDate: cleanedValues.StartDate,
-            LocationCategory: cleanedValues.LocationCategory,
-            Email: cleanedValues.Email,
-            Manager: cleanedValues.Manager,
-            LastName: cleanedValues.LastName,
-            ContractorHourlyRateCurrency:
-              cleanedValues.ContractorHourlyRateCurrency,
-            AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
-            Department: cleanedValues.Department,
-            Type: cleanedValues.Type,
-            EndDate: cleanedValues.EndDate,
-            Role: cleanedValues.Role,
-            FullName:
-              cleanedValues.FirstName?.trim() +
-              ' ' +
-              cleanedValues.LastName?.trim(),
-            Status: cleanedValues.Status,
-            ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
-            HRLevel: cleanedValues.HRLevel,
-            PhoneNumber: cleanedValues.PhoneNumber,
-            WorkLocation: cleanedValues.WorkLocation,
-            ...(cleanedValues.PreferredFirstName
-              ? { PreferredFirstName: cleanedValues.PreferredFirstName }
-              : {}),
-          },
+          FirstName: cleanedValues.FirstName,
+          StartDate: cleanedValues.StartDate,
+          LocationCategory: cleanedValues.LocationCategory,
+          Email: cleanedValues.Email,
+          Manager: cleanedValues.Manager,
+          LastName: cleanedValues.LastName,
+          ContractorHourlyRateCurrency:
+            cleanedValues.ContractorHourlyRateCurrency,
+          AverageWeeklyHours: cleanedValues.AverageWeeklyHours,
+          Department: cleanedValues.Department,
+          Type: cleanedValues.Type,
+          EndDate: cleanedValues.EndDate,
+          Role: cleanedValues.Role,
+          FullName:
+            cleanedValues.FirstName?.trim() +
+            ' ' +
+            cleanedValues.LastName?.trim(),
+          Status: cleanedValues.Status,
+          ContractorHourlyRate: cleanedValues.ContractorHourlyRate,
+          HRLevel: cleanedValues.HRLevel,
+          PhoneNumber: cleanedValues.PhoneNumber,
+          WorkLocation: cleanedValues.WorkLocation,
+          ...(cleanedValues.PreferredFirstName
+            ? { PreferredFirstName: cleanedValues.PreferredFirstName }
+            : {}),
         };
         try {
           const result = await dispatch(
@@ -841,7 +921,8 @@ const AllocationForm = () => {
             );
             return;
           }
-          const newResource = result?.payload?.result;
+          const newResource =
+            result?.payload?.OrganizationResource?.Resource?.Resource;
           const newResourceId = newResource?.Id ?? null;
 
           if (newResourceId) {
@@ -877,25 +958,20 @@ const AllocationForm = () => {
           }
         });
         postData = {
-          'ResourceAllocation.Core/Resource': {
-            ...cleanedValues,
-            EndDate:
-              cleanedValues.EndDate === undefined ||
-              cleanedValues.EndDate === ''
-                ? null
-                : cleanedValues.EndDate,
-          },
+          ...cleanedValues,
+          EndDate:
+            cleanedValues.EndDate === undefined || cleanedValues.EndDate === ''
+              ? null
+              : cleanedValues.EndDate,
         };
 
         try {
-          const selectedTeam = teams.result.find(
-            team => team.Id === values.Team
-          );
+          const selectedTeam = teams?.find(team => team.Id === values.Team);
           let teamAllocationManagerId = null;
           if (selectedTeam?.AllocationManager) {
             const raw = selectedTeam.AllocationManager;
-            teamAllocationManagerId = raw.includes(',')
-              ? raw.split(',')[1]
+            teamAllocationManagerId = raw.includes('/')
+              ? raw.split('/')[1]
               : raw;
           }
           if (!teamAllocationManagerId) {
@@ -959,10 +1035,8 @@ const AllocationForm = () => {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
-                'ResourceAllocation.Core/ChangeTeamResource': {
-                  Resource: initialData.Id,
-                  Team: teamOrgData.teamId,
-                },
+                Resource: initialData.Id,
+                Team: teamOrgData.teamId,
               },
             });
           }
@@ -975,10 +1049,8 @@ const AllocationForm = () => {
             await dispatch({
               type: 'UPDATE_RESOURCE_ORGANISATION',
               payload: {
-                'ResourceAllocation.Core/ChangeTeamOrganization': {
-                  Resource: initialData.Id,
-                  Organization: teamOrgData.organisationId,
-                },
+                Resource: initialData.Id,
+                Organization: teamOrgData.organisationId,
               },
             });
           }
@@ -1009,9 +1081,8 @@ const AllocationForm = () => {
             values.EndDate || values.endDate
           );
           const filteredProjects =
-            projects?.result?.filter(project =>
-              values.Project.includes(project.Id)
-            ) || [];
+            projects?.filter(project => values.Project.includes(project.Id)) ||
+            [];
 
           if (
             filteredProjects.some(p => !p.AllowOvertime) &&
@@ -1062,7 +1133,7 @@ const AllocationForm = () => {
                 }
 
                 //Check if Allocation is within the range of StartDate and EndDate of resource
-                const resourceDetails = resources?.result?.find(
+                const resourceDetails = resources?.find(
                   res => res.Id === resource
                 );
                 const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
@@ -1184,20 +1255,18 @@ const AllocationForm = () => {
               `Updating allocation for ${
                 Array.isArray(values.Resource)
                   ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.result?.find(
+                      const resource = resources?.find(
                         r => r.Id === resourceId
                       );
                       if (!resource) return acc;
                       return (
                         acc +
-                        resources?.result?.find(
-                          resource => resource.Id === resourceId
-                        )?.FullName +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
                         ', '
                       );
                     }, '').slice(0, -2)
-                  : resources?.result?.find(r => r.Id === values.Resource)
-                      ?.FullName
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }...`,
               'info'
             )
@@ -1261,7 +1330,9 @@ const AllocationForm = () => {
 
           await Promise.all([...allocationPromises, ...deletePromises]).then(
             async response => {
-              if (response && response.length > 0) {
+              if (response && response[0].length > 0) {
+                response = response.flat();
+                response = formatAPIResponse('Allocation', response);
                 let allocationsUpdated = [];
                 // handle for bulk Delete different responce
                 if (deleteList.length > 0) {
@@ -1269,12 +1340,12 @@ const AllocationForm = () => {
                 } else {
                   allocationsUpdated = response.reduce((arr, res) => {
                     // Check if result exists and is an array before spreading
-                    if (res?.result && Array.isArray(res.result)) {
-                      return [...arr, ...res.result];
+                    if (res && Array.isArray(res)) {
+                      return [...arr, ...res];
                     }
                     // If it's not an array but has a value you want to include
-                    else if (res?.result !== undefined) {
-                      return [...arr, res.result];
+                    else if (res !== undefined) {
+                      return [...arr, res];
                     }
                     // Otherwise just return the accumulator unchanged
                     return arr;
@@ -1411,20 +1482,18 @@ const AllocationForm = () => {
               `Failed to create allocation for ${
                 Array.isArray(values.Resource)
                   ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.result?.find(
+                      const resource = resources?.find(
                         r => r.Id === resourceId
                       );
                       if (!resource) return acc;
                       return (
                         acc +
-                        resources?.result?.find(
-                          resource => resource.Id === resourceId
-                        )?.FullName +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
                         ', '
                       );
                     }, '').slice(0, -2)
-                  : resources?.result?.find(r => r.Id === values.Resource)
-                      ?.FullName
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }`,
               'error',
               4000
@@ -1511,11 +1580,23 @@ const AllocationForm = () => {
             );
             dispatch(closeDialog());
           } else {
-            const userId = getUserIdFromEmail(
-              resources?.result || [],
-              user?.Email
-            );
-            // Create a new view.
+            const userId = getUserIdFromEmail(resources || [], email);
+
+            if (!userId) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message:
+                    'Save views require a user resource. Create a resource with this email to enable saving views.',
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 5000,
+                })
+              );
+              dispatch(closeDialog());
+              return;
+            }
+
             const newView = {
               isDefault: values.isDefault,
               isDynamicRange:
@@ -1612,7 +1693,7 @@ const AllocationForm = () => {
       case 'clone_resource':
         try {
           const sourceResourceName = initialData?.Resource;
-          const sourceResourceId = resources?.result?.find(
+          const sourceResourceId = resources?.find(
             res => res.FullName === sourceResourceName
           )?.Id;
 
@@ -1669,6 +1750,7 @@ const AllocationForm = () => {
                     allocationId: targetAlloc.allocationId,
                     putData: {
                       'ResourceAllocation.Core/Allocation': {
+                        // Will take care of this wehn I fix Clone API
                         AllocationEntered: sourceAlloc.value,
                       },
                     },
@@ -1681,6 +1763,7 @@ const AllocationForm = () => {
                     resourceId: targetResourceId,
                     postData: {
                       'ResourceAllocation.Core/Allocation': {
+                        // Will take care of this wehn I fix Clone API
                         Resource: targetResourceId,
                         Project: projectId,
                         ProjectName: initialData.Project,
@@ -1826,7 +1909,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response?.EmployeeRate?.Id));
           })
           .catch(error => {
             console.error('Failed to add rate:', error);
@@ -1866,7 +1949,7 @@ const AllocationForm = () => {
           dispatch({
             type: 'UPDATE_EMPLOYEE_RATES',
             payload: {
-              id: initialData.__Id__,
+              id: initialData.Id,
               updatedFields,
               resolve,
               reject,
@@ -1884,7 +1967,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.result[0].__Id__));
+            dispatch(setHighlightedRowId(response?.[0]?.Id));
           })
           .catch(error => {
             console.error('Failed to update rate:', error);
@@ -1910,7 +1993,6 @@ const AllocationForm = () => {
         postData = {
           ...cleanedValues,
         };
-
         new Promise((resolve, reject) => {
           dispatch({
             type: 'CREATE_PORTFOLIOS',
@@ -1931,7 +2013,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result.__Id__));
+            dispatch(setHighlightedRowId(response.Id));
           })
           .catch(error => {
             console.error('Failed to add portfolio:', error);
@@ -1948,7 +2030,115 @@ const AllocationForm = () => {
           .finally(() => {
             dispatch(closeDialog());
           });
+        break;
+      case 'add_organization':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
 
+        postData = {
+          ...cleanedValues,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_ORGANISATION,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Organization added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response?.Organization?.Id));
+            if (pathname !== '/people?tab=organizations') {
+              router.replace('/people?tab=organizations');
+            } else {
+              dispatch(closeDialog());
+            }
+          })
+          .catch(error => {
+            console.error('Failed to add organization:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add organization.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .finally(() => {
+            dispatch(closeDialog());
+          });
+        break;
+      case 'edit_organization':
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const postData = {
+          Name: cleanedValues.Name?.trim(),
+          Status: cleanedValues.Status,
+        };
+        try {
+          const result = await dispatch(
+            updateOrganization({
+              postData,
+              organizationId: initialData.Id,
+            })
+          );
+
+          dispatch(setHighlightedRowId(initialData.Id));
+
+          if (result.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update organization.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
+
+          const updated = result?.payload?.result;
+          dispatch(setHighlightedRowId(updated?.Id || updated?.__Id__));
+          dispatch({ type: FETCH_ORGANISATIONS });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Organization updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+        } catch (e) {
+          console.error('Failed to update organization:', e);
+        }
         break;
 
       case 'edit_portfolio': {
@@ -1981,7 +2171,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.Id));
+          dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
           console.error('Failed to update portfolio:', error);
@@ -2028,7 +2218,7 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
-              dispatch(setHighlightedRowId(response.result?.Name));
+              dispatch(setHighlightedRowId(response?.Role.name));
             })
             .catch(error => {
               console.error('Failed to add role:', error);
@@ -2058,11 +2248,9 @@ const AllocationForm = () => {
 
           const postData = {
             ...cleanedValues,
-            Assignee: cleanedValues.Assignee?.Email || null,
+            // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
-            Name: values.Role
-              ? `${values.Role}-${cleanedValues.Assignee?.Email}`
-              : null,
+            Name: values.Role ? `${cleanedValues.Assignee?.id}` : null,
           };
 
           new Promise((resolve, reject) => {
@@ -2104,21 +2292,68 @@ const AllocationForm = () => {
             });
         }
         break;
-
+      case 'edit_role_assignment': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const updatedFields = {
+          userRole: initialData.__path__,
+          userId: values.Assignee?.id || null,
+          roleName: values.Role,
+        };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_ROLESASSIGNMENT,
+              payload: {
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Role assignment updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response.result?.userId));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message = 'Failed to update role assignment.';
+          dispatch(
+            showToast({
+              open: true,
+              message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
       case 'add_privilege': {
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
           }
         });
-        const actionsArray = Object.entries(cleanedValues.Actions || {})
-          .filter(([_, isChecked]) => isChecked)
-          .map(([action]) => action.toLowerCase());
+        const { Name, Resource, Actions } = cleanedValues;
 
         const postData = {
-          Name: cleanedValues.Name,
-          Resource: cleanedValues.Resource,
-          Actions: actionsArray,
+          id: cleanedValues.Name,
+          resourceFqName: cleanedValues.Resource,
+          c: cleanedValues.Actions?.Create || false,
+          r: cleanedValues.Actions?.Read || false,
+          u: cleanedValues.Actions?.Update || false,
+          d: cleanedValues.Actions?.Delete || false,
         };
 
         new Promise((resolve, reject) => {
@@ -2141,7 +2376,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response.result?.Name));
+            dispatch(setHighlightedRowId(response.result?.id));
           })
           .catch(error => {
             console.error('Failed to add privilege:', error);
@@ -2170,14 +2405,15 @@ const AllocationForm = () => {
         if (Array.isArray(cleanedValues.Resource)) {
           cleanedValues.Resource = cleanedValues.Resource[0] || null;
         }
-        const actionsArray = Object.entries(cleanedValues.Actions || {})
-          .filter(([_, isChecked]) => isChecked)
-          .map(([action]) => action.toLowerCase());
 
+        const { Name, Resource, Actions } = cleanedValues;
         const updatedFields = {
-          Name: cleanedValues.Name,
-          Resource: cleanedValues.Resource,
-          Actions: actionsArray,
+          id: cleanedValues.Name,
+          resourceFqName: cleanedValues.Resource,
+          c: cleanedValues.Actions?.Create || false,
+          r: cleanedValues.Actions?.Read || false,
+          u: cleanedValues.Actions?.Update || false,
+          d: cleanedValues.Actions?.Delete || false,
         };
 
         try {
@@ -2185,7 +2421,7 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                name: cleanedValues.Name,
+                id: cleanedValues.Name,
                 updatedFields,
                 resolve,
                 reject,
@@ -2226,9 +2462,10 @@ const AllocationForm = () => {
           }
         });
         const postData = {
-          ...cleanedValues,
-          Role: values.Role || null,
-          Privilege: values.Privilege || null,
+          roleName: values.Role ? values.Role.split('/').pop() : null,
+          permissionId: values.Permission
+            ? values.Permission.split('agentlang.auth$Permission/')[1]
+            : null,
         };
         new Promise((resolve, reject) => {
           dispatch({
@@ -2277,16 +2514,17 @@ const AllocationForm = () => {
         });
 
         const updatedFields = {
-          Role: values.Role || null,
-          Privilege: values.Privilege || null,
+          rolePermission: initialData.__path__,
+          permissionId: values.Permission
+            ? values.Permission.split('agentlang.auth$Permission/')[1]
+            : null,
+          roleName: values.Role ? values.Role.split('/').pop() : null,
         };
-
         try {
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: UPDATE_PRIVILEGEASSIGNMENT,
               payload: {
-                name: initialData?.Name,
                 updatedFields,
                 resolve,
                 reject,
@@ -2303,7 +2541,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.Name));
+          dispatch(setHighlightedRowId(response.result?.roleName));
           dispatch(closeDialog());
         } catch (error) {
           const message =
@@ -2322,6 +2560,223 @@ const AllocationForm = () => {
         return;
       }
 
+      case 'add_project_type':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+          const postData = {
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+            Color: cleanedValues.Color,
+            Status: cleanedValues.Status,
+            Group:
+              projectTypeGroups.find(group => {
+                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
+              })?.Id || null,
+          };
+          try {
+            const response = await new Promise((resolve, reject) => {
+              dispatch({
+                type: ADD_PROJECT_TYPE,
+                payload: {
+                  postData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Project Type updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response?.Id));
+            dispatch(closeDialog());
+          } catch (error) {
+            console.error('Failed to update project type:', error);
+            const message =
+              error?.response?.data?.exception ||
+              'Failed to update project type.';
+            dispatch(
+              showToast({
+                open: true,
+                message: message,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        }
+        break;
+      case 'edit_project_type':
+        {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+          const postData = {
+            Name: cleanedValues.Name,
+            Description: cleanedValues.Description || '',
+            Color: cleanedValues.Color,
+            Status: cleanedValues.Status,
+
+            Group:
+              projectTypeGroups.find(group => {
+                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
+              })?.Id || null,
+          };
+          try {
+            const response = await new Promise((resolve, reject) => {
+              dispatch({
+                type: UPDATE_PROJECT_TYPE,
+                payload: {
+                  projectTypeId: initialData?.id,
+                  postData,
+                  resolve,
+                  reject,
+                },
+              });
+            });
+
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Project Type updated successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(setHighlightedRowId(response?.Id));
+            dispatch(closeDialog());
+          } catch (error) {
+            console.error('Failed to update project type:', error);
+            const message =
+              error?.response?.data?.exception ||
+              'Failed to update project type.';
+            dispatch(
+              showToast({
+                open: true,
+                message: message,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        }
+        break;
+      case 'add_project_type_group': {
+        try {
+          const postData = { ...cleanedValues };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: ADD_PROJECT_TYPE_GROUPS,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Project Type Group added successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response?.Id));
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to add project type group:', error);
+          const message =
+            error?.response?.data?.exception ||
+            'Failed to add project type group.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'edit_project_type_group': {
+        try {
+          const postData = { ...cleanedValues };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_PROJECT_TYPE_GROUPS,
+              payload: {
+                projectTypeGroupId: initialData?.id,
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Project Type Group updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response?.Id));
+          dispatch(closeDialog());
+        } catch (error) {
+          console.error('Failed to update project type group:', error);
+          const message =
+            error?.response?.data?.exception ||
+            'Failed to update project type group.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
+      case 'add_location': {
+        console.log('add_location');
+      }
+      case 'edit_location': {
+        console.log('edit_location');
+      }
+      case 'add_location_group': {
+        console.log('add_location_group');
+      }
+      case 'edit_location_group':
+        {
+          console.log('edit_location_group');
+        }
+        break;
+
       default:
         return;
     }
@@ -2335,7 +2790,7 @@ const AllocationForm = () => {
     try {
       const { values, initialData } = pendingTransferData;
       const sourceResourceName = initialData?.Resource;
-      const sourceResourceId = resources?.result?.find(
+      const sourceResourceId = resources?.find(
         res => res.FullName === sourceResourceName
       )?.Id;
 
@@ -2386,6 +2841,7 @@ const AllocationForm = () => {
                 allocationId: targetAlloc.allocationId,
                 putData: {
                   'ResourceAllocation.Core/Allocation': {
+                    // Will take care of this wehn I fix Transfer API
                     AllocationEntered: sourceAlloc.value,
                   },
                 },
@@ -2398,6 +2854,7 @@ const AllocationForm = () => {
                 resourceId: targetResourceId,
                 postData: {
                   'ResourceAllocation.Core/Allocation': {
+                    // Will take care of this wehn I fix Transfer API
                     Resource: targetResourceId,
                     Project: projectId,
                     ProjectName: initialData.Project,
@@ -2524,21 +2981,27 @@ const AllocationForm = () => {
         try {
           setHistoryData([]);
           setHistoryStatus('loading');
-          const response = await fetchHistory(initialData);
+          let response = await fetchHistory(initialData);
           if (response?.error) {
             console.error('Failed to fetch history:', response.error);
             return;
           }
 
           // If result is empty, return immediately
-          if (response?.result === null && response?.status === 'not-found') {
+          if (response === null) {
             setHistoryStatus('no-data');
             setHistoryData([]);
             return;
           }
 
+          response = formatAPIResponse('AllocationHistoryOut', response).map(
+            item => ({
+              ...item,
+              ChangesLog: formatAPIResponse('ChangesLog', item.ChangesLog),
+            })
+          );
           const formattedHistory = [];
-          (response && response.result ? response.result : [])
+          (response ? response : [])
             .filter(
               item =>
                 Array.isArray(item.ChangesLog) && item.ChangesLog.length > 0
@@ -2614,6 +3077,7 @@ const AllocationForm = () => {
                 let action = '';
                 let fromVersion = '';
                 let toVersion = '';
+                const modifingUserDetails = getUserFromUid(log.User, allUsers);
 
                 // Find the next log entry if it exists
                 const nextLog = ChangesLog[logIdx + 1];
@@ -2625,7 +3089,7 @@ const AllocationForm = () => {
                     ? (nextLog.AllocationEnteredLast ?? '')
                     : (AllocationEntered ?? '');
                 } else if (log.Action?.toLowerCase() === 'update') {
-                  action = 'Update';
+                  action = 'Updated';
                   fromVersion = log.AllocationEnteredLast ?? '';
                   toVersion = nextLog
                     ? (nextLog.AllocationEnteredLast ?? '')
@@ -2645,13 +3109,19 @@ const AllocationForm = () => {
                   projectName: ProjectName,
                   weekNumber: weekNumber ? Number(weekNumber) : undefined,
                   date: getDateString(Period),
-                  timestamp: getRelativeTime(log.Timestamp),
+                  timestamp: getRelativeTime(
+                    Math.floor(new Date(log.Timestamp)?.getTime() / 1000)
+                  ),
                   action,
                   fromVersion:
                     fromVersion !== undefined ? String(fromVersion) : '',
                   toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: getUserName(log.User),
-                  _timestampRaw: log.Timestamp, // Add raw timestamp for sorting
+                  byUser: `${modifingUserDetails?.firstName || ''} ${
+                    modifingUserDetails?.lastName || ''
+                  }`,
+                  _timestampRaw: Math.floor(
+                    new Date(log.Timestamp)?.getTime() / 1000
+                  ), // Add raw timestamp for sorting
                 });
               });
             });
@@ -2771,6 +3241,29 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
+
+      case 'add_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_organization':
+        return (
+          <AddOrganizationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+
       case 'add_role':
         return (
           <AddRoleForm formikProps={formikProps} setFormValue={setFormValue} />
@@ -2821,7 +3314,62 @@ const AllocationForm = () => {
             setFormValue={setFormValue}
           />
         );
-
+      case 'add_project_type':
+        return (
+          <AddProjectTypesForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_location':
+        return (
+          <AddLocationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_project_type':
+        return (
+          <AddProjectTypesForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_location':
+        return (
+          <AddLocationForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_project_type_group':
+        return (
+          <AddProjectTypesGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_location_group':
+        return (
+          <AddLocationGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_project_type_group':
+        return (
+          <AddProjectTypesGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_location_group':
+        return (
+          <AddLocationGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
       default:
         return <div>No form selected</div>;
     }
@@ -2911,16 +3459,12 @@ const AllocationForm = () => {
           >
             Are you sure you want to transfer this allocation to &nbsp;
             {pendingTransferData?.values?.Resource?.map(resourceId => {
-              const resource = resources?.result?.find(
-                res => res.Id === resourceId
-              );
+              const resource = resources?.find(res => res.Id === resourceId);
               return resource?.FullName || 'Unknown Resource';
             }).join(', ')}
             &nbsp; - &nbsp;
             {pendingTransferData?.values?.Project?.map(projectId => {
-              const project = projects?.result?.find(
-                proj => proj.Id === projectId
-              );
+              const project = projects?.find(proj => proj.Id === projectId);
               return project?.Name || 'Unknown Project';
             }).join(', ')}
             .

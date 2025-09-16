@@ -11,7 +11,7 @@ import { useDispatch } from 'react-redux';
 
 interface AssignPrivilegeFormValues {
   Role: string;
-  Privilege: string;
+  Permission: string;
 }
 
 interface AssignPrivilegeFormProps {
@@ -31,7 +31,18 @@ const AssignPrivilegeForm = ({
   const dispatch = useDispatch();
   const roles: Role[] = useSelector((state: any) => state.rbac.roles || []);
   const privileges: Privilege[] = useSelector(
-    (state: any) => state.rbac.privileges
+    (state: any) => state.rbac.privileges || []
+  );
+  const privilegeAssignments: PrivilegeAssignment[] = useSelector(
+    (state: any) => state.rbac.privilegeAssignments || []
+  );
+  const assignedPrivilegePaths = new Set(
+    privilegeAssignments
+      .filter(pa => pa.Role === values.Role) 
+      .map(pa => pa.Permission as string)   
+  );
+  const availablePrivileges = privileges.filter(
+    p => p.__path__ && !assignedPrivilegePaths.has(p.__path__)
   );
 
   const commonAutocompleteStyles = {
@@ -46,7 +57,7 @@ const AssignPrivilegeForm = ({
     if (initialData) {
       const rowData: AssignPrivilegeFormValues = {
         Role: initialData.Role || '',
-        Privilege: initialData.Privilege || '',
+        Permission: initialData.Permission || '',
       };
       setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
@@ -70,11 +81,23 @@ const AssignPrivilegeForm = ({
           sx={commonAutocompleteStyles}
           size="small"
           options={roles}
-          getOptionLabel={(option: Role) => option.Name}
-          value={roles.find(r => r.Name === values.Role) || null}
-          onChange={(_event, newValue) =>
-            setFieldValue('Role', newValue?.Name || '')
-          }
+          getOptionLabel={(option: Role) => option.name}
+          value={roles.find(r => r.__path__ === values.Role) || null}
+          onChange={(_event, newValue) => {
+            const newRolePath = newValue?.__path__ || '';
+            setFieldValue('Role', newRolePath);
+            if (
+              newRolePath &&
+              values.Permission &&
+              privilegeAssignments.some(
+                pa =>
+                  pa.Role === newRolePath &&
+                  pa.Permission === values.Permission
+              )
+            ) {
+              setFieldValue('Permission', '');
+            }
+          }}
           renderInput={params => (
             <TextField
               {...params}
@@ -92,31 +115,30 @@ const AssignPrivilegeForm = ({
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          {' '}
           Privilege <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <Autocomplete
           sx={commonAutocompleteStyles}
           size="small"
-          options={privileges}
+          options={availablePrivileges}
           getOptionLabel={(option: Privilege) => {
-            const name = option?.Name || '';
-            const prefix = 'priv_ResourceAllocation.Core_';
+            const name = option?.id || '';
+            const prefix = 'agentlang.auth$Permission';
             return name.startsWith(prefix) ? name.slice(prefix.length) : name;
           }}
-          value={privileges.find(p => p.Name === values.Privilege) || null}
+          value={privileges.find(p => p.__path__ === values.Permission) || null}
           onChange={(_event, newValue) =>
-            setFieldValue('Privilege', newValue?.Name || '')
+            setFieldValue('Permission', newValue?.__path__ || '')
           }
           renderInput={params => (
             <TextField
               {...params}
               placeholder="Select Privilege"
               variant="outlined"
-              error={touched.Privilege && Boolean(errors.Privilege)}
+              error={touched.Permission && Boolean(errors.Permission)}
               helperText={
-                touched.Privilege && typeof errors.Privilege === 'string'
-                  ? errors.Privilege
+                touched.Permission && typeof errors.Permission === 'string'
+                  ? errors.Permission
                   : undefined
               }
               FormHelperTextProps={{

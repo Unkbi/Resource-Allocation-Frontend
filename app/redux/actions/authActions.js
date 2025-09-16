@@ -22,11 +22,17 @@ export const performLogout = () => dispatch => {
   dispatch(logoutUser());
 };
 
-export const signUp = (data, email) => async dispatch => {
+export const signUp = (data) => async dispatch => {
   try {
     const response = await dispatch(signupUser(data)).unwrap();
-    if (response.status === 'ok') {
-      dispatch(updateSignup(email));
+    if (response.username) {
+      dispatch(updateSignup({
+        username: response.username,
+        systemUserInfo: response.systemUserInfo,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      }));
     }
   } catch (error) {
     console.error('Signup failed:', error);
@@ -41,9 +47,9 @@ export const confirmSignUpUser = data => async dispatch => {
   }
 };
 
-export const getUserData = () => async dispatch => {
+export const getUserData = userId => async dispatch => {
   try {
-    await dispatch(getUser());
+    await dispatch(getUser(userId));
   } catch (error) {
     console.error('get user failed:', error);
   }
@@ -68,15 +74,10 @@ export const performResetPassword = data => async dispatch => {
   }
 };
 
-export const resendOtp = email => async dispatch => {
+export const resendOtp = signupData => async dispatch => {
   try {
-    const response = await dispatch(
-      resendConfirmationCode({
-        'Agentlang.Kernel.Identity/ResendConfirmationCode': {
-          Username: email,
-        },
-      })
-    ).unwrap();
+    const response = await dispatch(resendConfirmationCode(signupData.email)).unwrap();
+    return response; 
   } catch (error) {
     console.error('OTP resend failed:', error);
     throw error;

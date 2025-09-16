@@ -73,7 +73,7 @@ const ContentHeader = styled(Box)({
   padding: '16px 32px',
   borderBottom: '1px solid #e0e0e0',
   backgroundColor: '#ffffff',
-  height:'96px'
+  height: '96px',
 });
 
 const ScrollableContent = styled(Box)(({ theme }: ThemeProps) => ({
@@ -198,7 +198,7 @@ const ColorPickerContainer = styled(Box)({
   display: 'flex',
   width: '100%',
   height: '100%',
-  justifyContent: 'center',
+  justifyContent: 'start',
   alignItems: 'center',
 });
 
@@ -301,6 +301,9 @@ const StyledDataGrid = styled(DataGridPremium)(({ theme }: ThemeProps) => ({
   borderRadius: '0px',
   borderRight: 'none',
   borderLeft: 'none',
+  '& .MuiDataGrid-main': {
+    borderRight: '1px solid #DDE1E4'
+  },
   '& .MuiDataGrid-columnHeaders': {
     '& .MuiDataGrid-columnHeader': {
       borderRight: '1px solid #DDE1E4',
@@ -347,6 +350,88 @@ const StyledTableHeader = styled(Typography)({
   padding: '14px',
 });
 
+const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
+  let textColor;
+  switch (status) {
+    case 'Active':
+      textColor = '#229E60';
+      break;
+    case 'Proposed':
+      textColor = '#5041AB';
+      break;
+    case 'Approved':
+      textColor = '#2772F0';
+      break;
+    case 'Paused':
+      textColor = '#E6521F';
+      break;
+    case 'Completed':
+      textColor = '#F5B544';
+      break;
+    case 'Inactive':
+      textColor = '#C73732';
+      break;
+    case 'Invited':
+      textColor = '#2563EB';
+      break;
+    case 'Created':
+      textColor = '#EC9E17';
+    default:
+      textColor = '#6c757d';
+  }
+
+  return {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '4px',
+  borderRadius: '4px',
+  fontFamily: theme.typography.fontFamily,
+  fontSize: '12px',
+  fontWeight: 400,
+  lineHeight: '18px',
+  padding: '2px 6px',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid #D0D5DD',
+  color: textColor,
+
+  '&::before': {
+    content: '""',
+    display: 'inline-block',
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    backgroundColor: textColor,
+    flexShrink: 0
+  },
+}
+});
+
+const commonTabSx = {
+  color: '#4B5563',
+  textTransform: 'none',
+  borderRadius: 0,
+  px: 3,
+  textAlign: 'center',
+  fontFamily: 'Open Sans',
+  fontSize: '14px',
+  fontStyle: 'normal',
+  fontWeight: 600,
+  lineHeight: '24px',
+  '&.Mui-selected': {
+    background: 'transparent',
+    color: '#152E75',
+    boxShadow: 'none',
+    borderBottom: '2px solid #152E75',
+    textAlign: 'center',
+    fontFamily: 'Open Sans',
+    fontSize: '14px',
+    fontStyle: 'normal',
+    fontWeight: 600,
+    lineHeight: '24px',
+  },
+};
+
 export {
   PageContainer,
   Header,
@@ -377,4 +462,6 @@ export {
   CustomFooter,
   DeleteButton,
   StyledTableHeader,
+  StatusPill,
+  commonTabSx
 };

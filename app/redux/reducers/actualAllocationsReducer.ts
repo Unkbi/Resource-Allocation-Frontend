@@ -1,4 +1,5 @@
 import { ActualAllocationsState } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 import { getMondayOfISO, getSundayOfISO } from '@/app/utils/common';
 import { createSlice } from '@reduxjs/toolkit';
 
@@ -18,8 +19,12 @@ const actualAllocationsSlice = createSlice({
   initialState,
   reducers: {
     setActualAllocations: (state, action) => {
-      state.actualAllocations = action.payload.Allocs;
-      state.status = action.payload.Status;
+      const formatedResponse = action.payload?.GetActualizedAllocsOut;
+      state.actualAllocations = formatAPIResponse(
+        'Allocation',
+        formatedResponse?.Allocs
+      );
+      state.status = formatedResponse?.Status;
     },
     setActualAllocationsStatus: (state, action) => {
       state.status = action.payload;

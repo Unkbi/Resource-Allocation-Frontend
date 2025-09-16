@@ -35,7 +35,6 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { useRouter } from 'next/navigation';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
@@ -45,6 +44,15 @@ import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
+import { StatusPill } from '@/app/components/Settings/styled';
+
+import {
+  CREATE_ORGANISATION,
+  DELETE_ORGANISATION,
+  UPDATE_ORGANISATION,
+} from '@/app/redux/actions/organizationsAction';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -66,52 +74,6 @@ const PersonContainer = styled('div')(() => ({
   justifyContent: 'flex-start',
 }));
 
-const StatusPill = styled('div')(({ theme, status }) => {
-  let backgroundColor, textColor;
-
-  switch (status) {
-    case 'Active':
-      backgroundColor = '#4B9F471A';
-      textColor = '#4B9F47';
-      break;
-    case 'Proposed':
-      backgroundColor = '#5041AB1A';
-      textColor = '#5041AB';
-      break;
-    case 'Approved':
-      backgroundColor = '#2772F01A';
-      textColor = '#2772F0';
-      break;
-    case 'Paused':
-      backgroundColor = '#E6521F1A';
-      textColor = '#E6521F';
-      break;
-    case 'Completed':
-      backgroundColor = '#F5B5441A';
-      textColor = '#F5B544';
-      break;
-    default:
-      backgroundColor = '#e0e0e0';
-      textColor = '#6c757d';
-  }
-
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '4px',
-    fontFamily: theme.typography.fontFamily,
-    fontsize: '12px',
-    fontStyle: 'normal',
-    fontweight: 400,
-    lineheight: '16px',
-    width: '86px',
-    height: '28px',
-    backgroundColor,
-    color: textColor,
-  };
-});
-
 const menuItemStyle = {
   '&:hover': {
     backgroundColor: '#142B51B2',
@@ -132,18 +94,30 @@ const AddAllocationIcon = () => (
 export default function Project() {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
+
+  useEffect(() => {
+    new Promise((resolve, reject) => {})
+      .then(res => {
+        console.log(' Organisation created successfully:', res);
+      })
+      .catch(err => {
+        console.error(' Failed to create organisation:', err);
+      });
+  }, [dispatch]);
+
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
   const { resources, loading: resourceLoading } = useSelector(
     state => state.resources
   );
+  const { projectTypes } = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [rows, setRows] = useState(projects?.result || null);
+  const [rows, setRows] = useState(projects || null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const router = useRouter();
-  const allResources = resources.result || [];
+  const allResources = resources || [];
   const [value, setValue] = useState('project');
   const { portfolios } = useSelector(state => state.portfolios);
   const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
@@ -160,10 +134,10 @@ export default function Project() {
   }, [updating]);
 
   useEffect(() => {
-    if (projects?.result?.length) {
+    if (projects?.length) {
       if (portfolios?.length) {
         setRows(
-          projects?.result?.map(project => ({
+          projects?.map(project => ({
             ...project,
             Portfolio: project.PortfolioId
               ? portfolios.find(p => p.Id === project.PortfolioId)?.Name || ''
@@ -171,18 +145,27 @@ export default function Project() {
           }))
         );
       } else {
-        setRows(projects?.result);
+        setRows(projects);
       }
     }
   }, [projects, portfolios]);
 
   useEffect(() => {
-    if (!resources?.result?.length) {
-      dispatch(fetchAllResources());
+    if (!resources?.length) {
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
     }
     if (!portfolios?.length) {
       dispatch({
         type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
+    }
+    if (!projectTypes?.length) {
+      dispatch({
+        type: FETCH_PROJECT_TYPES,
         payload: {},
       });
     }
@@ -196,20 +179,41 @@ export default function Project() {
     setPortfolioRows(portfolios);
   }, [portfolios]);
 
+  // const modifyData = data => {
+  //   if (data) {
+  //     return data.map(item => {
+  //       return {
+  //         ...item,
+  //         id: item.Id,
+  //         ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
+  //           ?.FullName,
+  //         ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
+  //           ?.FullName,
+  //       };
+  //     });
+  //   }
+  //   return [];
+  // };
+
   const modifyData = data => {
-    if (data) {
-      return data.map(item => {
-        return {
-          ...item,
-          id: item.Id,
-          ProjectSponsor: getResourceFromUid(item.ProjectSponsor, allResources)
-            ?.FullName,
-          ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
-            ?.FullName,
-        };
-      });
-    }
-    return [];
+    if (!data) return [];
+
+    return data.map(item => {
+      const project = item.Project || item;
+
+      return {
+        ...project,
+        id: project.Id,
+        ProjectSponsor: getResourceFromUid(project.ProjectSponsor, allResources)
+          ?.FullName,
+        ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
+          ?.FullName,
+        Type:
+          projectTypes?.find(pt => pt.Id === project.Type)?.Name ||
+          project.Type ||
+          '',
+      };
+    });
   };
 
   const modifyPortfolioData = data => {
@@ -280,15 +284,13 @@ export default function Project() {
       );
       try {
         const postData = {
-          'ResourceAllocation.Core/GetProjectAllocationsForPeriod': {
-            Project: id,
-            StartDate: '2000-01-01',
-            EndDate: '2032-01-01',
-          },
+          Project: id,
+          StartDate: '2000-01-01',
+          EndDate: '2032-01-01',
         };
         const response = await fetchProjectAllocationsForSaga(postData);
-        if (!response.result || response.result.length === 0) {
-          await dispatch(deleteProject(id)).unwrap();
+        if (!response || response.length === 0) {
+          await dispatch(deleteProject({ projectId: id })).unwrap();
           dispatch(
             showToast({
               open: true,
@@ -329,8 +331,8 @@ export default function Project() {
       try {
         const { Id, Name } = portfolioDelete;
         if (
-          projects?.result &&
-          projects?.result?.some(
+          projects &&
+          projects?.some(
             p =>
               p.PortfolioId === Id &&
               !['Requested', 'Paused', 'Cancelled', 'Completed'].includes(
@@ -638,8 +640,8 @@ export default function Project() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleOpenDialog('Edit Project', 'edit_project', params.row),
-                  handleMenuClose();
+                (handleOpenDialog('Edit Project', 'edit_project', params.row),
+                  handleMenuClose());
               }}
               sx={menuItemStyle}
             >

@@ -5,7 +5,6 @@ import {
   Button,
   Typography,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import { DataGrid } from '@mui/x-data-grid';
 
 
@@ -69,7 +68,6 @@ export default function AccessTable({
         </Typography>
         <Button
           variant="contained"
-          startIcon={<AddIcon sx={{ fontSize: '16px' }} />}
           onClick={onAdd}
           sx={{
             height: 40,
@@ -86,19 +84,18 @@ export default function AccessTable({
         </Button>
       </Box>
 
-      <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%',  height: 'calc(100vh - 355px)' }}>
         <DataGrid
           rows={data}
           columns={columns}
-          getRowId={row => row.Name}
           disableColumnMenu
           hideFooter
           disableRowSelectionOnClick
-          autoHeight
           apiRef={apiRef}
           loading={loading}
           sx={{
             border: 'none',
+            height: '100%',
             '.MuiDataGrid-columnHeaders': {
               color: '#6B7280',
               fontSize: '12px',

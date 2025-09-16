@@ -108,16 +108,12 @@ export default function ProjectAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectName, setMenuProjectName] = useState<string>('');
-  const allResources = _resources.result || [];
+  const allResources = _resources || [];
   const {
     setRows,
     ready,
@@ -160,7 +156,7 @@ export default function ProjectAllocation({
           hasAllocation: calculateTotalEffort(normalizeRow(allocation)) > 0,
           teamAllocationManager: getAllocationManagerFromPath(
             allocation?.teamAllocationManager,
-            _resources?.result || []
+            _resources || []
           )?.FullName,
         }));
 
@@ -185,7 +181,7 @@ export default function ProjectAllocation({
 
   const handleEditProject = (params: SplitViewParams) => {
     const data = modifyData(
-      (projects?.result ?? []).filter(project => project.Name === params.value)
+      (projects ?? []).filter(project => project.Name === params.value)
     );
     dispatch(
       openDialog({
@@ -200,7 +196,7 @@ export default function ProjectAllocation({
 
   const handleOpenSplitView = (params: SplitViewParams) => {
     const data = modifyData(
-      (projects?.result ?? []).filter(project => project.Name === params.value)
+      (projects ?? []).filter(project => project.Name === params.value)
     );
     dispatch(setSplitView(true));
     dispatch(setSplitViewCurrentProject(data?.[0] || {}));
@@ -251,7 +247,7 @@ export default function ProjectAllocation({
 
   const handleOpenHistory = (params: SplitViewParams) => {
     const data = modifyData(
-      (projects?.result ?? []).filter(project => project.Name === params.value)
+      (projects ?? []).filter(project => project.Name === params.value)
     );
 
     dispatch(
@@ -274,8 +270,10 @@ export default function ProjectAllocation({
     const isGridTreeNode = 'children' in rowNode;
     if (isGridTreeNode && rowNode.children) return null;
     const resourceId = params.row.resourceId;
-    if (_resources.result && resourceId) {
-      return _resources.result.find(res => res.Id === resourceId) || null;
+    if (_resources && resourceId) {
+      return (
+        (_resources as Resource[]).find(res => res.Id === resourceId) || null
+      );
     }
     return null;
   };
@@ -310,7 +308,7 @@ export default function ProjectAllocation({
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
         const row = api.getRow(rowNode.id);
-        const projectType = projects?.result?.find(
+        const projectType = projects?.find(
           project => project.Name === value
         )?.Type;
 
@@ -656,7 +654,7 @@ export default function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStatus || ""} />
+          <EllipsisNameCell value={firstChild.projectStatus || ''} />
         ) : null;
       },
     },

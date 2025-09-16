@@ -7,10 +7,12 @@ import { useSelector } from 'react-redux';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
 import { useDispatch } from 'react-redux';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { DATE_FORMAT, PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import StyledAutocomplete from '../Select/Autocomplete';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -25,10 +27,11 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { resources } = useSelector(state => state.resources);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { projectTypes } = useSelector(state => state.allSettings);
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
-    resources?.result?.map(resource => ({
+    resources?.map(resource => ({
       value: resource.Id,
       label: resource.FullName,
     })) || [];
@@ -41,13 +44,28 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         label: portfolio.Name,
       })) || [];
 
+  const projectTypeOptions =
+    projectTypes?.map(pt => ({
+      value: pt.Id,
+      label: pt.Name,
+    })) || [];
+
   useEffect(() => {
-    if (!resources || !resources?.result) {
-      dispatch(fetchAllResources());
+    if (!resources.length) {
+      dispatch({
+        type: FETCH_ALL_RESOURCES_DETAIL,
+        payload: {},
+      });
     }
-    if (!portfolios) {
+    if (!portfolios.length) {
       dispatch({
         type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
+    }
+    if (!projectTypes.length) {
+      dispatch({
+        type: FETCH_PROJECT_TYPES,
         payload: {},
       });
     }
@@ -59,18 +77,16 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
         ProjectSponsor:
-          resources?.result?.find(
-            res => res.FullName === initialData.ProjectSponsor
-          )?.Id || '',
-        AllowOvertime: initialData.AllowOvertime ? 'Yes': 'No',
+          resources?.find(res => res.FullName === initialData.ProjectSponsor)
+            ?.Id || '',
+        AllowOvertime: initialData.AllowOvertime ? 'Yes' : 'No',
         Location: initialData.Location || '',
         ProjectManager:
-          resources?.result?.find(
-            res => res.FullName === initialData.ProjectManager
-          )?.Id || '',
+          resources?.find(res => res.FullName === initialData.ProjectManager)
+            ?.Id || '',
         Name: initialData.Name || '',
         PortfolioId: initialData.PortfolioId || '',
-        Type: initialData.Type || '',
+        Type: projectTypes?.find(pT => pT.Name === initialData.Type)?.Id || '',
         Status: initialData.Status || 'Active',
         Budget: initialData.Budget || 0,
       };
@@ -80,13 +96,6 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
     }
   }, [initialData]);
 
-  const projectTypeOptions = [
-    { value: 'Key Initiative', label: 'Key Initiative' },
-    { value: 'RTB', label: 'RTB' }, //(Run-th-business)
-    { value: 'CTB', label: 'CTB' },
-    { value: 'STB', label: 'STB' },
-    { value: 'Ongoing', label: 'Ongoing' },
-  ];
   const allowOverTimeOptions = [
     { value: 'Yes', label: 'Yes' },
     { value: 'No', label: 'No' },
@@ -116,14 +125,13 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
 
   const handleEndDateChange = newDate => {
     if (!newDate || !newDate.isValid?.()) {
-      formikProps.setFieldValue('EndDate', null); 
+      formikProps.setFieldValue('EndDate', null);
       return;
     }
 
     const formattedEndDate = newDate.format(DATE_FORMAT.toUpperCase());
     formikProps.setFieldValue('EndDate', formattedEndDate);
   };
-  
 
   return (
     <Box>
@@ -134,6 +142,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Name"
+          placeholder="Enter Project Name"
           value={values.Name || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -145,7 +154,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>{PORTFOLIO_DISPLAY_NAME}</StyledLabel>
         <StyledAutocomplete
           name="PortfolioId"
-          // label={PORTFOLIO_DISPLAY_NAME}
+          label={`Select ${PORTFOLIO_DISPLAY_NAME} Name`}
           options={portfolioOptions}
           value={values.PortfolioId}
           formikProps={formikProps}
@@ -155,7 +164,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>Project Sponsor</StyledLabel>
         <StyledAutocomplete
           name="ProjectSponsor"
-          // label="Project Sponsor"
+          label="Select Project Sponsor"
           options={resourceTypeOptions}
           value={values.ProjectSponsor}
           formikProps={formikProps}
@@ -167,6 +176,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           type="number"
           name="Budget"
           value={values.Budget || ''}
+          placeholder="Enter Budget"
           onChange={e => {
             const input = e.target.value;
             const parsed = input === '' ? null : Number(input);
@@ -189,7 +199,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>Project Manager</StyledLabel>
         <StyledAutocomplete
           name="ProjectManager"
-          // label="Project Manager"
+          label="Select Project Manager"
           options={resourceTypeOptions}
           value={values.ProjectManager}
           formikProps={formikProps}
@@ -200,6 +210,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledInput
           as={TextField}
           name="Location"
+          placeholder="Enter Location"
           value={values.Location || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -223,7 +234,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="Type"
-            // label="Type"
+            label="Select Type"
             options={projectTypeOptions}
             value={values.Type}
             formikProps={formikProps}
@@ -236,7 +247,7 @@ const AddProjectForm = ({ formikProps, setFormValue = () => {} }) => {
           </StyledLabel>
           <StyledAutocomplete
             name="AllowOvertime"
-            // label="Allow Overtime"
+            label="Select Allow Overtime"
             options={allowOverTimeOptions}
             value={values.AllowOvertime}
             formikProps={formikProps}

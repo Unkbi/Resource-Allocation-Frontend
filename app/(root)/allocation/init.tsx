@@ -9,9 +9,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { resetAllocations } from '@/app/redux/reducers/allAllocationsReducer';
-import { ApiResponse, Resource, Team } from '@/app/types';
+import { Resource } from '@/app/types';
 import { generateDateWeekMath } from '@/app/utils/common';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
@@ -45,7 +44,7 @@ export default function AllocationInit() {
   );
   const { projects } = useSelector((state: RootState) => state.projects);
   // @ts-ignore
-  const { resources }: { resources: ApiResponse<Resource[]> } = useSelector(
+  const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
   );
   const { portfolios } = useSelector((state: RootState) => state.portfolios);
@@ -77,14 +76,14 @@ export default function AllocationInit() {
         : endDate
   );
   useEffect(() => {
-    if (!teams?.result?.length) {
+    if (!teams?.length) {
       dispatch(fetchAllTeams());
     }
-    if (!projects?.result?.length) {
+    if (!projects?.length) {
       dispatch(fetchAllProjects());
     }
-    if (!resources?.result?.length) {
-      dispatch(fetchAllResources());
+    if (!resources?.length) {
+      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     }
     if (!portfolios?.length) {
       dispatch({
@@ -104,16 +103,16 @@ export default function AllocationInit() {
         payload: {},
       });
     }
-    if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
+    if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
     }
   }, []);
 
   useEffect(() => {
     if (
-      (teams?.result?.length ?? 0) > 0 &&
-      (projects?.result?.length ?? 0) > 0 &&
-      (resources?.result?.length ?? 0) > 0 &&
+      (teams?.length ?? 0) > 0 &&
+      (projects?.length ?? 0) > 0 &&
+      (resources?.length ?? 0) > 0 &&
       (allResourcesDetail?.length ?? 0) > 0 &&
       allAllocations?.length === 0
     ) {
@@ -121,9 +120,9 @@ export default function AllocationInit() {
       dispatch({
         type: 'FETCH_ALL_ALLOCATIONS_INIT',
         payload: {
-          teams: teams?.result,
-          projects: projects?.result,
-          resources: resources?.result,
+          teams: teams,
+          projects: projects,
+          resources: resources,
           portfolios: portfolios,
           allResourcesDetail: allResourcesDetail,
           startDate: currentViewStartDate,
@@ -135,18 +134,18 @@ export default function AllocationInit() {
 
   useEffect(() => {
     if (
-      (teams?.result?.length ?? 0) > 0 &&
-      (projects?.result?.length ?? 0) > 0 &&
-      (resources?.result?.length ?? 0) > 0 &&
+      (teams?.length ?? 0) > 0 &&
+      (projects?.length ?? 0) > 0 &&
+      (resources?.length ?? 0) > 0 &&
       (allResourcesDetail?.length ?? 0) > 0
     ) {
       dispatch(resetAllocations());
       dispatch({
         type: 'FETCH_ALL_ALLOCATIONS',
         payload: {
-          teams: teams?.result,
-          projects: projects?.result,
-          resources: resources?.result,
+          teams: teams,
+          projects: projects,
+          resources: resources,
           portfolios: portfolios,
           allResourcesDetail: allResourcesDetail,
           startDate: currentView?.isDynamicRange
