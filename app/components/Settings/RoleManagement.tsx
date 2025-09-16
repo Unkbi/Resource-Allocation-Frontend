@@ -921,13 +921,15 @@ export default function RoleManagementPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#f8f9fa] p-8"
+      className="bg-[#f8f9fa] p-8"
       style={{
+        minHeight: '-webkit-fill-available',
         fontFamily: 'open sans',
         padding: '1.5%',
         backgroundColor: 'rgba(217, 217, 217, 0.27)',
       }}
     >
+
       <TabHeader tab={tab} setTab={setTab} />
 
       {tab === 'role-management' && (
