@@ -1,5 +1,5 @@
-import { Box, Tabs, Tab, styled, Button } from '@mui/material';
-import { useState } from 'react';
+import { Box, Tabs, Tab, styled, Button, Theme } from '@mui/material';
+import { SyntheticEvent, useState } from 'react';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
@@ -7,9 +7,22 @@ import {
 } from '@mui/x-data-grid';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import {
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_PAGE_VALID_TABS,
+} from '@/app/constants/constants';
 import CommonToolbar from './CommonToolbar';
-import { withRBAC } from '../HOC/withRBAC';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+
+interface ProjectToolbarProps {
+  setFilterButtonEl?: (el: HTMLElement | null) => void;
+  value: 'project' | 'portfolio' | 'businessImpact';
+  onChange: (
+    event: SyntheticEvent,
+    newValue: 'project' | 'portfolio' | 'businessImpact'
+  ) => void;
+  permissions: Record<string, CrudPermissions>;
+}
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -20,7 +33,7 @@ const commonButtonStyles = {
   padding: '5px 12px',
   fontSize: '13px',
   color: 'rgb(33, 33, 33)',
-  fontFamily: theme => theme.typography.fontFamily,
+  fontFamily: (theme: any) => theme.typography.fontFamily,
   fontWeight: '600',
   textTransform: 'none',
   minWidth: '0px',
@@ -85,8 +98,18 @@ const tabTypographyStyle = {
   },
 };
 
-const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {},  permissions, }) => {
+const ProjectToolbar = ({
+  setFilterButtonEl,
+  value,
+  onChange = () => {},
+  permissions,
+}: ProjectToolbarProps) => {
   const dispatch = useDispatch();
+
+  if (!PROJECT_PAGE_VALID_TABS.includes(value)) {
+    return null; // or a fallback UI
+  }
+
   const handleAddPortfolio = () => {
     dispatch(
       openDialog({
@@ -122,22 +145,39 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {},  permis
             flex: '1 0 0',
           }}
         >
-          <Tabs
-            value={value}
-            onChange={onChange}
-            textColor="primary"
-            indicatorColor="primary"
-            aria-label="secondary tabs example"
-          >
-            <Tab value="project" label="Projects" sx={tabTypographyStyle} />
-            <Tab value="portfolio" label="Portfolios" sx={tabTypographyStyle} />
-            <Tab
-              value="businessImpact"
-              label="Business Impact"
-              disabled
-              sx={tabTypographyStyle}
-            />
-          </Tabs>
+          {Object.keys(permissions).some(
+            resourceName => permissions[resourceName]?.r
+          ) && (
+            <Tabs
+              value={value}
+              onChange={onChange}
+              textColor="primary"
+              indicatorColor="primary"
+              aria-label="secondary tabs example"
+            >
+              {permissions['Project'].r && (
+                <Tab value="project" label="Projects" sx={tabTypographyStyle} />
+              )}
+              {permissions['Portfolio'].r && (
+                <Tab
+                  value="portfolio"
+                  label="Portfolios"
+                  sx={tabTypographyStyle}
+                />
+              )}
+              {
+                // Sahadev : Hard Code, once this tab is developed remove Hard Code.
+                false && (
+                  <Tab
+                    value="businessImpact"
+                    label="Business Impact"
+                    disabled
+                    sx={tabTypographyStyle}
+                  />
+                )
+              }
+            </Tabs>
+          )}
         </Box>
 
         <Box className="line" sx={{ marginRight: '16px', height: '64px' }}>
@@ -158,7 +198,6 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {},  permis
                   tooltip: { title: 'Filter' },
                   button: {
                     variant: 'outlined',
-                    sx: { color: '#555', borderColor: '#ddd' },
                     startIcon: (
                       <img
                         src="/images/icons/newFilterPeople.svg"
@@ -206,4 +245,4 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {},  permis
   );
 };
 
-export default withRBAC(ProjectToolbar,['Portfolio']);
+export default withRBAC(ProjectToolbar, ['Project', 'Portfolio']);

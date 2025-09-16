@@ -18,6 +18,7 @@ const AddPortfolioForm = ({
   const dispatch = useDispatch();
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { projects } = useSelector(state => state.projects);
+  const { portfolios } = useSelector(state => state.portfolios);
   const { formType } = useSelector(state => state.globalDialog.formState);
   const [readOnly, setReadOnly] = useState(true);
 
@@ -38,8 +39,13 @@ const AddPortfolioForm = ({
   ];
 
   useEffect(() => {
-    dispatch({ type: FETCH_PORTFOLIOS });
-  }, [dispatch]);
+    if (!portfolios.length) {
+      dispatch({
+        type: FETCH_PORTFOLIOS,
+        payload: {},
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (initialData) {

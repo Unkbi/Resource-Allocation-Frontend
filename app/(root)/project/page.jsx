@@ -34,7 +34,7 @@ import {
   setSplitViewCurrentProject,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import EllipsisNameCell from '@/app/components/ResourceAllocation/component/EllipsisNameCell';
@@ -42,7 +42,10 @@ import { fetchProjectAllocationsForSaga } from '@/app/services/projectServices';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import {
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_PAGE_VALID_TABS,
+} from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
 import { StatusPill } from '@/app/components/Settings/styled';
 
@@ -95,17 +98,8 @@ const AddAllocationIcon = () => (
 
 function Project({ permissions }) {
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
   const apiRef = useGridApiRef();
-
-  useEffect(() => {
-    new Promise((resolve, reject) => {})
-      .then(res => {
-        console.log(' Organisation created successfully:', res);
-      })
-      .catch(err => {
-        console.error(' Failed to create organisation:', err);
-      });
-  }, [dispatch]);
 
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
@@ -121,12 +115,52 @@ function Project({ permissions }) {
   const router = useRouter();
   const allResources = resources || [];
   const [value, setValue] = useState('project');
-  const { portfolios } = useSelector(state => state.portfolios);
+  const { portfolios, loading: loadingPortfolio } = useSelector(
+    state => state.portfolios
+  );
   const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
   const [portfolioDelete, setPortfolioDelete] = useState({
     Id: '',
     Name: '',
   });
+
+  useEffect(() => {
+    const accessMap = [
+      { key: 'Project', value: 'project' },
+      { key: 'Portfolio', value: 'portfolio' },
+    ];
+
+    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+
+    if (accessible.length === 0) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    const tab = searchParams.get('tab');
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tab);
+
+    if (!tab || !PROJECT_PAGE_VALID_TABS.includes(tab) || !isAccessible) {
+      router.replace(`/project?tab=${firstAccessible}`);
+      return;
+    }
+
+    if (tab !== value) {
+      setValue(tab);
+    }
+  }, []);
+
+  useEffect(() => {
+    const newTab = searchParams.get('tab');
+    if (
+      newTab &&
+      PROJECT_PAGE_VALID_TABS.includes(newTab) &&
+      newTab !== value
+    ) {
+      setValue(newTab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!updating) {
@@ -882,6 +916,10 @@ function Project({ permissions }) {
 
   const onChange = (event, newValue) => {
     setValue(newValue);
+
+    const tabParam = `?tab=${newValue}`;
+    const newUrl = `/project${tabParam}`;
+    router.replace(newUrl, { scroll: false });
   };
 
   const renderTable = () => {
@@ -901,7 +939,7 @@ function Project({ permissions }) {
       case 'portfolio':
         return (
           <PortfolioTable
-            loading={loading || resourceLoading}
+            loading={loadingPortfolio}
             columns={portfolioColumns}
             rows={modifyPortfolioData(portfolioRows)}
             apiRef={apiRef}
