@@ -382,6 +382,7 @@ export const getStartAndEndDateForView = (
 };
 
 export const getUserIdFromEmail = (users, email) => {
+  if (!Array.isArray(users) || !email) return null;
   const userObj = users.find(user => user.Email === email);
   return userObj ? userObj.Id : null;
 };
@@ -443,12 +444,16 @@ export const getResourceFromUid = (uid, resources) => {
   return resources.find(resource => resource.Id === uid);
 };
 
+export const getUserFromUid = (uid, users) => {
+  return users.find(user => user.id === uid);
+};
+
 export const getAllocationManagerFromPath = (
   allocationManager_Path,
   resources
 ) => {
   if (!allocationManager_Path || !Array.isArray(resources)) return null;
-  if (/^:[^/]+\/[^,]+,.+/.test(allocationManager_Path)) {
+  if (/[^$]+\$[^/]+\/.+/.test(allocationManager_Path)) {
     // Check if the path is a valid resource path
     return resources.find(
       resource => resource.__path__ === allocationManager_Path
@@ -732,7 +737,7 @@ export function isCellEditableUtils(params, type, resources) {
   const cellPeriodStart = startOfWeek(parsedCellPeriod, { weekStartsOn: 1 }); // Monday start
   const cellPeriodEnd = addDays(cellPeriodStart, 6);
 
-  const matchingResource = resources?.result?.find(
+  const matchingResource = resources?.find(
     resource => resource.Id === params.row.resourceId
   );
   if (!matchingResource) return false;

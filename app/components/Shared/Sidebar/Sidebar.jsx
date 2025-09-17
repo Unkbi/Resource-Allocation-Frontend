@@ -13,6 +13,8 @@ import { performLogout } from '@/app/redux/actions/authActions';
 import { Button } from '@mui/material';
 import EllipsisNameCell from '../../ResourceAllocation/component/EllipsisNameCell';
 import CustomAvatar from '../../Avatar/CustomAvatar';
+import { getUserAttributes } from '@/app/utils/authUtils';
+import { withRBAC } from '../../HOC/withRBAC';
 
 const MainBox = styled(Box, {
   shouldForwardProp: prop => prop !== 'sidebarExpanded',
@@ -95,7 +97,7 @@ const MainBox = styled(Box, {
   },
 }));
 
-const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
+const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
   const [selectedMenu, setSelectedMenu] = useState('allocation');
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -103,7 +105,11 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
   const dispatch = useDispatch();
   const anchorRef = useRef(null);
   const { user } = useSelector(state => state.user);
-
+  const {
+    email = '',
+    given_name: firstName = '',
+    family_name: lastName = '',
+  } = getUserAttributes(user, []) || {};
   const handleToggle = () => {
     setOpen(prevOpen => !prevOpen);
   };
@@ -136,6 +142,18 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
   const handleLogout = () => {
     dispatch(performLogout());
     router.push('/login');
+  };
+
+  const hasAnyAccess = {
+    Dashboard: true,
+    Allocation: true,
+    Projects: permissions['Project'].r || permissions['Portfolio'].r,
+    Actuals: true,
+    People:
+      permissions['Resource'].r ||
+      permissions['Team'].r ||
+      permissions['Organization'].r ||
+      permissions['EmployeeRate'].r,
   };
 
   const menuItems = [
@@ -290,30 +308,32 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
         <Box className="items-parent-wrapper">
           <Box className="menu-items-parent" sx={{ marginTop: '15px' }}>
             <List>
-              {menuItems.map((item, index) => (
-                <MenuItem
-                  className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
-                  key={index}
-                  onClick={() => handleMenuClick(item.url, item.disabled)}
-                  sx={{
-                    opacity: item.disabled ? 0.5 : 1,
-                    cursor: item.disabled ? 'not-allowed' : 'pointer',
-                    margin: '8px',
-                    color: '#95979E',
-                  }}
-                >
-                  <img
-                    src={item.icon}
-                    alt={item.text}
-                    sx={{ width: '16px', height: '16px' }}
-                  />
-                  {sidebarExpanded && (
-                    <Typography sx={{ marginLeft: '10px' }}>
-                      {item.text}
-                    </Typography>
-                  )}
-                </MenuItem>
-              ))}
+              {menuItems
+                .filter(m => hasAnyAccess[m.text])
+                .map((item, index) => (
+                  <MenuItem
+                    className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
+                    key={index}
+                    onClick={() => handleMenuClick(item.url, item.disabled)}
+                    sx={{
+                      opacity: item.disabled ? 0.5 : 1,
+                      cursor: item.disabled ? 'not-allowed' : 'pointer',
+                      margin: '8px',
+                      color: '#95979E',
+                    }}
+                  >
+                    <img
+                      src={item.icon}
+                      alt={item.text}
+                      sx={{ width: '16px', height: '16px' }}
+                    />
+                    {sidebarExpanded && (
+                      <Typography sx={{ marginLeft: '10px' }}>
+                        {item.text}
+                      </Typography>
+                    )}
+                  </MenuItem>
+                ))}
             </List>
           </Box>
           {sidebarExpanded && (
@@ -372,8 +392,8 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
                 {/* <img src={"/images/icons/profile.svg"} className="profle-img" alt='' /> */}
                 <CustomAvatar
                   value={
-                    user && user.FirstName && user.LastName
-                      ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
+                    user && firstName && lastName
+                      ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
                       : ''
                   }
                   showFullName={false}
@@ -427,8 +447,8 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
                             >
                               <EllipsisNameCell
                                 value={
-                                  user && user.FirstName && user.LastName
-                                    ? `${user.FirstName.charAt(0).toUpperCase() + user.FirstName.slice(1).toLowerCase()} ${user.LastName.charAt(0).toUpperCase() + user.LastName.slice(1).toLowerCase()}`
+                                  user && firstName && lastName
+                                    ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
                                     : ''
                                 }
                               />
@@ -446,7 +466,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
                                 width: '100%',
                               }}
                             >
-                              <EllipsisNameCell value={user?.Email || ''} />
+                              <EllipsisNameCell value={email || ''} />
                             </Box>
                           </Box>
 
@@ -593,4 +613,11 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded }) => {
   );
 };
 
-export default Sidebar;
+export default withRBAC(Sidebar, [
+  'Resource',
+  'Team',
+  'Organization',
+  'EmployeeRate',
+  'Project',
+  'Portfolio',
+]);

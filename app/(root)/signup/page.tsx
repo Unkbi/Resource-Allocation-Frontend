@@ -227,22 +227,11 @@ export default function SingupPage() {
     dispatch(
       signUp(
         {
-          'Agentlang.Kernel.Identity/SignUp': {
-            User: {
-              'Agentlang.Kernel.Identity/User': {
-                Name: `${firstName} ${lastName}`,
-                FirstName: firstName,
-                LastName: lastName,
-                Email: email,
-                // UserData: {
-                //     PhoneNumber: mobile
-                // },
-                Password: password,
-              },
-            },
-          },
+           firstName,
+           lastName, 
+           email, 
+           password
         },
-        email
       )
     );
   };

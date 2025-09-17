@@ -33,11 +33,11 @@ const AddPrivilegeForm = ({
 }: AddPrivilegeFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, errors, touched } =
     formikProps;
-  const privileges = useSelector((state: any) => state.rbac.privileges);
   const [privilegeName, setPrivilegeName] = useState('');
   const { initialData } = useSelector(
     (state: any) => state.globalDialog.formState
   );
+  const meta = useSelector((state: any) => state.rbac.meta);
 
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -49,20 +49,18 @@ const AddPrivilegeForm = ({
 
   useEffect(() => {
     if (initialData) {
-      const actionArray: string[] = initialData.Actions || [];
-
       const actionObject: Record<ActionType, boolean> = {
-        Create: actionArray.includes('create'),
-        Read: actionArray.includes('read'),
-        Update: actionArray.includes('update'),
-        Delete: actionArray.includes('delete'),
+        Create: initialData.c ?? false,
+        Read: initialData.r ?? false,
+        Update: initialData.u ?? false,
+        Delete: initialData.d ?? false,
       };
 
       const rowData: PrivilegeFormValues = {
-        Name: initialData.Name || '',
-        Resource: Array.isArray(initialData.Resource)
-          ? initialData.Resource[0] || ''
-          : initialData.Resource || '',
+        Name: initialData.id || '',
+        Resource: Array.isArray(initialData.resourceFqName)
+          ? initialData.resourceFqName[0] || ''
+          : initialData.resourceFqName || '',
         Actions: actionObject,
       };
       setFormValue(rowData);
@@ -83,12 +81,11 @@ const AddPrivilegeForm = ({
       ? formikProps.errors.Actions
       : undefined;
 
-  const resourceOptions: string[] = Array.from(
-    new Set(
-      privileges.map((r: any) =>
-        Array.isArray(r.Resource) ? r.Resource[0] : r.Resource
-      )
-    )
+  const resourceEntities = meta?.entities?.Resource ?? [];
+  const authEntities = meta?.entities?.['agentlang.auth'] ?? [];
+  const allEntities = [...resourceEntities, ...authEntities];
+  const resourceOptions: string[] = allEntities.map(
+    (entity: any) => entity.fqName
   );
 
   return (
@@ -102,11 +99,15 @@ const AddPrivilegeForm = ({
           name="Name"
           placeholder="Enter Privilege Name"
           value={values.Name || ''}
-          onChange={e => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
             setPrivilegeName(e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
           error={touched.Name && Boolean(errors.Name)}
           helperText={touched.Name && errors.Name}
         />

@@ -79,14 +79,10 @@ const CellWithMenu = ({
   const dispatch = useDispatch();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteParams, setDeleteParams] = useState(null);
-  const allTeams = useSelector(state => state.teams.teams?.result || []);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allTeams = useSelector(state => state.teams.teams || []);
+  const allResources = useSelector(state => state.resources.resources || []);
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
-  const allProjects = useSelector(
-    state => state.projects.projects?.result || []
-  );
+  const allProjects = useSelector(state => state.projects.projects || []);
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
@@ -171,7 +167,7 @@ const CellWithMenu = ({
       })
     )
       .then(response => {
-        if (!response?.result) {
+        if (!response) {
           dispatch(
             showToast({
               open: true,
@@ -493,9 +489,7 @@ export const getFinalColumns = (
   isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allResources = useSelector(state => state.resources.resources || []);
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -574,7 +568,7 @@ export const getFinalColumns = (
     dispatch(
       openDialog({
         title: 'Allocation History',
-        cancelButtonText: 'View All History',
+        cancelButtonText: 'Cancel',
         formType: 'open_history',
         initialData:
           params.field === 'project'
@@ -645,7 +639,7 @@ export const getFinalColumns = (
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
-            Array.isArray(teamAllocations.result) &&
+            Array.isArray(teamAllocations.result) && // Sahadev : Unsure of this
             teamAllocations.result.filter(
               resource => resource.Resource === params.row.resourceId
             );
@@ -665,7 +659,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
@@ -810,7 +804,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
@@ -1337,7 +1331,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     // Get unique teams for teams and teamsId to avoid duplicate teams
     let unique_teams = {};
     let teams_with_name = {};
-    teams?.result?.forEach(team => {
+    teams?.forEach(team => {
       teams_with_name[team?.Name] = team?.Id;
     });
 

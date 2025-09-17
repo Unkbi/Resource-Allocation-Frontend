@@ -220,8 +220,8 @@ export const TOTAL_FUTURE_WEEKS_ARROW = 4;
 export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DISPLAY_DATE_FORMAT = 'MMM yyyy';
 
-export const API_PROJECT_PORTFOLIO = '/api/ResourceAllocation.Core';
-export const API_AGENTLANG_KERNEL_RBAC = '/api/Agentlang.Kernel.Rbac';
+export const API_PROJECT_PORTFOLIO = '/Resource';
+export const API_AGENTLANG_KERNEL_RBAC = '/agentlang.auth';
 
 export const PUBLIC_ROUTES = [
   '/login',
@@ -248,3 +248,16 @@ export const PORTFOLIO_DISPLAY_NAME = 'Portfolio';
 export const PORTFOLIO_DISPLAY_NAME_PLURAL = 'Portfolios';
 
 export const PORTFOLIO_BLANK = 'Blank';
+
+export const RESOURCE_PAGE_VALID_TABS = [
+  'resource',
+  'teams',
+  'organizations',
+  'rates',
+] as const;
+
+export const PROJECT_PAGE_VALID_TABS = [
+  'project',
+  'portfolio',
+  'businessImpact',
+] as const;

@@ -24,6 +24,8 @@ import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReduce
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import { StatusPill, commonTabSx } from './styled';
+import { DELETE_PROJECT_TYPE, DELETE_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
 
 const tabMenuNames = ['project-types', 'project-types-group'];
 const baseURLAccessManagement = '/settings?menu=access-management';
@@ -33,22 +35,6 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
     width: '120px',
   },
-}));
-
-const StatusPill = styled('div')(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '4px',
-  fontFamily: theme.typography.fontFamily,
-  fontSize: '12px',
-  fontStyle: 'normal',
-  fontWeight: 400,
-  lineHeight: '16px',
-  width: '86px',
-  height: '28px',
-  backgroundColor: '#4B9F471A',
-  color: '#4B9F47',
 }));
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -82,31 +68,6 @@ const commonCellStyle = {
   display: 'flex',
   alignItems: 'center',
   height: '100%',
-};
-
-const commonTabSx = {
-  color: '#4B5563',
-  textTransform: 'none',
-  borderRadius: 0,
-  px: 3,
-  textAlign: 'center',
-  fontFamily: 'Open Sans',
-  fontSize: '14px',
-  fontStyle: 'normal',
-  fontWeight: 600,
-  lineHeight: '24px',
-  '&.Mui-selected': {
-    background: 'transparent',
-    color: '#2563EB',
-    boxShadow: 'none',
-    borderBottom: '2px solid #3b82f6',
-    textAlign: 'center',
-    fontFamily: 'Open Sans',
-    fontSize: '14px',
-    fontStyle: 'normal',
-    fontWeight: 600,
-    lineHeight: '24px',
-  },
 };
 
 const tabConfig = [
@@ -152,11 +113,10 @@ const TabHeader = ({
           gap: 1.5,
         },
         '& .MuiTabs-indicator': {
-          backgroundColor: '#2563EB',
+          backgroundColor: '#152E75',
         },
         '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(33%) sepia(93%) saturate(1554%) hue-rotate(197deg) brightness(100%) contrast(101%)',
+          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
         },
       }}
     >
@@ -195,61 +155,10 @@ export default function ProjectSettingPage() {
   const [deletingProjectTypesGroup, setDeletingProjectTypesGroup] = useState<
     string | null
   >(null);
-  // Dummy data for demonstration
-  const ProjectTypesData: any[] = [
-    {
-      id: '1',
-      projectTypes: 'Internal',
-      projectTypesGroup: 'Group A',
-      description: 'Internal projects',
-      Color: '#FADCB9',
-      Status: 'Active',
-      Name: 'Internal',
-    },
-    {
-      id: '2',
-      projectTypes: 'Client',
-      projectTypesGroup: 'Group B',
-      description: 'Client projects',
-      Color: '#D9F1B7',
-      Status: 'Active',
-      Name: 'Client',
-    },
-    {
-      id: '3',
-      projectTypes: 'R&D',
-      projectTypesGroup: 'Group C',
-      description: 'Research and Development',
-      Color: '#B2D0FF',
-      Status: 'Inactive',
-      Name: 'R&D',
-    },
-    {
-      id: '4',
-      projectTypes: 'Migration',
-      projectTypesGroup: 'Group D',
-      description: 'Migration projects',
-      Color: '#FBB7AE',
-      Status: 'Active',
-      Name: 'Migration',
-    },
-    {
-      id: '5',
-      projectTypes: 'Support',
-      projectTypesGroup: 'Group E',
-      description: 'Support projects',
-      Color: '#C1F0F5',
-      Status: 'Active',
-      Name: 'Support',
-    },
-  ];
-  const ProjectTypesGroupData: any[] = [
-    { id: 'g1', projectTypeGroup: 'Group A', Name: 'Group A' },
-    { id: 'g2', projectTypeGroup: 'Group B', Name: 'Group B' },
-    { id: 'g3', projectTypeGroup: 'Group C', Name: 'Group C' },
-    { id: 'g4', projectTypeGroup: 'Group D', Name: 'Group D' },
-    { id: 'g5', projectTypeGroup: 'Group E', Name: 'Group E' },
-  ];
+  const {projectTypes, projectTypeGroups} = useSelector((state: any) => state.allSettings);
+  const [ProjectTypesData, setProjectTypesData] = useState<any[]>([]);
+  const [ProjectTypesGroupData, setProjectTypesGroupData] = useState<any[]>([]);
+  
   const loading = false;
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
@@ -266,17 +175,41 @@ export default function ProjectSettingPage() {
   }, []);
 
   useEffect(() => {
-    if (tab === 'ProjectTypes') {
-      // Fetch project types data
-    }
-    if (tab === 'project-types-group') {
-      // Fetch project types group data
-    }
+      const formattedData = projectTypes?.map((projectType: any, index: number) => {
+        
+        const projectTypeGroup = projectTypeGroups?.find(
+          (group: any) => group.Id === projectType.Group
+        );
+        
+        return {
+          id: projectType.Id || (index + 1).toString(),
+          projectTypes: projectType.Name || '',
+          projectTypesGroup: projectTypeGroup?.Name || '',
+          description: projectType.Description || '',
+          Color: projectType.Color || '',
+          Status: projectType.Status || 'Active',
+          Name: projectType.Name || '',
+        };
+      }) || [];
+
+      const formattedGroupData = projectTypeGroups?.map((group: any, index: number) => {
+        return {
+          id: group.Id || (index + 1).toString(),
+          projectTypeGroup: group.Name || '',
+          Name: group.Name || '',
+        };
+      }) || [];
+
+      setProjectTypesData(formattedData);
+      setProjectTypesGroupData(formattedGroupData);
+  }, [ projectTypes, projectTypeGroups]);
+
+  useEffect(() => {
     if (tabMenuNames.includes(tab)) {
       const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
       router.replace(newUrl);
     }
-  }, [tab, dispatch]);
+  }, [tab]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
@@ -375,12 +308,23 @@ export default function ProjectSettingPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!deletingProjectTypes || !deletingProjectTypesGroup) return;
+    if (!deletingProjectTypes && !deletingProjectTypesGroup) return;
     try {
-      if (tab === 'project-types') {
-        //delete action
-      } else if (tab === 'project-types-group') {
-        //delete action
+      if (tab === 'project-types' && deletingProjectTypes) {
+        dispatch({
+          type: DELETE_PROJECT_TYPE,
+          payload:{
+            projectTypeId: projectTypes.find((e:any)=>{ return e.Name === deletingProjectTypes })?.Id
+          }
+        });
+      } else if (tab === 'project-types-group' && deletingProjectTypesGroup) {
+        
+        dispatch({
+          type: DELETE_PROJECT_TYPE_GROUPS,
+          payload: {
+            projectTypeGroupId: projectTypeGroups.find((e:any)=>{ return e.Name === deletingProjectTypesGroup })?.Id
+          }
+        });
       }
     } catch (error) {
       console.error('Delete failed:', error);
@@ -397,7 +341,13 @@ export default function ProjectSettingPage() {
       headerName: 'Project Type',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <Typography onClick={() => handleEditProjectTypes(params.row)} sx={{ ...commonCellStyle, cursor: 'pointer',
+                  '&:hover': {
+                  textDecoration: 'underline',
+                }, 
+              }}>
+                {params.value}
+              </Typography>
       ),
     },
     {
@@ -453,7 +403,7 @@ export default function ProjectSettingPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: () => <StatusPill>Active</StatusPill>,
+      renderCell: (params: any) => <StatusPill status={params.value}>{params.value}</StatusPill>,
     },
     {
       field: 'actions',
@@ -486,7 +436,13 @@ export default function ProjectSettingPage() {
       headerName: 'Project Type Group',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <Typography onClick={() => handleEditProjectTypesGroup(params.row)} sx={{ ...commonCellStyle, cursor: 'pointer',
+                  '&:hover': {
+                  textDecoration: 'underline',
+                }, 
+              }}>
+                {params.value}
+              </Typography>
       ),
     },
     {
@@ -524,7 +480,7 @@ export default function ProjectSettingPage() {
     >
       <StyledMenuItem
         onClick={() => {
-          const assignment = ProjectTypesData.find(r => r);
+          const assignment = ProjectTypesData.find(r => r.Name === id);
           if (assignment) {
             handleEditProjectTypes(assignment);
           }
@@ -580,13 +536,15 @@ export default function ProjectSettingPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#f8f9fa] p-8"
+      className="bg-[#f8f9fa] p-8"
       style={{
+        minHeight: '-webkit-fill-available',
         fontFamily: 'open sans',
         padding: '1.5%',
         backgroundColor: 'rgba(217, 217, 217, 0.27)',
       }}
     >
+
       <TabHeader tab={tab} setTab={setTab} />
 
       {tab === 'project-types' && (

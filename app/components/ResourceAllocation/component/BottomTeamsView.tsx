@@ -35,11 +35,7 @@ export default function BottomTeamsView({
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
-  ) as {
-    result?: Resource[];
-    loading?: boolean;
-    error?: string;
-  };
+  );
   const { setRows, ready, getAllRows } = useAllocationGrid('bottomTeam');
 
   const handleAddClick = (params: GridCellParams) => {
@@ -131,18 +127,22 @@ export default function BottomTeamsView({
     return allocations.filter(
       allocation =>
         allocation.teams &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.EndDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.EndDate
           ? new Date(
-              _resources?.result?.find(res => res.Id === allocation.resourceId)
-                ?.EndDate ?? ''
+              (_resources as Resource[])?.find(
+                res => res.Id === allocation.resourceId
+              )?.EndDate ?? ''
             ) >= new Date(startDate)
           : true) &&
-        (_resources?.result?.find(res => res.Id === allocation.resourceId)
-          ?.StartDate
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.StartDate
           ? new Date(
-              _resources?.result?.find(res => res.Id === allocation.resourceId)
-                ?.StartDate ?? ''
+              (_resources as Resource[])?.find(
+                res => res.Id === allocation.resourceId
+              )?.StartDate ?? ''
             ) <= new Date(endDate)
           : true)
     );
