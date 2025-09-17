@@ -949,7 +949,7 @@ export default function Resources() {
           id: item?.Resource?.Id,
           Team: item?.Team?.Name || '',
           Organization: item?.Organization?.Name || '',
-          WorkLocation: location?.find(loc => loc.Name === item?.Resource?.WorkLocation)?.Name || '',
+          WorkLocation: location?.find(loc => loc.Id === item?.Resource?.WorkLocation)?.Name || '',
         };
       });
     }
@@ -964,6 +964,20 @@ export default function Resources() {
         Team: item.Name,
         AllocationManager: item.AllocationManager,
         Status: item.Status,
+      }));
+    }
+    return [];
+  };
+
+  const modifyRatesData = data => {
+    if (data) {
+      const filteredData = data.filter(loc => {
+        return location?.some(setting => setting.Id === loc.WorkLocation);
+      });
+      return filteredData.map(item => ({
+        ...item,
+        id: item.Id,
+        WorkLocation: location?.find(loc => loc.Id === item.WorkLocation)?.Name || '',
       }));
     }
     return [];
@@ -1358,12 +1372,7 @@ export default function Resources() {
           <TeamsTable
             loading={employeeRatesLoading}
             columns={employeeRatesColumns}
-            rows={
-              employeeRates?.map(emp => ({
-                ...emp,
-                id: emp.Id,
-              })) || []
-            }
+            rows={modifyRatesData(employeeRates) || []}
             apiRef={apiRef}
             value={value}
             onChange={onChange}

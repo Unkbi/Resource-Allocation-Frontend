@@ -6,10 +6,12 @@ import { StyledInput } from '../Input/StyledInput';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import CustomSelect from '../Select/CustomSelect';
 import { useSelector } from 'react-redux';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import { useDispatch } from 'react-redux';
 import StyledAutocomplete from '../Select/Autocomplete';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
+
 
 const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
   const {
@@ -25,7 +27,9 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
       state => state.employeeRates
     );
- const dispatch = useDispatch()
+  const { location } = useSelector(state => state.allSettings);
+  const [locationOptions, setLocationOptions] = useState([]);
+  const dispatch = useDispatch();
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
@@ -43,12 +47,29 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
               payload: {},
             });
           }
+      if (!location || location?.length === 0) {
+            dispatch({ type: FETCH_LOCATION });
+          }
     }, []);
+
+    useEffect(() => {
+        if (location && Array.isArray(location)) {
+          const locationNames = location.map((loc) => ({
+            value: loc.Id,
+            label: loc.Name,
+          })) || [];
+          setLocationOptions(locationNames);
+        }
+      }, [location]);
 
   useEffect(() => {
       if (initialData) {
+        const matchedLocation = location?.find(
+        loc => loc.Name === initialData.WorkLocation
+      );
+
         const rowData = {
-          WorkLocation: initialData.WorkLocation,
+          WorkLocation: matchedLocation?.Id || '',
           HRLevel: initialData.HRLevel,
           HourlyRate: initialData.HourlyRate,
           ValidityEndDate: initialData.ValidityEndDate || '',
@@ -68,16 +89,15 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>
           Location <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <StyledInput
-          as={TextField}
-          name="WorkLocation"
-          placeholder="Select Location"
-          value={values.WorkLocation || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-          helperText={touched.WorkLocation && formikProps.errors.WorkLocation}
-        />
+        <StyledAutocomplete
+                    name="WorkLocation"
+                    label="Work Location"
+                    placeholder="Enter Location"
+                    value={values.WorkLocation || ''}
+                    options={locationOptions}
+                    formikProps={formikProps}
+                    fullWidth
+                  />
       </Box>
       <Box
         sx={{
