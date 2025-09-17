@@ -51,6 +51,14 @@ import {
   fetchAllocationTheme,
   updateAllocationThemeAction,
 } from '@/app/redux/actions/settingsAction';
+import {
+  ADD_SCALAR_SETTING,
+  UPDATE_SCALAR_SETTING,
+} from '@/app/redux/actions/allSettingsActions';
+import {
+  handleOptimizedSettingsSave,
+  type SettingsData,
+} from '@/app/utils/settingsUtils';
 
 const baseURLAccessManagement = '/settings?menu=allocation-setting';
 interface ColorPair {
@@ -167,7 +175,8 @@ const TabHeader = ({
           backgroundColor: '#152E75',
         },
         '& .Mui-selected .tab-icon': {
-          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
+          filter:
+            'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
         },
       }}
     >
@@ -202,18 +211,22 @@ export default function AllocationTheme() {
     React.useState<number>(0.0);
   const [maxAllocationError, setMaxAllocationError] =
     React.useState<number>(0.0);
-  // Alert threshold message states
-  const [warningMessage, setWarningMessage] = React.useState<string>(
-    'Allocation for x (resource name) has exceeded the warning threshold.'
-  );
-  const [errorMessage, setErrorMessage] = React.useState<string>(
-    'Allocation for x (resource name) has exceeded the allowed threshold.'
-  );
   // Retention durations (1-9 months)
   const [allocationHistoryDuration, setAllocationHistoryDuration] =
     React.useState<string>('');
   const [commentsHistoryDuration, setCommentsHistoryDuration] =
     React.useState<string>('');
+
+  // Track original values for change detection
+  const [originalAlertSettings, setOriginalAlertSettings] = React.useState({
+    maxAllocationWarning: 0.0,
+    maxAllocationError: 0.0,
+  });
+
+  const [originalHistorySettings, setOriginalHistorySettings] = React.useState({
+    allocationHistoryDuration: '',
+    commentsHistoryDuration: '',
+  });
   const dispatch: AppDispatch = useDispatch();
   const [tab, setTab] = React.useState('color-settings');
   const [allocationRanges, setAllocationRanges] =
@@ -226,13 +239,61 @@ export default function AllocationTheme() {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const searchParams = useSearchParams();
   const router = useRouter();
+  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
+  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
 
   useEffect(() => {
     setAllocationRanges(allocationTheme);
     setOriginalAllocationRanges(allocationTheme);
   }, [allocationTheme]);
+
+  useEffect(() => {
+    if (scalarSettings && Object.keys(scalarSettings).length > 0) {
+      if (scalarSettings['History_Archive_month'] !== undefined) {
+        setAllocationHistoryDuration(
+          String(scalarSettings['History_Archive_month'])
+        );
+      }
+      if (scalarSettings['Comments_Archive_month'] !== undefined) {
+        setCommentsHistoryDuration(
+          String(scalarSettings['Comments_Archive_month'])
+        );
+      }
+      if (scalarSettings['Max_Allocation_Warning'] !== undefined) {
+        setMaxAllocationWarning(
+          Number(Number(scalarSettings['Max_Allocation_Warning']).toFixed(1))
+        );
+      }
+      if (scalarSettings['Max_Allocation_Error'] !== undefined) {
+        setMaxAllocationError(
+          Number(Number(scalarSettings['Max_Allocation_Error']).toFixed(1))
+        );
+      }
+      // Update original values for change tracking
+      setOriginalAlertSettings({
+        maxAllocationWarning: Number(
+          scalarSettings['Max_Allocation_Warning'] || 0.0
+        ),
+        maxAllocationError: Number(
+          scalarSettings['Max_Allocation_Error'] || 0.0
+        ),
+      });
+
+      setOriginalHistorySettings({
+        allocationHistoryDuration: String(
+          scalarSettings['History_Archive_month'] || ''
+        ),
+        commentsHistoryDuration: String(
+          scalarSettings['Comments_Archive_month'] || ''
+        ),
+      });
+    }
+  }, [scalarSettings]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -242,15 +303,6 @@ export default function AllocationTheme() {
   }, []);
 
   useEffect(() => {
-    if (tab === 'color-settings') {
-      // Fetch color settings data
-    }
-    if (tab === 'alerts-threshold') {
-      // Fetch alerts threshold data
-    }
-    if (tab === 'allocation-history') {
-      // Fetch allocation history data
-    }
     if (tabMenuNames.includes(tab)) {
       const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
       router.replace(newUrl);
@@ -330,7 +382,7 @@ export default function AllocationTheme() {
 
       if (field === 'To') {
         const currentRow = updatedRanges.find(row => row.id === id);
-        if (currentRow && currentRow.To !== '2.0') {
+        if (currentRow && currentRow.To !== max_allocation_error) {
           let currentTo = isDecimalDots(value)
             ? parseFloat('0.0')
             : parseFloat(value);
@@ -366,13 +418,13 @@ export default function AllocationTheme() {
               );
               return;
             }
-            if (parseFloat(value) >= 2.0) {
+            if (parseFloat(value) >= Number(max_allocation_error)) {
               // updatedRanges = allocationRanges;
 
               dispatch(
                 showToastAction(
                   true,
-                  `Allocation range cannot exceed 2.0 `,
+                  `Allocation range cannot exceed ${max_allocation_error}.`,
                   'error',
                   4000
                 )
@@ -391,7 +443,7 @@ export default function AllocationTheme() {
                   ? {
                       ...row,
                       From: newFromValue,
-                      To: row.To === '2.0' ? row.To : '', // Clear subsequent to values
+                      To: row.To === max_allocation_error ? row.To : '', // Clear subsequent to values
                     }
                   : row
               );
@@ -412,9 +464,13 @@ export default function AllocationTheme() {
       }
 
       // Update base row based on max to value from all rows
-      const baseRow = updatedRanges.find(row => row.To === '2.0');
+      const baseRow = updatedRanges.find(
+        row => row.To === max_allocation_error
+      );
       if (baseRow) {
-        const nonBaseRows = updatedRanges.filter(row => row.To !== '2.0');
+        const nonBaseRows = updatedRanges.filter(
+          row => row.To !== max_allocation_error
+        );
         const toValues = nonBaseRows
           .map(row => parseFloat(row.To))
           .filter(v => !isNaN(v));
@@ -424,12 +480,14 @@ export default function AllocationTheme() {
           const newBaseFrom = (maxTo + 0.1).toFixed(1);
 
           updatedRanges = updatedRanges.map(row =>
-            row.To === '2.0' ? { ...row, From: newBaseFrom } : row
+            row.To === max_allocation_error
+              ? { ...row, From: newBaseFrom }
+              : row
           );
         } else {
           // Reset base row if no valid ranges
           updatedRanges = updatedRanges.map(row =>
-            row.To === '2.0' ? { ...row, From: '0.0' } : row
+            row.To === max_allocation_error ? { ...row, From: '0.0' } : row
           );
         }
       }
@@ -451,8 +509,8 @@ export default function AllocationTheme() {
           value={row.From}
           disabled={
             (row.From === '0.0' && row.To === '0.0') ||
-            row.To === '2.0' ||
-            (row.From !== '' && row.To !== '2.0')
+            row.To === max_allocation_error ||
+            (row.From !== '' && row.To !== max_allocation_error)
           }
           onChange={e => handleRangeChange(id, 'From', e.target.value)}
           error={error?.From}
@@ -464,7 +522,7 @@ export default function AllocationTheme() {
           }}
           size="small"
           value={row.To}
-          disabled={row.To === '2.0'}
+          disabled={row.To === max_allocation_error}
           onChange={e => handleRangeChange(id, 'To', e.target.value)}
           onBlur={e => formatValues(e, row)}
           error={error?.To}
@@ -557,14 +615,13 @@ export default function AllocationTheme() {
     deletedRowId: string,
     allocationRangeId: string
   ) => {
-    // Init case, not more rows, add new row 0.0 to 2.0
     const newRange = updatedRanges;
     if (newRange?.length === 0) {
       const newRow: AllocationRange = {
         id: '1',
         __id__: allocationRangeId,
         From: '0.0',
-        To: '2.0',
+        To: `${max_allocation_error}`,
         Label: '',
         Color: '#FBB7AE',
         DarkColor: '#C55858',
@@ -619,7 +676,8 @@ export default function AllocationTheme() {
     };
 
     return (
-      allocationRanges.find(row => row.id === id)?.To !== '2.0' && (
+      allocationRanges.find(row => row.id === id)?.To !==
+        max_allocation_error && (
         <Tooltip title="Delete">
           <Box sx={{ paddingTop: '7px' }} onClick={handleDelete}>
             <img src="/images/icons/delete.svg" style={{ height: '24px' }} />
@@ -631,7 +689,9 @@ export default function AllocationTheme() {
 
   // Add new allocation range
   const handleAddAllocationRange = () => {
-    const baseRow = allocationRanges.find(row => row.To === '2.0');
+    const baseRow = allocationRanges.find(
+      row => row.To === max_allocation_error
+    );
     const hasBaseRow = !!baseRow;
 
     // Find unused color
@@ -660,7 +720,7 @@ export default function AllocationTheme() {
       // newTo = baseRow.From;
     } else {
       newFrom = '0.0';
-      newTo = '2.0';
+      newTo = `${max_allocation_error}`;
     }
 
     // Create new row with proper ID
@@ -787,7 +847,7 @@ export default function AllocationTheme() {
     return newRow;
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (tab === 'color-settings') {
       // Validate ranges before saving
       const errors = validateRanges(allocationRanges);
@@ -839,25 +899,161 @@ export default function AllocationTheme() {
         }
       }
     }
+
     if (tab === 'alerts-threshold') {
-      //save data here
+      try {
+        setHasUnsavedChanges(false);
+
+        // Prepare current settings data
+        const currentSettings: SettingsData = {
+          Max_Allocation_Warning: maxAllocationWarning.toFixed(1),
+          Max_Allocation_Error: maxAllocationError.toFixed(1),
+        };
+
+        // Prepare original settings data for comparison
+        const originalSettings: Record<string, any> = {
+          Max_Allocation_Warning:
+            originalAlertSettings.maxAllocationWarning.toFixed(1),
+          Max_Allocation_Error:
+            originalAlertSettings.maxAllocationError.toFixed(1),
+        };
+
+        const result = await handleOptimizedSettingsSave(
+          dispatch,
+          currentSettings,
+          scalarSettings ?? {},
+          {
+            updateAction: UPDATE_SCALAR_SETTING,
+            addAction: ADD_SCALAR_SETTING,
+            supportsBulk: false, // Set to true if your API supports bulk operations
+            batchSize: 2,
+            originalSettings: originalSettings, // Pass original UI values for change detection
+          }
+        );
+
+        if (result.changedCount > 0) {
+          // Update original values after successful save
+          setOriginalAlertSettings({
+            maxAllocationWarning,
+            maxAllocationError,
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: `Alert threshold settings saved successfully.`,
+              type: 'success',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'No changes detected in alert threshold settings',
+              type: 'info',
+              autoHideTimer: 3000,
+            })
+          );
+        }
+      } catch (error) {
+        console.error('Error saving alert threshold settings:', error);
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to save alert threshold settings',
+            type: 'error',
+            autoHideTimer: 4000,
+          })
+        );
+      }
     }
+
     if (tab === 'allocation-history') {
-      //save data here
+      try {
+        setHasUnsavedChanges(false);
+
+        // Prepare current settings data
+        const currentSettings: SettingsData = {
+          History_Archive_month: allocationHistoryDuration,
+          Comments_Archive_month: commentsHistoryDuration,
+        };
+
+        // Prepare original settings data for comparison
+        const originalSettings: Record<string, any> = {
+          History_Archive_month:
+            originalHistorySettings.allocationHistoryDuration,
+          Comments_Archive_month:
+            originalHistorySettings.commentsHistoryDuration,
+        };
+
+        const result = await handleOptimizedSettingsSave(
+          dispatch,
+          currentSettings,
+          scalarSettings ?? {},
+          {
+            updateAction: UPDATE_SCALAR_SETTING,
+            addAction: ADD_SCALAR_SETTING,
+            supportsBulk: false, // Set to true if your API supports bulk operations
+            batchSize: 2,
+            originalSettings: originalSettings,
+          }
+        );
+
+        if (result.changedCount > 0) {
+          
+          setOriginalHistorySettings({
+            allocationHistoryDuration,
+            commentsHistoryDuration,
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: `Allocation history settings saved successfully.`,
+              type: 'success',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'No changes detected in allocation history settings',
+              type: 'info',
+              autoHideTimer: 3000,
+            })
+          );
+        }
+      } catch (error) {
+        console.error('Error saving allocation history settings:', error);
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to save allocation history settings',
+            type: 'error',
+            autoHideTimer: 4000,
+          })
+        );
+      }
     }
   };
 
   const handleCancel = () => {
-    // Restore original data
+   
     if (tab === 'color-settings') {
       setAllocationRanges([...originalAllocationRanges]);
       setValidationErrors({});
     } else if (tab === 'alerts-threshold') {
-      setMaxAllocationWarning(0);
-      setMaxAllocationError(0);
+      setMaxAllocationWarning(originalAlertSettings.maxAllocationWarning);
+      setMaxAllocationError(originalAlertSettings.maxAllocationError);
     } else if (tab === 'allocation-history') {
-      setAllocationHistoryDuration('');
-      setCommentsHistoryDuration('');
+      setAllocationHistoryDuration(
+        originalHistorySettings.allocationHistoryDuration
+      );
+      setCommentsHistoryDuration(
+        originalHistorySettings.commentsHistoryDuration
+      );
     }
 
     setHasUnsavedChanges(false);
@@ -921,7 +1117,7 @@ export default function AllocationTheme() {
               gap: 4,
             }}
           >
-            {/* Row: Warning Threshold + Message */}
+            
             <Box
               sx={{
                 width: '100%',
@@ -930,7 +1126,7 @@ export default function AllocationTheme() {
                 alignItems: 'start',
               }}
             >
-              {/* Left block: numeric warning threshold + helper */}
+             
               <Box sx={{ minWidth: 320 }}>
                 <Box
                   sx={{
@@ -955,8 +1151,20 @@ export default function AllocationTheme() {
                     onChange={e => {
                       const val = e.target.value;
                       if (/^\d*\.?\d{0,1}$/.test(val)) {
-                        setMaxAllocationWarning(parseFloat(val) || 0.0);
+                        const numValue = parseFloat(val);
+                        setMaxAllocationWarning(
+                          Number.isNaN(numValue)
+                            ? 0.0
+                            : parseFloat(numValue.toFixed(1))
+                        );
                         setHasUnsavedChanges(true);
+                      }
+                    }}
+                    onBlur={e => {
+                      const val = e.target.value;
+                      if (val && !isNaN(parseFloat(val))) {
+                        const formattedValue = parseFloat(val).toFixed(1);
+                        setMaxAllocationWarning(parseFloat(formattedValue));
                       }
                     }}
                     sx={{
@@ -966,7 +1174,6 @@ export default function AllocationTheme() {
                         height: 36,
                         width: 129,
                         fontSize: '15px',
-                        color: '#888',
                         '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
                           {
                             WebkitAppearance: 'none',
@@ -1012,49 +1219,7 @@ export default function AllocationTheme() {
                   </Box>
                 </Box>
               </Box>
-              {/* Right block: warning message input */}
-              <Box
-                sx={{
-                  minWidth: 320,
-                  display: 'flex',
-                  alignItems: 'start',
-                  flexDirection: 'row',
-                  justifyContent: 'space-evenly',
-                  gap: 2,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    color: '#444',
-                    pt: 1,
-                  }}
-                >
-                  Warning message
-                </Typography>
-                <TextField
-                  size="small"
-                  placeholder="Set warning message"
-                  multiline
-                  minRows={3}
-                  value={warningMessage}
-                  onChange={e => {
-                    setWarningMessage(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      width: '200px',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    },
-                  }}
-                />
-              </Box>
             </Box>
-
-            {/* Row: Error Threshold + Message */}
             <Box
               sx={{
                 width: '100%',
@@ -1063,7 +1228,7 @@ export default function AllocationTheme() {
                 alignItems: 'start',
               }}
             >
-              {/* Left block: numeric error threshold + helper */}
+            
               <Box sx={{ minWidth: 320 }}>
                 <Box
                   sx={{
@@ -1086,8 +1251,20 @@ export default function AllocationTheme() {
                     onChange={e => {
                       const val = e.target.value;
                       if (/^\d*\.?\d{0,1}$/.test(val)) {
-                        setMaxAllocationError(parseFloat(val) || 0.0);
+                        const numValue = parseFloat(val);
+                        setMaxAllocationError(
+                          Number.isNaN(numValue)
+                            ? 0.0
+                            : parseFloat(numValue.toFixed(1))
+                        );
                         setHasUnsavedChanges(true);
+                      }
+                    }}
+                    onBlur={e => {
+                      const val = e.target.value;
+                      if (val && !isNaN(parseFloat(val))) {
+                        const formattedValue = parseFloat(val).toFixed(1);
+                        setMaxAllocationError(parseFloat(formattedValue));
                       }
                     }}
                     sx={{
@@ -1097,7 +1274,6 @@ export default function AllocationTheme() {
                         height: 36,
                         width: 129,
                         fontSize: '15px',
-                        color: '#888',
                         '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
                           {
                             WebkitAppearance: 'none',
@@ -1143,51 +1319,10 @@ export default function AllocationTheme() {
                   </Box>
                 </Box>
               </Box>
-              {/* Right block: error message input */}
-              <Box
-                sx={{
-                  minWidth: 320,
-                  display: 'flex',
-                  alignItems: 'start',
-                  flexDirection: 'row',
-                  gap: 2,
-                  justifyContent: 'space-evenly',
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: 400,
-                    fontSize: '15px',
-                    color: '#444',
-                    pt: 1,
-                  }}
-                >
-                  Error message
-                </Typography>
-                <TextField
-                  size="small"
-                  placeholder="Set error message"
-                  multiline
-                  minRows={3}
-                  value={errorMessage}
-                  onChange={e => {
-                    setErrorMessage(e.target.value);
-                    setHasUnsavedChanges(true);
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      width: '200px',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    },
-                  }}
-                />
-              </Box>
             </Box>
           </Box>
         )}
 
-        {/* Allocation History Section */}
         {tab === 'allocation-history' && (
           <Box
             sx={{
@@ -1198,7 +1333,6 @@ export default function AllocationTheme() {
               width: '100%',
             }}
           >
-            {/* Allocation History Retention */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography
                 sx={{ fontSize: '14px', fontWeight: 600, color: '#4B5563' }}
@@ -1240,7 +1374,6 @@ export default function AllocationTheme() {
               </Box>
             </Box>
 
-            {/* Comments History Retention */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography
                 sx={{ fontSize: '14px', fontWeight: 600, color: '#4B5563' }}
