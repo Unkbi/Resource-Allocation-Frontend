@@ -166,12 +166,12 @@ const initialValuesMap = {
   add_team: {
     Name: '',
     AllocationManager: '',
-    Status: 'Active',
+    Status: 'Inactive',
   },
   edit_team: {
     Name: '',
     AllocationManager: '',
-    Status: 'Active',
+    Status: 'Inactive',
   },
   add_resource: {
     FirstName: '',
