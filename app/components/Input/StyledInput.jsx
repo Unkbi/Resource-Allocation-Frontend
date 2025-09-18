@@ -1,8 +1,9 @@
 import { FormHelperText, styled, TextField, Box } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { TextFieldProps } from '@mui/material/TextField';
 
-export const StyledInput = styled(TextField)(
-  ({ theme, width, margin, padding, height, error }) => ({
+export const BaseStyledInput = styled(TextField)(
+  ({ readOnly, theme, width, margin, padding, height, error }) => ({
     '& .MuiOutlinedInput-root': {
       borderRadius: '4px',
       height: height || '36px',
@@ -12,9 +13,26 @@ export const StyledInput = styled(TextField)(
         borderColor: '#D6DCE1',
       },
       '&.Mui-disabled': {
-        backgroundColor: '#E5E7EB !important',
-        color: '#6B7280',
+        backgroundColor: readOnly
+          ? theme.palette.readonly.main
+          : '#E5E7EB !important',
+        '& .MuiInputBase-input': {
+          borderColor: readOnly
+            ? 'rgba(214, 220, 225, 1) !important'
+            : '#D6DCE1 !important',
+          color: readOnly
+            ? theme.palette.readonly.contrastText
+            : 'currentColor !important',
+          WebkitTextFillColor: readOnly
+            ? theme.palette.readonly.contrastText
+            : 'currentColor !important',
+        },
       },
+    },
+    '& .MuiInputBase-adornedStart': {
+      color: readOnly
+        ? theme.palette.readonly?.contrastText
+        : 'currentColor !important',
     },
     '& fieldset': {
       borderColor: error ? theme.palette.error.main : '#D6DCE1',
@@ -112,3 +130,18 @@ export const StyledFormInfoText = styled(({ children, ...props }) => (
     display: 'inline',
   },
 }));
+
+export const StyledInput = props => {
+  const { disabled, value, placeholder, ...rest } = props;
+
+  const effectivePlaceholder = disabled && !value ? '' : placeholder;
+
+  return (
+    <BaseStyledInput
+      {...rest}
+      disabled={disabled}
+      value={value}
+      placeholder={effectivePlaceholder}
+    />
+  );
+};

@@ -2,32 +2,25 @@ import {
   ColumnManagementStyles,
   FilterPanelStyles,
   StyledDataGrid,
-} from '../AllocationTable/styles/StyledDataGrid';
-import {
-  GridApi,
-  GridColDef,
-  GridColumnMenu,
-  GridColumnMenuProps,
-  GridToolbarProps,
-} from '@mui/x-data-grid-premium';
-import ResourceToolbar from '../Toolbar/ResourceToolbar';
+} from '../../AllocationTable/styles/StyledDataGrid';
+import { GridApi, GridColDef, GridColumnMenu, GridColumnMenuProps, GridToolbarProps } from '@mui/x-data-grid-premium';
+import ProjectToolbar from '../../Toolbar/ProjectToolbar';
+import { JSXElementConstructor, useState } from 'react';
 import { Box } from '@mui/material';
-import { useState, JSXElementConstructor } from 'react';
+import {  CrudPermissions ,withRBAC } from '../../HOC/withRBAC';
+import { Portfolio } from '@/app/types';
 
-import { Organisation } from '@/app/types';
-import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
-
-interface OrganisationsTableProps {
+interface PortfolioTableProps{
   columns: GridColDef[];
-  rows: Organisation[];
+  rows: Portfolio[];
   loading: boolean;
   apiRef: React.RefObject<GridApi>;
-  value: string;
+  value: String;
   onChange: any;
   permissions: Record<string, CrudPermissions>;
 }
 
-function CustomColumnMenu(props: GridColumnMenuProps) {
+function CustomColumnMenu(props : GridColumnMenuProps) {
   return (
     <GridColumnMenu
       {...props}
@@ -39,7 +32,7 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
   );
 }
 
-const OrganisationsTable = ({
+const PortfolioTable = ({
   columns,
   rows,
   loading,
@@ -47,34 +40,39 @@ const OrganisationsTable = ({
   value,
   onChange = () => {},
   permissions,
-}: OrganisationsTableProps) => {
+}: PortfolioTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 31px)',
+      }}
+    >
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Organization'].r ? rows : []}
+        rows={permissions['Portfolio']?.r ? rows : []}
+        hideFooter
         loading={loading}
-        hideFooter={true}
-        hideFooterSelectedRowCount={true}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Name', sort: 'asc' }],
           },
           columns: {
             columnVisibilityModel: {
-              Status: true,
-              // You can optionally hide fields like:
-              // CreatedDate: false,
-              // Owner: false,
+              ProjectSponsor: false,
+              ProjectManager: false,
+              Location: false,
+              Budget: false,
+              BudgetCurrency: false,
             },
           },
         }}
         slots={{
-          toolbar:
-            ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
+          toolbar: ProjectToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
           columnMenu: CustomColumnMenu,
         }}
         localeText={{
@@ -86,9 +84,6 @@ const OrganisationsTable = ({
           '& .MuiDataGrid-columnHeader': {
             padding: '0 16px',
             borderRight: 'none',
-          },
-          '& .MuiDataGrid-footer': {
-            display: 'block',
           },
         }}
         slotProps={{
@@ -102,7 +97,7 @@ const OrganisationsTable = ({
             placement: 'bottom-end',
           },
           toolbar: {
-            // @ts-ignore
+             //@ts-ignore
             setFilterButtonEl,
             value: value,
             onChange: onChange,
@@ -113,7 +108,7 @@ const OrganisationsTable = ({
           },
           filterPanel: {
             columnsSort: 'asc',
-            // @ts-ignore
+             //@ts-ignore
             className: 'filterPopup',
             filterFormProps: {
               columnInputProps: {
@@ -143,4 +138,4 @@ const OrganisationsTable = ({
   );
 };
 
-export default withRBAC(OrganisationsTable, ['Organization']);
+export default withRBAC(PortfolioTable, ['Portfolio']);

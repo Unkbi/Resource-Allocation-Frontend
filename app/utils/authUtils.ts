@@ -2,7 +2,14 @@ import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from 'lz-string';
-import { LoginUser, UserRbac } from '../types';
+import {
+  LoginUser,
+  LoginUserPrivilege,
+  Privilege,
+  PrivilegeAssignment,
+  RoleAssignment,
+  UserRbac,
+} from '../types';
 
 // Save access token to localStorage
 export const saveToken = (token: string): null => {
@@ -154,9 +161,47 @@ export const getUserDisplayName = (userId: string, users: UserRbac[]) => {
   const cleanId = userId.replace('agentlang.auth$User/', '');
   const matchedUser = users.find(u => u.id === cleanId);
 
-  if (!matchedUser) return cleanId; 
+  if (!matchedUser) return cleanId;
 
   return matchedUser.firstName && matchedUser.lastName
     ? `${matchedUser.firstName} ${matchedUser.lastName}`
     : matchedUser.email || cleanId;
 };
+
+export function buildLoginUserPrivileges(
+  user: UserRbac,
+  roleAssignments: RoleAssignment[],
+  privilegeAssignments: PrivilegeAssignment[],
+  privileges: Privilege[]
+): LoginUserPrivilege {
+  const loginUserPrivileges: LoginUserPrivilege = {};
+
+  // Step 1: find all roles assigned to the user
+  const userRoles = roleAssignments
+    .filter(ra => ra.User === `agentlang.auth$User/${user.id}`)
+    .map(ra => ra.Role);
+
+  // Step 2: find all privilegeAssignments for those roles
+  const userPrivilegeAssignments = privilegeAssignments.filter(pa =>
+    userRoles.includes(pa.Role)
+  );
+
+  // Step 3: link to privileges
+  userPrivilegeAssignments.forEach(pa => {
+    const privilege = privileges.find(
+      p => pa.Permission === p.__path__ // match by ID suffix
+    );
+    if (privilege && privilege.resourceFqName) {
+      // remove Resource/ prefix if present
+      const resourceName = privilege.resourceFqName.replace(/^Resource\//, '');
+      loginUserPrivileges[resourceName] = {
+        c: privilege.c,
+        r: privilege.r,
+        u: privilege.u,
+        d: privilege.d,
+      };
+    }
+  });
+
+  return loginUserPrivileges;
+}

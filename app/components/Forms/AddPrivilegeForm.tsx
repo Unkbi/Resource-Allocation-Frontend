@@ -51,7 +51,7 @@ const AddPrivilegeForm = ({
     if (initialData) {
       const actionObject: Record<ActionType, boolean> = {
         Create: initialData.c ?? false,
-        Read:   initialData.r ?? false,
+        Read: initialData.r ?? false,
         Update: initialData.u ?? false,
         Delete: initialData.d ?? false,
       };
@@ -84,7 +84,9 @@ const AddPrivilegeForm = ({
   const resourceEntities = meta?.entities?.Resource ?? [];
   const authEntities = meta?.entities?.['agentlang.auth'] ?? [];
   const allEntities = [...resourceEntities, ...authEntities];
-  const resourceOptions: string[] = allEntities.map((entity: any) => entity.fqName);
+  const resourceOptions: string[] = allEntities.map(
+    (entity: any) => entity.fqName
+  );
 
   return (
     <Box>
@@ -97,11 +99,15 @@ const AddPrivilegeForm = ({
           name="Name"
           placeholder="Enter Privilege Name"
           value={values.Name || ''}
-          onChange={e => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
             setPrivilegeName(e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
           error={touched.Name && Boolean(errors.Name)}
           helperText={touched.Name && errors.Name}
         />

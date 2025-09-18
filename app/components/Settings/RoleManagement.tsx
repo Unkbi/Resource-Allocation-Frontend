@@ -20,7 +20,6 @@ import {
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import AccessTable from './AccessTable';
 import {
   DELETE_PRIVILEGE,
   DELETE_PRIVILEGEASSIGNMENT,
@@ -47,6 +46,10 @@ import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
 import { getUserDisplayName } from '@/app/utils/authUtils';
 import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
+import AssignRolesTable from './AssignRolesTable';
+import PrivilegeTable from './PrivilegeTable';
+import AssignPrivilegeTable from './AssignPrivilegeTable';
+import RolesTable from './RolesTable';
 
 const tabMenuNames = [
   'role-assignments',
@@ -203,6 +206,10 @@ export default function RoleManagementPage() {
     (state: any) => state.rbac.privilegeAssignments
   );
   const loading = useSelector((state: any) => state.rbac.loading);
+  const rolesLoading = useSelector((state: any) => state.rbac.rolesLoading);
+  const roleAssignmentsLoading = useSelector((state: any) => state.rbac.roleAssignmentsLoading);
+  const privilegesLoading = useSelector((state: any) => state.rbac.privilegesLoading);
+  const privilegeAssignmentsLoading = useSelector((state: any) => state.rbac.privilegeAssignmentsLoading);
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
   );
@@ -256,7 +263,7 @@ export default function RoleManagementPage() {
       const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
       router.replace(newUrl);
     }
-  }, [tab, dispatch, roles, roleAssignments, privileges, privilegeAssignments]);
+  }, [tab]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
@@ -295,7 +302,7 @@ export default function RoleManagementPage() {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [highlightedRowId, roles, roleAssignments, tab]);
+  }, [highlightedRowId, roles, roleAssignments]);
 
   const handleAddNewRole = () => {
     dispatch(
@@ -933,7 +940,7 @@ export default function RoleManagementPage() {
       <TabHeader tab={tab} setTab={setTab} />
 
       {tab === 'role-management' && (
-        <AccessTable
+        <RolesTable
           title="Role Management"
           data={data}
           onAdd={handleAddNewRole}
@@ -947,11 +954,11 @@ export default function RoleManagementPage() {
           columns={rolesColumns}
           renderMenu={renderRoleMenu}
           apiRef={apiRef}
-          loading={loading}
+          loading={rolesLoading}
         />
       )}
       {tab === 'role-assignments' && (
-        <AccessTable
+        <AssignRolesTable
           title="Role Assignments"
           data={data}
           onAdd={handleAddNewRoleAssignment}
@@ -972,11 +979,11 @@ export default function RoleManagementPage() {
           renderMenu={renderAssignmentMenu}
           columns={roleAssignmentColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={roleAssignmentsLoading}
         />
       )}
       {tab === 'privilege-management' && (
-        <AccessTable
+        <PrivilegeTable
           title="Privilege Management"
           data={data}
           onAdd={handleAddNewPrivilege}
@@ -990,11 +997,11 @@ export default function RoleManagementPage() {
           renderMenu={renderprivilegeMenu}
           columns={privilegesColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={privilegesLoading}
         />
       )}
       {tab === 'privilege-assignments' && (
-        <AccessTable
+        <AssignPrivilegeTable
           title="Current Privilege Assignments"
           data={data}
           onAdd={handleAddNewPrivilegeAssignment}
@@ -1010,7 +1017,7 @@ export default function RoleManagementPage() {
           renderMenu={renderPrivilegeAssignmentMenu}
           columns={privilegeAssignmentsColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={privilegeAssignmentsLoading}
         />
       )}
 

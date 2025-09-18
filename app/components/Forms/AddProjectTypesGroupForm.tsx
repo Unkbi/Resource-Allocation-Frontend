@@ -48,11 +48,15 @@ const AddProjectTypesGroupForm = ({
           name="Name"
           placeholder="Enter Name"
           fullWidth
-          onChange={e => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
             setFieldValue('Name', e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
           value={values.Name || ''}
           error={touched.Name && Boolean(errors.Name)}
           helperText={touched.Name && errors.Name}

@@ -248,3 +248,16 @@ export const PORTFOLIO_DISPLAY_NAME = 'Portfolio';
 export const PORTFOLIO_DISPLAY_NAME_PLURAL = 'Portfolios';
 
 export const PORTFOLIO_BLANK = 'Blank';
+
+export const RESOURCE_PAGE_VALID_TABS = [
+  'resource',
+  'teams',
+  'organizations',
+  'rates',
+] as const;
+
+export const PROJECT_PAGE_VALID_TABS = [
+  'project',
+  'portfolio',
+  'businessImpact',
+] as const;

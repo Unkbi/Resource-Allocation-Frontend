@@ -7,6 +7,7 @@ import { GridColumnMenu, useGridApiRef } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
 import { useState } from 'react';
 import { Box } from '@mui/material';
+import { withRBAC } from '../../HOC/withRBAC';
 
 function CustomColumnMenu(props) {
   return (
@@ -27,6 +28,7 @@ const ProjectTable = ({
   apiRef,
   value,
   onChange = () => {},
+  permissions ,
 }) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
@@ -40,7 +42,7 @@ const ProjectTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={rows}
+        rows={permissions['Project']?.r ? rows : []}
         hideFooter={true}
         loading={loading}
         initialState={{
@@ -122,4 +124,4 @@ const ProjectTable = ({
   );
 };
 
-export default ProjectTable;
+export default withRBAC(ProjectTable,['Project']);

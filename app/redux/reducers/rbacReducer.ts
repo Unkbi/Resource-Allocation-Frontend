@@ -4,12 +4,17 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: RBACState = {
   user: null,
+  loginUserPrivileges: null,
   roles: [],
   roleAssignments: [],
   privileges: [],
   privilegeAssignments: [],
   meta: null,
   loading: true,
+  rolesLoading:true,
+  roleAssignmentsLoading:true,
+  privilegesLoading :true ,
+  privilegeAssignmentsLoading :true ,
   error: false,
 };
 
@@ -17,6 +22,9 @@ const rbacSlice = createSlice({
   name: 'RBAC',
   initialState,
   reducers: {
+    setLoginUpserPrivileges: (state, action) => {
+      state.loginUserPrivileges = action.payload;
+    },
     setRoles: (state, action) => {
       state.roles = formatAPIResponse('Role', action.payload);
     },
@@ -106,6 +114,18 @@ const rbacSlice = createSlice({
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
+    setRolesLoading: (state, action) => {
+      state.rolesLoading = action.payload;
+    },
+    setRoleAssignmentsLoading: (state, action) => {
+      state.roleAssignmentsLoading = action.payload;
+    },
+    setPrivilegesLoading: (state, action) => {
+      state.privilegesLoading = action.payload;
+    },
+    setPrivilegeAssignmentsLoading: (state, action) => {
+      state.privilegeAssignmentsLoading = action.payload;
+    },
     setError: (state, action) => {
       state.error = action.payload;
     },
@@ -116,6 +136,7 @@ const rbacSlice = createSlice({
 });
 
 export const {
+  setLoginUpserPrivileges,
   setRoles,
   clearRoles,
   updateRoles,
@@ -129,6 +150,10 @@ export const {
   clearPrivilegeAssignments,
   updatePrivilegeAssignments,
   setLoading,
+  setRolesLoading,
+  setRoleAssignmentsLoading,
+  setPrivilegesLoading,
+  setPrivilegeAssignmentsLoading,
   setError,
   setUser,
   setMeta,

@@ -31,14 +31,12 @@ const AddLocationForm = ({
 }: AddLocationFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-
   const { locationGroups } = useSelector((state: any) => state.allSettings);
   const { initialData } = useSelector(
     (state: any) => state.globalDialog.formState
   );
   const [locationGroupName, setLocationGroupName] = useState<string[]>([]);
   const dispatch = useDispatch();
-
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
     '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
@@ -87,11 +85,15 @@ const AddLocationForm = ({
           name="Name"
           placeholder="Enter Name "
           fullWidth
-          onChange={e => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
             setFieldValue('Name', e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
           value={values.Name || ''}
           error={touched.Name && Boolean(errors.Name)}
           helperText={touched.Name && errors.Name}
