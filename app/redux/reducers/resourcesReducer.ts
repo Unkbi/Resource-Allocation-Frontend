@@ -1,13 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
-<<<<<<< HEAD:app/redux/reducers/resourcesReducer.ts
-import { getAllResources, deleteResource } from '@/app/services/resourceServices';
-import { Resource } from '@/app/types/resourceTypes'; 
-=======
 import {
   getAllResources,
   deleteResource,
 } from '@/app/services/resourceServices';
->>>>>>> origin/ui-dev-ts:app/redux/reducers/resourcesReducer.js
+
+import type { Resource } from '@/app/types/resourceTypes';
 
 export interface ResourcesState {
   resources: Resource[];
@@ -53,25 +50,17 @@ const resourcesSlice = createSlice({
         state.error = (action.payload as string) ?? 'Failed to fetch resources';
       })
 
-<<<<<<< HEAD:app/redux/reducers/resourcesReducer.ts
-=======
       // Delete resource
->>>>>>> origin/ui-dev-ts:app/redux/reducers/resourcesReducer.js
       .addCase(deleteResource.pending, state => {
         state.loading = true;
         state.error = null;
       })
       .addCase(deleteResource.fulfilled, (state, action) => {
         state.loading = false;
-<<<<<<< HEAD:app/redux/reducers/resourcesReducer.ts
-        const deletedId = action.payload as string;
-        state.resources = state.resources.filter(res => res.Id !== deletedId);
-=======
         const deletedId = action.payload;
         if (Array.isArray(state.resources)) {
           state.resources = state.resources.filter(res => res.Id !== deletedId);
         }
->>>>>>> origin/ui-dev-ts:app/redux/reducers/resourcesReducer.js
       })
       .addCase(deleteResource.rejected, (state, action) => {
         state.loading = false;
@@ -80,11 +69,7 @@ const resourcesSlice = createSlice({
   },
 });
 
-<<<<<<< HEAD:app/redux/reducers/resourcesReducer.ts
-export default resourcesSlice.reducer;
-=======
 export const { setResources, clearResources, setLoading, setError } =
   resourcesSlice.actions;
 
 export default resourcesSlice.reducer;
->>>>>>> origin/ui-dev-ts:app/redux/reducers/resourcesReducer.js
