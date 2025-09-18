@@ -8,19 +8,35 @@ import { useSelector, useDispatch } from 'react-redux';
 import { FormikProps } from 'formik';
 
 interface FormValues {
-  LocationGroup: string;
+  Name: string;
   [key: string]: any;
 }
 
 interface AddLocationGroupFormProps {
   formikProps: FormikProps<FormValues>;
+  setFormValue: (value: FormValues) => void;
 }
 
-const AddLocationGroupForm = ({ formikProps }: AddLocationGroupFormProps) => {
+const AddLocationGroupForm = ({
+  formikProps,
+  setFormValue,
+}: AddLocationGroupFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const dispatch = useDispatch();
-  const [locationGroupName, setLocationGroupName] = useState('');
+  const { initialData } = useSelector(
+    (state: any) => state.globalDialog.formState
+  );
+
+  useEffect(() => {
+    if (initialData) {
+      const rowData = {
+        Name: initialData.Name || '',
+      };
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
+    }
+  }, []);
 
   return (
     <Box>
@@ -30,21 +46,21 @@ const AddLocationGroupForm = ({ formikProps }: AddLocationGroupFormProps) => {
         </StyledLabel>
         <StyledInput
           as={TextField}
-          name="LocationGroup"
+          name="Name"
           placeholder="Enter Name"
           fullWidth
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
-            setLocationGroupName(e.target.value);
+            setFormValue({ ...values, Name: e.target.value });
           }}
           onBlur={
             handleBlur as React.FocusEventHandler<
               HTMLInputElement | HTMLTextAreaElement
             >
           }
-          value={values.LocationGroup || ''}
-          error={touched.LocationGroup && Boolean(errors.LocationGroup)}
-          helperText={touched.LocationGroup && errors.LocationGroup}
+          value={values.Name || ''}
+          error={touched.Name && Boolean(errors.Name)}
+          helperText={touched.Name && errors.Name}
         />
       </Box>
     </Box>

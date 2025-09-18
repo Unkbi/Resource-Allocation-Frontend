@@ -536,3 +536,62 @@ export const addProjectTypeValidationSchema = (
     Color: Yup.string().required('Color is required'),
   });
 };
+
+export const addLocationValidationSchema = (
+  locations: any[] = [],
+  initialName = ''
+) => {
+  const locationNames = Array.isArray(locations)
+    ? locations.map(loc => loc.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedInitial = initialName.toLowerCase().trim();
+          if (initialName && trimmedValue === trimmedInitial) {
+            return true; // Allow same name when editing
+          }
+          return !locationNames.includes(trimmedValue);
+        }
+      ),
+    LocationGroup: Yup.string().required('Location Group is required'),
+    Status: Yup.string()
+      .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
+      .required('Status is required'),
+  });
+};
+
+export const addLocationGroupValidationSchema = (
+  locationGroups: any[] = [],
+  initialName = ''
+) => {
+  const locationGroupNames = Array.isArray(locationGroups)
+    ? locationGroups.map(lg => lg.Name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Group Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Group Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          )
+            return true;
+          return !locationGroupNames.includes(value.toLowerCase().trim());
+        }
+      ),
+  });
+};

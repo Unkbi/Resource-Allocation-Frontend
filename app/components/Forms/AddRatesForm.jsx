@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import { useDispatch } from 'react-redux';
 import StyledAutocomplete from '../Select/Autocomplete';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '../HOC/withRBAC';
 
 const AddRatesForm = ({
@@ -30,6 +31,8 @@ const AddRatesForm = ({
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
+  const { location } = useSelector(state => state.allSettings);
+  const [locationOptions, setLocationOptions] = useState([]);
   const { formType } = useSelector(state => state.globalDialog.formState);
   const [readOnly, setReadOnly] = useState(true);
   const dispatch = useDispatch();
@@ -52,12 +55,30 @@ const AddRatesForm = ({
         payload: {},
       });
     }
+    if (!location || location?.length === 0) {
+      dispatch({ type: FETCH_LOCATION });
+    }
   }, []);
 
   useEffect(() => {
+    if (location && Array.isArray(location)) {
+      const locationNames =
+        location.map(loc => ({
+          value: loc.Id,
+          label: loc.Name,
+        })) || [];
+      setLocationOptions(locationNames);
+    }
+  }, [location]);
+
+  useEffect(() => {
     if (initialData) {
+      const matchedLocation = location?.find(
+        loc => loc.Name === initialData.WorkLocation
+      );
+
       const rowData = {
-        WorkLocation: initialData.WorkLocation,
+        WorkLocation: matchedLocation?.Id || '',
         HRLevel: initialData.HRLevel,
         HourlyRate: initialData.HourlyRate,
         ValidityEndDate: initialData.ValidityEndDate || '',
@@ -77,17 +98,15 @@ const AddRatesForm = ({
         <StyledLabel>
           Location <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <StyledInput
+        <StyledAutocomplete
           disabled={readOnly}
-          readOnly={readOnly}
-          as={TextField}
           name="WorkLocation"
+          label="Work Location"
           placeholder="Select Location"
           value={values.WorkLocation || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-          helperText={touched.WorkLocation && formikProps.errors.WorkLocation}
+          options={locationOptions}
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
       <Box

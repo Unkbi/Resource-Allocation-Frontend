@@ -217,7 +217,7 @@ const SettingsPanel = () => {
             content: (
               <AllocationTheme />
             ),
-            description: 'It is a color theme for organization view',
+            description: 'Configuration setting for resource allocation',
           },
           {
             id: 'location-setting',
@@ -225,7 +225,7 @@ const SettingsPanel = () => {
             headerText: 'Location Settings',
             icon: '',
             content: <Location />,
-            description: 'Lorem ipsum',
+            description: 'Configure work location for resource',
           },
           {
             id: 'theme',

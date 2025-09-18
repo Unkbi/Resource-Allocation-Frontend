@@ -53,6 +53,7 @@ import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 import { StatusPill } from '@/app/components/Settings/styled';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import RatesTable from '@/app/components/Resources/RatesTable';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
@@ -106,55 +107,6 @@ const PersonContainer = styled('div')(() => ({
   justifyContent: 'flex-start',
 }));
 
-// const StatusPill = styled('div')(({ theme, status }) => {
-//   let backgroundColor, textColor;
-//   switch (status) {
-//     case 'Active':
-//       backgroundColor = '#4B9F471A';
-//       textColor = '#4B9F47';
-//       break;
-//     case 'Proposed':
-//       backgroundColor = '#5041AB1A';
-//       textColor = '#5041AB';
-//       break;
-//     case 'Approved':
-//       backgroundColor = '#2772F01A';
-//       textColor = '#2772F0';
-//       break;
-//     case 'Paused':
-//       backgroundColor = '#E6521F1A';
-//       textColor = '#E6521F';
-//       break;
-//     case 'Completed':
-//       backgroundColor = '#F5B5441A';
-//       textColor = '#F5B544';
-//       break;
-//     case 'Inactive':
-//       backgroundColor = '#FCF0ED';
-//       textColor = '#C73732';
-//       break;
-//     default:
-//       backgroundColor = '#e0e0e0';
-//       textColor = '#6c757d';
-//   }
-
-//   return {
-//     display: 'inline-flex',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     borderRadius: '4px',
-//     fontFamily: theme.typography.fontFamily,
-//     fontsize: '12px',
-//     fontStyle: 'normal',
-//     fontweight: 400,
-//     lineheight: '16px',
-//     width: '86px',
-//     height: '28px',
-//     backgroundColor,
-//     color: textColor,
-//   };
-// });
-
 const menuItemStyle = {
   '&:hover': {
     backgroundColor: '#142B51B2',
@@ -185,6 +137,7 @@ function Resources({ permissions }) {
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
+  const { location } = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(allResourcesDetail || null);
@@ -1089,6 +1042,9 @@ function Resources({ permissions }) {
     if (!organisations || organisations.length === 0) {
       dispatch({ type: FETCH_ORGANISATIONS });
     }
+    if (!location || location?.length === 0) {
+      dispatch({ type: FETCH_LOCATION });
+    }
   }, []);
 
   const modifyData = data => {
@@ -1099,6 +1055,9 @@ function Resources({ permissions }) {
           id: item?.Resource?.Id,
           Team: item?.Team?.Name || '',
           Organization: item?.Organization?.Name || '',
+          WorkLocation:
+            location?.find(loc => loc.Id === item?.Resource?.WorkLocation)
+              ?.Name || '',
         };
       });
     }
@@ -1113,6 +1072,21 @@ function Resources({ permissions }) {
         Team: item.Name,
         AllocationManager: item.AllocationManager,
         Status: item.Status,
+      }));
+    }
+    return [];
+  };
+
+  const modifyRatesData = data => {
+    if (data) {
+      const filteredData = data.filter(loc => {
+        return location?.some(setting => setting.Id === loc.WorkLocation);
+      });
+      return filteredData.map(item => ({
+        ...item,
+        id: item.Id,
+        WorkLocation:
+          location?.find(loc => loc.Id === item.WorkLocation)?.Name || '',
       }));
     }
     return [];
@@ -1508,12 +1482,7 @@ function Resources({ permissions }) {
           <RatesTable
             loading={employeeRatesLoading}
             columns={employeeRatesColumns}
-            rows={
-              employeeRates?.map(emp => ({
-                ...emp,
-                id: emp.Id,
-              })) || []
-            }
+            rows={modifyRatesData(employeeRates) || []}
             apiRef={apiRef}
             value={value}
             onChange={onChange}
