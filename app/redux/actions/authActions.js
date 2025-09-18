@@ -8,7 +8,7 @@ import {
   logoutUser,
   resendConfirmationCode,
   signupUser,
-} from '../../services/authServices.js';
+} from '../../services/authServices';
 
 export const performLogin = credentials => async dispatch => {
   try {

@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   confirmForgotPassword,
   forgotPassword,
@@ -8,9 +8,22 @@ import {
   signupUser,
   getUser,
   resendConfirmationCode,
-} from '../../services/authServices.js';
+} from '@/app/services/authServices'; 
 
-const initialState = {
+import type { LoginUser } from '@/app/types/authTypes';
+
+export interface AuthState {
+  user: LoginUser | null;
+  token: string | null;
+  loading: boolean;
+  signupData: Record<string, any> | null;
+  error: string | null;
+  forgotPasswordMessage: string | null;
+  resetPasswordMessage: string | null;
+  otpVerified: boolean;
+}
+
+const initialState: AuthState = {
   user: null,
   token: null,
   loading: false,
@@ -25,7 +38,7 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    updateSignup: (state, action) => {
+    updateSignup: (state, action: PayloadAction<Record<string, any>>) => {
       state.signupData = action.payload;
     },
     logout: () => initialState,
@@ -37,14 +50,14 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase(loginUser.fulfilled, (state, action: PayloadAction<LoginUser & { 'id-token': string }>) => {
         state.loading = false;
         state.user = action.payload;
         state.token = action.payload['id-token'];
       })
-      .addCase(loginUser.rejected, (state, action) => {
+      .addCase(loginUser.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Login failed';
       })
 
       // Logout Actions
@@ -57,9 +70,9 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
       })
-      .addCase(logoutUser.rejected, (state, action) => {
+      .addCase(logoutUser.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Logout failed';
       })
 
       // Signup Actions
@@ -72,80 +85,85 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
       })
-      .addCase(signupUser.rejected, (state, action) => {
+      .addCase(signupUser.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Signup failed';
       })
-      // forgot
+
+      // Forgot Password
       .addCase(forgotPassword.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(forgotPassword.fulfilled, (state, action) => {
+      .addCase(forgotPassword.fulfilled, (state, action: PayloadAction<{ statusText: string }>) => {
         state.loading = false;
         state.forgotPasswordMessage = action.payload.statusText;
       })
-      .addCase(forgotPassword.rejected, (state, action) => {
+      .addCase(forgotPassword.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Forgot password failed';
       })
-      // confirm forgot password
+
+      // Confirm Forgot Password
       .addCase(confirmForgotPassword.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(confirmForgotPassword.fulfilled, (state, action) => {
+      .addCase(confirmForgotPassword.fulfilled, (state, action: PayloadAction<{ message: string }>) => {
         state.loading = false;
         state.resetPasswordMessage = action.payload.message;
       })
-      .addCase(confirmForgotPassword.rejected, (state, action) => {
+      .addCase(confirmForgotPassword.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Reset password failed';
       })
-      // confirm signup
+
+      // Confirm Signup
       .addCase(confirmSignUp.pending, state => {
         state.loading = true;
         state.error = null;
         state.otpVerified = false;
       })
-      .addCase(confirmSignUp.fulfilled, (state, action) => {
+      .addCase(confirmSignUp.fulfilled, (state, action: PayloadAction<{ user: LoginUser; token: string }>) => {
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.otpVerified = true;
       })
-      .addCase(confirmSignUp.rejected, (state, action) => {
+      .addCase(confirmSignUp.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Confirm signup failed';
         state.otpVerified = false;
       })
-      //resend otp
+
+      // Resend OTP
       .addCase(resendConfirmationCode.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(resendConfirmationCode.fulfilled, (state, action) => {
+      .addCase(resendConfirmationCode.fulfilled, state => {
         state.loading = false;
       })
-      .addCase(resendConfirmationCode.rejected, (state, action) => {
+      .addCase(resendConfirmationCode.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Resend code failed';
       })
-      // get user
+
+      // Get User
       .addCase(getUser.pending, state => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(getUser.fulfilled, (state, action) => {
+      .addCase(getUser.fulfilled, (state, action: PayloadAction<LoginUser>) => {
         state.loading = false;
         state.user = action.payload;
       })
-      .addCase(getUser.rejected, (state, action) => {
+      .addCase(getUser.rejected, (state, action: PayloadAction<string | undefined>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Get user failed';
       });
   },
 });
 
-export const { updateSignup } = authSlice.actions;
+export const { updateSignup, logout } = authSlice.actions;
 export default authSlice.reducer;
