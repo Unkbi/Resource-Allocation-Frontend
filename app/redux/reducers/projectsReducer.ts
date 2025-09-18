@@ -8,6 +8,7 @@ import {
 } from '@/app/services/projectServices';
 import { generateTMinusOneStartEndDate } from '@/app/utils/common';
 import { ProjectState } from '@/app/types';
+import { formatAPIResponse } from '@/app/utils/authUtils';
 
 const initialState: ProjectState = {
   projects: null,
@@ -54,7 +55,10 @@ const projectsSlice = createSlice({
       })
       .addCase(getAllProjects.fulfilled, (state, action) => {
         state.loading = false;
-        state.projects = action.payload;
+        state.projects = formatAPIResponse(
+                  'Project',
+                  action.payload as string | null
+                );
       })
       .addCase(getAllProjects.rejected, (state, action) => {
         state.loading = false;
@@ -102,7 +106,6 @@ const projectsSlice = createSlice({
       })
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.loading = false;
-        state.projects = action.payload;
       })
       .addCase(deleteProject.rejected, (state, action) => {
         state.loading = false;

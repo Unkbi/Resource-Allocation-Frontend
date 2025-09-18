@@ -24,10 +24,10 @@ import { useEffect, useState } from 'react';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useDispatch } from 'react-redux';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
-  getResourceDetail,
 } from '@/app/services/teamServices';
 import dayjs from 'dayjs';
 import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';
@@ -40,9 +40,9 @@ import {
   getResourceIdByEmail,
 } from '@/app/utils/allocationUtils';
 import { addDays, addWeeks, format } from 'date-fns';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { parseISO } from 'date-fns';
 import StyledAutocomplete from '../Select/Autocomplete';
+import { withRBAC } from '../HOC/withRBAC';
 
 const warningTextStyle = {
   color: '#B44536',
@@ -67,7 +67,12 @@ const reviewLinkStyle = {
   textDecorationLine: 'underline',
 };
 
-const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
+const AddResourceForm = ({
+  formikProps,
+  setFormValue,
+  onValuesChange,
+  permissions,
+}) => {
   const {
     values,
     handleChange,
@@ -82,26 +87,39 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   const { resources } = useSelector(state => state.resources);
   const { teams } = useSelector(state => state.teams);
   const { organisations } = useSelector(state => state.organisations);
+  const { location } = useSelector(state => state.allSettings);
   const { formType } = useSelector(state => state.globalDialog.formState);
   const [showWarning, setShowWarning] = useState(false);
   const [shareLink, setShareLink] = useState('');
+  const [locationOptions, setLocationOptions] = useState([]);
+  const [readOnly, setReadOnly] = useState(true);
 
   const resourceListOptions =
     resources &&
-    resources?.result?.map(resource => {
+    resources?.map(resource => {
       return { value: resource.Id, label: resource.FullName };
     });
   const organisationListOptions =
-    organisations?.map(org => ({
-      value: org.Id,
-      label: org.Name,
-    })) || [];
+    organisations
+      ?.filter(org => org.Status === 'Active')
+      .map(org => ({
+        value: org.Id,
+        label: org.Name,
+      })) || [];
+
   const teamListOptions =
-    teams?.result?.map(team => ({
+    teams?.map(team => ({
       value: team.Id,
       label: team.Name,
     })) || [];
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_resource' && !permissions['Resource']?.u) ||
+        (formType === 'add_resource' && !permissions['Resource']?.c)
+    );
+  }, [readOnly]);
 
   useEffect(() => {
     const firstNameToUse =
@@ -118,17 +136,17 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const loadAndSetForm = async () => {
       if (!initialData || !initialData.Id) return;
 
-      const matchedTeam = teams?.result?.find(
-        team => team.Name === initialData.Team
-      );
+      const matchedTeam = teams?.find(team => team.Name === initialData.Team);
       const matchedOrg = organisations?.find(
         org => org.Name === initialData.Organization
       );
-
+      const matchedLocation = location?.find(
+        loc => loc.Name === initialData.WorkLocation
+      );
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
-        WorkLocation: initialData.WorkLocation || null,
+        WorkLocation: matchedLocation?.Id || null,
         Manager: initialData.Manager || '',
         FirstName: initialData.FirstName || '',
         LastName: initialData.LastName || '',
@@ -197,6 +215,23 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!location || location.length === 0) {
+      dispatch({ type: FETCH_LOCATION });
+    }
+  }, [dispatch, location]);
+
+  useEffect(() => {
+    if (location && Array.isArray(location)) {
+      const locationNames =
+        location.map(loc => ({
+          value: loc.Id,
+          label: loc.Name,
+        })) || [];
+      setLocationOptions(locationNames);
+    }
+  }, [location]);
+
   // Add effect to watch Team and Organisation changes
   useEffect(() => {
     if (onValuesChange && values.Team && values.Organisation) {
@@ -216,7 +251,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     formikProps.setFieldValue('EndDate', formattedEndDate);
     if (formType !== 'edit_resource') return;
     try {
-      const resourceId = getResourceIdByEmail(resources.result, values.Email);
+      const resourceId = getResourceIdByEmail(resources, values.Email);
       if (!resourceId) {
         console.error('Resource ID not found for email:', values.Email);
         return;
@@ -248,7 +283,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
     const formattedEndDate = dayjs(formikProps.values.EndDate).format(
       'YYYY-MM-DD'
     );
-    const resourceId = getResourceIdByEmail(resources.result, values.Email);
+    const resourceId = getResourceIdByEmail(resources, values.Email);
     if (!resourceId) {
       console.error('Resource ID not found for email:', values.Email);
       return;
@@ -320,8 +355,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             First Name <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="FirstName"
-            placeholder="Enter first name"
+            placeholder="Enter First Name"
             value={values.FirstName || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -338,8 +375,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Last Name <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="LastName"
-            placeholder="Enter last name"
+            placeholder="Enter Last Name"
             value={values.LastName || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -356,8 +395,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <StyledLabel>Preferred First Name</StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           name="PreferredFirstName"
-          placeholder="Enter preferred first name"
+          placeholder="Enter Preferred First Name"
           value={values.PreferredFirstName || ''}
           onChange={handleChange}
           onBlur={e => {
@@ -377,8 +418,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           name="Email"
-          placeholder="Enter email"
+          placeholder="Enter Email"
           value={values.Email || ''}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -400,8 +443,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <Box sx={{ flex: 1, width: '50%' }}>
           <StyledLabel>Phone Number</StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="PhoneNumber"
-            placeholder="Enter phone number"
+            placeholder="Enter Phone Number"
             value={values.PhoneNumber || ''}
             onChange={e => {
               const numericOnly = e.target.value.replace(/\D/g, '');
@@ -416,6 +461,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <Box sx={{ flex: 1 }}>
           <StyledLabel>Department</StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Department"
             width={'100%'}
             placeholder="Enter Department"
@@ -447,6 +494,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Organization <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledAutocomplete
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Organisation"
             label="Organization"
             placeholder="Enter organization"
@@ -461,8 +510,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Role <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Role"
-            placeholder="Enter role"
+            placeholder="Enter Role"
             value={values.Role || ''}
             onChange={handleChange}
             onBlur={e => {
@@ -488,8 +539,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         <Box sx={{ width: '50%' }}>
           <StyledLabel>HR Level</StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             name="HRLevel"
-            placeholder="Enter level"
+            placeholder="Enter HR Level"
             value={values.HRLevel || ''}
             onChange={e => {
               const input = e.target.value;
@@ -508,8 +561,10 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
             Resource Type <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledAutocomplete
+            disabled={readOnly}
+            readOnly={readOnly}
             name="Type"
-            label="Type"
+            label="Select Type"
             placeholder="Select type"
             value={values.Type || ''}
             options={typeOptions}
@@ -543,6 +598,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <Box sx={{ flex: 1 }}>
             <StyledLabel>Hourly Rate</StyledLabel>
             <StyledInput
+              disabled={readOnly}
+              readOnly={readOnly}
               type="number"
               name="ContractorHourlyRate"
               placeholder="Enter rate"
@@ -573,6 +630,8 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           <Box sx={{ flex: 1 }}>
             <StyledLabel>Avg. Weekly Hrs</StyledLabel>
             <StyledInput
+              disabled={readOnly}
+              readOnly={readOnly}
               type="number"
               name="AverageWeeklyHours"
               placeholder="Enter hours"
@@ -599,8 +658,9 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           Team <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
           name="Team"
-          label="Team"
+          label="Select Team"
           placeholder="Select team"
           options={teamListOptions}
           value={values.Team || ''}
@@ -612,8 +672,9 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>Manager</StyledLabel>
         <StyledAutocomplete
+          disabled={readOnly}
           name="Manager"
-          label="Manager"
+          label="Select Manager"
           placeholder="Select manager"
           options={resourceListOptions}
           value={values.Manager || ''}
@@ -632,6 +693,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
         }}
       >
         <CustomDatePicker
+          readOnly={readOnly}
           name="StartDate"
           value={formikProps.values.StartDate || null}
           formikProps={formikProps}
@@ -648,6 +710,7 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
           isRequired={false}
         />
         <CustomDatePicker
+          readOnly={readOnly}
           name="EndDate"
           value={formikProps.values.EndDate || null}
           onChange={handleEndDateChange}
@@ -685,18 +748,15 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
       </Box>
       <Box sx={{ flex: 1 }}>
         <StyledLabel>Work Location</StyledLabel>
-        <StyledInput
+        <StyledAutocomplete
+          disabled={readOnly}
           name="WorkLocation"
-          placeholder="Enter location"
+          label="Work Location"
+          placeholder="Select Location"
           value={values.WorkLocation || ''}
-          onChange={handleChange}
-          onBlur={e => {
-            const trimmedValue = e.target.value.trim();
-            setFieldValue('WorkLocation', trimmedValue);
-            handleBlur(e);
-          }}
-          error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-          helperText={touched.WorkLocation && errors.WorkLocation}
+          options={locationOptions}
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
       <Box>
@@ -777,4 +837,4 @@ const AddResourceForm = ({ formikProps, setFormValue, onValuesChange }) => {
   );
 };
 
-export default AddResourceForm;
+export default withRBAC(AddResourceForm, ['Resource']);

@@ -189,7 +189,7 @@ export default function AccessTable({
               placeholder="Search by Name /or email"
               value={search}
               sx={{ width: 230 }}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e:any) => setSearch(e.target.value)}
             />
 
             <Box
@@ -372,7 +372,7 @@ export default function AccessTable({
         </Box>
       )}
 
-      <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%',  height: 'calc(100vh - 355px)' }}>
         <DataGrid
           rows={filteredRows}
           checkboxSelection={checkboxSelection}
@@ -388,6 +388,7 @@ export default function AccessTable({
           loading={loading}
           sx={{
             border: 'none',
+            height: '100%',
             '.MuiDataGrid-columnHeaders': {
               color: '#6B7280',
               fontSize: '12px',

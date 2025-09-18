@@ -18,7 +18,6 @@ import {
   getUserIdFromEmail,
   isCurrentWeek,
 } from '@/app/utils/common';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import {
   setActualAllocationsStatus,
   setCalendarDate,
@@ -31,13 +30,23 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
+import { getUserAttributes } from '@/app/utils/authUtils';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
+import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
+import { useRouter } from 'next/navigation';
 
-export default function ActualsPage() {
+interface ActualsPageProps {
+  permissions: Record<string, CrudPermissions>;
+}
+
+function ActualsPage({ permissions }: ActualsPageProps) {
   const dispatch: AppDispatch = useDispatch();
   const { actualAllocations, status, calendarDate, dataProcessing } =
     useSelector((state: RootState) => state.actualAllocations);
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
+  // @ts-ignore
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
   const { projects } = useSelector((state: RootState) => state.projects);
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
@@ -52,6 +61,7 @@ export default function ActualsPage() {
   const [show, setShow] = useState(true);
   const [isModified, setIsModified] = useState(false);
   const [confirmSignal, setConfirmSignal] = useState(0);
+  const router = useRouter();
 
   const handleModificationChange = (modified: boolean) => {
     setShow(false);
@@ -67,19 +77,8 @@ export default function ActualsPage() {
   };
 
   const handleConfirmed = () => {
-    if (
-      projects &&
-      'result' in projects &&
-      resources &&
-      'result' in resources &&
-      user &&
-      'Email' in user
-    ) {
-      const userId = getUserIdFromEmail(
-        ('result' in resources && resources?.result) || [],
-        // @ts-ignore
-        ('Email' in user && user?.Email) || ''
-      );
+    if (projects && resources && user && email) {
+      const userId = getUserIdFromEmail(resources || [], email);
 
       const allData = apiRef.current
         .getAllRowIds()
@@ -115,7 +114,7 @@ export default function ActualsPage() {
             )
         )
         .map(tabData => ({
-          Project: projects?.result?.find(
+          Project: projects?.find(
             (project: any) => project.Name === tabData.project
           )?.Id,
           ActualsEntered: formateToFloat(tabData.actuals),
@@ -231,12 +230,8 @@ export default function ActualsPage() {
   };
 
   useEffect(() => {
-    if (resources && 'result' in resources && user && 'Email' in user) {
-      const userId = getUserIdFromEmail(
-        ('result' in resources && resources?.result) || [],
-        // @ts-ignore
-        ('Email' in user && user?.Email) || ''
-      );
+    if (resources && user && email) {
+      const userId = getUserIdFromEmail(resources || [], email);
       dispatch({
         type: GET_ACTUAL_ALLOCATIONS,
         payload: {
@@ -246,7 +241,7 @@ export default function ActualsPage() {
         },
       });
     }
-  }, [resources, user, startDate, endDate]);
+  }, [resources, user, email, startDate, endDate]);
 
   useEffect(() => {
     if (actualAllocations) {
@@ -270,11 +265,17 @@ export default function ActualsPage() {
   }, [actualAllocations]);
 
   useEffect(() => {
-    // @ts-ignore
-    if (!resources?.result?.length) {
-      dispatch(fetchAllResources());
+    if (!permissions['ActualsStatus'].r) {
+      router.replace('/dashboard');
     }
-    if (!projects?.result?.length) {
+  }, []);
+
+  useEffect(() => {
+    // @ts-ignore
+    if (!resources?.length) {
+      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+    }
+    if (!projects?.length) {
       dispatch(fetchAllProjects());
     }
   }, []);
@@ -362,9 +363,11 @@ export default function ActualsPage() {
               data={formattedActualAllocations || []}
               dataProcessing={dataProcessing || false}
               disableView={
-                status === 'Confirmed' &&
-                startDate !== null &&
-                !isCurrentWeek(parseISO(startDate))
+                (!permissions['ActualsStatus'].c &&
+                  !permissions['ActualsStatus'].u) ||
+                (status === 'Confirmed' &&
+                  startDate !== null &&
+                  !isCurrentWeek(parseISO(startDate)))
               }
               startDate={startDate}
               endDate={endDate}
@@ -419,12 +422,14 @@ export default function ActualsPage() {
                   borderRadius: '5px',
                 }}
                 disabled={
-                  status !== null &&
-                  startDate !== null &&
-                  status !== 'Proposed' &&
-                  // Enable button if it's the current week even if status is 'Confirmed'
-                  !isCurrentWeek(parseISO(startDate)) &&
-                  (!isModified || show || hasInvalidRows)
+                  (!permissions['ActualsStatus'].c &&
+                    !permissions['ActualsStatus'].u) ||
+                  (status !== null &&
+                    startDate !== null &&
+                    status !== 'Proposed' &&
+                    // Enable button if it's the current week even if status is 'Confirmed'
+                    !isCurrentWeek(parseISO(startDate)) &&
+                    (!isModified || show || hasInvalidRows))
                 }
                 onClick={handleConfirmed}
               >
@@ -485,3 +490,5 @@ export default function ActualsPage() {
     </Box>
   );
 }
+
+export default withRBAC(ActualsPage, ['ActualsStatus']);

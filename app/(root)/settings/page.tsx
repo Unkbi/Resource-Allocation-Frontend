@@ -37,6 +37,7 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
 import UserManagement from '@/app/components/Settings/UserManagement';
+import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 
 interface MenuItem {
   id: string;
@@ -144,10 +145,20 @@ const SettingsPanel = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (scalarSettings === null) {
+      // Sahadev : This is temporary, we will pobably need to call AllSettings API here.
+      dispatch({
+        type: FETCH_ALL_SETTINGS,
+        payload: {},
+      });
+    }
     dispatch(fetchAllocationTheme());
   }, []);
 
@@ -210,18 +221,12 @@ const SettingsPanel = () => {
           {
             id: 'allocation-setting',
             title: 'Allocation Setting',
-            headerText: 'Color Theme: Teams View',
+            headerText: 'Allocation Settings',
             icon: '',
             content: (
-              <AllocationTheme
-                allocationRanges={allocationRanges}
-                onAllocationRangesChange={setAllocationRanges}
-                onDataChanged={() => setHasUnsavedChanges(true)}
-                validationErrors={validationErrors}
-                setValidationErrors={setValidationErrors}
-              />
+              <AllocationTheme />
             ),
-            description: 'It is a color theme for organization view',
+            description: 'Configuration setting for resource allocation',
           },
           {
             id: 'location-setting',
@@ -229,7 +234,7 @@ const SettingsPanel = () => {
             headerText: 'Location Settings',
             icon: '',
             content: <Location />,
-            description: 'Lorem ipsum',
+            description: 'Configure work location for resource',
           },
           {
             id: 'theme',
@@ -318,70 +323,6 @@ const SettingsPanel = () => {
     }
   }, [activeItem?.id]);
 
-  const handleSaveChanges = () => {
-    if (activeItem?.id === 'allocation-setting' || activeItem?.id === 'theme') {
-      // Validate ranges before saving
-      const errors = validateRanges(allocationRanges);
-      const hasErrors = Object.keys(errors).length > 0;
-
-      if (hasErrors) {
-        Object.entries(errors).forEach(([rangeId, error]) => {
-          dispatch(
-            showToast({
-              message: `${error.message}`,
-              type: 'error',
-            })
-          );
-        });
-        return;
-      }
-      setOriginalAllocationRanges([...allocationRanges]);
-      setHasUnsavedChanges(false);
-      dispatch(updateAllocationTheme([...allocationRanges]));
-      const transformedAllocationRanges = allocationRanges.map(range => {
-        const { __Id__, id, ...rest } = range;
-        return {
-          Id: id,
-          ...rest,
-        };
-      });
-      const itemsWithId = allocationRanges.filter(d => d.__Id__);
-      if (itemsWithId.length > 0) {
-        const payload = {
-          postData: transformedAllocationRanges,
-          __Id__: itemsWithId[0]?.__Id__,
-        };
-        dispatch(updateAllocationThemeAction(payload)).then(response => {
-          if (response?.meta?.requestStatus === 'fulfilled') {
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Allocation theme updated successfully',
-                type: 'success',
-                autoHideTimer: 4000,
-              })
-            );
-          }
-        });
-      } else {
-        const newItems = allocationRanges.filter(d => !d.__Id__);
-        if (newItems.length > 0) {
-          dispatch(addAllocationThemeAction(transformedAllocationRanges));
-        }
-      }
-    }
-  };
-
-  const handleCancel = () => {
-    // Restore original data
-    if (activeItem?.id === 'allocation-setting' || activeItem?.id === 'theme') {
-      setAllocationRanges([...originalAllocationRanges]);
-      setValidationErrors({});
-    }
-
-    setHasUnsavedChanges(false);
-  };
-
   return (
     <PageContainer>
       <BodyContainer>
@@ -445,26 +386,6 @@ const SettingsPanel = () => {
             </Typography>
           </ContentHeader>
           <ScrollableContent>{activeItem?.content}</ScrollableContent>
-          {activeItem?.id === 'allocation-setting' && (
-            <ContentFooter>
-              <BottomActions>
-                <CancelButton
-                  variant="outlined"
-                  onClick={handleCancel}
-                  disabled={!hasUnsavedChanges}
-                >
-                  Cancel
-                </CancelButton>
-                <SaveButton
-                  variant="contained"
-                  onClick={handleSaveChanges}
-                  disabled={!hasUnsavedChanges}
-                >
-                  Save Changes
-                </SaveButton>
-              </BottomActions>
-            </ContentFooter>
-          )}
         </ContentContainer>
       </BodyContainer>
     </PageContainer>

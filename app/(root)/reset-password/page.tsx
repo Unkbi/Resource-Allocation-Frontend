@@ -203,11 +203,9 @@ function RestPasswordPage() {
     }
     dispatch(
       performResetPassword({
-        'Agentlang.Kernel.Identity/ConfirmForgotPassword': {
-          Password: newPassword,
-          Username: username,
-          ConfirmationCode: code,
-        },
+    email:username,
+    confirmationCode: code,
+    newPassword:newPassword
       })
     ).then(response => {
       // @ts-ignore

@@ -1,23 +1,36 @@
-"use client";
-import { createTheme } from "@mui/material/styles";
-import { themeColors, fontSizeMap, BASE_FONT_SIZE, DEFAULT_COLOR } from "../constants/constants";
+'use client';
+import { createTheme } from '@mui/material/styles';
+import {
+  themeColors,
+  fontSizeMap,
+  BASE_FONT_SIZE,
+  DEFAULT_COLOR,
+} from '../constants/constants';
 
 export const getTheme = (mode, primaryColor, fontSize) => {
-
-  const selectedColor = primaryColor && themeColors[primaryColor] ? primaryColor : DEFAULT_COLOR;
+  const selectedColor =
+    primaryColor && themeColors[primaryColor] ? primaryColor : DEFAULT_COLOR;
   const customSettings = themeColors[selectedColor]?.[mode];
   return createTheme({
     palette: {
       mode,
       primary: {
-        main: primaryColor, 
+        main: primaryColor,
       },
-      sideBarColor :{
-        main :'#152E75',
-      }
+      sideBarColor: {
+        main: '#152E75',
+      },
+      readonly: {
+        main: 'rgba(243, 243, 243, 1)',
+        contrastText: 'rgba(51, 51, 51, 1)',
+      },
+      disabledField: {
+        main: '#E5E7EB',
+        contrastText: '#6B7280',
+      },
     },
     typography: {
-      fontFamily: "Open Sans",
+      fontFamily: 'Open Sans',
       fontSize: BASE_FONT_SIZE + fontSizeMap[fontSize],
       h1: { fontSize: BASE_FONT_SIZE + 16 + fontSizeMap[fontSize] },
       h2: { fontSize: BASE_FONT_SIZE + 12 + fontSizeMap[fontSize] },
@@ -27,7 +40,7 @@ export const getTheme = (mode, primaryColor, fontSize) => {
       button: { fontSize: BASE_FONT_SIZE - 1 + fontSizeMap[fontSize] },
     },
     custom: {
-     ...customSettings
+      ...customSettings,
     },
   });
 };

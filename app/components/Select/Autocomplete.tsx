@@ -1,6 +1,6 @@
 'use client';
 
-import { Autocomplete, TextField } from '@mui/material';
+import { Autocomplete, TextField, useTheme } from '@mui/material';
 import { FormikProps } from 'formik';
 import { useState } from 'react';
 
@@ -17,6 +17,7 @@ interface StyledAutocompleteProps {
   formikProps: FormikProps<any>;
   required?: boolean;
   FormHelperTextProps?: any;
+  disabled?: boolean;
   disableClearable?: boolean;
   onChange?: (value: any) => void;
 }
@@ -36,16 +37,19 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
     },
   },
   disableClearable = false,
+  disabled = false,
   onChange,
 }) => {
   const { touched, errors, setFieldValue, setFieldTouched } = formikProps;
   const [open, setOpen] = useState(false);
 
-  const selectedOption = options.find(opt => opt.value === value) || null;
+  const selectedOption = options?.find(opt => opt.value === value) || null;
   const hasError = touched[name] && errors[name] && !value;
+  const theme = useTheme();
 
   return (
     <Autocomplete
+      disabled={disabled}
       options={options}
       getOptionLabel={option => option.label || ''}
       value={value === '' ? null : selectedOption}
@@ -62,7 +66,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
         const isSameValue = currentValue === newValue?.value;
         const finalValue = isSameValue ? '' : (newValue?.value ?? '');
 
-        setFieldValue(name, finalValue, true); 
+        setFieldValue(name, finalValue, true);
         if (onChange) {
           onChange(finalValue);
         }
@@ -113,6 +117,21 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
             },
             '& input': {
               padding: '0 8px',
+            },
+
+            '& .Mui-disabled': {
+              backgroundColor: disabled
+                ? // @ts-ignore
+                  theme.palette.readonly.main // This is a custom color in the theme
+                : '#F8FAFC !important',
+              cursor: 'default',
+            },
+            '& .Mui-disabled .MuiInputBase-input': {
+              color: disabled ? '#6B7280 !important' : '#1E293B !important',
+              WebkitTextFillColor: disabled
+                ? // @ts-ignore
+                  theme.palette.readonly.contrastText // This is a custom color in the theme
+                : '#1E293B !important',
             },
           }}
           onFocus={() => setOpen(true)}

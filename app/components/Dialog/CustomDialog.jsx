@@ -103,7 +103,13 @@ const StyledSubmitButtonContainer = styled(Box)(({ theme }) => ({
   gap: 5,
 }));
 
-const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel, viewOnly = false }) => {
+const CustomDialog = ({
+  children,
+  onSubmit,
+  onSecondarySubmit,
+  onCancel,
+  viewOnly = false,
+}) => {
   const dispatch = useDispatch();
   const dialogState = useSelector(state => state.globalDialog);
   const {
@@ -115,11 +121,13 @@ const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel, viewOnl
     cancelButtonText,
   } = dialogState;
 
-  const handleClose = () => {
+  const handleClose = (event, reason) => {
+    if (reason && reason === 'backdropClick') {
+      return;
+    }
     dispatch(closeDialog());
     onCancel();
   };
-
   return (
     <React.Fragment>
       <StyledDialog open={isOpen} onClose={handleClose}>
@@ -128,55 +136,66 @@ const CustomDialog = ({ children, onSubmit, onSecondarySubmit, onCancel, viewOnl
           <CloseIcon />
         </StyledIconButton>
         <DialogContent>{children}</DialogContent>
-         {!viewOnly && (
-        <DialogActions>         
-          {primarySecondButtonText ? (
-            <StyledDialogActionsContainer>
-              <StyledCancelButton variant="outlined" onClick={handleClose}>
-                {cancelButtonText}
-              </StyledCancelButton>
-              <StyledSubmitButtonContainer>
-                <StyledSubmitButton onClick={onSubmit} variant="contained">
-                  {submitButtonText}
-                </StyledSubmitButton>
-                <StyledSubmitButton
-                  variant="contained"
-                  onClick={onSecondarySubmit}
-                >
-                  {primarySecondButtonText}
-                </StyledSubmitButton>
-              </StyledSubmitButtonContainer>
-            </StyledDialogActionsContainer>
-          ) : secondaryButtonText ? (
-            <StyledDialogActionsContainer>
-              <StyledCancelButton variant="outlined" onClick={handleClose}>
-                {cancelButtonText}
-              </StyledCancelButton>
-              <StyledSubmitButtonContainer>
-                <StyledSubmitButton
-                  variant="outlined"
-                  onClick={onSecondarySubmit}
-                >
-                  {secondaryButtonText}
-                </StyledSubmitButton>
-                <StyledSubmitButton onClick={onSubmit} variant="contained">
-                  {submitButtonText}
-                </StyledSubmitButton>
-              </StyledSubmitButtonContainer>
-            </StyledDialogActionsContainer>
-          ) : (
-            <>
-              <StyledCancelButton variant="outlined" onClick={handleClose}>
-                {cancelButtonText}
-              </StyledCancelButton>
-              <StyledSubmitButton onClick={onSubmit} variant="contained">
-                {submitButtonText}
-              </StyledSubmitButton>
-            </>
-          )
-        }      
-        </DialogActions>
-         )}
+        {viewOnly ? (
+          <DialogActions>
+            <StyledCancelButton variant="outlined" onClick={handleClose}>
+              {cancelButtonText}
+            </StyledCancelButton>
+          </DialogActions>
+        ) : (
+          <DialogActions>
+            {primarySecondButtonText ? (
+              <StyledDialogActionsContainer>
+                <StyledCancelButton variant="outlined" onClick={handleClose}>
+                  {cancelButtonText}
+                </StyledCancelButton>
+                <StyledSubmitButtonContainer>
+                  {submitButtonText && (
+                    <StyledSubmitButton onClick={onSubmit} variant="contained">
+                      {submitButtonText}
+                    </StyledSubmitButton>
+                  )}
+                  <StyledSubmitButton
+                    variant="contained"
+                    onClick={onSecondarySubmit}
+                  >
+                    {primarySecondButtonText}
+                  </StyledSubmitButton>
+                </StyledSubmitButtonContainer>
+              </StyledDialogActionsContainer>
+            ) : secondaryButtonText ? (
+              <StyledDialogActionsContainer>
+                <StyledCancelButton variant="outlined" onClick={handleClose}>
+                  {cancelButtonText}
+                </StyledCancelButton>
+                <StyledSubmitButtonContainer>
+                  <StyledSubmitButton
+                    variant="outlined"
+                    onClick={onSecondarySubmit}
+                  >
+                    {secondaryButtonText}
+                  </StyledSubmitButton>
+                  {submitButtonText && (
+                    <StyledSubmitButton onClick={onSubmit} variant="contained">
+                      {submitButtonText}
+                    </StyledSubmitButton>
+                  )}
+                </StyledSubmitButtonContainer>
+              </StyledDialogActionsContainer>
+            ) : (
+              <>
+                <StyledCancelButton variant="outlined" onClick={handleClose}>
+                  {cancelButtonText}
+                </StyledCancelButton>
+                {submitButtonText && (
+                  <StyledSubmitButton onClick={onSubmit} variant="contained">
+                    {submitButtonText}
+                  </StyledSubmitButton>
+                )}
+              </>
+            )}
+          </DialogActions>
+        )}
       </StyledDialog>
     </React.Fragment>
   );

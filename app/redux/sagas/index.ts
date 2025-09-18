@@ -9,6 +9,9 @@ import { employeeRatesSaga } from './employeeRatesSaga';
 import { AllResourcesDetailSaga } from './allResourcesDetailSaga';
 import { portfolioSaga } from './portfolioSaga';
 import { rbacSaga } from './rbacSaga';
+import { projectTypesSaga } from './projectTypesSaga';
+import { allSettingsSaga } from './allSettingsSaga';
+import { locationSaga } from './locationSaga';
 
 // listening for all sagas based on actions
 export default function* rootSaga() {
@@ -23,6 +26,9 @@ export default function* rootSaga() {
     AllResourcesDetailSaga(),
     portfolioSaga(),
     rbacSaga(),
+    projectTypesSaga(),
+    allSettingsSaga(),
+    locationSaga(),
     // ...add more watchers here
   ]);
 }

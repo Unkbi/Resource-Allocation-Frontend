@@ -23,8 +23,8 @@ export const addProjectValidationSchema = (
   projects: ProjectsPayload = {},
   initialName = ''
 ) => {
-  const projectNames = Array.isArray(projects?.result)
-    ? projects.result.map(project => project.Name?.toLowerCase().trim())
+  const projectNames = Array.isArray(projects)
+    ? projects?.map(project => project.Name?.toLowerCase().trim())
     : [];
 
   return Yup.object({
@@ -169,24 +169,28 @@ export const editResourceValidationSchema = Yup.object({
     .required('You must confirm before continuing.'),
 });
 
-export const addAllocationValidationSchema = Yup.object({
-  Resource: Yup.array()
-    .of(Yup.string())
-    .min(1, 'You must select at least one Resource')
-    .required('Resource is required'),
-  Project: Yup.array()
-    .of(Yup.string())
-    .min(1, 'You must select at least one Project')
-    .required('Project is required'),
-  StartDate: Yup.date().required('Start date is required'),
-  EndDate: Yup.date()
-    .required('End date is required')
-    .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
-  AllocationEntered: Yup.number()
-    .required('Allocation is required')
-    .min(0, 'Allocation must be a positive number')
-    .max(2, 'Allocation cannot exceed 2.0'),
-});
+export const addAllocationValidationSchema = (scalarSettings: any) =>
+  Yup.object({
+    Resource: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Resource')
+      .required('Resource is required'),
+    Project: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Project')
+      .required('Project is required'),
+    StartDate: Yup.date().required('Start date is required'),
+    EndDate: Yup.date()
+      .required('End date is required')
+      .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
+    AllocationEntered: Yup.number()
+      .required('Allocation is required')
+      .min(0, 'Allocation must be a positive number')
+      .max(
+        scalarSettings?.Max_Allocation_Error || '2.0',
+        `Allocation cannot exceed ${scalarSettings?.Max_Allocation_Error || '2.0'}.`
+      ),
+  });
 
 const stripTime = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -198,18 +202,11 @@ export function getProjectRangeWarnings(
   const warnings: string[] = [];
   const { Project: selectedIds, StartDate, EndDate } = values;
 
-  if (
-    Array.isArray(projects?.result) &&
-    selectedIds?.length &&
-    StartDate &&
-    EndDate
-  ) {
+  if (Array.isArray(projects) && selectedIds?.length && StartDate && EndDate) {
     const allocationStart = stripTime(new Date(StartDate));
     const allocationEnd = stripTime(new Date(EndDate));
 
-    const selectedProjects = projects.result.filter(p =>
-      selectedIds.includes(p.Id)
-    );
+    const selectedProjects = projects.filter(p => selectedIds.includes(p.Id));
 
     selectedProjects.forEach(({ Name, StartDate: pSD, EndDate: pED }) => {
       if (!pSD || !pED) return;
@@ -432,7 +429,7 @@ export const addOrganizationValidationSchema = (
 };
 
 export const addRoleValidationSchema = Yup.object({
-  Name: Yup.string()
+  name: Yup.string()
     .required('Role Name is required')
     .max(90, 'Reached Max Characters')
     .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word
@@ -475,5 +472,126 @@ export const addPrivilegeValidationSchema = Yup.object({
 
 export const assignPrivilegeValidationSchema = Yup.object({
   Role: Yup.string().required('Role is required'),
-  Privilege: Yup.string().required('Privilege is required'),
+  Permission: Yup.string().required('Privilege is required'),
 });
+
+export const addProjectTypeGroupValidationSchema = (
+  projectTypeGroups: any[] = [],
+  initialName = ''
+) => {
+  const projectTypeGroupNames = Array.isArray(projectTypeGroups)
+    ? projectTypeGroups.map(ptg => ptg.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Project Type Group name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Project Type Group name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          )
+            return true;
+          return !projectTypeGroupNames.includes(value.toLowerCase().trim());
+        }
+      ),
+  });
+};
+
+export const addProjectTypeValidationSchema = (
+  projectTypes: any[] = [],
+  initialName = ''
+) => {
+  const projectTypeNames = Array.isArray(projectTypes)
+    ? projectTypes.map(pt => pt.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Project Type Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Project Type Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedInitial = initialName.toLowerCase().trim();
+          if (initialName && trimmedValue === trimmedInitial) {
+            return true; // Allow same name when editing
+          }
+          return !projectTypeNames.includes(trimmedValue);
+        }
+      ),
+    Status: Yup.string()
+      .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
+      .required('Status is required'),
+    ProjectTypeGroup: Yup.string().required('Project Type Group is required'),
+    Description: Yup.string().nullable(),
+    Color: Yup.string().required('Color is required'),
+  });
+};
+
+export const addLocationValidationSchema = (
+  locations: any[] = [],
+  initialName = ''
+) => {
+  const locationNames = Array.isArray(locations)
+    ? locations.map(loc => loc.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedInitial = initialName.toLowerCase().trim();
+          if (initialName && trimmedValue === trimmedInitial) {
+            return true; // Allow same name when editing
+          }
+          return !locationNames.includes(trimmedValue);
+        }
+      ),
+    LocationGroup: Yup.string().required('Location Group is required'),
+    Status: Yup.string()
+      .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
+      .required('Status is required'),
+  });
+};
+
+export const addLocationGroupValidationSchema = (
+  locationGroups: any[] = [],
+  initialName = ''
+) => {
+  const locationGroupNames = Array.isArray(locationGroups)
+    ? locationGroups.map(lg => lg.Name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Group Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Group Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          )
+            return true;
+          return !locationGroupNames.includes(value.toLowerCase().trim());
+        }
+      ),
+  });
+};

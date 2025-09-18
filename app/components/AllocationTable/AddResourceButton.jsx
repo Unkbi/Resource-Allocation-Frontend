@@ -127,13 +127,14 @@ const StyledInput = styled(TextField)(({ theme }) => ({
 // ];
 
 export const AddResourceButton = ({ project, handleAddRow, onClick }) => {
+  // Not used in the application currently
   const [isSearchMode, setIsSearchMode] = useState(false);
   const { resources, loading, error } = useSelector(state => state.resources);
 
   const dispatch = useDispatch();
 
   const defaultProps = {
-    options: resources?.[0]?.result || [],
+    options: resources?.[0]?.result || [], // Not used in the application currently
     getOptionLabel: option => option.FullName,
   };
   const inputRef = useRef(null);

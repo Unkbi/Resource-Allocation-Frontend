@@ -36,7 +36,6 @@ import { isCurrentWeek } from '@/app/utils/common';
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
 
-
 export function formatWeekRangeFromStrings(
   startDate: string | null,
   endDate: string | null
@@ -112,6 +111,7 @@ export default function ActualTable({
     (state: RootState) => state.settings.allocationTheme
   );
   const { status } = useSelector((state: RootState) => state.actualAllocations);
+  const { scalarSettings } = useSelector((state: RootState) => state.allSettings);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -132,12 +132,12 @@ export default function ActualTable({
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
   >({});
-  const [baselineRows, setBaselineRows] = useState<ActualAllocationTableRow[]>(
-    data
-  );
-
+  const [baselineRows, setBaselineRows] =
+    useState<ActualAllocationTableRow[]>(data);
+  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
+  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   useEffect(() => {
-    if (allocationTheme.length === 1 && allocationTheme[0].__Id__ === '') {
+    if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
     }
   }, [allocationTheme]);
@@ -182,10 +182,12 @@ export default function ActualTable({
     if (onModificationChange) {
       const isModified =
         rows.length !== baselineRows.length ||
-      rows.some((r, i) => JSON.stringify(r) !== JSON.stringify(baselineRows[i]));
-    onModificationChange?.(isModified);
+        rows.some(
+          (r, i) => JSON.stringify(r) !== JSON.stringify(baselineRows[i])
+        );
+      onModificationChange?.(isModified);
     }
-    }, [rows, baselineRows, onModificationChange]);
+  }, [rows, baselineRows, onModificationChange]);
 
   // Organize rows into sections
   const getOrganizedRows = () => {
@@ -257,20 +259,20 @@ export default function ActualTable({
         return sum;
       }, 0);
 
-      if (updatedTotal > 2.0) {
+      if (updatedTotal > Number(max_allocation_error)) {
         dispatch(
           showToastAction(
             true,
-            `Total of Actuals cannot exceed 2.0 (Current sum: ${updatedTotal.toFixed(1)})`,
+            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${updatedTotal.toFixed(1)})`,
             'error'
           )
         );
         return oldRow;
-      } else if (updatedTotal >= 1.5) {
+      } else if (updatedTotal >= Number(max_allocation_warning)) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals is approaching the maximum of 2.0. Current sum: ${updatedTotal.toFixed(1)}`,
+            `Warning: Total actuals is approaching the maximum of ${max_allocation_warning}. Current sum: ${updatedTotal.toFixed(1)}`,
             'warning'
           )
         );
@@ -303,8 +305,10 @@ export default function ActualTable({
         newRow.project === 'Personal Time') &&
       (!newRow.actuals || newRow.actuals === 0);
     const commentsInvalid =
-    (isUnplannedProject || newRow.project === 'Other Work' || newRow.project === 'Personal Time') &&
-    (!newRow.comments || !newRow.comments.trim());
+      (isUnplannedProject ||
+        newRow.project === 'Other Work' ||
+        newRow.project === 'Personal Time') &&
+      (!newRow.comments || !newRow.comments.trim());
     setRowValidationErrors(prev => {
       const updated = { ...prev };
 
@@ -479,7 +483,8 @@ export default function ActualTable({
       headerClassName: 'header-comments',
       cellClassName: params =>
         `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
-          params.row.planned === 0 && rowValidationErrors[params.id as string]?.comments &&
+          params.row.planned === 0 &&
+          rowValidationErrors[params.id as string]?.comments &&
           (!params.row.comments || !params.row.comments.trim())
             ? 'comment-error-cell'
             : ''
@@ -698,7 +703,7 @@ export default function ActualTable({
             disableRowSelectionOnClick
             onCellKeyDown={handleCellKeyDown}
             processRowUpdate={handleProcessRowUpdate}
-              getRowClassName={params => {
+            getRowClassName={params => {
               const isLastRow =
                 params?.row?.id ===
                 getOrganizedRows()[getOrganizedRows().length - 1]?.id;

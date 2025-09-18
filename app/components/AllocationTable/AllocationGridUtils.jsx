@@ -12,7 +12,7 @@ import {
 import { AddRowButton } from './AddRowButton';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { CustomAddIcon } from './CustomAddIcon';
+import CustomAddIcon from './CustomAddIcon';
 import { useState } from 'react';
 import {
   IconButton,
@@ -79,20 +79,17 @@ const CellWithMenu = ({
   const dispatch = useDispatch();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteParams, setDeleteParams] = useState(null);
-  const allTeams = useSelector(state => state.teams.teams?.result || []);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allTeams = useSelector(state => state.teams.teams || []);
+  const allResources = useSelector(state => state.resources.resources || []);
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
-  const allProjects = useSelector(
-    state => state.projects.projects?.result || []
-  );
+  const allProjects = useSelector(state => state.projects.projects || []);
   const { teamsResources } = useSelector(state => state.teams);
   const rowState = useSelector(state => state.dataGrid.rowState);
   const { view } = useSelector(state => state.allocationView);
   const { currentView, splitView } = useSelector(state => state.allocationView);
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
+  const { loginUserPrivileges } = useSelector(state => state.rbac);
 
   const handleDeleteClick = params => {
     setDeleteParams(params);
@@ -171,7 +168,7 @@ const CellWithMenu = ({
       })
     )
       .then(response => {
-        if (!response?.result) {
+        if (!response) {
           dispatch(
             showToast({
               open: true,
@@ -338,21 +335,25 @@ const CellWithMenu = ({
     //   label: 'Clone',
     //   icon: <ContentCopyIcon fontSize="small" />,
     //   func: () => handleCloneClick(params),
+    //   allowed: oginUserPrivileges['Allocation'].c
     // },
     // {
     //   label: 'Transfer',
     //   icon: <SwapHorizIcon fontSize="small" />,
     //   func: () => handleTranferClick(params),
+    //   allowed: oginUserPrivileges['Allocation'].c,
     // },
     {
       label: 'History',
       icon: <HistoryIcon fontSize="small" />,
       func: () => handleOpenHistory(params),
+      allowed: true,
     },
     {
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
       func: () => handleDeleteClick(params),
+      allowed: loginUserPrivileges['Allocation'].d,
     },
   ];
 
@@ -381,34 +382,36 @@ const CellWithMenu = ({
         anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       >
-        {menuItems.map(item => (
-          <StyledMenuItem
-            key={item.label}
-            onClick={() => {
-              item.func && item.func(params);
-              handleMenuClose();
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText
-              primary={
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: ' #424242',
-                    fontFamily: 'Manrope',
-                    fontSize: '12px',
-                    fontStyle: 'normal',
-                    fontWeight: '600',
-                    lineHeight: ' 18px',
-                  }}
-                >
-                  {item.label}
-                </Typography>
-              }
-            />
-          </StyledMenuItem>
-        ))}
+        {menuItems
+          .filter(i => i.allowed)
+          .map(item => (
+            <StyledMenuItem
+              key={item.label}
+              onClick={() => {
+                item.func && item.func(params);
+                handleMenuClose();
+              }}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: ' #424242',
+                      fontFamily: 'Manrope',
+                      fontSize: '12px',
+                      fontStyle: 'normal',
+                      fontWeight: '600',
+                      lineHeight: ' 18px',
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                }
+              />
+            </StyledMenuItem>
+          ))}
       </StyledMenu>
     </>
   );
@@ -493,9 +496,7 @@ export const getFinalColumns = (
   isFormatWithK
 ) => {
   const { teamAllocations } = useSelector(state => state.teams);
-  const allResources = useSelector(
-    state => state.resources.resources?.result || []
-  );
+  const allResources = useSelector(state => state.resources.resources || []);
   const { projects } = useSelector(state => state.projects);
   const { splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -574,7 +575,7 @@ export const getFinalColumns = (
     dispatch(
       openDialog({
         title: 'Allocation History',
-        cancelButtonText: 'View All History',
+        cancelButtonText: 'Cancel',
         formType: 'open_history',
         initialData:
           params.field === 'project'
@@ -645,7 +646,7 @@ export const getFinalColumns = (
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
-            Array.isArray(teamAllocations.result) &&
+            Array.isArray(teamAllocations.result) && // Sahadev : Unsure of this
             teamAllocations.result.filter(
               resource => resource.Resource === params.row.resourceId
             );
@@ -665,7 +666,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
@@ -810,7 +811,7 @@ export const getFinalColumns = (
                 project={params.row.project}
                 handleAddRow={handleAddProject}
                 buttonName="Add Project"
-                resourceProjects={projects?.result.filter(
+                resourceProjects={projects?.filter(
                   item => !uniqueProjectNames?.includes(item.Name)
                 )}
                 onClick={event => {
@@ -1337,7 +1338,7 @@ export const getInitialRowsState = (updatedRows, groupBy, teams) => {
     // Get unique teams for teams and teamsId to avoid duplicate teams
     let unique_teams = {};
     let teams_with_name = {};
-    teams?.result?.forEach(team => {
+    teams?.forEach(team => {
       teams_with_name[team?.Name] = team?.Id;
     });
 

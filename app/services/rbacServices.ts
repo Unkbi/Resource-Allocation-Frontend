@@ -11,7 +11,7 @@ export const fetchRoles = async () => {
 
 export const createRole = async (newData: any) => {
   const payload = {
-    'Agentlang.Kernel.Rbac/Role': newData,
+    name: newData.name,
   };
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/Role`,
@@ -20,9 +20,12 @@ export const createRole = async (newData: any) => {
   return response.data;
 };
 
-export const deleteRole = async (Name: string) => {
+export const deleteRole = async (Name: string, hardDelete: boolean = true) => {
   const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/Role/${Name}`
+    `${API_AGENTLANG_KERNEL_RBAC}/Role/${Name}`,
+    {
+      params: { purge: hardDelete }
+    }
   );
   return response.data;
 };
@@ -31,26 +34,40 @@ export const deleteRole = async (Name: string) => {
  * RoleAssignment
  */
 export const fetchRoleAssignments = async () => {
-  const response = await axiosInstance.get(
-    `${API_AGENTLANG_KERNEL_RBAC}/RoleAssignment`
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/ListUserRoles`
   );
   return response.data;
 };
 
 export const createRoleAssignment = async (newData: any) => {
   const payload = {
-    'Agentlang.Kernel.Rbac/RoleAssignment': newData,
+   userId: newData.Name,
+   roleName: newData.Role,
   };
   const response = await axiosInstance.post(
-    `${API_AGENTLANG_KERNEL_RBAC}/RoleAssignment`,
+    `${API_AGENTLANG_KERNEL_RBAC}/AssignUserToRole`,
     payload
   );
   return response.data;
 };
 
-export const deleteRoleAssignment = async (Name: string) => {
-  const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/RoleAssignment/${Name}`
+export const updateRoleAssigment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdateRoleAssignment`,
+    updatedFields
+  );
+  return response.data;
+}
+
+
+export const deleteRoleAssignment = async (User :string , Role:string) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/DeleteUserRole`,
+    {
+      User,
+      Role,
+    }
   );
   return response.data;
 };
@@ -60,36 +77,43 @@ export const deleteRoleAssignment = async (Name: string) => {
  */
 export const fetchPrivileges = async () => {
   const response = await axiosInstance.get(
-    `${API_AGENTLANG_KERNEL_RBAC}/Privilege`
+    `${API_AGENTLANG_KERNEL_RBAC}/Permission`
   );
   return response.data;
 };
 
 export const createPrivilege = async (newData: any) => {
   const payload = {
-    'Agentlang.Kernel.Rbac/Privilege': newData,
+    id: newData.id,
+    resourceFqName: newData.resourceFqName,
+    c: newData.c,
+    r: newData.r,
+    u: newData.u,
+    d: newData.d,
   };
   const response = await axiosInstance.post(
-    `${API_AGENTLANG_KERNEL_RBAC}/Privilege`,
+    `${API_AGENTLANG_KERNEL_RBAC}/Permission`,
     payload
   );
   return response.data;
 };
 
-export const updatePrivilege = async (Name: string, updatedFields: any) => {
+export const updatePrivilege = async (id: string, updatedFields: any) => {
   const payload = {
-    'Agentlang.Kernel.Rbac/Privilege': updatedFields,
+   ...updatedFields
   };
   const response = await axiosInstance.put(
-    `${API_AGENTLANG_KERNEL_RBAC}/Privilege/${Name}`,
+    `${API_AGENTLANG_KERNEL_RBAC}/Permission/${id}`,
     payload
   );
-  return response.data;
+  return  response.data[0];
 };
 
-export const deletePrivilege = async (Name: string) => {
+
+export const deletePrivilege = async (id: string, hardDelete: boolean = true) => {
   const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/Privilege/${Name}`
+    `${API_AGENTLANG_KERNEL_RBAC}/Permission/${id}`,
+    { params: { purge: hardDelete } }
   );
   return response.data;
 };
@@ -98,40 +122,36 @@ export const deletePrivilege = async (Name: string) => {
  * PrivilegeAssignment
  */
 export const fetchPrivilegeAssignments = async () => {
-  const response = await axiosInstance.get(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment`
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/ListRolePermissions`
   );
   return response.data;
 };
 
 export const createPrivilegeAssignment = async (newData: any) => {
-  const payload = {
-    'Agentlang.Kernel.Rbac/PrivilegeAssignment': newData,
+   const payload = {
+   roleName: newData.roleName,
+   permissionId: newData.permissionId,
   };
   const response = await axiosInstance.post(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment`,
+    `${API_AGENTLANG_KERNEL_RBAC}/AddPermissionToRole`,
     payload
   );
   return response.data;
 };
 
-export const updatePrivilegeAssignment = async (
-  Name: string,
-  updatedFields: any
-) => {
-  const payload = {
-    'Agentlang.Kernel.Rbac/PrivilegeAssignment': updatedFields,
-  };
-  const response = await axiosInstance.put(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment/${Name}`,
-    payload
+export const updatePrivilegeAssignment = async (updatedFields: any) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/UpdatePermissionAssignment`,
+    updatedFields
   );
   return response.data;
 };
 
-export const deletePrivilegeAssignment = async (Name: string) => {
-  const response = await axiosInstance.delete(
-    `${API_AGENTLANG_KERNEL_RBAC}/PrivilegeAssignment/${Name}`
+export const deletePrivilegeAssignment = async (Role :string , Permission :string) => {
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/DeleteRolePermission`,
+    { Role, Permission }
   );
   return response.data;
 };
@@ -143,3 +163,13 @@ export const fetchEntities = async () => {
   const response = await axiosInstance.get(`/meta/ResourceAllocation.Core`);
   return response.data;
 };
+
+export const fetchUser = async () => {
+  const response = await axiosInstance.get(`${API_AGENTLANG_KERNEL_RBAC}/User`);
+  return response.data;
+}
+
+export const fetchMeta = async () => {
+  const response = await axiosInstance.get(`/meta`);
+  return response.data;
+}

@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import TeamAllocation from '@/app/components/ResourceAllocation/component/TeamAllocation';
 import ProjectAllocation from '@/app/components/ResourceAllocation/component/ProjectAllocation';
 import { useEffect } from 'react';
-import { fetchAllResources } from '@/app/redux/actions/fetchResourcesAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import {
   fetchAllSavedViews,
@@ -26,6 +25,8 @@ import PortfolioAllocation from '@/app/components/ResourceAllocation/component/P
 import OrganisationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
 import ResourceAllocation from '@/app/components/ResourceAllocation/component/ResourceAllocation';
 import FlatAllocation from '@/app/components/ResourceAllocation/component/FlatAllocation';
+import { getUserAttributes } from '@/app/utils/authUtils';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 export default function Allocation({ startDate, endDate }) {
   const dispatch = useDispatch();
@@ -33,6 +34,7 @@ export default function Allocation({ startDate, endDate }) {
     state => state.allocationView
   );
   const { user } = useSelector(state => state.user);
+  const { email = '' } = getUserAttributes(user, []) || {};
   const { teams } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);
@@ -40,25 +42,27 @@ export default function Allocation({ startDate, endDate }) {
   const settingsParam = searchParams.get('settings');
 
   useEffect(() => {
-    dispatch(fetchAllResources());
+    dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     dispatch(fetchAllProjects());
     dispatch(fetchAllocationTheme());
   }, []);
 
   useEffect(() => {
-    const userId = getUserIdFromEmail(resources?.result || [], user?.Email);
-    if (userId) {
-      dispatch(fetchUsersSavedViews(userId));
+    if (user && email) {
+      const userId = getUserIdFromEmail(resources || [], email);
+      if (userId) {
+        dispatch(fetchUsersSavedViews(userId));
+      }
     }
-  }, [resources, user]);
+  }, [resources, user, email]);
 
   useEffect(() => {
     // Only after fetching resources, projects, and teams should the deeplinked settings be processed.
     if (
       settingsParam &&
-      (teams?.result?.length ?? 0) > 0 &&
-      (projects?.result?.length ?? 0) > 0 &&
-      (resources?.result?.length ?? 0) > 0
+      (teams?.length ?? 0) > 0 &&
+      (projects?.length ?? 0) > 0 &&
+      (resources?.length ?? 0) > 0
     ) {
       try {
         const parsedSettings = JSON.parse(

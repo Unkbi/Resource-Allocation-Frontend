@@ -1,13 +1,20 @@
 'use client';
 
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import type {
   GridColDef,
   GridRenderCellParams,
   GridValidRowModel,
 } from '@mui/x-data-grid';
-import { TextField, Typography, Popover, Tooltip } from '@mui/material';
+import {
+  TextField,
+  Typography,
+  Popover,
+  Tooltip,
+  Tab,
+  Tabs,
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
   AddButton,
@@ -24,13 +31,36 @@ import {
   StyledTableHeader,
 } from './styled';
 import { validateRanges } from '@/app/(root)/settings/page';
-import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
-import { AppDispatch } from '@/app/redux/store';
 import { useDispatch } from 'react-redux';
 import { AllocationRange } from '@/app/types';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import { formatStringToFloat } from '@/app/utils/common';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import {
+  BottomActions,
+  CancelButton,
+  SaveButton,
+} from '@/app/components/Settings/styled';
+import { useSelector } from 'react-redux';
+import type { AppDispatch, RootState } from '@/app/redux/store';
+import { showToast } from '@/app/redux/reducers/toastReducer';
+import { updateAllocationTheme } from '@/app/redux/reducers/settingsReducer';
+import {
+  addAllocationThemeAction,
+  fetchAllocationTheme,
+  updateAllocationThemeAction,
+} from '@/app/redux/actions/settingsAction';
+import {
+  ADD_SCALAR_SETTING,
+  UPDATE_SCALAR_SETTING,
+} from '@/app/redux/actions/allSettingsActions';
+import {
+  handleOptimizedSettingsSave,
+  type SettingsData,
+} from '@/app/utils/settingsUtils';
 
+const baseURLAccessManagement = '/settings?menu=allocation-setting';
 interface ColorPair {
   pastel: string;
   dark: string;
@@ -49,14 +79,6 @@ const colorPairs: ColorPair[] = [
   { pastel: '#FFFFFF', dark: '#FFFFFF' },
 ];
 
-interface AllocationThemeProps {
-  allocationRanges: AllocationRange[];
-  onAllocationRangesChange: (ranges: AllocationRange[]) => void;
-  onDataChanged: () => void;
-  validationErrors: ValidationErrors;
-  setValidationErrors: (errors: ValidationErrors) => void;
-}
-
 // Interface for validation errors
 interface ValidationErrors {
   [key: number]: {
@@ -66,18 +88,226 @@ interface ValidationErrors {
   };
 }
 
-export default function AllocationTheme({
-  allocationRanges,
-  onAllocationRangesChange,
-  onDataChanged,
-  validationErrors,
-  setValidationErrors,
-}: AllocationThemeProps) {
+const commonTabSx = {
+  color: '#4B5563',
+  textTransform: 'none',
+  borderRadius: 0,
+  px: 3,
+  textAlign: 'center',
+  fontFamily: 'Open Sans',
+  fontSize: '14px',
+  fontStyle: 'normal',
+  fontWeight: 600,
+  lineHeight: '24px',
+  '&.Mui-selected': {
+    background: 'transparent',
+    color: '#152E75',
+    boxShadow: 'none',
+    borderBottom: '2px solid #3b82f6',
+    textAlign: 'center',
+    fontFamily: 'Open Sans',
+    fontSize: '14px',
+    fontStyle: 'normal',
+    fontWeight: 600,
+    lineHeight: '24px',
+  },
+};
+
+const tabMenuNames = [
+  'color-settings',
+  'alerts-threshold',
+  'allocation-history',
+];
+
+const tabConfig = [
+  {
+    label: 'Color Settings',
+    value: 'color-settings',
+    icon: '/images/icons/colorPalette.svg',
+  },
+  {
+    label: 'Alert Threshold',
+    value: 'alerts-threshold',
+    icon: '/images/icons/alertThresholdIcon.svg',
+  },
+  {
+    label: 'Allocation History',
+    value: 'allocation-history',
+    icon: '/images/icons/allocationHistoryIcon.svg',
+  },
+];
+
+const TabHeader = ({
+  tab,
+  setTab,
+  setHasUnsavedChanges,
+}: {
+  tab: string;
+  setTab: (value: string) => void;
+  setHasUnsavedChanges: (value: boolean) => void;
+}) => (
+  <Box
+    sx={{
+      boxShadow: 1,
+      display: 'flex',
+      justifyContent: 'flex-start',
+      width: '100%',
+      backgroundColor: '#fff',
+      height: '59px',
+      borderBottom: '0px solid #E5E7EB',
+    }}
+  >
+    <Tabs
+      value={tab}
+      onChange={(_, v) => {
+        setTab(v);
+        setHasUnsavedChanges(false);
+      }}
+      sx={{
+        width: 'fit-content',
+        marginLeft: '20px',
+        marginRight: '20px',
+        background: 'transparent',
+        '& .MuiTabs-flexContainer': {
+          gap: 1.5,
+        },
+        '& .MuiTabs-indicator': {
+          backgroundColor: '#152E75',
+        },
+        '& .Mui-selected .tab-icon': {
+          filter:
+            'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
+        },
+      }}
+    >
+      {tabConfig.map(({ label, value, icon }) => (
+        <Tab
+          key={value}
+          icon={
+            <img
+              src={icon}
+              alt={label}
+              style={{ width: 21, height: 16, marginRight: 6 }}
+              className="tab-icon"
+            />
+          }
+          iconPosition="start"
+          label={label}
+          value={value}
+          sx={commonTabSx}
+        />
+      ))}
+    </Tabs>
+  </Box>
+);
+
+export default function AllocationTheme() {
+  const { allocationTheme } = useSelector((state: RootState) => state.settings);
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
   );
+  const [maxAllocationWarning, setMaxAllocationWarning] =
+    React.useState<number>(0.0);
+  const [maxAllocationError, setMaxAllocationError] =
+    React.useState<number>(0.0);
+  // Retention durations (1-9 months)
+  const [allocationHistoryDuration, setAllocationHistoryDuration] =
+    React.useState<string>('');
+  const [commentsHistoryDuration, setCommentsHistoryDuration] =
+    React.useState<string>('');
+
+  // Track original values for change detection
+  const [originalAlertSettings, setOriginalAlertSettings] = React.useState({
+    maxAllocationWarning: 0.0,
+    maxAllocationError: 0.0,
+  });
+
+  const [originalHistorySettings, setOriginalHistorySettings] = React.useState({
+    allocationHistoryDuration: '',
+    commentsHistoryDuration: '',
+  });
   const dispatch: AppDispatch = useDispatch();
+  const [tab, setTab] = React.useState('color-settings');
+  const [allocationRanges, setAllocationRanges] =
+    useState<AllocationRange[]>(allocationTheme);
+  // State to track if there are unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  // Keep a backup of the original data for cancel functionality
+  const [originalAllocationRanges, setOriginalAllocationRanges] =
+    useState<AllocationRange[]>(allocationTheme);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
+  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
+
+  useEffect(() => {
+    setAllocationRanges(allocationTheme);
+    setOriginalAllocationRanges(allocationTheme);
+  }, [allocationTheme]);
+
+  useEffect(() => {
+    if (scalarSettings && Object.keys(scalarSettings).length > 0) {
+      if (scalarSettings['History_Archive_month'] !== undefined) {
+        setAllocationHistoryDuration(
+          String(scalarSettings['History_Archive_month'])
+        );
+      }
+      if (scalarSettings['Comments_Archive_month'] !== undefined) {
+        setCommentsHistoryDuration(
+          String(scalarSettings['Comments_Archive_month'])
+        );
+      }
+      if (scalarSettings['Max_Allocation_Warning'] !== undefined) {
+        setMaxAllocationWarning(
+          Number(Number(scalarSettings['Max_Allocation_Warning']).toFixed(1))
+        );
+      }
+      if (scalarSettings['Max_Allocation_Error'] !== undefined) {
+        setMaxAllocationError(
+          Number(Number(scalarSettings['Max_Allocation_Error']).toFixed(1))
+        );
+      }
+      // Update original values for change tracking
+      setOriginalAlertSettings({
+        maxAllocationWarning: Number(
+          scalarSettings['Max_Allocation_Warning'] || 0.0
+        ),
+        maxAllocationError: Number(
+          scalarSettings['Max_Allocation_Error'] || 0.0
+        ),
+      });
+
+      setOriginalHistorySettings({
+        allocationHistoryDuration: String(
+          scalarSettings['History_Archive_month'] || ''
+        ),
+        commentsHistoryDuration: String(
+          scalarSettings['Comments_Archive_month'] || ''
+        ),
+      });
+    }
+  }, [scalarSettings]);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && tabMenuNames.includes(tabParam)) {
+      setTab(tabParam);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tabMenuNames.includes(tab)) {
+      const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
+      router.replace(newUrl);
+    }
+  }, [tab, dispatch]);
 
   // Get currently used colors
   const usedColors = React.useMemo(() => {
@@ -110,10 +340,10 @@ export default function AllocationTheme({
       return r;
     });
 
-    onAllocationRangesChange(updatedRanges);
+    setAllocationRanges(updatedRanges);
     const newErrors = validateRanges(updatedRanges);
     setValidationErrors(newErrors);
-    onDataChanged();
+    setHasUnsavedChanges(true);
   };
 
   React.useEffect(() => {
@@ -152,7 +382,7 @@ export default function AllocationTheme({
 
       if (field === 'To') {
         const currentRow = updatedRanges.find(row => row.id === id);
-        if (currentRow && currentRow.To !== '2.0') {
+        if (currentRow && currentRow.To !== max_allocation_error) {
           let currentTo = isDecimalDots(value)
             ? parseFloat('0.0')
             : parseFloat(value);
@@ -188,13 +418,13 @@ export default function AllocationTheme({
               );
               return;
             }
-            if (parseFloat(value) >= 2.0) {
+            if (parseFloat(value) >= Number(max_allocation_error)) {
               // updatedRanges = allocationRanges;
 
               dispatch(
                 showToastAction(
                   true,
-                  `Allocation range cannot exceed 2.0 `,
+                  `Allocation range cannot exceed ${max_allocation_error}.`,
                   'error',
                   4000
                 )
@@ -213,7 +443,7 @@ export default function AllocationTheme({
                   ? {
                       ...row,
                       From: newFromValue,
-                      To: row.To === '2.0' ? row.To : '', // Clear subsequent to values
+                      To: row.To === max_allocation_error ? row.To : '', // Clear subsequent to values
                     }
                   : row
               );
@@ -225,18 +455,22 @@ export default function AllocationTheme({
             updatedRanges = updatedRanges.map(row =>
               row.id === id ? { ...row, To: '' } : row
             );
-            onAllocationRangesChange(updatedRanges);
+            setAllocationRanges(updatedRanges);
             const newErrors = validateRanges(updatedRanges);
             setValidationErrors(newErrors);
-            onDataChanged();
+            setHasUnsavedChanges(true);
           }
         }
       }
 
       // Update base row based on max to value from all rows
-      const baseRow = updatedRanges.find(row => row.To === '2.0');
+      const baseRow = updatedRanges.find(
+        row => row.To === max_allocation_error
+      );
       if (baseRow) {
-        const nonBaseRows = updatedRanges.filter(row => row.To !== '2.0');
+        const nonBaseRows = updatedRanges.filter(
+          row => row.To !== max_allocation_error
+        );
         const toValues = nonBaseRows
           .map(row => parseFloat(row.To))
           .filter(v => !isNaN(v));
@@ -246,20 +480,22 @@ export default function AllocationTheme({
           const newBaseFrom = (maxTo + 0.1).toFixed(1);
 
           updatedRanges = updatedRanges.map(row =>
-            row.To === '2.0' ? { ...row, From: newBaseFrom } : row
+            row.To === max_allocation_error
+              ? { ...row, From: newBaseFrom }
+              : row
           );
         } else {
           // Reset base row if no valid ranges
           updatedRanges = updatedRanges.map(row =>
-            row.To === '2.0' ? { ...row, From: '0.0' } : row
+            row.To === max_allocation_error ? { ...row, From: '0.0' } : row
           );
         }
       }
 
-      onAllocationRangesChange(updatedRanges);
+      setAllocationRanges(updatedRanges);
       const newErrors = validateRanges(updatedRanges);
       setValidationErrors(newErrors);
-      onDataChanged();
+      setHasUnsavedChanges(true);
     };
 
     return (
@@ -273,8 +509,8 @@ export default function AllocationTheme({
           value={row.From}
           disabled={
             (row.From === '0.0' && row.To === '0.0') ||
-            row.To === '2.0' ||
-            (row.From !== '' && row.To !== '2.0')
+            row.To === max_allocation_error ||
+            (row.From !== '' && row.To !== max_allocation_error)
           }
           onChange={e => handleRangeChange(id, 'From', e.target.value)}
           error={error?.From}
@@ -286,7 +522,7 @@ export default function AllocationTheme({
           }}
           size="small"
           value={row.To}
-          disabled={row.To === '2.0'}
+          disabled={row.To === max_allocation_error}
           onChange={e => handleRangeChange(id, 'To', e.target.value)}
           onBlur={e => formatValues(e, row)}
           error={error?.To}
@@ -308,14 +544,14 @@ export default function AllocationTheme({
     const handleColorSelect = (pastelColor: string) => {
       const colorPair = colorPairs.find(pair => pair.pastel === pastelColor);
       if (colorPair) {
-        onAllocationRangesChange(
+        setAllocationRanges(
           allocationRanges.map(row =>
             row.id === activeColorRow
               ? { ...row, Color: pastelColor, DarkColor: colorPair.dark }
               : row
           )
         );
-        onDataChanged();
+        setHasUnsavedChanges(true);
       }
       handleClose();
     };
@@ -379,14 +615,13 @@ export default function AllocationTheme({
     deletedRowId: string,
     allocationRangeId: string
   ) => {
-    // Init case, not more rows, add new row 0.0 to 2.0
     const newRange = updatedRanges;
     if (newRange?.length === 0) {
       const newRow: AllocationRange = {
         id: '1',
-        __Id__: allocationRangeId,
+        __id__: allocationRangeId,
         From: '0.0',
-        To: '2.0',
+        To: `${max_allocation_error}`,
         Label: '',
         Color: '#FBB7AE',
         DarkColor: '#C55858',
@@ -429,19 +664,20 @@ export default function AllocationTheme({
       updatedRanges = fixRanges(
         updatedRanges,
         id as string,
-        allocationRanges[0].__Id__
+        allocationRanges[0].__id__
       );
-      onAllocationRangesChange(updatedRanges);
+      setAllocationRanges(updatedRanges);
 
       // Re-validate after deletion
       const newErrors = validateRanges(updatedRanges);
       setValidationErrors(newErrors);
 
-      onDataChanged();
+      setHasUnsavedChanges(true);
     };
 
     return (
-      allocationRanges.find(row => row.id === id)?.To !== '2.0' && (
+      allocationRanges.find(row => row.id === id)?.To !==
+        max_allocation_error && (
         <Tooltip title="Delete">
           <Box sx={{ paddingTop: '7px' }} onClick={handleDelete}>
             <img src="/images/icons/delete.svg" style={{ height: '24px' }} />
@@ -453,7 +689,9 @@ export default function AllocationTheme({
 
   // Add new allocation range
   const handleAddAllocationRange = () => {
-    const baseRow = allocationRanges.find(row => row.To === '2.0');
+    const baseRow = allocationRanges.find(
+      row => row.To === max_allocation_error
+    );
     const hasBaseRow = !!baseRow;
 
     // Find unused color
@@ -482,13 +720,13 @@ export default function AllocationTheme({
       // newTo = baseRow.From;
     } else {
       newFrom = '0.0';
-      newTo = '2.0';
+      newTo = `${max_allocation_error}`;
     }
 
     // Create new row with proper ID
     const newRow: AllocationRange = {
       id: getNextId().toString(),
-      __Id__: '',
+      __id__: '',
       From: newFrom,
       To: newTo,
       Label: '',
@@ -515,20 +753,20 @@ export default function AllocationTheme({
       id: (index + 1).toString(),
     }));
 
-    onAllocationRangesChange(updatedRanges);
+    setAllocationRanges(updatedRanges);
     const newErrors = validateRanges(updatedRanges);
     setValidationErrors(newErrors);
-    onDataChanged();
+    setHasUnsavedChanges(true);
   };
 
   // Handle label field changes
   const handleLabelChange = (id: string, value: string) => {
-    onAllocationRangesChange(
+    setAllocationRanges(
       allocationRanges.map(row =>
         row.id === id ? { ...row, Label: value } : row
       )
     );
-    onDataChanged();
+    setHasUnsavedChanges(true);
   };
 
   // Custom footer component with Add button
@@ -604,38 +842,600 @@ export default function AllocationTheme({
     const updated = allocationRanges.map(row =>
       row.id === newRow.id ? { ...row, Label: newRow.Label as string } : row
     );
-    onAllocationRangesChange(updated);
-    onDataChanged();
+    setAllocationRanges(updated);
+    setHasUnsavedChanges(true);
     return newRow;
   };
 
+  const handleSaveChanges = async () => {
+    if (tab === 'color-settings') {
+      // Validate ranges before saving
+      const errors = validateRanges(allocationRanges);
+      const hasErrors = Object.keys(errors).length > 0;
+
+      if (hasErrors) {
+        Object.entries(errors).forEach(([rangeId, error]) => {
+          dispatch(
+            showToast({
+              message: `${error.message}`,
+              type: 'error',
+            })
+          );
+        });
+        return;
+      }
+      setOriginalAllocationRanges([...allocationRanges]);
+      setHasUnsavedChanges(false);
+      dispatch(updateAllocationTheme([...allocationRanges]));
+      const transformedAllocationRanges = allocationRanges.map(range => {
+        const { __id__, id, ...rest } = range;
+        return {
+          Id: id,
+          ...rest,
+        };
+      });
+      const itemsWithId = allocationRanges.filter(d => d.__id__);
+      if (itemsWithId.length > 0) {
+        const payload = {
+          postData: transformedAllocationRanges,
+          __id__: itemsWithId[0]?.__id__,
+        };
+        dispatch(updateAllocationThemeAction(payload)).then(response => {
+          if (response?.meta?.requestStatus === 'fulfilled') {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Allocation theme updated successfully',
+                type: 'success',
+                autoHideTimer: 4000,
+              })
+            );
+          }
+        });
+      } else {
+        const newItems = allocationRanges.filter(d => !d.__id__);
+        if (newItems.length > 0) {
+          dispatch(addAllocationThemeAction(transformedAllocationRanges));
+        }
+      }
+    }
+
+    if (tab === 'alerts-threshold') {
+      try {
+        setHasUnsavedChanges(false);
+
+        // Prepare current settings data
+        const currentSettings: SettingsData = {
+          Max_Allocation_Warning: maxAllocationWarning.toFixed(1),
+          Max_Allocation_Error: maxAllocationError.toFixed(1),
+        };
+
+        // Prepare original settings data for comparison
+        const originalSettings: Record<string, any> = {
+          Max_Allocation_Warning:
+            originalAlertSettings.maxAllocationWarning.toFixed(1),
+          Max_Allocation_Error:
+            originalAlertSettings.maxAllocationError.toFixed(1),
+        };
+
+        const result = await handleOptimizedSettingsSave(
+          dispatch,
+          currentSettings,
+          scalarSettings ?? {},
+          {
+            updateAction: UPDATE_SCALAR_SETTING,
+            addAction: ADD_SCALAR_SETTING,
+            supportsBulk: false, // Set to true if your API supports bulk operations
+            batchSize: 2,
+            originalSettings: originalSettings, // Pass original UI values for change detection
+          }
+        );
+
+        if (result.changedCount > 0) {
+          // Update original values after successful save
+          setOriginalAlertSettings({
+            maxAllocationWarning,
+            maxAllocationError,
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: `Alert threshold settings saved successfully.`,
+              type: 'success',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'No changes detected in alert threshold settings',
+              type: 'info',
+              autoHideTimer: 3000,
+            })
+          );
+        }
+      } catch (error) {
+        console.error('Error saving alert threshold settings:', error);
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to save alert threshold settings',
+            type: 'error',
+            autoHideTimer: 4000,
+          })
+        );
+      }
+    }
+
+    if (tab === 'allocation-history') {
+      try {
+        setHasUnsavedChanges(false);
+
+        // Prepare current settings data
+        const currentSettings: SettingsData = {
+          History_Archive_month: allocationHistoryDuration,
+          Comments_Archive_month: commentsHistoryDuration,
+        };
+
+        // Prepare original settings data for comparison
+        const originalSettings: Record<string, any> = {
+          History_Archive_month:
+            originalHistorySettings.allocationHistoryDuration,
+          Comments_Archive_month:
+            originalHistorySettings.commentsHistoryDuration,
+        };
+
+        const result = await handleOptimizedSettingsSave(
+          dispatch,
+          currentSettings,
+          scalarSettings ?? {},
+          {
+            updateAction: UPDATE_SCALAR_SETTING,
+            addAction: ADD_SCALAR_SETTING,
+            supportsBulk: false, // Set to true if your API supports bulk operations
+            batchSize: 2,
+            originalSettings: originalSettings,
+          }
+        );
+
+        if (result.changedCount > 0) {
+          
+          setOriginalHistorySettings({
+            allocationHistoryDuration,
+            commentsHistoryDuration,
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: `Allocation history settings saved successfully.`,
+              type: 'success',
+              autoHideTimer: 4000,
+            })
+          );
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'No changes detected in allocation history settings',
+              type: 'info',
+              autoHideTimer: 3000,
+            })
+          );
+        }
+      } catch (error) {
+        console.error('Error saving allocation history settings:', error);
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to save allocation history settings',
+            type: 'error',
+            autoHideTimer: 4000,
+          })
+        );
+      }
+    }
+  };
+
+  const handleCancel = () => {
+   
+    if (tab === 'color-settings') {
+      setAllocationRanges([...originalAllocationRanges]);
+      setValidationErrors({});
+    } else if (tab === 'alerts-threshold') {
+      setMaxAllocationWarning(originalAlertSettings.maxAllocationWarning);
+      setMaxAllocationError(originalAlertSettings.maxAllocationError);
+    } else if (tab === 'allocation-history') {
+      setAllocationHistoryDuration(
+        originalHistorySettings.allocationHistoryDuration
+      );
+      setCommentsHistoryDuration(
+        originalHistorySettings.commentsHistoryDuration
+      );
+    }
+
+    setHasUnsavedChanges(false);
+  };
+
   return (
-    <MainContent>
-      <ContentPaper elevation={0}>
-        <StyledTableHeader>Allocation Range</StyledTableHeader>
-        <Box sx={{ height: 'auto', width: '100%' }}>
-          <StyledDataGrid
-            rows={allocationRanges}
-            disableColumnMenu
-            columns={columns}
-            editMode="row"
-            processRowUpdate={handleProcessRowUpdate}
-            initialState={{
-              pagination: {
-                paginationModel: {
-                  pageSize: 10,
-                },
-              },
+    <div
+      className="min-h-screen bg-[#f8f9fa] p-8"
+      style={{
+        fontFamily: 'open sans',
+        padding: '1.5%',
+        backgroundColor: 'rgba(217, 217, 217, 0.27)',
+        height: '100%',
+      }}
+    >
+      <TabHeader
+        tab={tab}
+        setTab={setTab}
+        setHasUnsavedChanges={setHasUnsavedChanges}
+      />
+      <Box
+        sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
+      >
+        {tab === 'color-settings' && (
+          <Box>
+            <StyledTableHeader>Allocation Range</StyledTableHeader>
+            <Box sx={{ height: 'auto', width: '60%' }}>
+              <StyledDataGrid
+                rows={allocationRanges}
+                disableColumnMenu
+                columns={columns}
+                editMode="row"
+                processRowUpdate={handleProcessRowUpdate}
+                initialState={{
+                  pagination: {
+                    paginationModel: {
+                      pageSize: 10,
+                    },
+                  },
+                }}
+                pageSizeOptions={[10]}
+                disableRowSelectionOnClick
+                autoHeight
+                slots={{
+                  footer: CustomFooterComponent,
+                }}
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* Alert Threshold Section */}
+        {tab === 'alerts-threshold' && (
+          <Box
+            sx={{
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              width: '100%',
+              gap: 4,
             }}
-            pageSizeOptions={[10]}
-            disableRowSelectionOnClick
-            autoHeight
-            slots={{
-              footer: CustomFooterComponent,
+          >
+            
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                gap: 4,
+                alignItems: 'start',
+              }}
+            >
+             
+              <Box sx={{ minWidth: 320 }}>
+                <Box
+                  sx={{
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                  }}
+                >
+                  <Typography
+                    sx={{ fontWeight: 400, fontSize: '15px', color: '#444' }}
+                  >
+                    Max Allocation Warning
+                  </Typography>
+                  <TextField
+                    type="number"
+                    size="small"
+                    placeholder="0.0"
+                    value={
+                      maxAllocationWarning === 0 ? '' : maxAllocationWarning
+                    }
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (/^\d*\.?\d{0,1}$/.test(val)) {
+                        const numValue = parseFloat(val);
+                        setMaxAllocationWarning(
+                          Number.isNaN(numValue)
+                            ? 0.0
+                            : parseFloat(numValue.toFixed(1))
+                        );
+                        setHasUnsavedChanges(true);
+                      }
+                    }}
+                    onBlur={e => {
+                      const val = e.target.value;
+                      if (val && !isNaN(parseFloat(val))) {
+                        const formattedValue = parseFloat(val).toFixed(1);
+                        setMaxAllocationWarning(parseFloat(formattedValue));
+                      }
+                    }}
+                    sx={{
+                      background: '#fff',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                        height: 36,
+                        width: 129,
+                        fontSize: '15px',
+                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                          {
+                            WebkitAppearance: 'none',
+                            margin: 0,
+                          },
+                        '& input[type="number"]': {
+                          MozAppearance: 'textfield',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'start',
+                      bgcolor: '#FFFBEB',
+                      borderRadius: 2,
+                      px: 1.5,
+                      py: 0.75,
+                      maxWidth: 380,
+                    }}
+                  >
+                    <img
+                      src="/images/icons/WarningIcon.svg"
+                      alt="Warning"
+                      style={{ width: 14, height: 14, marginRight: 6 }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: '12px',
+                        color: '#92400E',
+                        fontWeight: 400,
+                        fontStyle: 'italic',
+                        lineHeight: '16px',
+                      }}
+                    >
+                      Threshold beyond which a warning message is displayed to
+                      user making the change when total assigned capacity of a
+                      resource exceeds the specified threshold value
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                gap: 6.2,
+                alignItems: 'start',
+              }}
+            >
+            
+              <Box sx={{ minWidth: 320 }}>
+                <Box
+                  sx={{
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Typography
+                    sx={{ fontWeight: 500, fontSize: '15px', color: '#444' }}
+                  >
+                    Max Allocation Error
+                  </Typography>
+                  <TextField
+                    type="number"
+                    size="small"
+                    placeholder="0.0"
+                    value={maxAllocationError === 0 ? '' : maxAllocationError}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (/^\d*\.?\d{0,1}$/.test(val)) {
+                        const numValue = parseFloat(val);
+                        setMaxAllocationError(
+                          Number.isNaN(numValue)
+                            ? 0.0
+                            : parseFloat(numValue.toFixed(1))
+                        );
+                        setHasUnsavedChanges(true);
+                      }
+                    }}
+                    onBlur={e => {
+                      const val = e.target.value;
+                      if (val && !isNaN(parseFloat(val))) {
+                        const formattedValue = parseFloat(val).toFixed(1);
+                        setMaxAllocationError(parseFloat(formattedValue));
+                      }
+                    }}
+                    sx={{
+                      background: '#fff',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '8px',
+                        height: 36,
+                        width: 129,
+                        fontSize: '15px',
+                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                          {
+                            WebkitAppearance: 'none',
+                            margin: 0,
+                          },
+                        '& input[type="number"]': {
+                          MozAppearance: 'textfield',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'start',
+                      bgcolor: '#FEF2F2',
+                      borderRadius: 2,
+                      px: 1.5,
+                      py: 0.75,
+                      maxWidth: 380,
+                    }}
+                  >
+                    <img
+                      src="/images/icons/ErrorIcon.svg"
+                      alt="Error"
+                      style={{ width: 14, height: 14, marginRight: 6 }}
+                    />
+                    <Typography
+                      sx={{
+                        color: '#d32f2f',
+                        fontSize: '12px',
+                        fontWeight: 400,
+                        fontStyle: 'italic',
+                        lineHeight: '16px',
+                      }}
+                    >
+                      Resource allocation limit configuration that displays an
+                      error message to user when total assigned capacity of a
+                      resource exceeds the specified threshold value
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {tab === 'allocation-history' && (
+          <Box
+            sx={{
+              p: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 5,
+              width: '100%',
             }}
-          />
-        </Box>
-      </ContentPaper>
-    </MainContent>
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography
+                sx={{ fontSize: '14px', fontWeight: 600, color: '#4B5563' }}
+              >
+                Allocation History Retention
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  Duration:
+                </Typography>
+                <TextField
+                  size="small"
+                  placeholder="Enter Value in number  1 to 9  month"
+                  value={allocationHistoryDuration}
+                  onChange={e => {
+                    const v = e.target.value.trim();
+                    if (/^[1-9]?$/.test(v)) {
+                      setAllocationHistoryDuration(v);
+                      setHasUnsavedChanges(true);
+                    }
+                  }}
+                  sx={{
+                    width: 250,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                    },
+                  }}
+                  inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
+                />
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography
+                sx={{ fontSize: '14px', fontWeight: 600, color: '#4B5563' }}
+              >
+                Comments History Retention
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  Duration:
+                </Typography>
+                <TextField
+                  size="small"
+                  placeholder="Enter Value in number  1 to 9  month"
+                  value={commentsHistoryDuration}
+                  onChange={e => {
+                    const v = e.target.value.trim();
+                    if (/^[1-9]?$/.test(v)) {
+                      setCommentsHistoryDuration(v);
+                      setHasUnsavedChanges(true);
+                    }
+                  }}
+                  sx={{
+                    width: 250,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                    },
+                  }}
+                  inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+        <div style={{ margin: '1.5%', width: '50%' }}>
+          <BottomActions>
+            <CancelButton
+              variant="outlined"
+              onClick={handleCancel}
+              disabled={!hasUnsavedChanges}
+            >
+              Cancel
+            </CancelButton>
+            <SaveButton
+              variant="contained"
+              onClick={handleSaveChanges}
+              disabled={!hasUnsavedChanges}
+            >
+              Save Changes
+            </SaveButton>
+          </BottomActions>
+        </div>
+        <br />
+      </Box>
+    </div>
   );
 }
