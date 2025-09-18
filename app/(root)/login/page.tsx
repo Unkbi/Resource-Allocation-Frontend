@@ -196,6 +196,7 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    localStorage.removeItem("signupEmail");
     if (isLoggedIn) {
       // Use redirect path if present, otherwise go to dashboard
       router.replace(redirectPath || '/dashboard');
