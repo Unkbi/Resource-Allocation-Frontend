@@ -10,10 +10,10 @@ import {
 import type {
   LoginPayload,
   LoginUser,
-} from '@/app/types/authTypes'; // adjust path to your types
+} from '@/app/types/authTypes'; 
 
 export const loginUser = createAsyncThunk<
-  LoginUser & { 'id-token': string }, // required now
+  LoginUser & { 'id-token': string }, 
   LoginPayload,
   { rejectValue: string }
 >('auth/loginUser', async (credentials, { rejectWithValue }) => {
@@ -30,7 +30,7 @@ export const loginUser = createAsyncThunk<
     saveToken(token);
     saveUserId(data.userId);
     saveRefreshToken(data.refresh_token);
-    return { ...data, 'id-token': token }; // make sure id-token exists
+    return { ...data, 'id-token': token }; 
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message || 'Login failed'
@@ -38,7 +38,6 @@ export const loginUser = createAsyncThunk<
   }
 });
 
-// ---------- GET USER ----------
 export const getUser = createAsyncThunk<
   LoginUser,
   string,
@@ -54,7 +53,6 @@ export const getUser = createAsyncThunk<
   }
 });
 
-// ---------- SIGNUP ----------
 export const signupUser = createAsyncThunk<
   unknown,
   Record<string, unknown>,
@@ -68,7 +66,6 @@ export const signupUser = createAsyncThunk<
   }
 });
 
-// ---------- CONFIRM SIGNUP ----------
 export const confirmSignUp = createAsyncThunk<
   { user: LoginUser; token: string },
   Record<string, unknown>,
@@ -85,11 +82,11 @@ export const confirmSignUp = createAsyncThunk<
   }
 });
 
-// ---------- LOGOUT ----------
+
 export const logoutUser = createAsyncThunk<
   void, // return type
   void, // arg type
-  { rejectValue: string } // <-- this makes payload typed
+  { rejectValue: string } 
 >('auth/logoutUser', async (_, { rejectWithValue }) => {
   try {
     clearAuth();
@@ -98,8 +95,6 @@ export const logoutUser = createAsyncThunk<
   }
 });
 
-
-// ---------- FORGOT PASSWORD ----------
 export const forgotPassword = createAsyncThunk<
   { statusText: string },
   Record<string, unknown>,
@@ -130,7 +125,7 @@ export const confirmForgotPassword = createAsyncThunk<
         'agentlang.auth/confirmForgotPassword',
         data
       );
-      return response.data; // <-- only the data part
+      return response.data; 
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.reason || 'Failed to reset password'
@@ -138,7 +133,7 @@ export const confirmForgotPassword = createAsyncThunk<
     }
   }
 );
-// ---------- RESEND CONFIRMATION CODE ----------
+
 export const resendConfirmationCode = createAsyncThunk<
   unknown,
   string,
