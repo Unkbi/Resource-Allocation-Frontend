@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, ReactNode } from 'react';
 import { Tooltip } from '@mui/material';
-import { CustomAddIcon } from '../../AllocationTable/CustomAddIcon';
+import CustomAddIcon from '../../AllocationTable/CustomAddIcon';
 import CustomAvatar from '../../Avatar/CustomAvatar';
 
 interface EllipsisNameCellProps {

@@ -16,6 +16,8 @@ import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
+import { useRouter } from 'next/navigation';
 
 interface TopContentProps {
   startDate: string;
@@ -26,6 +28,11 @@ interface BottomContentProps {
   startDate: string;
   endDate: string;
 }
+
+interface AllocationInitProps {
+  permissions: Record<string, CrudPermissions>;
+}
+
 const TopContent = ({ startDate, endDate }: TopContentProps) => (
   <TopProjectsView startDate={startDate} endDate={endDate} />
 );
@@ -34,7 +41,8 @@ const BottomContent = ({ startDate, endDate }: BottomContentProps) => (
   <BottomTeamsView startDate={startDate} endDate={endDate} />
 );
 
-export default function AllocationInit() {
+function AllocationInit({ permissions }: AllocationInitProps) {
+  const router = useRouter();
   const { splitView, currentView } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -75,6 +83,13 @@ export default function AllocationInit() {
         ? currentView?.EndDate
         : endDate
   );
+
+  useEffect(() => {
+    if (!permissions['Allocation'].r) {
+      router.replace('/dashboard');
+    }
+  }, []);
+
   useEffect(() => {
     if (!teams?.length) {
       dispatch(fetchAllTeams());
@@ -207,3 +222,5 @@ export default function AllocationInit() {
     <Allocation startDate={currentViewStartDate} endDate={currentViewEndDate} />
   );
 }
+
+export default withRBAC(AllocationInit, ['Allocation']);

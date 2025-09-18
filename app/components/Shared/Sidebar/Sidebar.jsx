@@ -146,7 +146,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
 
   const hasAnyAccess = {
     Dashboard: true,
-    Allocation: true,
+    Allocation: permissions['Allocation'].r,
     Projects: permissions['Project'].r || permissions['Portfolio'].r,
     Actuals: permissions['ActualsStatus'].r,
     People:
@@ -621,4 +621,5 @@ export default withRBAC(Sidebar, [
   'Project',
   'Portfolio',
   'ActualsStatus',
+  'Allocation',
 ]);

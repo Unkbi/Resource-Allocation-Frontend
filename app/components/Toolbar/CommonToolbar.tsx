@@ -131,142 +131,149 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
         sx={{ display: 'flex', flexDirection: 'column' }}
       >
         <Box display="flex" position="relative" zIndex={1}>
-          <Box
-            sx={{
-              width: '64px',
-              borderRight: 'rgba(171, 183, 194, 0.5) solid 1px',
-              height: '64px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <IconButton
-              className="AddIcon"
-              onClick={handleAddMenuToggle}
-              ref={anchorRefAdd}
-              // Temporary disabled state for testing
-              // disabled={!allApiSuccess}
+          {menuItems.some(m =>
+            permissions
+              ? m.entity in permissions && permissions[m.entity].c
+              : false
+          ) && (
+            <Box
               sx={{
+                width: '64px',
+                borderRight: 'rgba(171, 183, 194, 0.5) solid 1px',
+                height: '64px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '30px',
-                height: '24px',
-                backgroundColor: '#20232D',
-                marginTop: '3px',
-                padding: '2px',
-                borderRadius: '8px',
-                '&:hover': {
-                  backgroundColor: allApiSuccess ? '#20232D' : '#A0A0A0',
-                },
               }}
             >
-              {openAddMenu ? (
-                <CloseIcon
-                  sx={{
-                    color: '#fff',
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: '#20232D',
-                    borderRadius: '8px',
-                  }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '44px',
-                    height: '44px',
-                  }}
-                >
-                  <img
-                    src="/images/icons/AddIconNew.svg"
-                    alt=""
-                    style={{ width: '44px', height: '44px' }}
+              <IconButton
+                className="AddIcon"
+                onClick={handleAddMenuToggle}
+                ref={anchorRefAdd}
+                // Temporary disabled state for testing
+                // disabled={!allApiSuccess}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '30px',
+                  height: '24px',
+                  backgroundColor: '#20232D',
+                  marginTop: '3px',
+                  padding: '2px',
+                  borderRadius: '8px',
+                  '&:hover': {
+                    backgroundColor: allApiSuccess ? '#20232D' : '#A0A0A0',
+                  },
+                }}
+              >
+                {openAddMenu ? (
+                  <CloseIcon
+                    sx={{
+                      color: '#fff',
+                      width: '40px',
+                      height: '40px',
+                      backgroundColor: '#20232D',
+                      borderRadius: '8px',
+                    }}
                   />
-                </Box>
-              )}
-            </IconButton>
-
-            <Popper
-              open={openAddMenu}
-              anchorEl={anchorRefAdd.current}
-              role={undefined}
-              placement="bottom-start"
-              transition
-              disablePortal
-              modifiers={[{ name: 'offset', options: { offset: [0, 4] } }]}
-            >
-              {({ TransitionProps, placement }) => (
-                <Grow
-                  {...TransitionProps}
-                  style={{
-                    transformOrigin:
-                      placement === 'bottom-start' ? 'left top' : 'left bottom',
-                  }}
-                >
-                  <Paper
-                    className="AddMenu"
-                    sx={{ boxShadow: '0px 4px 20px rgba(0,0,0,0.06)' }}
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '44px',
+                      height: '44px',
+                    }}
                   >
-                    <ClickAwayListener onClickAway={handleAddMenuClose}>
-                      <MenuList
-                        autoFocusItem={openAddMenu}
-                        id="add-menu"
-                        onKeyDown={handleListKeyDown}
-                        sx={{
-                          gap: '8px',
-                          m: 1,
-                          pt: 2,
-                          pb: 1.5,
-                        }}
-                      >
-                        {menuItems
-                          .filter(m =>
-                            permissions
-                              ? m.entity in permissions &&
-                                permissions[m.entity].c
-                              : true
-                          )
-                          .map((item, idx) => (
-                            <MenuItem
-                              key={idx}
-                              onClick={() =>
-                                handleOpenDialog(
-                                  item.title,
-                                  item.type,
-                                  item?.primarySecondButtonText ?? '',
-                                  item.initialData
-                                )
-                              }
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1.5,
-                                px: 2,
-                                py: 1,
-                              }}
-                            >
-                              <img
-                                src={item.icon}
-                                alt={item.alt}
-                                width={20}
-                                style={{ marginRight: 8 }}
-                              />
-                              {item.title}
-                            </MenuItem>
-                          ))}
-                      </MenuList>
-                    </ClickAwayListener>
-                  </Paper>
-                </Grow>
-              )}
-            </Popper>
-          </Box>
+                    <img
+                      src="/images/icons/AddIconNew.svg"
+                      alt=""
+                      style={{ width: '44px', height: '44px' }}
+                    />
+                  </Box>
+                )}
+              </IconButton>
 
+              <Popper
+                open={openAddMenu}
+                anchorEl={anchorRefAdd.current}
+                role={undefined}
+                placement="bottom-start"
+                transition
+                disablePortal
+                modifiers={[{ name: 'offset', options: { offset: [0, 4] } }]}
+              >
+                {({ TransitionProps, placement }) => (
+                  <Grow
+                    {...TransitionProps}
+                    style={{
+                      transformOrigin:
+                        placement === 'bottom-start'
+                          ? 'left top'
+                          : 'left bottom',
+                    }}
+                  >
+                    <Paper
+                      className="AddMenu"
+                      sx={{ boxShadow: '0px 4px 20px rgba(0,0,0,0.06)' }}
+                    >
+                      <ClickAwayListener onClickAway={handleAddMenuClose}>
+                        <MenuList
+                          autoFocusItem={openAddMenu}
+                          id="add-menu"
+                          onKeyDown={handleListKeyDown}
+                          sx={{
+                            gap: '8px',
+                            m: 1,
+                            pt: 2,
+                            pb: 1.5,
+                          }}
+                        >
+                          {menuItems
+                            .filter(m =>
+                              permissions
+                                ? m.entity in permissions &&
+                                  permissions[m.entity].c
+                                : true
+                            )
+                            .map((item, idx) => (
+                              <MenuItem
+                                key={idx}
+                                onClick={() =>
+                                  handleOpenDialog(
+                                    item.title,
+                                    item.type,
+                                    item?.primarySecondButtonText ?? '',
+                                    item.initialData
+                                  )
+                                }
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1.5,
+                                  px: 2,
+                                  py: 1,
+                                }}
+                              >
+                                <img
+                                  src={item.icon}
+                                  alt={item.alt}
+                                  width={20}
+                                  style={{ marginRight: 8 }}
+                                />
+                                {item.title}
+                              </MenuItem>
+                            ))}
+                        </MenuList>
+                      </ClickAwayListener>
+                    </Paper>
+                  </Grow>
+                )}
+              </Popper>
+            </Box>
+          )}
           <Box
             sx={{
               flexGrow: 1,

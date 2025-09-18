@@ -73,8 +73,9 @@ import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import { withRBAC } from '../HOC/withRBAC';
 
-export default function AllocationGrid({
+function AllocationGrid({
   groupBy,
   columns,
   loading,
@@ -91,6 +92,7 @@ export default function AllocationGrid({
   viewId = 'main',
   showActuals = false,
   rowGroupingColumnMode = 'single',
+  permissions = null,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -1133,9 +1135,15 @@ export default function AllocationGrid({
   );
   const handleCellSelectionModelChange = useCallback(
     newModel => {
+      // Cost Screens are readOnly, no selections.
+      if (type === 'cost') return;
+
+      // When Updates are not permitted, no selections.
+      if (!permissions['Allocation']?.u && !permissions['Allocation']?.c)
+        return;
+
       // Cell Selection Model should have a value only for minimum of 2 cells
       // If only one cell is selected, then clear the selection
-      if (type === 'cost') return;
       const rowIds = Object.keys(newModel);
       if (
         Object.keys(newModel).length === 0 ||
@@ -1375,13 +1383,13 @@ export default function AllocationGrid({
       isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
-      getRowHeight={(params) => {
-       if(params?.model?.projectId ===""){
-        // Sahadev: really small value, it doesnt accept 0
-        // New solution for hiding empty rows 
-        return .000000000001
-       }
-       return 52 ;
+      getRowHeight={params => {
+        if (params?.model?.projectId === '') {
+          // Sahadev: really small value, it doesnt accept 0
+          // New solution for hiding empty rows
+          return 0.000000000001;
+        }
+        return 52;
       }}
       rowModesModel={rowModesModel}
       onRowModesModelChange={handleRowModesModelChange}
@@ -1505,3 +1513,5 @@ export default function AllocationGrid({
     />
   );
 }
+
+export default withRBAC(AllocationGrid, ['Allocation']);
