@@ -353,7 +353,7 @@ const CellWithMenu = ({
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
       func: () => handleDeleteClick(params),
-      allowed: loginUserPrivileges['Allocation'].d,
+      allowed: loginUserPrivileges?.['Allocation']?.d ?? false,
     },
   ];
 

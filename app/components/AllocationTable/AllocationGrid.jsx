@@ -920,7 +920,10 @@ function AllocationGrid({
         const currentRowOldValue = oldRow[key]?.value || 0;
         totalForWeek = totalForWeek - currentRowOldValue + value;
 
-        if (totalForWeek > Number(max_allocation_warning) && totalForWeek <= Number(max_allocation_error)) {
+        if (
+          totalForWeek > Number(max_allocation_warning) &&
+          totalForWeek <= Number(max_allocation_error)
+        ) {
           dispatch(
             showToastAction(
               true,
@@ -1122,7 +1125,14 @@ function AllocationGrid({
   );
 
   const handleRowModesModelChange = newRowModesModel => {
-    setRowModesModel(newRowModesModel);
+    // If no Create or Edit permission to Allocation then do not allow rowMode to change from View to Edit.
+    if (!permissions['Allocation'].c && !permissions['Allocation'].u) {
+      if (Object.keys(rowModesModel).length) {
+        setRowModesModel({});
+      }
+    } else {
+      setRowModesModel(newRowModesModel);
+    }
   };
 
   const filterColumns = ({ columns }) => {

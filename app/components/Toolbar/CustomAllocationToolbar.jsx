@@ -1535,120 +1535,124 @@ const CustomToolbar = memo(({ setFilterButtonEl, permissions }) => {
               </Box>
 
               {/* View Selector + Save View Button */}
-              <Box className="view-btn" sx={{ display: 'flex', gap: 2 }}>
-                <Box>
-                  <ViewButton
-                    startIcon={<PreferencesIcon />}
-                    endIcon={<KeyboardArrowDownIcon />}
-                    onClick={handleViewClick}
-                    aria-controls={open ? 'view-menu' : undefined}
-                    aria-haspopup="true"
-                    aria-expanded={open ? 'true' : undefined}
-                  >
-                    <EllipsisNameCell value={currentViewName} />
-                  </ViewButton>
+              {permissions['UserAllocationView'].r && (
+                <Box className="view-btn" sx={{ display: 'flex', gap: 2 }}>
+                  <Box>
+                    <ViewButton
+                      startIcon={<PreferencesIcon />}
+                      endIcon={<KeyboardArrowDownIcon />}
+                      onClick={handleViewClick}
+                      aria-controls={open ? 'view-menu' : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={open ? 'true' : undefined}
+                    >
+                      <EllipsisNameCell value={currentViewName} />
+                    </ViewButton>
 
-                  <StyledMenu
-                    id="group-menu"
-                    anchorEl={anchorEl}
-                    open={open}
-                    onClose={handleClose}
-                    MenuListProps={{ 'aria-labelledby': 'view-button' }}
-                    PaperProps={{
-                      style: {
-                        minWidth: 'auto',
-                        width: 'auto',
-                        position: 'absolute',
-                        left: 0,
-                      },
-                    }}
-                  >
-                    {savedViews.map(option => (
-                      <StyledViewMenuItem
-                        key={option.Id}
-                        onClick={() => handleMenuItemClick(option.Id)}
-                        className={selectedView === option.Id ? 'selected' : ''}
-                        sx={
-                          option.Id === '0'
-                            ? { borderTop: '1px solid #DDE1E4' }
-                            : {}
-                        }
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            minWidth: '180px',
-                          }}
+                    <StyledMenu
+                      id="group-menu"
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={handleClose}
+                      MenuListProps={{ 'aria-labelledby': 'view-button' }}
+                      PaperProps={{
+                        style: {
+                          minWidth: 'auto',
+                          width: 'auto',
+                          position: 'absolute',
+                          left: 0,
+                        },
+                      }}
+                    >
+                      {savedViews.map(option => (
+                        <StyledViewMenuItem
+                          key={option.Id}
+                          onClick={() => handleMenuItemClick(option.Id)}
+                          className={
+                            selectedView === option.Id ? 'selected' : ''
+                          }
+                          sx={
+                            option.Id === '0'
+                              ? { borderTop: '1px solid #DDE1E4' }
+                              : {}
+                          }
                         >
                           <Box
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 1,
+                              gap: 3,
+                              minWidth: '180px',
                             }}
                           >
-                            {getIcon(option.Id)}
-                            <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
-                          </Box>
-                          {option.isDefault && option.Id !== '0' && (
-                            <Typography className="tag">default</Typography>
-                          )}
-                          {option.Id !== '0' && (
-                            <Box className="action-buttons">
-                              {permissions['UserAllocationView'].u && (
-                                <ActionIconButton
-                                  size="small"
-                                  onClick={e => handleEditView(e, option)}
-                                >
-                                  <EditActionIcon />
-                                </ActionIconButton>
-                              )}
-                              {permissions['UserAllocationView'].d && (
-                                <ActionIconButton
-                                  size="small"
-                                  onClick={e => handleDeleteView(e, option)}
-                                >
-                                  <DeleteActionIcon />
-                                </ActionIconButton>
-                              )}
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                            >
+                              {getIcon(option.Id)}
+                              <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
                             </Box>
-                          )}
-                        </Box>
-                      </StyledViewMenuItem>
-                    ))}
-                  </StyledMenu>
-                </Box>
+                            {option.isDefault && option.Id !== '0' && (
+                              <Typography className="tag">default</Typography>
+                            )}
+                            {option.Id !== '0' && (
+                              <Box className="action-buttons">
+                                {permissions['UserAllocationView'].u && (
+                                  <ActionIconButton
+                                    size="small"
+                                    onClick={e => handleEditView(e, option)}
+                                  >
+                                    <EditActionIcon />
+                                  </ActionIconButton>
+                                )}
+                                {permissions['UserAllocationView'].d && (
+                                  <ActionIconButton
+                                    size="small"
+                                    onClick={e => handleDeleteView(e, option)}
+                                  >
+                                    <DeleteActionIcon />
+                                  </ActionIconButton>
+                                )}
+                              </Box>
+                            )}
+                          </Box>
+                        </StyledViewMenuItem>
+                      ))}
+                    </StyledMenu>
+                  </Box>
 
-                {((selectedView !== '0' &&
-                  (permissions['UserAllocationView'].c ||
-                    permissions['UserAllocationView'].u)) ||
-                  (selectedView === '0' &&
-                    permissions['UserAllocationView'].c)) && (
-                  <Button
-                    disabled={
-                      (!permissions['UserAllocationView'].c &&
-                        !permissions['UserAllocationView'].u) ||
-                      currentView.GroupBy.includes('Cost') ||
-                      isObjectEqual(
-                        savedViews.find(view => view.Id === selectedView),
-                        currentView
-                      )
-                    }
-                    onClick={handleSaveView}
-                    sx={{
-                      border: 'none !important',
-                      color: '#344665 !important',
-                      textTransform: 'none',
-                      marginTop: '2px',
-                      '&.Mui-disabled': { color: '#9F9F9F !important' },
-                    }}
-                  >
-                    <EllipsisNameCell value="Save View" />
-                  </Button>
-                )}
-              </Box>
+                  {((selectedView !== '0' &&
+                    (permissions['UserAllocationView'].c ||
+                      permissions['UserAllocationView'].u)) ||
+                    (selectedView === '0' &&
+                      permissions['UserAllocationView'].c)) && (
+                    <Button
+                      disabled={
+                        (!permissions['UserAllocationView'].c &&
+                          !permissions['UserAllocationView'].u) ||
+                        currentView.GroupBy.includes('Cost') ||
+                        isObjectEqual(
+                          savedViews.find(view => view.Id === selectedView),
+                          currentView
+                        )
+                      }
+                      onClick={handleSaveView}
+                      sx={{
+                        border: 'none !important',
+                        color: '#344665 !important',
+                        textTransform: 'none',
+                        marginTop: '2px',
+                        '&.Mui-disabled': { color: '#9F9F9F !important' },
+                      }}
+                    >
+                      <EllipsisNameCell value="Save View" />
+                    </Button>
+                  )}
+                </Box>
+              )}
             </Box>
           </ToolBox2>
         </ToolBox1>
