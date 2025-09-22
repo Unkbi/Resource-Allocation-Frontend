@@ -93,6 +93,11 @@ export default function AssignRolesTable({
           disableRowSelectionOnClick
           apiRef={apiRef}
           loading={loading}
+          initialState={{
+            sorting: {
+              sortModel: [{ field: 'Role', sort: 'asc' }], 
+            },
+          }}
           sx={{
             border: 'none',
             height: '100%',
