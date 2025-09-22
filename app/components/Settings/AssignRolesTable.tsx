@@ -130,6 +130,12 @@ export default function AssignRolesTable({
               borderBottom: '1px solid #f0f0f0',
               fontSize: 13,
             },
+             '& .MuiDataGrid-columnHeader--sorted .MuiDataGrid-sortIcon': {
+              display: 'none',
+            },
+             '& .MuiDataGrid-columnHeader--sorted:hover .MuiDataGrid-sortIcon': {
+             display: 'inline-flex',
+            },
           }}
           slotProps={{
             loadingOverlay: {
