@@ -31,6 +31,7 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const tabMenuNames = ['location', 'location-group'];
 const baseURLAccessManagement = '/settings?menu=access-management';
@@ -172,6 +173,10 @@ export default function RoleManagementPage() {
   const apiRef = useGridApiRef();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { allResourcesDetail, loading: allResourcesDetailLoading } =useSelector(
+    (state:any )=> state.allResourcesDetail);
+  const { employeeRates, loading: employeeRatesLoading } = useSelector(
+    (state:any ) => state.employeeRates);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -309,20 +314,55 @@ export default function RoleManagementPage() {
     if (!deletingLocation && !deletingLocationGroup) return;
     try {
       if (tab === 'location' && deletingLocation) {
-        let locationid = locationData.find(
+        const locationId = locationData.find(
           loc => loc.Name === deletingLocation
         )?.Id;
+        const isInResources = allResourcesDetail.some((res: any) => {
+         return res.Resource?.WorkLocation === locationId;
+        });
+       const isInRates = employeeRates.some(
+        (rate: any) => rate.WorkLocation === locationId
+       );
+         if (isInResources || isInRates) {
+        dispatch(
+          showToast({
+            open: true,
+            message: `Cannot delete "${deletingLocation}", already in use.`,
+            type: 'error',
+            position: 'bottom-right',
+            autoHideTimer: 4000,
+          })
+        );
+        return; 
+      }
         await dispatch({
           type: DELETE_LOCATION,
-          payload: { locationId: locationid },
+          payload: { locationId },
         });
       } else if (tab === 'location-group' && deletingLocationGroup) {
-        let locationGroupid = locationGroupData.find(
+      const isAssigned = locationData.some(
+        loc => loc.LocationGroup === deletingLocationGroup
+      );
+
+      if (isAssigned) {
+        dispatch(
+          showToast({
+            open: true,
+            message: `Cannot delete "${deletingLocationGroup}", with assigned locations.`,
+            type: 'error',
+            position: 'bottom-right',
+            autoHideTimer: 4000,
+          })
+        );
+        return;
+      }
+        const locationGroupId = locationGroupData.find(
           locG => locG.Name === deletingLocationGroup
         )?.Id;
+
         await dispatch({
           type: DELETE_LOCATION_GROUPS,
-          payload: { locationGroupId: locationGroupid },
+          payload: { locationGroupId },
         });
       }
     } catch (error) {
