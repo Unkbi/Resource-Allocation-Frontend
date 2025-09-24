@@ -169,24 +169,28 @@ export const editResourceValidationSchema = Yup.object({
     .required('You must confirm before continuing.'),
 });
 
-export const addAllocationValidationSchema = Yup.object({
-  Resource: Yup.array()
-    .of(Yup.string())
-    .min(1, 'You must select at least one Resource')
-    .required('Resource is required'),
-  Project: Yup.array()
-    .of(Yup.string())
-    .min(1, 'You must select at least one Project')
-    .required('Project is required'),
-  StartDate: Yup.date().required('Start date is required'),
-  EndDate: Yup.date()
-    .required('End date is required')
-    .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
-  AllocationEntered: Yup.number()
-    .required('Allocation is required')
-    .min(0, 'Allocation must be a positive number')
-    .max(2, 'Allocation cannot exceed 2.0'),
-});
+export const addAllocationValidationSchema = (scalarSettings: any) =>
+  Yup.object({
+    Resource: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Resource')
+      .required('Resource is required'),
+    Project: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Project')
+      .required('Project is required'),
+    StartDate: Yup.date().required('Start date is required'),
+    EndDate: Yup.date()
+      .required('End date is required')
+      .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
+    AllocationEntered: Yup.number()
+      .required('Allocation is required')
+      .min(0, 'Allocation must be a positive number')
+      .max(
+        scalarSettings?.Max_Allocation_Error || '2.0',
+        `Allocation cannot exceed ${scalarSettings?.Max_Allocation_Error || '2.0'}.`
+      ),
+  });
 
 const stripTime = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -530,5 +534,64 @@ export const addProjectTypeValidationSchema = (
     ProjectTypeGroup: Yup.string().required('Project Type Group is required'),
     Description: Yup.string().nullable(),
     Color: Yup.string().required('Color is required'),
+  });
+};
+
+export const addLocationValidationSchema = (
+  locations: any[] = [],
+  initialName = ''
+) => {
+  const locationNames = Array.isArray(locations)
+    ? locations.map(loc => loc.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedInitial = initialName.toLowerCase().trim();
+          if (initialName && trimmedValue === trimmedInitial) {
+            return true; // Allow same name when editing
+          }
+          return !locationNames.includes(trimmedValue);
+        }
+      ),
+    LocationGroup: Yup.string().required('Location Group is required'),
+    Status: Yup.string()
+      .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
+      .required('Status is required'),
+  });
+};
+
+export const addLocationGroupValidationSchema = (
+  locationGroups: any[] = [],
+  initialName = ''
+) => {
+  const locationGroupNames = Array.isArray(locationGroups)
+    ? locationGroups.map(lg => lg.Name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Group Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Group Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          )
+            return true;
+          return !locationGroupNames.includes(value.toLowerCase().trim());
+        }
+      ),
   });
 };

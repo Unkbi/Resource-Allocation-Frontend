@@ -58,7 +58,7 @@ const AddTeamForm = ({
         AllocationManager:
           resources?.find(res => res.__path__ === initialData.AllocationManager)
             ?.__path__ || '',
-        Status: initialData.Status || 'Active',
+        Status: initialData.Status || 'Inactive',
       };
 
       setFormValue(rowData);
@@ -66,6 +66,14 @@ const AddTeamForm = ({
       setTouched({});
     }
   }, [initialData, resources]);
+
+  const isEdit = Boolean(initialData && Object.keys(initialData).length > 0);
+
+  useEffect(() => {
+    if (!isEdit) {
+      setFieldValue('Status', values.AllocationManager ? 'Active' : 'Inactive', false);
+    }
+  }, [values.AllocationManager, isEdit, setFieldValue]);
 
   return (
     <Box>

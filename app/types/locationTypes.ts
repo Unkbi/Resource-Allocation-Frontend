@@ -1,9 +1,21 @@
 export interface Location {
-    Location: string;
-    LocationGroup: string;
-    Status: string;
+    Id: string;
+    Name: string | null;
+    LocationGroup: string | null;
+    Status: string | null;
+    __path__: string | null;
+    __parent__: string | null;
 }
 
 export interface LocationGroup {
-    LocationGroup: string;
+    Id: string;
+    Name: string | null;
+  __path__: string | null;
+  __parent__: string | null;
+}
+
+export interface AddLocationPayload {
+    Name: string | null;
+    LocationGroup: string | null;
+    Status: string | null;
 }

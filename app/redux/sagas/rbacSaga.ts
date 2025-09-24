@@ -23,9 +23,13 @@ import {
   setLoginUpserPrivileges,
   setMeta,
   setPrivilegeAssignments,
+  setPrivilegeAssignmentsLoading,
   setPrivileges,
+  setPrivilegesLoading,
   setRoleAssignments,
+  setRoleAssignmentsLoading,
   setRoles,
+  setRolesLoading,
   setUser,
 } from '../reducers/rbacReducer';
 import {
@@ -53,7 +57,7 @@ import { buildLoginUserPrivileges } from '@/app/utils/authUtils';
 
 function* fetchRolesSaga(): Generator<any, void, any> {
   try {
-    yield put(setLoading(true));
+    yield put(setRolesLoading(true));
 
     const responses = yield call(fetchRoles);
 
@@ -61,7 +65,7 @@ function* fetchRolesSaga(): Generator<any, void, any> {
   } catch (error) {
     console.error('Saga error, Failed to fetch Roles : ', error);
   } finally {
-    yield put(setLoading(false));
+    yield put(setRolesLoading(false));
   }
 }
 
@@ -95,7 +99,7 @@ function* deleteRoleSaga(action: any): Generator<any, void, any> {
 
 function* fetchRoleAssignmentsSaga(): Generator<any, void, any> {
   try {
-    yield put(setLoading(true));
+    yield put(setRoleAssignmentsLoading(true));
 
     const responses = yield call(fetchRoleAssignments);
 
@@ -103,7 +107,7 @@ function* fetchRoleAssignmentsSaga(): Generator<any, void, any> {
   } catch (error) {
     console.error('Saga error, Failed to fetch Role Assignments : ', error);
   } finally {
-    yield put(setLoading(false));
+    yield put(setRoleAssignmentsLoading(false));
   }
 }
 
@@ -151,7 +155,7 @@ function* deleteRoleAssignmentSaga(action: any): Generator<any, void, any> {
 }
 function* fetchPrivilegesSaga(): Generator<any, void, any> {
   try {
-    yield put(setLoading(true));
+    yield put(setPrivilegesLoading(true));
 
     const responses = yield call(fetchPrivileges);
 
@@ -159,7 +163,7 @@ function* fetchPrivilegesSaga(): Generator<any, void, any> {
   } catch (error) {
     console.error('Saga error, Failed to fetch Privileges : ', error);
   } finally {
-    yield put(setLoading(false));
+    yield put(setPrivilegesLoading(false));
   }
 }
 
@@ -208,7 +212,7 @@ function* updatePrivilegeSaga(action: any): Generator<any, void, any> {
 
 function* fetchPrivilegeAssignmentsSaga(): Generator<any, void, any> {
   try {
-    yield put(setLoading(true));
+    yield put(setPrivilegeAssignmentsLoading(true));
 
     const responses = yield call(fetchPrivilegeAssignments);
 
@@ -219,7 +223,7 @@ function* fetchPrivilegeAssignmentsSaga(): Generator<any, void, any> {
       error
     );
   } finally {
-    yield put(setLoading(false));
+    yield put(setPrivilegeAssignmentsLoading(false));
   }
 }
 

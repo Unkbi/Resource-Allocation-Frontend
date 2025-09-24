@@ -99,6 +99,7 @@ import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
 import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 import { getUserAttributes } from '@/app/utils/authUtils';
+import { withRBAC } from '../HOC/withRBAC';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -588,7 +589,7 @@ const PortfolioIcon = () => (
 
 const FlatIcon = () => <img src="/images/icons/FlatView.svg" alt="flat view" />;
 
-const CustomToolbar = memo(({ setFilterButtonEl }) => {
+const CustomToolbar = memo(({ setFilterButtonEl, permissions }) => {
   const dispatch = useDispatch();
   const [value, setValue] = React.useState([null, null]);
   const { view, savedViews, currentView, showActuals } = useSelector(
@@ -810,12 +811,24 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       dispatch(
         openDialog({
           title: currentView?.Name
-            ? `Save View - ${currentView?.Name}`
+            ? `Save View: ${currentView?.Name}`
             : 'Save View',
-          submitButtonText: 'Save',
-          secondaryButtonText: 'Save As',
+          submitButtonText: permissions['UserAllocationView'].u
+            ? 'Save'
+            : permissions['UserAllocationView'].c
+              ? 'Next'
+              : '',
+          secondaryButtonText:
+            permissions['UserAllocationView'].c &&
+            permissions['UserAllocationView'].u
+              ? 'Save As'
+              : '',
           cancelButtonText: 'Cancel',
-          formType: 'save_view',
+          formType:
+            permissions['UserAllocationView'].c &&
+            permissions['UserAllocationView'].u
+              ? 'save_view'
+              : 'new_view',
           initialData: null,
         })
       );
@@ -1034,6 +1047,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       alt: 'Allocation Icon',
       title: 'Update Allocation',
       type: 'add_allocation',
+      entity: 'Allocation',
     },
     {
       icon: '/images/icons/ProjectIcon.svg',
@@ -1044,24 +1058,28 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       initialData: {
         Status: 'Active',
       },
+      entity: 'Project',
     },
     {
       icon: '/images/icons/TeamIcon.svg',
       alt: 'Team Icon',
       title: 'Add Team',
       type: 'add_team',
+      entity: 'Team',
     },
     {
       icon: '/images/icons/ResourceIcon.svg',
       alt: 'Resource Icon',
       title: 'Add Resource',
       type: 'add_resource',
+      entity: 'Resource',
     },
     {
       icon: '/images/icons/corporate_fare.svg',
       alt: 'Organization Icon',
       title: 'Add Organization',
       type: 'add_organization',
+      entity: 'Organization',
     },
   ];
 
@@ -1095,141 +1113,156 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         {/* Left Section (Add + View Selector + Toggle Buttons + Date Picker + Views) */}
         <ToolBox1 sx={{ display: 'flex' }}>
           {/* Add Button */}
-          <Box
-            sx={{
-              width: '64px',
-              borderRight: 'rgba(171, 183, 194, 0.5) solid 1px',
-              height: '64px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <IconButton
-              className="AddIcon"
-              onClick={handleAddMenuToggle}
-              ref={anchorRefAdd}
-              disabled={!allApiSuccess}
+          {menuItems.some(m =>
+            permissions
+              ? m.entity in permissions && permissions[m.entity].c
+              : false
+          ) && (
+            <Box
               sx={{
+                width: '64px',
+                borderRight: 'rgba(171, 183, 194, 0.5) solid 1px',
+                height: '64px',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '30px',
-                height: '24px',
-                backgroundColor: '#20232D',
-                marginTop: '3px',
-                padding: '2px',
-                borderRadius: '8px',
-                '&:hover, &:focus': { backgroundColor: '#20232D' },
               }}
             >
-              {openAddMenu ? (
-                <CloseIcon
-                  sx={{
-                    color: '#fff',
-                    width: '40px',
-                    height: '40px',
-                    backgroundColor: '#20232D',
-                    borderRadius: '8px',
-                  }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '44px',
-                    height: '44px',
-                  }}
-                >
-                  <img
-                    src="/images/icons/AddIconNew.svg"
-                    alt=""
-                    style={{ width: '44px', height: '44px' }}
-                  />
-                </Box>
-              )}
-            </IconButton>
-            <Popper
-              open={openAddMenu}
-              anchorEl={anchorRefAdd.current}
-              role={undefined}
-              placement="bottom-start"
-              transition
-              disablePortal
-              modifiers={[
-                {
-                  name: 'offset',
-                  options: {
-                    offset: [0, 4],
-                  },
-                },
-              ]}
-            >
-              {({ TransitionProps, placement }) => (
-                <Grow
-                  {...TransitionProps}
-                  style={{
-                    transformOrigin:
-                      placement === 'bottom-start' ? 'left top' : 'left bottom',
-                  }}
-                >
-                  <Paper
-                    className="AddMenu"
+              <IconButton
+                className="AddIcon"
+                onClick={handleAddMenuToggle}
+                ref={anchorRefAdd}
+                disabled={!allApiSuccess}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '30px',
+                  height: '24px',
+                  backgroundColor: '#20232D',
+                  marginTop: '3px',
+                  padding: '2px',
+                  borderRadius: '8px',
+                  '&:hover, &:focus': { backgroundColor: '#20232D' },
+                }}
+              >
+                {openAddMenu ? (
+                  <CloseIcon
                     sx={{
-                      boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.06)',
+                      color: '#fff',
+                      width: '40px',
+                      height: '40px',
+                      backgroundColor: '#20232D',
+                      borderRadius: '8px',
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '44px',
+                      height: '44px',
                     }}
                   >
-                    <ClickAwayListener onClickAway={handleAddMenuClose}>
-                      <MenuList
-                        autoFocusItem={openAddMenu}
-                        id="Add-menu"
-                        aria-labelledby="Add-button"
-                        onKeyDown={handleListKeyDown}
-                        sx={{
-                          gap: '8px',
-                          margin: ' 5px',
-                          paddingTop: '18px',
-                          paddingBottom: '12px',
-                        }}
-                      >
-                        {menuItems.map((item, index) => (
-                          <MenuItem
-                            key={index}
-                            onClick={() =>
-                              handleOpenDialog(
-                                item.title,
-                                item.type,
-                                item?.primarySecondButtonText ?? '',
-                                item.initialData
-                              )
-                            }
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              paddingLeft: 2,
-                              paddingBottom: 2,
-                              gap: 1,
-                            }}
-                          >
-                            <img
-                              src={item.icon}
-                              alt={item.alt}
-                              width={20}
-                              style={{ marginRight: 8 }}
-                            />
-                            {item.title}
-                          </MenuItem>
-                        ))}
-                      </MenuList>
-                    </ClickAwayListener>
-                  </Paper>
-                </Grow>
-              )}
-            </Popper>
-          </Box>
+                    <img
+                      src="/images/icons/AddIconNew.svg"
+                      alt=""
+                      style={{ width: '44px', height: '44px' }}
+                    />
+                  </Box>
+                )}
+              </IconButton>
+              <Popper
+                open={openAddMenu}
+                anchorEl={anchorRefAdd.current}
+                role={undefined}
+                placement="bottom-start"
+                transition
+                disablePortal
+                modifiers={[
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, 4],
+                    },
+                  },
+                ]}
+              >
+                {({ TransitionProps, placement }) => (
+                  <Grow
+                    {...TransitionProps}
+                    style={{
+                      transformOrigin:
+                        placement === 'bottom-start'
+                          ? 'left top'
+                          : 'left bottom',
+                    }}
+                  >
+                    <Paper
+                      className="AddMenu"
+                      sx={{
+                        boxShadow: '0px 4px 20px 0px rgba(0, 0, 0, 0.06)',
+                      }}
+                    >
+                      <ClickAwayListener onClickAway={handleAddMenuClose}>
+                        <MenuList
+                          autoFocusItem={openAddMenu}
+                          id="Add-menu"
+                          aria-labelledby="Add-button"
+                          onKeyDown={handleListKeyDown}
+                          sx={{
+                            gap: '8px',
+                            margin: ' 5px',
+                            paddingTop: '18px',
+                            paddingBottom: '12px',
+                          }}
+                        >
+                          {menuItems
+                            .filter(m =>
+                              permissions
+                                ? m.entity in permissions &&
+                                  permissions[m.entity].c
+                                : true
+                            )
+                            .map((item, index) => (
+                              <MenuItem
+                                key={index}
+                                onClick={() =>
+                                  handleOpenDialog(
+                                    item.title,
+                                    item.type,
+                                    item?.primarySecondButtonText ?? '',
+                                    item.initialData
+                                  )
+                                }
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  paddingLeft: 2,
+                                  paddingBottom: 2,
+                                  gap: 1,
+                                }}
+                              >
+                                <img
+                                  src={item.icon}
+                                  alt={item.alt}
+                                  width={20}
+                                  style={{ marginRight: 8 }}
+                                />
+                                {item.title}
+                              </MenuItem>
+                            ))}
+                        </MenuList>
+                      </ClickAwayListener>
+                    </Paper>
+                  </Grow>
+                )}
+              </Popper>
+            </Box>
+          )}
 
           {/* View Grouping Dropdown */}
           <Box
@@ -1502,108 +1535,124 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               </Box>
 
               {/* View Selector + Save View Button */}
-              <Box className="view-btn" sx={{ display: 'flex', gap: 2 }}>
-                <Box>
-                  <ViewButton
-                    startIcon={<PreferencesIcon />}
-                    endIcon={<KeyboardArrowDownIcon />}
-                    onClick={handleViewClick}
-                    aria-controls={open ? 'view-menu' : undefined}
-                    aria-haspopup="true"
-                    aria-expanded={open ? 'true' : undefined}
-                  >
-                    <EllipsisNameCell value={currentViewName} />
-                  </ViewButton>
+              {permissions['UserAllocationView'].r && (
+                <Box className="view-btn" sx={{ display: 'flex', gap: 2 }}>
+                  <Box>
+                    <ViewButton
+                      startIcon={<PreferencesIcon />}
+                      endIcon={<KeyboardArrowDownIcon />}
+                      onClick={handleViewClick}
+                      aria-controls={open ? 'view-menu' : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={open ? 'true' : undefined}
+                    >
+                      <EllipsisNameCell value={currentViewName} />
+                    </ViewButton>
 
-                  <StyledMenu
-                    id="group-menu"
-                    anchorEl={anchorEl}
-                    open={open}
-                    onClose={handleClose}
-                    MenuListProps={{ 'aria-labelledby': 'view-button' }}
-                    PaperProps={{
-                      style: {
-                        minWidth: 'auto',
-                        width: 'auto',
-                        position: 'absolute',
-                        left: 0,
-                      },
-                    }}
-                  >
-                    {savedViews.map(option => (
-                      <StyledViewMenuItem
-                        key={option.Id}
-                        onClick={() => handleMenuItemClick(option.Id)}
-                        className={selectedView === option.Id ? 'selected' : ''}
-                        sx={
-                          option.Id === '0'
-                            ? { borderTop: '1px solid #DDE1E4' }
-                            : {}
-                        }
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            minWidth: '180px',
-                          }}
+                    <StyledMenu
+                      id="group-menu"
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={handleClose}
+                      MenuListProps={{ 'aria-labelledby': 'view-button' }}
+                      PaperProps={{
+                        style: {
+                          minWidth: 'auto',
+                          width: 'auto',
+                          position: 'absolute',
+                          left: 0,
+                        },
+                      }}
+                    >
+                      {savedViews.map(option => (
+                        <StyledViewMenuItem
+                          key={option.Id}
+                          onClick={() => handleMenuItemClick(option.Id)}
+                          className={
+                            selectedView === option.Id ? 'selected' : ''
+                          }
+                          sx={
+                            option.Id === '0'
+                              ? { borderTop: '1px solid #DDE1E4' }
+                              : {}
+                          }
                         >
                           <Box
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 1,
+                              gap: 3,
+                              minWidth: '180px',
                             }}
                           >
-                            {getIcon(option.Id)}
-                            <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
-                          </Box>
-                          {option.isDefault && option.Id !== '0' && (
-                            <Typography className="tag">default</Typography>
-                          )}
-                          {option.Id !== '0' && (
-                            <Box className="action-buttons">
-                              <ActionIconButton
-                                size="small"
-                                onClick={e => handleEditView(e, option)}
-                              >
-                                <EditActionIcon />
-                              </ActionIconButton>
-                              <ActionIconButton
-                                size="small"
-                                onClick={e => handleDeleteView(e, option)}
-                              >
-                                <DeleteActionIcon />
-                              </ActionIconButton>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
+                            >
+                              {getIcon(option.Id)}
+                              <Box sx={{ flexGrow: 1 }}>{option.Name}</Box>
                             </Box>
-                          )}
-                        </Box>
-                      </StyledViewMenuItem>
-                    ))}
-                  </StyledMenu>
-                </Box>
+                            {option.isDefault && option.Id !== '0' && (
+                              <Typography className="tag">default</Typography>
+                            )}
+                            {option.Id !== '0' && (
+                              <Box className="action-buttons">
+                                {permissions['UserAllocationView'].u && (
+                                  <ActionIconButton
+                                    size="small"
+                                    onClick={e => handleEditView(e, option)}
+                                  >
+                                    <EditActionIcon />
+                                  </ActionIconButton>
+                                )}
+                                {permissions['UserAllocationView'].d && (
+                                  <ActionIconButton
+                                    size="small"
+                                    onClick={e => handleDeleteView(e, option)}
+                                  >
+                                    <DeleteActionIcon />
+                                  </ActionIconButton>
+                                )}
+                              </Box>
+                            )}
+                          </Box>
+                        </StyledViewMenuItem>
+                      ))}
+                    </StyledMenu>
+                  </Box>
 
-                <Button
-                  disabled={
-                    currentView.GroupBy.includes('Cost') ||
-                    isObjectEqual(
-                      savedViews.find(view => view.Id === selectedView),
-                      currentView
-                    )
-                  }
-                  onClick={handleSaveView}
-                  sx={{
-                    border: 'none !important',
-                    color: '#344665 !important',
-                    textTransform: 'none',
-                    marginTop: '2px',
-                    '&.Mui-disabled': { color: '#9F9F9F !important' },
-                  }}
-                >
-                  <EllipsisNameCell value="Save View" />
-                </Button>
-              </Box>
+                  {((selectedView !== '0' &&
+                    (permissions['UserAllocationView'].c ||
+                      permissions['UserAllocationView'].u)) ||
+                    (selectedView === '0' &&
+                      permissions['UserAllocationView'].c)) && (
+                    <Button
+                      disabled={
+                        (!permissions['UserAllocationView'].c &&
+                          !permissions['UserAllocationView'].u) ||
+                        currentView.GroupBy.includes('Cost') ||
+                        isObjectEqual(
+                          savedViews.find(view => view.Id === selectedView),
+                          currentView
+                        )
+                      }
+                      onClick={handleSaveView}
+                      sx={{
+                        border: 'none !important',
+                        color: '#344665 !important',
+                        textTransform: 'none',
+                        marginTop: '2px',
+                        '&.Mui-disabled': { color: '#9F9F9F !important' },
+                      }}
+                    >
+                      <EllipsisNameCell value="Save View" />
+                    </Button>
+                  )}
+                </Box>
+              )}
             </Box>
           </ToolBox2>
         </ToolBox1>
@@ -1684,100 +1733,115 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         }}
       >
         <Box className="lowerToolbarSub" sx={{ display: 'flex' }}>
-          <ToolBox2>
-            <Stack direction="row" sx={{ alignItems: 'center' }}>
-              <Typography
-                sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
-              >
-                Allocations
-              </Typography>
-              <Switch
-                size="small"
-                checked={currentView?.GroupBy.includes('Cost')}
-                onChange={handleAllocationCostSwitch}
-                disabled={
-                  currentView?.GroupBy === 'Portfolio' ||
-                  currentView?.GroupBy === 'Organisations' ||
-                  currentView?.GroupBy === 'Resources' ||
-                  currentView?.GroupBy === 'Flat'
-                }
-              />
-              <Typography
-                sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#344665' }}
-              >
-                Costs
-              </Typography>
-            </Stack>
-          </ToolBox2>
-          <Box
-            sx={{
-              borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
-              ml: '20px',
-              height: '34px',
-              position: 'relative',
-              top: '10px',
-            }}
-          ></Box>
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', marginLeft: '22px' }}
-          >
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showActuals}
-                  onChange={handleShowActualsToggle}
-                  size="small"
-                  sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
-                />
-              }
-              label={
+          {permissions['AllocationCost'].r && (
+            <ToolBox2>
+              <Stack direction="row" sx={{ alignItems: 'center' }}>
                 <Typography
                   sx={{
-                    color: '#374151',
-                    fontFamily: 'Open Sans',
-                    fontSize: '14px',
-                    fontStyle: 'normal',
-                    fontWeight: 500,
-                    lineHeight: '20px',
-                    marginRight: '-12px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: '#344665',
                   }}
                 >
-                  Show Actuals
+                  Allocations
                 </Typography>
-              }
-            />
-            <Tooltip
-              placement="right"
-              title={
-                <Box>
-                  <Typography variant="body2">
-                    Displays actuals beneath planned allocations for all weeks
-                    with actuals.
-                  </Typography>
-                  <Typography variant="body2" fontWeight="bold" mt={1}>
-                    Color indicators:
-                  </Typography>
-                  <Typography variant="body2">
-                    <span>● Green</span> = match
-                    <br />
-                    <span>● Yellow</span> = actuals are lower
-                    <br />
-                    <span>● Red</span> = actuals are higher than planned.
-                  </Typography>
-                </Box>
-              }
-            >
+                <Switch
+                  size="small"
+                  checked={currentView?.GroupBy.includes('Cost')}
+                  onChange={handleAllocationCostSwitch}
+                  disabled={
+                    currentView?.GroupBy === 'Portfolio' ||
+                    currentView?.GroupBy === 'Organisations' ||
+                    currentView?.GroupBy === 'Resources' ||
+                    currentView?.GroupBy === 'Flat'
+                  }
+                />
+                <Typography
+                  sx={{
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: '#344665',
+                  }}
+                >
+                  Costs
+                </Typography>
+              </Stack>
+            </ToolBox2>
+          )}
+          {permissions['AllocationCost'].r &&
+            permissions['ActualsStatus'].r && (
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  cursor: 'pointer',
+                  borderLeft: 'rgba(206, 220, 233, 0.5) solid 1px',
+                  ml: '20px',
+                  height: '34px',
+                  position: 'relative',
+                  top: '10px',
                 }}
+              ></Box>
+            )}
+          {permissions['ActualsStatus'].r && (
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', marginLeft: '22px' }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={showActuals}
+                    onChange={handleShowActualsToggle}
+                    size="small"
+                    sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
+                  />
+                }
+                label={
+                  <Typography
+                    sx={{
+                      color: '#374151',
+                      fontFamily: 'Open Sans',
+                      fontSize: '14px',
+                      fontStyle: 'normal',
+                      fontWeight: 500,
+                      lineHeight: '20px',
+                      marginRight: '-12px',
+                    }}
+                  >
+                    Show Actuals
+                  </Typography>
+                }
+              />
+              <Tooltip
+                placement="right"
+                title={
+                  <Box>
+                    <Typography variant="body2">
+                      Displays actuals beneath planned allocations for all weeks
+                      with actuals.
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold" mt={1}>
+                      Color indicators:
+                    </Typography>
+                    <Typography variant="body2">
+                      <span>● Green</span> = match
+                      <br />
+                      <span>● Yellow</span> = actuals are lower
+                      <br />
+                      <span>● Red</span> = actuals are higher than planned.
+                    </Typography>
+                  </Box>
+                }
               >
-                <img src="/images/icons/InfoRounded.svg" alt="info" />
-              </Box>
-            </Tooltip>
-          </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <img src="/images/icons/InfoRounded.svg" alt="info" />
+                </Box>
+              </Tooltip>
+            </Box>
+          )}
         </Box>
 
         <Box
@@ -1953,4 +2017,13 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
 
 CustomToolbar.displayName = 'CustomToolbar';
 
-export default CustomToolbar;
+export default withRBAC(CustomToolbar, [
+  'UserAllocationView',
+  'AllocationCost',
+  'ActualsStatus',
+  'Allocation',
+  'Organization',
+  'Team',
+  'Resource',
+  'Project',
+]);

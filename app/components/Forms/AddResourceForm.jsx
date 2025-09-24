@@ -24,6 +24,7 @@ import { useEffect, useState } from 'react';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { useDispatch } from 'react-redux';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import {
   fetchResourceAllocationsForSaga,
   fetchTeamAllocationsForSaga,
@@ -86,9 +87,11 @@ const AddResourceForm = ({
   const { resources } = useSelector(state => state.resources);
   const { teams } = useSelector(state => state.teams);
   const { organisations } = useSelector(state => state.organisations);
+  const { location } = useSelector(state => state.allSettings);
   const { formType } = useSelector(state => state.globalDialog.formState);
   const [showWarning, setShowWarning] = useState(false);
   const [shareLink, setShareLink] = useState('');
+  const [locationOptions, setLocationOptions] = useState([]);
   const [readOnly, setReadOnly] = useState(true);
 
   const resourceListOptions =
@@ -137,11 +140,13 @@ const AddResourceForm = ({
       const matchedOrg = organisations?.find(
         org => org.Name === initialData.Organization
       );
-
+      const matchedLocation = location?.find(
+        loc => loc.Name === initialData.WorkLocation
+      );
       const rowData = {
         StartDate: initialData.StartDate || null,
         EndDate: initialData.EndDate || null,
-        WorkLocation: initialData.WorkLocation || null,
+        WorkLocation: matchedLocation?.Id || null,
         Manager: initialData.Manager || '',
         FirstName: initialData.FirstName || '',
         LastName: initialData.LastName || '',
@@ -209,6 +214,23 @@ const AddResourceForm = ({
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (!location || location.length === 0) {
+      dispatch({ type: FETCH_LOCATION });
+    }
+  }, [dispatch, location]);
+
+  useEffect(() => {
+    if (location && Array.isArray(location)) {
+      const locationNames =
+        location.map(loc => ({
+          value: loc.Id,
+          label: loc.Name,
+        })) || [];
+      setLocationOptions(locationNames);
+    }
+  }, [location]);
 
   // Add effect to watch Team and Organisation changes
   useEffect(() => {
@@ -726,20 +748,15 @@ const AddResourceForm = ({
       </Box>
       <Box sx={{ flex: 1 }}>
         <StyledLabel>Work Location</StyledLabel>
-        <StyledInput
+        <StyledAutocomplete
           disabled={readOnly}
-          readOnly={readOnly}
           name="WorkLocation"
-          placeholder="Enter location"
+          label="Work Location"
+          placeholder="Select Location"
           value={values.WorkLocation || ''}
-          onChange={handleChange}
-          onBlur={e => {
-            const trimmedValue = e.target.value.trim();
-            setFieldValue('WorkLocation', trimmedValue);
-            handleBlur(e);
-          }}
-          error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-          helperText={touched.WorkLocation && errors.WorkLocation}
+          options={locationOptions}
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
       <Box>
