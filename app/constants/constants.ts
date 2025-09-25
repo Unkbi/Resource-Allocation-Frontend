@@ -261,3 +261,5 @@ export const PROJECT_PAGE_VALID_TABS = [
   'portfolio',
   'businessImpact',
 ] as const;
+
+export const PROJECT_TYPE_VALID_TABS = ['project-types', 'project-types-group'];

@@ -51,6 +51,9 @@ export * from './allSettingsType';
 // Project Types Types
 export * from './projectTypesType';
 
+// Dialog Types
+export * from './dialogTypes';
+
 /* This is a General Type for API Response */
 export interface ApiResponse<T> {
   status?: string;

@@ -2595,10 +2595,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             Color: cleanedValues.Color,
             Status: cleanedValues.Status,
-            Group:
-              projectTypeGroups.find(group => {
-                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
-              })?.Id || null,
+            Group: cleanedValues.ProjectTypeGroup,
           };
           try {
             const response = await new Promise((resolve, reject) => {
@@ -2652,11 +2649,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             Color: cleanedValues.Color,
             Status: cleanedValues.Status,
-
-            Group:
-              projectTypeGroups.find(group => {
-                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
-              })?.Id || null,
+            Group: cleanedValues.ProjectTypeGroup,
           };
           try {
             const response = await new Promise((resolve, reject) => {
