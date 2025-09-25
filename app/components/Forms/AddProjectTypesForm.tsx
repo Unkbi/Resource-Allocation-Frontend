@@ -1,12 +1,17 @@
 'use client';
 
-import { Box, TextField, Autocomplete } from '@mui/material';
+import { Box, TextField } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { MuiColorInput } from 'mui-color-input';
 import { FormikProps } from 'formik';
 import { StyledCommentInput, StyledInput } from '../Input/StyledInput';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { RootState } from '@/app/redux/store';
+import StyledAutocomplete from '../Select/Autocomplete';
+import { ProjectTypeGroup } from '@/app/types';
 
 export interface ProjectType {
   Name: string;
@@ -19,14 +24,30 @@ export interface ProjectType {
 interface AddProjectTypesForm {
   formikProps: FormikProps<ProjectType>;
   setFormValue: (value: ProjectType) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
-const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjectTypesForm) => {
+const AddProjectTypesForm = ({
+  formikProps,
+  setFormValue = () => {},
+  permissions,
+}: AddProjectTypesForm) => {
+  const theme = useTheme();
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const [projectTypeGroupName, setProjectTypeGroupName] = useState([]);
-  const { initialData } = useSelector((state: any) => state.globalDialog.formState);
-  const { projectTypeGroups } = useSelector((state: any) => state.allSettings);
+  const [projectTypeGroupName, setProjectTypeGroupName] = useState<
+    ProjectTypeGroup[]
+  >([]);
+  const { initialData } = useSelector(
+    (state: RootState) => state.globalDialog.formState
+  );
+  const { projectTypeGroups } = useSelector(
+    (state: RootState) => state.allSettings
+  );
+  const { formType } = useSelector(
+    (state: RootState) => state.globalDialog.formState
+  );
+  const [readOnly, setReadOnly] = useState(true);
   const [description, setDescription] = useState('');
   const commonAutocompleteStyles = {
     '& .MuiInputBase-root': { fontSize: '12px' },
@@ -37,19 +58,29 @@ const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjec
   };
 
   useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_project_type' && !permissions['ProjectType']?.u) ||
+        (formType === 'add_project_type' && !permissions['ProjectType']?.c)
+    );
+  }, []);
+
+  useEffect(() => {
     setProjectTypeGroupName(projectTypeGroups || []);
-    
+
     if (initialData) {
+      const matchedProjectTypeGroup = projectTypeGroups.find(
+        pTGrp => pTGrp.Name === initialData.projectTypesGroup
+      );
       const rowData = {
         Name: initialData.Name || '',
-        ProjectTypeGroup: initialData.projectTypesGroup || '',
+        ProjectTypeGroup: matchedProjectTypeGroup?.Id || '',
         Description: initialData.description || '',
         Status: initialData.Status || 'Active',
         Color: initialData.Color || '#CCE0FF',
       };
-       setFormValue(rowData);
+      setFormValue(rowData);
       formikProps.resetForm({ values: rowData });
-      formikProps.setTouched({});     
+      formikProps.setTouched({});
     }
   }, [initialData, projectTypeGroups]);
 
@@ -62,6 +93,17 @@ const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjec
       }
     };
 
+  const statusOptions = [
+    { value: 'Active', label: 'Active' },
+    { value: 'Inactive', label: 'Inactive' },
+  ];
+
+  const projectTypeGroupNameOptions =
+    projectTypeGroupName?.map((projectTypeGroup: ProjectTypeGroup) => ({
+      value: projectTypeGroup.Id,
+      label: projectTypeGroup.Name ?? '',
+    })) || [];
+
   return (
     <Box>
       <Box sx={{ pb: 2 }}>
@@ -69,6 +111,8 @@ const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjec
           Project Type Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           as={TextField}
           name="Name"
           placeholder="Enter Name"
@@ -86,48 +130,25 @@ const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjec
           {' '}
           Project Type Group <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <Autocomplete
-          sx={commonAutocompleteStyles}
-          size="small"
-          options={projectTypeGroupName}
-          getOptionLabel={(option: any) => option.Name || ''}
-          value={
-            projectTypeGroupName.find(
-              (group: any) => group.Name === values.ProjectTypeGroup
-            ) || null
-          }
-          onChange={handleAutocompleteChange('ProjectTypeGroup')}
-          onBlur={() => formikProps.setFieldTouched('ProjectTypeGroup', true)}
-          renderInput={params => (
-            <TextField
-              {...params}
-              name="ProjectTypeGroup"
-              placeholder="Select Group"
-              variant="outlined"
-              error={
-                touched.ProjectTypeGroup && Boolean(errors.ProjectTypeGroup)
-              }
-              helperText={touched.ProjectTypeGroup && errors.ProjectTypeGroup}
-              slotProps={{
-                formHelperText: {
-                  sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-                },
-              }}
-            />
-          )}
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="ProjectTypeGroup"
+          label="Select Project Type Group"
+          options={projectTypeGroupNameOptions}
+          value={values.ProjectTypeGroup || ''}
+          formikProps={formikProps}
         />
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>
-          Description
-        </StyledLabel>
+        <StyledLabel>Description</StyledLabel>
         <StyledCommentInput
+          disabled={readOnly}
           as={TextField}
           multiline
           rows={5}
           name="Description"
-          placeholder="Enter Description"
+          placeholder={readOnly ? '' : 'Enter Description'}
           fullWidth
           onChange={e => {
             handleChange(e);
@@ -148,6 +169,7 @@ const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjec
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Color</StyledLabel>
         <MuiColorInput
+          disabled={readOnly}
           name="Color"
           format="hex"
           value={values.Color ?? '#CCE0FF'}
@@ -167,36 +189,36 @@ const AddProjectTypesForm = ({ formikProps, setFormValue = () => {} }: AddProjec
             '& .MuiInputBase-input': {
               fontSize: '14px',
             },
+            '& .Mui-disabled': {
+              //@ts-ignore
+              backgroundColor: theme.palette.readonly?.main ?? '#f3f3f3', // fallback if not defined
+              cursor: 'default',
+            },
+            '& .Mui-disabled .MuiInputBase-input': {
+              color: '#6B7280 !important',
+              WebkitTextFillColor:
+                //@ts-ignore
+                theme.palette.readonly?.contrastText ?? '#333', // fallback if not defined
+            },
           }}
         />
       </Box>
 
       <Box sx={{ pb: 2 }}>
-        <StyledLabel>Status  <span style={{ color: 'red' }}>*</span></StyledLabel>
-        <Autocomplete
-          disableClearable
-          sx={commonAutocompleteStyles}
-          size="small"
-          options={['Active', 'Inactive']}
-          value={values.Status || 'Active'}
-          onChange={handleAutocompleteChange('Status')}
-          renderInput={params => (
-            <TextField
-              {...params}
-              name="Status"
-              error={touched.Status && Boolean(errors.Status)}
-              helperText={touched.Status && errors.Status}
-              slotProps={{
-                formHelperText: {
-                  sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-                },
-              }}
-            />
-          )}
+        <StyledLabel>
+          Status <span style={{ color: 'red' }}>*</span>
+        </StyledLabel>
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="Status"
+          label="Status"
+          options={statusOptions}
+          value={values.Status || ''}
+          formikProps={formikProps}
         />
       </Box>
     </Box>
   );
 };
 
-export default AddProjectTypesForm;
+export default withRBAC(AddProjectTypesForm, ['ProjectType']);
