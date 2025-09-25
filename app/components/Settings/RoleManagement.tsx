@@ -955,6 +955,7 @@ export default function RoleManagementPage() {
           renderMenu={renderRoleMenu}
           apiRef={apiRef}
           loading={rolesLoading}
+          toolbarType="filter"
         />
       )}
       {tab === 'role-assignments' && (
@@ -980,6 +981,7 @@ export default function RoleManagementPage() {
           columns={roleAssignmentColumns}
           apiRef={apiRef}
           loading={roleAssignmentsLoading}
+          toolbarType="filter"
         />
       )}
       {tab === 'privilege-management' && (
@@ -998,6 +1000,7 @@ export default function RoleManagementPage() {
           columns={privilegesColumns}
           apiRef={apiRef}
           loading={privilegesLoading}
+          toolbarType="filter"
         />
       )}
       {tab === 'privilege-assignments' && (
@@ -1018,6 +1021,7 @@ export default function RoleManagementPage() {
           columns={privilegeAssignmentsColumns}
           apiRef={apiRef}
           loading={privilegeAssignmentsLoading}
+          toolbarType="filter"
         />
       )}
 

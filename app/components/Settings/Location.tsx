@@ -531,6 +531,7 @@ export default function RoleManagementPage() {
           columns={LocationPageColumns}
           apiRef={apiRef}
           loading={loading}
+          toolbarType="filter"
         />
       )}
       {tab === 'location-group' && (
@@ -549,6 +550,7 @@ export default function RoleManagementPage() {
           columns={LocationGroupColumns}
           apiRef={apiRef}
           loading={loading}
+          toolbarType="filter"
         />
       )}
 

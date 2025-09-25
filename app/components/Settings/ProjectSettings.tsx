@@ -563,6 +563,7 @@ export default function ProjectSettingPage() {
           columns={ProjectTypesPageColumns}
           apiRef={apiRef}
           loading={loading}
+          toolbarType="filter"
         />
       )}
       {tab === 'project-types-group' && (
@@ -581,6 +582,7 @@ export default function ProjectSettingPage() {
           columns={ProjectTypesGroupColumns}
           apiRef={apiRef}
           loading={loading}
+          toolbarType="filter"
         />
       )}
 
