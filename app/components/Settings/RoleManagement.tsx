@@ -587,16 +587,15 @@ export default function RoleManagementPage() {
       field: 'User',
       headerName: 'Assigned User',
       flex: 1,
-      renderCell: (params: any) => {
-        const value = params.value;
+      valueGetter: (params: any) => {
+        const value = params;
         const userId = value?.includes('/') ? value.split('/').pop() : value;
         const matchedUser = user?.find(u => u.id === userId);
-        const displayValue = matchedUser
-          ? `${matchedUser.firstName} ${matchedUser.lastName}`
-          : userId;
-
-        return <Typography sx={commonCellStyle}>{displayValue}</Typography>;
+        return matchedUser ? `${matchedUser.firstName} ${matchedUser.lastName}` : userId;
       },
+      renderCell: (params: any) => (
+        <Typography sx={commonCellStyle}>{params.value}</Typography>
+      ),
     },
     {
       field: 'Status',
