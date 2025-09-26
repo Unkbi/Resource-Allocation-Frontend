@@ -1112,8 +1112,9 @@ function AllocationGrid({
       const rowNode = apiRef.current.getRowNode(params.id);
       if (
         rowNode &&
-        rowNode.type === 'group' &&
-        rowNode.groupingField != 'teams'
+        rowNode.type === 'group'
+        // Commenting to allow expansion of teams groups as well on click anywhere on row Teams View
+        // && rowNode.groupingField != 'teams'
       ) {
         apiRef.current.setRowChildrenExpansion(
           params.id,
@@ -1410,11 +1411,7 @@ function AllocationGrid({
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}
-      onRowClick={
-        groupBy === 'teams' || groupBy === 'organisationName'
-          ? onRowClick
-          : () => null
-      }
+      onRowClick={onRowClick}
       apiRef={apiRef}
       groupBy={groupBy}
       loading={loading}
