@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import {
   Box,
   Button,
@@ -8,10 +8,21 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  Chip,
 } from '@mui/material';
 import { StyledInput } from '../Input/StyledInput';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { DataGrid, GridRowSelectionModel } from '@mui/x-data-grid';
+import {
+  DataGrid,
+  GridRowSelectionModel,
+  GridToolbarColumnsButton,
+  GridToolbarContainer,
+  GridToolbarFilterButton,
+} from '@mui/x-data-grid';
+import {
+  ColumnManagementStyles,
+  FilterPanelStyles,
+} from '../AllocationTable/styles/StyledDataGrid';
 
 interface AccessTableProps {
   title: string;
@@ -30,6 +41,13 @@ interface AccessTableProps {
   loading?: boolean;
   checkboxSelection?: boolean;
   setMode?: () => void;
+  onBulkAddUser?: (resources: any[]) => void;
+  onBulkSendInvite?: (resources: any[]) => void;
+  onBulkResendInvite?: (resources: any[]) => void;
+  onBulkDeactivateUser?: (resources: any[]) => void;
+  onBulkReactivateUser?: (resources: any[]) => void;
+  selectedRowIds?: Set<string>;
+  onSelectionChange?: (hasSelection: boolean, selectedIds: Set<string>) => void;
 }
 
 export default function AccessTable({
@@ -49,6 +67,13 @@ export default function AccessTable({
   loading = false,
   checkboxSelection = false,
   setMode,
+  onBulkAddUser,
+  onBulkSendInvite,
+  onBulkResendInvite,
+  onBulkDeactivateUser,
+  onBulkReactivateUser,
+  selectedRowIds = new Set(),
+  onSelectionChange,
 }: AccessTableProps) {
   const [search, setSearch] = useState('');
   const [gridView, setGridView] = useState<'grid' | 'list'>('grid');
@@ -56,26 +81,67 @@ export default function AccessTable({
   const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>(
     []
   );
+  const [filterButtonEl, setFilterButtonEl] = useState(null);
   const [showToolbar, setShowToolbar] = useState(false);
+  const [activeQuickFilter, setActiveQuickFilter] = useState('Not Created');
+  const [filterModel, setFilterModel] = useState({
+    items: [],
+  });
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  // Refs for external filter and column buttons to use as anchor elements
+  const externalFilterButtonRef = useRef<HTMLButtonElement>(null);
+  const externalColumnButtonRef = useRef<HTMLButtonElement>(null);
+  const [currentAnchorEl, setCurrentAnchorEl] = useState<HTMLElement | null>(
+    null
+  );
+
+  const quickFilterOptions = [
+    { label: 'All', value: 'All' },
+    { label: 'Not Created', value: 'Not Created' },
+    { label: 'Created', value: 'Created' },
+    { label: 'Invited', value: 'Invited' },
+    { label: 'Active', value: 'Active' },
+    { label: 'Inactive', value: 'Inactive' },
+  ];
 
   const filteredRows = useMemo(() => {
-    if (!search) return data || [];
-    const q = search.toLowerCase();
-    return (data || []).filter(row => {
-      return (
-        (row.Name && String(row.Name).toLowerCase().includes(q)) ||
-        (row.email && String(row.email).toLowerCase().includes(q))
-      );
-    });
-  }, [data, search]);
+    if (!data) return [];
 
-  // This will be called whenever selection changes
-  const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
-    if (newSelection.length > 0) {
-      setShowToolbar(true);
-    } else {
-      setShowToolbar(false);
+    let filtered = data;
+
+    if (title === 'Resources' && activeQuickFilter !== 'All') {
+      filtered = filtered.filter((row: any) => {
+        return row.userStatus === activeQuickFilter;
+      });
     }
+
+    // Apply search filter
+    if (search) {
+      filtered = filtered.filter((row: any) => {
+        return (
+          (row.Name &&
+            String(row.Name).toLowerCase().includes(search.toLowerCase())) ||
+          (row.email &&
+            String(row.email).toLowerCase().includes(search.toLowerCase()))
+        );
+      });
+    }
+
+    return filtered;
+  }, [data, search, activeQuickFilter, title]);
+
+  const handleQuickFilterChange = (filterValue: string) => {
+    setActiveQuickFilter(filterValue);
+  };
+
+  const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
+    const hasSelection = newSelection.length > 0;
+    setShowToolbar(hasSelection);
+
+    const selectedIds = new Set(newSelection.map(id => String(id)));
+
+    onSelectionChange?.(hasSelection, selectedIds);
 
     setSelectionModel(newSelection);
     const ids = new Set(newSelection.map(id => String(id)));
@@ -83,6 +149,69 @@ export default function AccessTable({
       ids.has(String(row.id ?? row.Name ?? JSON.stringify(row)))
     );
     setSelectedRows(selected);
+  };
+
+  const getAvailableActions = () => {
+    if (!selectedRows.length) return {};
+
+    const getStatus = (row: any) => {
+      return title === 'Resources' ? row.userStatus : row.status;
+    };
+
+    const canAddUser =
+      title === 'Resources'
+        ? selectedRows.some(row => getStatus(row) === 'Not Created')
+        : false;
+    const canSendInvite = selectedRows.some(
+      row => getStatus(row) === 'Created'
+    );
+    const canResendInvite = selectedRows.some(
+      row => getStatus(row) === 'Invited'
+    );
+    const canDeactivate = selectedRows.some(row =>
+      ['Created', 'Invited', 'Active'].includes(getStatus(row))
+    );
+    const canReactivate = selectedRows.some(
+      row => getStatus(row) === 'Inactive'
+    );
+
+    return {
+      showAddUser: canAddUser,
+      showSendInvite: canSendInvite,
+      showResendInvite: canResendInvite,
+      showDeactivate: canDeactivate,
+      showReactivate: canReactivate,
+    };
+  };
+
+  const availableActions = getAvailableActions();
+
+  const handleFilterModelChange = (newModel: any) => {
+    setFilterModel(newModel);
+  };
+
+  const handleColumnVisibilityModelChange = (newModel: any) => {
+    setColumnVisibilityModel(newModel);
+  };
+
+  // Get toggleable columns - filter out action column and include all data columns
+  const getTogglableColumns = (columns: any[]) => {
+    return columns
+      .filter(column => column.field !== 'actions')
+      .map(column => column.field);
+  };
+
+  const filterColumns = ({ columns }: { columns: any[] }) => {
+    return getTogglableColumns(columns);
+  };
+
+  const CustomToolbar = () => {
+    return (
+      <GridToolbarContainer sx={{ display: 'none' }}>
+        <GridToolbarFilterButton />
+        <GridToolbarColumnsButton />
+      </GridToolbarContainer>
+    );
   };
 
   return (
@@ -103,73 +232,197 @@ export default function AccessTable({
             <Typography
               sx={{ color: '#152E75', fontWeight: 700, fontSize: 13 }}
             >
-              {selectedRows.length} Resources selected
+              {selectedRows.length}{' '}
+              {title === 'Resources' ? 'Resources' : 'Users'} selected
             </Typography>
 
             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-              <Button
-                variant="contained"
-                onClick={() => onAdd()}
-                sx={{
-                  height: 36,
-                  borderRadius: 1,
-                  background: '#152E75',
-                  color: '#FFF',
-                  textTransform: 'none',
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                Add User
-              </Button>
+              {title === 'Resources' ? (
+                // Resource-specific toolbar buttons
+                <>
+                  {availableActions.showAddUser && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkAddUser?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Add
+                    </Button>
+                  )}
 
-              <Button
-                variant="contained"
-                onClick={() => console.log('Send Invite', selectedRows)}
-                sx={{
-                  height: 36,
-                  borderRadius: 1,
-                  background: '#152E75',
-                  color: '#FFF',
-                  textTransform: 'none',
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                Send Invite
-              </Button>
+                  {availableActions.showSendInvite && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkSendInvite?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Invite
+                    </Button>
+                  )}
 
-              <Button
-                variant="contained"
-                onClick={() => console.log('Re-Send Invite', selectedRows)}
-                sx={{
-                  height: 36,
-                  borderRadius: 1,
-                  background: '#152E75',
-                  color: '#FFF',
-                  textTransform: 'none',
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                Re-Send Invite
-              </Button>
+                  {availableActions.showResendInvite && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkResendInvite?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Reinvite
+                    </Button>
+                  )}
 
-              <Button
-                variant="contained"
-                onClick={() => console.log('Deactivate', selectedRows)}
-                sx={{
-                  height: 36,
-                  borderRadius: 1,
-                  borderColor: '#152E75',
-                  color: '#FFF',
-                  textTransform: 'none',
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                Deactivate User
-              </Button>
+                  {availableActions.showDeactivate && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkDeactivateUser?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Deactivate
+                    </Button>
+                  )}
+                  {availableActions.showReactivate && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkReactivateUser?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Reactivate
+                    </Button>
+                  )}
+                </>
+              ) : (
+                // User-specific toolbar buttons - use same logic as Resources
+                <>
+                  {availableActions.showAddUser && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkAddUser?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Add
+                    </Button>
+                  )}
+
+                  {availableActions.showSendInvite && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkSendInvite?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Invite
+                    </Button>
+                  )}
+
+                  {availableActions.showResendInvite && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkResendInvite?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Re-invite
+                    </Button>
+                  )}
+
+                  {availableActions.showDeactivate && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkDeactivateUser?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Deactivate
+                    </Button>
+                  )}
+
+                  {availableActions.showReactivate && (
+                    <Button
+                      variant="contained"
+                      onClick={() => onBulkReactivateUser?.(selectedRows)}
+                      sx={{
+                        height: 36,
+                        borderRadius: 1,
+                        background: '#152E75',
+                        color: '#FFF',
+                        textTransform: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      Reactivate
+                    </Button>
+                  )}
+                </>
+              )}
             </Box>
           </Box>
         ) : (
@@ -179,21 +432,87 @@ export default function AccessTable({
             py={2}
             display="flex"
             alignItems="center"
-            gap={2}
+            justifyContent={title === 'Resources' ? 'space-between' : 'unset'}
             sx={{ borderBottom: '0.667px solid #E5E7EB' }}
           >
-            <StyledInput
-              as={TextField}
-              name="Location"
-              size="small"
-              placeholder="Search by Name /or email"
-              value={search}
-              sx={{ width: 230 }}
-              onChange={(e:any) => setSearch(e.target.value)}
-            />
+            {/* Quick Filter Chips */}
+
+            {title === 'Resources' ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: 14,
+                      color: '#6B7280',
+                      mr: 1,
+                    }}
+                  >
+                    Quick Filter
+                  </Typography>
+                  {quickFilterOptions.map(option => (
+                    <Chip
+                      key={option.value}
+                      label={option.label}
+                      onClick={() => handleQuickFilterChange(option.value)}
+                      variant={
+                        activeQuickFilter === option.value
+                          ? 'filled'
+                          : 'outlined'
+                      }
+                      sx={{
+                        height: 32,
+                        borderRadius: 0,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border:
+                          activeQuickFilter === option.value
+                            ? 'none'
+                            : '1px solid #E2E8F0',
+                        backgroundColor:
+                          activeQuickFilter === option.value
+                            ? '#152E75'
+                            : '#EEEEEE',
+                        color:
+                          activeQuickFilter === option.value
+                            ? '#FFF'
+                            : '#6B7280',
+                      }}
+                    />
+                  ))}
+                </Box>
+                <StyledInput
+                  as={TextField}
+                  name="Location"
+                  size="small"
+                  placeholder="Search by Name /or email"
+                  value={search}
+                  sx={{ width: 230 }}
+                  onChange={(e: any) => setSearch(e.target.value)}
+                />
+              </Box>
+            ) : (
+              <StyledInput
+                as={TextField}
+                name="Location"
+                size="small"
+                placeholder="Search by Name /or email"
+                value={search}
+                sx={{ width: 230 }}
+                onChange={(e: any) => setSearch(e.target.value)}
+              />
+            )}
 
             <Box
-              sx={{ display: 'flex', alignItems: 'center', ml: 'auto', gap: 1 }}
+              sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box
@@ -204,62 +523,134 @@ export default function AccessTable({
                     mx: 1.5,
                   }}
                 />
-                <IconButton
-                  size="small"
-                  color={gridView === 'grid' ? 'primary' : 'default'}
-                  onClick={() => setGridView('grid')}
+                <Box
                   sx={{
-                    minWidth: 'unset',
-                    width: '41px',
-                    height: '36px',
-                    padding: '20px 10px 20px 10px',
-                    justifyContent: 'center',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    flexShrink: 0,
-                    borderRadius: '6px',
-                    border: '1px solid #E2E8F0',
-                    boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-                    '.MuiButton-startIcon': { marginRight: '0px' },
-                    '& .MuiBadge-root span': { top: '-12px', right: '-5px' },
-                    '& .MuiBadge-root svg': { display: 'none' },
+                    gap: 1,
                   }}
                 >
-                  <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
-                </IconButton>
+                  <IconButton
+                    ref={externalFilterButtonRef}
+                    size="small"
+                    onClick={event => {
+                      setCurrentAnchorEl(event.currentTarget);
 
-                <IconButton
-                  size="small"
-                  color={gridView === 'list' ? 'primary' : 'default'}
-                  onClick={() => setGridView('list')}
-                  sx={{
-                    minWidth: 'unset',
-                    width: '41px',
-                    height: '36px',
-                    padding: '20px 17px 20px 17px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '6px',
-                    flexShrink: 0,
-                    borderRadius: '6px',
-                    border: '1px solid #E2E8F0',
-                    boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-                    '& .MuiButton-startIcon': {
-                      marginRight: '0px',
-                    },
-                    '& .MuiButton-endIcon': {
-                      marginLeft: '0px',
-                    },
-                  }}
-                >
-                  <img src="images/icons/newColumnIcon.svg" alt="columns" />
-                </IconButton>
+                      setTimeout(() => {
+                        const filterButton =
+                          document.querySelector(
+                            'button[data-field="__toolbar__filters__"]'
+                          ) ||
+                          document.querySelector(
+                            '.MuiDataGrid-toolbarContainer button[title="Show filters"]'
+                          ) ||
+                          document
+                            .querySelector(
+                              '.MuiDataGrid-toolbarContainer [data-testid="FilterListIcon"]'
+                            )
+                            ?.closest('button');
+
+                        if (filterButton) {
+                          (filterButton as HTMLElement).click();
+                        } else {
+                          console.error('Filter button not found!');
+                        }
+                      }, 10);
+                    }}
+                    sx={{
+                      minWidth: 'unset',
+                      width: '41px',
+                      height: '36px',
+                      padding: '20px 10px 20px 17px',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '6px',
+                      flexShrink: 0,
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                    }}
+                  >
+                    <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
+                  </IconButton>
+                  <IconButton
+                    ref={externalColumnButtonRef}
+                    size="small"
+                    onClick={event => {
+                      setCurrentAnchorEl(event.currentTarget);
+
+                      setTimeout(() => {
+                        let columnsButton = document.querySelector(
+                          'button[data-field="__toolbar__columns__"]'
+                        );
+
+                        if (!columnsButton) {
+                          columnsButton = document.querySelector(
+                            '.MuiDataGrid-toolbarContainer button[title="Select columns"]'
+                          );
+                        }
+
+                        if (!columnsButton) {
+                          const viewColumnIcon = document.querySelector(
+                            '.MuiDataGrid-toolbarContainer [data-testid="ViewColumnIcon"]'
+                          );
+                          columnsButton =
+                            viewColumnIcon?.closest('button') ?? null;
+                        }
+
+                        if (!columnsButton) {
+                          columnsButton = document.querySelector(
+                            '[aria-label="Select columns"]'
+                          );
+                        }
+
+                        if (!columnsButton) {
+                          const toolbarButtons = document.querySelectorAll(
+                            '.MuiDataGrid-toolbarContainer button'
+                          );
+
+                          if (toolbarButtons.length > 1) {
+                            columnsButton = toolbarButtons[1] as HTMLElement;
+                          }
+                        }
+
+                        if (columnsButton) {
+                          (columnsButton as HTMLElement).click();
+                        } else {
+                          const toolbar = document.querySelector(
+                            '.MuiDataGrid-toolbarContainer'
+                          );
+                        }
+                      }, 50);
+                    }}
+                    sx={{
+                      minWidth: 'unset',
+                      width: '41px',
+                      height: '36px',
+                      padding: '20px 17px 20px 17px',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '6px',
+                      flexShrink: 0,
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                    }}
+                  >
+                    <img
+                      src="/images/icons/newColumnIcon.svg"
+                      alt="columns"
+                      style={{ width: 20, height: 20 }}
+                    />
+                  </IconButton>
+                </Box>
                 <Box
                   sx={{
                     height: 36,
                     width: '1px',
                     backgroundColor: '#E2E8F0',
                     mx: 1.5,
+                    display: title === 'Resources' ? 'none' : 'block',
                   }}
                 />
               </Box>
@@ -283,6 +674,7 @@ export default function AccessTable({
                   fontSize: 14,
                   fontWeight: 600,
                   px: 2,
+                  display: title === 'Resources' ? 'none' : 'block',
                 }}
                 endIcon={title === 'Users' ? <ArrowDropDownIcon /> : null}
               >
@@ -305,7 +697,6 @@ export default function AccessTable({
                   }}
                 >
                   <Button
-                    // fullWidth
                     sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
                     onClick={() => {
                       setMenuId(null);
@@ -316,7 +707,6 @@ export default function AccessTable({
                     From resource list
                   </Button>
                   <Button
-                    // fullWidth
                     sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
                     onClick={() => {
                       setMenuId(null);
@@ -372,7 +762,7 @@ export default function AccessTable({
         </Box>
       )}
 
-        <Box sx={{ width: '100%',  height: 'calc(100vh - 355px)' }}>
+      <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGrid
           rows={filteredRows}
           checkboxSelection={checkboxSelection}
@@ -386,6 +776,18 @@ export default function AccessTable({
           autoHeight
           apiRef={apiRef}
           loading={loading}
+          filterModel={filterModel}
+          onFilterModelChange={handleFilterModelChange}
+          columnVisibilityModel={columnVisibilityModel}
+          onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+          localeText={{
+            toolbarFilters: '',
+            toolbarColumns: '',
+            toolbarExport: '',
+          }}
+          slots={{
+            toolbar: CustomToolbar,
+          }}
           sx={{
             border: 'none',
             height: '100%',
@@ -409,7 +811,7 @@ export default function AccessTable({
               backgroundColor: '#F9FAFB',
             },
             '.MuiDataGrid-columnHeader:last-of-type': {
-              borderRight: 'none', // Avoid double border on last column
+              borderRight: 'none',
             },
             '.MuiDataGrid-columnSeparator': {
               display: 'block',
@@ -423,6 +825,42 @@ export default function AccessTable({
             loadingOverlay: {
               variant: 'skeleton',
               noRowsVariant: 'skeleton',
+            },
+            panel: {
+              anchorEl: currentAnchorEl,
+              className: 'parent-grid-panel',
+            },
+            columnsManagement: {
+              getTogglableColumns: () => getTogglableColumns(columns),
+            },
+            filterPanel: {
+              columnsSort: 'asc',
+              filterFormProps: {
+                filterColumns,
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                operatorInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                valueInputProps: {
+                  InputComponentProps: {
+                    size: 'small',
+                  },
+                },
+                deleteIconProps: {
+                  sx: {
+                    '& .MuiSvgIcon-root': { color: '#d32f2f' },
+                  },
+                },
+              },
+              sx: FilterPanelStyles,
+            },
+            columnsPanel: {
+              className: 'styleColumnMenu',
+              sx: ColumnManagementStyles,
             },
           }}
         />

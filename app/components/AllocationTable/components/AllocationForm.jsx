@@ -35,6 +35,8 @@ import {
   addProjectTypeGroupValidationSchema,
   addLocationValidationSchema,
   addLocationGroupValidationSchema,
+  addUserValidationSchema,
+  addResourceToUserValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -144,6 +146,7 @@ import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
 import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
+import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
 import AddUserForm from '../../Forms/AddUserForm';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
 import {
@@ -390,13 +393,25 @@ const initialValuesMap = {
     LastName: '',
     Email: '',
     Role: '',
+    sendActivationEmail: false,
   },
   edit_user: {
     FirstName: '',
     LastName: '',
     Email: '',
     Role: '',
+    sendActivationEmail: false,
   },
+  add_resource_to_user: {
+    Resources: [],
+    Role: '',
+    sendInviteEmail: false,
+  },
+  edit_resource_to_user:{
+    Resources: [],
+    Role: '',
+    sendInviteEmail: false,
+  }
 };
 
 const AllocationForm = () => {
@@ -550,6 +565,14 @@ const AllocationForm = () => {
           locationGroups,
           initialData?.Name || ''
         );
+      case 'add_user':
+        return addUserValidationSchema;
+      case 'edit_user':
+        return addUserValidationSchema;
+      case 'add_resource_to_user':
+        return addResourceToUserValidationSchema;
+      case 'edit_resource_to_user':
+        return addResourceToUserValidationSchema;
       default:
         return null;
     }
@@ -2979,7 +3002,105 @@ const AllocationForm = () => {
         }
         break;
       }
+      case 'add_resource_to_user': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = {
+          ...cleanedValues,
+          User: cleanedValues.User?.id || null,
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'CREATE_USER',
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'User added successfully.',
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          })
+          .catch(error => {
+            console.error('Failed to add user:', error);
+            const message =
+              error?.response?.data?.exception || 'Failed to add user.';
+            dispatch(
+              showToast({
+                open: true,
+                message: message,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          });
+      }
+      case 'edit_resource_to_user': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+        const postData = {
+          ...cleanedValues,
+          User: cleanedValues.User?.id || null,
+        };
+        try {
+          const result = await dispatch(
+            updateUser({
+              postData,
+              userId: initialData.Id,
+            })
+          );
 
+          if (result.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: `Failed to update user.`,
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } catch (e) {
+          console.error('Failed to update user:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update user.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        return;
+      }
       default:
         return;
     }
@@ -3593,6 +3714,20 @@ const AllocationForm = () => {
       case 'edit_user':
         return (
           <AddUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_resource_to_user':
+        return (
+          <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_resource_to_user':
+        return (
+          <AddResourceToUserForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

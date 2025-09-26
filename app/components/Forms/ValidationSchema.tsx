@@ -595,3 +595,20 @@ export const addLocationGroupValidationSchema = (
       ),
   });
 };
+
+export const addUserValidationSchema = Yup.object({
+  FirstName: Yup.string().required('First Name is required'),
+  LastName: Yup.string().required('Last Name is required'),
+  Email: Yup.string()
+    .required('Email is required')
+    .matches(emailRegex, 'Enter a valid email address'),
+  Role: Yup.string().required('Role is required'),
+});
+
+export const addResourceToUserValidationSchema = Yup.object({
+  Resources: Yup.array()
+    .of(Yup.string())
+    .min(1, 'You must select at least one Resource')
+    .required('Resource is required'),
+  Role: Yup.string().required('Role is required'),
+});

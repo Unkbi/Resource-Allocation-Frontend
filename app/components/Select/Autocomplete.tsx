@@ -13,12 +13,14 @@ interface StyledAutocompleteProps {
   name: string;
   label: string;
   options: Option[];
+  placeholder?: string;
   value: string;
   formikProps: FormikProps<any>;
   required?: boolean;
   FormHelperTextProps?: any;
   disabled?: boolean;
   disableClearable?: boolean;
+  fullWidth?: boolean;
   onChange?: (value: any) => void;
 }
 
