@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { styled } from '@mui/material/styles';
 import ConfirmDialog from '../Dialog/ConfirmDialog';
 import {
@@ -161,7 +161,7 @@ export default function UserManagementPage() {
   >('delete');
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
-  const UsersData: any[] = [
+  const UsersData = useMemo(() => [
     {
       id: 'u1',
       Name: 'Emily Carter',
@@ -197,7 +197,7 @@ export default function UserManagementPage() {
       resourceLink: 'NA',
       status: 'Inactive',
     },
-  ];
+  ], []);
 
   const ResourcesData: any[] = [
     {
@@ -259,14 +259,16 @@ export default function UserManagementPage() {
     if (tabParam && tabMenuNames.includes(tabParam)) {
       setTab(tabParam);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
-    if (tabMenuNames.includes(tab)) {
+    // Always ensure URL has the tab parameter
+    const currentTabParam = searchParams.get('tab');
+    if (currentTabParam !== tab && tabMenuNames.includes(tab)) {
       const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
       router.replace(newUrl);
     }
-  }, [tab, dispatch]);
+  }, [tab]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
