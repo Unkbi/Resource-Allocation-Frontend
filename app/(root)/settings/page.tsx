@@ -161,7 +161,8 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
     'access-management': true,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
-    'allocation-setting': true,
+    'allocation-setting':
+      permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
     'location-setting': true,
     theme: true,
     'holiday-calendar': true,
@@ -417,4 +418,9 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
   );
 };
 
-export default withRBAC(SettingsPanel, ['ProjectType', 'ProjectTypeGroup']);
+export default withRBAC(SettingsPanel, [
+  'ProjectType',
+  'ProjectTypeGroup',
+  'AllocationRangeSetting',
+  'ScalarSetting',
+]);
