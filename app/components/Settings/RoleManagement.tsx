@@ -50,13 +50,9 @@ import AssignRolesTable from './AssignRolesTable';
 import PrivilegeTable from './PrivilegeTable';
 import AssignPrivilegeTable from './AssignPrivilegeTable';
 import RolesTable from './RolesTable';
+import { ACCESS_MANAGEMENT_VALID_TABS } from '@/app/constants/constants';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
-const tabMenuNames = [
-  'role-assignments',
-  'role-management',
-  'privilege-assignments',
-  'privilege-management',
-];
 const baseURLAccessManagement = '/settings?menu=access-management';
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -181,7 +177,11 @@ const TabHeader = ({
   </Box>
 );
 
-export default function RoleManagementPage() {
+interface RoleManagementPageProps {
+  permissions: Record<string, CrudPermissions>;
+}
+
+function RoleManagementPage({ permissions }: RoleManagementPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('role-management');
@@ -207,9 +207,15 @@ export default function RoleManagementPage() {
   );
   const loading = useSelector((state: any) => state.rbac.loading);
   const rolesLoading = useSelector((state: any) => state.rbac.rolesLoading);
-  const roleAssignmentsLoading = useSelector((state: any) => state.rbac.roleAssignmentsLoading);
-  const privilegesLoading = useSelector((state: any) => state.rbac.privilegesLoading);
-  const privilegeAssignmentsLoading = useSelector((state: any) => state.rbac.privilegeAssignmentsLoading);
+  const roleAssignmentsLoading = useSelector(
+    (state: any) => state.rbac.roleAssignmentsLoading
+  );
+  const privilegesLoading = useSelector(
+    (state: any) => state.rbac.privilegesLoading
+  );
+  const privilegeAssignmentsLoading = useSelector(
+    (state: any) => state.rbac.privilegeAssignmentsLoading
+  );
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
   );
@@ -226,7 +232,7 @@ export default function RoleManagementPage() {
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && tabMenuNames.includes(tabParam)) {
+    if (tabParam && ACCESS_MANAGEMENT_VALID_TABS.includes(tabParam)) {
       setTab(tabParam);
     }
   }, []);
@@ -258,10 +264,6 @@ export default function RoleManagementPage() {
       (!privilegeAssignments || privilegeAssignments.length === 0)
     ) {
       dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
-    }
-    if (tabMenuNames.includes(tab)) {
-      const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
-      router.replace(newUrl);
     }
   }, [tab]);
 
@@ -337,16 +339,21 @@ export default function RoleManagementPage() {
     );
   };
 
-  const handleEditRoleAssignment = (row: RoleAssignment) => {
+  const handleEditRoleAssignment = (
+    row: RoleAssignment,
+    title = 'Edit Role Assignment',
+    dialogOptions = {}
+  ) => {
     const roleName = row.Role?.split('/')[1] || row.Role;
     const userId = row.User?.split('/')[1] || row.User;
     dispatch(
       openDialog({
-        title: 'Edit Role Assignment',
+        title: title,
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_role_assignment',
         initialData: { ...row, Role: roleName, User: userId },
+        ...dialogOptions,
       })
     );
   };
@@ -384,7 +391,7 @@ export default function RoleManagementPage() {
   };
 
   const handleEditPrivilegeAssignments = (row: PrivilegeAssignment) => {
-    const roleName = row.Role ;
+    const roleName = row.Role;
     const permissionName = row.Permission;
     dispatch(
       openDialog({
@@ -499,29 +506,33 @@ export default function RoleManagementPage() {
       hideable: false,
       renderCell: () => <StatusPill status="Active">Active</StatusPill>,
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 100,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.id);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.id && renderRoleMenu(params.row.id)}
-          </Typography>
-        </>
-      ),
-    },
+    ...(permissions['Role'].d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 100,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuRoleId(params.row.id);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.id && renderRoleMenu(params.row.id)}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const renderRoleMenu = (id: string) => (
@@ -563,10 +574,16 @@ export default function RoleManagementPage() {
       headerName: 'Role',
       flex: 1,
       renderCell: (params: any) => {
-        const handleNameClick = () => {
-          handleEditRoleAssignment(params.row);
-        };
         const role = params.value?.replace('agentlang.auth$Role/', '') || '';
+        const handleNameClick = () => {
+          if (permissions['Role'].u) {
+            handleEditRoleAssignment(params.row);
+          } else {
+            handleEditRoleAssignment(params.row, `Role Assignment: ${role}`, {
+              readOnly: true,
+            });
+          }
+        };
         return (
           <Box
             onClick={handleNameClick}
@@ -604,29 +621,33 @@ export default function RoleManagementPage() {
       flex: 1,
       renderCell: () => <StatusPill status="Active">Active</StatusPill>,
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 0,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.id);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.id && renderAssignmentMenu(params.row)}
-          </Typography>
-        </>
-      ),
-    },
+    ...(permissions['Role'].u || permissions['Role'].d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 0,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuRoleId(params.row.id);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.id && renderAssignmentMenu(params.row)}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const renderAssignmentMenu = (row: any) => (
@@ -637,29 +658,33 @@ export default function RoleManagementPage() {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = roleAssignments.find(
-            (r: any) => r.__path__ === row.__path__
-          );
-          if (assignment) {
-            handleEditRoleAssignment(assignment);
-          }
-          setMenuRoleId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeleteRoleAssignment(row.User, row.Role);
-          setMenuRoleId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
+      {permissions['Role'].u && (
+        <StyledMenuItem
+          onClick={() => {
+            const assignment = roleAssignments.find(
+              (r: any) => r.__path__ === row.__path__
+            );
+            if (assignment) {
+              handleEditRoleAssignment(assignment);
+            }
+            setMenuRoleId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+      )}
+      {permissions['Role'].d && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeleteRoleAssignment(row.User, row.Role);
+            setMenuRoleId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
   );
 
@@ -936,13 +961,12 @@ export default function RoleManagementPage() {
         backgroundColor: 'rgba(217, 217, 217, 0.27)',
       }}
     >
-
       <TabHeader tab={tab} setTab={setTab} />
 
       {tab === 'role-management' && (
         <RolesTable
           title="Role Management"
-          data={data}
+          data={permissions['Role'].r ? data : []}
           onAdd={handleAddNewRole}
           onEdit={handleEditRole}
           onDelete={handleDeleteRole}
@@ -950,7 +974,7 @@ export default function RoleManagementPage() {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add Role"
+          buttonLabel={permissions['Role'].c ? 'Add Role' : ''}
           columns={rolesColumns}
           renderMenu={renderRoleMenu}
           apiRef={apiRef}
@@ -960,7 +984,7 @@ export default function RoleManagementPage() {
       {tab === 'role-assignments' && (
         <AssignRolesTable
           title="Role Assignments"
-          data={data}
+          data={permissions['Role'].r ? data : []}
           onAdd={handleAddNewRoleAssignment}
           onEdit={handleEditRoleAssignment}
           onDelete={(id: string) => {
@@ -975,7 +999,7 @@ export default function RoleManagementPage() {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Assign Role"
+          buttonLabel={permissions['Role'].c ? 'Assign Role' : ''}
           renderMenu={renderAssignmentMenu}
           columns={roleAssignmentColumns}
           apiRef={apiRef}
@@ -985,7 +1009,7 @@ export default function RoleManagementPage() {
       {tab === 'privilege-management' && (
         <PrivilegeTable
           title="Privilege Management"
-          data={data}
+          data={permissions['Permission'].r ? data : []}
           onAdd={handleAddNewPrivilege}
           onEdit={handleEditPrivilege}
           onDelete={handleDeletePrivilege}
@@ -993,7 +1017,7 @@ export default function RoleManagementPage() {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add Privilege"
+          buttonLabel={permissions['Permission'].c ? 'Add Privilege' : ''}
           renderMenu={renderprivilegeMenu}
           columns={privilegesColumns}
           apiRef={apiRef}
@@ -1003,7 +1027,7 @@ export default function RoleManagementPage() {
       {tab === 'privilege-assignments' && (
         <AssignPrivilegeTable
           title="Current Privilege Assignments"
-          data={data}
+          data={permissions['Permission'].r ? data : []}
           onAdd={handleAddNewPrivilegeAssignment}
           onEdit={handleEditPrivilegeAssignments}
           onDelete={(row: any) => {
@@ -1013,7 +1037,7 @@ export default function RoleManagementPage() {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Assign Privilege"
+          buttonLabel={permissions['Permission'].c ? 'Assign Privilege' : ''}
           renderMenu={renderPrivilegeAssignmentMenu}
           columns={privilegeAssignmentsColumns}
           apiRef={apiRef}
@@ -1044,3 +1068,5 @@ export default function RoleManagementPage() {
     </div>
   );
 }
+
+export default withRBAC(RoleManagementPage, ['Role', 'Permission']);

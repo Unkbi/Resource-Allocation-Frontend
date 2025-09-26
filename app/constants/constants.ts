@@ -269,3 +269,10 @@ export const ALLOCATION_SETTINGS_VALID_TABS = [
   'alerts-threshold',
   'allocation-history',
 ];
+
+export const ACCESS_MANAGEMENT_VALID_TABS = [
+  'role-assignments',
+  'role-management',
+  'privilege-assignments',
+  'privilege-management',
+];
