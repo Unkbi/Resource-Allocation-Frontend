@@ -1160,6 +1160,11 @@ export default function AllocationTheme() {
                         setHasUnsavedChanges(true);
                       }
                     }}
+                    onKeyDown={e => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     onBlur={e => {
                       const val = e.target.value;
                       if (val && !isNaN(parseFloat(val))) {
@@ -1258,6 +1263,11 @@ export default function AllocationTheme() {
                             : parseFloat(numValue.toFixed(1))
                         );
                         setHasUnsavedChanges(true);
+                      }
+                    }}
+                      onKeyDown={e => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
                       }
                     }}
                     onBlur={e => {
