@@ -84,6 +84,14 @@ export const StyledCommentInput = styled(TextField)(
         borderColor: '#D6DCE1',
       },
     },
+    '& .Mui-disabled': {
+      backgroundColor: theme.palette.readonly.main, // This is a custom color in the theme
+      cursor: 'default',
+    },
+    '& .Mui-disabled .MuiInputBase-input': {
+      color: '#6B7280 !important',
+      WebkitTextFillColor: theme.palette.readonly.contrastText, // This is a custom color in the theme
+    },
 
     width: width || '100%',
     margin: margin || '0',

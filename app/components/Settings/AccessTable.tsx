@@ -61,7 +61,7 @@ export default function AccessTable({
   setMenuId,
   setAnchorEl,
   anchorEl,
-  buttonLabel = 'Add New',
+  buttonLabel = '',
   columns = [],
   apiRef,
   loading = false,
