@@ -33,7 +33,8 @@ import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { PROJECT_TYPE_VALID_TABS } from '@/app/constants/constants';
 
 interface ProjectSettingPageProps {
-  permissions: Record<string, CrudPermissions>;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
 const baseURLAccessManagement = '/settings?menu=project-setting';
@@ -93,7 +94,10 @@ const tabConfig = [
   },
 ];
 
-function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
+function ProjectSettingPage({
+  permissions,
+  loadingPermissions,
+}: ProjectSettingPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('project-types');
@@ -121,12 +125,13 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (loadingPermissions) return;
     const accessMap = [
       { key: 'ProjectType', value: 'project-types' },
       { key: 'ProjectTypeGroup', value: 'project-types-group' },
     ];
 
-    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+    const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
       router.replace('/settings?menu=user-profile');
@@ -145,7 +150,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
     if (tabParam !== tab) {
       setTab(tabParam);
     }
-  }, [searchParams]);
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -330,7 +335,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
       renderCell: (params: any) => (
         <Typography
           onClick={() => {
-            if (permissions['ProjectType'].u) {
+            if (permissions!['ProjectType'].u) {
               handleEditProjectTypes(params.row);
             } else {
               handleEditProjectTypes(
@@ -411,7 +416,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
-    ...(permissions['ProjectType']?.u || permissions['ProjectType']?.d
+    ...(permissions!['ProjectType']?.u || permissions!['ProjectType']?.d
       ? [
           {
             field: 'actions',
@@ -448,7 +453,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
       renderCell: (params: any) => (
         <Typography
           onClick={() => {
-            if (permissions['ProjectTypeGroup'].u) {
+            if (permissions!['ProjectTypeGroup'].u) {
               handleEditProjectTypesGroup(params.row);
             } else {
               handleEditProjectTypesGroup(
@@ -472,7 +477,8 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
         </Typography>
       ),
     },
-    ...(permissions['ProjectTypeGroup']?.u || permissions['ProjectTypeGroup']?.d
+    ...(permissions!['ProjectTypeGroup']?.u ||
+    permissions!['ProjectTypeGroup']?.d
       ? [
           {
             field: 'actions',
@@ -509,7 +515,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      {permissions['ProjectType'].u && (
+      {permissions!['ProjectType'].u && (
         <StyledMenuItem
           onClick={() => {
             const assignment = ProjectTypesData.find(r => r.Name === id);
@@ -523,7 +529,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
           Edit
         </StyledMenuItem>
       )}
-      {permissions['ProjectType'].d && (
+      {permissions!['ProjectType'].d && (
         <StyledMenuItem
           onClick={() => {
             handleDeleteProjectTypes(id);
@@ -545,7 +551,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      {permissions['ProjectTypeGroup'].u && (
+      {permissions!['ProjectTypeGroup'].u && (
         <StyledMenuItem
           onClick={() => {
             const assignment = ProjectTypesGroupData.find(r => r.Name === id);
@@ -559,7 +565,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
           Edit
         </StyledMenuItem>
       )}
-      {permissions['ProjectTypeGroup'].d && (
+      {permissions!['ProjectTypeGroup'].d && (
         <StyledMenuItem
           onClick={() => {
             handleDeleteProjectTypesGroup(id);
@@ -618,7 +624,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
         }}
       >
         {tabConfig
-          .filter(tab => permissions[tab.entity].r)
+          .filter(tab => permissions![tab.entity].r)
           .map(({ label, value, icon }) => (
             <Tab
               key={value}
@@ -655,7 +661,7 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
       {tab === 'project-types' && (
         <AccessTable
           title="Project Types"
-          data={permissions['ProjectType'].r ? ProjectTypesData : []}
+          data={permissions!['ProjectType'].r ? ProjectTypesData : []}
           onAdd={handleAddNewProjectTypes}
           onEdit={handleEditProjectTypes}
           onDelete={handleDeleteProjectTypes}
@@ -663,17 +669,17 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
           setMenuId={setMenuProjectTypeId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions['ProjectType'].c ? 'Add Project Type' : ''}
+          buttonLabel={permissions!['ProjectType'].c ? 'Add Project Type' : ''}
           renderMenu={renderProjectTypesMenu}
           columns={ProjectTypesPageColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
         />
       )}
       {tab === 'project-types-group' && (
         <AccessTable
           title="Project Types Group"
-          data={permissions['ProjectTypeGroup'].r ? ProjectTypesGroupData : []}
+          data={permissions!['ProjectTypeGroup'].r ? ProjectTypesGroupData : []}
           onAdd={handleAddNewProjectTypesGroup}
           onEdit={handleEditProjectTypesGroup}
           onDelete={handleDeleteProjectTypesGroup}
@@ -682,12 +688,12 @@ function ProjectSettingPage({ permissions }: ProjectSettingPageProps) {
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
           buttonLabel={
-            permissions['ProjectTypeGroup'].c ? 'Add Project Type Group' : ''
+            permissions!['ProjectTypeGroup'].c ? 'Add Project Type Group' : ''
           }
           renderMenu={ProjectTypesGroupMenu}
           columns={ProjectTypesGroupColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
         />
       )}
 

@@ -64,6 +64,7 @@ interface ValidationErrors {
 
 interface SettingsPanelProps {
   permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 
 // Function to validate ranges
@@ -136,7 +137,10 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
   return errors;
 };
 
-const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
+const SettingsPanel = ({
+  permissions,
+  loadingPermissions,
+}: SettingsPanelProps) => {
   const { allocationTheme } = useSelector((state: RootState) => state.settings);
   const dispatch: AppDispatch = useDispatch();
   const [allocationRanges, setAllocationRanges] =
@@ -332,6 +336,7 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
   }, []);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     const menu = searchParams.get('menu');
     const updatedMenuItems = createMenuItems();
     // Only allow menus that are accessible
@@ -342,7 +347,7 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
       router.replace('/settings?menu=user-profile');
       setActiveItem(updatedMenuItems[0].items[0]);
     }
-  }, [searchParams]);
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const menu = searchParams.get('menu');

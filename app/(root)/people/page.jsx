@@ -120,7 +120,7 @@ const menuItemStyle = {
   lineHeight: '18px',
 };
 
-function Resources({ permissions }) {
+function Resources({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
   const { resources, updating, loading } = useSelector(
@@ -162,6 +162,7 @@ function Resources({ permissions }) {
   );
 
   useEffect(() => {
+    if (loadingPermissions) return;
     const accessMap = [
       { key: 'Resource', value: 'resource' },
       { key: 'Team', value: 'teams' },
@@ -188,7 +189,7 @@ function Resources({ permissions }) {
     if (tab !== value) {
       setValue(tab);
     }
-  }, []);
+  }, [loadingPermissions]);
 
   useEffect(() => {
     const newTab = searchParams.get('tab');
@@ -1430,7 +1431,12 @@ function Resources({ permissions }) {
       case 'resource':
         return (
           <ResourceTable
-            loading={loading || dataProcessing || allResourcesDetailLoading}
+            loading={
+              loading ||
+              dataProcessing ||
+              allResourcesDetailLoading ||
+              loadingPermissions
+            }
             columns={columns}
             rows={modifyData(rows)}
             apiRef={apiRef}
@@ -1441,7 +1447,7 @@ function Resources({ permissions }) {
       case 'teams':
         return (
           <TeamsTable
-            loading={loading || dataProcessing}
+            loading={loading || dataProcessing || loadingPermissions}
             columns={teamColumns}
             rows={modifyTeamData(teamRows) || []}
             apiRef={apiRef}
@@ -1464,7 +1470,7 @@ function Resources({ permissions }) {
       case 'organizations':
         return (
           <OrganisationsTable
-            loading={allOrganizationsLoading}
+            loading={allOrganizationsLoading || loadingPermissions}
             columns={organizationColumns}
             rows={organisations.map((org, index) => ({
               Id: org.Id,
@@ -1480,7 +1486,7 @@ function Resources({ permissions }) {
       case 'rates':
         return (
           <RatesTable
-            loading={employeeRatesLoading}
+            loading={employeeRatesLoading || loadingPermissions}
             columns={employeeRatesColumns}
             rows={modifyRatesData(employeeRates) || []}
             apiRef={apiRef}

@@ -139,9 +139,10 @@ export interface RBACState {
   privilegeAssignments: PrivilegeAssignment[];
   meta: Meta | null;
   loading: boolean;
-  rolesLoading:boolean,
-  roleAssignmentsLoading:boolean,
-  privilegesLoading :boolean ,
-  privilegeAssignmentsLoading :boolean ,
-  error: boolean;  
+  loadingLoginUserPrivileges: boolean;
+  rolesLoading: boolean;
+  roleAssignmentsLoading: boolean;
+  privilegesLoading: boolean;
+  privilegeAssignmentsLoading: boolean;
+  error: boolean;
 }

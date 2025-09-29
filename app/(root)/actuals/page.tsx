@@ -37,9 +37,10 @@ import { useRouter } from 'next/navigation';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 
-function ActualsPage({ permissions }: ActualsPageProps) {
+function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const dispatch: AppDispatch = useDispatch();
   const { actualAllocations, status, calendarDate, dataProcessing } =
     useSelector((state: RootState) => state.actualAllocations);
@@ -230,18 +231,21 @@ function ActualsPage({ permissions }: ActualsPageProps) {
   };
 
   useEffect(() => {
-    if (resources && user && email) {
-      const userId = getUserIdFromEmail(resources || [], email);
-      dispatch({
-        type: GET_ACTUAL_ALLOCATIONS,
-        payload: {
-          resource: userId,
-          startDate: startDate,
-          endDate: endDate,
-        },
-      });
+    if (loadingPermissions) return;
+    if (permissions['ActualsStatus'].r) {
+      if (resources && user && email) {
+        const userId = getUserIdFromEmail(resources || [], email);
+        dispatch({
+          type: GET_ACTUAL_ALLOCATIONS,
+          payload: {
+            resource: userId,
+            startDate: startDate,
+            endDate: endDate,
+          },
+        });
+      }
     }
-  }, [resources, user, email, startDate, endDate]);
+  }, [resources, user, email, startDate, endDate, loadingPermissions]);
 
   useEffect(() => {
     if (actualAllocations) {
@@ -265,20 +269,24 @@ function ActualsPage({ permissions }: ActualsPageProps) {
   }, [actualAllocations]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     if (!permissions['ActualsStatus'].r) {
       router.replace('/dashboard');
     }
-  }, []);
+  }, [loadingPermissions]);
 
   useEffect(() => {
-    // @ts-ignore
-    if (!resources?.length) {
-      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+    if (loadingPermissions) return;
+    if (permissions['ActualsStatus'].r) {
+      // @ts-ignore
+      if (!resources?.length) {
+        dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+      }
+      if (!projects?.length) {
+        dispatch(fetchAllProjects());
+      }
     }
-    if (!projects?.length) {
-      dispatch(fetchAllProjects());
-    }
-  }, []);
+  }, [loadingPermissions]);
 
   const handleConfirm = () => {
     setDeleteDialogOpen(false);

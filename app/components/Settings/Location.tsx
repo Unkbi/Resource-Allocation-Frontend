@@ -92,10 +92,14 @@ const tabConfig = [
 ];
 
 interface LocationSettingPageProps {
-  permissions: Record<string, CrudPermissions>;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
-function LocationSettingPage({ permissions }: LocationSettingPageProps) {
+function LocationSettingPage({
+  permissions,
+  loadingPermissions,
+}: LocationSettingPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('location');
@@ -121,12 +125,13 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (loadingPermissions) return;
     const accessMap = [
       { key: 'WorkLocation', value: 'location' },
       { key: 'WorkLocationGroup', value: 'location-group' },
     ];
 
-    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+    const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
       router.replace('/settings?menu=user-profile');
@@ -145,7 +150,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
     if (tabParam !== tab) {
       setTab(tabParam);
     }
-  }, [searchParams]);
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -326,7 +331,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
       renderCell: (params: any) => (
         <Typography
           onClick={() => {
-            if (permissions['WorkLocation'].u) {
+            if (permissions!['WorkLocation'].u) {
               handleEditLocation(params.row);
             } else {
               handleEditLocation(params.row, `Location: ${params.value}`, {
@@ -362,7 +367,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
-    ...(permissions['WorkLocation']?.u || permissions['WorkLocation']?.d
+    ...(permissions!['WorkLocation']?.u || permissions!['WorkLocation']?.d
       ? [
           {
             field: 'actions',
@@ -399,7 +404,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
       renderCell: (params: any) => (
         <Typography
           onClick={() => {
-            if (permissions['WorkLocationGroup'].u) {
+            if (permissions!['WorkLocationGroup'].u) {
               handleEditLocationGroup(params.row);
             } else {
               handleEditLocationGroup(
@@ -423,8 +428,8 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
         </Typography>
       ),
     },
-    ...(permissions['WorkLocationGroup']?.u ||
-    permissions['WorkLocationGroup']?.d
+    ...(permissions!['WorkLocationGroup']?.u ||
+    permissions!['WorkLocationGroup']?.d
       ? [
           {
             field: 'actions',
@@ -461,7 +466,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      {permissions['WorkLocation'].u && (
+      {permissions!['WorkLocation'].u && (
         <StyledMenuItem
           onClick={() => {
             const assignment = locationData.find(r => r.Name === id);
@@ -475,7 +480,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
           Edit
         </StyledMenuItem>
       )}
-      {permissions['WorkLocation'].d && (
+      {permissions!['WorkLocation'].d && (
         <StyledMenuItem
           onClick={() => {
             handleDeleteLocation(id);
@@ -497,7 +502,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      {permissions['WorkLocationGroup'].u && (
+      {permissions!['WorkLocationGroup'].u && (
         <StyledMenuItem
           onClick={() => {
             const assignment = locationGroupData.find(r => r.Name === id);
@@ -511,7 +516,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
           Edit
         </StyledMenuItem>
       )}
-      {permissions['WorkLocationGroup'].d && (
+      {permissions!['WorkLocationGroup'].d && (
         <StyledMenuItem
           onClick={() => {
             handleDeleteLocationGroup(id);
@@ -570,7 +575,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
         }}
       >
         {tabConfig
-          .filter(tab => permissions[tab.entity].r)
+          .filter(tab => permissions![tab.entity].r)
           .map(({ label, value, icon }) => (
             <Tab
               key={value}
@@ -606,7 +611,7 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
       {tab === 'location' && (
         <AccessTable
           title="Locations"
-          data={permissions['WorkLocation'].r ? locationData : []}
+          data={permissions!['WorkLocation'].r ? locationData : []}
           onAdd={handleAddNewLocation}
           onEdit={handleEditLocation}
           onDelete={handleDeleteLocation}
@@ -614,17 +619,17 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions['WorkLocation'].c ? 'Add Location' : ''}
+          buttonLabel={permissions!['WorkLocation'].c ? 'Add Location' : ''}
           renderMenu={renderLocationMenu}
           columns={LocationPageColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
         />
       )}
       {tab === 'location-group' && (
         <AccessTable
           title="Location Group"
-          data={permissions['WorkLocationGroup'].r ? locationGroupData : []}
+          data={permissions!['WorkLocationGroup'].r ? locationGroupData : []}
           onAdd={handleAddNewLocationGroup}
           onEdit={handleEditLocationGroup}
           onDelete={handleDeleteLocationGroup}
@@ -633,12 +638,12 @@ function LocationSettingPage({ permissions }: LocationSettingPageProps) {
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
           buttonLabel={
-            permissions['WorkLocationGroup'].c ? 'Add Location Group' : ''
+            permissions!['WorkLocationGroup'].c ? 'Add Location Group' : ''
           }
           renderMenu={locationGroupMenu}
           columns={LocationGroupColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
         />
       )}
 

@@ -123,10 +123,14 @@ const tabConfig = [
 ];
 
 interface RoleManagementPageProps {
-  permissions: Record<string, CrudPermissions>;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
-function RoleManagementPage({ permissions }: RoleManagementPageProps) {
+function RoleManagementPage({
+  permissions,
+  loadingPermissions,
+}: RoleManagementPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('role-management');
@@ -176,6 +180,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
   }, [dispatch, meta]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     const accessMap = [
       { key: 'Role', value: 'role-assignments' },
       { key: 'Role', value: 'role-management' },
@@ -183,7 +188,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       { key: 'Permission', value: 'privilege-management' },
     ];
 
-    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+    const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
       router.replace('/settings?menu=user-profile');
@@ -206,7 +211,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
     if (tabParam !== tab) {
       setTab(tabParam);
     }
-  }, [searchParams]);
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -494,7 +499,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       hideable: false,
       renderCell: () => <StatusPill status="Active">Active</StatusPill>,
     },
-    ...(permissions['Role'].d
+    ...(permissions!['Role'].d
       ? [
           {
             field: 'actions',
@@ -564,7 +569,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       renderCell: (params: any) => {
         const role = params.value?.replace('agentlang.auth$Role/', '') || '';
         const handleNameClick = () => {
-          if (permissions['Role'].u) {
+          if (permissions!['Role'].u) {
             handleEditRoleAssignment(params.row);
           } else {
             handleEditRoleAssignment(params.row, `Role Assignment: ${role}`, {
@@ -609,7 +614,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       flex: 1,
       renderCell: () => <StatusPill status="Active">Active</StatusPill>,
     },
-    ...(permissions['Role'].u || permissions['Role'].d
+    ...(permissions!['Role'].u || permissions!['Role'].d
       ? [
           {
             field: 'actions',
@@ -646,7 +651,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      {permissions['Role'].u && (
+      {permissions!['Role'].u && (
         <StyledMenuItem
           onClick={() => {
             const assignment = roleAssignments.find(
@@ -662,7 +667,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
           Edit
         </StyledMenuItem>
       )}
-      {permissions['Role'].d && (
+      {permissions!['Role'].d && (
         <StyledMenuItem
           onClick={() => {
             handleDeleteRoleAssignment(row.User, row.Role);
@@ -683,7 +688,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       flex: 1.5,
       renderCell: (params: any) => {
         const handleNameClick = () => {
-          if (permissions['Permission'].u) {
+          if (permissions!['Permission'].u) {
             handleEditPrivilege(params.row);
           } else {
             handleEditPrivilege(params.row, `Privilege: ${params.value}`, {
@@ -792,7 +797,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
         );
       },
     },
-    ...(permissions['Permission'].u || permissions['Permission'].d
+    ...(permissions!['Permission'].u || permissions!['Permission'].d
       ? [
           {
             field: 'actions',
@@ -829,7 +834,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       renderCell: (params: any) => {
         const roleName = params.value?.split('/')[1];
         const handleNameClick = () => {
-          if (permissions['Permission'].u) {
+          if (permissions!['Permission'].u) {
             handleEditPrivilegeAssignments(params.row);
           } else {
             handleEditPrivilegeAssignments(
@@ -869,7 +874,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
         return <Typography sx={commonCellStyle}>{privilegeName}</Typography>;
       },
     },
-    ...(permissions['Permission'].u || permissions['Permission'].d
+    ...(permissions!['Permission'].u || permissions!['Permission'].d
       ? [
           {
             field: 'actions',
@@ -907,7 +912,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      {permissions['Permission'].u && (
+      {permissions!['Permission'].u && (
         <StyledMenuItem
           onClick={() => {
             const privilege = privileges.find(r => r.id === id);
@@ -921,7 +926,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
           Edit
         </StyledMenuItem>
       )}
-      {permissions['Permission'].d && (
+      {permissions!['Permission'].d && (
         <StyledMenuItem
           onClick={() => {
             handleDeletePrivilege(id);
@@ -942,7 +947,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      {permissions['Permission'].u && (
+      {permissions!['Permission'].u && (
         <StyledMenuItem
           onClick={() => {
             const assignment = privilegeAssignments.find(
@@ -958,7 +963,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
           Edit
         </StyledMenuItem>
       )}
-      {permissions['Permission'].d && (
+      {permissions!['Permission'].d && (
         <StyledMenuItem
           onClick={() => {
             handleDeletePrivilegeAssignment(row.Role, row.Permission);
@@ -1012,7 +1017,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
         }}
       >
         {tabConfig
-          .filter(tab => permissions[tab.entity].r)
+          .filter(tab => permissions![tab.entity].r)
           .map(({ label, value, icon }) => (
             <Tab
               key={value}
@@ -1049,7 +1054,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       {tab === 'role-management' && (
         <RolesTable
           title="Role Management"
-          data={permissions['Role'].r ? data : []}
+          data={permissions!['Role'].r ? data : []}
           onAdd={handleAddNewRole}
           onEdit={handleEditRole}
           onDelete={handleDeleteRole}
@@ -1057,17 +1062,17 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions['Role'].c ? 'Add Role' : ''}
+          buttonLabel={permissions!['Role'].c ? 'Add Role' : ''}
           columns={rolesColumns}
           renderMenu={renderRoleMenu}
           apiRef={apiRef}
-          loading={rolesLoading}
+          loading={rolesLoading || loadingPermissions}
         />
       )}
       {tab === 'role-assignments' && (
         <AssignRolesTable
           title="Role Assignments"
-          data={permissions['Role'].r ? data : []}
+          data={permissions!['Role'].r ? data : []}
           onAdd={handleAddNewRoleAssignment}
           onEdit={handleEditRoleAssignment}
           onDelete={(id: string) => {
@@ -1082,17 +1087,17 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions['Role'].c ? 'Assign Role' : ''}
+          buttonLabel={permissions!['Role'].c ? 'Assign Role' : ''}
           renderMenu={renderAssignmentMenu}
           columns={roleAssignmentColumns}
           apiRef={apiRef}
-          loading={roleAssignmentsLoading}
+          loading={roleAssignmentsLoading || loadingPermissions}
         />
       )}
       {tab === 'privilege-management' && (
         <PrivilegeTable
           title="Privilege Management"
-          data={permissions['Permission'].r ? data : []}
+          data={permissions!['Permission'].r ? data : []}
           onAdd={handleAddNewPrivilege}
           onEdit={handleEditPrivilege}
           onDelete={handleDeletePrivilege}
@@ -1100,17 +1105,17 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions['Permission'].c ? 'Add Privilege' : ''}
+          buttonLabel={permissions!['Permission'].c ? 'Add Privilege' : ''}
           renderMenu={renderprivilegeMenu}
           columns={privilegesColumns}
           apiRef={apiRef}
-          loading={privilegesLoading}
+          loading={privilegesLoading || loadingPermissions}
         />
       )}
       {tab === 'privilege-assignments' && (
         <AssignPrivilegeTable
           title="Current Privilege Assignments"
-          data={permissions['Permission'].r ? data : []}
+          data={permissions!['Permission'].r ? data : []}
           onAdd={handleAddNewPrivilegeAssignment}
           onEdit={handleEditPrivilegeAssignments}
           onDelete={(row: any) => {
@@ -1120,11 +1125,11 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions['Permission'].c ? 'Assign Privilege' : ''}
+          buttonLabel={permissions!['Permission'].c ? 'Assign Privilege' : ''}
           renderMenu={renderPrivilegeAssignmentMenu}
           columns={privilegeAssignmentsColumns}
           apiRef={apiRef}
-          loading={privilegeAssignmentsLoading}
+          loading={privilegeAssignmentsLoading || loadingPermissions}
         />
       )}
 
