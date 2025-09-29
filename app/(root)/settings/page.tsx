@@ -158,7 +158,7 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
   const hasAnyAccess = {
     'user-profile': true,
     notification: true,
-    'access-management': true,
+    'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
     'allocation-setting':
@@ -419,6 +419,8 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
 };
 
 export default withRBAC(SettingsPanel, [
+  'Role',
+  'Permission',
   'ProjectType',
   'ProjectTypeGroup',
   'AllocationRangeSetting',

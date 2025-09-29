@@ -100,82 +100,27 @@ const tabConfig = [
     label: 'Role Assignments',
     value: 'role-assignments',
     icon: '/images/icons/roleAssign.svg',
+    entity: 'Role',
   },
   {
     label: 'Role Management',
     value: 'role-management',
     icon: '/images/icons/roleManage.svg',
+    entity: 'Role',
   },
   {
     label: 'Privilege Assignments',
     value: 'privilege-assignments',
     icon: '/images/icons/privilegeAssign.svg',
+    entity: 'Permission',
   },
   {
     label: 'Privilege Management',
     value: 'privilege-management',
     icon: '/images/icons/privilegeManage.svg',
+    entity: 'Permission',
   },
 ];
-
-const TabHeader = ({
-  tab,
-  setTab,
-}: {
-  tab: string;
-  setTab: (value: string) => void;
-}) => (
-  <Box
-    sx={{
-      boxShadow: 1,
-      display: 'flex',
-      justifyContent: 'flex-start',
-      width: '100%',
-      backgroundColor: '#fff',
-      height: '59px',
-      borderBottom: '0px solid #E5E7EB',
-    }}
-  >
-    <Tabs
-      value={tab}
-      onChange={(_, v) => setTab(v)}
-      sx={{
-        width: 'fit-content',
-        marginLeft: '20px',
-        marginRight: '20px',
-        background: 'transparent',
-        '& .MuiTabs-flexContainer': {
-          gap: 1.5,
-        },
-        '& .MuiTabs-indicator': {
-          backgroundColor: '#152E75',
-        },
-        '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
-        },
-      }}
-    >
-      {tabConfig.map(({ label, value, icon }) => (
-        <Tab
-          key={value}
-          icon={
-            <img
-              src={icon}
-              alt={label}
-              style={{ width: 21, height: 16, marginRight: 6 }}
-              className="tab-icon"
-            />
-          }
-          iconPosition="start"
-          label={label}
-          value={value}
-          sx={commonTabSx}
-        />
-      ))}
-    </Tabs>
-  </Box>
-);
 
 interface RoleManagementPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -231,11 +176,44 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
   }, [dispatch, meta]);
 
   useEffect(() => {
+    const accessMap = [
+      { key: 'Role', value: 'role-assignments' },
+      { key: 'Role', value: 'role-management' },
+      { key: 'Permission', value: 'privilege-assignments' },
+      { key: 'Permission', value: 'privilege-management' },
+    ];
+
+    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+
+    if (accessible.length === 0) {
+      router.replace('/settings?menu=user-profile');
+      return;
+    }
+
+    const tabParam = searchParams.get('tab');
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tabParam);
+
+    if (
+      !tabParam ||
+      !ACCESS_MANAGEMENT_VALID_TABS.includes(tab) ||
+      !isAccessible
+    ) {
+      router.replace(`${baseURLAccessManagement}&tab=${firstAccessible}`);
+      return;
+    }
+
+    if (tabParam !== tab) {
+      setTab(tabParam);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam && ACCESS_MANAGEMENT_VALID_TABS.includes(tabParam)) {
       setTab(tabParam);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!user || user.length === 0) {
@@ -368,14 +346,19 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       })
     );
   };
-  const handleEditPrivilege = (privilege: Privilege) => {
+  const handleEditPrivilege = (
+    privilege: Privilege,
+    title = 'Edit Privilege',
+    dialogOptions = {}
+  ) => {
     dispatch(
       openDialog({
-        title: 'Edit Privilege',
+        title: title,
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_privilege',
         initialData: privilege,
+        ...dialogOptions,
       })
     );
   };
@@ -390,16 +373,21 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
     );
   };
 
-  const handleEditPrivilegeAssignments = (row: PrivilegeAssignment) => {
+  const handleEditPrivilegeAssignments = (
+    row: PrivilegeAssignment,
+    title = 'Edit Privilege Assignment',
+    dialogOptions = {}
+  ) => {
     const roleName = row.Role;
     const permissionName = row.Permission;
     dispatch(
       openDialog({
-        title: 'Edit Privilege Assignment',
+        title: title,
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_privilege_assignment',
         initialData: { ...row, Role: roleName, Permission: permissionName },
+        ...dialogOptions,
       })
     );
   };
@@ -695,7 +683,13 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       flex: 1.5,
       renderCell: (params: any) => {
         const handleNameClick = () => {
-          handleEditPrivilege(params.row);
+          if (permissions['Permission'].u) {
+            handleEditPrivilege(params.row);
+          } else {
+            handleEditPrivilege(params.row, `Privilege: ${params.value}`, {
+              readOnly: true,
+            });
+          }
         };
         return (
           <Box
@@ -727,7 +721,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
     },
     {
       field: 'Actions',
-      headerName: 'Actions',
+      headerName: 'Manage',
       flex: 0.75,
       renderCell: (params: any) => {
         const actionLetterMap: Record<string, string> = {
@@ -798,29 +792,33 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
         );
       },
     },
-    {
-      field: 'actions',
-      headerName: 'Manage',
-      flex: 0,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.id);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.id && renderprivilegeMenu(params.row.id)}{' '}
-          </Typography>
-        </>
-      ),
-    },
+    ...(permissions['Permission'].u || permissions['Permission'].d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 0,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuRoleId(params.row.id);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.id && renderprivilegeMenu(params.row.id)}{' '}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const privilegeAssignmentsColumns = [
@@ -829,10 +827,20 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       headerName: 'Role',
       flex: 0.5,
       renderCell: (params: any) => {
-        const handleNameClick = () => {
-          handleEditPrivilegeAssignments(params.row);
-        };
         const roleName = params.value?.split('/')[1];
+        const handleNameClick = () => {
+          if (permissions['Permission'].u) {
+            handleEditPrivilegeAssignments(params.row);
+          } else {
+            handleEditPrivilegeAssignments(
+              params.row,
+              `Privilege Assignment: ${roleName}`,
+              {
+                readOnly: true,
+              }
+            );
+          }
+        };
         return (
           <Box
             onClick={handleNameClick}
@@ -861,29 +869,34 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
         return <Typography sx={commonCellStyle}>{privilegeName}</Typography>;
       },
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 0,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.id);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.id && renderPrivilegeAssignmentMenu(params.row)}{' '}
-          </Typography>
-        </>
-      ),
-    },
+    ...(permissions['Permission'].u || permissions['Permission'].d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 0,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuRoleId(params.row.id);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.id &&
+                    renderPrivilegeAssignmentMenu(params.row)}{' '}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const renderprivilegeMenu = (id: string) => (
@@ -894,27 +907,31 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
-        onClick={() => {
-          const privilege = privileges.find(r => r.id === id);
-          if (privilege) {
-            handleEditPrivilege(privilege);
-          }
-          setMenuRoleId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeletePrivilege(id);
-          setMenuRoleId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
+      {permissions['Permission'].u && (
+        <StyledMenuItem
+          onClick={() => {
+            const privilege = privileges.find(r => r.id === id);
+            if (privilege) {
+              handleEditPrivilege(privilege);
+            }
+            setMenuRoleId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+      )}
+      {permissions['Permission'].d && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeletePrivilege(id);
+            setMenuRoleId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
   );
   const renderPrivilegeAssignmentMenu = (row: any) => (
@@ -925,30 +942,96 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = privilegeAssignments.find(
-            (r: any) => r.Role === row.Role && r.Permission === row.Permission
-          );
-          if (assignment) {
-            handleEditPrivilegeAssignments(assignment);
-          }
-          setMenuRoleId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeletePrivilegeAssignment(row.Role, row.Permission);
-          setMenuRoleId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
+      {permissions['Permission'].u && (
+        <StyledMenuItem
+          onClick={() => {
+            const assignment = privilegeAssignments.find(
+              (r: any) => r.Role === row.Role && r.Permission === row.Permission
+            );
+            if (assignment) {
+              handleEditPrivilegeAssignments(assignment);
+            }
+            setMenuRoleId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+      )}
+      {permissions['Permission'].d && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeletePrivilegeAssignment(row.Role, row.Permission);
+            setMenuRoleId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
+  );
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setTab(newValue);
+    const tabParam = `tab=${newValue}`;
+    const newUrl = `${baseURLAccessManagement}&${tabParam}`;
+    router.replace(newUrl, { scroll: false });
+  };
+
+  const TabHeader = ({ tab }: { tab: string }) => (
+    <Box
+      sx={{
+        boxShadow: 1,
+        display: 'flex',
+        justifyContent: 'flex-start',
+        width: '100%',
+        backgroundColor: '#fff',
+        height: '59px',
+        borderBottom: '0px solid #E5E7EB',
+      }}
+    >
+      <Tabs
+        value={tab}
+        onChange={handleTabChange}
+        sx={{
+          width: 'fit-content',
+          marginLeft: '20px',
+          marginRight: '20px',
+          background: 'transparent',
+          '& .MuiTabs-flexContainer': {
+            gap: 1.5,
+          },
+          '& .MuiTabs-indicator': {
+            backgroundColor: '#152E75',
+          },
+          '& .Mui-selected .tab-icon': {
+            filter:
+              'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
+          },
+        }}
+      >
+        {tabConfig
+          .filter(tab => permissions[tab.entity].r)
+          .map(({ label, value, icon }) => (
+            <Tab
+              key={value}
+              icon={
+                <img
+                  src={icon}
+                  alt={label}
+                  style={{ width: 21, height: 16, marginRight: 6 }}
+                  className="tab-icon"
+                />
+              }
+              iconPosition="start"
+              label={label}
+              value={value}
+              sx={commonTabSx}
+            />
+          ))}
+      </Tabs>
+    </Box>
   );
 
   return (
