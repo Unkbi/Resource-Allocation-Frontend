@@ -158,10 +158,11 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
   const hasAnyAccess = {
     'user-profile': true,
     notification: true,
-    'access-management': true,
+    'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
-    'allocation-setting': true,
+    'allocation-setting':
+      permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
     'location-setting':
       permissions['WorkLocation'].r || permissions['WorkLocationGroup'].r,
     theme: true,
@@ -419,8 +420,12 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
 };
 
 export default withRBAC(SettingsPanel, [
+  'Role',
+  'Permission',
   'ProjectType',
   'ProjectTypeGroup',
+  'AllocationRangeSetting',
+  'ScalarSetting',
   'WorkLocation',
   'WorkLocationGroup',
 ]);

@@ -2323,7 +2323,7 @@ const AllocationForm = () => {
         });
         const updatedFields = {
           userRole: initialData.__path__,
-          userId: values.Assignee?.id || null,
+          userId: values.Assignee || null,
           roleName: values.Role,
         };
         try {
