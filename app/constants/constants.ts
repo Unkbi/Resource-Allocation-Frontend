@@ -264,6 +264,8 @@ export const PROJECT_PAGE_VALID_TABS = [
 
 export const PROJECT_TYPE_VALID_TABS = ['project-types', 'project-types-group'];
 
+export const LOCATION_VALID_TABS = ['location', 'location-group'];
+
 export const ALLOCATION_SETTINGS_VALID_TABS = [
   'color-settings',
   'alerts-threshold',

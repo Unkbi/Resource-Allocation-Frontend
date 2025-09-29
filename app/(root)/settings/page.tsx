@@ -163,7 +163,8 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
     'allocation-setting':
       permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
-    'location-setting': true,
+    'location-setting':
+      permissions['WorkLocation'].r || permissions['WorkLocationGroup'].r,
     theme: true,
     'holiday-calendar': true,
     'global-default-view': true,
@@ -425,4 +426,6 @@ export default withRBAC(SettingsPanel, [
   'ProjectTypeGroup',
   'AllocationRangeSetting',
   'ScalarSetting',
+  'WorkLocation',
+  'WorkLocationGroup',
 ]);
