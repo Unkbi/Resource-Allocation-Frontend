@@ -193,7 +193,9 @@ export function buildLoginUserPrivileges(
     );
     if (privilege && privilege.resourceFqName) {
       // remove Resource/ prefix if present
-      const resourceName = privilege.resourceFqName.replace(/^Resource\//, '');
+      const resourceName = privilege.resourceFqName
+        .replace(/^Resource\//, '')
+        .replace(/^agentlang.auth\//, '');
 
       if (!loginUserPrivileges[resourceName]) {
         loginUserPrivileges[resourceName] = {

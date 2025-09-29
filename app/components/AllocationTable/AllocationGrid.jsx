@@ -93,6 +93,7 @@ function AllocationGrid({
   showActuals = false,
   rowGroupingColumnMode = 'single',
   permissions = null,
+  loadingPermissions = true,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -1417,7 +1418,7 @@ function AllocationGrid({
       }
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={loading}
+      loading={loading || loadingPermissions}
       disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={rowGroupingColumnMode}

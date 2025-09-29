@@ -20,10 +20,13 @@ import ProjectTotalCustomToolTip from '../../AllocationTable/components/ProjectT
 import { getProjectTypeColorLine } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
   endDate: string | null;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 
 interface Resource {
@@ -34,7 +37,12 @@ interface Resource {
   [key: string]: any;
 }
 
-const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
+const ProjectCost = ({
+  startDate,
+  endDate,
+  permissions,
+  loadingPermissions,
+}: ProjectCostAllocationProps) => {
   const dispatch: AppDispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('');
   const { costs: projectCosts, dataProcessing } = useSelector(
@@ -52,7 +60,8 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const { setRows, ready } = useAllocationGrid('main');
 
   useEffect(() => {
-    if (ready && projectCosts) {
+    if (loadingPermissions) return;
+    if (permissions['AllocationCost'].r && ready && projectCosts) {
       const filteredResources = removeResourcesWithNoProjects(projectCosts);
 
       const formattedResources = filteredResources?.map(allocation => ({
@@ -66,21 +75,24 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       }));
       setRows(formattedResources || []);
     }
-  }, [ready, projectCosts]);
+  }, [ready, projectCosts, loadingPermissions]);
 
   useEffect(() => {
-    dispatch({
-      type: 'FETCH_ALLOCATIONS_COST',
-      payload: {
-        teams: teams,
-        projects: projects,
-        resources: resources,
-        allResourcesDetail: allResourcesDetail,
-        startDate: startDate,
-        endDate: endDate,
-      },
-    });
-  }, [startDate, endDate, teams, projects, resources]);
+    if (loadingPermissions) return;
+    if (permissions['AllocationCost'].r) {
+      dispatch({
+        type: 'FETCH_ALLOCATIONS_COST',
+        payload: {
+          teams: teams,
+          projects: projects,
+          resources: resources,
+          allResourcesDetail: allResourcesDetail,
+          startDate: startDate,
+          endDate: endDate,
+        },
+      });
+    }
+  }, [startDate, endDate, teams, projects, resources, loadingPermissions]);
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
@@ -662,4 +674,4 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   );
 };
 
-export default ProjectCost;
+export default withRBAC(ProjectCost, ['AllocationCost']);

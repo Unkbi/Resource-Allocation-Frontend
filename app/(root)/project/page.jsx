@@ -96,7 +96,7 @@ const AddAllocationIcon = () => (
   <img src="/images/icons/AddAllocation.svg" alt="AddAllocation" />
 );
 
-function Project({ permissions }) {
+function Project({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const apiRef = useGridApiRef();
@@ -125,6 +125,7 @@ function Project({ permissions }) {
   });
 
   useEffect(() => {
+    if (loadingPermissions) return;
     const accessMap = [
       { key: 'Project', value: 'project' },
       { key: 'Portfolio', value: 'portfolio' },
@@ -149,7 +150,7 @@ function Project({ permissions }) {
     if (tab !== value) {
       setValue(tab);
     }
-  }, []);
+  }, [loadingPermissions]);
 
   useEffect(() => {
     const newTab = searchParams.get('tab');
@@ -927,7 +928,7 @@ function Project({ permissions }) {
       case 'project':
         return (
           <ProjectTable
-            loading={loading || resourceLoading}
+            loading={loading || resourceLoading || loadingPermissions}
             columns={columns}
             rows={modifyData(rows)}
             apiRef={apiRef}
@@ -939,7 +940,7 @@ function Project({ permissions }) {
       case 'portfolio':
         return (
           <PortfolioTable
-            loading={loadingPortfolio}
+            loading={loadingPortfolio || loadingPermissions}
             columns={portfolioColumns}
             rows={modifyPortfolioData(portfolioRows)}
             apiRef={apiRef}
