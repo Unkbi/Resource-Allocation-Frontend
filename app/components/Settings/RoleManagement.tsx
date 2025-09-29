@@ -1044,7 +1044,7 @@ function RoleManagementPage({ permissions }: RoleManagementPageProps) {
         backgroundColor: 'rgba(217, 217, 217, 0.27)',
       }}
     >
-      <TabHeader tab={tab} setTab={setTab} />
+      <TabHeader tab={tab} />
 
       {tab === 'role-management' && (
         <RolesTable
