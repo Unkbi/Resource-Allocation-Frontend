@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  Box,
-  Button,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-
 
 interface AccessTableProps {
   title: string;
@@ -36,7 +31,7 @@ export default function RolesTable({
   setMenuId,
   setAnchorEl,
   anchorEl,
-  buttonLabel = 'Add New',
+  buttonLabel = '',
   columns = [],
   apiRef,
   loading = false,
@@ -66,25 +61,27 @@ export default function RolesTable({
         >
           {title}
         </Typography>
-        <Button
-          variant="contained"
-          onClick={onAdd}
-          sx={{
-            height: 40,
-            borderRadius: 2,
-            background: '#152E75',
-            color: '#FFF',
-            textTransform: 'none',
-            fontSize: 14,
-            fontWeight: 600,
-            px: 2,
-          }}
-        >
-          {buttonLabel}
-        </Button>
+        {buttonLabel && (
+          <Button
+            variant="contained"
+            onClick={onAdd}
+            sx={{
+              height: 40,
+              borderRadius: 2,
+              background: '#152E75',
+              color: '#FFF',
+              textTransform: 'none',
+              fontSize: 14,
+              fontWeight: 600,
+              px: 2,
+            }}
+          >
+            {buttonLabel}
+          </Button>
+        )}
       </Box>
 
-        <Box sx={{ width: '100%',  height: 'calc(100vh - 355px)' }}>
+      <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGrid
           rows={data}
           columns={columns}
