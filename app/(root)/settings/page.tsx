@@ -157,7 +157,7 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
 
   const hasAnyAccess = {
     'user-profile': true,
-    notification: true,
+    notification: false,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
@@ -165,10 +165,20 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
       permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
     'location-setting':
       permissions['WorkLocation'].r || permissions['WorkLocationGroup'].r,
-    theme: true,
-    'holiday-calendar': true,
-    'global-default-view': true,
-    'help-centre': true,
+    theme: false,
+    'holiday-calendar': false,
+    'global-default-view': false,
+    'help-centre': false,
+  };
+
+  const anyChildHasAccess = (menuCategory: MenuCategory) => {
+    if (
+      menuCategory.items.some(
+        item => hasAnyAccess[item.id as keyof typeof hasAnyAccess]
+      )
+    )
+      return true;
+    return false;
   };
 
   useEffect(() => {
@@ -351,7 +361,9 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
       <BodyContainer>
         <Box sx={{ padding: '16px', borderRight: '1px solid #e0e0e0' }}>
           <SettingsSidebar>
-            {MenuItems.map(category => (
+            {MenuItems.filter(menuCategory =>
+              anyChildHasAccess(menuCategory)
+            ).map(category => (
               <Box key={category.name}>
                 <CategoryLabel color="red">{category.name}</CategoryLabel>
                 <List disablePadding>
