@@ -11,10 +11,10 @@ const initialState: RBACState = {
   privilegeAssignments: [],
   meta: null,
   loading: true,
-  rolesLoading:true,
-  roleAssignmentsLoading:true,
-  privilegesLoading :true ,
-  privilegeAssignmentsLoading :true ,
+  rolesLoading: true,
+  roleAssignmentsLoading: true,
+  privilegesLoading: true,
+  privilegeAssignmentsLoading: true,
   error: false,
 };
 
@@ -22,7 +22,7 @@ const rbacSlice = createSlice({
   name: 'RBAC',
   initialState,
   reducers: {
-    setLoginUpserPrivileges: (state, action) => {
+    setLoginUserPrivileges: (state, action) => {
       state.loginUserPrivileges = action.payload;
     },
     setRoles: (state, action) => {
@@ -108,7 +108,7 @@ const rbacSlice = createSlice({
         };
       }
     },
-    setMeta : (state, action) => {
+    setMeta: (state, action) => {
       state.meta = action.payload;
     },
     setLoading: (state, action) => {
@@ -136,7 +136,7 @@ const rbacSlice = createSlice({
 });
 
 export const {
-  setLoginUpserPrivileges,
+  setLoginUserPrivileges,
   setRoles,
   clearRoles,
   updateRoles,
