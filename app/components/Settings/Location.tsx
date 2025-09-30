@@ -124,10 +124,11 @@ function LocationSettingPage({
   const apiRef = useGridApiRef();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { allResourcesDetail, loading: allResourcesDetailLoading } =useSelector(
-    (state:any )=> state.allResourcesDetail);
+  const { allResourcesDetail, loading: allResourcesDetailLoading } =
+    useSelector((state: any) => state.allResourcesDetail);
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
-    (state:any ) => state.employeeRates);
+    (state: any) => state.employeeRates
+  );
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -307,44 +308,44 @@ function LocationSettingPage({
           loc => loc.Name === deletingLocation
         )?.Id;
         const isInResources = allResourcesDetail.some((res: any) => {
-         return res.Resource?.WorkLocation === locationId;
+          return res.Resource?.WorkLocation === locationId;
         });
-       const isInRates = employeeRates.some(
-        (rate: any) => rate.WorkLocation === locationId
-       );
-         if (isInResources || isInRates) {
-        dispatch(
-          showToast({
-            open: true,
-            message: `Cannot delete "${deletingLocation}", already in use.`,
-            type: 'error',
-            position: 'bottom-right',
-            autoHideTimer: 4000,
-          })
+        const isInRates = employeeRates.some(
+          (rate: any) => rate.WorkLocation === locationId
         );
-        return; 
-      }
+        if (isInResources || isInRates) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete "${deletingLocation}", already in use.`,
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
         await dispatch({
           type: DELETE_LOCATION,
           payload: { locationId },
         });
       } else if (tab === 'location-group' && deletingLocationGroup) {
-      const isAssigned = locationData.some(
-        loc => loc.LocationGroup === deletingLocationGroup
-      );
-
-      if (isAssigned) {
-        dispatch(
-          showToast({
-            open: true,
-            message: `Cannot delete "${deletingLocationGroup}", with assigned locations.`,
-            type: 'error',
-            position: 'bottom-right',
-            autoHideTimer: 4000,
-          })
+        const isAssigned = locationData.some(
+          loc => loc.LocationGroup === deletingLocationGroup
         );
-        return;
-      }
+
+        if (isAssigned) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete "${deletingLocationGroup}", with assigned locations.`,
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
         const locationGroupId = locationGroupData.find(
           locG => locG.Name === deletingLocationGroup
         )?.Id;
@@ -664,6 +665,7 @@ function LocationSettingPage({
           columns={LocationPageColumns}
           apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'location-group' && (
@@ -684,6 +686,7 @@ function LocationSettingPage({
           columns={LocationGroupColumns}
           apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
 

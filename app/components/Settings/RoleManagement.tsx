@@ -577,7 +577,7 @@ function RoleManagementPage({
         return <Typography sx={commonCellStyle}>{displayValue}</Typography>;
       },
     },
-     {
+    {
       field: 'Role',
       headerName: 'Role',
       flex: 1,
@@ -607,6 +607,22 @@ function RoleManagementPage({
           </Box>
         );
       },
+    },
+    {
+      field: 'User',
+      headerName: 'Assigned User',
+      flex: 1,
+      valueGetter: (params: any) => {
+        const value = params;
+        const userId = value?.includes('/') ? value.split('/').pop() : value;
+        const matchedUser = user?.find(u => u.id === userId);
+        return matchedUser
+          ? `${matchedUser.firstName} ${matchedUser.lastName}`
+          : userId;
+      },
+      renderCell: (params: any) => (
+        <Typography sx={commonCellStyle}>{params.value}</Typography>
+      ),
     },
     {
       field: 'Status',
@@ -1067,6 +1083,7 @@ function RoleManagementPage({
           renderMenu={renderRoleMenu}
           apiRef={apiRef}
           loading={rolesLoading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'role-assignments' && (
@@ -1092,6 +1109,7 @@ function RoleManagementPage({
           columns={roleAssignmentColumns}
           apiRef={apiRef}
           loading={roleAssignmentsLoading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'privilege-management' && (
@@ -1110,6 +1128,7 @@ function RoleManagementPage({
           columns={privilegesColumns}
           apiRef={apiRef}
           loading={privilegesLoading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'privilege-assignments' && (
@@ -1130,6 +1149,7 @@ function RoleManagementPage({
           columns={privilegeAssignmentsColumns}
           apiRef={apiRef}
           loading={privilegeAssignmentsLoading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
 

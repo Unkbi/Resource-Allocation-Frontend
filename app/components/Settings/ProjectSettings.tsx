@@ -674,6 +674,7 @@ function ProjectSettingPage({
           columns={ProjectTypesPageColumns}
           apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'project-types-group' && (
@@ -694,6 +695,7 @@ function ProjectSettingPage({
           columns={ProjectTypesGroupColumns}
           apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
 
