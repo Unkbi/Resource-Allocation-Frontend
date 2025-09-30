@@ -18,6 +18,7 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
+import LoadingScreen from '@/app/loadingScreen';
 
 interface TopContentProps {
   startDate: string;
@@ -213,26 +214,33 @@ function AllocationInit({
     loadingPermissions,
   ]);
 
-  return splitView ? (
-    <HorizontalSplitView
-      top={
-        <TopContent
-          startDate={currentViewStartDate || ''}
-          endDate={currentViewEndDate || ''}
-        />
-      }
-      bottom={
-        <BottomContent
-          startDate={currentViewStartDate || ''}
-          endDate={currentViewEndDate || ''}
-        />
-      }
-      initialTopHeight={300}
-      syncHorizontalScroll={true}
-      // {...(dataProcessing ? { topCSSHeight: 'var(--height)' } : {})}
-    />
+  return permissions!['Allocation'].r ? (
+    splitView ? (
+      <HorizontalSplitView
+        top={
+          <TopContent
+            startDate={currentViewStartDate || ''}
+            endDate={currentViewEndDate || ''}
+          />
+        }
+        bottom={
+          <BottomContent
+            startDate={currentViewStartDate || ''}
+            endDate={currentViewEndDate || ''}
+          />
+        }
+        initialTopHeight={300}
+        syncHorizontalScroll={true}
+        // {...(dataProcessing ? { topCSSHeight: 'var(--height)' } : {})}
+      />
+    ) : (
+      <Allocation
+        startDate={currentViewStartDate}
+        endDate={currentViewEndDate}
+      />
+    )
   ) : (
-    <Allocation startDate={currentViewStartDate} endDate={currentViewEndDate} />
+    <></>
   );
 }
 

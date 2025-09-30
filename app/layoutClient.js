@@ -24,6 +24,7 @@ import {
   FETCH_ROLESASSIGNMENTS,
   GET_USER_AND_PRIVILEGES,
 } from './redux/actions/rbacActions';
+import LoadingScreen from './loadingScreen';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -54,6 +55,7 @@ export default function LayoutClient({ children }) {
     privileges,
     privilegeAssignments,
     loginUserPrivileges,
+    loadingLoginUserPrivileges,
   } = useSelector(state => state.rbac);
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
@@ -170,7 +172,11 @@ export default function LayoutClient({ children }) {
         />
       )}
       <MainContent isLoggedIn={isUserLoginIn} sidebarExpanded={sidebarExpanded}>
-        {children}
+        {!isPublicRoute && loadingLoginUserPrivileges ? (
+          <LoadingScreen />
+        ) : (
+          children
+        )}
         {open && <CustomSnackbar sidebarExpanded={sidebarExpanded} />}
       </MainContent>
       <MuiXLicense />
