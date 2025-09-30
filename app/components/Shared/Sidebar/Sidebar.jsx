@@ -9,7 +9,7 @@ import Grow from '@mui/material/Grow';
 import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import MenuList from '@mui/material/MenuList';
-import { performLogout, RESET_STORE } from '@/app/redux/actions/authActions';
+import { performLogout } from '@/app/redux/actions/authActions';
 import { Button } from '@mui/material';
 import EllipsisNameCell from '../../ResourceAllocation/component/EllipsisNameCell';
 import CustomAvatar from '../../Avatar/CustomAvatar';
@@ -141,7 +141,6 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
 
   const handleLogout = () => {
     dispatch(performLogout());
-    dispatch({ type: RESET_STORE });
     router.push('/login');
   };
 

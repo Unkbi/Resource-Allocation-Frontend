@@ -12,7 +12,6 @@ import {
 
 const initialState = {
   user: null,
-  loginUser: null,
   token: null,
   loading: false,
   signupData: null,
@@ -40,7 +39,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.loginUser = action.payload;
+        state.user = action.payload;
         state.token = action.payload['id-token'];
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -55,7 +54,7 @@ const authSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, state => {
         state.loading = false;
-        state.loginUser = null;
+        state.user = null;
         state.token = null;
       })
       .addCase(logoutUser.rejected, (state, action) => {
@@ -70,7 +69,7 @@ const authSlice = createSlice({
       })
       .addCase(signupUser.fulfilled, state => {
         state.loading = false;
-        state.loginUser = null;
+        state.user = null;
         state.token = null;
       })
       .addCase(signupUser.rejected, (state, action) => {
@@ -111,7 +110,7 @@ const authSlice = createSlice({
       })
       .addCase(confirmSignUp.fulfilled, (state, action) => {
         state.loading = false;
-        state.loginUser = action.payload.user;
+        state.user = action.payload.user;
         state.token = action.payload.token;
         state.otpVerified = true;
       })
