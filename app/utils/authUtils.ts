@@ -193,13 +193,26 @@ export function buildLoginUserPrivileges(
     );
     if (privilege && privilege.resourceFqName) {
       // remove Resource/ prefix if present
-      const resourceName = privilege.resourceFqName.replace(/^Resource\//, '');
-      loginUserPrivileges[resourceName] = {
-        c: privilege.c,
-        r: privilege.r,
-        u: privilege.u,
-        d: privilege.d,
-      };
+      const resourceName = privilege.resourceFqName
+        .replace(/^Resource\//, '')
+        .replace(/^agentlang.auth\//, '');
+
+      if (!loginUserPrivileges[resourceName]) {
+        loginUserPrivileges[resourceName] = {
+          c: privilege.c,
+          r: privilege.r,
+          u: privilege.u,
+          d: privilege.d,
+        };
+      } else {
+        // merge with existing permissions if already present
+        loginUserPrivileges[resourceName] = {
+          c: loginUserPrivileges[resourceName].c || privilege.c,
+          r: loginUserPrivileges[resourceName].r || privilege.r,
+          u: loginUserPrivileges[resourceName].u || privilege.u,
+          d: loginUserPrivileges[resourceName].d || privilege.d,
+        };
+      }
     }
   });
 

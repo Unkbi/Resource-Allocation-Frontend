@@ -259,12 +259,12 @@ export function formatAllAllocations(
       grouped.set(key, base);
     }
 
-    const weekKey = getWeekNumber(parseISO(alloc.Period));
+    const weekKey = getWeekNumber(parseISO(alloc.Period.split('T')[0]));
     const entry = grouped.get(key);
     entry[weekKey] = {
       allocationId: alloc.Id,
       value: alloc.AllocationEntered,
-      period: alloc.Period,
+      period: alloc.Period.split('T')[0],
       actuals: alloc.ActualsEntered || null,
       notes: alloc.Notes || null,
     };
@@ -468,12 +468,12 @@ export function formatCostAllocations(
       grouped.set(key, base);
     }
 
-    const weekKey = getWeekNumber(parseISO(alloc.Period));
+    const weekKey = getWeekNumber(parseISO(alloc.Period.split('T')[0]));
     const entry = grouped.get(key);
     entry[weekKey] = {
       allocationId: alloc.Id,
       value: alloc.Cost,
-      period: alloc.Period,
+      period: alloc.Period.split('T')[0],
     };
     entry.totalCost += alloc.Cost;
   }

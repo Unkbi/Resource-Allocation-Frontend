@@ -18,10 +18,13 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface ResourceAllocationProps {
   startDate: string;
   endDate: string;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -47,9 +50,11 @@ export interface Project {
   Type: string;
 }
 
-export default function ResourceAllocation({
+function ResourceAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: ResourceAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
@@ -78,7 +83,8 @@ export default function ResourceAllocation({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
-    if (ready) {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('teamAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -115,7 +121,7 @@ export default function ResourceAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready, allAllocations]);
+  }, [ready, allAllocations, loadingPermissions]);
 
   const getTeam = (params: GridCellParams) => {
     if (
@@ -625,3 +631,5 @@ export default function ResourceAllocation({
     </>
   );
 }
+
+export default withRBAC(ResourceAllocation, ['Allocation']);

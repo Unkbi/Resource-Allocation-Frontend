@@ -47,7 +47,7 @@ const AddOrganizationForm = ({
       (formType === 'edit_organization' && !permissions['Organization']?.u) ||
         (formType === 'add_organization' && !permissions['Organization']?.c)
     );
-    if (!resources.length) {
+    if (!resources?.length) {
       dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
     }
   }, []);

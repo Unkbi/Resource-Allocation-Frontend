@@ -57,6 +57,7 @@ import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import RatesTable from '@/app/components/Resources/RatesTable';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 const demoResources = {
   result: [
@@ -120,7 +121,14 @@ const menuItemStyle = {
   lineHeight: '18px',
 };
 
-function Resources({ permissions }) {
+const accessMap = [
+  { key: 'Resource', value: 'resource' },
+  { key: 'Team', value: 'teams' },
+  { key: 'Organization', value: 'organizations' },
+  { key: 'EmployeeRate', value: 'rates' },
+];
+
+function Resources({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
   const { resources, updating, loading } = useSelector(
@@ -162,12 +170,7 @@ function Resources({ permissions }) {
   );
 
   useEffect(() => {
-    const accessMap = [
-      { key: 'Resource', value: 'resource' },
-      { key: 'Team', value: 'teams' },
-      { key: 'Organization', value: 'organizations' },
-      { key: 'EmployeeRate', value: 'rates' },
-    ];
+    if (loadingPermissions) return;
 
     const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
 
@@ -188,7 +191,7 @@ function Resources({ permissions }) {
     if (tab !== value) {
       setValue(tab);
     }
-  }, []);
+  }, [loadingPermissions]);
 
   useEffect(() => {
     const newTab = searchParams.get('tab');
@@ -1430,7 +1433,12 @@ function Resources({ permissions }) {
       case 'resource':
         return (
           <ResourceTable
-            loading={loading || dataProcessing || allResourcesDetailLoading}
+            loading={
+              loading ||
+              dataProcessing ||
+              allResourcesDetailLoading ||
+              loadingPermissions
+            }
             columns={columns}
             rows={modifyData(rows)}
             apiRef={apiRef}
@@ -1441,7 +1449,7 @@ function Resources({ permissions }) {
       case 'teams':
         return (
           <TeamsTable
-            loading={loading || dataProcessing}
+            loading={loading || dataProcessing || loadingPermissions}
             columns={teamColumns}
             rows={modifyTeamData(teamRows) || []}
             apiRef={apiRef}
@@ -1464,7 +1472,7 @@ function Resources({ permissions }) {
       case 'organizations':
         return (
           <OrganisationsTable
-            loading={allOrganizationsLoading}
+            loading={allOrganizationsLoading || loadingPermissions}
             columns={organizationColumns}
             rows={organisations.map((org, index) => ({
               Id: org.Id,
@@ -1480,7 +1488,7 @@ function Resources({ permissions }) {
       case 'rates':
         return (
           <RatesTable
-            loading={employeeRatesLoading}
+            loading={employeeRatesLoading || loadingPermissions}
             columns={employeeRatesColumns}
             rows={modifyRatesData(employeeRates) || []}
             apiRef={apiRef}
@@ -1493,30 +1501,34 @@ function Resources({ permissions }) {
     }
   };
 
-  return (
-    <Box
-      sx={{
-        backgroundColor: '#fff',
-        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-        height: '100%',
-      }}
-    >
-      {renderTable()}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        title={handleTitle(value)}
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : (
+    accessMap.some(tab => permissions[tab.key].r) && (
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+          height: '100%',
+        }}
       >
-        This will permanently delete the{' '}
-        {value === 'rates'
-          ? 'Rate'
-          : value === 'teams'
-            ? 'Team'
-            : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
-        .
-      </ConfirmDialog>
-    </Box>
+        {renderTable()}
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          title={handleTitle(value)}
+        >
+          This will permanently delete the{' '}
+          {value === 'rates'
+            ? 'Rate'
+            : value === 'teams'
+              ? 'Team'
+              : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
+          .
+        </ConfirmDialog>
+      </Box>
+    )
   );
 }
 

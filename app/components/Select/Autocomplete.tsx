@@ -47,6 +47,8 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
   const hasError = touched[name] && errors[name] && !value;
   const theme = useTheme();
 
+  const effectivePlaceholder = disabled && !value ? '' : label;
+
   return (
     <Autocomplete
       disabled={disabled}
@@ -104,7 +106,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
       renderInput={params => (
         <TextField
           {...params}
-          placeholder={label || ''}
+          placeholder={effectivePlaceholder || ''}
           required={required}
           name={name}
           error={Boolean(hasError)}

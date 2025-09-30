@@ -45,10 +45,13 @@ import {
 import { useRouter } from 'next/navigation';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface ProjectAllocationProps {
   startDate: string | null;
   endDate: string | null;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -97,9 +100,11 @@ interface DateRange {
   end?: any;
 }
 
-export default function ProjectAllocation({
+function ProjectAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const router = useRouter();
@@ -127,7 +132,8 @@ export default function ProjectAllocation({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
-    if (ready) {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -163,7 +169,7 @@ export default function ProjectAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready && allAllocations]);
+  }, [ready && allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -910,3 +916,5 @@ export default function ProjectAllocation({
     </>
   );
 }
+
+export default withRBAC(ProjectAllocation, ['Allocation']);
