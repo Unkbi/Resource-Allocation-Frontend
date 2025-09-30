@@ -90,6 +90,11 @@ export default function AssignRolesTable({
           disableRowSelectionOnClick
           apiRef={apiRef}
           loading={loading}
+          initialState={{
+            sorting: {
+              sortModel: [{ field: 'Role', sort: 'asc' }], 
+            },
+          }}
           sx={{
             border: 'none',
             height: '100%',
@@ -121,6 +126,12 @@ export default function AssignRolesTable({
             '.MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
               fontSize: 13,
+            },
+             '& .MuiDataGrid-columnHeader--sorted .MuiDataGrid-sortIcon': {
+              display: 'none',
+            },
+             '& .MuiDataGrid-columnHeader--sorted:hover .MuiDataGrid-sortIcon': {
+             display: 'inline-flex',
             },
           }}
           slotProps={{

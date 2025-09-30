@@ -563,6 +563,21 @@ function RoleManagementPage({
 
   const roleAssignmentColumns = [
     {
+      field: 'User',
+      headerName: 'Assigned User',
+      flex: 1,
+      renderCell: (params: any) => {
+        const value = params.value;
+        const userId = value?.includes('/') ? value.split('/').pop() : value;
+        const matchedUser = user?.find(u => u.id === userId);
+        const displayValue = matchedUser
+          ? `${matchedUser.firstName} ${matchedUser.lastName}`
+          : userId;
+
+        return <Typography sx={commonCellStyle}>{displayValue}</Typography>;
+      },
+    },
+     {
       field: 'Role',
       headerName: 'Role',
       flex: 1,
@@ -591,21 +606,6 @@ function RoleManagementPage({
             <EllipsisNameCell value={role} showAvatar={false} />
           </Box>
         );
-      },
-    },
-    {
-      field: 'User',
-      headerName: 'Assigned User',
-      flex: 1,
-      renderCell: (params: any) => {
-        const value = params.value;
-        const userId = value?.includes('/') ? value.split('/').pop() : value;
-        const matchedUser = user?.find(u => u.id === userId);
-        const displayValue = matchedUser
-          ? `${matchedUser.firstName} ${matchedUser.lastName}`
-          : userId;
-
-        return <Typography sx={commonCellStyle}>{displayValue}</Typography>;
       },
     },
     {
