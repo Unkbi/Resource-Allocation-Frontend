@@ -1,7 +1,10 @@
 'use client';
 
 import { Box, Button, Typography } from '@mui/material';
-import { GridToolbarContainer, GridToolbarFilterButton } from '@mui/x-data-grid-premium';
+import {
+  GridToolbarContainer,
+  GridToolbarFilterButton,
+} from '@mui/x-data-grid-premium';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -28,7 +31,7 @@ export default function SettingsToolbar({
   title,
   buttonLabel,
   onButtonClick,
-  setFilterButtonEl
+  setFilterButtonEl,
 }: SettingsToolbarProps) {
   return (
     <GridToolbarContainer
@@ -79,22 +82,24 @@ export default function SettingsToolbar({
             },
           }}
         />
-        <Button
-          variant="contained"
-          onClick={onButtonClick}
-          sx={{
-            height: 40,
-            borderRadius: 2,
-            background: '#152E75',
-            color: '#FFF',
-            textTransform: 'none',
-            fontSize: 14,
-            fontWeight: 600,
-            px: 2,
-          }}
-        >
-          {buttonLabel}
-        </Button>
+        {buttonLabel && (
+          <Button
+            variant="contained"
+            onClick={onButtonClick}
+            sx={{
+              height: 40,
+              borderRadius: 2,
+              background: '#152E75',
+              color: '#FFF',
+              textTransform: 'none',
+              fontSize: 14,
+              fontWeight: 600,
+              px: 2,
+            }}
+          >
+            {buttonLabel}
+          </Button>
+        )}
       </Box>
     </GridToolbarContainer>
   );
