@@ -1433,6 +1433,18 @@ function AllocationTheme({
                   }}
                   inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
                 />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  {allocationHistoryDuration ?
+                    allocationHistoryDuration === '1' ? 'month': 'months': ''}
+                </Typography>
               </Box>
             </Box>
 
@@ -1478,6 +1490,18 @@ function AllocationTheme({
                   }}
                   inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
                 />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  {commentsHistoryDuration
+                    ? commentsHistoryDuration === '1' ? 'month' : 'months' : ''}
+                </Typography>
               </Box>
             </Box>
           </Box>
