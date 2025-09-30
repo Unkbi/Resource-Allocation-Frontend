@@ -46,6 +46,7 @@ import { useRouter } from 'next/navigation';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -116,6 +117,7 @@ function ProjectAllocation({
   );
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const {projectTypes} = useSelector((state: RootState) => state.allSettings);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectName, setMenuProjectName] = useState<string>('');
   const allResources = _resources || [];
@@ -130,6 +132,11 @@ function ProjectAllocation({
     (state: RootState) => state.allocationView
   );
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+
+  useEffect(() => {
+    if(projectTypes.length === 0)
+    dispatch({type: FETCH_PROJECT_TYPES});
+  }, [projectTypes]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -169,7 +176,7 @@ function ProjectAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready && allAllocations, loadingPermissions]);
+  }, [ready && allAllocations, loadingPermissions, projects, projectTypes]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -294,6 +301,7 @@ function ProjectAllocation({
             ?.FullName,
           ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
             ?.FullName,
+          Type: projectTypes?.find(type => type.Id === item.Type)?.Name || '',
         };
       });
     }
@@ -314,9 +322,12 @@ function ProjectAllocation({
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
         const row = api.getRow(rowNode.id);
-        const projectType = projects?.find(
+        const pType = projects?.find(
           project => project.Name === value
         )?.Type;
+        const projectType = pType
+          ? projectTypes?.find(type => type.Id === pType)?.Name
+          : '';
 
         const open = Boolean(anchorEl);
 
@@ -693,8 +704,9 @@ function ProjectAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
+        const pType = firstChild && projectTypes?.find(type => type.Id === firstChild?.projectType)?.Name || '';
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectType || ''} />
+          <EllipsisNameCell value={pType} />
         ) : null;
       },
     },

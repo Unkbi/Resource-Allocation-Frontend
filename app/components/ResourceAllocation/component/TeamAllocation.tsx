@@ -20,6 +20,7 @@ import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -74,6 +75,7 @@ function TeamAllocation({
   const { allAllocations, loading, dataProcessing } = useSelector(
     (state: RootState) => state.allAllocations
   );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const {
     setRows,
     ready,
@@ -82,6 +84,11 @@ function TeamAllocation({
   const { getAllRows: getAllProjectViewRows } =
     useAllocationGrid('projectAllocation');
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+
+  useEffect(() => {
+      if(projectTypes.length === 0)
+      dispatch({type: FETCH_PROJECT_TYPES});
+    }, [projectTypes]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -534,7 +541,10 @@ function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectType || ''} />;
+        const pType = allocation && projectTypes?.find(type => type.Id === allocation?.projectType)?.Name || '';
+        return allocation ? (
+          <EllipsisNameCell value={pType} />
+        ) : '';
       },
     },
     {
