@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  Box,
-  Button,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-
 
 interface AccessTableProps {
   title: string;
@@ -84,7 +79,7 @@ export default function AssignRolesTable({
         </Button>
       </Box>
 
-        <Box sx={{ width: '100%',  height: 'calc(100vh - 355px)' }}>
+      <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGrid
           rows={data}
           columns={columns}
@@ -95,7 +90,7 @@ export default function AssignRolesTable({
           loading={loading}
           initialState={{
             sorting: {
-              sortModel: [{ field: 'Role', sort: 'asc' }], 
+              sortModel: [{ field: 'Role', sort: 'asc' }],
             },
           }}
           sx={{
@@ -129,12 +124,6 @@ export default function AssignRolesTable({
             '.MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
               fontSize: 13,
-            },
-             '& .MuiDataGrid-columnHeader--sorted .MuiDataGrid-sortIcon': {
-              display: 'none',
-            },
-             '& .MuiDataGrid-columnHeader--sorted:hover .MuiDataGrid-sortIcon': {
-             display: 'inline-flex',
             },
           }}
           slotProps={{
