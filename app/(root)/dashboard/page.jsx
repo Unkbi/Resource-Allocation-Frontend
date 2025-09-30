@@ -48,6 +48,7 @@ import {
 } from '@/app/utils/useResponsiveChart';
 import CommonToolbar from '@/app/components/Toolbar/CommonToolbar';
 import { getWeekNumber } from '@/app/utils/common';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -154,12 +155,19 @@ export default function ExecutiveDashboardPage() {
   const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
+  const {projectTypes} = useSelector(state => state.allSettings);
 
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
     const parsed = saved ? JSON.parse(saved) : layouts.md;
     setLayout(parsed);
   }, []);
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, [projectTypes]);
 
   useEffect(() => {
     try {
@@ -243,13 +251,22 @@ export default function ExecutiveDashboardPage() {
     if (projectFTEData.length > 0) {
       let filteredFTE = projectFTEData;
       if (selectedProjectType !== 'all') {
-        filteredFTE = projectFTEData.filter(
-          d => d.project_type === selectedProjectType
-        );
+        // Find the project type object that matches the selected name
+        const selectedProjectTypeObj = projectTypes.find(pt => pt.Name === selectedProjectType);
+        
+        if (selectedProjectTypeObj) {
+          // Filter using the ID of the matched project type
+          filteredFTE = projectFTEData.filter(
+            d => d.project_type === selectedProjectTypeObj.Id
+          );
+        } else {
+          // If no matching project type found, return empty array
+          filteredFTE = [];
+        }
       }
       setFilteredProjectFTEData(filteredFTE);
     }
-  }, [projectFTEData, selectedProjectType]);
+  }, [projectFTEData, selectedProjectType, projectTypes]);
 
   useEffect(() => {
     if (activeProjectsByType.length > 0) {
@@ -376,30 +393,31 @@ export default function ExecutiveDashboardPage() {
   }));
 
   // Extract unique project types and periods from projectFTEData
-  const projectTypes = [
-    ...new Set(filteredProjectFTEData.map(d => d.project_type)),
+  const ProjectTypes = [
+    ...new Set(filteredProjectFTEData.map(d => d.project_type).filter(type => type !== null))
   ];
   const projectPeriods = [
     ...new Set(filteredProjectFTEData.map(d => d.period_start)),
   ].sort();
 
-  // Ensure projectTypes and projectPeriods remain the same
-  const filteredProjectTypes =
-    selectedProjectType === 'all' ? projectTypes : [selectedProjectType];
-
-  const projectSeries = filteredProjectTypes
-    .filter(type => type !== null) // Filter out entries with project_type as null
-    .map(type => ({
-      label: type,
+  // Create project series with proper name mapping
+  const projectSeries = ProjectTypes.map(typeId => {
+    const projectTypeName = projectTypes.find(pt => pt.Id === typeId)?.Name || `Unknown (${typeId})`;
+    const projectTypeColor = projectTypes.find(pt => pt.Id === typeId)?.Color || '#CCCCCC';
+    
+    return {
+      label: projectTypeName,
       data: projectPeriods.map(period => {
         const match = filteredProjectFTEData.find(
-          d => d.project_type === type && d.period_start === period
+          d => d.project_type === typeId && d.period_start === period
         );
         const value = match ? parseFloat(match.avg_weekly_fte) : 0;
         return isNaN(value) ? 0 : value;
       }),
-      area: true, // <-- Enable area shading
-    }));
+      color: projectTypeColor,
+      area: true,
+    };
+  });
 
   const transformDataForPieChart = data => {
     const colors = {
@@ -546,16 +564,22 @@ export default function ExecutiveDashboardPage() {
                   series={[
                     {
                       data: (filteredActiveProjectsByType || []).map(
-                        (item, idx) => ({
-                          id: idx,
-                          value: Number(item.count),
-                          label: truncateLabel(
-                            item._type,
-                            dimensions.width < 400 ? 12 : 14
-                          ),
-                          color:
-                            item.Color || undefined,
-                        })
+                        (item, idx) => {
+                          // Map UUID project type to name
+                          const projectType = projectTypes?.find(pt => pt.Name === item._type);
+                          const typeName = projectType ? projectType.Name : item._type;
+                          const typeColor = projectType ? projectType.Color : item.Color;
+                          
+                          return {
+                            id: idx,
+                            value: Number(item.count),
+                            label: truncateLabel(
+                              typeName,
+                              dimensions.width < 400 ? 12 : 14
+                            ),
+                            color: typeColor || undefined,
+                          };
+                        }
                       ),
                       innerRadius: 0,
                       outerRadius: config.outerRadius || 80,
@@ -828,19 +852,10 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   series={projectSeries.map(series => ({
                     data: series.data,
-                    label: series.label, //truncateLabel(series.label, dimensions.width < 400 ? 12 : 14),
+                    label: series.label,
                     id: series.label,
                     stack: 'total',
-                    color:
-                      series.label === 'RTB'
-                        ? '#0080FF'
-                        : series.label === 'Key Initiative'
-                          ? '#00C9A7'
-                          : series.label === 'Ongoing'
-                            ? '#FFC233'
-                            : series.label === 'STB'
-                              ? '#FF884D'
-                              : '#FFB6B6',
+                    color: series.color,
                   }))}
                   xAxis={[
                     {
@@ -1346,7 +1361,7 @@ export default function ExecutiveDashboardPage() {
 
   const teamNames = [...new Set(coverageData.map(d => d.team_name))];
   const projectTypeNames = [
-    ...new Set(projectFTEData.map(d => d.project_type)),
+    ...new Set(projectTypes.map(d => d.Name)),
   ];
 
   return (

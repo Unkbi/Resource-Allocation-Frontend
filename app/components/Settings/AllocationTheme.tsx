@@ -59,6 +59,8 @@ import {
   handleOptimizedSettingsSave,
   type SettingsData,
 } from '@/app/utils/settingsUtils';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { ALLOCATION_SETTINGS_VALID_TABS } from '@/app/constants/constants';
 
 const baseURLAccessManagement = '/settings?menu=allocation-setting';
 interface ColorPair {
@@ -88,6 +90,11 @@ interface ValidationErrors {
   };
 }
 
+interface AllocationThemeProps {
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
+}
+
 const commonTabSx = {
   color: '#4B5563',
   textTransform: 'none',
@@ -113,96 +120,34 @@ const commonTabSx = {
   },
 };
 
-const tabMenuNames = [
-  'color-settings',
-  'alerts-threshold',
-  'allocation-history',
-];
-
 const tabConfig = [
   {
     label: 'Color Settings',
     value: 'color-settings',
     icon: '/images/icons/colorPalette.svg',
+    entity: 'AllocationRangeSetting',
   },
   {
     label: 'Alert Threshold',
     value: 'alerts-threshold',
     icon: '/images/icons/alertThresholdIcon.svg',
+    entity: 'ScalarSetting',
   },
   {
     label: 'Allocation History',
     value: 'allocation-history',
     icon: '/images/icons/allocationHistoryIcon.svg',
+    entity: 'ScalarSetting',
   },
 ];
 
-const TabHeader = ({
-  tab,
-  setTab,
-  setHasUnsavedChanges,
-}: {
-  tab: string;
-  setTab: (value: string) => void;
-  setHasUnsavedChanges: (value: boolean) => void;
-}) => (
-  <Box
-    sx={{
-      boxShadow: 1,
-      display: 'flex',
-      justifyContent: 'flex-start',
-      width: '100%',
-      backgroundColor: '#fff',
-      height: '59px',
-      borderBottom: '0px solid #E5E7EB',
-    }}
-  >
-    <Tabs
-      value={tab}
-      onChange={(_, v) => {
-        setTab(v);
-        setHasUnsavedChanges(false);
-      }}
-      sx={{
-        width: 'fit-content',
-        marginLeft: '20px',
-        marginRight: '20px',
-        background: 'transparent',
-        '& .MuiTabs-flexContainer': {
-          gap: 1.5,
-        },
-        '& .MuiTabs-indicator': {
-          backgroundColor: '#152E75',
-        },
-        '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
-        },
-      }}
-    >
-      {tabConfig.map(({ label, value, icon }) => (
-        <Tab
-          key={value}
-          icon={
-            <img
-              src={icon}
-              alt={label}
-              style={{ width: 21, height: 16, marginRight: 6 }}
-              className="tab-icon"
-            />
-          }
-          iconPosition="start"
-          label={label}
-          value={value}
-          sx={commonTabSx}
-        />
-      ))}
-    </Tabs>
-  </Box>
-);
-
-export default function AllocationTheme() {
-  const { allocationTheme } = useSelector((state: RootState) => state.settings);
+function AllocationTheme({
+  permissions,
+  loadingPermissions,
+}: AllocationThemeProps) {
+  const { allocationTheme, loading } = useSelector(
+    (state: RootState) => state.settings
+  );
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
@@ -253,6 +198,7 @@ export default function AllocationTheme() {
   }, [allocationTheme]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     if (scalarSettings && Object.keys(scalarSettings).length > 0) {
       if (scalarSettings['History_Archive_month'] !== undefined) {
         setAllocationHistoryDuration(
@@ -293,21 +239,49 @@ export default function AllocationTheme() {
         ),
       });
     }
-  }, [scalarSettings]);
+  }, [scalarSettings, loadingPermissions]);
+
+  useEffect(() => {
+    if (loadingPermissions) return;
+    const accessMap = [
+      { key: 'AllocationRangeSetting', value: 'color-settings' },
+      { key: 'ScalarSetting', value: 'alerts-threshold' },
+      { key: 'ScalarSetting', value: 'allocation-history' },
+    ];
+
+    const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
+
+    if (accessible.length === 0) {
+      router.replace('/settings?menu=user-profile');
+      return;
+    }
+
+    const tabParam = searchParams.get('tab');
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tabParam);
+
+    if (
+      !tabParam ||
+      !ALLOCATION_SETTINGS_VALID_TABS.includes(tab) ||
+      !isAccessible
+    ) {
+      router.replace(
+        `/settings?menu=allocation-setting&tab=${firstAccessible}`
+      );
+      return;
+    }
+
+    if (tabParam !== tab) {
+      setTab(tabParam);
+    }
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && tabMenuNames.includes(tabParam)) {
+    if (tabParam && ALLOCATION_SETTINGS_VALID_TABS.includes(tabParam)) {
       setTab(tabParam);
     }
-  }, []);
-
-  useEffect(() => {
-    if (tabMenuNames.includes(tab)) {
-      const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
-      router.replace(newUrl);
-    }
-  }, [tab, dispatch]);
+  }, [searchParams]);
 
   // Get currently used colors
   const usedColors = React.useMemo(() => {
@@ -522,7 +496,10 @@ export default function AllocationTheme() {
           }}
           size="small"
           value={row.To}
-          disabled={row.To === max_allocation_error}
+          disabled={
+            !permissions!['AllocationRangeSetting'].u ||
+            row.To === max_allocation_error
+          }
           onChange={e => handleRangeChange(id, 'To', e.target.value)}
           onBlur={e => formatValues(e, row)}
           error={error?.To}
@@ -537,8 +514,10 @@ export default function AllocationTheme() {
     const handleColorPickerClick = (
       event: React.MouseEvent<HTMLDivElement>
     ) => {
-      setAnchorEl(event.currentTarget);
-      setActiveColorRow(id as string);
+      if (permissions!['AllocationRangeSetting'].u) {
+        setAnchorEl(event.currentTarget);
+        setActiveColorRow(id as string);
+      }
     };
 
     const handleColorSelect = (pastelColor: string) => {
@@ -774,6 +753,7 @@ export default function AllocationTheme() {
     return (
       <CustomFooter>
         <AddButton
+          disabled={!permissions!['AllocationRangeSetting'].c}
           startIcon={<AddIcon sx={{ width: '16px', height: '16px' }} />}
           onClick={handleAddAllocationRange}
         >
@@ -825,15 +805,19 @@ export default function AllocationTheme() {
       align: 'center',
       headerClassName: 'border-header-icon',
     },
-    {
-      field: 'actions',
-      headerName: '',
-      width: 40,
-      editable: false,
-      renderCell: DeleteCell,
-      sortable: false,
-      align: 'center',
-    },
+    ...(permissions!['AllocationRangeSetting'].d
+      ? [
+          {
+            field: 'actions',
+            headerName: '',
+            width: 40,
+            editable: false,
+            renderCell: DeleteCell,
+            sortable: false,
+            align: 'center' as const,
+          },
+        ]
+      : []),
   ];
 
   const handleProcessRowUpdate = (
@@ -1001,7 +985,6 @@ export default function AllocationTheme() {
         );
 
         if (result.changedCount > 0) {
-          
           setOriginalHistorySettings({
             allocationHistoryDuration,
             commentsHistoryDuration,
@@ -1040,7 +1023,6 @@ export default function AllocationTheme() {
   };
 
   const handleCancel = () => {
-   
     if (tab === 'color-settings') {
       setAllocationRanges([...originalAllocationRanges]);
       setValidationErrors({});
@@ -1059,6 +1041,69 @@ export default function AllocationTheme() {
     setHasUnsavedChanges(false);
   };
 
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setHasUnsavedChanges(false);
+    setTab(newValue);
+    const tabParam = `tab=${newValue}`;
+    const newUrl = `${baseURLAccessManagement}&${tabParam}`;
+    router.replace(newUrl, { scroll: false });
+  };
+
+  const TabHeader = ({ tab }: { tab: string }) => (
+    <Box
+      sx={{
+        boxShadow: 1,
+        display: 'flex',
+        justifyContent: 'flex-start',
+        width: '100%',
+        backgroundColor: '#fff',
+        height: '59px',
+        borderBottom: '0px solid #E5E7EB',
+      }}
+    >
+      <Tabs
+        value={tab}
+        onChange={handleTabChange}
+        sx={{
+          width: 'fit-content',
+          marginLeft: '20px',
+          marginRight: '20px',
+          background: 'transparent',
+          '& .MuiTabs-flexContainer': {
+            gap: 1.5,
+          },
+          '& .MuiTabs-indicator': {
+            backgroundColor: '#152E75',
+          },
+          '& .Mui-selected .tab-icon': {
+            filter:
+              'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
+          },
+        }}
+      >
+        {tabConfig
+          .filter(tab => permissions![tab.entity].r)
+          .map(({ label, value, icon }) => (
+            <Tab
+              key={value}
+              icon={
+                <img
+                  src={icon}
+                  alt={label}
+                  style={{ width: 21, height: 16, marginRight: 6 }}
+                  className="tab-icon"
+                />
+              }
+              iconPosition="start"
+              label={label}
+              value={value}
+              sx={commonTabSx}
+            />
+          ))}
+      </Tabs>
+    </Box>
+  );
+
   return (
     <div
       className="min-h-screen bg-[#f8f9fa] p-8"
@@ -1069,11 +1114,7 @@ export default function AllocationTheme() {
         height: '100%',
       }}
     >
-      <TabHeader
-        tab={tab}
-        setTab={setTab}
-        setHasUnsavedChanges={setHasUnsavedChanges}
-      />
+      <TabHeader tab={tab} />
       <Box
         sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
       >
@@ -1082,8 +1123,14 @@ export default function AllocationTheme() {
             <StyledTableHeader>Allocation Range</StyledTableHeader>
             <Box sx={{ height: 'auto', width: '60%' }}>
               <StyledDataGrid
-                rows={allocationRanges}
+                loading={loading || loadingPermissions}
+                rows={
+                  permissions!['AllocationRangeSetting'].r
+                    ? allocationRanges
+                    : []
+                }
                 disableColumnMenu
+                isCellEditable={() => permissions!['AllocationRangeSetting'].u}
                 columns={columns}
                 editMode="row"
                 processRowUpdate={handleProcessRowUpdate}
@@ -1099,6 +1146,12 @@ export default function AllocationTheme() {
                 autoHeight
                 slots={{
                   footer: CustomFooterComponent,
+                }}
+                slotProps={{
+                  loadingOverlay: {
+                    variant: 'skeleton',
+                    noRowsVariant: 'skeleton',
+                  },
                 }}
               />
             </Box>
@@ -1117,7 +1170,6 @@ export default function AllocationTheme() {
               gap: 4,
             }}
           >
-            
             <Box
               sx={{
                 width: '100%',
@@ -1126,7 +1178,6 @@ export default function AllocationTheme() {
                 alignItems: 'start',
               }}
             >
-             
               <Box sx={{ minWidth: 320 }}>
                 <Box
                   sx={{
@@ -1142,6 +1193,10 @@ export default function AllocationTheme() {
                     Max Allocation Warning
                   </Typography>
                   <TextField
+                    disabled={
+                      !permissions!['ScalarSetting'].c &&
+                      !permissions!['ScalarSetting'].u
+                    }
                     type="number"
                     size="small"
                     placeholder="0.0"
@@ -1228,7 +1283,6 @@ export default function AllocationTheme() {
                 alignItems: 'start',
               }}
             >
-            
               <Box sx={{ minWidth: 320 }}>
                 <Box
                   sx={{
@@ -1244,6 +1298,10 @@ export default function AllocationTheme() {
                     Max Allocation Error
                   </Typography>
                   <TextField
+                    disabled={
+                      !permissions!['ScalarSetting'].c &&
+                      !permissions!['ScalarSetting'].u
+                    }
                     type="number"
                     size="small"
                     placeholder="0.0"
@@ -1352,6 +1410,10 @@ export default function AllocationTheme() {
                   Duration:
                 </Typography>
                 <TextField
+                  disabled={
+                    !permissions!['ScalarSetting'].c &&
+                    !permissions!['ScalarSetting'].u
+                  }
                   size="small"
                   placeholder="Enter Value in number  1 to 9  month"
                   value={allocationHistoryDuration}
@@ -1393,6 +1455,10 @@ export default function AllocationTheme() {
                   Duration:
                 </Typography>
                 <TextField
+                  disabled={
+                    !permissions!['ScalarSetting'].c &&
+                    !permissions!['ScalarSetting'].u
+                  }
                   size="small"
                   placeholder="Enter Value in number  1 to 9  month"
                   value={commentsHistoryDuration}
@@ -1439,3 +1505,8 @@ export default function AllocationTheme() {
     </div>
   );
 }
+
+export default withRBAC(AllocationTheme, [
+  'AllocationRangeSetting',
+  'ScalarSetting',
+]);

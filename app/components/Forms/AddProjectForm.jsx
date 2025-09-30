@@ -65,19 +65,19 @@ const AddProjectForm = ({
   }, [readOnly]);
 
   useEffect(() => {
-    if (!resources.length) {
+    if (!resources?.length) {
       dispatch({
         type: FETCH_ALL_RESOURCES_DETAIL,
         payload: {},
       });
     }
-    if (!portfolios.length) {
+    if (!portfolios?.length) {
       dispatch({
         type: FETCH_PORTFOLIOS,
         payload: {},
       });
     }
-    if (!projectTypes.length) {
+    if (!projectTypes?.length) {
       dispatch({
         type: FETCH_PROJECT_TYPES,
         payload: {},

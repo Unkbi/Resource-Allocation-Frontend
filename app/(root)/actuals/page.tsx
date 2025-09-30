@@ -34,12 +34,14 @@ import { getUserAttributes } from '@/app/utils/authUtils';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 
-function ActualsPage({ permissions }: ActualsPageProps) {
+function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const dispatch: AppDispatch = useDispatch();
   const { actualAllocations, status, calendarDate, dataProcessing } =
     useSelector((state: RootState) => state.actualAllocations);
@@ -230,18 +232,21 @@ function ActualsPage({ permissions }: ActualsPageProps) {
   };
 
   useEffect(() => {
-    if (resources && user && email) {
-      const userId = getUserIdFromEmail(resources || [], email);
-      dispatch({
-        type: GET_ACTUAL_ALLOCATIONS,
-        payload: {
-          resource: userId,
-          startDate: startDate,
-          endDate: endDate,
-        },
-      });
+    if (loadingPermissions) return;
+    if (permissions['ActualsStatus'].r) {
+      if (resources && user && email) {
+        const userId = getUserIdFromEmail(resources || [], email);
+        dispatch({
+          type: GET_ACTUAL_ALLOCATIONS,
+          payload: {
+            resource: userId,
+            startDate: startDate,
+            endDate: endDate,
+          },
+        });
+      }
     }
-  }, [resources, user, email, startDate, endDate]);
+  }, [resources, user, email, startDate, endDate, loadingPermissions]);
 
   useEffect(() => {
     if (actualAllocations) {
@@ -265,20 +270,24 @@ function ActualsPage({ permissions }: ActualsPageProps) {
   }, [actualAllocations]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     if (!permissions['ActualsStatus'].r) {
       router.replace('/dashboard');
     }
-  }, []);
+  }, [loadingPermissions]);
 
   useEffect(() => {
-    // @ts-ignore
-    if (!resources?.length) {
-      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+    if (loadingPermissions) return;
+    if (permissions['ActualsStatus'].r) {
+      // @ts-ignore
+      if (!resources?.length) {
+        dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
+      }
+      if (!projects?.length) {
+        dispatch(fetchAllProjects());
+      }
     }
-    if (!projects?.length) {
-      dispatch(fetchAllProjects());
-    }
-  }, []);
+  }, [loadingPermissions]);
 
   const handleConfirm = () => {
     setDeleteDialogOpen(false);
@@ -307,7 +316,9 @@ function ActualsPage({ permissions }: ActualsPageProps) {
     };
   }, [isModified]);
 
-  return (
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       <Box
         px={{ xs: 2, sm: 2 }}
@@ -327,157 +338,165 @@ function ActualsPage({ permissions }: ActualsPageProps) {
           values.
         </Typography>
 
-        <Box
-          className="tableWithArrow"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Box mx={2} maxWidth={580} minHeight={350} width={530}>
-            <Typography
-              style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}
-            >
-              Current Status :{' '}
-              {dataProcessing ? (
-                <Skeleton
-                  variant="text"
-                  sx={{
-                    display: 'inline-block',
-                    width: '80px',
-                    height: '21px',
-                    marginLeft: '4px',
-                    verticalAlign: 'middle',
-                  }}
-                />
-              ) : (
-                <span
-                  style={{
-                    color: status === 'Confirmed' ? '#198F35' : '#FF7912',
-                  }}
-                >
-                  {status === 'Confirmed' ? status : 'Proposed'}
-                </span>
-              )}
-            </Typography>
-            <ActualTable
-              data={formattedActualAllocations || []}
-              dataProcessing={dataProcessing || false}
-              disableView={
-                (!permissions['ActualsStatus'].c &&
-                  !permissions['ActualsStatus'].u) ||
-                (status === 'Confirmed' &&
-                  startDate !== null &&
-                  !isCurrentWeek(parseISO(startDate)))
-              }
-              startDate={startDate}
-              endDate={endDate}
-              apiRef={apiRef}
-              onValidationChange={handleValidationChange}
-              setShow={handleSetShow}
-              onModificationChange={handleModificationChange}
-              confirmSignal={confirmSignal}
-            />
-            <Box mt={4} width="100%">
-              <Box
-                sx={{
-                  borderBottom: '1px solid #E0E0E0',
-                }}
-              />
-            </Box>
-            <Box display="flex" justifyContent="space-between" mt={4}>
-              <Button
-                startIcon={<ChevronLeftIcon />}
-                onClick={() => {
-                  if (isModified) {
-                    setDialogSource('prev');
-                    setDeleteDialogOpen(true);
-                  } else {
-                    handlePrev();
-                  }
-                }}
-                sx={{
+        {permissions['ActualsStatus'].r ? (
+          <Box
+            className="tableWithArrow"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Box mx={2} maxWidth={580} minHeight={350} width={530}>
+              <Typography
+                style={{
+                  fontWeight: 700,
                   fontSize: '14px',
-                  color: '#152e75',
-                  textTransform: 'none',
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                  },
-                  '& .MuiButton-startIcon': {
-                    marginRight: '0px',
-                  },
+                  marginBottom: '8px',
                 }}
-                variant="text"
               >
-                Prev Week
-              </Button>
-
-              <Button
-                variant="contained"
-                sx={{
-                  // @ts-ignore
-                  bgcolor: theme => theme.palette.sideBarColor.main,
-                  px: 2,
-                  width: '192px',
-                  height: '36px',
-                  borderRadius: '5px',
-                }}
-                disabled={
+                Current Status :{' '}
+                {dataProcessing ? (
+                  <Skeleton
+                    variant="text"
+                    sx={{
+                      display: 'inline-block',
+                      width: '80px',
+                      height: '21px',
+                      marginLeft: '4px',
+                      verticalAlign: 'middle',
+                    }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      color: status === 'Confirmed' ? '#198F35' : '#FF7912',
+                    }}
+                  >
+                    {status === 'Confirmed' ? status : 'Proposed'}
+                  </span>
+                )}
+              </Typography>
+              <ActualTable
+                data={formattedActualAllocations || []}
+                dataProcessing={dataProcessing || false}
+                disableView={
                   (!permissions['ActualsStatus'].c &&
                     !permissions['ActualsStatus'].u) ||
-                  (status !== null &&
+                  (status === 'Confirmed' &&
                     startDate !== null &&
-                    status !== 'Proposed' &&
-                    // Enable button if it's the current week even if status is 'Confirmed'
-                    !isCurrentWeek(parseISO(startDate)) &&
-                    (!isModified || show || hasInvalidRows))
+                    !isCurrentWeek(parseISO(startDate)))
                 }
-                onClick={handleConfirmed}
-              >
-                <Typography
+                startDate={startDate}
+                endDate={endDate}
+                apiRef={apiRef}
+                onValidationChange={handleValidationChange}
+                setShow={handleSetShow}
+                onModificationChange={handleModificationChange}
+                confirmSignal={confirmSignal}
+              />
+              <Box mt={4} width="100%">
+                <Box
                   sx={{
-                    color: '#FFF',
-                    textAlign: 'center',
-                    fontFamily: 'Open Sans',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    textTransform: 'none',
+                    borderBottom: '1px solid #E0E0E0',
                   }}
+                />
+              </Box>
+              <Box display="flex" justifyContent="space-between" mt={4}>
+                <Button
+                  startIcon={<ChevronLeftIcon />}
+                  onClick={() => {
+                    if (isModified) {
+                      setDialogSource('prev');
+                      setDeleteDialogOpen(true);
+                    } else {
+                      handlePrev();
+                    }
+                  }}
+                  sx={{
+                    fontSize: '14px',
+                    color: '#152e75',
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      marginRight: '0px',
+                    },
+                  }}
+                  variant="text"
                 >
-                  {status === 'Confirmed' ? 'Modify' : 'Confirm'}
-                </Typography>
-              </Button>
+                  Prev Week
+                </Button>
 
-              <Button
-                endIcon={<ChevronRightIcon />}
-                onClick={() => {
-                  if (isModified) {
-                    setDialogSource('next');
-                    setDeleteDialogOpen(true);
-                  } else {
-                    handleNext();
+                <Button
+                  variant="contained"
+                  sx={{
+                    // @ts-ignore
+                    bgcolor: theme => theme.palette.sideBarColor.main,
+                    px: 2,
+                    width: '192px',
+                    height: '36px',
+                    borderRadius: '5px',
+                  }}
+                  disabled={
+                    (!permissions['ActualsStatus'].c &&
+                      !permissions['ActualsStatus'].u) ||
+                    (status !== null &&
+                      startDate !== null &&
+                      status !== 'Proposed' &&
+                      // Enable button if it's the current week even if status is 'Confirmed'
+                      !isCurrentWeek(parseISO(startDate)) &&
+                      (!isModified || show || hasInvalidRows))
                   }
-                }}
-                disabled={
-                  startDate ? isCurrentWeek(parseISO(startDate)) : false
-                }
-                sx={{
-                  color: '#152e75',
-                  fontSize: '14px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                  },
-                  '& .MuiButton-endIcon': {
-                    marginLeft: '0px',
-                  },
-                }}
-                variant="text"
-              >
-                Next Week
-              </Button>
+                  onClick={handleConfirmed}
+                >
+                  <Typography
+                    sx={{
+                      color: '#FFF',
+                      textAlign: 'center',
+                      fontFamily: 'Open Sans',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                    }}
+                  >
+                    {status === 'Confirmed' ? 'Modify' : 'Confirm'}
+                  </Typography>
+                </Button>
+
+                <Button
+                  endIcon={<ChevronRightIcon />}
+                  onClick={() => {
+                    if (isModified) {
+                      setDialogSource('next');
+                      setDeleteDialogOpen(true);
+                    } else {
+                      handleNext();
+                    }
+                  }}
+                  disabled={
+                    startDate ? isCurrentWeek(parseISO(startDate)) : false
+                  }
+                  sx={{
+                    color: '#152e75',
+                    fontSize: '14px',
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                    '& .MuiButton-endIcon': {
+                      marginLeft: '0px',
+                    },
+                  }}
+                  variant="text"
+                >
+                  Next Week
+                </Button>
+              </Box>
             </Box>
           </Box>
-        </Box>
+        ) : (
+          <></>
+        )}
         <ConfirmDialog
           open={deleteDialogOpen}
           onConfirm={handleConfirm}

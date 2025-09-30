@@ -13,15 +13,20 @@ import { AllAllocations, Resource } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getCombinedAllocation } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface BottomTeamsViewProps {
   startDate: string;
   endDate: string;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
-export default function BottomTeamsView({
+function BottomTeamsView({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: BottomTeamsViewProps) {
   const [selectedTeam, setSelectedTeam] = useState<
     Array<{ label: string; value: string }>
@@ -163,7 +168,13 @@ export default function BottomTeamsView({
   };
 
   useEffect(() => {
-    if (ready && (allAllocations?.length || getAllRows()?.length)) {
+    if (loadingPermissions) return;
+    if (
+      permissions &&
+      permissions['Allocation'].r &&
+      ready &&
+      (allAllocations?.length || getAllRows()?.length)
+    ) {
       let filteredResources = [];
       // Combine to keep upto Date information.
       let allRows = [];
@@ -199,7 +210,13 @@ export default function BottomTeamsView({
 
       setRows(filteredResources || []);
     }
-  }, [ready, allAllocations, selectedTeam, allocationThreshold]);
+  }, [
+    ready,
+    allAllocations,
+    selectedTeam,
+    allocationThreshold,
+    loadingPermissions,
+  ]);
 
   return (
     <>
@@ -254,3 +271,5 @@ export default function BottomTeamsView({
     </>
   );
 }
+
+export default withRBAC(BottomTeamsView, ['Allocation']);

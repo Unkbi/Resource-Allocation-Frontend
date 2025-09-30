@@ -2323,7 +2323,7 @@ const AllocationForm = () => {
         });
         const updatedFields = {
           userRole: initialData.__path__,
-          userId: values.Assignee?.id || null,
+          userId: values.Assignee || null,
           roleName: values.Role,
         };
         try {
@@ -2595,10 +2595,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             Color: cleanedValues.Color,
             Status: cleanedValues.Status,
-            Group:
-              projectTypeGroups.find(group => {
-                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
-              })?.Id || null,
+            Group: cleanedValues.ProjectTypeGroup,
           };
           try {
             const response = await new Promise((resolve, reject) => {
@@ -2652,11 +2649,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             Color: cleanedValues.Color,
             Status: cleanedValues.Status,
-
-            Group:
-              projectTypeGroups.find(group => {
-                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
-              })?.Id || null,
+            Group: cleanedValues.ProjectTypeGroup,
           };
           try {
             const response = await new Promise((resolve, reject) => {

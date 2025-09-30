@@ -1,13 +1,10 @@
 'use client';
 
-import {
-  Box,
-} from '@mui/material';
+import { Box } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import SettingsToolbar from '../Toolbar/SettingsToolbar';
 import { DataGridPremium } from '@mui/x-data-grid-premium';
 import { FilterPanelStyles } from '../AllocationTable/styles/StyledDataGrid';
-
 
 interface AccessTableProps {
   title: string;
@@ -38,13 +35,12 @@ export default function AssignRolesTable({
   setMenuId,
   setAnchorEl,
   anchorEl,
-  buttonLabel = 'Add New',
+  buttonLabel = '',
   columns = [],
   toolbarType,
   apiRef,
   loading = false,
 }: AccessTableProps) {
-
   const AssignRoleToolbar = () => (
     <SettingsToolbar
       title={title}
@@ -52,13 +48,12 @@ export default function AssignRolesTable({
       onButtonClick={onAdd}
     />
   );
-  
+
   return (
     <Box
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
     >
-      
-        <Box sx={{ width: '100%', height: 'calc(100vh - 248px)' }}>
+      <Box sx={{ width: '100%', height: 'calc(100vh - 248px)' }}>
         <DataGridPremium
           rows={data}
           columns={columns}
@@ -66,43 +61,48 @@ export default function AssignRolesTable({
           disableRowSelectionOnClick
           apiRef={apiRef}
           loading={loading}
+          initialState={{
+            sorting: {
+              sortModel: [{ field: 'Role', sort: 'asc' }],
+            },
+          }}
           slotProps={{
-                loadingOverlay: {
-                  variant: 'skeleton',
-                  noRowsVariant: 'skeleton',
-                },
-                panel: {
-                  className: 'parent-grid-panel',
-                  placement: 'bottom-end',
-                  sx: {
-                    transform: 'translate3d(-50px, 250px, 0px) !important',
-                    top: '40px !important',
-                  },
-                },
-                filterPanel: {
-                  columnsSort: 'asc',
-                  filterFormProps: {
-                    columnInputProps: { 
-                      size: 'small', 
-                      sx: { mt: 'auto' } 
-                    },
-                  operatorInputProps: { size: 'small', sx: { mt: 'auto' } },
-                  valueInputProps: {
-                    InputComponentProps: { size: 'small' },
-                  },
-                  deleteIconProps: {
-                    sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
-                  },
-                },
-                sx: FilterPanelStyles,
+            loadingOverlay: {
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
+            },
+            panel: {
+              className: 'parent-grid-panel',
+              placement: 'bottom-end',
+              sx: {
+                transform: 'translate3d(-50px, 250px, 0px) !important',
+                top: '40px !important',
               },
-            }}
-            slots={{
-              toolbar: toolbarType === 'filter' ? AssignRoleToolbar : undefined,
-            }}
-            localeText={{
-                toolbarFilters: '',
-              }}
+            },
+            filterPanel: {
+              columnsSort: 'asc',
+              filterFormProps: {
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                operatorInputProps: { size: 'small', sx: { mt: 'auto' } },
+                valueInputProps: {
+                  InputComponentProps: { size: 'small' },
+                },
+                deleteIconProps: {
+                  sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
+                },
+              },
+              sx: FilterPanelStyles,
+            },
+          }}
+          slots={{
+            toolbar: toolbarType === 'filter' ? AssignRoleToolbar : undefined,
+          }}
+          localeText={{
+            toolbarFilters: '',
+          }}
           sx={{
             border: 'none',
             height: '100%',

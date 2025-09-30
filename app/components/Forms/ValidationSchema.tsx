@@ -182,7 +182,10 @@ export const addAllocationValidationSchema = (scalarSettings: any) =>
     StartDate: Yup.date().required('Start date is required'),
     EndDate: Yup.date()
       .required('End date is required')
-      .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
+      .min(
+        Yup.ref('StartDate'),
+        'End date must be after or equal to start date'
+      ),
     AllocationEntered: Yup.number()
       .required('Allocation is required')
       .min(0, 'Allocation must be a positive number')
@@ -445,8 +448,9 @@ export const addRoleValidationSchema = Yup.object({
 });
 
 export const assignRoleValidationSchema = Yup.object({
-  Assignee: Yup.object().nullable().required('Assignee is required'),
+  Assignee: Yup.string().required('Assignee is required'),
   Role: Yup.string().required('Role is required'),
+  Status: Yup.string().required('Status is required'),
 });
 
 export const addPrivilegeValidationSchema = Yup.object({

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box} from '@mui/material';
+import { Box } from '@mui/material';
 import { DataGridPremium, useGridApiRef } from '@mui/x-data-grid-premium';
 import SettingsToolbar from '../Toolbar/SettingsToolbar';
 import { FilterPanelStyles } from '../AllocationTable/styles/StyledDataGrid';
@@ -39,18 +39,15 @@ export default function RolesTable({
   columns = [],
   loading = false,
 }: AccessTableProps) {
+  const apiRef = useGridApiRef();
 
- const apiRef = useGridApiRef();
-
-
-const RolesToolbar = () => (
-  <SettingsToolbar
-    title={title}
-    buttonLabel={buttonLabel}
-    onButtonClick={onAdd}
-  />
-);
-
+  const RolesToolbar = () => (
+    <SettingsToolbar
+      title={title}
+      buttonLabel={buttonLabel}
+      onButtonClick={onAdd}
+    />
+  );
 
   return (
     <Box
@@ -67,41 +64,41 @@ const RolesToolbar = () => (
           slots={{
             toolbar: toolbarType === 'filter' ? RolesToolbar : undefined,
           }}
-              slotProps={{
+          slotProps={{
             loadingOverlay: {
-            variant: 'skeleton',
-            noRowsVariant: 'skeleton',
-          },
-          panel: {
-            className: 'parent-grid-panel',
-            placement: 'bottom-end',
-            sx: {
-              transform: 'translate3d(-50px, 250px, 0px) !important',
-              top: '40px !important',
-                  },
-                },
-          filterPanel: {
-            columnsSort: 'asc',
-            filterFormProps: {
-              columnInputProps: { 
-                size: 'small', 
-                sx: { mt: 'auto' } 
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
+            },
+            panel: {
+              className: 'parent-grid-panel',
+              placement: 'bottom-end',
+              sx: {
+                transform: 'translate3d(-50px, 250px, 0px) !important',
+                top: '40px !important',
               },
-            operatorInputProps: { size: 'small', sx: { mt: 'auto' } },
-            valueInputProps: {
-              InputComponentProps: { size: 'small' },
             },
-            deleteIconProps: {
-              sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
+            filterPanel: {
+              columnsSort: 'asc',
+              filterFormProps: {
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                operatorInputProps: { size: 'small', sx: { mt: 'auto' } },
+                valueInputProps: {
+                  InputComponentProps: { size: 'small' },
+                },
+                deleteIconProps: {
+                  sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
+                },
+              },
+              sx: FilterPanelStyles,
             },
-          },
-          sx: FilterPanelStyles,
-        },
-      }}
-      localeText={{
-          toolbarFilters: '',
-        }}
-        sx={{
+          }}
+          localeText={{
+            toolbarFilters: '',
+          }}
+          sx={{
             border: 'none',
             height: '100%',
             '.MuiDataGrid-columnHeaders': {

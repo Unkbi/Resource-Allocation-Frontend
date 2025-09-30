@@ -1,13 +1,10 @@
 'use client';
 
-import {
-  Box,
-} from '@mui/material';
+import { Box } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import SettingsToolbar from '../Toolbar/SettingsToolbar';
 import { DataGridPremium } from '@mui/x-data-grid-premium';
 import { FilterPanelStyles } from '../AllocationTable/styles/StyledDataGrid';
-
 
 interface AccessTableProps {
   title: string;
@@ -38,27 +35,25 @@ export default function AccessTable({
   setMenuId,
   setAnchorEl,
   anchorEl,
-  buttonLabel = 'Add New',
+  buttonLabel = '',
   columns = [],
   toolbarType,
   apiRef,
   loading = false,
 }: AccessTableProps) {
-  
   const AccessToolbar = () => (
-        <SettingsToolbar
-          title={title}
-          buttonLabel={buttonLabel}
-          onButtonClick={onAdd}
-        />
-      );
+    <SettingsToolbar
+      title={title}
+      buttonLabel={buttonLabel}
+      onButtonClick={onAdd}
+    />
+  );
 
   return (
     <Box
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
     >
-
-        <Box sx={{ width: '100%',  height: 'calc(100vh - 248px)' }}>
+      <Box sx={{ width: '100%', height: 'calc(100vh - 248px)' }}>
         <DataGridPremium
           rows={data}
           columns={columns}
@@ -68,44 +63,44 @@ export default function AccessTable({
           loading={loading}
           slotProps={{
             loadingOverlay: {
-            variant: 'skeleton',
-            noRowsVariant: 'skeleton',
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
             },
-          panel: {
-            className: 'parent-grid-panel',
-            placement: 'bottom-end',
-            sx: {
-              transform: 'translate3d(-50px, 250px, 0px) !important',
-              top: '40px !important',
-                  },
+            panel: {
+              className: 'parent-grid-panel',
+              placement: 'bottom-end',
+              sx: {
+                transform: 'translate3d(-50px, 250px, 0px) !important',
+                top: '40px !important',
+              },
             },
-          filterPanel: {
-            columnsSort: 'asc',
-            filterFormProps: {
-              columnInputProps: {
-                size: 'small',
-                sx: { mt: 'auto' }
-              },
-              operatorInputProps: {
-                size: 'small',
-                sx: { mt: 'auto' }
-              },
-              valueInputProps: {
-                    InputComponentProps: { size: 'small' },
-                  },
-              deleteIconProps: {
-                    sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
-                  },
+            filterPanel: {
+              columnsSort: 'asc',
+              filterFormProps: {
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
                 },
-                sx: FilterPanelStyles,
+                operatorInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                valueInputProps: {
+                  InputComponentProps: { size: 'small' },
+                },
+                deleteIconProps: {
+                  sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
+                },
               },
-            }}
-            slots={{
-              toolbar: toolbarType === 'filter' ? AccessToolbar : undefined,
-            }}
-            localeText={{
-                toolbarFilters: '',
-              }}
+              sx: FilterPanelStyles,
+            },
+          }}
+          slots={{
+            toolbar: toolbarType === 'filter' ? AccessToolbar : undefined,
+          }}
+          localeText={{
+            toolbarFilters: '',
+          }}
           sx={{
             border: 'none',
             height: '100%',

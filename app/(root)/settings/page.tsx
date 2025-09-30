@@ -37,6 +37,8 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
 import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
+import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 interface MenuItem {
   id: string;
@@ -59,6 +61,11 @@ interface ValidationErrors {
     To?: boolean;
     message?: string;
   };
+}
+
+interface SettingsPanelProps {
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 
 // Function to validate ranges
@@ -131,7 +138,10 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
   return errors;
 };
 
-const SettingsPanel = () => {
+const SettingsPanel = ({
+  permissions,
+  loadingPermissions,
+}: SettingsPanelProps) => {
   const { allocationTheme } = useSelector((state: RootState) => state.settings);
   const dispatch: AppDispatch = useDispatch();
   const [allocationRanges, setAllocationRanges] =
@@ -149,6 +159,32 @@ const SettingsPanel = () => {
   );
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const hasAnyAccess = {
+    'user-profile': true,
+    notification: false,
+    'access-management': permissions['Role'].r || permissions['Permission'].r,
+    'project-setting':
+      permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
+    'allocation-setting':
+      permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
+    'location-setting':
+      permissions['WorkLocation'].r || permissions['WorkLocationGroup'].r,
+    theme: false,
+    'holiday-calendar': false,
+    'global-default-view': false,
+    'help-centre': false,
+  };
+
+  const anyChildHasAccess = (menuCategory: MenuCategory) => {
+    if (
+      menuCategory.items.some(
+        item => hasAnyAccess[item.id as keyof typeof hasAnyAccess]
+      )
+    )
+      return true;
+    return false;
+  };
 
   useEffect(() => {
     if (scalarSettings === null) {
@@ -214,9 +250,7 @@ const SettingsPanel = () => {
             title: 'Allocation Setting',
             headerText: 'Allocation Settings',
             icon: '',
-            content: (
-              <AllocationTheme />
-            ),
+            content: <AllocationTheme />,
             description: 'Configuration setting for resource allocation',
           },
           {
@@ -298,9 +332,23 @@ const SettingsPanel = () => {
         setActiveItem(updatedActiveItem);
       }
     } else {
-      setActiveItem(updatedMenuItems[1].items[1]);
+      setActiveItem(updatedMenuItems[0].items[0]);
     }
   }, []);
+
+  useEffect(() => {
+    if (loadingPermissions) return;
+    const menu = searchParams.get('menu');
+    const updatedMenuItems = createMenuItems();
+    // Only allow menus that are accessible
+    const accessibleMenus = Object.keys(hasAnyAccess).filter(
+      key => hasAnyAccess[key as keyof typeof hasAnyAccess]
+    );
+    if (!menu || !accessibleMenus.includes(menu)) {
+      router.replace('/settings?menu=user-profile');
+      setActiveItem(updatedMenuItems[0].items[0]);
+    }
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const menu = searchParams.get('menu');
@@ -314,27 +362,35 @@ const SettingsPanel = () => {
     }
   }, [activeItem?.id]);
 
-  return (
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : (
     <PageContainer>
       <BodyContainer>
         <Box sx={{ padding: '16px', borderRight: '1px solid #e0e0e0' }}>
           <SettingsSidebar>
-            {MenuItems.map(category => (
+            {MenuItems.filter(menuCategory =>
+              anyChildHasAccess(menuCategory)
+            ).map(category => (
               <Box key={category.name}>
                 <CategoryLabel color="red">{category.name}</CategoryLabel>
                 <List disablePadding>
-                  {category.items.map(item => (
-                    <StyledListItem
-                      key={item.id}
-                      selected={activeItem?.id === item.id}
-                      onClick={() => setActiveItem(item)}
-                    >
-                      <ListItemLabel
-                        primary={item.title}
+                  {category.items
+                    .filter(
+                      m => hasAnyAccess[m.id as keyof typeof hasAnyAccess]
+                    )
+                    .map(item => (
+                      <StyledListItem
+                        key={item.id}
                         selected={activeItem?.id === item.id}
-                      />
-                    </StyledListItem>
-                  ))}
+                        onClick={() => setActiveItem(item)}
+                      >
+                        <ListItemLabel
+                          primary={item.title}
+                          selected={activeItem?.id === item.id}
+                        />
+                      </StyledListItem>
+                    ))}
                 </List>
                 <Divider sx={{ mx: 2, pt: 2 }} />
               </Box>
@@ -383,4 +439,13 @@ const SettingsPanel = () => {
   );
 };
 
-export default SettingsPanel;
+export default withRBAC(SettingsPanel, [
+  'Role',
+  'Permission',
+  'ProjectType',
+  'ProjectTypeGroup',
+  'AllocationRangeSetting',
+  'ScalarSetting',
+  'WorkLocation',
+  'WorkLocationGroup',
+]);

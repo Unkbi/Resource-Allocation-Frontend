@@ -31,9 +31,11 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
+import { showToast } from '@/app/redux/reducers/toastReducer';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { LOCATION_VALID_TABS } from '@/app/constants/constants';
 
-const tabMenuNames = ['location', 'location-group'];
-const baseURLAccessManagement = '/settings?menu=access-management';
+const baseURLAccessManagement = '/settings?menu=location-setting';
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: 4,
@@ -80,74 +82,25 @@ const tabConfig = [
     label: 'Locations',
     value: 'location',
     icon: '/images/icons/LocationIcon.svg',
+    entity: 'WorkLocation',
   },
   {
     label: 'Location Group',
     value: 'location-group',
     icon: '/images/icons/LocationGroupIcon.svg',
+    entity: 'WorkLocationGroup',
   },
 ];
 
-const TabHeader = ({
-  tab,
-  setTab,
-}: {
-  tab: string;
-  setTab: (value: string) => void;
-}) => (
-  <Box
-    sx={{
-      boxShadow: 1,
-      display: 'flex',
-      justifyContent: 'flex-start',
-      width: '100%',
-      backgroundColor: '#fff',
-      height: '59px',
-      borderBottom: '0px solid #E5E7EB',
-    }}
-  >
-    <Tabs
-      value={tab}
-      onChange={(_, v) => setTab(v)}
-      sx={{
-        width: 'fit-content',
-        marginLeft: '20px',
-        marginRight: '20px',
-        background: 'transparent',
-        '& .MuiTabs-flexContainer': {
-          gap: 1.5,
-        },
-        '& .MuiTabs-indicator': {
-          backgroundColor: '#152E75',
-        },
-        '& .Mui-selected .tab-icon': {
-          filter:
-            'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
-        },
-      }}
-    >
-      {tabConfig.map(({ label, value, icon }) => (
-        <Tab
-          key={value}
-          icon={
-            <img
-              src={icon}
-              alt={label}
-              style={{ width: 21, height: 16, marginRight: 6 }}
-              className="tab-icon"
-            />
-          }
-          iconPosition="start"
-          label={label}
-          value={value}
-          sx={commonTabSx}
-        />
-      ))}
-    </Tabs>
-  </Box>
-);
+interface LocationSettingPageProps {
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
+}
 
-export default function RoleManagementPage() {
+function LocationSettingPage({
+  permissions,
+  loadingPermissions,
+}: LocationSettingPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('location');
@@ -158,33 +111,72 @@ export default function RoleManagementPage() {
     string | null
   >(null);
   const roles = [];
-  const { location, locationGroups } = useSelector(
+  const { location, locationGroups, loading } = useSelector(
     (state: any) => state.allSettings
   );
   const [locationData, setLocationData] = useState<Location[]>([]);
   const [locationGroupData, setLocationGroupData] = useState<LocationGroup[]>(
     []
   );
-  const loading = useSelector((state: any) => state.rbac.loading);
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
   );
   const apiRef = useGridApiRef();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { allResourcesDetail, loading: allResourcesDetailLoading } =
+    useSelector((state: any) => state.allResourcesDetail);
+  const { employeeRates, loading: employeeRatesLoading } = useSelector(
+    (state: any) => state.employeeRates
+  );
+
+  useEffect(() => {
+    if (loadingPermissions) return;
+    const accessMap = [
+      { key: 'WorkLocation', value: 'location' },
+      { key: 'WorkLocationGroup', value: 'location-group' },
+    ];
+
+    const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
+
+    if (accessible.length === 0) {
+      router.replace('/settings?menu=user-profile');
+      return;
+    }
+
+    const tabParam = searchParams.get('tab');
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tabParam);
+
+    if (!tabParam || !LOCATION_VALID_TABS.includes(tab) || !isAccessible) {
+      router.replace(`/settings?menu=location-setting&tab=${firstAccessible}`);
+      return;
+    }
+
+    if (tabParam !== tab) {
+      setTab(tabParam);
+    }
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && tabMenuNames.includes(tabParam)) {
+    if (tabParam && LOCATION_VALID_TABS.includes(tabParam)) {
       setTab(tabParam);
     }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (location && location.length) {
-      const formattedLocation = location.map((loc: any) => {
+      const formattedLocation = location.map((loc: Location) => {
+        const locationGroup = locationGroups?.find(
+          (group: LocationGroup) => group.Id === loc.LocationGroup
+        );
+
         return {
           id: loc.Id,
           Id: loc.Id,
           Name: loc.Name,
-          LocationGroup: loc.LocationGroup,
+          LocationGroup: locationGroup?.Name || '',
           Status: loc.Status,
         };
       });
@@ -202,13 +194,6 @@ export default function RoleManagementPage() {
       setLocationGroupData(formattedLocationGroups);
     }
   }, [location, locationGroups]);
-
-  useEffect(() => {
-    if (tabMenuNames.includes(tab)) {
-      const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
-      router.replace(newUrl);
-    }
-  }, [tab, dispatch]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
@@ -260,14 +245,19 @@ export default function RoleManagementPage() {
     );
   };
 
-  const handleEditLocationGroup = (assignment: LocationGroup) => {
+  const handleEditLocationGroup = (
+    assignment: LocationGroup,
+    title = 'Edit Location Group',
+    dialogOptions = {}
+  ) => {
     dispatch(
       openDialog({
-        title: 'Edit Location Group',
+        title: title,
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_location_group',
         initialData: assignment,
+        ...dialogOptions,
       })
     );
   };
@@ -288,14 +278,19 @@ export default function RoleManagementPage() {
     );
   };
 
-  const handleEditLocation = (assignment: Location) => {
+  const handleEditLocation = (
+    assignment: Location,
+    title = 'Edit Location',
+    dialogOptions = {}
+  ) => {
     dispatch(
       openDialog({
-        title: 'Edit Location',
+        title: title,
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_location',
         initialData: assignment,
+        ...dialogOptions,
       })
     );
   };
@@ -309,20 +304,55 @@ export default function RoleManagementPage() {
     if (!deletingLocation && !deletingLocationGroup) return;
     try {
       if (tab === 'location' && deletingLocation) {
-        let locationid = locationData.find(
+        const locationId = locationData.find(
           loc => loc.Name === deletingLocation
         )?.Id;
+        const isInResources = allResourcesDetail.some((res: any) => {
+          return res.Resource?.WorkLocation === locationId;
+        });
+        const isInRates = employeeRates.some(
+          (rate: any) => rate.WorkLocation === locationId
+        );
+        if (isInResources || isInRates) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete "${deletingLocation}", already in use.`,
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
         await dispatch({
           type: DELETE_LOCATION,
-          payload: { locationId: locationid },
+          payload: { locationId },
         });
       } else if (tab === 'location-group' && deletingLocationGroup) {
-        let locationGroupid = locationGroupData.find(
+        const isAssigned = locationData.some(
+          loc => loc.LocationGroup === deletingLocationGroup
+        );
+
+        if (isAssigned) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete "${deletingLocationGroup}", with assigned locations.`,
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+            })
+          );
+          return;
+        }
+        const locationGroupId = locationGroupData.find(
           locG => locG.Name === deletingLocationGroup
         )?.Id;
+
         await dispatch({
           type: DELETE_LOCATION_GROUPS,
-          payload: { locationGroupId: locationGroupid },
+          payload: { locationGroupId },
         });
       }
     } catch (error) {
@@ -341,7 +371,15 @@ export default function RoleManagementPage() {
       flex: 1,
       renderCell: (params: any) => (
         <Typography
-          onClick={() => handleEditLocation(params.row)}
+          onClick={() => {
+            if (permissions!['WorkLocation'].u) {
+              handleEditLocation(params.row);
+            } else {
+              handleEditLocation(params.row, `Location: ${params.value}`, {
+                readOnly: true,
+              });
+            }
+          }}
           sx={{
             ...commonCellStyle,
             cursor: 'pointer',
@@ -370,29 +408,33 @@ export default function RoleManagementPage() {
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 0,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.Name);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.Name && renderLocationMenu(params.row.Name)}
-          </Typography>
-        </>
-      ),
-    },
+    ...(permissions!['WorkLocation']?.u || permissions!['WorkLocation']?.d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 0,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuRoleId(params.row.Name);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.Name && renderLocationMenu(params.row.Name)}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const LocationGroupColumns = [
@@ -402,7 +444,19 @@ export default function RoleManagementPage() {
       flex: 1,
       renderCell: (params: any) => (
         <Typography
-          onClick={() => handleEditLocationGroup(params.row)}
+          onClick={() => {
+            if (permissions!['WorkLocationGroup'].u) {
+              handleEditLocationGroup(params.row);
+            } else {
+              handleEditLocationGroup(
+                params.row,
+                `Location Group: ${params.value}`,
+                {
+                  readOnly: true,
+                }
+              );
+            }
+          }}
           sx={{
             ...commonCellStyle,
             cursor: 'pointer',
@@ -415,29 +469,34 @@ export default function RoleManagementPage() {
         </Typography>
       ),
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 0,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuRoleId(params.row.Name);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.Name && locationGroupMenu(params.row.Name)}
-          </Typography>
-        </>
-      ),
-    },
+    ...(permissions!['WorkLocationGroup']?.u ||
+    permissions!['WorkLocationGroup']?.d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 0,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuRoleId(params.row.Name);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.Name && locationGroupMenu(params.row.Name)}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const renderLocationMenu = (id: string) => (
@@ -448,27 +507,31 @@ export default function RoleManagementPage() {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = locationData.find(r => r.Name === id);
-          if (assignment) {
-            handleEditLocation(assignment);
-          }
-          setMenuRoleId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeleteLocation(id);
-          setMenuRoleId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
+      {permissions!['WorkLocation'].u && (
+        <StyledMenuItem
+          onClick={() => {
+            const assignment = locationData.find(r => r.Name === id);
+            if (assignment) {
+              handleEditLocation(assignment);
+            }
+            setMenuRoleId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+      )}
+      {permissions!['WorkLocation'].d && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeleteLocation(id);
+            setMenuRoleId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
   );
 
@@ -480,28 +543,99 @@ export default function RoleManagementPage() {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = locationGroupData.find(r => r.Name === id);
-          if (assignment) {
-            handleEditLocationGroup(assignment);
-          }
-          setMenuRoleId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeleteLocationGroup(id);
-          setMenuRoleId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
+      {permissions!['WorkLocationGroup'].u && (
+        <StyledMenuItem
+          onClick={() => {
+            const assignment = locationGroupData.find(r => r.Name === id);
+            if (assignment) {
+              handleEditLocationGroup(assignment);
+            }
+            setMenuRoleId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+      )}
+      {permissions!['WorkLocationGroup'].d && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeleteLocationGroup(id);
+            setMenuRoleId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
+  );
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setTab(newValue);
+    const tabParam = `tab=${newValue}`;
+    const newUrl = `${baseURLAccessManagement}&${tabParam}`;
+    router.replace(newUrl, { scroll: false });
+  };
+
+  const TabHeader = ({
+    tab,
+  }: {
+    tab: string;
+    setTab: (value: string) => void;
+  }) => (
+    <Box
+      sx={{
+        boxShadow: 1,
+        display: 'flex',
+        justifyContent: 'flex-start',
+        width: '100%',
+        backgroundColor: '#fff',
+        height: '59px',
+        borderBottom: '0px solid #E5E7EB',
+      }}
+    >
+      <Tabs
+        value={tab}
+        onChange={handleTabChange}
+        sx={{
+          width: 'fit-content',
+          marginLeft: '20px',
+          marginRight: '20px',
+          background: 'transparent',
+          '& .MuiTabs-flexContainer': {
+            gap: 1.5,
+          },
+          '& .MuiTabs-indicator': {
+            backgroundColor: '#152E75',
+          },
+          '& .Mui-selected .tab-icon': {
+            filter:
+              'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
+          },
+        }}
+      >
+        {tabConfig
+          .filter(tab => permissions![tab.entity].r)
+          .map(({ label, value, icon }) => (
+            <Tab
+              key={value}
+              icon={
+                <img
+                  src={icon}
+                  alt={label}
+                  style={{ width: 21, height: 16, marginRight: 6 }}
+                  className="tab-icon"
+                />
+              }
+              iconPosition="start"
+              label={label}
+              value={value}
+              sx={commonTabSx}
+            />
+          ))}
+      </Tabs>
+    </Box>
   );
 
   return (
@@ -518,7 +652,7 @@ export default function RoleManagementPage() {
       {tab === 'location' && (
         <AccessTable
           title="Locations"
-          data={locationData}
+          data={permissions!['WorkLocation'].r ? locationData : []}
           onAdd={handleAddNewLocation}
           onEdit={handleEditLocation}
           onDelete={handleDeleteLocation}
@@ -526,18 +660,18 @@ export default function RoleManagementPage() {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add Location"
+          buttonLabel={permissions!['WorkLocation'].c ? 'Add Location' : ''}
           renderMenu={renderLocationMenu}
           columns={LocationPageColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
           toolbarType="filter"
         />
       )}
       {tab === 'location-group' && (
         <AccessTable
           title="Location Group"
-          data={locationGroupData}
+          data={permissions!['WorkLocationGroup'].r ? locationGroupData : []}
           onAdd={handleAddNewLocationGroup}
           onEdit={handleEditLocationGroup}
           onDelete={handleDeleteLocationGroup}
@@ -545,11 +679,13 @@ export default function RoleManagementPage() {
           setMenuId={setMenuRoleId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add Location Group"
+          buttonLabel={
+            permissions!['WorkLocationGroup'].c ? 'Add Location Group' : ''
+          }
           renderMenu={locationGroupMenu}
           columns={LocationGroupColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
           toolbarType="filter"
         />
       )}
@@ -571,3 +707,8 @@ export default function RoleManagementPage() {
     </div>
   );
 }
+
+export default withRBAC(LocationSettingPage, [
+  'WorkLocation',
+  'WorkLocationGroup',
+]);
