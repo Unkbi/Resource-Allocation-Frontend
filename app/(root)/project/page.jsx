@@ -58,6 +58,7 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -96,6 +97,11 @@ const AddAllocationIcon = () => (
   <img src="/images/icons/AddAllocation.svg" alt="AddAllocation" />
 );
 
+const accessMap = [
+  { key: 'Project', value: 'project' },
+  { key: 'Portfolio', value: 'portfolio' },
+];
+
 function Project({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
@@ -126,10 +132,6 @@ function Project({ permissions, loadingPermissions }) {
 
   useEffect(() => {
     if (loadingPermissions) return;
-    const accessMap = [
-      { key: 'Project', value: 'project' },
-      { key: 'Portfolio', value: 'portfolio' },
-    ];
 
     const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
 
@@ -966,34 +968,38 @@ function Project({ permissions, loadingPermissions }) {
     }
   };
 
-  return (
-    <Box
-      sx={{
-        backgroundColor: '#fff',
-        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-        height: '100%',
-      }}
-    >
-      {renderTable()}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onConfirm={() =>
-          handleConfirmDelete(
-            value === 'project' ? projectToDelete?.Id : portfolioDelete?.Id
-          )
-        }
-        onCancel={handleCancelDelete}
-        title={
-          value === 'project'
-            ? 'Are you sure you want to delete this project?'
-            : 'Are you sure you want to delete this portfolio?'
-        }
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : (
+    accessMap.some(tab => permissions[tab.key].r) && (
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+          height: '100%',
+        }}
       >
-        {value === 'project'
-          ? 'This will permanently delete the project.'
-          : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
-      </ConfirmDialog>
-    </Box>
+        {renderTable()}
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onConfirm={() =>
+            handleConfirmDelete(
+              value === 'project' ? projectToDelete?.Id : portfolioDelete?.Id
+            )
+          }
+          onCancel={handleCancelDelete}
+          title={
+            value === 'project'
+              ? 'Are you sure you want to delete this project?'
+              : 'Are you sure you want to delete this portfolio?'
+          }
+        >
+          {value === 'project'
+            ? 'This will permanently delete the project.'
+            : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
+        </ConfirmDialog>
+      </Box>
+    )
   );
 }
 
