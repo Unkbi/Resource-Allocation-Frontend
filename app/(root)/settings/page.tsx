@@ -38,6 +38,7 @@ import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
 import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 interface MenuItem {
   id: string;
@@ -361,7 +362,9 @@ const SettingsPanel = ({
     }
   }, [activeItem?.id]);
 
-  return (
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : (
     <PageContainer>
       <BodyContainer>
         <Box sx={{ padding: '16px', borderRight: '1px solid #e0e0e0' }}>

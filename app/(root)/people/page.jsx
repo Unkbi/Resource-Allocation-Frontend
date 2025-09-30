@@ -57,6 +57,7 @@ import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import RatesTable from '@/app/components/Resources/RatesTable';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 const demoResources = {
   result: [
@@ -120,6 +121,13 @@ const menuItemStyle = {
   lineHeight: '18px',
 };
 
+const accessMap = [
+  { key: 'Resource', value: 'resource' },
+  { key: 'Team', value: 'teams' },
+  { key: 'Organization', value: 'organizations' },
+  { key: 'EmployeeRate', value: 'rates' },
+];
+
 function Resources({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
@@ -163,12 +171,6 @@ function Resources({ permissions, loadingPermissions }) {
 
   useEffect(() => {
     if (loadingPermissions) return;
-    const accessMap = [
-      { key: 'Resource', value: 'resource' },
-      { key: 'Team', value: 'teams' },
-      { key: 'Organization', value: 'organizations' },
-      { key: 'EmployeeRate', value: 'rates' },
-    ];
 
     const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
 
@@ -1499,30 +1501,34 @@ function Resources({ permissions, loadingPermissions }) {
     }
   };
 
-  return (
-    <Box
-      sx={{
-        backgroundColor: '#fff',
-        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-        height: '100%',
-      }}
-    >
-      {renderTable()}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        title={handleTitle(value)}
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : (
+    accessMap.some(tab => permissions[tab.key].r) && (
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+          height: '100%',
+        }}
       >
-        This will permanently delete the{' '}
-        {value === 'rates'
-          ? 'Rate'
-          : value === 'teams'
-            ? 'Team'
-            : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
-        .
-      </ConfirmDialog>
-    </Box>
+        {renderTable()}
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          title={handleTitle(value)}
+        >
+          This will permanently delete the{' '}
+          {value === 'rates'
+            ? 'Rate'
+            : value === 'teams'
+              ? 'Team'
+              : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
+          .
+        </ConfirmDialog>
+      </Box>
+    )
   );
 }
 
