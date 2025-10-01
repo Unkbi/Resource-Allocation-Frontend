@@ -2273,7 +2273,7 @@ const AllocationForm = () => {
             ...cleanedValues,
             // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
-            Name: values.Role ? `${cleanedValues.Assignee?.id}` : null,
+            Name: values.Role ? `${cleanedValues.Assignee}` : null,
           };
 
           new Promise((resolve, reject) => {
