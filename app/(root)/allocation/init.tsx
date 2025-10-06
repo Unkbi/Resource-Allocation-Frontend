@@ -19,6 +19,7 @@ import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface TopContentProps {
   startDate: string;
@@ -66,6 +67,10 @@ function AllocationInit({
   );
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
+  );
+
+  const { projectTypes } = useSelector(
+    (state: RootState) => state.allSettings
   );
 
   const { allAllocations, calendarDate } = useSelector(
@@ -131,6 +136,12 @@ function AllocationInit({
   }, [loadingPermissions]);
 
   useEffect(() => {
+    if(projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
     if (loadingPermissions) return;
     if (permissions && permissions['Allocation'].r) {
       if (
@@ -149,6 +160,7 @@ function AllocationInit({
             resources: resources,
             portfolios: portfolios,
             allResourcesDetail: allResourcesDetail,
+            projectTypes: projectTypes,
             startDate: currentViewStartDate,
             endDate: currentViewEndDate,
           },
@@ -175,6 +187,7 @@ function AllocationInit({
             resources: resources,
             portfolios: portfolios,
             allResourcesDetail: allResourcesDetail,
+            projectTypes: projectTypes,
             startDate: currentView?.isDynamicRange
               ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
               : currentView?.isFixedRange

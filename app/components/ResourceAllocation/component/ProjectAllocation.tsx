@@ -46,6 +46,7 @@ import { useRouter } from 'next/navigation';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -114,6 +115,7 @@ function ProjectAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -130,6 +132,12 @@ function ProjectAllocation({
     (state: RootState) => state.allocationView
   );
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+
+  useEffect(() => {
+    if(projectTypes.length === 0){
+      dispatch({type: FETCH_PROJECT_TYPES})
+    }
+  },[])
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -294,6 +302,7 @@ function ProjectAllocation({
             ?.FullName,
           ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
             ?.FullName,
+          Type: projectTypes.find(pt => pt.Id === item.Type)?.Name || '',
         };
       });
     }

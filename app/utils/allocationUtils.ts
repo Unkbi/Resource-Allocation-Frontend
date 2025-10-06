@@ -20,6 +20,7 @@ import {
   Resource,
   ResourceAllocation,
   Team,
+  ProjectType,
 } from '../types';
 import {
   generateAllWeeks,
@@ -169,6 +170,7 @@ export function formatAllAllocations(
   allocations: Allocation[],
   teams: Team[],
   projects: Project[],
+  projectTypes: ProjectType[],
   resources: Resource[],
   portfolios: Portfolio[],
   allResourcesDetail: AllResourceDetail[],
@@ -184,6 +186,7 @@ export function formatAllAllocations(
 
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
+    const projectType = projectTypes.find(pt => pt.Id === project?.Type); 
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
     const resourceDetails = allResourcesDetail?.find(
       r => r?.Resource?.Id === alloc.Resource
@@ -214,7 +217,7 @@ export function formatAllAllocations(
           null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
-        projectType: project?.Type || null,
+        projectType: projectType?.Name || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
