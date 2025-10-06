@@ -826,6 +826,8 @@ const AllocationForm = () => {
                     autoHideTimer: 4000,
                   })
                 );
+                dispatch(closeDialog());
+                setFormValue({});
               }
 
               if (pathname !== '/people?tab=teams') {
@@ -849,7 +851,7 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add team:', e);
         }
-        dispatch(closeDialog());
+        // dispatch(closeDialog());
         break;
 
       case 'edit_team':
@@ -962,6 +964,8 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(closeDialog());
+            setFormValue({});
           }
 
           if (pathname !== '/people') {
@@ -970,7 +974,7 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add resource:', e);
         }
-        dispatch(closeDialog());
+        // dispatch(closeDialog());
         break;
 
       case 'edit_resource':
@@ -1932,6 +1936,8 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            // dispatch(closeDialog())
+            // dispatch(setFormValue({}));
             dispatch(setHighlightedRowId(response?.EmployeeRate?.Id));
           })
           .catch(error => {
@@ -2089,12 +2095,12 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response?.Organization?.Id));
+            dispatch(closeDialog());
+            setFormValue({});
             if (pathname !== '/people?tab=organizations') {
               router.replace('/people?tab=organizations');
-            } else {
-              dispatch(closeDialog());
             }
+            dispatch(setHighlightedRowId(response?.Organization?.Id));
           })
           .catch(error => {
             console.error('Failed to add organization:', error);
@@ -2109,7 +2115,8 @@ const AllocationForm = () => {
             );
           })
           .finally(() => {
-            dispatch(closeDialog());
+            // dispatch(closeDialog());
+            console.log("error")
           });
         break;
       case 'edit_organization':
@@ -2964,7 +2971,7 @@ const AllocationForm = () => {
         return;
     }
     setSubmitting(false);
-    setFormValue({});
+    // setFormValue({});
   };
 
   const performTransfer = async () => {
