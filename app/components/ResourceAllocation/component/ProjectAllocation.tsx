@@ -323,9 +323,12 @@ function ProjectAllocation({
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
         const row = api.getRow(rowNode.id);
-        const projectType = projects?.find(
+        const pType = projects?.find(
           project => project.Name === value
         )?.Type;
+        const projectType = pType
+          ? projectTypes?.find(type => type.Id === pType)?.Name
+          : '';
 
         const open = Boolean(anchorEl);
 
