@@ -355,7 +355,7 @@ const SettingsPanel = ({
     if (activeItem && (!menu || (menu && activeItem.id !== menu))) {
       const menuParam =
         activeItem.id === 'access-management'
-          ? `?menu=${activeItem.id}&tab=role-management`
+          ? `?menu=${activeItem.id}&tab=role-assignments`
           : `?menu=${activeItem.id}`;
       const newUrl = `/settings${menuParam}`;
       router.replace(newUrl, { scroll: false });
