@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback,useRef } from 'react';
 import { Box, Tooltip } from '@mui/material';
 import {
   GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -68,6 +68,7 @@ import { useDataGrid } from '@/app/context/dataGridContext';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFormattedAllocationsForUpdate } from '@/app/utils/allocationUtils';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { Menu, MenuItem } from '@mui/material';
 import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
@@ -115,6 +116,9 @@ function AllocationGrid({
     currentView,
     columns: _columns,
   } = useSelector(state => state.allocationView);
+
+  const [contextMenu, setContextMenu] = useState(null);
+  // const contextMenuRef = useRef(null);
 
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
@@ -664,6 +668,106 @@ function AllocationGrid({
       dispatch(setRowState(updatedRows));
     }
   };
+  // const finalColumns = getFinalColumns(
+  //   columns,
+  //   groupBy,
+  //   mode,
+  //   setSelectedTeam,
+  //   handleAddProject,
+  //   setSelectedResourceId,
+  //   dispatch,
+  //   currentView?.isFixedRange
+  //     ? currentView.startDate || startDate
+  //     : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
+  //   currentView?.isFixedRange
+  //     ? currentView.endDate || endDate
+  //     : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
+  //   type === 'cost'
+  // ).map(column => {
+  //   if (column.field.startsWith('W')) {
+  //     return {
+  //       ...column,
+  //       renderCell: params => {
+  //         const editable = isCellEditable(params);
+  //         const cellClass = getCellClassName(
+  //           params,
+  //           getAllRowsForView(viewId),
+  //           allocationTheme,
+  //           type,
+  //           projects,
+  //           isCellEditable
+  //         );
+  //         const showTooltip =
+  //           cellClass.split(' ').includes('non-editable-cell') ||
+  //           cellClass.split(' ').includes('non-editable-darker');
+
+  //         const value = params.formattedValue ?? '';
+  //         const cellData = params.row[params.field];
+  //         const notes = cellData?.notes || '';
+  //         const actuals = cellData?.actuals || null;
+  //         const period = cellData?.period;
+  //         const isFutureWeek =
+  //           period &&
+  //           !isCurrentWeek(parseISO(period)) &&
+  //           !isCurrentOrPastWeek(parseISO(period));
+  //         const cellContent = (() => {
+  //           if (showTooltip) {
+  //             return (
+  //               <Tooltip
+  //                 title="This resource is inactive for this period. Allocation not allowed."
+  //                 arrow
+  //                 placement="top"
+  //               >
+  //                 <span
+  //                   style={{
+  //                     display: 'inline-block',
+  //                     width: '100%',
+  //                     cursor: 'not-allowed',
+  //                   }}
+  //                 >
+  //                   {'' || <>&nbsp;</>}
+  //                 </span>
+  //               </Tooltip>
+  //             );
+  //           }
+  //           if (isFutureWeek || !editable) {
+  //             return <span>{value}</span>;
+  //           }
+  //           return (
+  //             <Box
+  //               sx={{
+  //                 width: '100%',
+  //                 height: '100%',
+  //                 display: 'flex',
+  //                 alignItems: 'stretch',
+  //                 justifyContent: 'center',
+  //                 position: 'relative',
+  //               }}
+  //             >
+  //               {showActuals && params.rowNode?.type !== 'group' ? (
+  //                 <AllocationCellWithActuals params={cellData} />
+  //               ) : (
+  //                 <span>{value}</span>
+  //               )}
+  //             </Box>
+  //           );
+  //         })();
+  //         return (
+  //           <CommentTooltip notes={notes} actuals={actuals}>
+  //             {cellContent}
+  //           </CommentTooltip>
+  //         );
+  //       },
+  //     };
+  //   }
+  //   return column;
+  // });
+
+  const isCellEditable = useCallback(
+    params => isCellEditableUtils(params, type, resources),
+    [type, resources]
+  );
+
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
@@ -684,6 +788,8 @@ function AllocationGrid({
       return {
         ...column,
         renderCell: params => {
+          console.log(params, 'param');
+
           const editable = isCellEditable(params);
           const cellClass = getCellClassName(
             params,
@@ -706,6 +812,8 @@ function AllocationGrid({
             period &&
             !isCurrentWeek(parseISO(period)) &&
             !isCurrentOrPastWeek(parseISO(period));
+
+          // 🔹 Build the cell content logic
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -726,9 +834,11 @@ function AllocationGrid({
                 </Tooltip>
               );
             }
+
             if (isFutureWeek || !editable) {
-              return <span>{value}</span>;
+              return <span>{value}</span>; 
             }
+
             return (
               <Box
                 sx={{
@@ -748,6 +858,7 @@ function AllocationGrid({
               </Box>
             );
           })();
+
           return (
             <CommentTooltip notes={notes} actuals={actuals}>
               {cellContent}
@@ -756,8 +867,10 @@ function AllocationGrid({
         },
       };
     }
+
     return column;
   });
+
 
   const showField = [
     GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD,
@@ -1141,10 +1254,6 @@ function AllocationGrid({
     return getTogglableColumns(columns);
   };
 
-  const isCellEditable = useCallback(
-    params => isCellEditableUtils(params, type, resources),
-    [type, resources]
-  );
   const handleCellSelectionModelChange = useCallback(
     newModel => {
       // Cost Screens are readOnly, no selections.
@@ -1387,138 +1496,173 @@ function AllocationGrid({
         },
       }
     : {};
+    const handleContextMenu = event => {
+      event.preventDefault();
+      event.stopPropagation();
+      setContextMenu(
+        contextMenu === null
+          ? { mouseX: event.clientX, mouseY: event.clientY }
+          : null
+      );
+    };
+    
+    
+    const handleClose = () => {
+      setContextMenu(null);
+    };
+  
 
   return (
-    <StyledDataGrid
-      cellSelection
-      allocationTheme={allocationTheme}
-      isCellEditable={isCellEditable}
-      onCellKeyDown={handleCellKeyDown}
-      type={type}
-      getRowHeight={params => {
-        if (params?.model?.projectId === '') {
-          // Sahadev: really small value, it doesnt accept 0
-          // New solution for hiding empty rows
-          return 0.000000000001;
-        }
-        return 52;
-      }}
-      rowModesModel={rowModesModel}
-      onRowModesModelChange={handleRowModesModelChange}
-      processRowUpdate={handleCellUpdate}
-      onProcessRowUpdateError={err => {
-        console.error('Row update failed:', err);
-      }}
-      aggregationModel={aggregation}
-      columns={finalColumns}
-      rowSelection={true}
-      onRowClick={onRowClick}
-      apiRef={apiRef}
-      groupBy={groupBy}
-      loading={loading || loadingPermissions}
-      disableRowSelectionOnClick
-      initialState={initialState}
-      rowGroupingColumnMode={rowGroupingColumnMode}
-      columnHeaderHeight={30}
-      columnGroupHeaderHeight={22}
-      columnGroupingModel={generateColumnGroupingModel(
-        startDate,
-        endDate,
-        finalColumns
-      )}
-      defaultGroupingExpansionDepth={1}
-      disableAutosize
-      getCellClassName={params => {
-        if (
-          (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
-          (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
-          (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
-          (viewId === 'projectAllocation' && !projectAllocationGrid.ready) ||
-          (viewId === 'main' && !mainAllocationGrid.ready)
-        ) {
-          return '';
-        }
-        const originalClass = getCellClassName(
-          params,
-          getAllRowsForView(viewId),
-          allocationTheme,
-          type,
-          projects,
-          isCellEditable,
-          groupBy
-        );
-        // const editable = isCellEditable(params);
-        // if (!editable) {
-        //   return originalClass ? `${originalClass}` : 'non-editable-cell';
-        // }
-        return originalClass || '';
-      }}
-      getRowClassName={params => getRowClassName(params)}
-      cellSelectionModel={cellSelectionModel}
-      onCellSelectionModelChange={handleCellSelectionModelChange}
-      {...toolBarBasedProperties}
-      slots={{
-        noRowsOverlay: NoRowsOverlay,
-        toolbar: toolbarComponent,
-        columnMenu: props => {
-          return <CustomColumnMenu {...props} apiRef={apiRef} />;
-        },
-      }}
-      slotProps={{
-        loadingOverlay: {
-          variant: 'skeleton',
-          noRowsVariant: 'skeleton',
-        },
-        panel: {
-          anchorEl: filterButtonEl,
-          className: 'parent-grid-panel',
-        },
-        columnsManagement: {
-          getTogglableColumns,
-        },
-        toolbar: {
-          setFilterButtonEl,
-        },
-        columnsPanel: {
-          className: 'styleColumnMenu',
-          sx: ColumnManagementStyles,
-        },
-        filterPanel: {
-          columnsSort: 'asc',
-          className: 'filterPopup',
-          filterFormProps: {
-            filterColumns,
-            columnInputProps: {
-              size: 'small',
-              sx: { mt: 'auto' },
+    <>
+      <div onContextMenu={handleContextMenu}>
+        <StyledDataGrid
+          cellSelection
+          allocationTheme={allocationTheme}
+          isCellEditable={isCellEditable}
+          onCellKeyDown={handleCellKeyDown}
+          type={type}
+          getRowHeight={params => {
+            if (params?.model?.projectId === '') {
+              // Sahadev: really small value, it doesnt accept 0
+              // New solution for hiding empty rows
+              return 0.000000000001;
+            }
+            return 52;
+          }}
+          rowModesModel={rowModesModel}
+          onRowModesModelChange={handleRowModesModelChange}
+          processRowUpdate={handleCellUpdate}
+          onProcessRowUpdateError={err => {
+            console.error('Row update failed:', err);
+          }}
+          aggregationModel={aggregation}
+          columns={finalColumns}
+          rowSelection={true}
+          onRowClick={onRowClick}
+          apiRef={apiRef}
+          groupBy={groupBy}
+          loading={loading || loadingPermissions}
+          disableRowSelectionOnClick
+          initialState={initialState}
+          rowGroupingColumnMode={rowGroupingColumnMode}
+          columnHeaderHeight={30}
+          columnGroupHeaderHeight={22}
+          columnGroupingModel={generateColumnGroupingModel(
+            startDate,
+            endDate,
+            finalColumns
+          )}
+          defaultGroupingExpansionDepth={1}
+          disableAutosize
+          getCellClassName={params => {
+            if (
+              (viewId === 'topProject' && !topProjectAllocationGrid.ready) ||
+              (viewId === 'bottomTeam' && !bottomTeamAllocationGrid.ready) ||
+              (viewId === 'teamAllocation' && !teamAllocationGrid.ready) ||
+              (viewId === 'projectAllocation' &&
+                !projectAllocationGrid.ready) ||
+              (viewId === 'main' && !mainAllocationGrid.ready)
+            ) {
+              return '';
+            }
+            const originalClass = getCellClassName(
+              params,
+              getAllRowsForView(viewId),
+              allocationTheme,
+              type,
+              projects,
+              isCellEditable,
+              groupBy
+            );
+            // const editable = isCellEditable(params);
+            // if (!editable) {
+            //   return originalClass ? `${originalClass}` : 'non-editable-cell';
+            // }
+            return originalClass || '';
+          }}
+          getRowClassName={params => getRowClassName(params)}
+          cellSelectionModel={cellSelectionModel}
+          onCellSelectionModelChange={handleCellSelectionModelChange}
+          {...toolBarBasedProperties}
+          slots={{
+            noRowsOverlay: NoRowsOverlay,
+            toolbar: toolbarComponent,
+            columnMenu: props => {
+              return <CustomColumnMenu {...props} apiRef={apiRef} />;
             },
-            operatorInputProps: {
-              size: 'small',
-              sx: { mt: 'auto' },
+          }}
+          slotProps={{
+            loadingOverlay: {
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
             },
-            valueInputProps: {
-              InputComponentProps: {
-                size: 'small',
+            panel: {
+              anchorEl: filterButtonEl,
+              className: 'parent-grid-panel',
+            },
+            columnsManagement: {
+              getTogglableColumns,
+            },
+            toolbar: {
+              setFilterButtonEl,
+            },
+            columnsPanel: {
+              className: 'styleColumnMenu',
+              sx: ColumnManagementStyles,
+            },
+            filterPanel: {
+              columnsSort: 'asc',
+              className: 'filterPopup',
+              filterFormProps: {
+                filterColumns,
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                operatorInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                valueInputProps: {
+                  InputComponentProps: {
+                    size: 'small',
+                  },
+                },
+                deleteIconProps: {
+                  sx: {
+                    '& .MuiSvgIcon-root': { color: '#d32f2f' },
+                  },
+                },
               },
+              sx: FilterPanelStyles,
             },
-            deleteIconProps: {
-              sx: {
-                '& .MuiSvgIcon-root': { color: '#d32f2f' },
-              },
-            },
-          },
-          sx: FilterPanelStyles,
-        },
-      }}
-      getAggregationPosition={groupNode =>
-        groupNode.depth === -1 ? null : 'inline'
-      }
-      hideFooter
-      editMode="row"
-      aggregationRowsCount={params => {
-        return params.rowNode.children?.length || 1;
-      }}
-    />
+          }}
+          getAggregationPosition={groupNode =>
+            groupNode.depth === -1 ? null : 'inline'
+          }
+          hideFooter
+          editMode="row"
+          aggregationRowsCount={params => {
+            return params.rowNode.children?.length || 1;
+          }}
+        />
+      </div>
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleClose}>Copy</MenuItem>
+        <MenuItem onClick={handleClose}>Print</MenuItem>
+        <MenuItem onClick={handleClose}>Highlight</MenuItem>
+        <MenuItem onClick={handleClose}>Email</MenuItem>
+      </Menu>
+    </>
   );
 }
 
