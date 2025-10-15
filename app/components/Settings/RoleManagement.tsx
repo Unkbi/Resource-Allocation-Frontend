@@ -191,7 +191,6 @@ function RoleManagementPage({
     const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/settings?menu=user-profile');
       return;
     }
 
@@ -586,7 +585,7 @@ function RoleManagementPage({
           }
         };
         return (
-            <Box
+          <Box
             onClick={handleNameClick}
             sx={{
               ...commonCellStyle,
@@ -597,7 +596,7 @@ function RoleManagementPage({
             }}
           >
             <Typography sx={commonCellStyle}>{params.value}</Typography>
-           </Box>
+          </Box>
         );
       },
     },

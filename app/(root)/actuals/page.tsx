@@ -35,6 +35,7 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -271,9 +272,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   useEffect(() => {
     if (loadingPermissions) return;
-    if (!permissions['ActualsStatus'].r) {
-      router.replace('/dashboard');
-    }
   }, [loadingPermissions]);
 
   useEffect(() => {
@@ -318,7 +316,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   return loadingPermissions ? (
     <LoadingScreen />
-  ) : (
+  ) : permissions['ActualsStatus'].r ? (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       <Box
         px={{ xs: 2, sm: 2 }}
@@ -507,6 +505,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         </ConfirmDialog>
       </Box>
     </Box>
+  ) : (
+    <ErrorPage type="accessDenied" redirectPath="/dashboard" />
   );
 }
 

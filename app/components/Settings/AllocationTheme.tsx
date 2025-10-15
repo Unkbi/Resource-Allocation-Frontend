@@ -252,7 +252,6 @@ function AllocationTheme({
     const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/settings?menu=user-profile');
       return;
     }
 
@@ -1323,7 +1322,7 @@ function AllocationTheme({
                         setHasUnsavedChanges(true);
                       }
                     }}
-                      onKeyDown={e => {
+                    onKeyDown={e => {
                       if (['e', 'E', '+', '-'].includes(e.key)) {
                         e.preventDefault();
                       }
@@ -1452,8 +1451,11 @@ function AllocationTheme({
                     color: '#374151',
                   }}
                 >
-                  {allocationHistoryDuration ?
-                    allocationHistoryDuration === '1' ? 'month': 'months': ''}
+                  {allocationHistoryDuration
+                    ? allocationHistoryDuration === '1'
+                      ? 'month'
+                      : 'months'
+                    : ''}
                 </Typography>
               </Box>
             </Box>
@@ -1510,7 +1512,10 @@ function AllocationTheme({
                   }}
                 >
                   {commentsHistoryDuration
-                    ? commentsHistoryDuration === '1' ? 'month' : 'months' : ''}
+                    ? commentsHistoryDuration === '1'
+                      ? 'month'
+                      : 'months'
+                    : ''}
                 </Typography>
               </Box>
             </Box>

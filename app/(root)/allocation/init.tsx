@@ -19,6 +19,7 @@ import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 interface TopContentProps {
   startDate: string;
@@ -91,9 +92,6 @@ function AllocationInit({
 
   useEffect(() => {
     if (loadingPermissions) return;
-    if (permissions && !permissions['Allocation'].r) {
-      router.replace('/dashboard');
-    }
   }, [loadingPermissions]);
 
   useEffect(() => {
@@ -242,7 +240,7 @@ function AllocationInit({
       />
     )
   ) : (
-    <></>
+    <ErrorPage type="accessDenied" redirectPath="/dashboard" />
   );
 }
 
