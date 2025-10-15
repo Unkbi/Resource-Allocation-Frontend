@@ -41,7 +41,7 @@ const MainAppBar = styled(AppBar, {
   marginLeft: sidebarExpanded ? '276px' : '74px',
   width: `calc(100% - ${sidebarExpanded ? '276px' : '74px'})`,
   transition: 'margin-left 0.3s ease-in-out, width 0.3s ease-in-out',
-  zIndex: '100',
+  zIndex: '91',
   boxShadow: '0 1px 0 0 #DDE1E4',
   background: theme.palette.sideBarColor.main,
   '& h6': {
