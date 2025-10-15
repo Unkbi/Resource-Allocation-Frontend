@@ -89,7 +89,7 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
 
   useEffect(() => {
     const avaiableProjects = projects
-      ?.filter(project => project.Status === 'Active')
+      ?.filter(project => project.Status === 'Active' || project.Status === 'Approved')
       ?.sort((a, b) => a.Name.localeCompare(b.Name))
       ?.map(project => ({
         value: project.Id,
