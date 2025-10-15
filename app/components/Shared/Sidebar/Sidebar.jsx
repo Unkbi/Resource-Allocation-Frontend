@@ -231,6 +231,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
     if (disabled) return;
     setSelectedMenu(url);
     router.push(url);
+    setOpen(false);
   };
 
   // const {FirstName ,LastName} = user | {} ; might need in future
