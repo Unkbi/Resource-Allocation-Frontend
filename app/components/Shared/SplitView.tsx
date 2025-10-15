@@ -28,6 +28,7 @@ const TopPanel = styled('div')<{ height: string | number }>(({ height }) => ({
   overflow: 'auto',
   flexShrink: 0,
   background: '#fff',
+  zIndex : '100',
 }));
 
 const Resizer = styled('div')(({ theme }) => ({
