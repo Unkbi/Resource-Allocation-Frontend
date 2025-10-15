@@ -134,7 +134,6 @@ function ProjectSettingPage({
     const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/settings?menu=user-profile');
       return;
     }
 

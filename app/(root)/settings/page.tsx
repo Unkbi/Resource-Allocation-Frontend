@@ -39,6 +39,7 @@ import Location from '@/app/components/Settings/Location';
 import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 interface MenuItem {
   id: string;
@@ -337,20 +338,6 @@ const SettingsPanel = ({
   }, []);
 
   useEffect(() => {
-    if (loadingPermissions) return;
-    const menu = searchParams.get('menu');
-    const updatedMenuItems = createMenuItems();
-    // Only allow menus that are accessible
-    const accessibleMenus = Object.keys(hasAnyAccess).filter(
-      key => hasAnyAccess[key as keyof typeof hasAnyAccess]
-    );
-    if (!menu || !accessibleMenus.includes(menu)) {
-      router.replace('/settings?menu=user-profile');
-      setActiveItem(updatedMenuItems[0].items[0]);
-    }
-  }, [searchParams, loadingPermissions]);
-
-  useEffect(() => {
     const menu = searchParams.get('menu');
     if (activeItem && (!menu || (menu && activeItem.id !== menu))) {
       const menuParam =
@@ -432,7 +419,16 @@ const SettingsPanel = ({
               {activeItem?.description}
             </Typography>
           </ContentHeader>
-          <ScrollableContent>{activeItem?.content}</ScrollableContent>
+          {hasAnyAccess[activeItem?.id as keyof typeof hasAnyAccess] ? (
+            <ScrollableContent>{activeItem?.content}</ScrollableContent>
+          ) : (
+            <ErrorPage
+              type="accessDenied"
+              redirectPath="/settings?menu=user-profile"
+              buttonLabel="Go to User Profile"
+              feedbackFunc={() => setActiveItem(MenuItems[0].items[0])}
+            />
+          )}
         </ContentContainer>
       </BodyContainer>
     </PageContainer>

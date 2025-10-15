@@ -13,6 +13,7 @@ interface ErrorPageProps {
   message?: string;
   buttonLabel?: string;
   redirectPath?: string;
+  feedbackFunc?: () => void;
 }
 
 const defaultConfigs: Record<
@@ -95,22 +96,22 @@ const messageStyles: SxProps = {
 };
 
 const buttonStyles: SxProps = {
-    width: '131px',
-    height: 36,
-    borderRadius: 1,
-    mt: 2,
-    backgroundColor: '#1C2D5F',
-    '&:hover': {
+  width: '131px',
+  height: 36,
+  borderRadius: 1,
+  mt: 2,
+  backgroundColor: '#1C2D5F',
+  '&:hover': {
     backgroundColor: '#152347',
-    },
-    fontFamily: 'Open Sans',
-    color : '#FFFFFF' ,
-    fontWeight: 700,
-    fontSize: 12,
-    lineHeight: '100%',
-    letterSpacing: 0,
-    textAlign: 'center',
-    textTransform: 'none', 
+  },
+  fontFamily: 'Open Sans',
+  color: '#FFFFFF',
+  fontWeight: 700,
+  fontSize: 12,
+  lineHeight: '100%',
+  letterSpacing: 0,
+  textAlign: 'center',
+  textTransform: 'none',
 };
 
 export default function ErrorPage({
@@ -120,6 +121,7 @@ export default function ErrorPage({
   message,
   buttonLabel,
   redirectPath = '/dashboard',
+  feedbackFunc = () => {},
 }: ErrorPageProps) {
   const router = useRouter();
   const config = defaultConfigs[type];
@@ -129,6 +131,7 @@ export default function ErrorPage({
       window.location.reload();
     } else {
       router.replace(redirectPath);
+      feedbackFunc();
     }
   };
 

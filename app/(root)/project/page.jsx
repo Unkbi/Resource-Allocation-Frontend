@@ -59,6 +59,7 @@ import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -136,7 +137,6 @@ function Project({ permissions, loadingPermissions }) {
     const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/dashboard');
       return;
     }
 
@@ -970,36 +970,36 @@ function Project({ permissions, loadingPermissions }) {
 
   return loadingPermissions ? (
     <LoadingScreen />
-  ) : (
-    accessMap.some(tab => permissions[tab.key].r) && (
-      <Box
-        sx={{
-          backgroundColor: '#fff',
-          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-          height: '100%',
-        }}
+  ) : accessMap.some(tab => permissions[tab.key].r) ? (
+    <Box
+      sx={{
+        backgroundColor: '#fff',
+        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+        height: '100%',
+      }}
+    >
+      {renderTable()}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onConfirm={() =>
+          handleConfirmDelete(
+            value === 'project' ? projectToDelete?.Id : portfolioDelete?.Id
+          )
+        }
+        onCancel={handleCancelDelete}
+        title={
+          value === 'project'
+            ? 'Are you sure you want to delete this project?'
+            : 'Are you sure you want to delete this portfolio?'
+        }
       >
-        {renderTable()}
-        <ConfirmDialog
-          open={deleteDialogOpen}
-          onConfirm={() =>
-            handleConfirmDelete(
-              value === 'project' ? projectToDelete?.Id : portfolioDelete?.Id
-            )
-          }
-          onCancel={handleCancelDelete}
-          title={
-            value === 'project'
-              ? 'Are you sure you want to delete this project?'
-              : 'Are you sure you want to delete this portfolio?'
-          }
-        >
-          {value === 'project'
-            ? 'This will permanently delete the project.'
-            : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
-        </ConfirmDialog>
-      </Box>
-    )
+        {value === 'project'
+          ? 'This will permanently delete the project.'
+          : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
+      </ConfirmDialog>
+    </Box>
+  ) : (
+    <ErrorPage type="accessDenied" redirectPath="/dashboard" />
   );
 }
 

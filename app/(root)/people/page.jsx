@@ -58,6 +58,7 @@ import { withRBAC } from '@/app/components/HOC/withRBAC';
 import RatesTable from '@/app/components/Resources/RatesTable';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 const demoResources = {
   result: [
@@ -175,7 +176,6 @@ function Resources({ permissions, loadingPermissions }) {
     const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/dashboard');
       return;
     }
 
@@ -1503,32 +1503,32 @@ function Resources({ permissions, loadingPermissions }) {
 
   return loadingPermissions ? (
     <LoadingScreen />
-  ) : (
-    accessMap.some(tab => permissions[tab.key].r) && (
-      <Box
-        sx={{
-          backgroundColor: '#fff',
-          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-          height: '100%',
-        }}
+  ) : accessMap.some(tab => permissions[tab.key].r) ? (
+    <Box
+      sx={{
+        backgroundColor: '#fff',
+        boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+        height: '100%',
+      }}
+    >
+      {renderTable()}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        title={handleTitle(value)}
       >
-        {renderTable()}
-        <ConfirmDialog
-          open={deleteDialogOpen}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-          title={handleTitle(value)}
-        >
-          This will permanently delete the{' '}
-          {value === 'rates'
-            ? 'Rate'
-            : value === 'teams'
-              ? 'Team'
-              : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
-          .
-        </ConfirmDialog>
-      </Box>
-    )
+        This will permanently delete the{' '}
+        {value === 'rates'
+          ? 'Rate'
+          : value === 'teams'
+            ? 'Team'
+            : value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
+        .
+      </ConfirmDialog>
+    </Box>
+  ) : (
+    <ErrorPage type={'accessDenied'} redirectPath="/dashboard" />
   );
 }
 
