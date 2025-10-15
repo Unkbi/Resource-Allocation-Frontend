@@ -63,7 +63,10 @@ const AddRatesForm = ({
   useEffect(() => {
     if (location && Array.isArray(location)) {
       const locationNames =
-        location.map(loc => ({
+        location
+          ?.filter(loc => loc.Status === 'Active')
+          .sort((a, b) => a.Name.localeCompare(b.Name))
+          .map(loc => ({
           value: loc.Id,
           label: loc.Name,
         })) || [];

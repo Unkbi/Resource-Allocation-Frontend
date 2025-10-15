@@ -95,20 +95,27 @@ const AddResourceForm = ({
   const [readOnly, setReadOnly] = useState(true);
 
   const resourceListOptions =
-    resources &&
-    resources?.map(resource => {
-      return { value: resource.Id, label: resource.FullName };
-    });
+   resources
+     ?.filter(resource => resource.Status === 'Active') 
+     .sort((a, b) => a.FullName.localeCompare(b.FullName)) 
+     .map(resource => ({
+       value: resource.Id,
+       label: resource.FullName,
+     })) || [];
   const organisationListOptions =
     organisations
       ?.filter(org => org.Status === 'Active')
+      .sort((a, b) => a.Name.localeCompare(b.Name))
       .map(org => ({
         value: org.Id,
         label: org.Name,
       })) || [];
 
   const teamListOptions =
-    teams?.map(team => ({
+    teams
+      ?.filter(team => team.Status === 'Active')
+      .sort((a, b) => a.Name.localeCompare(b.Name))
+      ?.map(team => ({
       value: team.Id,
       label: team.Name,
     })) || [];
@@ -224,7 +231,10 @@ const AddResourceForm = ({
   useEffect(() => {
     if (location && Array.isArray(location)) {
       const locationNames =
-        location.map(loc => ({
+        location
+          ?.filter(loc => loc.Status === 'Active')
+          .sort((a, b) => a.Name.localeCompare(b.Name))
+          .map(loc => ({
           value: loc.Id,
           label: loc.Name,
         })) || [];
