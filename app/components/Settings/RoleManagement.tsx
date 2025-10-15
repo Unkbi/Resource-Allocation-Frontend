@@ -133,7 +133,7 @@ function RoleManagementPage({
 }: RoleManagementPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tab, setTab] = useState('role-management');
+  const [tab, setTab] = useState('role-assignments');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuRoleId, setMenuRoleId] = useState<string | null>(null);
   const [deletingRole, setDeletingRole] = useState<string | null>(null);
