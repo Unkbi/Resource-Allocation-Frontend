@@ -418,6 +418,7 @@ const AllocationForm = () => {
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
   const { organisations } = useSelector(state => state.organisations);
+  const roles = useSelector((state) => state.rbac.roles);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
@@ -495,7 +496,7 @@ const AllocationForm = () => {
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios, initialData.Name || '');
       case 'add_role':
-        return addRoleValidationSchema;
+        return addRoleValidationSchema(roles);
       case 'edit_role':
         return addRoleValidationSchema;
       case 'assign_role':

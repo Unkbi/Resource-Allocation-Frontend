@@ -491,21 +491,29 @@ export const addOrganizationValidationSchema = (
   });
 };
 
-export const addRoleValidationSchema = Yup.object({
-  name: Yup.string()
-    .required('Role Name is required')
-    .max(90, 'Reached Max Characters')
-    .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word
-    .test(
-      'unique-name',
-      'Role Name already exists. Please choose another name.',
-      function (value) {
-        if (!value) return true;
-        const roleNames = this.options.context?.roleNames || [];
-        return !roleNames.includes(value.toLowerCase().trim());
-      }
-    ),
-});
+export const addRoleValidationSchema = (roles: any[] = [], initialName = '') => {
+  const roleNames = Array.isArray(roles)
+    ? roles.map(role => role.name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    name: Yup.string()
+      .required('Role Name is required')
+      .max(90, 'Reached Max Characters')
+      .matches(/^[^\s]+$/, 'Name must be a single word without spaces')
+      .test(
+        'unique-name',
+        'Role Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          ) return true;
+          return !roleNames.includes(value.toLowerCase().trim());
+        }
+      ),
+  });
+};
 
 export const assignRoleValidationSchema = Yup.object({
   Assignee: Yup.string().required('Assignee is required'),
