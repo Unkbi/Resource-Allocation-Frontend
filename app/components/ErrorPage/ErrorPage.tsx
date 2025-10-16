@@ -70,7 +70,7 @@ const textBoxStyles: SxProps = {
 };
 
 const subtitleStyles: SxProps = {
-  width: 312,
+  width: 'auto',
   height: 24,
   opacity: 1,
   fontFamily: 'Open Sans',
@@ -83,7 +83,7 @@ const subtitleStyles: SxProps = {
 };
 
 const messageStyles: SxProps = {
-  width: 312,
+  width: 'auto',
   minHeight: 24,
   opacity: 1,
   fontFamily: 'Open Sans',
