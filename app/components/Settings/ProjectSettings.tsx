@@ -134,7 +134,6 @@ function ProjectSettingPage({
     const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/settings?menu=user-profile');
       return;
     }
 
@@ -674,6 +673,7 @@ function ProjectSettingPage({
           columns={ProjectTypesPageColumns}
           apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'project-types-group' && (
@@ -694,6 +694,7 @@ function ProjectSettingPage({
           columns={ProjectTypesGroupColumns}
           apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
 

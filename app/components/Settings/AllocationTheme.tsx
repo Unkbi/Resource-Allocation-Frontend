@@ -252,7 +252,6 @@ function AllocationTheme({
     const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/settings?menu=user-profile');
       return;
     }
 
@@ -1215,6 +1214,11 @@ function AllocationTheme({
                         setHasUnsavedChanges(true);
                       }
                     }}
+                    onKeyDown={e => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     onBlur={e => {
                       const val = e.target.value;
                       if (val && !isNaN(parseFloat(val))) {
@@ -1316,6 +1320,11 @@ function AllocationTheme({
                             : parseFloat(numValue.toFixed(1))
                         );
                         setHasUnsavedChanges(true);
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
                       }
                     }}
                     onBlur={e => {
@@ -1433,6 +1442,21 @@ function AllocationTheme({
                   }}
                   inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
                 />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  {allocationHistoryDuration
+                    ? allocationHistoryDuration === '1'
+                      ? 'month'
+                      : 'months'
+                    : ''}
+                </Typography>
               </Box>
             </Box>
 
@@ -1478,6 +1502,21 @@ function AllocationTheme({
                   }}
                   inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
                 />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  {commentsHistoryDuration
+                    ? commentsHistoryDuration === '1'
+                      ? 'month'
+                      : 'months'
+                    : ''}
+                </Typography>
               </Box>
             </Box>
           </Box>

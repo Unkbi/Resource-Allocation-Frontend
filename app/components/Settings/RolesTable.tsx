@@ -1,7 +1,9 @@
 'use client';
 
-import { Box, Button, Typography } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { Box } from '@mui/material';
+import { DataGridPremium, useGridApiRef } from '@mui/x-data-grid-premium';
+import SettingsToolbar from '../Toolbar/SettingsToolbar';
+import { FilterPanelStyles } from '../AllocationTable/styles/StyledDataGrid';
 
 interface AccessTableProps {
   title: string;
@@ -15,6 +17,7 @@ interface AccessTableProps {
   setAnchorEl: (el: HTMLElement | null) => void;
   anchorEl: HTMLElement | null;
   buttonLabel?: string;
+  toolbarType?: 'filter' | 'none';
   columns?: any[];
   apiRef?: any;
   loading?: boolean;
@@ -31,72 +34,76 @@ export default function RolesTable({
   setMenuId,
   setAnchorEl,
   anchorEl,
-  buttonLabel = '',
+  toolbarType,
+  buttonLabel = 'Add New',
   columns = [],
-  apiRef,
   loading = false,
 }: AccessTableProps) {
+  const apiRef = useGridApiRef();
+
+  const RolesToolbar = () => (
+    <SettingsToolbar
+      title={title}
+      buttonLabel={buttonLabel}
+      onButtonClick={onAdd}
+    />
+  );
+
   return (
     <Box
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
     >
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        px={2}
-        py={3}
-        sx={{ borderBottom: '0.667px solid #E5E7EB' }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 700,
-            fontSize: '18px',
-            color: '#1F2937',
-            fontFamily: 'Open Sans',
-            fontStyle: 'normal',
-            lineHeight: ' 28px',
-          }}
-        >
-          {title}
-        </Typography>
-        {buttonLabel && (
-          <Button
-            variant="contained"
-            onClick={onAdd}
-            sx={{
-              height: 40,
-              borderRadius: 2,
-              background: '#152E75',
-              color: '#FFF',
-              textTransform: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-              px: 2,
-            }}
-          >
-            {buttonLabel}
-          </Button>
-        )}
-      </Box>
-
-      <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
-        <DataGrid
+      <Box sx={{ width: '100%', height: 'calc(100vh - 248px)' }}>
+        <DataGridPremium
           rows={data}
           columns={columns}
-          disableColumnMenu
           hideFooter
           disableRowSelectionOnClick
           apiRef={apiRef}
           loading={loading}
+          slots={{
+            toolbar: toolbarType === 'filter' ? RolesToolbar : undefined,
+          }}
+          slotProps={{
+            loadingOverlay: {
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
+            },
+            panel: {
+              className: 'parent-grid-panel',
+              placement: 'bottom-end',
+              sx: {
+                transform: 'translate3d(-50px, 250px, 0px) !important',
+                top: '40px !important',
+              },
+            },
+            filterPanel: {
+              columnsSort: 'asc',
+              filterFormProps: {
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                operatorInputProps: { size: 'small', sx: { mt: 'auto' } },
+                valueInputProps: {
+                  InputComponentProps: { size: 'small' },
+                },
+                deleteIconProps: {
+                  sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
+                },
+              },
+              sx: FilterPanelStyles,
+            },
+          }}
+          localeText={{
+            toolbarFilters: '',
+          }}
           sx={{
             border: 'none',
             height: '100%',
             '.MuiDataGrid-columnHeaders': {
               color: '#6B7280',
               fontSize: '12px',
-              fontStyle: 'normal',
               fontWeight: 600,
               lineHeight: '16px',
               letterSpacing: '0.6px',
@@ -121,12 +128,6 @@ export default function RolesTable({
             '.MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
               fontSize: 13,
-            },
-          }}
-          slotProps={{
-            loadingOverlay: {
-              variant: 'skeleton',
-              noRowsVariant: 'skeleton',
             },
           }}
         />
