@@ -57,8 +57,10 @@ axiosInstance.interceptors.response.use(
       status === 500 &&
       (data?.toLowerCase().includes('token has expired') ||
         data?.toLowerCase().includes('no active session') ||
-        data?.toLowerCase().includes('session verification failed') ||
-        data?.toLowerCase().includes('invalid input syntax for type uuid: "'))
+        data?.toLowerCase().includes('session verification failed'))
+      // This is causing issues when APIs are failing for other reasons
+      // ||
+      // data?.toLowerCase().includes('invalid input syntax for type uuid: "')
     ) {
       clearAuth();
       if (typeof window !== 'undefined') {
