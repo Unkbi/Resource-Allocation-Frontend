@@ -417,7 +417,8 @@ const AllocationForm = () => {
   const [HistoryData, setHistoryData] = useState([]);
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
-  const { organizations } = useSelector(state => state.organisations);
+  const { organisations } = useSelector(state => state.organisations);
+  const roles = useSelector((state) => state.rbac.roles);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
@@ -463,13 +464,13 @@ const AllocationForm = () => {
       case 'edit_project':
         return addProjectValidationSchema(projects, initialData?.Name || '');
       case 'add_team':
-        return addTeamValidationSchema;
+        return addTeamValidationSchema(teams);
       case 'edit_team':
-        return addTeamValidationSchema;
+        return addTeamValidationSchema(teams, initialData?.Name || '');
       case 'add_resource':
-        return addResourceValidationSchema;
+        return addResourceValidationSchema(allResourcesDetail, initialData?.Email || '');
       case 'edit_resource': // Temporary later on this will be same as add_resource
-        return editResourceValidationSchema;
+        return editResourceValidationSchema(allResourcesDetail, initialData?.Email || '');;
       case 'add_allocation':
         return addAllocationValidationSchema(scalarSettings);
       case 'assign_allocation':
@@ -495,7 +496,7 @@ const AllocationForm = () => {
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios, initialData.Name || '');
       case 'add_role':
-        return addRoleValidationSchema;
+        return addRoleValidationSchema(roles);
       case 'edit_role':
         return addRoleValidationSchema;
       case 'assign_role':
@@ -511,7 +512,9 @@ const AllocationForm = () => {
       case 'edit_privilege_assignment':
         return assignPrivilegeValidationSchema;
       case 'add_organization':
-        return addOrganizationValidationSchema(organizations);
+        return addOrganizationValidationSchema(organisations);
+      case 'edit_organization':
+        return addOrganizationValidationSchema(organisations, initialData?.Name || '');
       case 'add_project_type':
         return addProjectTypeValidationSchema(projectTypes);
       case 'edit_project_type':
