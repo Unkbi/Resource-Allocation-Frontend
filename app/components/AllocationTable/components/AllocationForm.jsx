@@ -710,6 +710,8 @@ const AllocationForm = () => {
                   })
                 );
                 setTimeout(() => {
+                   setFormValue({});
+                   dispatch(closeDialog());
                   dispatch(setHighlightedRowId(newProjectId));
                 }, 4000);
               }
@@ -851,7 +853,6 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add team:', e);
         }
-        // dispatch(closeDialog());
         break;
 
       case 'edit_team':
@@ -868,12 +869,24 @@ const AllocationForm = () => {
         };
 
         try {
-          await dispatch(
+          const response = await dispatch(
             updateTeam({
               postData,
               teamId: initialData.Id,
             })
           );
+          if (response.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to update team',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
 
           await dispatch(fetchAllTeams());
           dispatch(setHighlightedRowId(initialData.Id));
@@ -887,8 +900,18 @@ const AllocationForm = () => {
             })
           );
           dispatch(closeDialog());
+          setFormValue({});
         } catch (e) {
           console.error('Failed to update team:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update team',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
         }
         break;
 
@@ -974,7 +997,6 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add resource:', e);
         }
-        // dispatch(closeDialog());
         break;
 
       case 'edit_resource':
@@ -1048,12 +1070,24 @@ const AllocationForm = () => {
               return;
             }
           }
-          await dispatch(
+          const response = await dispatch(
             updateResource({
               postData,
               resourceId: initialData.Id,
             })
           );
+          if (response.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to update resource',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
 
           // Check if team changed and update if needed
           if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
@@ -1094,8 +1128,18 @@ const AllocationForm = () => {
             })
           );
           dispatch(closeDialog());
+          setFormValue({});
         } catch (e) {
           console.error('Failed to update resource:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update resource',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
         }
         break;
 
@@ -1936,9 +1980,9 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            // dispatch(closeDialog())
-            // dispatch(setFormValue({}));
             dispatch(setHighlightedRowId(response?.EmployeeRate?.Id));
+            dispatch(closeDialog());
+            setFormValue({});
           })
           .catch(error => {
             console.error('Failed to add rate:', error);
@@ -1951,9 +1995,6 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-          })
-          .finally(() => {
-            dispatch(closeDialog());
           });
 
         break;
@@ -2042,6 +2083,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+             dispatch(closeDialog());
             dispatch(setHighlightedRowId(response.Id));
           })
           .catch(error => {
@@ -2056,9 +2098,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            dispatch(closeDialog());
-          });
         break;
       case 'add_organization':
         Object.keys(cleanedValues).forEach(key => {
@@ -2114,10 +2153,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            // dispatch(closeDialog());
-            console.log("error")
-          });
         break;
       case 'edit_organization':
         Object.keys(cleanedValues).forEach(key => {
@@ -2248,6 +2283,8 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
+              dispatch(closeDialog());
+              setFormValue({});
               dispatch(setHighlightedRowId(response?.Role.name));
             })
             .catch(error => {
@@ -2262,9 +2299,6 @@ const AllocationForm = () => {
                 })
               );
             })
-            .finally(() => {
-              dispatch(closeDialog());
-            });
         }
         break;
 
@@ -2280,7 +2314,7 @@ const AllocationForm = () => {
             ...cleanedValues,
             // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
-            Name: values.Role ? `${cleanedValues.Assignee?.id}` : null,
+            Name: values.Role ? `${cleanedValues?.Assignee}` : null,
           };
 
           new Promise((resolve, reject) => {
@@ -2303,6 +2337,8 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
+              dispatch(closeDialog());
+              setFormValue({});
               dispatch(setHighlightedRowId(response.result?.Name));
             })
             .catch(error => {
@@ -2317,9 +2353,6 @@ const AllocationForm = () => {
                 })
               );
             })
-            .finally(() => {
-              dispatch(closeDialog());
-            });
         }
         break;
       case 'edit_role_assignment': {
@@ -2353,8 +2386,9 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.userId));
           dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(response.result?.userId));
         } catch (error) {
           const message = 'Failed to update role assignment.';
           dispatch(
@@ -2406,6 +2440,8 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(closeDialog());
+            setFormValue({});
             dispatch(setHighlightedRowId(response.result?.id));
           })
           .catch(error => {
@@ -2420,9 +2456,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            dispatch(closeDialog());
-          });
         break;
       }
       case 'edit_privilege': {
@@ -2468,8 +2501,9 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(cleanedValues.Name));
           dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(cleanedValues.Name));
         } catch (error) {
           const message =
             error?.response?.data?.exception || 'Failed to update privilege.';
@@ -2517,6 +2551,8 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(closeDialog());
+            setFormValue({});
             dispatch(setHighlightedRowId(response.result?.Name));
           })
           .catch(error => {
@@ -2531,9 +2567,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            dispatch(closeDialog());
-          });
         break;
       }
       case 'edit_privilege_assignment': {
@@ -2571,8 +2604,9 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.roleName));
           dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(response.result?.roleName));
         } catch (error) {
           const message =
             error?.response?.data?.exception ||
@@ -2971,7 +3005,6 @@ const AllocationForm = () => {
         return;
     }
     setSubmitting(false);
-    // setFormValue({});
   };
 
   const performTransfer = async () => {
