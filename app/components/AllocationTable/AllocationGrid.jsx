@@ -74,6 +74,7 @@ import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 function AllocationGrid({
   groupBy,
