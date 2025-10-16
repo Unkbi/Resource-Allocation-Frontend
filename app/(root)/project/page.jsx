@@ -60,6 +60,7 @@ import { withRBAC } from '@/app/components/HOC/withRBAC';
 import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import dayjs from 'dayjs';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -341,10 +342,15 @@ function Project({ permissions, loadingPermissions }) {
           );
           dispatch(fetchAllProjects());
         } else {
+          const allocations = response;
+          const firstPeriod = allocations[0]?.Period;
+          const lastPeriod = allocations[allocations.length - 1]?.Period;
+          const formattedFirst = dayjs(firstPeriod).format('MM/DD/YYYY');
+          const formattedLast = dayjs(lastPeriod).format('MM/DD/YYYY');
           dispatch(
             showToast({
               open: true,
-              message: 'Cannot delete project with active allocations',
+              message: `Cannot delete project with active allocations for period: ${formattedFirst} to ${formattedLast}`,
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
