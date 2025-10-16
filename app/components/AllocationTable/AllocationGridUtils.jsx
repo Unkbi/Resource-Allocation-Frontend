@@ -1170,6 +1170,7 @@ export const getCellClassName = (
   allocationTheme = [],
   type = 'allocation',
   allProjects = [],
+  projectTypes = [],
   isCellEditable,
   groupBy = ''
 ) => {
@@ -1290,12 +1291,16 @@ export const getCellClassName = (
           parseISO(project.StartDate) <= parseISO(currentWeekData?.period) &&
           parseISO(project.EndDate) >= parseISO(currentWeekData?.period);
         if (isWithinProjectDateRange && project.Type) {
+          const projectType = projectTypes.find(
+            type => type.Id === project.Type
+          );
+
           const isTopLevelProject =
             params.rowNode.depth === 0 || groupBy === 'project';
           const prefix = isTopLevelProject
             ? 'firstGroupsRow'
             : 'secondGroupsRow';
-          return `${prefix} project-type-${project.Type.toLowerCase().replace(/\s+/g, '_')}`;
+          return `${prefix} project-type-${projectType.Name.toLowerCase().replace(/\s+/g, '_')}`;
         }
       }
     }

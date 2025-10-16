@@ -16,16 +16,17 @@ export const StyledDataGrid = styled(DataGridPremium)(({
   groupBy,
   type,
   allocationTheme = [],
+  projectTypes = [],
 }) => {
   const allocationRangeStyles = {};
   const projectTypeColors = {};
   const projectBudgetCategoryColors = {};
 
-  PROJECT_TYPES.forEach(projectType => {
+  projectTypes.forEach(projectType => {
     projectTypeColors[
-      `& .project-type-${projectType.toLowerCase().split(' ').join('_')}`
+      `& .project-type-${projectType.Name.toLowerCase().split(' ').join('_')}`
     ] = {
-      borderBottom: `3px solid ${getProjectTypeColorLine(projectType)}`,
+      borderBottom: `3px solid ${projectType.Color}`,
       // borderRight: 'none !important',
       // boxShadow: '1px 0 0 0 #DDE1E4 inset',
     };

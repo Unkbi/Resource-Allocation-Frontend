@@ -14,7 +14,6 @@ import { AllAllocations } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
-  getProjectTypeColorLine,
   getResourceFromUid,
   getTotalWeeks,
   generateDateWeekMath,
@@ -134,10 +133,10 @@ function ProjectAllocation({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
-    if(projectTypes.length === 0){
-      dispatch({type: FETCH_PROJECT_TYPES})
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
     }
-  },[])
+  }, []);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -322,58 +321,54 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        const row = api.getRow(rowNode.id);
-        const pType = projects?.find(
-          project => project.Name === value
-        )?.Type;
-        const projectType = pType
-          ? projectTypes?.find(type => type.Id === pType)?.Name
-          : '';
+        if (isGridTreeNode) {
+          const row = api.getRow(rowNode?.children[0]);
 
-        const open = Boolean(anchorEl);
+          const open = Boolean(anchorEl);
 
-        const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-          event.stopPropagation();
-          setAnchorEl(event.currentTarget);
-        };
+          const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+            event.stopPropagation();
+            setAnchorEl(event.currentTarget);
+          };
 
-        const handleMenuClose = () => {
-          setAnchorEl(null);
-        };
+          const handleMenuClose = () => {
+            setAnchorEl(null);
+          };
 
-        if (isGridTreeNode && rowNode.children) {
-          const resource_count = rowNode?.children?.length || null;
-          return (
-            <>
-              <EllipsisNameCell
-                value={value as string}
-                resourceCount={resource_count}
-                onAddClick={() => handleAddClick(params)}
-                showAddIcon={true}
-                leftBorderColor={getProjectTypeColorLine(projectType || '')}
-              />
-              <IconButton
-                size="small"
-                disableRipple
-                disableFocusRipple
-                onClick={e => {
-                  e.stopPropagation();
-                  setMenuProjectName(params.value as string);
-                  setAnchorEl(e.currentTarget);
-                }}
-                sx={{
-                  mr: -1.5,
-                  padding: '0px',
-                  backgroundColor: 'transparent',
-                  '&:hover': {
+          if (isGridTreeNode && rowNode.children) {
+            const resource_count = rowNode?.children?.length || null;
+            return (
+              <>
+                <EllipsisNameCell
+                  value={value as string}
+                  resourceCount={resource_count}
+                  onAddClick={() => handleAddClick(params)}
+                  showAddIcon={true}
+                  leftBorderColor={row?.projectTypeColor}
+                />
+                <IconButton
+                  size="small"
+                  disableRipple
+                  disableFocusRipple
+                  onClick={e => {
+                    e.stopPropagation();
+                    setMenuProjectName(params.value as string);
+                    setAnchorEl(e.currentTarget);
+                  }}
+                  sx={{
+                    mr: -1.5,
+                    padding: '0px',
                     backgroundColor: 'transparent',
-                  },
-                }}
-              >
-                <MoreVertIcon sx={{ fontSize: 22 }} />
-              </IconButton>
-            </>
-          );
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  <MoreVertIcon sx={{ fontSize: 22 }} />
+                </IconButton>
+              </>
+            );
+          }
         }
       },
     },

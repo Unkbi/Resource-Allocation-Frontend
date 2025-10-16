@@ -138,8 +138,15 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 }
 
 function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
-  const { projects, teams, resources, allResourcesDetail, startDate, endDate } =
-    action.payload;
+  const {
+    projects,
+    teams,
+    resources,
+    allResourcesDetail,
+    projectTypes,
+    startDate,
+    endDate,
+  } = action.payload;
   try {
     yield put(setCostDataProcessing(true));
 
@@ -201,6 +208,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       formatResponses,
       teams,
       projects,
+      projectTypes || [],
       resources,
       teamResourceObject,
       startDate,
