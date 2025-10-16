@@ -46,7 +46,7 @@ import {
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_PAGE_VALID_TABS,
 } from '@/app/constants/constants';
-import { parseISO } from 'date-fns';
+import { parseISO ,format } from 'date-fns';
 import { StatusPill } from '@/app/components/Settings/styled';
 
 import {
@@ -60,6 +60,7 @@ import { withRBAC } from '@/app/components/HOC/withRBAC';
 import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import dayjs from 'dayjs';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -341,10 +342,21 @@ function Project({ permissions, loadingPermissions }) {
           );
           dispatch(fetchAllProjects());
         } else {
+          const allocations = response;
+          const sortedAllocations = allocations.sort(
+            (a, b) => parseISO(a.Period) - parseISO(b.Period)
+          );
+          
+          const firstPeriod = sortedAllocations[0]?.Period;
+          const lastPeriod =
+            sortedAllocations[sortedAllocations.length - 1]?.Period;
+          
+         const formattedFirst = format(parseISO(firstPeriod), 'MM/dd/yyyy');
+         const formattedLast = format(parseISO(lastPeriod), 'MM/dd/yyyy');
           dispatch(
             showToast({
               open: true,
-              message: 'Cannot delete project with active allocations',
+              message: `Cannot delete project with active allocations for period: ${formattedFirst} to ${formattedLast}`,
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
