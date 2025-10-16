@@ -46,7 +46,7 @@ import {
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_PAGE_VALID_TABS,
 } from '@/app/constants/constants';
-import { parseISO } from 'date-fns';
+import { parseISO ,format } from 'date-fns';
 import { StatusPill } from '@/app/components/Settings/styled';
 
 import {
@@ -343,10 +343,16 @@ function Project({ permissions, loadingPermissions }) {
           dispatch(fetchAllProjects());
         } else {
           const allocations = response;
-          const firstPeriod = allocations[0]?.Period;
-          const lastPeriod = allocations[allocations.length - 1]?.Period;
-          const formattedFirst = dayjs(firstPeriod).format('MM/DD/YYYY');
-          const formattedLast = dayjs(lastPeriod).format('MM/DD/YYYY');
+          const sortedAllocations = allocations.sort(
+            (a, b) => parseISO(a.Period) - parseISO(b.Period)
+          );
+          
+          const firstPeriod = sortedAllocations[0]?.Period;
+          const lastPeriod =
+            sortedAllocations[sortedAllocations.length - 1]?.Period;
+          
+         const formattedFirst = format(parseISO(firstPeriod), 'MM/dd/yyyy');
+         const formattedLast = format(parseISO(lastPeriod), 'MM/dd/yyyy');
           dispatch(
             showToast({
               open: true,
