@@ -14,7 +14,6 @@ import { AllAllocations } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
-  getProjectTypeColorLine,
   getResourceFromUid,
   getTotalWeeks,
   generateDateWeekMath,
@@ -46,6 +45,7 @@ import { useRouter } from 'next/navigation';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectAllocationProps {
   startDate: string | null;
@@ -114,6 +114,7 @@ function ProjectAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -130,6 +131,12 @@ function ProjectAllocation({
     (state: RootState) => state.allocationView
   );
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -294,6 +301,7 @@ function ProjectAllocation({
             ?.FullName,
           ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
             ?.FullName,
+          Type: projectTypes.find(pt => pt.Id === item.Type)?.Name || '',
         };
       });
     }
@@ -313,55 +321,54 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        const row = api.getRow(rowNode.id);
-        const projectType = projects?.find(
-          project => project.Name === value
-        )?.Type;
+        if (isGridTreeNode) {
+          const row = api.getRow(rowNode?.children[0]);
 
-        const open = Boolean(anchorEl);
+          const open = Boolean(anchorEl);
 
-        const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-          event.stopPropagation();
-          setAnchorEl(event.currentTarget);
-        };
+          const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+            event.stopPropagation();
+            setAnchorEl(event.currentTarget);
+          };
 
-        const handleMenuClose = () => {
-          setAnchorEl(null);
-        };
+          const handleMenuClose = () => {
+            setAnchorEl(null);
+          };
 
-        if (isGridTreeNode && rowNode.children) {
-          const resource_count = rowNode?.children?.length || null;
-          return (
-            <>
-              <EllipsisNameCell
-                value={value as string}
-                resourceCount={resource_count}
-                onAddClick={() => handleAddClick(params)}
-                showAddIcon={true}
-                leftBorderColor={getProjectTypeColorLine(projectType || '')}
-              />
-              <IconButton
-                size="small"
-                disableRipple
-                disableFocusRipple
-                onClick={e => {
-                  e.stopPropagation();
-                  setMenuProjectName(params.value as string);
-                  setAnchorEl(e.currentTarget);
-                }}
-                sx={{
-                  mr: -1.5,
-                  padding: '0px',
-                  backgroundColor: 'transparent',
-                  '&:hover': {
+          if (isGridTreeNode && rowNode.children) {
+            const resource_count = rowNode?.children?.length || null;
+            return (
+              <>
+                <EllipsisNameCell
+                  value={value as string}
+                  resourceCount={resource_count}
+                  onAddClick={() => handleAddClick(params)}
+                  showAddIcon={true}
+                  leftBorderColor={row?.projectTypeColor}
+                />
+                <IconButton
+                  size="small"
+                  disableRipple
+                  disableFocusRipple
+                  onClick={e => {
+                    e.stopPropagation();
+                    setMenuProjectName(params.value as string);
+                    setAnchorEl(e.currentTarget);
+                  }}
+                  sx={{
+                    mr: -1.5,
+                    padding: '0px',
                     backgroundColor: 'transparent',
-                  },
-                }}
-              >
-                <MoreVertIcon sx={{ fontSize: 22 }} />
-              </IconButton>
-            </>
-          );
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  <MoreVertIcon sx={{ fontSize: 22 }} />
+                </IconButton>
+              </>
+            );
+          }
         }
       },
     },

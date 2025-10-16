@@ -21,6 +21,7 @@ import { getProjectTypeColorLine } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -50,6 +51,7 @@ const ProjectCost = ({
   );
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   // @ts-ignore
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
@@ -58,6 +60,12 @@ const ProjectCost = ({
     (state: RootState) => state.allResourcesDetail
   );
   const { setRows, ready } = useAllocationGrid('main');
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -87,6 +95,7 @@ const ProjectCost = ({
           projects: projects,
           resources: resources,
           allResourcesDetail: allResourcesDetail,
+          projectTypes: projectTypes,
           startDate: startDate,
           endDate: endDate,
         },

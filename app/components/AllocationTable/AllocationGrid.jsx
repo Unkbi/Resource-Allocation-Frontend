@@ -137,6 +137,7 @@ function AllocationGrid({
   const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
+  const { projectTypes } = useSelector(state => state.allSettings);
   const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -281,6 +282,12 @@ function AllocationGrid({
 
     return normalized;
   };
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
 
   // Set the apiRef in the context when it's available
   useEffect(() => {
@@ -691,6 +698,7 @@ function AllocationGrid({
             allocationTheme,
             type,
             projects,
+            projectTypes,
             isCellEditable
           );
           const showTooltip =
@@ -1395,6 +1403,7 @@ function AllocationGrid({
       isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
+      projectTypes={projectTypes}
       getRowHeight={params => {
         if (params?.model?.projectId === '') {
           // Sahadev: really small value, it doesnt accept 0
@@ -1444,6 +1453,7 @@ function AllocationGrid({
           allocationTheme,
           type,
           projects,
+          projectTypes,
           isCellEditable,
           groupBy
         );
