@@ -575,7 +575,7 @@ const AllocationForm = () => {
 
   useEffect(() => {
     if (resources.length === 0) {
-      dispatch(fetchAllResourcesDetail());
+      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL });
     }
   }, []);
 
@@ -742,8 +742,8 @@ const AllocationForm = () => {
                   })
                 );
                 setTimeout(() => {
-                   setFormValue({});
-                   dispatch(closeDialog());
+                  setFormValue({});
+                  dispatch(closeDialog());
                   dispatch(setHighlightedRowId(newProjectId));
                 }, 4000);
               }
@@ -2166,7 +2166,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-             dispatch(closeDialog());
+            dispatch(closeDialog());
             dispatch(setHighlightedRowId(response.Id));
           })
           .catch(error => {
@@ -2180,7 +2180,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-          })
+          });
         break;
       case 'add_organization':
         Object.keys(cleanedValues).forEach(key => {
@@ -2235,7 +2235,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-          })
+          });
         break;
       case 'edit_organization':
         Object.keys(cleanedValues).forEach(key => {
@@ -2381,7 +2381,7 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
-            })
+            });
         }
         break;
 
@@ -2435,7 +2435,7 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
-            })
+            });
         }
         break;
       case 'edit_role_assignment': {
@@ -2538,7 +2538,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-          })
+          });
         break;
       }
       case 'edit_privilege': {
@@ -2649,7 +2649,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-          })
+          });
         break;
       }
       case 'edit_privilege_assignment': {
