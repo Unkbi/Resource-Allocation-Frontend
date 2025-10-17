@@ -20,7 +20,8 @@ import {
 import { call, put, select, take, takeEvery } from 'redux-saga/effects';
 import {
   setLoading,
-  setLoginUpserPrivileges,
+  setLoadingLoginUserPrivileges,
+  setLoginUserPrivileges,
   setMeta,
   setPrivilegeAssignments,
   setPrivilegeAssignmentsLoading,
@@ -302,7 +303,7 @@ function* getUserSaga(): Generator<any, void, any> {
 function* getUserAndPrivilegesSaga(action: any): Generator<any, void, any> {
   try {
     const { userId } = action.payload;
-    yield put(setLoading(true));
+    yield put(setLoadingLoginUserPrivileges(true));
 
     let user = yield select(state => state.user.user);
     if (!user) {
@@ -344,11 +345,11 @@ function* getUserAndPrivilegesSaga(action: any): Generator<any, void, any> {
       privilegeAssignments,
       privileges
     );
-    yield put(setLoginUpserPrivileges(loginUserPrivileges));
+    yield put(setLoginUserPrivileges(loginUserPrivileges));
   } catch (error) {
     console.error('Saga error, Failed to fetch User and Privileges : ', error);
   } finally {
-    yield put(setLoading(false));
+    yield put(setLoadingLoginUserPrivileges(false));
   }
 }
 

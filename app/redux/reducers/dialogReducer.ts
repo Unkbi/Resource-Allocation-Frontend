@@ -1,6 +1,7 @@
+import { dialogState } from '@/app/types/dialogTypes';
 import { createSlice } from '@reduxjs/toolkit';
 
-const initialState = {
+const initialState: dialogState = {
   isOpen: false,
   title: '',
   submitButtonText: '',

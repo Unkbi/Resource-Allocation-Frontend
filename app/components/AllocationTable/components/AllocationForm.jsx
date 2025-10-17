@@ -150,6 +150,7 @@ import {
   UPDATE_PROJECT_TYPE,
   ADD_PROJECT_TYPE_GROUPS,
   UPDATE_PROJECT_TYPE_GROUPS,
+  FETCH_PROJECT_TYPES,
 } from '@/app/redux/actions/allSettingsActions';
 import {
   ADD_LOCATION,
@@ -157,6 +158,7 @@ import {
   UPDATE_LOCATION_GROUPS,
   ADD_LOCATION_GROUPS,
 } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
 const initialValuesMap = {
   add_project: {
@@ -417,7 +419,8 @@ const AllocationForm = () => {
   const [HistoryData, setHistoryData] = useState([]);
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
-  const { organizations } = useSelector(state => state.organisations);
+  const { organisations } = useSelector(state => state.organisations);
+  const roles = useSelector(state => state.rbac.roles);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
@@ -463,13 +466,19 @@ const AllocationForm = () => {
       case 'edit_project':
         return addProjectValidationSchema(projects, initialData?.Name || '');
       case 'add_team':
-        return addTeamValidationSchema;
+        return addTeamValidationSchema(teams);
       case 'edit_team':
-        return addTeamValidationSchema;
+        return addTeamValidationSchema(teams, initialData?.Name || '');
       case 'add_resource':
-        return addResourceValidationSchema;
+        return addResourceValidationSchema(
+          allResourcesDetail,
+          initialData?.Email || ''
+        );
       case 'edit_resource': // Temporary later on this will be same as add_resource
-        return editResourceValidationSchema;
+        return editResourceValidationSchema(
+          allResourcesDetail,
+          initialData?.Email || ''
+        );
       case 'add_allocation':
         return addAllocationValidationSchema(scalarSettings);
       case 'assign_allocation':
@@ -495,7 +504,7 @@ const AllocationForm = () => {
       case 'edit_portfolio':
         return addPortfolioValidationSchema(portfolios, initialData.Name || '');
       case 'add_role':
-        return addRoleValidationSchema;
+        return addRoleValidationSchema(roles);
       case 'edit_role':
         return addRoleValidationSchema;
       case 'assign_role':
@@ -511,7 +520,12 @@ const AllocationForm = () => {
       case 'edit_privilege_assignment':
         return assignPrivilegeValidationSchema;
       case 'add_organization':
-        return addOrganizationValidationSchema(organizations);
+        return addOrganizationValidationSchema(organisations);
+      case 'edit_organization':
+        return addOrganizationValidationSchema(
+          organisations,
+          initialData?.Name || ''
+        );
       case 'add_project_type':
         return addProjectTypeValidationSchema(projectTypes);
       case 'edit_project_type':
@@ -550,6 +564,24 @@ const AllocationForm = () => {
   useEffect(() => {
     if (!allUsers?.length) {
       dispatch({ type: GET_USER });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (resources.length === 0) {
+      dispatch(fetchAllResourcesDetail());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (portfolios.length === 0) {
+      dispatch({ type: FETCH_PORTFOLIOS });
     }
   }, []);
 
@@ -710,6 +742,8 @@ const AllocationForm = () => {
                   })
                 );
                 setTimeout(() => {
+                   setFormValue({});
+                   dispatch(closeDialog());
                   dispatch(setHighlightedRowId(newProjectId));
                 }, 4000);
               }
@@ -769,6 +803,57 @@ const AllocationForm = () => {
           dispatch(updateProject({ postData, projectId: initialData.Id })).then(
             async response => {
               if (response.meta.requestStatus === 'fulfilled') {
+                const allAllocationRows = getAllRowsForView(
+                  currentView?.GroupBy === 'Project'
+                    ? 'projectAllocation'
+                    : 'teamAllocation'
+                );
+                const currentProjectAllocations = allAllocationRows.filter(
+                  row => row.projectId === initialData.Id
+                );
+                const updatedRows = currentProjectAllocations.map(row => {
+                  return {
+                    ...row,
+                    project: cleanedValues.Name,
+                    projectSponsor:
+                      resources.find(r => r.Id === cleanedValues.ProjectSponsor)
+                        ?.FullName || null,
+                    projectManager:
+                      resources.find(r => r.Id === cleanedValues.ProjectManager)
+                        ?.FullName || null,
+                    projectStatus: cleanedValues.Status || 'Active',
+                    projectLocation: cleanedValues.Location || '',
+                    projectType:
+                      projectTypes.find(pt => pt.Id === cleanedValues.Type)
+                        ?.Name || '',
+                    projectTypeColor: projectTypes?.find(
+                      pt => pt.Id === cleanedValues.Type
+                    )?.Color,
+                    projectOvertimeAllowed:
+                      cleanedValues.AllowOvertime === true ||
+                      cleanedValues.AllowOvertime === 'Yes',
+                    projectCost: cleanedValues.Budget || 0,
+                    projectCurrency: cleanedValues.BudgetCurrency || 'USD',
+                    projectStartDate: cleanedValues.StartDate,
+                    projectEndDate: cleanedValues.EndDate || null,
+                    projectDescription: cleanedValues.Description || '',
+                    portfolioId: cleanedValues.PortfolioId,
+                    portfolioName: portfolios.find(
+                      p => p.Id === cleanedValues.PortfolioId
+                    )?.Name,
+                    portfolioDescription: portfolios.find(
+                      p => p.Id === cleanedValues.PortfolioId
+                    )?.Description,
+                    portfolioSidebarColor: portfolios.find(
+                      p => p.Id === cleanedValues.PortfolioId
+                    )?.SidebarColor,
+                  };
+                });
+                updateRowsForView('projectAllocation', updatedRows);
+                updateRowsForView('teamAllocation', updatedRows);
+                updateRowsForView('bottomTeam', updatedRows);
+                updateRowsForView('topProject', updatedRows);
+
                 dispatch(
                   showToast({
                     open: true,
@@ -826,6 +911,8 @@ const AllocationForm = () => {
                     autoHideTimer: 4000,
                   })
                 );
+                dispatch(closeDialog());
+                setFormValue({});
               }
 
               if (pathname !== '/people?tab=teams') {
@@ -849,7 +936,6 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add team:', e);
         }
-        dispatch(closeDialog());
         break;
 
       case 'edit_team':
@@ -866,12 +952,24 @@ const AllocationForm = () => {
         };
 
         try {
-          await dispatch(
+          const response = await dispatch(
             updateTeam({
               postData,
               teamId: initialData.Id,
             })
           );
+          if (response.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to update team',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
 
           await dispatch(fetchAllTeams());
           dispatch(setHighlightedRowId(initialData.Id));
@@ -885,8 +983,18 @@ const AllocationForm = () => {
             })
           );
           dispatch(closeDialog());
+          setFormValue({});
         } catch (e) {
           console.error('Failed to update team:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update team',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
         }
         break;
 
@@ -962,6 +1070,8 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(closeDialog());
+            setFormValue({});
           }
 
           if (pathname !== '/people') {
@@ -970,7 +1080,6 @@ const AllocationForm = () => {
         } catch (e) {
           console.error('Failed to add resource:', e);
         }
-        dispatch(closeDialog());
         break;
 
       case 'edit_resource':
@@ -1044,12 +1153,24 @@ const AllocationForm = () => {
               return;
             }
           }
-          await dispatch(
+          const response = await dispatch(
             updateResource({
               postData,
               resourceId: initialData.Id,
             })
           );
+          if (response.meta.requestStatus === 'rejected') {
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to update resource',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            return;
+          }
 
           // Check if team changed and update if needed
           if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
@@ -1090,8 +1211,18 @@ const AllocationForm = () => {
             })
           );
           dispatch(closeDialog());
+          setFormValue({});
         } catch (e) {
           console.error('Failed to update resource:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update resource',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
         }
         break;
 
@@ -1933,6 +2064,8 @@ const AllocationForm = () => {
               })
             );
             dispatch(setHighlightedRowId(response?.EmployeeRate?.Id));
+            dispatch(closeDialog());
+            setFormValue({});
           })
           .catch(error => {
             console.error('Failed to add rate:', error);
@@ -1945,9 +2078,6 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-          })
-          .finally(() => {
-            dispatch(closeDialog());
           });
 
         break;
@@ -2036,6 +2166,7 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+             dispatch(closeDialog());
             dispatch(setHighlightedRowId(response.Id));
           })
           .catch(error => {
@@ -2050,9 +2181,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            dispatch(closeDialog());
-          });
         break;
       case 'add_organization':
         Object.keys(cleanedValues).forEach(key => {
@@ -2089,12 +2217,12 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
-            dispatch(setHighlightedRowId(response?.Organization?.Id));
+            dispatch(closeDialog());
+            setFormValue({});
             if (pathname !== '/people?tab=organizations') {
               router.replace('/people?tab=organizations');
-            } else {
-              dispatch(closeDialog());
             }
+            dispatch(setHighlightedRowId(response?.Organization?.Id));
           })
           .catch(error => {
             console.error('Failed to add organization:', error);
@@ -2108,9 +2236,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            dispatch(closeDialog());
-          });
         break;
       case 'edit_organization':
         Object.keys(cleanedValues).forEach(key => {
@@ -2241,6 +2366,8 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
+              dispatch(closeDialog());
+              setFormValue({});
               dispatch(setHighlightedRowId(response?.Role.name));
             })
             .catch(error => {
@@ -2255,9 +2382,6 @@ const AllocationForm = () => {
                 })
               );
             })
-            .finally(() => {
-              dispatch(closeDialog());
-            });
         }
         break;
 
@@ -2273,7 +2397,7 @@ const AllocationForm = () => {
             ...cleanedValues,
             // Assignee: cleanedValues.Assignee?.id || null, //Will be changed while integrating with API
             Role: values.Role || null,
-            Name: values.Role ? `${cleanedValues.Assignee?.id}` : null,
+            Name: values.Role ? `${cleanedValues?.Assignee}` : null,
           };
 
           new Promise((resolve, reject) => {
@@ -2296,6 +2420,8 @@ const AllocationForm = () => {
                   autoHideTimer: 4000,
                 })
               );
+              dispatch(closeDialog());
+              setFormValue({});
               dispatch(setHighlightedRowId(response.result?.Name));
             })
             .catch(error => {
@@ -2310,9 +2436,6 @@ const AllocationForm = () => {
                 })
               );
             })
-            .finally(() => {
-              dispatch(closeDialog());
-            });
         }
         break;
       case 'edit_role_assignment': {
@@ -2323,7 +2446,7 @@ const AllocationForm = () => {
         });
         const updatedFields = {
           userRole: initialData.__path__,
-          userId: values.Assignee?.id || null,
+          userId: values.Assignee || null,
           roleName: values.Role,
         };
         try {
@@ -2346,8 +2469,9 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.userId));
           dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(response.result?.userId));
         } catch (error) {
           const message = 'Failed to update role assignment.';
           dispatch(
@@ -2399,6 +2523,8 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(closeDialog());
+            setFormValue({});
             dispatch(setHighlightedRowId(response.result?.id));
           })
           .catch(error => {
@@ -2413,9 +2539,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            dispatch(closeDialog());
-          });
         break;
       }
       case 'edit_privilege': {
@@ -2461,8 +2584,9 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(cleanedValues.Name));
           dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(cleanedValues.Name));
         } catch (error) {
           const message =
             error?.response?.data?.exception || 'Failed to update privilege.';
@@ -2510,6 +2634,8 @@ const AllocationForm = () => {
                 autoHideTimer: 4000,
               })
             );
+            dispatch(closeDialog());
+            setFormValue({});
             dispatch(setHighlightedRowId(response.result?.Name));
           })
           .catch(error => {
@@ -2524,9 +2650,6 @@ const AllocationForm = () => {
               })
             );
           })
-          .finally(() => {
-            dispatch(closeDialog());
-          });
         break;
       }
       case 'edit_privilege_assignment': {
@@ -2564,8 +2687,9 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response.result?.roleName));
           dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(response.result?.roleName));
         } catch (error) {
           const message =
             error?.response?.data?.exception ||
@@ -2595,10 +2719,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             Color: cleanedValues.Color,
             Status: cleanedValues.Status,
-            Group:
-              projectTypeGroups.find(group => {
-                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
-              })?.Id || null,
+            Group: cleanedValues.ProjectTypeGroup,
           };
           try {
             const response = await new Promise((resolve, reject) => {
@@ -2652,11 +2773,7 @@ const AllocationForm = () => {
             Description: cleanedValues.Description || '',
             Color: cleanedValues.Color,
             Status: cleanedValues.Status,
-
-            Group:
-              projectTypeGroups.find(group => {
-                if (group.Name === cleanedValues.ProjectTypeGroup) return group;
-              })?.Id || null,
+            Group: cleanedValues.ProjectTypeGroup,
           };
           try {
             const response = await new Promise((resolve, reject) => {
@@ -2971,7 +3088,6 @@ const AllocationForm = () => {
         return;
     }
     setSubmitting(false);
-    setFormValue({});
   };
 
   const performTransfer = async () => {

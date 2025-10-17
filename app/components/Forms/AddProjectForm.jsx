@@ -38,7 +38,10 @@ const AddProjectForm = ({
   const dispatch = useDispatch();
 
   const resourceTypeOptions =
-    resources?.map(resource => ({
+    resources
+      ?.filter(resource => resource.Status === 'Active')
+      ?.sort((a, b) => a.FullName.localeCompare(b.FullName))
+      ?.map(resource => ({
       value: resource.Id,
       label: resource.FullName,
     })) || [];
@@ -46,13 +49,17 @@ const AddProjectForm = ({
   const portfolioOptions =
     portfolios
       ?.filter(p => p.Status === 'Active')
+      .sort((a, b) => a.Name.localeCompare(b.Name))
       .map(portfolio => ({
         value: portfolio.Id,
         label: portfolio.Name,
       })) || [];
 
   const projectTypeOptions =
-    projectTypes?.map(pt => ({
+    projectTypes
+      ?.filter(pt => pt.Status === 'Active')
+      ?.sort((a, b) => a.Name.localeCompare(b.Name))
+      ?.map(pt => ({
       value: pt.Id,
       label: pt.Name,
     })) || [];
@@ -65,19 +72,19 @@ const AddProjectForm = ({
   }, [readOnly]);
 
   useEffect(() => {
-    if (!resources.length) {
+    if (!resources?.length) {
       dispatch({
         type: FETCH_ALL_RESOURCES_DETAIL,
         payload: {},
       });
     }
-    if (!portfolios.length) {
+    if (!portfolios?.length) {
       dispatch({
         type: FETCH_PORTFOLIOS,
         payload: {},
       });
     }
-    if (!projectTypes.length) {
+    if (!projectTypes?.length) {
       dispatch({
         type: FETCH_PROJECT_TYPES,
         payload: {},

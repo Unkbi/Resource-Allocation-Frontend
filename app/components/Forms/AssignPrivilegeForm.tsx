@@ -1,13 +1,14 @@
 'use client';
 
-import { Box, TextField, Autocomplete } from '@mui/material';
+import { Box, TextField, Autocomplete, useTheme } from '@mui/material';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { Privilege, PrivilegeAssignment, Resource, Role } from '@/app/types';
 import { FormikProps } from 'formik';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FETCH_PRIVILEGES } from '@/app/redux/actions/rbacActions';
 import { useDispatch } from 'react-redux';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 interface AssignPrivilegeFormValues {
   Role: string;
@@ -17,15 +18,18 @@ interface AssignPrivilegeFormValues {
 interface AssignPrivilegeFormProps {
   formikProps: FormikProps<AssignPrivilegeFormValues>;
   setFormValue?: (values: AssignPrivilegeFormValues) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const AssignPrivilegeForm = ({
   formikProps,
   setFormValue = () => {},
+  permissions,
 }: AssignPrivilegeFormProps) => {
+  const theme = useTheme();
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const { initialData } = useSelector(
+  const { initialData, formType } = useSelector(
     (state: any) => state.globalDialog.formState
   );
   const dispatch = useDispatch();
@@ -36,10 +40,11 @@ const AssignPrivilegeForm = ({
   const privilegeAssignments: PrivilegeAssignment[] = useSelector(
     (state: any) => state.rbac.privilegeAssignments || []
   );
+  const [readOnly, setReadOnly] = useState(true);
   const assignedPrivilegePaths = new Set(
     privilegeAssignments
-      .filter(pa => pa.Role === values.Role) 
-      .map(pa => pa.Permission as string)   
+      .filter(pa => pa.Role === values.Role)
+      .map(pa => pa.Permission as string)
   );
   const availablePrivileges = privileges.filter(
     p => p.__path__ && !assignedPrivilegePaths.has(p.__path__)
@@ -51,7 +56,26 @@ const AssignPrivilegeForm = ({
     '& input': { fontSize: '12px' },
     '& .MuiAutocomplete-popper': { fontSize: '12px' },
     '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
+    '& .Mui-disabled': {
+      //@ts-ignore
+      backgroundColor: theme.palette.readonly.main, // This is a custom color in the theme
+      cursor: 'default',
+    },
+    '& .Mui-disabled .MuiInputBase-input': {
+      color: '#6B7280 !important',
+      //@ts-ignore
+      WebkitTextFillColor: theme.palette.readonly.contrastText, // This is a custom color in the theme
+    },
   };
+
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_privilege_assignment' &&
+        !permissions['Permission']?.u) ||
+        (formType === 'add_privilege_assignment' &&
+          !permissions['Permission']?.c)
+    );
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -67,7 +91,7 @@ const AssignPrivilegeForm = ({
 
   useEffect(() => {
     if (!privileges || privileges.length === 0) {
-       dispatch({ type: FETCH_PRIVILEGES});
+      dispatch({ type: FETCH_PRIVILEGES });
     }
   }, [privileges]);
 
@@ -78,6 +102,7 @@ const AssignPrivilegeForm = ({
           Role <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <Autocomplete
+          disabled={readOnly}
           sx={commonAutocompleteStyles}
           size="small"
           options={roles}
@@ -91,8 +116,7 @@ const AssignPrivilegeForm = ({
               values.Permission &&
               privilegeAssignments.some(
                 pa =>
-                  pa.Role === newRolePath &&
-                  pa.Permission === values.Permission
+                  pa.Role === newRolePath && pa.Permission === values.Permission
               )
             ) {
               setFieldValue('Permission', '');
@@ -118,6 +142,7 @@ const AssignPrivilegeForm = ({
           Privilege <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <Autocomplete
+          disabled={readOnly}
           sx={commonAutocompleteStyles}
           size="small"
           options={availablePrivileges}
@@ -152,4 +177,4 @@ const AssignPrivilegeForm = ({
   );
 };
 
-export default AssignPrivilegeForm;
+export default withRBAC(AssignPrivilegeForm, ['Permission']);

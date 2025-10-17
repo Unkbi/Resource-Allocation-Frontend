@@ -20,6 +20,7 @@ import {
   Resource,
   ResourceAllocation,
   Team,
+  ProjectType,
 } from '../types';
 import {
   generateAllWeeks,
@@ -169,6 +170,7 @@ export function formatAllAllocations(
   allocations: Allocation[],
   teams: Team[],
   projects: Project[],
+  projectTypes: ProjectType[],
   resources: Resource[],
   portfolios: Portfolio[],
   allResourcesDetail: AllResourceDetail[],
@@ -184,6 +186,7 @@ export function formatAllAllocations(
 
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
+    const projectType = projectTypes.find(pt => pt.Id === project?.Type);
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
     const resourceDetails = allResourcesDetail?.find(
       r => r?.Resource?.Id === alloc.Resource
@@ -214,7 +217,8 @@ export function formatAllAllocations(
           null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
-        projectType: project?.Type || null,
+        projectType: projectType?.Name || null,
+        projectTypeColor: projectType?.Color || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -259,12 +263,12 @@ export function formatAllAllocations(
       grouped.set(key, base);
     }
 
-    const weekKey = getWeekNumber(parseISO(alloc.Period));
+    const weekKey = getWeekNumber(parseISO(alloc.Period.split('T')[0]));
     const entry = grouped.get(key);
     entry[weekKey] = {
       allocationId: alloc.Id,
       value: alloc.AllocationEntered,
-      period: alloc.Period,
+      period: alloc.Period.split('T')[0],
       actuals: alloc.ActualsEntered || null,
       notes: alloc.Notes || null,
     };
@@ -373,6 +377,7 @@ export function formatCostAllocations(
   allocations: CostAllocation[],
   teams: Team[],
   projects: Project[],
+  projectTypes: ProjectType[],
   resources: Resource[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
@@ -405,6 +410,7 @@ export function formatCostAllocations(
 
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
+    const projectType = projectTypes.find(pt => pt.Id === project?.Type);
     const resource = resources.find(r => r.Id === alloc.Resource);
     const team = resourceIdToTeam.get(alloc.Resource);
 
@@ -431,7 +437,8 @@ export function formatCostAllocations(
           null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
-        projectType: project?.Type || null,
+        projectType: projectType?.Name || null,
+        projectTypeColor: projectType?.Color || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -468,12 +475,12 @@ export function formatCostAllocations(
       grouped.set(key, base);
     }
 
-    const weekKey = getWeekNumber(parseISO(alloc.Period));
+    const weekKey = getWeekNumber(parseISO(alloc.Period.split('T')[0]));
     const entry = grouped.get(key);
     entry[weekKey] = {
       allocationId: alloc.Id,
       value: alloc.Cost,
-      period: alloc.Period,
+      period: alloc.Period.split('T')[0],
     };
     entry.totalCost += alloc.Cost;
   }

@@ -6,6 +6,8 @@ import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import { useSelector, useDispatch } from 'react-redux';
 import { FormikProps } from 'formik';
+import { RootState } from '@/app/redux/store';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 interface FormValues {
   Name: string;
@@ -15,17 +17,29 @@ interface FormValues {
 interface AddLocationGroupFormProps {
   formikProps: FormikProps<FormValues>;
   setFormValue: (value: FormValues) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const AddLocationGroupForm = ({
   formikProps,
   setFormValue,
+  permissions,
 }: AddLocationGroupFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const { initialData } = useSelector(
-    (state: any) => state.globalDialog.formState
+  const { initialData, formType } = useSelector(
+    (state: RootState) => state.globalDialog.formState
   );
+  const [readOnly, setReadOnly] = useState(true);
+
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_location_group' &&
+        !permissions['WorkLocationGroup']?.u) ||
+        (formType === 'add_location_group' &&
+          !permissions['WorkLocationGroup']?.c)
+    );
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -45,6 +59,8 @@ const AddLocationGroupForm = ({
           Location Group Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           as={TextField}
           name="Name"
           placeholder="Enter Name"
@@ -67,4 +83,4 @@ const AddLocationGroupForm = ({
   );
 };
 
-export default AddLocationGroupForm;
+export default withRBAC(AddLocationGroupForm, ['WorkLocationGroup']);

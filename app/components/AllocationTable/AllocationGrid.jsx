@@ -74,6 +74,7 @@ import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 function AllocationGrid({
   groupBy,
@@ -93,6 +94,7 @@ function AllocationGrid({
   showActuals = false,
   rowGroupingColumnMode = 'single',
   permissions = null,
+  loadingPermissions = true,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -136,6 +138,7 @@ function AllocationGrid({
   const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
+  const { projectTypes } = useSelector(state => state.allSettings);
   const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -280,6 +283,12 @@ function AllocationGrid({
 
     return normalized;
   };
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
 
   // Set the apiRef in the context when it's available
   useEffect(() => {
@@ -690,6 +699,7 @@ function AllocationGrid({
             allocationTheme,
             type,
             projects,
+            projectTypes,
             isCellEditable
           );
           const showTooltip =
@@ -1112,8 +1122,9 @@ function AllocationGrid({
       const rowNode = apiRef.current.getRowNode(params.id);
       if (
         rowNode &&
-        rowNode.type === 'group' &&
-        rowNode.groupingField != 'teams'
+        rowNode.type === 'group'
+        // Commenting to allow expansion of teams groups as well on click anywhere on row Teams View
+        // && rowNode.groupingField != 'teams'
       ) {
         apiRef.current.setRowChildrenExpansion(
           params.id,
@@ -1393,6 +1404,7 @@ function AllocationGrid({
       isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
+      projectTypes={projectTypes}
       getRowHeight={params => {
         if (params?.model?.projectId === '') {
           // Sahadev: really small value, it doesnt accept 0
@@ -1410,14 +1422,10 @@ function AllocationGrid({
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}
-      onRowClick={
-        groupBy === 'teams' || groupBy === 'organisationName'
-          ? onRowClick
-          : () => null
-      }
+      onRowClick={onRowClick}
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={loading}
+      loading={loading || loadingPermissions}
       disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={rowGroupingColumnMode}
@@ -1446,6 +1454,7 @@ function AllocationGrid({
           allocationTheme,
           type,
           projects,
+          projectTypes,
           isCellEditable,
           groupBy
         );

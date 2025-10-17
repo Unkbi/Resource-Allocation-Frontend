@@ -11,15 +11,20 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { filterAllocationsForSelectedProject } from '@/app/utils/allocationUtils';
 import CommonToolbar from '../../Toolbar/CommonToolbar';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface TopProjectsViewProps {
   startDate: string | null;
   endDate: string | null;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
-export default function TopProjectsView({
+function TopProjectsView({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: TopProjectsViewProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const { splitViewCurrentProject } = useSelector(
@@ -31,7 +36,8 @@ export default function TopProjectsView({
   const { setRows, ready } = useAllocationGrid('topProject');
 
   useEffect(() => {
-    if (ready && allAllocations) {
+    if (loadingPermissions) return;
+    if (permissions && permissions['Allocation'].r && ready && allAllocations) {
       setRows(
         filterAllocationsForSelectedProject(
           allAllocations || [],
@@ -39,7 +45,7 @@ export default function TopProjectsView({
         ) || []
       );
     }
-  }, [ready, allAllocations]);
+  }, [ready, allAllocations, loadingPermissions]);
 
   const projectColumnConfig = [
     {
@@ -209,7 +215,7 @@ export default function TopProjectsView({
   ];
 
   return (
-        <Box
+    <Box
       sx={{
         height: dataProcessing ? '100vh' : 'var(--height)',
         width: '100%',
@@ -265,3 +271,5 @@ export default function TopProjectsView({
     </Box>
   );
 }
+
+export default withRBAC(TopProjectsView, ['Allocation']);
