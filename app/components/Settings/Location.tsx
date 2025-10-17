@@ -149,7 +149,6 @@ function LocationSettingPage({
     const isAccessible = accessible.some(({ value }) => value === tabParam);
 
     if (!tabParam || !LOCATION_VALID_TABS.includes(tab) || !isAccessible) {
-      router.replace(`/settings?menu=location-setting&tab=${firstAccessible}`);
       return;
     }
 

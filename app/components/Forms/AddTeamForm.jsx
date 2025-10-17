@@ -30,8 +30,11 @@ const AddTeamForm = ({
     setTouched,
   } = formikProps;
 
-  const resourceListOptions =
-    resources?.map(resource => ({
+   const resourceListOptions =
+     resources
+       ?.filter(resource => resource.Status === 'Active') 
+       .sort((a, b) => a.FullName.localeCompare(b.FullName))
+       .map(resource => ({
       value: resource.__path__,
       label: resource.FullName,
     })) || [];

@@ -133,7 +133,7 @@ function RoleManagementPage({
 }: RoleManagementPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tab, setTab] = useState('role-management');
+  const [tab, setTab] = useState('role-assignments');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuRoleId, setMenuRoleId] = useState<string | null>(null);
   const [deletingRole, setDeletingRole] = useState<string | null>(null);
@@ -191,7 +191,6 @@ function RoleManagementPage({
     const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/settings?menu=user-profile');
       return;
     }
 
@@ -566,28 +565,21 @@ function RoleManagementPage({
       field: 'User',
       headerName: 'Assigned User',
       flex: 1,
-      renderCell: (params: any) => {
-        const value = params.value;
+      valueGetter: (params: any) => {
+        const value = params;
         const userId = value?.includes('/') ? value.split('/').pop() : value;
         const matchedUser = user?.find(u => u.id === userId);
-        const displayValue = matchedUser
+        return matchedUser
           ? `${matchedUser.firstName} ${matchedUser.lastName}`
           : userId;
-
-        return <Typography sx={commonCellStyle}>{displayValue}</Typography>;
       },
-    },
-    {
-      field: 'Role',
-      headerName: 'Role',
-      flex: 1,
       renderCell: (params: any) => {
-        const role = params.value?.replace('agentlang.auth$Role/', '') || '';
+        const user = params.value || '';
         const handleNameClick = () => {
           if (permissions!['Role'].u) {
             handleEditRoleAssignment(params.row);
           } else {
-            handleEditRoleAssignment(params.row, `Role Assignment: ${role}`, {
+            handleEditRoleAssignment(params.row, `Role Assignment: ${user}`, {
               readOnly: true,
             });
           }
@@ -603,26 +595,23 @@ function RoleManagementPage({
               },
             }}
           >
-            <EllipsisNameCell value={role} showAvatar={false} />
+            <Typography sx={commonCellStyle}>{params.value}</Typography>
           </Box>
         );
       },
     },
     {
-      field: 'User',
-      headerName: 'Assigned User',
+      field: 'Role',
+      headerName: 'Role',
       flex: 1,
-      valueGetter: (params: any) => {
-        const value = params;
-        const userId = value?.includes('/') ? value.split('/').pop() : value;
-        const matchedUser = user?.find(u => u.id === userId);
-        return matchedUser
-          ? `${matchedUser.firstName} ${matchedUser.lastName}`
-          : userId;
+      renderCell: (params: any) => {
+        const role = params.value?.replace('agentlang.auth$Role/', '') || '';
+        return (
+          <Box>
+            <EllipsisNameCell value={role} showAvatar={false} />
+          </Box>
+        );
       },
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
     },
     {
       field: 'Status',

@@ -48,6 +48,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     projects,
     teams,
     resources,
+    projectTypes,
     portfolios,
     allResourcesDetail,
     startDate,
@@ -103,6 +104,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       responses,
       teams,
       projects,
+      projectTypes,
       resources,
       portfolios || [],
       allResourcesDetail || [],
@@ -136,8 +138,15 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
 }
 
 function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
-  const { projects, teams, resources, allResourcesDetail, startDate, endDate } =
-    action.payload;
+  const {
+    projects,
+    teams,
+    resources,
+    allResourcesDetail,
+    projectTypes,
+    startDate,
+    endDate,
+  } = action.payload;
   try {
     yield put(setCostDataProcessing(true));
 
@@ -199,6 +208,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       formatResponses,
       teams,
       projects,
+      projectTypes || [],
       resources,
       teamResourceObject,
       startDate,
@@ -238,6 +248,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
     allResourcesDetail,
     teamsResources,
     startDate,
+    projectTypes,
     endDate,
     resolve,
     reject,
@@ -277,6 +288,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
+      projectTypes || [],
       portfolios || [],
       allResourcesDetail || [],
       startDate,
@@ -311,6 +323,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
     resources,
     portfolios,
     allResourcesDetail,
+    projectTypes,
     teamsResources,
     startDate,
     endDate,
@@ -351,6 +364,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       projects,
       resources,
+      projectTypes || [],
       portfolios || [],
       allResourcesDetail || [],
       startDate,
@@ -409,6 +423,7 @@ function* updateResourceAllocationsSaga(
     projects,
     resources,
     portfolios,
+    projectTypes,
     allResourcesDetail,
     teamsResources,
     startDate,
@@ -449,6 +464,7 @@ function* updateResourceAllocationsSaga(
       teams,
       projects,
       resources,
+      projectTypes || [],
       portfolios,
       allResourcesDetail || [],
       startDate,
