@@ -150,6 +150,7 @@ import {
   UPDATE_PROJECT_TYPE,
   ADD_PROJECT_TYPE_GROUPS,
   UPDATE_PROJECT_TYPE_GROUPS,
+  FETCH_PROJECT_TYPES,
 } from '@/app/redux/actions/allSettingsActions';
 import {
   ADD_LOCATION,
@@ -157,6 +158,7 @@ import {
   UPDATE_LOCATION_GROUPS,
   ADD_LOCATION_GROUPS,
 } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
 const initialValuesMap = {
   add_project: {
@@ -418,7 +420,7 @@ const AllocationForm = () => {
   const [historyStatus, setHistoryStatus] = useState('loading');
   const { portfolios } = useSelector(state => state.portfolios);
   const { organisations } = useSelector(state => state.organisations);
-  const roles = useSelector((state) => state.rbac.roles);
+  const roles = useSelector(state => state.rbac.roles);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
@@ -468,9 +470,15 @@ const AllocationForm = () => {
       case 'edit_team':
         return addTeamValidationSchema(teams, initialData?.Name || '');
       case 'add_resource':
-        return addResourceValidationSchema(allResourcesDetail, initialData?.Email || '');
+        return addResourceValidationSchema(
+          allResourcesDetail,
+          initialData?.Email || ''
+        );
       case 'edit_resource': // Temporary later on this will be same as add_resource
-        return editResourceValidationSchema(allResourcesDetail, initialData?.Email || '');;
+        return editResourceValidationSchema(
+          allResourcesDetail,
+          initialData?.Email || ''
+        );
       case 'add_allocation':
         return addAllocationValidationSchema(scalarSettings);
       case 'assign_allocation':
@@ -514,7 +522,10 @@ const AllocationForm = () => {
       case 'add_organization':
         return addOrganizationValidationSchema(organisations);
       case 'edit_organization':
-        return addOrganizationValidationSchema(organisations, initialData?.Name || '');
+        return addOrganizationValidationSchema(
+          organisations,
+          initialData?.Name || ''
+        );
       case 'add_project_type':
         return addProjectTypeValidationSchema(projectTypes);
       case 'edit_project_type':
@@ -553,6 +564,24 @@ const AllocationForm = () => {
   useEffect(() => {
     if (!allUsers?.length) {
       dispatch({ type: GET_USER });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (resources.length === 0) {
+      dispatch(fetchAllResourcesDetail());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (portfolios.length === 0) {
+      dispatch({ type: FETCH_PORTFOLIOS });
     }
   }, []);
 
@@ -772,6 +801,57 @@ const AllocationForm = () => {
           dispatch(updateProject({ postData, projectId: initialData.Id })).then(
             async response => {
               if (response.meta.requestStatus === 'fulfilled') {
+                const allAllocationRows = getAllRowsForView(
+                  currentView?.GroupBy === 'Project'
+                    ? 'projectAllocation'
+                    : 'teamAllocation'
+                );
+                const currentProjectAllocations = allAllocationRows.filter(
+                  row => row.projectId === initialData.Id
+                );
+                const updatedRows = currentProjectAllocations.map(row => {
+                  return {
+                    ...row,
+                    project: cleanedValues.Name,
+                    projectSponsor:
+                      resources.find(r => r.Id === cleanedValues.ProjectSponsor)
+                        ?.FullName || null,
+                    projectManager:
+                      resources.find(r => r.Id === cleanedValues.ProjectManager)
+                        ?.FullName || null,
+                    projectStatus: cleanedValues.Status || 'Active',
+                    projectLocation: cleanedValues.Location || '',
+                    projectType:
+                      projectTypes.find(pt => pt.Id === cleanedValues.Type)
+                        ?.Name || '',
+                    projectTypeColor: projectTypes?.find(
+                      pt => pt.Id === cleanedValues.Type
+                    )?.Color,
+                    projectOvertimeAllowed:
+                      cleanedValues.AllowOvertime === true ||
+                      cleanedValues.AllowOvertime === 'Yes',
+                    projectCost: cleanedValues.Budget || 0,
+                    projectCurrency: cleanedValues.BudgetCurrency || 'USD',
+                    projectStartDate: cleanedValues.StartDate,
+                    projectEndDate: cleanedValues.EndDate || null,
+                    projectDescription: cleanedValues.Description || '',
+                    portfolioId: cleanedValues.PortfolioId,
+                    portfolioName: portfolios.find(
+                      p => p.Id === cleanedValues.PortfolioId
+                    )?.Name,
+                    portfolioDescription: portfolios.find(
+                      p => p.Id === cleanedValues.PortfolioId
+                    )?.Description,
+                    portfolioSidebarColor: portfolios.find(
+                      p => p.Id === cleanedValues.PortfolioId
+                    )?.SidebarColor,
+                  };
+                });
+                updateRowsForView('projectAllocation', updatedRows);
+                updateRowsForView('teamAllocation', updatedRows);
+                updateRowsForView('bottomTeam', updatedRows);
+                updateRowsForView('topProject', updatedRows);
+
                 dispatch(
                   showToast({
                     open: true,
