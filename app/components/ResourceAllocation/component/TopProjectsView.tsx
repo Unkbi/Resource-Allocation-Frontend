@@ -217,14 +217,30 @@ function TopProjectsView({
   return (
     <Box
       sx={{
-        height: dataProcessing ? '100vh' : 'var(--height)',
-        width: '100%',
         display: 'flex',
         flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+        overflow: 'hidden',
       }}
     >
-      <CommonToolbar />
-      <Box sx={{ flexGrow: 1 }}>
+      <Box
+        sx={{
+          flexShrink: 0,
+          borderBottom: '1px solid var(--mui-palette-divider)',
+          backgroundColor: 'var(--mui-palette-background-paper)',
+          zIndex: 10,
+        }}
+      >
+        <CommonToolbar />
+      </Box>
+      <Box
+        sx={{
+          flexGrow: 1,
+          minHeight: 0, 
+          overflow: 'hidden', 
+        }}
+      >
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}

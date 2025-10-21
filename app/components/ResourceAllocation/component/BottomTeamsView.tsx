@@ -220,12 +220,6 @@ function BottomTeamsView({
 
   return (
     <>
-      <Box
-        sx={{
-          height: dataProcessing ? '100vh' : 'var(--height)',
-          width: '100%',
-        }}
-      >
         <AllocationGrid
           loading={dataProcessing}
           groupBy="teams"
@@ -267,7 +261,6 @@ function BottomTeamsView({
           viewId="bottomTeam"
           rowGroupingColumnMode="multiple"
         />
-      </Box>
     </>
   );
 }
