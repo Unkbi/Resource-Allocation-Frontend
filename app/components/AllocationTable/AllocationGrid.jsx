@@ -22,6 +22,7 @@ import {
   getTeamForResource,
   isCurrentOrPastWeek,
   isCurrentWeek,
+  getSundayOfISO,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -234,7 +235,7 @@ function AllocationGrid({
           initialData: {
             Resource: resourcesSelected,
             StartDate,
-            EndDate,
+            EndDate: getSundayOfISO(EndDate),
             Project: projectsSelected,
           },
         })
