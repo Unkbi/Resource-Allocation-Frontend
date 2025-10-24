@@ -521,16 +521,23 @@ export const assignRoleValidationSchema = Yup.object({
   Status: Yup.string().required('Status is required'),
 });
 
-export const addPrivilegeValidationSchema = Yup.object({
+export const addPrivilegeValidationSchema = (privileges: any[] = [], initialName = '') => {
+  const privilegeNames = Array.isArray(privileges)
+    ? privileges.map(priv => priv.id?.toLowerCase().trim())
+    : [];
+  return Yup.object({
   Name: Yup.string()
     .required('Privilege Name is required')
     .max(90, 'Reached Max Characters')
     .test(
       'unique-name',
       'Privilege Name already exists. Please choose another name.',
-      function (value) {
+      value => {
         if (!value) return true;
-        const privilegeNames = this.options.context?.privilegeNames || [];
+         if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+         ) return true;
         return !privilegeNames.includes(value.toLowerCase().trim());
       }
     ),
@@ -541,6 +548,7 @@ export const addPrivilegeValidationSchema = Yup.object({
     value => !!value && Object.values(value).some(v => v)
   ),
 });
+}
 
 export const assignPrivilegeValidationSchema = Yup.object({
   Role: Yup.string().required('Role is required'),
