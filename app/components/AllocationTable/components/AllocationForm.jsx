@@ -515,7 +515,7 @@ const AllocationForm = () => {
       case 'add_privilege':
         return addPrivilegeValidationSchema(privileges);
       case 'edit_privilege':
-        return addPrivilegeValidationSchema;
+        return addPrivilegeValidationSchema(privileges,initialData.id || '');
       case 'assign_privilege':
         return assignPrivilegeValidationSchema;
       case 'edit_privilege_assignment':
