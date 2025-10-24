@@ -444,7 +444,6 @@ function AllocationGrid({
             currentView?.Filters.map((filter, index) => {
               return {
                 ...filter,
-                id: index,
               };
             }) ?? [],
         });
@@ -1303,12 +1302,11 @@ function AllocationGrid({
   };
 
   const handleFilterModelChange = newModel => {
-    // setFilterModel(newModel);
-
     const filterData = newModel.items.map(item => ({
       field: item.field,
       operator: item.operator,
       value: item.value,
+      id : item.id,
     }));
     dispatch(
       updateCurrentView({
