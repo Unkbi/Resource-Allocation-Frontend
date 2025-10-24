@@ -14,7 +14,6 @@ import { AllAllocations } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
-  getProjectTypeColorLine,
   getResourceFromUid,
   getTotalWeeks,
   generateDateWeekMath,
@@ -45,10 +44,14 @@ import {
 import { useRouter } from 'next/navigation';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectAllocationProps {
   startDate: string | null;
   endDate: string | null;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -97,9 +100,11 @@ interface DateRange {
   end?: any;
 }
 
-export default function ProjectAllocation({
+function ProjectAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const router = useRouter();
@@ -109,6 +114,7 @@ export default function ProjectAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -127,7 +133,14 @@ export default function ProjectAllocation({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
-    if (ready) {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -163,7 +176,7 @@ export default function ProjectAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready && allAllocations]);
+  }, [ready && allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -288,6 +301,7 @@ export default function ProjectAllocation({
             ?.FullName,
           ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
             ?.FullName,
+          Type: projectTypes.find(pt => pt.Id === item.Type)?.Name || '',
         };
       });
     }
@@ -307,55 +321,54 @@ export default function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        const row = api.getRow(rowNode.id);
-        const projectType = projects?.find(
-          project => project.Name === value
-        )?.Type;
+        if (isGridTreeNode) {
+          const row = api.getRow(rowNode?.children[0]);
 
-        const open = Boolean(anchorEl);
+          const open = Boolean(anchorEl);
 
-        const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-          event.stopPropagation();
-          setAnchorEl(event.currentTarget);
-        };
+          const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+            event.stopPropagation();
+            setAnchorEl(event.currentTarget);
+          };
 
-        const handleMenuClose = () => {
-          setAnchorEl(null);
-        };
+          const handleMenuClose = () => {
+            setAnchorEl(null);
+          };
 
-        if (isGridTreeNode && rowNode.children) {
-          const resource_count = rowNode?.children?.length || null;
-          return (
-            <>
-              <EllipsisNameCell
-                value={value as string}
-                resourceCount={resource_count}
-                onAddClick={() => handleAddClick(params)}
-                showAddIcon={true}
-                leftBorderColor={getProjectTypeColorLine(projectType || '')}
-              />
-              <IconButton
-                size="small"
-                disableRipple
-                disableFocusRipple
-                onClick={e => {
-                  e.stopPropagation();
-                  setMenuProjectName(params.value as string);
-                  setAnchorEl(e.currentTarget);
-                }}
-                sx={{
-                  mr: -1.5,
-                  padding: '0px',
-                  backgroundColor: 'transparent',
-                  '&:hover': {
+          if (isGridTreeNode && rowNode.children) {
+            const resource_count = rowNode?.children?.length || null;
+            return (
+              <>
+                <EllipsisNameCell
+                  value={value as string}
+                  resourceCount={resource_count}
+                  onAddClick={() => handleAddClick(params)}
+                  showAddIcon={true}
+                  leftBorderColor={row?.projectTypeColor}
+                />
+                <IconButton
+                  size="small"
+                  disableRipple
+                  disableFocusRipple
+                  onClick={e => {
+                    e.stopPropagation();
+                    setMenuProjectName(params.value as string);
+                    setAnchorEl(e.currentTarget);
+                  }}
+                  sx={{
+                    mr: -1.5,
+                    padding: '0px',
                     backgroundColor: 'transparent',
-                  },
-                }}
-              >
-                <MoreVertIcon sx={{ fontSize: 22 }} />
-              </IconButton>
-            </>
-          );
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  <MoreVertIcon sx={{ fontSize: 22 }} />
+                </IconButton>
+              </>
+            );
+          }
         }
       },
     },
@@ -910,3 +923,5 @@ export default function ProjectAllocation({
     </>
   );
 }
+
+export default withRBAC(ProjectAllocation, ['Allocation']);

@@ -25,10 +25,20 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
-import { DELETE_PROJECT_TYPE, DELETE_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
+import {
+  DELETE_PROJECT_TYPE,
+  DELETE_PROJECT_TYPE_GROUPS,
+} from '@/app/redux/actions/allSettingsActions';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { PROJECT_TYPE_VALID_TABS } from '@/app/constants/constants';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
-const tabMenuNames = ['project-types', 'project-types-group'];
-const baseURLAccessManagement = '/settings?menu=access-management';
+interface ProjectSettingPageProps {
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
+}
+
+const baseURLAccessManagement = '/settings?menu=project-setting';
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: 4,
@@ -75,73 +85,20 @@ const tabConfig = [
     label: 'Project Types',
     value: 'project-types',
     icon: '/images/icons/ProjectTypes.svg',
+    entity: 'ProjectType',
   },
   {
     label: 'Project Types Group',
     value: 'project-types-group',
     icon: '/images/icons/ProjectTypesGroup.svg',
+    entity: 'ProjectTypeGroup',
   },
 ];
 
-const TabHeader = ({
-  tab,
-  setTab,
-}: {
-  tab: string;
-  setTab: (value: string) => void;
-}) => (
-  <Box
-    sx={{
-      boxShadow: 1,
-      display: 'flex',
-      justifyContent: 'flex-start',
-      width: '100%',
-      backgroundColor: '#fff',
-      height: '59px',
-      borderBottom: '0px solid #E5E7EB',
-    }}
-  >
-    <Tabs
-      value={tab}
-      onChange={(_, v) => setTab(v)}
-      sx={{
-        width: 'fit-content',
-        marginLeft: '20px',
-        marginRight: '20px',
-        background: 'transparent',
-        '& .MuiTabs-flexContainer': {
-          gap: 1.5,
-        },
-        '& .MuiTabs-indicator': {
-          backgroundColor: '#152E75',
-        },
-        '& .Mui-selected .tab-icon': {
-          filter: 'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
-        },
-      }}
-    >
-      {tabConfig.map(({ label, value, icon }) => (
-        <Tab
-          key={value}
-          icon={
-            <img
-              src={icon}
-              alt={label}
-              style={{ width: 21, height: 16, marginRight: 6 }}
-              className="tab-icon"
-            />
-          }
-          iconPosition="start"
-          label={label}
-          value={value}
-          sx={commonTabSx}
-        />
-      ))}
-    </Tabs>
-  </Box>
-);
-
-export default function ProjectSettingPage() {
+function ProjectSettingPage({
+  permissions,
+  loadingPermissions,
+}: ProjectSettingPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('project-types');
@@ -155,11 +112,13 @@ export default function ProjectSettingPage() {
   const [deletingProjectTypesGroup, setDeletingProjectTypesGroup] = useState<
     string | null
   >(null);
-  const {projectTypes, projectTypeGroups} = useSelector((state: any) => state.allSettings);
+  const { projectTypes, projectTypeGroups, loading } = useSelector(
+    (state: any) => state.allSettings
+  );
+  const { projects, updating } = useSelector( (state: any) => state.projects);
   const [ProjectTypesData, setProjectTypesData] = useState<any[]>([]);
   const [ProjectTypesGroupData, setProjectTypesGroupData] = useState<any[]>([]);
-  
-  const loading = false;
+
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
   );
@@ -168,19 +127,46 @@ export default function ProjectSettingPage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (loadingPermissions) return;
+    const accessMap = [
+      { key: 'ProjectType', value: 'project-types' },
+      { key: 'ProjectTypeGroup', value: 'project-types-group' },
+    ];
+
+    const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
+
+    if (accessible.length === 0) {
+      return;
+    }
+
     const tabParam = searchParams.get('tab');
-    if (tabParam && tabMenuNames.includes(tabParam)) {
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tabParam);
+
+    if (!tabParam || !PROJECT_TYPE_VALID_TABS.includes(tab) || !isAccessible) {
+      router.replace(`/settings?menu=project-setting&tab=${firstAccessible}`);
+      return;
+    }
+
+    if (tabParam !== tab) {
       setTab(tabParam);
     }
-  }, []);
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
-      const formattedData = projectTypes?.map((projectType: any, index: number) => {
-        
+    const tabParam = searchParams.get('tab');
+    if (tabParam && PROJECT_TYPE_VALID_TABS.includes(tabParam)) {
+      setTab(tabParam);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const formattedData =
+      projectTypes?.map((projectType: any, index: number) => {
         const projectTypeGroup = projectTypeGroups?.find(
           (group: any) => group.Id === projectType.Group
         );
-        
+
         return {
           id: projectType.Id || (index + 1).toString(),
           projectTypes: projectType.Name || '',
@@ -192,7 +178,8 @@ export default function ProjectSettingPage() {
         };
       }) || [];
 
-      const formattedGroupData = projectTypeGroups?.map((group: any, index: number) => {
+    const formattedGroupData =
+      projectTypeGroups?.map((group: any, index: number) => {
         return {
           id: group.Id || (index + 1).toString(),
           projectTypeGroup: group.Name || '',
@@ -200,16 +187,9 @@ export default function ProjectSettingPage() {
         };
       }) || [];
 
-      setProjectTypesData(formattedData);
-      setProjectTypesGroupData(formattedGroupData);
-  }, [ projectTypes, projectTypeGroups]);
-
-  useEffect(() => {
-    if (tabMenuNames.includes(tab)) {
-      const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
-      router.replace(newUrl);
-    }
-  }, [tab]);
+    setProjectTypesData(formattedData);
+    setProjectTypesGroupData(formattedGroupData);
+  }, [projectTypes, projectTypeGroups]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
@@ -262,14 +242,19 @@ export default function ProjectSettingPage() {
     );
   };
 
-  const handleEditProjectTypesGroup = (assignment: any) => {
+  const handleEditProjectTypesGroup = (
+    assignment: any,
+    title = 'Edit Project Type Group',
+    dialogOptions = {}
+  ) => {
     dispatch(
       openDialog({
-        title: 'Edit Project Type Group',
+        title: title,
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_project_type_group',
         initialData: assignment,
+        ...dialogOptions,
       })
     );
   };
@@ -290,14 +275,19 @@ export default function ProjectSettingPage() {
     );
   };
 
-  const handleEditProjectTypes = (assignment: any) => {
+  const handleEditProjectTypes = (
+    assignment: any,
+    title = 'Edit Project Type',
+    dialogOptions = {}
+  ) => {
     dispatch(
       openDialog({
-        title: 'Edit Project Type',
+        title: title,
         submitButtonText: 'Save',
         cancelButtonText: 'Cancel',
         formType: 'edit_project_type',
         initialData: assignment,
+        ...dialogOptions,
       })
     );
   };
@@ -311,20 +301,65 @@ export default function ProjectSettingPage() {
     if (!deletingProjectTypes && !deletingProjectTypesGroup) return;
     try {
       if (tab === 'project-types' && deletingProjectTypes) {
-        dispatch({
-          type: DELETE_PROJECT_TYPE,
-          payload:{
-            projectTypeId: projectTypes.find((e:any)=>{ return e.Name === deletingProjectTypes })?.Id
-          }
-        });
-      } else if (tab === 'project-types-group' && deletingProjectTypesGroup) {
-        
+         const typeToDelete = projectTypes.find(
+           (e: any) => e.Name === deletingProjectTypes
+        );
+        const isTypeInUse = projects.some(
+          (p: any) => p.Type === typeToDelete?.Id
+        );
+        if (isTypeInUse) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete "${deletingProjectTypes}" because it is assigned to one or more Projects.`,
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+        })
+      );
+  } else {
+    dispatch({
+      type: DELETE_PROJECT_TYPE,
+      payload: { projectTypeId: typeToDelete?.Id },
+    });
+
+    dispatch(
+      showToast({
+        open: true,
+        message: `"${deletingProjectTypes}" deleted successfully.`,
+        type: 'success',
+        position: 'bottom-right',
+        autoHideTimer: 3000,
+      })
+    );
+  }
+      }
+      else if (tab === 'project-types-group' && deletingProjectTypesGroup) {
+        const groupToDelete = projectTypeGroups.find(
+          (g: any) => g.Name === deletingProjectTypesGroup);
+        const isGroupInUse = projectTypes.some(
+          (pt: any) => pt.Group === groupToDelete?.Id
+        );
+       if (isGroupInUse) {
+        dispatch(
+          showToast({
+            open: true,
+            message: `Cannot delete "${deletingProjectTypesGroup}" because it is already used in one or more Project Types.`,
+            type: 'error',
+            position: 'bottom-right',
+            autoHideTimer: 4000,
+          })
+        );
+      } else {
         dispatch({
           type: DELETE_PROJECT_TYPE_GROUPS,
           payload: {
-            projectTypeGroupId: projectTypeGroups.find((e:any)=>{ return e.Name === deletingProjectTypesGroup })?.Id
-          }
+            projectTypeGroupId: projectTypeGroups.find((e: any) =>
+              e.Name === deletingProjectTypesGroup
+            )?.Id,
+          },
         });
+      }
       }
     } catch (error) {
       console.error('Delete failed:', error);
@@ -341,13 +376,30 @@ export default function ProjectSettingPage() {
       headerName: 'Project Type',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography onClick={() => handleEditProjectTypes(params.row)} sx={{ ...commonCellStyle, cursor: 'pointer',
-                  '&:hover': {
-                  textDecoration: 'underline',
-                }, 
-              }}>
-                {params.value}
-              </Typography>
+        <Typography
+          onClick={() => {
+            if (permissions!['ProjectType'].u) {
+              handleEditProjectTypes(params.row);
+            } else {
+              handleEditProjectTypes(
+                params.row,
+                `Project Type: ${params.value}`,
+                {
+                  readOnly: true,
+                }
+              );
+            }
+          }}
+          sx={{
+            ...commonCellStyle,
+            cursor: 'pointer',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }}
+        >
+          {params.value}
+        </Typography>
       ),
     },
     {
@@ -403,31 +455,37 @@ export default function ProjectSettingPage() {
       field: 'Status',
       headerName: 'Status',
       flex: 1,
-      renderCell: (params: any) => <StatusPill status={params.value}>{params.value}</StatusPill>,
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 0,
-      sortable: false,
-      filterable: false,
       renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuProjectTypeId(params.row.Name);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.Name && renderProjectTypesMenu(params.row.Name)}
-          </Typography>
-        </>
+        <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
+    ...(permissions!['ProjectType']?.u || permissions!['ProjectType']?.d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 0,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuProjectTypeId(params.row.Name);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.Name && renderProjectTypesMenu(params.row.Name)}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const ProjectTypesGroupColumns = [
@@ -436,38 +494,60 @@ export default function ProjectSettingPage() {
       headerName: 'Project Type Group',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography onClick={() => handleEditProjectTypesGroup(params.row)} sx={{ ...commonCellStyle, cursor: 'pointer',
-                  '&:hover': {
-                  textDecoration: 'underline',
-                }, 
-              }}>
-                {params.value}
-              </Typography>
+        <Typography
+          onClick={() => {
+            if (permissions!['ProjectTypeGroup'].u) {
+              handleEditProjectTypesGroup(params.row);
+            } else {
+              handleEditProjectTypesGroup(
+                params.row,
+                `Project Type Group: ${params.value}`,
+                {
+                  readOnly: true,
+                }
+              );
+            }
+          }}
+          sx={{
+            ...commonCellStyle,
+            cursor: 'pointer',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }}
+        >
+          {params.value}
+        </Typography>
       ),
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      flex: 0,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => (
-        <>
-          <IconButton
-            onClick={e => {
-              setAnchorEl(e.currentTarget);
-              setMenuProjectTypeId(params.row.Name);
-            }}
-            size="small"
-          >
-            <MoreHorizontal sx={{ fontSize: 20 }} />
-          </IconButton>
-          <Typography sx={commonCellStyle}>
-            {params.row.Name && ProjectTypesGroupMenu(params.row.Name)}
-          </Typography>
-        </>
-      ),
-    },
+    ...(permissions!['ProjectTypeGroup']?.u ||
+    permissions!['ProjectTypeGroup']?.d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            flex: 0,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => (
+              <>
+                <IconButton
+                  onClick={e => {
+                    setAnchorEl(e.currentTarget);
+                    setMenuProjectTypeId(params.row.Name);
+                  }}
+                  size="small"
+                >
+                  <MoreHorizontal sx={{ fontSize: 20 }} />
+                </IconButton>
+                <Typography sx={commonCellStyle}>
+                  {params.row.Name && ProjectTypesGroupMenu(params.row.Name)}
+                </Typography>
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const renderProjectTypesMenu = (id: string) => (
@@ -478,27 +558,31 @@ export default function ProjectSettingPage() {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = ProjectTypesData.find(r => r.Name === id);
-          if (assignment) {
-            handleEditProjectTypes(assignment);
-          }
-          setMenuProjectTypeId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeleteProjectTypes(id);
-          setMenuProjectTypeId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
+      {permissions!['ProjectType'].u && (
+        <StyledMenuItem
+          onClick={() => {
+            const assignment = ProjectTypesData.find(r => r.Name === id);
+            if (assignment) {
+              handleEditProjectTypes(assignment);
+            }
+            setMenuProjectTypeId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+      )}
+      {permissions!['ProjectType'].d && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeleteProjectTypes(id);
+            setMenuProjectTypeId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
   );
 
@@ -510,28 +594,99 @@ export default function ProjectSettingPage() {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
     >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = ProjectTypesGroupData.find(r => r.Name === id);
-          if (assignment) {
-            handleEditProjectTypesGroup(assignment);
-          }
-          setMenuProjectTypeId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeleteProjectTypesGroup(id);
-          setMenuProjectTypeId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
+      {permissions!['ProjectTypeGroup'].u && (
+        <StyledMenuItem
+          onClick={() => {
+            const assignment = ProjectTypesGroupData.find(r => r.Name === id);
+            if (assignment) {
+              handleEditProjectTypesGroup(assignment);
+            }
+            setMenuProjectTypeId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+      )}
+      {permissions!['ProjectTypeGroup'].d && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeleteProjectTypesGroup(id);
+            setMenuProjectTypeId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      )}
     </StyledMenu>
+  );
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setTab(newValue);
+    const tabParam = `tab=${newValue}`;
+    const newUrl = `${baseURLAccessManagement}&${tabParam}`;
+    router.replace(newUrl, { scroll: false });
+  };
+
+  const TabHeader = ({
+    tab,
+  }: {
+    tab: string;
+    setTab: (value: string) => void;
+  }) => (
+    <Box
+      sx={{
+        boxShadow: 1,
+        display: 'flex',
+        justifyContent: 'flex-start',
+        width: '100%',
+        backgroundColor: '#fff',
+        height: '59px',
+        borderBottom: '0px solid #E5E7EB',
+      }}
+    >
+      <Tabs
+        value={tab}
+        onChange={handleTabChange}
+        sx={{
+          width: 'fit-content',
+          marginLeft: '20px',
+          marginRight: '20px',
+          background: 'transparent',
+          '& .MuiTabs-flexContainer': {
+            gap: 1.5,
+          },
+          '& .MuiTabs-indicator': {
+            backgroundColor: '#152E75',
+          },
+          '& .Mui-selected .tab-icon': {
+            filter:
+              'brightness(0) saturate(100%) invert(13%) sepia(45%) saturate(2864%) hue-rotate(203deg) brightness(94%) contrast(102%)',
+          },
+        }}
+      >
+        {tabConfig
+          .filter(tab => permissions![tab.entity].r)
+          .map(({ label, value, icon }) => (
+            <Tab
+              key={value}
+              icon={
+                <img
+                  src={icon}
+                  alt={label}
+                  style={{ width: 21, height: 16, marginRight: 6 }}
+                  className="tab-icon"
+                />
+              }
+              iconPosition="start"
+              label={label}
+              value={value}
+              sx={commonTabSx}
+            />
+          ))}
+      </Tabs>
+    </Box>
   );
 
   return (
@@ -544,13 +699,12 @@ export default function ProjectSettingPage() {
         backgroundColor: 'rgba(217, 217, 217, 0.27)',
       }}
     >
-
       <TabHeader tab={tab} setTab={setTab} />
 
       {tab === 'project-types' && (
         <AccessTable
           title="Project Types"
-          data={ProjectTypesData}
+          data={permissions!['ProjectType'].r ? ProjectTypesData : []}
           onAdd={handleAddNewProjectTypes}
           onEdit={handleEditProjectTypes}
           onDelete={handleDeleteProjectTypes}
@@ -558,17 +712,18 @@ export default function ProjectSettingPage() {
           setMenuId={setMenuProjectTypeId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add Project Type"
+          buttonLabel={permissions!['ProjectType'].c ? 'Add Project Type' : ''}
           renderMenu={renderProjectTypesMenu}
           columns={ProjectTypesPageColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'project-types-group' && (
         <AccessTable
           title="Project Types Group"
-          data={ProjectTypesGroupData}
+          data={permissions!['ProjectTypeGroup'].r ? ProjectTypesGroupData : []}
           onAdd={handleAddNewProjectTypesGroup}
           onEdit={handleEditProjectTypesGroup}
           onDelete={handleDeleteProjectTypesGroup}
@@ -576,11 +731,14 @@ export default function ProjectSettingPage() {
           setMenuId={setMenuProjectTypeId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add Project Type Group"
+          buttonLabel={
+            permissions!['ProjectTypeGroup'].c ? 'Add Project Type Group' : ''
+          }
           renderMenu={ProjectTypesGroupMenu}
           columns={ProjectTypesGroupColumns}
           apiRef={apiRef}
-          loading={loading}
+          loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
 
@@ -601,3 +759,8 @@ export default function ProjectSettingPage() {
     </div>
   );
 }
+
+export default withRBAC(ProjectSettingPage, [
+  'ProjectType',
+  'ProjectTypeGroup',
+]);

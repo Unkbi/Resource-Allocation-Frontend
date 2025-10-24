@@ -16,10 +16,14 @@ import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface TeamAllocationProps {
   startDate: string;
   endDate: string;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -29,11 +33,17 @@ interface Resource {
   [key: string]: any;
 }
 
-const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
+const TeamsCost = ({
+  startDate,
+  endDate,
+  permissions,
+  loadingPermissions,
+}: TeamAllocationProps) => {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   // @ts-ignore
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
@@ -53,7 +63,14 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   const { setRows, ready } = useAllocationGrid('main');
 
   useEffect(() => {
-    if (ready && teamsCost) {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loadingPermissions) return;
+    if (permissions['AllocationCost'].r && ready && teamsCost) {
       const filteredResources = removeResourcesWithNoTeams(teamsCost || []);
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
@@ -66,21 +83,25 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
       }));
       setRows(formattedResources);
     }
-  }, [ready, teamsCost]);
+  }, [ready, teamsCost, loadingPermissions]);
 
   useEffect(() => {
-    dispatch({
-      type: 'FETCH_ALLOCATIONS_COST',
-      payload: {
-        teams: teams,
-        projects: projects,
-        resources: resources,
-        allResourcesDetail: allResourcesDetail,
-        startDate: startDate,
-        endDate: endDate,
-      },
-    });
-  }, [startDate, endDate, teams, projects, resources]);
+    if (loadingPermissions) return;
+    if (permissions['AllocationCost'].r) {
+      dispatch({
+        type: 'FETCH_ALLOCATIONS_COST',
+        payload: {
+          teams: teams,
+          projects: projects,
+          resources: resources,
+          allResourcesDetail: allResourcesDetail,
+          projectTypes: projectTypes,
+          startDate: startDate,
+          endDate: endDate,
+        },
+      });
+    }
+  }, [startDate, endDate, teams, projects, resources, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -593,4 +614,4 @@ const TeamsCost = ({ startDate, endDate }: TeamAllocationProps) => {
   );
 };
 
-export default TeamsCost;
+export default withRBAC(TeamsCost, ['AllocationCost']);

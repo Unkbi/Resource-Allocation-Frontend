@@ -111,6 +111,7 @@ export default function ActualTable({
     (state: RootState) => state.settings.allocationTheme
   );
   const { status } = useSelector((state: RootState) => state.actualAllocations);
+  const { scalarSettings } = useSelector((state: RootState) => state.allSettings);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -133,7 +134,8 @@ export default function ActualTable({
   >({});
   const [baselineRows, setBaselineRows] =
     useState<ActualAllocationTableRow[]>(data);
-
+  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
+  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
@@ -257,20 +259,20 @@ export default function ActualTable({
         return sum;
       }, 0);
 
-      if (updatedTotal > 2.0) {
+      if (updatedTotal > Number(max_allocation_error)) {
         dispatch(
           showToastAction(
             true,
-            `Total of Actuals cannot exceed 2.0 (Current sum: ${updatedTotal.toFixed(1)})`,
+            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${updatedTotal.toFixed(1)})`,
             'error'
           )
         );
         return oldRow;
-      } else if (updatedTotal >= 1.5) {
+      } else if (updatedTotal >= Number(max_allocation_warning)) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals is approaching the maximum of 2.0. Current sum: ${updatedTotal.toFixed(1)}`,
+            `Warning: Total actuals is approaching the maximum of ${max_allocation_warning}. Current sum: ${updatedTotal.toFixed(1)}`,
             'warning'
           )
         );

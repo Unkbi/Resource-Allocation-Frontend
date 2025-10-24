@@ -3,17 +3,18 @@
 import {
   Box,
   TextField,
-  Autocomplete,
   FormGroup,
   FormControlLabel,
   Checkbox,
-  Typography,
 } from '@mui/material';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledFormHelperText, StyledInput } from '../Input/StyledInput';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { FormikProps } from 'formik';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { Entity } from '@/app/types';
+import StyledAutocomplete from '../Select/Autocomplete';
 
 type ActionType = 'Create' | 'Read' | 'Update' | 'Delete';
 
@@ -25,33 +26,35 @@ interface PrivilegeFormValues {
 interface AddPrivilegeFormProps {
   formikProps: FormikProps<PrivilegeFormValues>;
   setFormValue?: (values: PrivilegeFormValues) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const AddPrivilegeForm = ({
   formikProps,
   setFormValue = () => {},
+  permissions,
 }: AddPrivilegeFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, errors, touched } =
     formikProps;
   const [privilegeName, setPrivilegeName] = useState('');
-  const { initialData } = useSelector(
+  const { initialData, formType } = useSelector(
     (state: any) => state.globalDialog.formState
   );
+  const [readOnly, setReadOnly] = useState(true);
   const meta = useSelector((state: any) => state.rbac.meta);
 
-  const commonAutocompleteStyles = {
-    '& .MuiInputBase-root': { fontSize: '12px' },
-    '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
-    '& input': { fontSize: '12px' },
-    '& .MuiAutocomplete-popper': { fontSize: '12px' },
-    '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
-  };
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_privilege' && !permissions['Permission']?.u) ||
+        (formType === 'add_privilegee' && !permissions['Permission']?.c)
+    );
+  }, []);
 
   useEffect(() => {
     if (initialData) {
       const actionObject: Record<ActionType, boolean> = {
         Create: initialData.c ?? false,
-        Read:   initialData.r ?? false,
+        Read: initialData.r ?? false,
         Update: initialData.u ?? false,
         Delete: initialData.d ?? false,
       };
@@ -69,11 +72,6 @@ const AddPrivilegeForm = ({
     }
   }, [initialData]);
 
-  const handleAutocompleteChange =
-    (field: string) => (_event: any, newValue: any) => {
-      setFieldValue(field, newValue || '');
-    };
-
   const actionList: ActionType[] = ['Create', 'Read', 'Update', 'Delete'];
   const actionError =
     formikProps.touched.Actions &&
@@ -84,7 +82,13 @@ const AddPrivilegeForm = ({
   const resourceEntities = meta?.entities?.Resource ?? [];
   const authEntities = meta?.entities?.['agentlang.auth'] ?? [];
   const allEntities = [...resourceEntities, ...authEntities];
-  const resourceOptions: string[] = allEntities.map((entity: any) => entity.fqName);
+  const resourceOptions = allEntities.map((entity: Entity) => ({
+    value: entity.fqName,
+    label:
+      entity.fqName?.split('/').length >= 2
+        ? entity.fqName?.split('/')[1]
+        : (entity.fqName ?? ''),
+  }));
 
   return (
     <Box>
@@ -93,15 +97,21 @@ const AddPrivilegeForm = ({
           Privilege Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           as={TextField}
           name="Name"
           placeholder="Enter Privilege Name"
           value={values.Name || ''}
-          onChange={e => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
             setPrivilegeName(e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
           error={touched.Name && Boolean(errors.Name)}
           helperText={touched.Name && errors.Name}
         />
@@ -111,27 +121,13 @@ const AddPrivilegeForm = ({
         <StyledLabel>
           Entity <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <Autocomplete
-          sx={commonAutocompleteStyles}
-          size="small"
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="Resource"
+          label="Select Entity"
           options={resourceOptions}
-          getOptionLabel={(option: string) =>
-            option?.split('/').length >= 2 ? option?.split('/')[1] : option
-          }
           value={values.Resource || ''}
-          onChange={handleAutocompleteChange('Resource')}
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder="Select Entity"
-              variant="outlined"
-              error={touched.Resource && Boolean(errors.Resource)}
-              helperText={touched.Resource && errors.Resource}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-              }}
-            />
-          )}
+          formikProps={formikProps}
         />
       </Box>
 
@@ -143,8 +139,15 @@ const AddPrivilegeForm = ({
           {actionList.map(action => (
             <FormControlLabel
               key={action}
+              sx={{
+                '& .MuiFormControlLabel-label.Mui-disabled': {
+                  //@ts-ignore
+                  color: theme => theme.palette.readonly.contrastText,
+                },
+              }}
               control={
                 <Checkbox
+                  disabled={readOnly}
                   size="small"
                   name={`Actions.${action}`}
                   checked={values.Actions?.[action] || false}
@@ -152,6 +155,15 @@ const AddPrivilegeForm = ({
                     setFieldValue(`Actions.${action}`, e.target.checked)
                   }
                   onBlur={() => formikProps.setFieldTouched('Actions', true)}
+                  sx={{
+                    '&.Mui-disabled': {
+                      cursor: 'default',
+                    },
+                    '&.MuiCheckbox-root.Mui-disabled': {
+                      //@ts-ignore
+                      color: theme => theme.palette.readonly.contrastText,
+                    },
+                  }}
                 />
               }
               label={action}
@@ -174,4 +186,4 @@ const AddPrivilegeForm = ({
   );
 };
 
-export default AddPrivilegeForm;
+export default withRBAC(AddPrivilegeForm, ['Permission']);

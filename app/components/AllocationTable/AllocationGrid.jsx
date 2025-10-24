@@ -22,6 +22,7 @@ import {
   getTeamForResource,
   isCurrentOrPastWeek,
   isCurrentWeek,
+  getSundayOfISO,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -73,8 +74,10 @@ import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import { withRBAC } from '../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
-export default function AllocationGrid({
+function AllocationGrid({
   groupBy,
   columns,
   loading,
@@ -91,6 +94,8 @@ export default function AllocationGrid({
   viewId = 'main',
   showActuals = false,
   rowGroupingColumnMode = 'single',
+  permissions = null,
+  loadingPermissions = true,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -117,6 +122,7 @@ export default function AllocationGrid({
   const { teams, teamsResources, teamAllocations } = useSelector(
     state => state.teams
   );
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const allocationTheme = useSelector(state => state.settings.allocationTheme);
   const [rowModesModel, setRowModesModel] = useState({});
@@ -133,10 +139,13 @@ export default function AllocationGrid({
   const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
+  const { projectTypes } = useSelector(state => state.allSettings);
   const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
   );
+  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
+  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
   const handleKeyUp = e => {
     if (
@@ -226,7 +235,7 @@ export default function AllocationGrid({
           initialData: {
             Resource: resourcesSelected,
             StartDate,
-            EndDate,
+            EndDate: getSundayOfISO(EndDate),
             Project: projectsSelected,
           },
         })
@@ -275,6 +284,12 @@ export default function AllocationGrid({
 
     return normalized;
   };
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
 
   // Set the apiRef in the context when it's available
   useEffect(() => {
@@ -685,6 +700,7 @@ export default function AllocationGrid({
             allocationTheme,
             type,
             projects,
+            projectTypes,
             isCellEditable
           );
           const showTooltip =
@@ -892,7 +908,7 @@ export default function AllocationGrid({
           return;
         }
 
-        // Verify Updated Values total allocation for resource is not greater than 2.0
+        // Verify Updated Values total allocation for resource is not greater than Max_Allocation_Error
         let formattedCellValue = Math.round(newRow[key] * 10) / 10;
 
         const period = oldRow[key]?.period;
@@ -915,11 +931,14 @@ export default function AllocationGrid({
         const currentRowOldValue = oldRow[key]?.value || 0;
         totalForWeek = totalForWeek - currentRowOldValue + value;
 
-        if (totalForWeek > 1.5 && totalForWeek <= 2) {
+        if (
+          totalForWeek > Number(max_allocation_warning) &&
+          totalForWeek <= Number(max_allocation_error)
+        ) {
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds 1.5 (${totalForWeek.toFixed(2)}).`,
+              `Allocation for ${key} exceeds ${max_allocation_warning} (${totalForWeek.toFixed(2)}).`,
               'warning',
               4000
             )
@@ -929,7 +948,7 @@ export default function AllocationGrid({
           dispatch(
             showToastAction(
               true,
-              `Allocation for ${key} exceeds 2.0 (${totalForWeek.toFixed(2)}). Update cancelled.`,
+              `Allocation for ${key} exceeds ${max_allocation_error} (${totalForWeek.toFixed(2)}). Update cancelled.`,
               'error',
               4000
             )
@@ -1104,8 +1123,9 @@ export default function AllocationGrid({
       const rowNode = apiRef.current.getRowNode(params.id);
       if (
         rowNode &&
-        rowNode.type === 'group' &&
-        rowNode.groupingField != 'teams'
+        rowNode.type === 'group'
+        // Commenting to allow expansion of teams groups as well on click anywhere on row Teams View
+        // && rowNode.groupingField != 'teams'
       ) {
         apiRef.current.setRowChildrenExpansion(
           params.id,
@@ -1117,7 +1137,14 @@ export default function AllocationGrid({
   );
 
   const handleRowModesModelChange = newRowModesModel => {
-    setRowModesModel(newRowModesModel);
+    // If no Create or Edit permission to Allocation then do not allow rowMode to change from View to Edit.
+    if (!permissions['Allocation'].c && !permissions['Allocation'].u) {
+      if (Object.keys(rowModesModel).length) {
+        setRowModesModel({});
+      }
+    } else {
+      setRowModesModel(newRowModesModel);
+    }
   };
 
   const filterColumns = ({ columns }) => {
@@ -1130,9 +1157,15 @@ export default function AllocationGrid({
   );
   const handleCellSelectionModelChange = useCallback(
     newModel => {
+      // Cost Screens are readOnly, no selections.
+      if (type === 'cost') return;
+
+      // When Updates are not permitted, no selections.
+      if (!permissions['Allocation']?.u && !permissions['Allocation']?.c)
+        return;
+
       // Cell Selection Model should have a value only for minimum of 2 cells
       // If only one cell is selected, then clear the selection
-      if (type === 'cost') return;
       const rowIds = Object.keys(newModel);
       if (
         Object.keys(newModel).length === 0 ||
@@ -1184,11 +1217,11 @@ export default function AllocationGrid({
       };
 
       // Get Only Valid Fields, i.e. Fields starting with 'W\d'
-      const getNewModelWithValidFields = row => {
+      const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
-        Object.keys(row).forEach(key => {
-          if (/^W\d+/.test(key)) {
-            newModelWithValidFields[key] = row[key];
+        Object.keys(row).forEach(field => {
+          if (/^W\d+/.test(field) && isCellEditableInRow(rowId, field)) {
+            newModelWithValidFields[field] = row[field];
           }
         });
         return newModelWithValidFields;
@@ -1209,15 +1242,17 @@ export default function AllocationGrid({
           filteredModel = cellSelectionModel;
         } else {
           const key = Object.keys(newModel)[0];
+          const rowNode = apiRef.current.getRowNode(key);
           const newModelWithValidFields = getNewModelWithValidFields(
+            rowNode?.children[0],
             newModel[key]
           );
+
           filteredModel = {
             [key]: newModelWithValidFields,
           };
         }
       }
-
       rowIds.forEach(rowId => {
         if (!rowId.startsWith('auto-generated')) {
           const row = apiRef.current.getRow(rowId);
@@ -1372,13 +1407,14 @@ export default function AllocationGrid({
       isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
-      getRowHeight={(params) => {
-       if(params?.model?.projectId ===""){
-        // Sahadev: really small value, it doesnt accept 0
-        // New solution for hiding empty rows 
-        return .000000000001
-       }
-       return 52 ;
+      projectTypes={projectTypes}
+      getRowHeight={params => {
+        if (params?.model?.projectId === '') {
+          // Sahadev: really small value, it doesnt accept 0
+          // New solution for hiding empty rows
+          return 0.000000000001;
+        }
+        return 52;
       }}
       rowModesModel={rowModesModel}
       onRowModesModelChange={handleRowModesModelChange}
@@ -1389,14 +1425,10 @@ export default function AllocationGrid({
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}
-      onRowClick={
-        groupBy === 'teams' || groupBy === 'organisationName'
-          ? onRowClick
-          : () => null
-      }
+      onRowClick={onRowClick}
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={loading}
+      loading={loading || loadingPermissions}
       disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={rowGroupingColumnMode}
@@ -1425,6 +1457,7 @@ export default function AllocationGrid({
           allocationTheme,
           type,
           projects,
+          projectTypes,
           isCellEditable,
           groupBy
         );
@@ -1502,3 +1535,5 @@ export default function AllocationGrid({
     />
   );
 }
+
+export default withRBAC(AllocationGrid, ['Allocation']);

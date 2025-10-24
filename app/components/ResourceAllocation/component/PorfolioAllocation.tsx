@@ -23,10 +23,13 @@ import {
   PORTFOLIO_DISPLAY_NAME,
 } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface PortfolioAllocationProps {
   startDate: string | null;
   endDate: string | null;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -36,9 +39,11 @@ interface Resource {
   [key: string]: any;
 }
 
-export default function PortfolioAllocation({
+function PortfolioAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: PortfolioAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const { allAllocations, loading, dataProcessing } = useSelector(
@@ -58,7 +63,8 @@ export default function PortfolioAllocation({
   );
 
   useEffect(() => {
-    if (ready) {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -94,7 +100,7 @@ export default function PortfolioAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready && allAllocations]);
+  }, [ready && allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -639,3 +645,5 @@ export default function PortfolioAllocation({
     </>
   );
 }
+
+export default withRBAC(PortfolioAllocation, ['Allocation']);

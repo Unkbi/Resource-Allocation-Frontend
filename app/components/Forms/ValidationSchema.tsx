@@ -73,22 +73,57 @@ export const addProjectValidationSchema = (
   });
 };
 
-export const addTeamValidationSchema = Yup.object().shape({
-  Name: Yup.string().trim().required('Team Name is required'),
+export const addTeamValidationSchema = (teams = [], currentName = '') => {
+  const teamsArray = Array.isArray(teams) ? teams : [];
+  const existingTeamNames = teamsArray
+    .map((item: any) => item?.Name?.toLowerCase().trim())
+    .filter(Boolean);
+
+  return Yup.object().shape({
+  Name: Yup.string().trim().required('Team Name is required')
+      .test('unique-name', 'This team name already exists', function (value) {
+        if (!value) return true;
+        const nameLower = value.toLowerCase().trim();
+        const isDuplicate =
+          existingTeamNames.includes(nameLower) &&
+          nameLower !== (currentName?.toLowerCase().trim() || '');
+        return !isDuplicate;
+      }),
   AllocationManager: Yup.string(),
   Status: Yup.string()
     .oneOf(['Active', 'Inactive'], 'Invalid status')
     .required('Status is required'),
 });
+};
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const addResourceValidationSchema = Yup.object({
+export const addResourceValidationSchema = (allResourcesDetail = [], currentEmail = '') => {
+   const resourcesArray = Array.isArray(allResourcesDetail)
+    ? allResourcesDetail
+    : [];
+
+  const existingEmails = resourcesArray
+    .map(
+      (item: any) =>
+        item?.Resource?.Email?.toLowerCase().trim()
+    )
+    .filter(Boolean);
+  return Yup.object({
   FirstName: Yup.string().required('First Name is required'),
   LastName: Yup.string().required('Last Name is required'),
   Email: Yup.string()
     .required('Email is required')
-    .matches(emailRegex, 'Enter a valid email address'),
+    .matches(emailRegex, 'Enter a valid email address')
+    .test('unique-email', 'This email already exists', function (value) {
+        if (!value) return true;
+        const emailLower = value.toLowerCase().trim();
+        const isDuplicate =
+          existingEmails.includes(emailLower) &&
+          emailLower !== currentEmail.toLowerCase().trim();;
+        return !isDuplicate;
+      }),
+
   Role: Yup.string().required('Role is required'),
   Type: Yup.string().required('Resource type is required'),
   Manager: Yup.string(),
@@ -124,14 +159,38 @@ export const addResourceValidationSchema = Yup.object({
         ),
     }),
 });
+};
 
 // Temporary fix till we have the new API for Resource Creation and Update. This will be removed.
-export const editResourceValidationSchema = Yup.object({
+export const editResourceValidationSchema = (
+  allResourcesDetail = [],
+  currentEmail = ''
+) => {
+  const resourcesArray = Array.isArray(allResourcesDetail)
+    ? allResourcesDetail
+    : [];
+
+  const existingEmails = resourcesArray
+    .map(
+      (item: any) =>
+        item?.Resource?.Email?.toLowerCase().trim()
+    )
+    .filter(Boolean);
+
+  return Yup.object({
   FirstName: Yup.string().required('First Name is required'),
   LastName: Yup.string().required('Last Name is required'),
   Email: Yup.string()
     .required('Email is required')
-    .matches(emailRegex, 'Enter a valid email address'),
+    .matches(emailRegex, 'Enter a valid email address')
+    .test('unique-email', 'This email already exists', function (value) {
+        if (!value) return true;
+        const emailLower = value.toLowerCase().trim();
+        const isDuplicate =
+          existingEmails.includes(emailLower) &&
+          emailLower !== (currentEmail?.toLowerCase().trim() || '');
+        return !isDuplicate;
+      }),
   Role: Yup.string().required('Role is required'),
   Type: Yup.string().required('Resource type is required'),
   Manager: Yup.string(),
@@ -168,25 +227,33 @@ export const editResourceValidationSchema = Yup.object({
     .oneOf([true], 'You must confirm before continuing.')
     .required('You must confirm before continuing.'),
 });
+};
 
-export const addAllocationValidationSchema = Yup.object({
-  Resource: Yup.array()
-    .of(Yup.string())
-    .min(1, 'You must select at least one Resource')
-    .required('Resource is required'),
-  Project: Yup.array()
-    .of(Yup.string())
-    .min(1, 'You must select at least one Project')
-    .required('Project is required'),
-  StartDate: Yup.date().required('Start date is required'),
-  EndDate: Yup.date()
-    .required('End date is required')
-    .min(Yup.ref('StartDate'), 'End date must be after or equal to start date'),
-  AllocationEntered: Yup.number()
-    .required('Allocation is required')
-    .min(0, 'Allocation must be a positive number')
-    .max(2, 'Allocation cannot exceed 2.0'),
-});
+export const addAllocationValidationSchema = (scalarSettings: any) =>
+  Yup.object({
+    Resource: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Resource')
+      .required('Resource is required'),
+    Project: Yup.array()
+      .of(Yup.string())
+      .min(1, 'You must select at least one Project')
+      .required('Project is required'),
+    StartDate: Yup.date().required('Start date is required'),
+    EndDate: Yup.date()
+      .required('End date is required')
+      .min(
+        Yup.ref('StartDate'),
+        'End date must be after or equal to start date'
+      ),
+    AllocationEntered: Yup.number()
+      .required('Allocation is required')
+      .min(0, 'Allocation must be a positive number')
+      .max(
+        scalarSettings?.Max_Allocation_Error || '2.0',
+        `Allocation cannot exceed ${scalarSettings?.Max_Allocation_Error || '2.0'}.`
+      ),
+  });
 
 const stripTime = (date: Date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -394,11 +461,11 @@ export const addPortfolioValidationSchema = (
 
 // org schema
 export const addOrganizationValidationSchema = (
-  organizations: any[] = [],
+  organisations: any[] = [],
   initialName = ''
 ) => {
-  const organizationNames = Array.isArray(organizations)
-    ? organizations.map(org => org.Name?.toLowerCase().trim())
+  const organizationNames = Array.isArray(organisations)
+    ? organisations.map(org => org.Name?.toLowerCase().trim())
     : [];
 
   return Yup.object({
@@ -424,25 +491,34 @@ export const addOrganizationValidationSchema = (
   });
 };
 
-export const addRoleValidationSchema = Yup.object({
-  name: Yup.string()
-    .required('Role Name is required')
-    .max(90, 'Reached Max Characters')
-    .matches(/^[^\s]+$/, 'Name must be a single word without spaces') // <- added check for single word
-    .test(
-      'unique-name',
-      'Role Name already exists. Please choose another name.',
-      function (value) {
-        if (!value) return true;
-        const roleNames = this.options.context?.roleNames || [];
-        return !roleNames.includes(value.toLowerCase().trim());
-      }
-    ),
-});
+export const addRoleValidationSchema = (roles: any[] = [], initialName = '') => {
+  const roleNames = Array.isArray(roles)
+    ? roles.map(role => role.name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    name: Yup.string()
+      .required('Role Name is required')
+      .max(90, 'Reached Max Characters')
+      .matches(/^[^\s]+$/, 'Name must be a single word without spaces')
+      .test(
+        'unique-name',
+        'Role Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          ) return true;
+          return !roleNames.includes(value.toLowerCase().trim());
+        }
+      ),
+  });
+};
 
 export const assignRoleValidationSchema = Yup.object({
-  Assignee: Yup.object().nullable().required('Assignee is required'),
+  Assignee: Yup.string().required('Assignee is required'),
   Role: Yup.string().required('Role is required'),
+  Status: Yup.string().required('Status is required'),
 });
 
 export const addPrivilegeValidationSchema = Yup.object({
@@ -530,5 +606,64 @@ export const addProjectTypeValidationSchema = (
     ProjectTypeGroup: Yup.string().required('Project Type Group is required'),
     Description: Yup.string().nullable(),
     Color: Yup.string().required('Color is required'),
+  });
+};
+
+export const addLocationValidationSchema = (
+  locations: any[] = [],
+  initialName = ''
+) => {
+  const locationNames = Array.isArray(locations)
+    ? locations.map(loc => loc.Name?.toLowerCase().trim())
+    : [];
+
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedInitial = initialName.toLowerCase().trim();
+          if (initialName && trimmedValue === trimmedInitial) {
+            return true; // Allow same name when editing
+          }
+          return !locationNames.includes(trimmedValue);
+        }
+      ),
+    LocationGroup: Yup.string().required('Location Group is required'),
+    Status: Yup.string()
+      .oneOf(['Active', 'Inactive'], 'Status must be Active or Inactive')
+      .required('Status is required'),
+  });
+};
+
+export const addLocationGroupValidationSchema = (
+  locationGroups: any[] = [],
+  initialName = ''
+) => {
+  const locationGroupNames = Array.isArray(locationGroups)
+    ? locationGroups.map(lg => lg.Name?.toLowerCase().trim())
+    : [];
+  return Yup.object({
+    Name: Yup.string()
+      .required('Location Group Name is required')
+      .max(90, 'Reached Max Characters')
+      .test(
+        'unique-name',
+        'Location Group Name already exists. Please choose another name.',
+        value => {
+          if (!value) return true;
+          if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+          )
+            return true;
+          return !locationGroupNames.includes(value.toLowerCase().trim());
+        }
+      ),
   });
 };

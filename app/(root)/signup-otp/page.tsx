@@ -182,6 +182,18 @@ export default function SignUpOtpPage(){
     const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
     const router = useRouter();
     const [otpError, setOtpError] = useState<string>('');
+    const [savedEmail, setSavedEmail] = useState<string>('');
+
+    useEffect(() => {
+    const reduxEmail = (signupData as any)?.email;
+    const localEmail = localStorage.getItem('signupEmail');
+    if (reduxEmail) {
+      setSavedEmail(reduxEmail);
+      localStorage.setItem('signupEmail', reduxEmail);
+    } else if (localEmail) {
+      setSavedEmail(localEmail);
+    }
+  }, [signupData]);
 
     const handleVerifyOtp = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -194,8 +206,8 @@ export default function SignUpOtpPage(){
             setOtpError('');
         }
 
-        dispatch(confirmSignUpUser({
-             email: (signupData as any)?.email,       
+        dispatch(confirmSignUpUser({    
+             email: savedEmail,   
              confirmationCode: otp.join(""),
         }));
     };
@@ -263,6 +275,13 @@ useEffect(() => {
   }
 }, [otpVerified, loading, error]);
 
+useEffect(() => {
+    if (otpVerified && !loading && !error) {
+      localStorage.removeItem('signupEmail'); 
+      router.push('/login');
+    }
+  }, [otpVerified, loading, error, router]);
+
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
             <Box display={"flex"} width={'100%'}>
@@ -281,7 +300,7 @@ useEffect(() => {
                             Verify with OTP
                         </Typography>
                         <Typography className='subHeadingText'>
-                            We've sent a verification code to {(signupData as any)?.email}
+                            We've sent a verification code to {savedEmail}
                         </Typography>
             <Box component="form" onSubmit={handleVerifyOtp} sx={{ mt: 2 }}>
               <Box

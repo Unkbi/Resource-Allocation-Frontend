@@ -14,7 +14,8 @@ import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { Box } from '@mui/material';
 import { useState, JSXElementConstructor } from 'react';
 
-import { Organisation } from '@/app/types'; 
+import { Organisation } from '@/app/types';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 interface OrganisationsTableProps {
   columns: GridColDef[];
@@ -23,6 +24,7 @@ interface OrganisationsTableProps {
   apiRef: React.RefObject<GridApi>;
   value: string;
   onChange: any;
+  permissions: Record<string, CrudPermissions>;
 }
 
 function CustomColumnMenu(props: GridColumnMenuProps) {
@@ -44,6 +46,7 @@ const OrganisationsTable = ({
   apiRef,
   value,
   onChange = () => {},
+  permissions,
 }: OrganisationsTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
@@ -52,7 +55,7 @@ const OrganisationsTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={rows}
+        rows={permissions['Organization'].r ? rows : []}
         loading={loading}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
@@ -140,4 +143,4 @@ const OrganisationsTable = ({
   );
 };
 
-export default OrganisationsTable;
+export default withRBAC(OrganisationsTable, ['Organization']);
