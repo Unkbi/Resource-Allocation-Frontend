@@ -73,21 +73,17 @@ export const addProjectValidationSchema = (
   });
 };
 
-export const addTeamValidationSchema = (teams = [], currentName = '') => {
+export const addTeamValidationSchema = (teams = [], initialName = '') => {
   const teamsArray = Array.isArray(teams) ? teams : [];
   const existingTeamNames = teamsArray
-    .map((item: any) => item?.Name?.toLowerCase().trim())
-    .filter(Boolean);
+    .map((item: any) => item?.Name?.toLowerCase().trim());
 
   return Yup.object().shape({
     Name: Yup.string().trim().required('Team Name is required')
       .test('unique-name', 'Team Name already exists. Please choose another name.', function (value) {
         if (!value) return true;
-        const nameLower = value.toLowerCase().trim();
-        const isDuplicate =
-          existingTeamNames.includes(nameLower) &&
-          nameLower !== (currentName?.toLowerCase().trim() || '');
-        return !isDuplicate;
+        if (initialName && value === initialName) return true;
+        return !existingTeamNames.includes(value.toLowerCase().trim());
       }),
   AllocationManager: Yup.string(),
   Status: Yup.string()

@@ -469,7 +469,7 @@ const AllocationForm = () => {
       case 'add_team':
         return addTeamValidationSchema(teams);
       case 'edit_team':
-        return addTeamValidationSchema(teams, initialData?.Name || '');
+        return addTeamValidationSchema(teams, initialData?.Team || '');
       case 'add_resource':
         return addResourceValidationSchema(
           allResourcesDetail,
