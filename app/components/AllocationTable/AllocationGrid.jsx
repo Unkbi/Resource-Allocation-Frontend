@@ -1217,11 +1217,11 @@ function AllocationGrid({
       };
 
       // Get Only Valid Fields, i.e. Fields starting with 'W\d'
-      const getNewModelWithValidFields = row => {
+      const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
-        Object.keys(row).forEach(key => {
-          if (/^W\d+/.test(key)) {
-            newModelWithValidFields[key] = row[key];
+        Object.keys(row).forEach(field => {
+          if (/^W\d+/.test(field) && isCellEditableInRow(rowId, field)) {
+            newModelWithValidFields[field] = row[field];
           }
         });
         return newModelWithValidFields;
@@ -1242,15 +1242,17 @@ function AllocationGrid({
           filteredModel = cellSelectionModel;
         } else {
           const key = Object.keys(newModel)[0];
+          const rowNode = apiRef.current.getRowNode(key);
           const newModelWithValidFields = getNewModelWithValidFields(
+            rowNode?.children[0],
             newModel[key]
           );
+
           filteredModel = {
             [key]: newModelWithValidFields,
           };
         }
       }
-
       rowIds.forEach(rowId => {
         if (!rowId.startsWith('auto-generated')) {
           const row = apiRef.current.getRow(rowId);
