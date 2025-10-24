@@ -104,7 +104,7 @@ const AddRatesForm = ({
         <StyledAutocomplete
           disabled={readOnly}
           name="WorkLocation"
-          label="Work Location"
+          label="Location"
           placeholder="Select Location"
           value={values.WorkLocation || ''}
           options={locationOptions}
