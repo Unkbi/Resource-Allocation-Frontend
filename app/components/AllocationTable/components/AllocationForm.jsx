@@ -90,7 +90,7 @@ import {
 import { postTeamResource } from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import { DATE_FORMAT, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
   createTeam,
@@ -2778,6 +2778,31 @@ const AllocationForm = () => {
             Group: cleanedValues.ProjectTypeGroup,
           };
           try {
+          const projectTypeId = initialData?.id;
+          if (
+            initialData?.Status === 'Active' &&
+            postData.Status === 'Inactive'
+          ) {
+            const isProjectTypeInUse = projects?.filter(p =>
+              p?.Type === projectTypeId);
+            if (isProjectTypeInUse?.length > 0) {
+              const hasActiveProject = isProjectTypeInUse.some(p =>
+                PROJECT_ACTIVE_STATUS.includes(p?.Status)
+              );
+              if (hasActiveProject) {
+                dispatch(
+                  showToast({
+                    open: true,
+                    message: `Cannot set "${initialData?.Name}" to Inactive. It is currently in use by existing projects.`,
+                    type: 'error',
+                    position: 'bottom-left',
+                    autoHideTimer: 4000,
+                  })
+                );
+                return;
+              }
+            }
+            }
             const response = await new Promise((resolve, reject) => {
               dispatch({
                 type: UPDATE_PROJECT_TYPE,
@@ -2789,7 +2814,6 @@ const AllocationForm = () => {
                 },
               });
             });
-
             dispatch(
               showToast({
                 open: true,
@@ -2952,24 +2976,23 @@ const AllocationForm = () => {
             throw new Error('No location ID found in initialData');
           }
           if (postData.Status === 'Inactive') {
-            const isInResources = allResourcesDetail.some((res) => {
+            const isInResources = allResourcesDetail.some(res => {
               return res.Resource?.WorkLocation === locationId;
             });
             const isInRates = employeeRates.some(
-          (rate) => rate.WorkLocation === locationId
+              rate => rate.WorkLocation === locationId
             );
             if (isInResources || isInRates) {
               dispatch(
                 showToast({
                   open: true,
-                  message:
-                    `${cleanedValues.Name} location is already in use and cannot be set to inactive.`,
+                  message: `${cleanedValues.Name} location is already in use and cannot be set to inactive.`,
                   type: 'error',
                   position: 'bottom-left',
                   autoHideTimer: 4000,
                 })
               );
-              return; 
+              return;
             }
           }
           const response = await new Promise((resolve, reject) => {
