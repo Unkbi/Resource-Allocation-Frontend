@@ -25,6 +25,7 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { useDispatch } from 'react-redux';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { getProjectRangeWarnings } from './ValidationSchema';
+import { PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
 
 const AddAllocationForm = ({ formikProps, setFormValue }) => {
   const { values, handleChange, handleBlur, setFieldValue } = formikProps;
@@ -89,7 +90,7 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
 
   useEffect(() => {
     const avaiableProjects = projects
-      ?.filter(project => project.Status === 'Active' || project.Status === 'Approved')
+      ?.filter(project => PROJECT_ACTIVE_STATUS.includes(project.Status))
       ?.sort((a, b) => a.Name.localeCompare(b.Name))
       ?.map(project => ({
         value: project.Id,
