@@ -99,7 +99,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from 'lucide-react';
 import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
-import { getUserAttributes } from '@/app/utils/authUtils';
+import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
@@ -601,7 +601,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
     state => state.projects
   );
   const { user } = useSelector(state => state.user);
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
 
   const { resources } = useSelector(state => state.resources);
   const { teams } = useSelector(state => state.teams);

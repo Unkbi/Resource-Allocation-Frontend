@@ -45,7 +45,7 @@ import {
   DEFAULT_VISIBLE_RESOURCES_COLUMNS,
   DEFAULT_VISIBLE_TEAMS_COLUMNS,
 } from '@/app/redux/reducers/allocationViewReducer';
-import { getUserAttributes } from '@/app/utils/authUtils';
+import { getLoginUserDetails } from '@/app/utils/authUtils';
 
 const getColumnLabel = (column, groupBy = '') => {
   const columnLabels = {
@@ -146,7 +146,7 @@ const SaveViewForm = ({ formikProps, setFormValue }) => {
     formikProps;
   const { columns, currentView } = useSelector(state => state.allocationView);
   const { user } = useSelector(state => state.user);
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
 
   const commonAutocompleteStyles = {
