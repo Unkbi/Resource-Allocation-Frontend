@@ -402,7 +402,7 @@ export const transferResourceValidationSchema = Yup.object({
 });
 
 export const addRatesValidationSchema = Yup.object({
-  WorkLocation: Yup.string().required('Location is required'),
+  WorkLocation: Yup.string().required('Work Location is required'),
   HRLevel: Yup.string().required('HRLevel is required'),
   HourlyRate: Yup.number().required('HourlyRate is required'),
   HourlyRateCurrency: Yup.string().required('Currency is required'),
