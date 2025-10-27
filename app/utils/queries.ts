@@ -1,124 +1,155 @@
 export const allowedQueries: Record<
   string,
-  (startDate: string, endDate: string, bucket: string) => string
+  (startDate: string, endDate: string, bucket: string, projectTypeFilter: string[] | null, projectTypeGroupFilter: string[] | null, portfolioFilter: string[] | null, teamFilter: string[] | null, teamAllocMgrFilter: string[] | null, orgFilter: string[] | null) => string
 > = {
   //002 - Fractional units breakdown of resources allocation by duration trend based on project types.
-  projectFTE: (startDate, endDate, bucket) => `
-    /* ========= 1. Parameter block (extended) ========== */
+projectFTE: (startDate, endDate, bucket) => `
+/* ========= 1. Parameter block ========== */
 WITH params AS (
-    SELECT
-        DATE '${startDate}'                   AS start_date,             -- ← window start
-        DATE '${endDate}'                   AS end_date,               -- ← window end
-        '${bucket}'::text                      AS bucket,                 -- 'week' | 'month' | 'quarter'
-        'Contractor - PT'                  AS excluded_resource_type,
-        /* optional: list of project types to ignore                         */
-        /* supply '{}' to include all                                        */
-        ARRAY['Overhead', 'Internal']::text[] AS excluded_project_types
+    SELECT DATE '${startDate}' AS as_of_date
 ),
 
-/* ========= 2. Calendar buckets (unchanged) ========== */
+/* ========= 2. Compute 7-week window (3 past + current + 3 future) ========== */
+date_window AS (
+    SELECT
+        date_trunc('week', as_of_date - interval '3 week') AS start_date,
+        date_trunc('week', as_of_date + interval '2 week') + interval '6 day' AS end_date
+    FROM params
+),
+
+/* ========= 3. Weekly calendar buckets ========== */
 calendar AS (
-    SELECT
-        gs                                   AS period_start,
-        CASE p.bucket
-             WHEN 'week'    THEN gs + INTERVAL '1 week'   - INTERVAL '1 day'
-             WHEN 'month'   THEN gs + INTERVAL '1 month'  - INTERVAL '1 day'
-             WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
-        END                                  AS period_end,
-        CEIL( (DATE_PART('day',
-                 CASE p.bucket
-                      WHEN 'week'    THEN gs + INTERVAL '1 week'   - INTERVAL '1 day'
-                      WHEN 'month'   THEN gs + INTERVAL '1 month'  - INTERVAL '1 day'
-                      WHEN 'quarter' THEN gs + INTERVAL '3 months' - INTERVAL '1 day'
-                 END
-                 - gs) + 1) / 7.0 )::int     AS weeks_in_bucket
-    FROM params p
+    SELECT gs::date AS week_start
+    FROM date_window w
     JOIN LATERAL generate_series(
-            date_trunc(p.bucket, p.start_date),
-            date_trunc(p.bucket, p.end_date),
-            CASE p.bucket
-                 WHEN 'week'    THEN INTERVAL '1 week'
-                 WHEN 'month'   THEN INTERVAL '1 month'
-                 WHEN 'quarter' THEN INTERVAL '3 months'
-            END
-        ) AS gs ON TRUE
+        w.start_date,
+        w.end_date,
+        interval '1 week'
+    ) gs ON TRUE
 ),
 
-/* ========= 3. Raw allocations (weekly entries) ========== */
+/* ========= 4. Raw allocations (planned + actual) ========== */
 allocations AS (
     SELECT
-        a.__parent__                        AS resource_id,
-        a."Project"                           AS project_id,
-      	a."Period"    AS period_date,
-        a."AllocationEntered"                 AS alloc_fte
+        a.__parent__           AS resource_id,
+        a."Project"            AS project_id,
+        a."Period"             AS period_date,
+        a."AllocationEntered"  AS planned_fte,
+        a."ActualsEntered"     AS actual_fte
     FROM public.resource_allocation a
-    JOIN params p
-      ON a."Period"
-         BETWEEN p.start_date AND p.end_date
+    JOIN date_window w
+      ON a."Period" BETWEEN w.start_date AND w.end_date
 ),
 
-/* ========= 4. Eligible resources (non-contractor) ========== */
+/* ========= 5. Eligible resources (exclude contractors) ========== */
 eligible_resources AS (
     SELECT
-        r.__path__                          AS resource_id,
-        to_date(r."StartDate", 'YYYY-MM-DD')  AS start_date
+        r.__path__                           AS resource_id,
+        to_date(r."StartDate", 'YYYY-MM-DD') AS start_date
     FROM public.resource_resource r
-    JOIN params p
-      ON r."Type" <> p.excluded_resource_type
+    WHERE r."Type" <> 'Contractor - PT'
 ),
 
-/* ========= 5. Project lookup (type) ========== */
+/* ========= 6. Project lookup (project → type → typegroup) ========== */
 project_lu AS (
     SELECT
-        pr."Id"     AS project_id,
-        pr."Type"   AS project_type
+        pr."Id"       AS project_id,
+        ptg."Name"    AS project_type_group
     FROM public.resource_project pr
+    JOIN public.resource_projecttype pt
+      ON pr."Type"::uuid = pt."Id"
+    JOIN public.resource_projecttypegroup ptg
+      ON pt."Group"::uuid = ptg."Id"
 ),
 
-/* ========= 6. Allocation totals per bucket × project type ========== */
-alloc_by_proj_period AS (
+/* ========= 7. Aggregate planned + actual per week × project_type_group ========== */
+alloc_by_group_period AS (
     SELECT
-        pl.project_type,
-        date_trunc(p.bucket, alloc.period_date)     AS period_start,
-        SUM(alloc.alloc_fte)                        AS sum_alloc_fte
+        lu.project_type_group,
+        date_trunc('week', alloc.period_date)::date AS week_start,
+        SUM(alloc.planned_fte) AS planned_fte,
+        SUM(alloc.actual_fte)  AS actual_fte
     FROM allocations alloc
-    JOIN project_lu          pl ON pl.project_id = alloc.project_id
-    JOIN params              p  ON TRUE
-    JOIN eligible_resources  er ON er.resource_id = alloc.resource_id
-    WHERE (
-            pl.project_type IS NOT NULL
-        AND (p.excluded_project_types = '{}'::text[]
-             OR pl.project_type <> ALL (p.excluded_project_types))
-    )
-    GROUP BY pl.project_type, date_trunc(p.bucket, alloc.period_date)
+    JOIN project_lu         lu ON lu.project_id = alloc.project_id
+    JOIN eligible_resources er ON er.resource_id = alloc.resource_id
+    GROUP BY lu.project_type_group, date_trunc('week', alloc.period_date)
+),
+
+/* ========= 8. Add totals per week ========== */
+weekly_totals AS (
+    SELECT
+        week_start,
+        SUM(planned_fte) AS total_planned,
+        SUM(actual_fte)  AS total_actual
+    FROM alloc_by_group_period
+    GROUP BY week_start
 )
 
-/* ========= 7. Final — fractional (avg-weekly) FTE per bucket ========= */
+/* ========= 9. Final output with percentages ========== */
 SELECT
-    abpp.project_type,
-    cal.period_start::text,
+    cal.week_start::text,
+    abgp.project_type_group,
+    COALESCE(abgp.planned_fte, 0) AS planned_fte,
+    COALESCE(abgp.actual_fte,  0) AS actual_fte,
     ROUND(
-    (abpp.sum_alloc_fte            -- double precision
-     / NULLIF(cal.weeks_in_bucket, 0)
-    )::numeric                     -- ← single cast
- , 2) AS avg_weekly_fte
+    (COALESCE(abgp.planned_fte,0) * 100.0 / NULLIF(wt.total_planned,0))::numeric,
+    2
+) AS planned_pct,
+ROUND(
+    (COALESCE(abgp.actual_fte,0) * 100.0 / NULLIF(wt.total_actual,0))::numeric,
+    2
+) AS actual_pct
 FROM calendar cal
-LEFT JOIN alloc_by_proj_period abpp
-       ON abpp.period_start = cal.period_start
-ORDER BY abpp.project_type, cal.period_start;
-  `,
+LEFT JOIN alloc_by_group_period abgp
+       ON abgp.week_start = cal.week_start
+LEFT JOIN weekly_totals wt
+       ON wt.week_start = cal.week_start
+ORDER BY cal.week_start, abgp.project_type_group;
+`,
   //003 - What is my capacity available by Teams vs the Capacity allocated by duration trend?
   capacityAvailability: (
     startDate,
     endDate,
-    bucket
-  ) => `/* ========= 1. Parameter block ========== */
+    bucket,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Team Capacity vs Allocation Trend with Dynamic Filters
+-- Description: Shows team capacity available, capacity allocated, and utilization percentage with dropdown filters
+-- 
+-- REQUIRED Parameters:
+--   ${startDate}  - Start date (format: 'YYYY-MM-DD')
+--   ${endDate}    - End date (format: 'YYYY-MM-DD')
+--   ${bucket}     - Time bucket ('week', 'month', or 'quarter')
+--
+-- OPTIONAL Filter Parameters (pass NULL or empty array to skip filtering):
+--   Resource/Team Filters:
+--   ${teamFilter}          - Array of team __path__ values, e.g., ARRAY['team_path_1'] or NULL
+--   ${teamAllocMgrFilter}  - Array of team allocation manager __path__ values or NULL
+--   ${orgFilter}           - Array of organization __path__ values or NULL
+--
+--   Project Filters (filter which allocations are counted):
+--   ${projectTypeFilter}      - Array of project type names, e.g., ARRAY['RTB', 'Ongoing'] or NULL
+--   ${projectTypeGroupFilter} - Array of project type group names or NULL
+--   ${portfolioFilter}        - Array of portfolio Id (UUID) values or NULL
+
 WITH params AS (
     SELECT
-        DATE '${startDate}'                   AS start_date,             -- ← window start
-        DATE '${endDate}'                   AS end_date,               -- ← window end
-        '${bucket}'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
-        'Contractor - PT'    AS excluded_type
+        DATE '${startDate}'                   AS start_date,
+        DATE '${endDate}'                     AS end_date,
+        '${bucket}'::text                     AS bucket,
+        'Contractor - PT'                     AS excluded_type,
+        -- Resource/Team filter parameters (NULL means no filtering)
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filter parameters (NULL means no filtering)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= 2. Calendar buckets ========== */
@@ -149,36 +180,108 @@ calendar AS (
          ) AS gs ON TRUE
 ),
 
-/* ========= 3. Raw allocations (weekly entries) ========== */
+/* ========= 3. Project Filters ========== */
+-- Filter project types by project type group if specified
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+-- Filter projects by type, type group, and portfolio
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- Compare UUID to UUID
+          )
+      )
+),
+
+/* ========= 4. Raw allocations (weekly entries) - FILTERED ========== */
 allocations AS (
     SELECT
         a.__parent__                        AS resource_id,
-        a."Period"       AS period_date,
-        a."AllocationEntered"                 AS alloc_fte
+        a."Period"                          AS period_date,
+        a."AllocationEntered"               AS alloc_fte
     FROM resource_allocation a
     JOIN params p
-      ON a."Period"
-         BETWEEN p.start_date AND p.end_date
+      ON a."Period" BETWEEN p.start_date AND p.end_date
+    -- Apply project filters to allocations
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_projects fp 
+        WHERE fp.project_id = a."Project"
+    )
 ),
 
-/* ========= 4. Eligible resources (non-contractor, with start date) ========== */
+/* ========= 5. Organization Filter ========== */
+-- Filter resources by organization if org_filter is provided
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+/* ========= 6. Eligible resources (non-contractor, with start date) - FILTERED ========== */
 eligible_resources AS (
     SELECT
         r.__path__                          AS resource_id,
         to_date(r."StartDate", 'YYYY-MM-DD')  AS start_date
     FROM resource_resource r
     JOIN params p ON r."Type" <> p.excluded_type
+    -- Apply organization filter
+    WHERE EXISTS (
+        SELECT 1 
+        FROM org_filtered_resources ofr 
+        WHERE ofr.resource_id = r.__path__
+    )
 ),
 
-/* ========= 5. Resource → Team link (static) ========== */
+/* ========= 7. Team Filters ========== */
+-- Filter teams by allocation manager if team_alloc_mgr_filter is provided
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name,
+        t."AllocationManager" AS allocation_manager
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+/* ========= 8. Resource → Team link (static) - FILTERED ========== */
 team_map AS (
     SELECT
         tr."Resource" AS resource_id,
         tr."Team"     AS team_id
     FROM resource_teamresource tr
+    -- Only include teams that pass the team filters
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
 ),
 
-/* ========= 6. Dynamic team capacity for each bucket ========== */
+/* ========= 9. Dynamic team capacity for each bucket ========== */
 team_capacity AS (
     SELECT
         cal.period_start,
@@ -188,11 +291,11 @@ team_capacity AS (
     FROM calendar cal
     JOIN team_map tm           ON TRUE                    -- cross-join buckets
     JOIN eligible_resources er ON er.resource_id = tm.resource_id
-                               AND er.start_date <= cal.period_end  -- already joined
+                               AND er.start_date <= cal.period_end
     GROUP BY cal.period_start, cal.weeks_in_bucket, tm.team_id
 ),
 
-/* ========= 7. Allocation totals per bucket ========== */
+/* ========= 10. Allocation totals per bucket ========== */
 alloc_by_team_period AS (
     SELECT
         tm.team_id,
@@ -205,9 +308,9 @@ alloc_by_team_period AS (
     GROUP BY tm.team_id, date_trunc(p.bucket, alloc.period_date)
 )
 
-/* ========= 8. Capacity vs Allocation trend ========= */
+/* ========= 11. Capacity vs Allocation trend ========= */
 SELECT
-    t."Name"                                                AS team_name,
+    ft.team_name,
     cal.period_start::text,
     /* ── capacity ───────────────────────────────────── */
     (tc.headcount * cal.weeks_in_bucket)::numeric          AS capacity_available_fte,
@@ -215,28 +318,57 @@ SELECT
     COALESCE(abp.sum_alloc_fte, 0)::numeric                AS capacity_allocated_fte,
     /* optional helper % */
     ROUND(
-    COALESCE(abp.sum_alloc_fte, 0)::numeric
-    / NULLIF(tc.headcount * cal.weeks_in_bucket, 0)::numeric
-    * 100, 
-    2
-) AS utilization_pct
+        COALESCE(abp.sum_alloc_fte, 0)::numeric
+        / NULLIF(tc.headcount * cal.weeks_in_bucket, 0)::numeric
+        * 100, 
+        2
+    ) AS utilization_pct
 FROM calendar cal
 JOIN team_capacity tc
      ON tc.period_start = cal.period_start
 LEFT JOIN alloc_by_team_period abp
        ON  abp.period_start = cal.period_start
        AND abp.team_id      = tc.team_id
-JOIN resource_team t
-     ON t.__path__ = tc.team_id
-ORDER BY t."Name", cal.period_start;
-
+JOIN filtered_teams ft
+     ON ft.team_id = tc.team_id
+ORDER BY ft.team_name, cal.period_start;
 `,
   //004/005 - Which teams are over-allocated and under-allocated? (2 separate reporting charts over a period of time)
   resourceUtilization: (
     startDate,
     endDate,
-    bucket
-  ) => `/* ========= Thresholds you can tweak ========== */
+    bucket,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Resource Utilization with Classification and Dynamic Filters
+-- Description: Shows team capacity with utilization classification (over-allocated, under-allocated, balanced)
+--              Enhanced with dropdown filters for team and project filtering
+-- 
+-- REQUIRED Parameters:
+--   ${startDate}  - Start date (format: 'YYYY-MM-DD')
+--   ${endDate}    - End date (format: 'YYYY-MM-DD')
+--   ${bucket}     - Time bucket ('week', 'month', or 'quarter')
+--
+-- OPTIONAL Filter Parameters (pass NULL or empty array to skip filtering):
+--   Resource/Team Filters:
+--   ${teamFilter}          - Array of team __path__ values or NULL
+--   ${teamAllocMgrFilter}  - Array of team allocation manager __path__ values or NULL
+--   ${orgFilter}           - Array of organization __path__ values or NULL
+--
+--   Project Filters (filter which allocations are counted):
+--   ${projectTypeFilter}      - Array of project type names or NULL
+--   ${projectTypeGroupFilter} - Array of project type group names or NULL
+--   ${portfolioFilter}        - Array of portfolio Id (UUID) values or NULL
+--
+-- Classification Thresholds:
+--   > 100% = over-allocated
+--   < 80%  = under-allocated
+--   80-100% = balanced
+
 WITH limits AS (
     SELECT
         100::numeric AS over_pct,
@@ -245,10 +377,18 @@ WITH limits AS (
 /* ========= 1. Parameter block ========== */
 params AS (
     SELECT
-        DATE '${startDate}'                   AS start_date,             -- ← window start
-        DATE '${endDate}'                   AS end_date,               -- ← window end
-        '${bucket}'::text      AS bucket,                -- 'week' | 'month' | 'quarter'
-        'Contractor - PT'    AS excluded_type
+        DATE '${startDate}'                   AS start_date,
+        DATE '${endDate}'                     AS end_date,
+        '${bucket}'::text                     AS bucket,
+        'Contractor - PT'                     AS excluded_type,
+        -- Resource/Team filter parameters (NULL means no filtering)
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filter parameters (NULL means no filtering)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= 2. Calendar buckets ========== */
@@ -279,36 +419,108 @@ calendar AS (
          ) AS gs ON TRUE
 ),
 
-/* ========= 3. Raw allocations (weekly entries) ========== */
+/* ========= 3. Project Filters ========== */
+-- Filter project types by project type group if specified
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+-- Filter projects by type, type group, and portfolio
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- Compare UUID to UUID
+          )
+      )
+),
+
+/* ========= 4. Raw allocations (weekly entries) - FILTERED ========== */
 allocations AS (
     SELECT
         a.__parent__                        AS resource_id,
-        a."Period"      AS period_date,
-        a."AllocationEntered"                 AS alloc_fte
+        a."Period"                          AS period_date,
+        a."AllocationEntered"               AS alloc_fte
     FROM resource_allocation a
     JOIN params p
-      ON a."Period"
-         BETWEEN p.start_date AND p.end_date
+      ON a."Period" BETWEEN p.start_date AND p.end_date
+    -- Apply project filters to allocations
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_projects fp 
+        WHERE fp.project_id = a."Project"
+    )
 ),
 
-/* ========= 4. Eligible resources (non-contractor, with start date) ========== */
+/* ========= 5. Organization Filter ========== */
+-- Filter resources by organization if org_filter is provided
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+/* ========= 6. Eligible resources (non-contractor, with start date) - FILTERED ========== */
 eligible_resources AS (
     SELECT
         r.__path__                          AS resource_id,
         to_date(r."StartDate", 'YYYY-MM-DD')  AS start_date
     FROM resource_resource r
     JOIN params p ON r."Type" <> p.excluded_type
+    -- Apply organization filter
+    WHERE EXISTS (
+        SELECT 1 
+        FROM org_filtered_resources ofr 
+        WHERE ofr.resource_id = r.__path__
+    )
 ),
 
-/* ========= 5. Resource → Team link (static) ========== */
+/* ========= 7. Team Filters ========== */
+-- Filter teams by allocation manager if team_alloc_mgr_filter is provided
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name,
+        t."AllocationManager" AS allocation_manager
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+/* ========= 8. Resource → Team link (static) - FILTERED ========== */
 team_map AS (
     SELECT
         tr."Resource"  AS resource_id,
         tr."Team"      AS team_id
     FROM resource_teamresource tr
+    -- Only include teams that pass the team filters
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
 ),
 
-/* ========= 6. Dynamic team capacity for each bucket ========== */
+/* ========= 9. Dynamic team capacity for each bucket ========== */
 team_capacity AS (
     SELECT
         cal.period_start,
@@ -316,13 +528,13 @@ team_capacity AS (
         tm.team_id,
         COUNT(DISTINCT tm.resource_id)              AS headcount
     FROM calendar cal
-    JOIN team_map tm           ON TRUE                    -- cross-join buckets
+    JOIN team_map tm           ON TRUE
     JOIN eligible_resources er ON er.resource_id = tm.resource_id
-                               AND er.start_date <= cal.period_end  -- already joined
+                               AND er.start_date <= cal.period_end
     GROUP BY cal.period_start, cal.weeks_in_bucket, tm.team_id
 ),
 
-/* ========= 7. Allocation totals per bucket ========== */
+/* ========= 10. Allocation totals per bucket ========== */
 alloc_by_team_period AS (
     SELECT
         tm.team_id,
@@ -337,7 +549,7 @@ alloc_by_team_period AS (
 
 , baseline AS (
     SELECT
-        t."Name"                                                 AS team_name,
+        ft.team_name,
         cal.period_start::text,
         (tc.headcount * cal.weeks_in_bucket)::numeric          AS capacity_available_fte,
         COALESCE(abp.sum_alloc_fte, 0)::numeric                AS capacity_allocated_fte,
@@ -349,11 +561,11 @@ alloc_by_team_period AS (
     LEFT JOIN alloc_by_team_period abp
          ON  abp.period_start = cal.period_start
          AND abp.team_id      = tc.team_id
-    JOIN resource_team t
-         ON t.__path__ = tc.team_id
+    JOIN filtered_teams ft
+         ON ft.team_id = tc.team_id
 )
 
-/* ========= 9  Classify each row ========== */
+/* ========= 11. Classify each row ========== */
 SELECT
     b.*,
     CASE
@@ -362,36 +574,173 @@ SELECT
         ELSE                                      'balanced'
     END AS allocation_status
 FROM baseline b
-CROSS JOIN limits l;          -- gives you access to the thresholds
+CROSS JOIN limits l
+ORDER BY b.team_name, b.period_start;
 `,
   //006 -Projects budget vs Planned vs Actuals to date
   budgetVsPlanVsActual: (
     startDate,
     endDate,
-    bucket
-  ) => `/* ======== 1.  Parameters you can tweak ============================= */
+    bucket,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null
+  ) => `-- ENHANCED QUERY: Budget vs Plan vs Actual with Dynamic Filters
+-- Description: Compares project budget against planned costs and actual costs to date
+--              Enhanced with Project and Resource entity filters
+-- 
+-- REQUIRED Parameters:
+--   ${startDate}  - Start date (format: 'YYYY-MM-DD')
+--   ${endDate}    - End date (format: 'YYYY-MM-DD')
+--
+-- OPTIONAL Filter Parameters (pass NULL or empty array to skip filtering):
+--   Project Filters:
+--   ${projectTypeFilter}      - Array of project type names, e.g., ARRAY['RTB', 'Ongoing'] or NULL
+--   ${projectTypeGroupFilter} - Array of project type group names or NULL
+--   ${portfolioFilter}        - Array of portfolio Id (UUID) values or NULL
+--
+--   Resource/Team Filters (filter which resources' costs are counted):
+--   ${teamFilter}          - Array of team __path__ values or NULL
+--   ${teamAllocMgrFilter}  - Array of team allocation manager __path__ values or NULL
+--   ${orgFilter}           - Array of organization __path__ values or NULL
+--
+-- Output:
+--   project_id: UUID of the project
+--   project_name: Name of the project
+--   currency: Currency code
+--   budget_total: Total project budget
+--   planned_to_date: Sum of planned costs in the date range (from filtered resources)
+--   actuals_to_date: Sum of actual costs in the date range (from filtered resources)
 
 WITH params AS (
     SELECT
-        DATE '${startDate}'                   AS start_date,             -- ← window start
-        DATE '${endDate}'                     AS end_date
+        DATE '${startDate}'                   AS start_date,
+        DATE '${endDate}'                     AS end_date,
+        -- Project filter parameters
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter,
+        -- Resource/Team filter parameters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter
 ),
 
-/* ======== 2.  Allocation-cost rows inside the window =============== */
+/* ======== 2. PROJECT TYPE FILTERS ================================== */
+-- Filter project types by project type group and name
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+/* ======== 3. PROJECT FILTERS ======================================= */
+-- Filter projects by type, type group, and portfolio
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"
+          )
+      )
+),
+
+/* ======== 4. RESOURCE/TEAM FILTERS ================================= */
+-- Filter resources by organization if org_filter is provided
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+-- Filter teams by allocation manager if team_alloc_mgr_filter is provided
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+-- Team-resource mapping (filtered)
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+-- Eligible resources (with org and team filters)
+eligible_resources AS (
+    SELECT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    WHERE r.__is_deleted__ = FALSE
+      -- Apply organization filter
+      AND EXISTS (
+          SELECT 1 
+          FROM org_filtered_resources ofr 
+          WHERE ofr.resource_id = r.__path__
+      )
+      -- Apply team filter
+      AND EXISTS (
+          SELECT 1
+          FROM team_filtered_resources tfr
+          WHERE tfr.resource_id = r.__path__
+      )
+),
+
+/* ======== 5. ALLOCATION-COST ROWS (FILTERED) ======================= */
 alloc_cost AS (
     SELECT
-        ac."Project" ::uuid                       AS project_id,
-        ac."CostCurrency"                         AS currency,
-        COALESCE(ac."PlannedCost" , 0)            AS planned_cost,
-        COALESCE(ac."ActualsCost", 0)             AS actual_cost
+        ac."Project"::uuid                       AS project_id,
+        ac."CostCurrency"                        AS currency,
+        COALESCE(ac."PlannedCost", 0)            AS planned_cost,
+        COALESCE(ac."ActualsCost", 0)            AS actual_cost
     FROM public.resource_allocationcost ac
     JOIN params p
       ON to_date(ac."Period", 'YYYY-MM-DD')
          BETWEEN p.start_date AND p.end_date
-	where ac.__is_deleted__ is false
+    WHERE ac.__is_deleted__ IS FALSE
+      -- Apply project filters
+      AND EXISTS (
+          SELECT 1 
+          FROM filtered_projects fp 
+          WHERE fp.project_id = ac."Project"::uuid
+      )
+      -- Apply resource filters (only count costs from filtered resources)
+      AND EXISTS (
+          SELECT 1
+          FROM eligible_resources er
+          WHERE er.resource_id = ac."ResourceRef"
+      )
 ),
 
-/* ======== 3.  Sum plan / actual to-date per project ================ */
+/* ======== 6. SUM PLAN / ACTUAL TO-DATE PER PROJECT ================= */
 cost_by_project AS (
     SELECT
         project_id,
@@ -402,18 +751,24 @@ cost_by_project AS (
     GROUP BY project_id, currency
 ),
 
-/* ======== 4.  Project master with budget =========================== */
+/* ======== 7. PROJECT MASTER WITH BUDGET (FILTERED) ================= */
 project_budget AS (
     SELECT
-        pr."Id"          AS project_id,
-        pr."Name"        AS project_name,
-        pr."Budget"      AS budget,     -- assumed same currency as allocation rows
-		pr."BudgetCurrency" AS currency
+        pr."Id"             AS project_id,
+        pr."Name"           AS project_name,
+        pr."Budget"         AS budget,
+        pr."BudgetCurrency" AS currency
     FROM public.resource_project pr
-	where __is_deleted__ is false
+    WHERE pr.__is_deleted__ IS FALSE
+      -- Apply project filters
+      AND EXISTS (
+          SELECT 1 
+          FROM filtered_projects fp 
+          WHERE fp.project_id = pr."Id"
+      )
 )
 
-/* ======== 5.  Final report ========================================= */
+/* ======== 8. FINAL REPORT ========================================== */
 SELECT
     pb.project_id,
     pb.project_name,
@@ -424,20 +779,97 @@ SELECT
 FROM project_budget pb
 LEFT JOIN cost_by_project cbp
        ON cbp.project_id = pb.project_id
-where cbp.planned_to_date is not null;
+WHERE cbp.planned_to_date IS NOT NULL  -- Only show projects with cost data
+ORDER BY pb.project_name;
 `,
   //(007) Teams whose Actuals are most deviating from the Planned by duration trend?
   resourceActualsDeviation: (
     startDate,
     endDate,
-    bucket
-  ) => `/* ========= 1. Parameters ========================================== */
+    bucket,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Resource Actuals Deviation with Dynamic Filters
+-- Entity Type: Resource (6 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio
+
 WITH params AS (
     SELECT
         DATE '${startDate}'                   AS start_date,             -- ← window start
         DATE '${endDate}'                     AS end_date,               -- ← window end
         '${bucket}'::text                     AS bucket,                 -- 'week' | 'month' | 'quarter'
-        ''                                    AS excluded_resource_type
+        ''                                    AS excluded_resource_type,
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters (to filter which allocations/projects are counted)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
 ),
 
 /* ========= 2. Calendar buckets ==================================== */
@@ -475,10 +907,19 @@ alloc AS (
         a.__parent__                          AS resource_id,
         a."Period"                            AS period_date,
         COALESCE(a."AllocationEntered", 0)    AS plan_fte,
-        COALESCE(a."ActualsEntered", 0)       AS actual_fte
+        COALESCE(a."ActualsEntered", 0)        AS actual_fte
     FROM public.resource_allocation a
     JOIN params p
       ON a."Period" BETWEEN p.start_date AND p.end_date
+    -- Apply project filter (only if project filters are specified)
+    WHERE (
+        (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL)
+        OR EXISTS (
+            SELECT 1
+            FROM filtered_projects fp
+            WHERE fp.project_id = a."Project"::uuid
+        )
+    )
 ),
 
 /* ========= 4. Eligible resources ================================== */
@@ -490,6 +931,25 @@ eligible_resources AS (
     JOIN params p
       ON r."Type" <> p.excluded_resource_type
      AND to_date(r."StartDate", 'YYYY-MM-DD') <= p.end_date
+     AND r.__is_deleted__ = false
+      -- Apply organization filter (only if org_filter is specified)
+      AND (
+          p.org_filter IS NULL 
+          OR EXISTS (
+              SELECT 1 
+              FROM org_filtered_resources ofr 
+              WHERE ofr.resource_id = r.__path__
+          )
+      )
+      -- Apply team filter (only if team_filter or team_alloc_mgr_filter is specified)
+      AND (
+          (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM team_filtered_resources tfr
+              WHERE tfr.resource_id = r.__path__
+          )
+      )
 ),
 
 /* ========= 5. Company-wide plan / delta per bucket ================ */
@@ -521,20 +981,64 @@ SELECT
 FROM calendar cal
 JOIN company_dev cd
   ON cd.period_start = cal.period_start
-ORDER BY cal.period_start;
-`,
+ORDER BY cal.period_start;`,
 
   //(008) How much units is being actuals on unapproved projects by team?
   unapprovedProjectActualsByTeam: (
     startDate,
     endDate,
-    bucket
-  ) => `/* ========= 1. PARAMETERS ========================================== */
+    bucket,
+    resourceFilter = null,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Unapproved Project Actuals by Team with Dynamic Filters
+-- Description: Categorizes actuals into Approved Work, Unplanned Projects, Other Work, and Personal Time
+--              Enhanced with all 8 dropdown filters for Actuals entity
+-- 
+-- REQUIRED Parameters:
+--   ${startDate}  - Start date (format: 'YYYY-MM-DD')
+--   ${endDate}    - End date (format: 'YYYY-MM-DD')
+--   ${bucket}     - Time bucket ('week', 'month', or 'quarter')
+--
+-- OPTIONAL Filter Parameters (pass NULL or empty array to skip filtering):
+--   Resource Filters:
+--   ${resourceFilter}      - Array of resource __path__ values (UUIDs) or NULL
+--   ${teamFilter}          - Array of team __path__ values or NULL
+--   ${teamAllocMgrFilter}  - Array of team allocation manager __path__ values or NULL
+--   ${orgFilter}           - Array of organization __path__ values or NULL
+--
+--   Project Filters:
+--   ${projectFilter}          - Array of project Id (UUID) values or NULL
+--   ${projectTypeFilter}      - Array of project type names or NULL
+--   ${projectTypeGroupFilter} - Array of project type group names or NULL
+--   ${portfolioFilter}        - Array of portfolio Id (UUID) values or NULL
+--
+-- Categories:
+--   - Approved Work: Actuals that match or are less than allocation
+--   - Unplanned Projects: Actuals exceeding allocation
+--   - Other Work: Actuals on 'Other Work' project
+--   - Personal Time: Actuals on 'Personal Time' project
+
 WITH params AS (
     SELECT
-        DATE '${startDate}' AS start_date,        -- ← window start
-        DATE '${endDate}'   AS end_date,          -- ← window end
-        '${bucket}'::text   AS bucket             -- 'week' | 'month' | 'quarter'
+        DATE '${startDate}' AS start_date,
+        DATE '${endDate}'   AS end_date,
+        '${bucket}'::text   AS bucket,
+        -- Resource/Team filter parameters
+        ${resourceFilter}::text[]             AS resource_filter,
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filter parameters
+        ${projectFilter}::uuid[]              AS project_filter,
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= 2. CALENDAR BUCKETS ==================================== */
@@ -566,15 +1070,96 @@ calendar AS (
     ) AS gs ON TRUE
 ),
 
-/* ========= 3. TEAM MAP  (resource ➜ team) ========================= */
+/* ========= 3. PROJECT FILTERS ===================================== */
+-- Filter project types by project type group if specified
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+-- Filter projects by type, type group, and portfolio
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.project_filter IS NULL OR proj."Id" = ANY(p.project_filter))
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"
+          )
+      )
+),
+
+/* ========= 4. RESOURCE FILTERS ==================================== */
+-- Filter resources by organization if org_filter is provided
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+-- Eligible resources (with organization and direct resource filters)
+eligible_resources AS (
+    SELECT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    JOIN params p ON TRUE
+    WHERE r.__is_deleted__ = false
+      AND (p.resource_filter IS NULL OR r.__path__ = ANY(p.resource_filter))
+      AND EXISTS (
+          SELECT 1 
+          FROM org_filtered_resources ofr 
+          WHERE ofr.resource_id = r.__path__
+      )
+),
+
+/* ========= 5. TEAM FILTERS ======================================== */
+-- Filter teams by allocation manager if team_alloc_mgr_filter is provided
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+/* ========= 6. TEAM MAP  (resource ➜ team) - FILTERED ============== */
 team_map AS (
     SELECT
         tr."Resource" AS resource_id,
         tr."Team"     AS team_id
     FROM public.resource_teamresource tr
+    -- Only include filtered teams
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+    -- Only include eligible resources
+    AND EXISTS (
+        SELECT 1
+        FROM eligible_resources er
+        WHERE er.resource_id = tr."Resource"
+    )
 ),
 
-/* ========= 4. ALLOCATION ROWS  (add team_id) ====================== */
+/* ========= 7. ALLOCATION ROWS  (add team_id) - FILTERED =========== */
 alloc AS (
     SELECT
         CASE p.bucket
@@ -589,12 +1174,19 @@ alloc AS (
     FROM public.resource_allocation a
     JOIN params p
       ON a."Period" BETWEEN p.start_date AND p.end_date
-    JOIN team_map tm ON tm.resource_id = a.__parent__
+    JOIN team_map tm 
+      ON tm.resource_id = a.__parent__
     JOIN public.resource_project pr
       ON pr."Id" = a."Project"::uuid
+    -- Apply project filters
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_projects fp 
+        WHERE fp.project_id = a."Project"::uuid
+    )
 ),
 
-/* ========= 5. BUCKET TOTALS BY CATEGORY & TEAM ==================== */
+/* ========= 8. BUCKET TOTALS BY CATEGORY & TEAM ==================== */
 bucket_totals AS (
     SELECT
         period_start,
@@ -626,19 +1218,11 @@ bucket_totals AS (
             END)                                                     AS unplanned_units
     FROM alloc
     GROUP BY period_start, team_id
-),
-
-/* ========= 6. TEAM NAME LOOKUP ==================================== */
-teams AS (
-    SELECT
-        t.__path__ AS team_id,
-        t."Name"     AS team_name
-    FROM public.resource_team t
 )
 
-/* ========= 7. UNPIVOT & % SHARE  ================================== */
+/* ========= 9. UNPIVOT & % SHARE  ================================== */
 SELECT
-    tm.team_name,
+    ft.team_name,
     cal.period_start::text,
     cat.category,
     cat.units,
@@ -651,8 +1235,8 @@ SELECT
 FROM calendar cal
 JOIN bucket_totals bt
       ON bt.period_start = cal.period_start
-JOIN teams tm
-      ON tm.team_id      = bt.team_id
+JOIN filtered_teams ft
+      ON ft.team_id      = bt.team_id
 /* unpivot four category columns into rows */
 CROSS JOIN LATERAL (
     VALUES
@@ -661,7 +1245,7 @@ CROSS JOIN LATERAL (
         ('Other Work'        , COALESCE(bt.other_units    , 0)),
         ('Personal Time'     , COALESCE(bt.personal_units , 0))
 ) AS cat(category, units)
-ORDER BY tm.team_name,
+ORDER BY ft.team_name,
          cal.period_start,
          CASE cat.category
               WHEN 'Approved Work'      THEN 1
@@ -672,46 +1256,543 @@ ORDER BY tm.team_name,
 `,
 
   //(009)Ratio of employees (FTE) to contractors stacked by onshore and offshore resources
-  resourceFTEContractorRatio: (startDate, endDate, bucket) => `SELECT
-    "LocationCategory"                  AS shore_flag,
-    COUNT(DISTINCT __path__) FILTER (WHERE "Type" = 'FTE')   AS fte_cnt,
-    COUNT(DISTINCT __path__) FILTER (WHERE "Type" <> 'FTE')  AS contractor_cnt
-FROM public.resource_resource
-where __is_deleted__ is false
-and "Status" = 'Active'
-GROUP BY shore_flag
+  resourceFTEContractorRatio: (startDate, endDate, bucket,teamFilter, teamAllocMgrFilter, orgFilter, projectTypeFilter, projectTypeGroupFilter, portfolioFilter) => `-- ENHANCED QUERY: Resource FTE Contractor Ratio with Dynamic Filters
+-- Entity Type: Resource (6 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio
+
+WITH params AS (
+    SELECT
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters (to filter which resources are counted based on their project assignments)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+eligible_resources AS (
+    SELECT DISTINCT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    JOIN params p ON TRUE
+    WHERE r.__is_deleted__ = false
+      AND r."Status" = 'Active'
+      -- Apply organization filter (only if org_filter is specified)
+      AND (
+          p.org_filter IS NULL 
+          OR EXISTS (
+              SELECT 1 
+              FROM org_filtered_resources ofr 
+              WHERE ofr.resource_id = r.__path__
+          )
+      )
+      -- Apply team filter (only if team_filter or team_alloc_mgr_filter is specified)
+      AND (
+          (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM team_filtered_resources tfr
+              WHERE tfr.resource_id = r.__path__
+          )
+      )
+      -- Apply project filter (only if project filters are specified)
+      AND (
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM resource_allocation a
+              JOIN filtered_projects fp ON fp.project_id = a."Project"::uuid
+              WHERE a.__parent__ = r.__path__
+                AND a.__is_deleted__ = false
+          )
+      )
+)
+
+/* ========= Main Query ========== */
+SELECT
+    r."LocationCategory"                  AS shore_flag,
+    COUNT(DISTINCT r.__path__) FILTER (WHERE r."Type" = 'FTE')   AS fte_cnt,
+    COUNT(DISTINCT r.__path__) FILTER (WHERE r."Type" <> 'FTE')  AS contractor_cnt
+FROM public.resource_resource r
+JOIN params p ON TRUE
+WHERE r.__is_deleted__ = false
+  AND r."Status" = 'Active'
+  -- Apply all filters through eligible_resources
+  AND EXISTS (
+      SELECT 1
+      FROM eligible_resources er
+      WHERE er.resource_id = r.__path__
+  )
+GROUP BY r."LocationCategory";
 `,
   //(010) Total active projects breakdown by project type
   activeProjectsByType: (
     startDate,
     endDate,
-    bucket
-  ) => `select "Name" as "_type" , "Color", count(*) from public.resource_projecttype
-where "Status" = 'Active'
-group by "Name", "Color"`,
+    bucket,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null
+  ) => `-- ENHANCED QUERY: Active Projects by Type with Dynamic Filters
+-- Entity Type: Project (6 filters required)
+-- Filters: Project Type, Project Type Group, Portfolio, Team, Team Alloc Mgr, Org
+
+WITH params AS (
+    SELECT
+        -- Project filters
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter,
+        -- Resource/Team filters (to filter which projects are counted based on their resource assignments)
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+eligible_resources AS (
+    SELECT DISTINCT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    JOIN params p ON TRUE
+    WHERE r.__is_deleted__ = false
+      -- Apply organization filter (only if org_filter is specified)
+      AND (
+          p.org_filter IS NULL 
+          OR EXISTS (
+              SELECT 1 
+              FROM org_filtered_resources ofr 
+              WHERE ofr.resource_id = r.__path__
+          )
+      )
+      -- Apply team filter (only if team_filter or team_alloc_mgr_filter is specified)
+      AND (
+          (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM team_filtered_resources tfr
+              WHERE tfr.resource_id = r.__path__
+          )
+      )
+)
+
+/* ========= Main Query ========== */
+SELECT
+    ptg."Name" as "_type",
+    pt."Color",
+    COUNT(rp."Id") as count
+FROM public.resource_project rp
+JOIN public.resource_projecttype pt
+  ON rp."Type"::uuid = pt."Id"
+JOIN public.resource_projecttypegroup ptg
+  ON pt."Group"::uuid = ptg."Id"
+JOIN params p ON TRUE
+WHERE pt."Status" = 'Active'
+  -- Apply project filters (only if project filters are specified)
+  AND (
+      (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL)
+      OR EXISTS (
+          SELECT 1
+          FROM filtered_projects fp
+          WHERE fp.project_id = rp."Id"
+      )
+  )
+  -- Apply resource filters (only if resource filters are specified)
+  AND (
+      (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL AND p.org_filter IS NULL)
+      OR EXISTS (
+          SELECT 1
+          FROM resource_allocation a
+          JOIN eligible_resources er ON er.resource_id = a.__parent__
+          WHERE a."Project"::uuid = rp."Id"
+            AND a.__is_deleted__ = false
+      )
+  )
+GROUP BY ptg."Name", pt."Color"
+ORDER BY count DESC;`,
 
   //(011) Total headcount breakdown by FTE vs contractors
   totalHeadcount: (
     startDate,
     endDate,
-    bucket
-  ) => `select "Type" as "_type",count(*) from public.resource_resource
-where "Status" = 'Active'
-and __is_deleted__ is false
-group by "Type"`,
+    bucket,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Total Headcount with Dynamic Filters
+-- Entity Type: Resource (6 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio
+
+WITH params AS (
+    SELECT
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters (to filter which resources are counted based on their project assignments)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+eligible_resources AS (
+    SELECT DISTINCT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    JOIN params p ON TRUE
+    WHERE r.__is_deleted__ = false
+      AND r."Status" = 'Active'
+      -- Apply organization filter (only if org_filter is specified)
+      AND (
+          p.org_filter IS NULL 
+          OR EXISTS (
+              SELECT 1 
+              FROM org_filtered_resources ofr 
+              WHERE ofr.resource_id = r.__path__
+          )
+      )
+      -- Apply team filter (only if team_filter or team_alloc_mgr_filter is specified)
+      AND (
+          (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM team_filtered_resources tfr
+              WHERE tfr.resource_id = r.__path__
+          )
+      )
+      -- Apply project filter (only if project filters are specified)
+      AND (
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM resource_allocation a
+              JOIN filtered_projects fp ON fp.project_id = a."Project"::uuid
+              WHERE a.__parent__ = r.__path__
+                AND a.__is_deleted__ = false
+          )
+      )
+)
+
+/* ========= Main Query ========== */
+SELECT 
+    r."Type" as "_type",
+    COUNT(*) as count
+FROM public.resource_resource r
+JOIN params p ON TRUE
+WHERE r."Status" = 'Active'
+  AND r.__is_deleted__ = false
+  -- Apply all filters through eligible_resources
+  AND EXISTS (
+      SELECT 1
+      FROM eligible_resources er
+      WHERE er.resource_id = r.__path__
+  )
+GROUP BY r."Type";`,
 
   //(0011) - Unplanned Allocation Units
   unapprovedProjectAllocation: (
     startDate,
     endDate,
-    bucket
-  ) => `/* ========= 1. PARAMETERS ========================================== */
+    bucket,
+    resourceFilter = null,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Unapproved Project Allocation with Dynamic Filters
+-- Entity Type: Allocation (8 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio, Project, Resource
 
 WITH params AS (
     SELECT
         DATE '${startDate}'                   AS start_date,             -- ← window start
         DATE '${endDate}'                   AS end_date,               -- ← window end
-        '${bucket}'::text      AS bucket           -- 'week' | 'month' | 'quarter'
+        '${bucket}'::text      AS bucket,           -- 'week' | 'month' | 'quarter'
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter,
+        ${projectFilter}::uuid[]              AS project_filter,
+        -- Resource filter
+        ${resourceFilter}::text[]             AS resource_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (p.project_filter IS NULL OR proj."Id" = ANY(p.project_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+eligible_resources AS (
+    SELECT DISTINCT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    JOIN params p ON TRUE
+    WHERE r.__is_deleted__ = false
+      AND (p.resource_filter IS NULL OR r.__path__ = ANY(p.resource_filter))
+      -- Apply organization filter (only if org_filter is specified)
+      AND (
+          p.org_filter IS NULL 
+          OR EXISTS (
+              SELECT 1 
+              FROM org_filtered_resources ofr 
+              WHERE ofr.resource_id = r.__path__
+          )
+      )
+      -- Apply team filter (only if team_filter or team_alloc_mgr_filter is specified)
+      AND (
+          (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM team_filtered_resources tfr
+              WHERE tfr.resource_id = r.__path__
+          )
+      )
 ),
 
 /* ========= 2. CALENDAR BUCKETS ==================================== */
@@ -748,9 +1829,22 @@ alloc AS (
          BETWEEN p.start_date AND p.end_date
     JOIN public.resource_project pr
       ON pr."Id" = a."Project"::uuid
-)
---select sum(actual_units) from alloc group by period_start
-,
+    -- Apply resource filter
+    WHERE EXISTS (
+        SELECT 1
+        FROM eligible_resources er
+        WHERE er.resource_id = a.__parent__
+    )
+    -- Apply project filter (only if project filters are specified)
+    AND (
+        (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL AND p.project_filter IS NULL)
+        OR EXISTS (
+            SELECT 1
+            FROM filtered_projects fp
+            WHERE fp.project_id = pr."Id"
+        )
+    )
+),
 
 /* ========= 4. BUCKET TOTALS BY CATEGORY =========================== */
 bucket_totals AS (
@@ -784,7 +1878,7 @@ bucket_totals AS (
     FROM alloc
     GROUP BY period_start
 )
---select * from bucket_totals
+
 /* ========= 5. UNPIVOT & % SHARE =================================== */
 SELECT
     cal.period_start::text,
@@ -812,17 +1906,60 @@ ORDER BY cal.period_start,
               WHEN 'Unplanned Projects' THEN 2
               WHEN 'Other Work'         THEN 3
               WHEN 'Personal Time'      THEN 4
-         END;
-         `,
+         END;`,
 
   //001 - Percentage of coverage of resource allocation by teams by duration trend (duration trend is always weeks/months/quarters). Exclude PT contractor allocation
-  resourceCoverage: (startDate, endDate, bucket) => `
-    WITH params AS (
+  resourceCoverage: (startDate, endDate, bucket, teamFilter = null, teamAllocMgrFilter = null, orgFilter = null, projectTypeFilter = null, projectTypeGroupFilter = null, portfolioFilter = null) => `-- ENHANCED QUERY: Team Coverage Report with Dynamic Filters
+-- Description: Calculates team allocation coverage percentage over time periods with dropdown filters
+-- 
+-- REQUIRED Parameters:
+--   ${startDate}  - Start date (format: 'YYYY-MM-DD')
+--   ${endDate}    - End date (format: 'YYYY-MM-DD')
+--   ${bucket}     - Time bucket ('week', 'month', or 'quarter')
+--
+-- OPTIONAL Filter Parameters (pass NULL or empty array to skip filtering):
+--   Resource/Team Filters:
+--   ${teamFilter}          - Array of team __path__ values, e.g., ARRAY['team_path_1', 'team_path_2'] or NULL
+--   ${teamAllocMgrFilter}  - Array of team allocation manager __path__ values or NULL
+--   ${orgFilter}           - Array of organization __path__ values or NULL
+--
+--   Project Filters (filter which allocations are counted):
+--   ${projectTypeFilter}      - Array of project type names, e.g., ARRAY['Development', 'Maintenance'] or NULL
+--   ${projectTypeGroupFilter} - Array of project type group names or NULL
+--   ${portfolioFilter}        - Array of portfolio Id (UUID) values or NULL
+--
+-- Example Usage:
+-- 1. No filters (show all teams, all allocations):
+--    All filters = NULL
+--
+-- 2. Filter by specific teams:
+--    ${teamFilter} = ARRAY['Resource$Team/uuid-here']
+--
+-- 3. Filter by project portfolio (only count allocations to Portfolio X):
+--    ${portfolioFilter} = ARRAY['portfolio-uuid-here']
+--
+-- 4. Filter by project type group (only count allocations to certain project types):
+--    ${projectTypeGroupFilter} = ARRAY['Development', 'Support']
+--
+-- 5. Combine multiple filters:
+--    ${teamFilter} = ARRAY['team1', 'team2']
+--    ${portfolioFilter} = ARRAY['portfolio1']
+--    (Shows coverage for team1 and team2, but only for allocations to portfolio1)
+
+WITH params AS (
         SELECT
-        DATE '${startDate}'                   AS start_date,             -- ← window start
-        DATE '${endDate}'                   AS end_date,               -- ← window end
-        '${bucket}'::text       AS bucket,
-            'Contractor - PT'  AS excluded_type
+            DATE '${startDate}'                   AS start_date,
+            DATE '${endDate}'                     AS end_date,
+            '${bucket}'::text                     AS bucket,
+            'Contractor - PT'                     AS excluded_type,
+            -- Resource/Team filter parameters (NULL means no filtering)
+            ${teamFilter}::text[]                 AS team_filter,
+            ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+            ${orgFilter}::text[]                  AS org_filter,
+            -- Project filter parameters (NULL means no filtering)
+            ${projectTypeFilter}::text[]          AS project_type_filter,
+            ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+            ${portfolioFilter}::uuid[]            AS portfolio_filter
     ),
     calendar AS (
         SELECT
@@ -850,6 +1987,34 @@ ORDER BY cal.period_start,
                 END
              ) AS gs ON TRUE
     ),
+    -- Filter project types by project type group if specified
+    filtered_project_types AS (
+        SELECT
+            pt."Id"::text AS type_id  -- Store UUID as text to match project.Type
+        FROM resource_projecttype pt
+        JOIN params p ON TRUE
+        WHERE pt.__is_deleted__ = false
+          AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+          AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+    ),
+    -- Filter projects by type, type group, and portfolio
+    filtered_projects AS (
+        SELECT
+            proj."Id" AS project_id
+        FROM resource_project proj
+        JOIN params p ON TRUE
+        WHERE proj.__is_deleted__ = false
+          AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+          AND (
+              -- If project type filters are null, include all projects
+              (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+              OR EXISTS (
+                  SELECT 1 
+                  FROM filtered_project_types fpt 
+                  WHERE fpt.type_id = proj."Type"  -- Compare UUID to UUID
+              )
+          )
+    ),
     allocations AS (
         SELECT
             a.__parent__ AS resource_id,
@@ -859,6 +2024,21 @@ ORDER BY cal.period_start,
         JOIN params p
           ON a."Period"
              BETWEEN p.start_date AND p.end_date
+        -- Apply project filters to allocations
+        WHERE EXISTS (
+            SELECT 1 
+            FROM filtered_projects fp 
+            WHERE fp.project_id = a."Project"
+        )
+    ),
+    -- Filter resources by organization if org_filter is provided
+    org_filtered_resources AS (
+        SELECT DISTINCT
+            orgr."Resource" AS resource_id
+        FROM resource_organizationresource orgr
+        JOIN params p ON TRUE
+        WHERE p.org_filter IS NULL 
+           OR orgr."Organization" = ANY(p.org_filter)
     ),
     eligible_resources AS (
         SELECT
@@ -866,12 +2046,35 @@ ORDER BY cal.period_start,
             to_date(r."StartDate", 'YYYY-MM-DD') AS start_date
         FROM resource_resource r
         JOIN params p ON r."Type" <> p.excluded_type
+        -- Apply organization filter
+        WHERE EXISTS (
+            SELECT 1 
+            FROM org_filtered_resources ofr 
+            WHERE ofr.resource_id = r.__path__
+        )
+    ),
+    -- Filter teams by allocation manager if team_alloc_mgr_filter is provided
+    filtered_teams AS (
+        SELECT
+            t.__path__ AS team_id,
+            t."Name" AS team_name,
+            t."AllocationManager" AS allocation_manager
+        FROM resource_team t
+        JOIN params p ON TRUE
+        WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+          AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
     ),
     team_map AS (
         SELECT
             tr."Resource" AS resource_id,
             tr."Team"  AS team_id
         FROM resource_teamresource tr
+        -- Only include teams that pass the team filters
+        WHERE EXISTS (
+            SELECT 1 
+            FROM filtered_teams ft 
+            WHERE ft.team_id = tr."Team"
+        )
     ),
     team_capacity AS (
         SELECT
@@ -896,7 +2099,7 @@ ORDER BY cal.period_start,
         GROUP BY tm.team_id, date_trunc(p.bucket, alloc.period_date)
     )
     SELECT
-        t."Name" AS team_name,
+        ft.team_name,
         cal.period_start::text,
         ROUND(
             (COALESCE(abp.sum_alloc_fte, 0)
@@ -907,33 +2110,357 @@ ORDER BY cal.period_start,
     JOIN team_capacity tc ON tc.period_start = cal.period_start
     LEFT JOIN alloc_by_team_period abp
            ON abp.period_start = cal.period_start AND abp.team_id = tc.team_id
-    JOIN resource_team t ON t.__path__ = tc.team_id
-    ORDER BY t."Name", cal.period_start;
-  `,
+    JOIN filtered_teams ft ON ft.team_id = tc.team_id
+    ORDER BY ft.team_name, cal.period_start;
+`,
   activeProjects: (
     startDate,
     endDate,
-    bucket
-  ) => `SELECT count(*) as Active_project
-  FROM public.resource_project
-  WHERE __is_deleted__ is false
-    AND "Status" IN ('Active', 'Approved');`,
+    bucket,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null
+  ) => `-- ENHANCED QUERY: Active Projects with Dynamic Filters
+-- Entity Type: Project (6 filters required)
+-- Filters: Project Type, Project Type Group, Portfolio, Team, Team Alloc Mgr, Org
+
+WITH params AS (
+    SELECT
+        -- Project filters
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter,
+        -- Resource filters (to filter which resources' allocations count)
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND proj."Status" IN ('Active', 'Approved')
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+eligible_resources AS (
+    SELECT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    WHERE r.__is_deleted__ = FALSE
+      -- Apply organization filter
+      AND EXISTS (
+          SELECT 1 
+          FROM org_filtered_resources ofr 
+          WHERE ofr.resource_id = r.__path__
+      )
+      -- Apply team filter
+      AND EXISTS (
+          SELECT 1
+          FROM team_filtered_resources tfr
+          WHERE tfr.resource_id = r.__path__
+      )
+)
+
+/* ========= Main Query ========== */
+SELECT 
+    COUNT(*) as Active_project
+FROM filtered_projects fp
+JOIN params p ON TRUE
+-- Apply resource filters (for Project entity, resource filters determine which projects are counted)
+WHERE (
+    (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL AND p.org_filter IS NULL)
+    OR EXISTS (
+        SELECT 1
+        FROM resource_allocation a
+        JOIN eligible_resources er ON er.resource_id = a.__parent__
+        WHERE a."Project"::uuid = fp.project_id
+          AND a.__is_deleted__ = false
+    )
+);`,
 
   activeResources: (
     startDate,
     endDate,
-    bucket
-  ) => `SELECT count(*) as Active_Resource
-  FROM public.resource_resource
-  WHERE __is_deleted__ is false
-    AND "Status" = 'Active';`,
+    bucket,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Active Resources with Dynamic Filters
+-- Entity Type: Resource (6 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio
 
-  actualsConfirmed: (startDate, endDate, bucket) => `WITH params AS (
+WITH params AS (
+    SELECT
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters (to filter which allocations/projects are counted)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+)
+
+/* ========= Main Query ========== */
+SELECT 
+    COUNT(*) as Active_Resource
+FROM resource_resource r
+JOIN params p ON TRUE
+WHERE r.__is_deleted__ = false
+  AND r."Status" = 'Active'
+  -- Apply organization filter
+  AND EXISTS (
+      SELECT 1 
+      FROM org_filtered_resources ofr 
+      WHERE ofr.resource_id = r.__path__
+  )
+  -- Apply team filter
+  AND EXISTS (
+      SELECT 1
+      FROM team_filtered_resources tfr
+      WHERE tfr.resource_id = r.__path__
+  )
+  -- Apply project filters (for Resource entity, project filters determine which allocations count)
+  -- Only apply project filter if project filters are specified
+  AND (
+      (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL)
+      OR EXISTS (
+          SELECT 1
+          FROM resource_allocation a
+          JOIN filtered_projects fp ON fp.project_id = a."Project"::uuid
+          WHERE a.__parent__ = r.__path__
+            AND a.__is_deleted__ = false
+      )
+  );`,
+
+  actualsConfirmed: (startDate, endDate, bucket, resourceFilter = null, teamFilter = null, teamAllocMgrFilter = null, orgFilter = null, projectTypeFilter = null, projectTypeGroupFilter = null, portfolioFilter = null, projectFilter = null) => `-- ENHANCED QUERY: Actuals Confirmed with Dynamic Filters
+-- Entity Type: Actuals (8 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio, Project, Resource
+
+WITH params AS (
     SELECT
         DATE '${startDate}'                   AS start_date,             -- ← window start
         DATE '${endDate}'                   AS end_date,               -- ← window end
-        '${bucket}'::text       AS bucket        -- 'week' | 'month' | 'quarter'
+        '${bucket}'::text       AS bucket,        -- 'week' | 'month' | 'quarter'
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter,
+        ${projectFilter}::uuid[]              AS project_filter,
+        -- Resource filter
+        ${resourceFilter}::text[]             AS resource_filter
 ),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (p.project_filter IS NULL OR proj."Id" = ANY(p.project_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+eligible_resources AS (
+    SELECT DISTINCT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    JOIN params p ON TRUE
+    WHERE r.__is_deleted__ = false
+      AND (p.resource_filter IS NULL OR r.__path__ = ANY(p.resource_filter))
+      -- Apply organization filter (only if org_filter is specified)
+      AND (
+          p.org_filter IS NULL 
+          OR EXISTS (
+              SELECT 1 
+              FROM org_filtered_resources ofr 
+              WHERE ofr.resource_id = r.__path__
+          )
+      )
+      -- Apply team filter (only if team_filter or team_alloc_mgr_filter is specified)
+      AND (
+          (p.team_filter IS NULL AND p.team_alloc_mgr_filter IS NULL)
+          OR EXISTS (
+              SELECT 1
+              FROM team_filtered_resources tfr
+              WHERE tfr.resource_id = r.__path__
+          )
+      )
+),
+
 /* ========= 2. Calendar buckets ==================================== */
 calendar AS (
     SELECT
@@ -954,6 +2481,7 @@ calendar AS (
            END
          ) AS gs ON TRUE
 ),
+
 /* ========= 3. Bucketed actual-status rows ========================= */
 bucket_actuals AS (
     SELECT
@@ -964,8 +2492,27 @@ bucket_actuals AS (
     JOIN params p
       ON to_date(a."Period", 'YYYY-MM-DD')
          BETWEEN p.start_date AND p.end_date
+    -- Apply resource filter
+    WHERE EXISTS (
+        SELECT 1
+        FROM eligible_resources er
+        WHERE er.resource_id = a.__parent__
+    )
+    -- Apply project filter (only if project filters are specified)
+    AND (
+        (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL AND p.project_filter IS NULL)
+        OR EXISTS (
+            SELECT 1
+            FROM resource_allocation al
+            JOIN filtered_projects fp ON fp.project_id = al."Project"::uuid
+            WHERE al.__parent__ = a.__parent__
+              AND al."Period"::text = a."Period"
+              AND al.__is_deleted__ = false
+        )
+    )
     GROUP BY date_trunc(p.bucket, to_date(a."Period", 'YYYY-MM-DD'))
 )
+
 /* ========= 4. Final report ======================================== */
 SELECT
     cal.period_start::text,
@@ -983,30 +2530,209 @@ LEFT JOIN bucket_actuals ba
        ON ba.period_start = cal.period_start
 ORDER BY cal.period_start;`,
 
-  totalResourceCost: (startDate, endDate, bucket) => `WITH active_resource AS (
-    SELECT __path__ AS resource_id
-    FROM public.resource_resource
-    WHERE __is_deleted__ IS FALSE
-      AND "Type" <> 'Contractor - PT'
+  totalResourceCost: (startDate, endDate, bucket, resourceFilter = null, teamFilter = null, teamAllocMgrFilter = null, orgFilter = null, projectTypeFilter = null, projectTypeGroupFilter = null, portfolioFilter = null) => `-- ENHANCED QUERY: Total Resource Cost with Dynamic Filters
+-- Entity Type: Resource (6 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio
+
+WITH params AS (
+    SELECT
+        DATE '${startDate}' AS start_date,
+        DATE '${endDate}' AS end_date,
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters (to filter which allocations/projects are counted)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
+),
+
+eligible_resources AS (
+    SELECT
+        r.__path__ AS resource_id
+    FROM resource_resource r
+    WHERE r.__is_deleted__ = FALSE
+      AND r."Type" <> 'Contractor - PT'
+      -- Apply organization filter
+      AND EXISTS (
+          SELECT 1 
+          FROM org_filtered_resources ofr 
+          WHERE ofr.resource_id = r.__path__
+      )
+      -- Apply team filter
+      AND EXISTS (
+          SELECT 1
+          FROM team_filtered_resources tfr
+          WHERE tfr.resource_id = r.__path__
+      )
 )
+
+/* ========= Main Query ========== */
 SELECT
-    SUM(rcu."ActualsCost") AS total_cost,
+    SUM(rcu."PlannedCost") AS total_cost,
     rcu."CostCurrency" AS Currency
-FROM public.resource_allocationcost rcu
-JOIN active_resource ar ON ar.resource_id = rcu."ResourceRef"
-WHERE rcu."Period" BETWEEN '${startDate}' AND '${endDate}'
+FROM resource_allocationcost rcu
+JOIN params p ON TRUE
+JOIN eligible_resources er ON er.resource_id = rcu."ResourceRef"
+WHERE rcu."Period"::date BETWEEN p.start_date AND p.end_date
+  AND rcu.__is_deleted__ = FALSE
+  -- Apply project filters (only if project filters are specified)
+  AND (
+      (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL)
+      OR EXISTS (
+          SELECT 1
+          FROM filtered_projects fp
+          WHERE fp.project_id = rcu."Project"::uuid
+      )
+  )
 GROUP BY rcu."CostCurrency";`,
 
   allocationPercentage: (
     startDate,
     endDate,
-    bucket
-  ) => `/* ========= 1. PARAMETERS  ========================================= */
+    bucket,
+    teamFilter = null,
+    teamAllocMgrFilter = null,
+    orgFilter = null,
+    projectTypeFilter = null,
+    projectTypeGroupFilter = null,
+    portfolioFilter = null
+  ) => `-- ENHANCED QUERY: Allocation Percentage with Dynamic Filters
+-- Entity Type: Resource (6 filters required)
+-- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio
+
 WITH params AS (
     SELECT
         DATE '${startDate}'                   AS start_date,             -- ← window start
         DATE '${endDate}'                   AS end_date,               -- ← window end
-        '${bucket}'::text       AS bucket        -- 'week' | 'month' | 'quarter'
+        '${bucket}'::text       AS bucket,        -- 'week' | 'month' | 'quarter'
+        -- Resource/Team filters
+        ${teamFilter}::text[]                 AS team_filter,
+        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
+        ${orgFilter}::text[]                  AS org_filter,
+        -- Project filters (to filter which allocations/projects are counted)
+        ${projectTypeFilter}::text[]          AS project_type_filter,
+        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
+        ${portfolioFilter}::uuid[]            AS portfolio_filter
+),
+
+/* ========= Filter CTEs ========== */
+filtered_project_types AS (
+    SELECT
+        pt."Id"::text AS type_id  -- UUID to match project.Type
+    FROM resource_projecttype pt
+    JOIN params p ON TRUE
+    WHERE pt.__is_deleted__ = false
+      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
+),
+
+filtered_projects AS (
+    SELECT
+        proj."Id" AS project_id
+    FROM resource_project proj
+    JOIN params p ON TRUE
+    WHERE proj.__is_deleted__ = false
+      AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
+      AND (
+          -- If project type filters are null, include all projects
+          (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
+          OR EXISTS (
+              SELECT 1 
+              FROM filtered_project_types fpt 
+              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+          )
+      )
+),
+
+org_filtered_resources AS (
+    SELECT DISTINCT
+        orgr."Resource" AS resource_id
+    FROM resource_organizationresource orgr
+    JOIN params p ON TRUE
+    WHERE p.org_filter IS NULL 
+       OR orgr."Organization" = ANY(p.org_filter)
+),
+
+filtered_teams AS (
+    SELECT
+        t.__path__ AS team_id,
+        t."Name" AS team_name
+    FROM resource_team t
+    JOIN params p ON TRUE
+    WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
+      AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
+),
+
+team_filtered_resources AS (
+    SELECT DISTINCT
+        tr."Resource" AS resource_id
+    FROM resource_teamresource tr
+    WHERE EXISTS (
+        SELECT 1 
+        FROM filtered_teams ft 
+        WHERE ft.team_id = tr."Team"
+    )
 ),
 
 /* ========= 2. CALENDAR BUCKETS ==================================== */
@@ -1039,6 +2765,18 @@ fte_resources AS (
     FROM public.resource_resource
     WHERE "Type" <> 'Contractor - PT'       -- only full-timers
 	and __is_deleted__ is false
+      -- Apply organization filter
+      AND EXISTS (
+          SELECT 1 
+          FROM org_filtered_resources ofr 
+          WHERE ofr.resource_id = __path__
+      )
+      -- Apply team filter
+      AND EXISTS (
+          SELECT 1
+          FROM team_filtered_resources tfr
+          WHERE tfr.resource_id = __path__
+      )
 ),
 
 /* ========= 4. HEAD-COUNT PER BUCKET =============================== */
@@ -1063,6 +2801,15 @@ alloc_units AS (
                      BETWEEN date_trunc(p.bucket, p.start_date)     -- ← fixed filter
                          AND p.end_date
     JOIN fte_resources fr ON fr.resource_id = a.__parent__
+    -- Apply project filters (only if project filters are specified)
+    WHERE (
+        (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL AND p.portfolio_filter IS NULL)
+        OR EXISTS (
+            SELECT 1
+            FROM filtered_projects fp
+            WHERE fp.project_id = a."Project"::uuid
+        )
+    )
     GROUP BY date_trunc(p.bucket, a."Period")
 )
 

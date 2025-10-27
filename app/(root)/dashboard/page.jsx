@@ -121,6 +121,7 @@ export default function ExecutiveDashboardPage() {
   const [bucket, setBucket] = useState('week');
   const [teamFilter, setTeamFilter] = useState('all');
   const [selectedProjectType, setSelectedProjectType] = useState('all');
+  const [selectedProjectTypeGroup, setSelectedProjectTypeGroup] = useState('all');
   const [chartVisibility, setChartVisibility] = useState({
     resourceCoverage: true,
     projectFTE: true,
@@ -155,7 +156,7 @@ export default function ExecutiveDashboardPage() {
   const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
-  const {projectTypes} = useSelector(state => state.allSettings);
+  const {projectTypes, projectTypeGroups} = useSelector(state => state.allSettings);
 
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
@@ -167,7 +168,10 @@ export default function ExecutiveDashboardPage() {
     if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
-  }, [projectTypes]);
+    if (projectTypeGroups.length === 0) {
+      dispatch({ type: 'FETCH_PROJECT_TYPE_GROUPS' });
+    }
+  }, [projectTypes, projectTypeGroups]);
 
   useEffect(() => {
     try {
@@ -184,16 +188,26 @@ export default function ExecutiveDashboardPage() {
           fetchDashboardChart({
             chartKey: queryKey,
             queryKey: queryKey,
-            startDate,
-            endDate,
+            startDate: queryKey === 'resourceActualsDeviation' && selectedOption === 'week'
+              ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
+              : startDate,
+            endDate: queryKey === 'resourceActualsDeviation' && selectedOption === 'week'
+              ? getMonday(selectedDate).subtract(1, 'week').add(6, 'day').format('YYYY-MM-DD')
+              : endDate,
             bucket: selectedOption,
+            projectTypeFilter: selectedProjectType === 'all' ? null : [selectedProjectType],
+            projectTypeGroupFilter: selectedProjectTypeGroup === 'all' ? null : [selectedProjectTypeGroup],
+            portfolioFilter: null,
+            teamFilter: null,
+            teamAllocMgrFilter: null,
+            orgFilter: null
           })
         );
       });
     } catch {
       console.error('Error fetching dashboard data. Please try again later.');
     }
-  }, [dispatch, selectedDate, selectedOption]);
+  }, [dispatch, selectedDate, selectedOption, selectedProjectType, selectedProjectTypeGroup]);
 
   useEffect(() => {
     if (coverageData.length > 0) {
@@ -264,21 +278,27 @@ export default function ExecutiveDashboardPage() {
           filteredFTE = [];
         }
       }
+      if (selectedProjectTypeGroup !== 'all') {
+        // Filter by project type group
+        filteredFTE = filteredFTE.filter(
+          d => d.project_type_group === selectedProjectTypeGroup
+        );
+      }
       setFilteredProjectFTEData(filteredFTE);
     }
-  }, [projectFTEData, selectedProjectType, projectTypes]);
+  }, [projectFTEData, selectedProjectType, selectedProjectTypeGroup, projectTypes]);
 
   useEffect(() => {
     if (activeProjectsByType.length > 0) {
       let filteredProjects = activeProjectsByType;
-      if (selectedProjectType !== 'all') {
+      if (selectedProjectTypeGroup !== 'all') {
         filteredProjects = activeProjectsByType.filter(
-          d => d._type === selectedProjectType
+          d => d._type === selectedProjectTypeGroup
         );
       }
       setFilteredActiveProjectsByType(filteredProjects);
     }
-  }, [activeProjectsByType, selectedProjectType]);
+  }, [activeProjectsByType, selectedProjectTypeGroup]);
 
   // Calculate the Monday of the selected week
   const getMonday = date => {
@@ -353,6 +373,7 @@ export default function ExecutiveDashboardPage() {
     if (filter.type === 'time') setBucket(filter.value);
     if (filter.type === 'team') setTeamFilter(filter.value);
     if (filter.type === 'projectType') setSelectedProjectType(filter.value);
+    if (filter.type === 'projectTypeGroup') setSelectedProjectTypeGroup(filter.value);
   };
 
   const handleLayoutChange = newLayout => {
@@ -526,7 +547,7 @@ export default function ExecutiveDashboardPage() {
 
     activeProjectsByType: (
       <DashboardWidget
-        onClick={() => handleChartClick('Active Projects by Type')}
+        onClick={() => handleChartClick('Active Projects by Project Type Group')}
         minWidth={320}
         minHeight={280}
       >
@@ -549,7 +570,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Active Projects by Type
+                Active Projects by Project Type Group
               </Typography>
               <Box
                 sx={{
@@ -826,12 +847,80 @@ export default function ExecutiveDashboardPage() {
   const projectCharts = {
     projectFTE: (
       <DashboardWidget
-        onClick={() => handleChartClick('Allocation by Project Type Over Time')}
+        onClick={() => handleChartClick('Monthly Allocation Trends - Planned vs Actual')}
         minWidth={320}
         minHeight={280}
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'bar');
+          const config = useResponsiveChart(dimensions, 'line');
+          
+          const currentWeekStart = getMonday(selectedDate);
+          
+          // Generate week range: 3 weeks in past, current week, 2 weeks in future (total 6 weeks)
+          const weekRange = [];
+          for (let i = -3; i <= 2; i++) {
+            weekRange.push(currentWeekStart.add(i, 'week').format('YYYY-MM-DD'));
+          }
+          
+          // Group data by project_type_group and week
+          const groupedData = {};
+          filteredProjectFTEData.forEach(item => {
+            const group = item.project_type_group || 'Unknown';
+            if (!groupedData[group]) {
+              groupedData[group] = {};
+            }
+            const weekStart = item.week_start;
+            if (!groupedData[group][weekStart]) {
+              groupedData[group][weekStart] = {
+                planned_pct: 0,
+                actual_pct: 0
+              };
+            }
+            // Use percentage fields from the data
+            groupedData[group][weekStart].planned_pct += parseFloat(item.planned_pct || 0);
+            groupedData[group][weekStart].actual_pct += parseFloat(item.actual_pct || 0);
+          });
+          
+          // Create series for each project type group
+          const allSeries = [];
+          
+          Object.keys(groupedData).forEach(group => {
+            const groupColor = group === 'tobedeleted2' ? '#FF884D' : 
+                               group === 'Run' ? '#FFA500' :
+                               group === 'Grow' ? '#0080FF' :
+                               group === 'Transform' ? '#00C9A7' : '#CCCCCC';
+            
+            // Planned series (dotted line) - show for all weeks
+            allSeries.push({
+              label: `${group} - Planned`,
+              data: weekRange.map(week => {
+                const value = groupedData[group][week]?.planned_pct || 0;
+                return isNaN(value) ? 0 : parseFloat(value);
+              }),
+              curve: 'linear',
+              showMark: true,
+              color: groupColor,
+            });
+            
+            // Actual series (solid line) - show only for past weeks (not future)
+            allSeries.push({
+              label: `${group} - Actual`,
+              data: weekRange.map((week, idx) => {
+                // Show actual only for past weeks and current week (idx <= 3)
+                // For future weeks (idx > 3), return null
+                if (idx <= 3) {
+                  const value = groupedData[group][week]?.actual_pct || 0;
+                  return isNaN(value) ? 0 : parseFloat(value);
+                }
+                return null; // No actual data for future weeks
+              }),
+              curve: 'linear',
+              showMark: true,
+              color: groupColor,
+              connectNulls: false,
+            });
+          });
+          
           return (
             <Box
               sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
@@ -844,39 +933,49 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Allocation by Project Type Over Time
+                Allocation Trends - Planned vs Actual (%)
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                <BarChart
+                <LineChart
                   width={config.width}
                   height={config.height}
-                  series={projectSeries.map(series => ({
-                    data: series.data,
-                    label: series.label,
-                    id: series.label,
-                    stack: 'total',
-                    color: series.color,
+                  series={allSeries.map(series => ({
+                    ...series,
+                    // Make planned lines dotted/dashed
+                    strokeDasharray: series.label.includes('Planned') ? '5 5' : undefined,
+                    strokeWidth: 2,
                   }))}
                   xAxis={[
                     {
-                      data: projectPeriods.map(
-                        (p, idx) => `${getWeekNumber(p)}`
-                      ),
+                      data: weekRange.map((week, idx) => {
+                        const weekDate = dayjs(week);
+                        const isCurrentWeek = idx === 3;
+                        const weekNumber = getWeekNumber(week);
+                        return isCurrentWeek 
+                          ? `${weekNumber} (Current)`
+                          : `${weekNumber}`;
+                      }),
                       label: 'Week',
-                      //tickLabelStyle: config.xAxis?.tickLabelStyle,
+                      scaleType: 'point',
                     },
                   ]}
                   yAxis={[
                     {
-                      label: 'FTE',
+                      label: 'Allocation Percentage',
                       min: 0,
+                      valueFormatter: value => `${value.toFixed(0)}%`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
                     },
                   ]}
                   slotProps={{
-                    legend: config.legend,
+                    legend: {
+                      ...config.legend,
+                      direction: 'row',
+                      position: { vertical: 'bottom', horizontal: 'middle' },
+                    },
                   }}
+                  grid={{ vertical: true, horizontal: true }}
                 />
               </Box>
             </Box>
@@ -1363,6 +1462,9 @@ export default function ExecutiveDashboardPage() {
   const projectTypeNames = [
     ...new Set(projectTypes.map(d => d.Name)),
   ];
+  const projectTypeGroupNames = [
+    ...new Set(projectTypeGroups.map(d => d.Name)),
+  ];
 
   return (
     <>
@@ -1378,6 +1480,9 @@ export default function ExecutiveDashboardPage() {
             }
             .react-grid-item.cssTransforms {
               transition-property: transform;
+            }
+            .MuiLineElement-root.MuiLineElement-series-auto-generated-id-1 {
+              stroke-dasharray: 4 8 !important;
             }
 
             /* Responsive chart styles */
@@ -1439,6 +1544,7 @@ export default function ExecutiveDashboardPage() {
               timeFilter={bucket}
               teamfilter={teamFilter}
               projectTypes={projectTypeNames}
+              projectTypeGroups={projectTypeGroupNames}
               teamNames={teamNames}
             />
           </Tabs>
