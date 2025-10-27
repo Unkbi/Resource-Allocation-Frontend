@@ -73,21 +73,17 @@ export const addProjectValidationSchema = (
   });
 };
 
-export const addTeamValidationSchema = (teams = [], currentName = '') => {
+export const addTeamValidationSchema = (teams = [], initialName = '') => {
   const teamsArray = Array.isArray(teams) ? teams : [];
   const existingTeamNames = teamsArray
-    .map((item: any) => item?.Name?.toLowerCase().trim())
-    .filter(Boolean);
+    .map((item: any) => item?.Name?.toLowerCase().trim());
 
   return Yup.object().shape({
-  Name: Yup.string().trim().required('Team Name is required')
-      .test('unique-name', 'This team name already exists', function (value) {
+    Name: Yup.string().trim().required('Team Name is required')
+      .test('unique-name', 'Team Name already exists. Please choose another name.', function (value) {
         if (!value) return true;
-        const nameLower = value.toLowerCase().trim();
-        const isDuplicate =
-          existingTeamNames.includes(nameLower) &&
-          nameLower !== (currentName?.toLowerCase().trim() || '');
-        return !isDuplicate;
+        if (initialName && value === initialName) return true;
+        return !existingTeamNames.includes(value.toLowerCase().trim());
       }),
   AllocationManager: Yup.string(),
   Status: Yup.string()
@@ -115,7 +111,7 @@ export const addResourceValidationSchema = (allResourcesDetail = [], currentEmai
   Email: Yup.string()
     .required('Email is required')
     .matches(emailRegex, 'Enter a valid email address')
-    .test('unique-email', 'This email already exists', function (value) {
+    .test('unique-email', 'This Email already exists. Please choose another Email.', function (value) {
         if (!value) return true;
         const emailLower = value.toLowerCase().trim();
         const isDuplicate =
@@ -183,7 +179,7 @@ export const editResourceValidationSchema = (
   Email: Yup.string()
     .required('Email is required')
     .matches(emailRegex, 'Enter a valid email address')
-    .test('unique-email', 'This email already exists', function (value) {
+    .test('unique-email', 'This Email already exists. Please choose another Email.', function (value) {
         if (!value) return true;
         const emailLower = value.toLowerCase().trim();
         const isDuplicate =
@@ -358,7 +354,7 @@ export const nameViewValidationSchema = (savedViews: SavedView[] = []) =>
       .required('Name is required')
       .test(
         'unique-name',
-        'This name already exists in saved views.',
+        'This Name already exists in saved views. Please choose another name.',
         function (value) {
           if (!value) return true;
 
@@ -443,7 +439,7 @@ export const addPortfolioValidationSchema = (
       .required('Name is required')
       .test(
         'unique-name',
-        'A portfolio with this name already exists.',
+        'Portfolio Name already exists. Please choose another name.',
         function (value) {
           if (!value) return true;
           const currentName = value.toLowerCase().trim();
@@ -521,16 +517,23 @@ export const assignRoleValidationSchema = Yup.object({
   Status: Yup.string().required('Status is required'),
 });
 
-export const addPrivilegeValidationSchema = Yup.object({
+export const addPrivilegeValidationSchema = (privileges: any[] = [], initialName = '') => {
+  const privilegeNames = Array.isArray(privileges)
+    ? privileges.map(priv => priv.id?.toLowerCase().trim())
+    : [];
+  return Yup.object({
   Name: Yup.string()
     .required('Privilege Name is required')
     .max(90, 'Reached Max Characters')
     .test(
       'unique-name',
       'Privilege Name already exists. Please choose another name.',
-      function (value) {
+      value => {
         if (!value) return true;
-        const privilegeNames = this.options.context?.privilegeNames || [];
+         if (
+            initialName &&
+            value.toLowerCase().trim() === initialName.toLowerCase().trim()
+         ) return true;
         return !privilegeNames.includes(value.toLowerCase().trim());
       }
     ),
@@ -541,6 +544,7 @@ export const addPrivilegeValidationSchema = Yup.object({
     value => !!value && Object.values(value).some(v => v)
   ),
 });
+}
 
 export const assignPrivilegeValidationSchema = Yup.object({
   Role: Yup.string().required('Role is required'),
@@ -557,11 +561,11 @@ export const addProjectTypeGroupValidationSchema = (
 
   return Yup.object({
     Name: Yup.string()
-      .required('Project Type Group name is required')
+      .required('Project Type Group Name is required')
       .max(90, 'Reached Max Characters')
       .test(
         'unique-name',
-        'Project Type Group name already exists. Please choose another name.',
+        'Project Type Group Name already exists. Please choose another name.',
         value => {
           if (!value) return true;
           if (

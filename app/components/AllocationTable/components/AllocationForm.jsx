@@ -421,6 +421,7 @@ const AllocationForm = () => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { organisations } = useSelector(state => state.organisations);
   const roles = useSelector(state => state.rbac.roles);
+  const privileges = useSelector(state => state.rbac.privileges);
   const { user: allUsers } = useSelector(state => state.rbac);
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
@@ -468,7 +469,7 @@ const AllocationForm = () => {
       case 'add_team':
         return addTeamValidationSchema(teams);
       case 'edit_team':
-        return addTeamValidationSchema(teams, initialData?.Name || '');
+        return addTeamValidationSchema(teams, initialData?.Team || '');
       case 'add_resource':
         return addResourceValidationSchema(
           allResourcesDetail,
@@ -512,9 +513,9 @@ const AllocationForm = () => {
       case 'edit_role_assignment':
         return assignRoleValidationSchema;
       case 'add_privilege':
-        return addPrivilegeValidationSchema;
+        return addPrivilegeValidationSchema(privileges);
       case 'edit_privilege':
-        return addPrivilegeValidationSchema;
+        return addPrivilegeValidationSchema(privileges,initialData.id || '');
       case 'assign_privilege':
         return assignPrivilegeValidationSchema;
       case 'edit_privilege_assignment':
