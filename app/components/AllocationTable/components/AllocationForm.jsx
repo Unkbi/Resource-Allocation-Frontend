@@ -404,6 +404,7 @@ const AllocationForm = () => {
     state => state.teams
   );
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
+  const {employeeRates} = useSelector(state=>state.employeeRates);
   const { user } = useSelector(state => state.user);
   const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
@@ -2950,7 +2951,27 @@ const AllocationForm = () => {
           if (!locationId) {
             throw new Error('No location ID found in initialData');
           }
-
+          if (postData.Status === 'Inactive') {
+            const isInResources = allResourcesDetail.some((res) => {
+              return res.Resource?.WorkLocation === locationId;
+            });
+            const isInRates = employeeRates.some(
+          (rate) => rate.WorkLocation === locationId
+            );
+            if (isInResources || isInRates) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message:
+                    `${cleanedValues.Name} location is already in use and cannot be set to inactive.`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return; 
+            }
+          }
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: UPDATE_LOCATION,
