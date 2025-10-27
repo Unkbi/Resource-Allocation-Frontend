@@ -144,7 +144,7 @@ import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
 import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
-import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import {
   ADD_PROJECT_TYPE,
   UPDATE_PROJECT_TYPE,
@@ -405,7 +405,7 @@ const AllocationForm = () => {
   );
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
   const { user } = useSelector(state => state.user);
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { savedViews } = useSelector(state => state.allocationView);
   const { startDate, endDate } = calendarDate || {};
@@ -515,7 +515,7 @@ const AllocationForm = () => {
       case 'add_privilege':
         return addPrivilegeValidationSchema(privileges);
       case 'edit_privilege':
-        return addPrivilegeValidationSchema(privileges,initialData.id || '');
+        return addPrivilegeValidationSchema(privileges, initialData.id || '');
       case 'assign_privilege':
         return assignPrivilegeValidationSchema;
       case 'edit_privilege_assignment':
@@ -569,19 +569,19 @@ const AllocationForm = () => {
   }, []);
 
   useEffect(() => {
-    if (projectTypes.length === 0) {
+    if (projectTypes?.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
   }, []);
 
   useEffect(() => {
-    if (resources.length === 0) {
+    if (resources?.length === 0) {
       dispatch({ type: FETCH_ALL_RESOURCES_DETAIL });
     }
   }, []);
 
   useEffect(() => {
-    if (portfolios.length === 0) {
+    if (portfolios?.length === 0) {
       dispatch({ type: FETCH_PORTFOLIOS });
     }
   }, []);

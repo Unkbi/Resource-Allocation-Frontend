@@ -13,7 +13,7 @@ import { performLogout, RESET_STORE } from '@/app/redux/actions/authActions';
 import { Button } from '@mui/material';
 import EllipsisNameCell from '../../ResourceAllocation/component/EllipsisNameCell';
 import CustomAvatar from '../../Avatar/CustomAvatar';
-import { getUserAttributes } from '@/app/utils/authUtils';
+import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../../HOC/withRBAC';
 
 const MainBox = styled(Box, {
@@ -107,9 +107,9 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
   const { user } = useSelector(state => state.user);
   const {
     email = '',
-    given_name: firstName = '',
-    family_name: lastName = '',
-  } = getUserAttributes(user, []) || {};
+    firstName = '',
+    lastName = '',
+  } = getLoginUserDetails(user) || {};
   const handleToggle = () => {
     setOpen(prevOpen => !prevOpen);
   };
