@@ -8,6 +8,7 @@ import {
 } from './authUtils';
 import { getStore } from '../redux/store';
 import { showToast } from '../redux/reducers/toastReducer';
+import { RESET_STORE } from '../redux/actions/authActions';
 
 const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const MAX_RETRIES = 3;
@@ -74,6 +75,11 @@ axiosInstance.interceptors.response.use(
             autoHideTimer: 4000,
           })
         );
+
+        // Delay resetting the store to allow the toast to be seen.
+        setTimeout(() => {
+          getStore()?.dispatch({ type: RESET_STORE });
+        }, 2000);
       }
       return Promise.reject(new Error('Session expired'));
     }
