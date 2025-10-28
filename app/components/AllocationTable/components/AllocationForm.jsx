@@ -404,7 +404,7 @@ const AllocationForm = () => {
     state => state.teams
   );
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
-  const {employeeRates} = useSelector(state=>state.employeeRates);
+  const { employeeRates } = useSelector(state => state.employeeRates);
   const { user } = useSelector(state => state.user);
   const { email = '' } = getUserAttributes(user, []) || {};
   const { resources } = useSelector(state => state.resources);
@@ -516,7 +516,7 @@ const AllocationForm = () => {
       case 'add_privilege':
         return addPrivilegeValidationSchema(privileges);
       case 'edit_privilege':
-        return addPrivilegeValidationSchema(privileges,initialData.id || '');
+        return addPrivilegeValidationSchema(privileges, initialData.id || '');
       case 'assign_privilege':
         return assignPrivilegeValidationSchema;
       case 'edit_privilege_assignment':
@@ -2778,30 +2778,31 @@ const AllocationForm = () => {
             Group: cleanedValues.ProjectTypeGroup,
           };
           try {
-          const projectTypeId = initialData?.id;
-          if (
-            initialData?.Status === 'Active' &&
-            postData.Status === 'Inactive'
-          ) {
-            const isProjectTypeInUse = projects?.filter(p =>
-              p?.Type === projectTypeId);
-            if (isProjectTypeInUse?.length > 0) {
-              const hasActiveProject = isProjectTypeInUse.some(p =>
-                PROJECT_ACTIVE_STATUS.includes(p?.Status)
+            const projectTypeId = initialData?.id;
+            if (
+              initialData?.Status === 'Active' &&
+              postData.Status === 'Inactive'
+            ) {
+              const isProjectTypeInUse = projects?.filter(
+                p => p?.Type === projectTypeId
               );
-              if (hasActiveProject) {
-                dispatch(
-                  showToast({
-                    open: true,
-                    message: `Cannot set "${initialData?.Name}" to Inactive. It is currently in use by existing projects.`,
-                    type: 'error',
-                    position: 'bottom-left',
-                    autoHideTimer: 4000,
-                  })
+              if (isProjectTypeInUse?.length > 0) {
+                const hasActiveProject = isProjectTypeInUse.some(p =>
+                  PROJECT_ACTIVE_STATUS.includes(p?.Status)
                 );
-                return;
+                if (hasActiveProject) {
+                  dispatch(
+                    showToast({
+                      open: true,
+                      message: `Cannot set "${initialData?.Name}" to Inactive. It is currently in use by Active Project(s).`,
+                      type: 'error',
+                      position: 'bottom-left',
+                      autoHideTimer: 4000,
+                    })
+                  );
+                  return;
+                }
               }
-            }
             }
             const response = await new Promise((resolve, reject) => {
               dispatch({
@@ -2982,11 +2983,45 @@ const AllocationForm = () => {
             const isInRates = employeeRates.some(
               rate => rate.WorkLocation === locationId
             );
-            if (isInResources || isInRates) {
+            // if (isInResources || isInRates) {
+            //   dispatch(
+            //     showToast({
+            //       open: true,
+            //       message: `${cleanedValues.Name} location is already in use and cannot be set to inactive.`,
+            //       type: 'error',
+            //       position: 'bottom-left',
+            //       autoHideTimer: 4000,
+            //     })
+            //   );
+            //   return;
+            // }
+            if (isInResources && isInRates) {
               dispatch(
                 showToast({
                   open: true,
-                  message: `${cleanedValues.Name} location is already in use and cannot be set to inactive.`,
+                  message: `Cannot set "${cleanedValues?.Name}" to Inactive. It is currently in use by Active Resource(s) and Active Rate(s).`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return;
+            } else if (isInResources) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Cannot set "${cleanedValues?.Name}" to Inactive. It is currently in use by Active Resource(s).`,
+                  type: 'error',
+                  position: 'bottom-left',
+                  autoHideTimer: 4000,
+                })
+              );
+              return;
+            } else if (isInRates) {
+              dispatch(
+                showToast({
+                  open: true,
+                  message: `Cannot set "${cleanedValues?.Name}" to Inactive. It is currently in use by Active Rate(s).`,
                   type: 'error',
                   position: 'bottom-left',
                   autoHideTimer: 4000,
