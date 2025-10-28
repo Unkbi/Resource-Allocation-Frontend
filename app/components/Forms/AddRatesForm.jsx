@@ -99,12 +99,12 @@ const AddRatesForm = ({
     <Box>
       <Box sx={{ pb: 2 }}>
         <StyledLabel>
-          Location <span style={{ color: 'red' }}>*</span>
+         Work Location <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledAutocomplete
           disabled={readOnly}
           name="WorkLocation"
-          label="Location"
+          label="Work Location"
           placeholder="Select Location"
           value={values.WorkLocation || ''}
           options={locationOptions}

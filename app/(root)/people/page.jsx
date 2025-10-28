@@ -676,7 +676,7 @@ function Resources({ permissions, loadingPermissions }) {
   const employeeRatesColumns = [
     {
       field: 'WorkLocation',
-      headerName: 'Location',
+      headerName: 'Work Location',
       minWidth: 220,
       headerAlign: 'left',
       hideable: false,
