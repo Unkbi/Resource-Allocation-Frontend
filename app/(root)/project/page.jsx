@@ -562,12 +562,13 @@ function Project({ permissions, loadingPermissions }) {
         );
       },
     },
-    {
-      field: 'Location',
-      headerName: 'Location',
-      flex: 1,
-      minWidth: 150,
-    },
+    // Commenting out location from project table
+    // {
+    //   field: 'Location',
+    //   headerName: 'Location',
+    //   flex: 1,
+    //   minWidth: 150,
+    // },
     {
       field: 'Budget',
       headerName: 'Project Budget',

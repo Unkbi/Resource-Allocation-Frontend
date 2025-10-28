@@ -8,6 +8,7 @@ import {
   signupUser,
   getUser,
   resendConfirmationCode,
+  callback,
 } from '../../services/authServices.js';
 
 const initialState = {
@@ -44,6 +45,21 @@ const authSlice = createSlice({
         state.token = action.payload['id-token'];
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Callback for SSO login
+      .addCase(callback.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(callback.fulfilled, (state, action) => {
+        state.loading = false;
+        state.loginUser = action.payload;
+        state.token = action.payload['id-token'];
+      })
+      .addCase(callback.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

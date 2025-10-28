@@ -73,7 +73,7 @@ import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
-import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
@@ -136,7 +136,7 @@ function AllocationGrid({
     } ?? {}
   );
   const { user } = useSelector(state => state.user);
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
   const { projectTypes } = useSelector(state => state.allSettings);
@@ -444,7 +444,6 @@ function AllocationGrid({
             currentView?.Filters.map((filter, index) => {
               return {
                 ...filter,
-                id: index,
               };
             }) ?? [],
         });
@@ -1305,12 +1304,11 @@ function AllocationGrid({
   };
 
   const handleFilterModelChange = newModel => {
-    // setFilterModel(newModel);
-
     const filterData = newModel.items.map(item => ({
       field: item.field,
       operator: item.operator,
       value: item.value,
+      id: item.id,
     }));
     dispatch(
       updateCurrentView({
