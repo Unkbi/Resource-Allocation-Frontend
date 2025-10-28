@@ -6,12 +6,18 @@ import { StyledInput } from '../Input/StyledInput';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import CustomSelect from '../Select/CustomSelect';
 import { useSelector } from 'react-redux';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 import { useDispatch } from 'react-redux';
 import StyledAutocomplete from '../Select/Autocomplete';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
+import { withRBAC } from '../HOC/withRBAC';
 
-const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
+const AddRatesForm = ({
+  formikProps,
+  setFormValue = () => {},
+  permissions,
+}) => {
   const {
     values,
     handleChange,
@@ -23,44 +29,71 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
   } = formikProps;
   const { initialData } = useSelector(state => state.globalDialog.formState);
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
-      state => state.employeeRates
-    );
- const dispatch = useDispatch()
+    state => state.employeeRates
+  );
+  const { location } = useSelector(state => state.allSettings);
+  const [locationOptions, setLocationOptions] = useState([]);
+  const { formType } = useSelector(state => state.globalDialog.formState);
+  const [readOnly, setReadOnly] = useState(true);
+  const dispatch = useDispatch();
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Inactive', label: 'Inactive' },
   ];
 
-  const currencyOptions = [
-    {value :'USD' , label:'USD'},
-  ]
+  const currencyOptions = [{ value: 'USD', label: 'USD' }];
 
   useEffect(() => {
-      if (!employeeRates || employeeRates?.length === 0) {
-            dispatch({
-              type: FETCH_EMPLOYEE_RATES,
-              payload: {},
-            });
-          }
-    }, []);
+    setReadOnly(
+      (formType === 'edit_rates' && !permissions['EmployeeRate']?.u) ||
+        (formType === 'add_rates' && !permissions['EmployeeRate']?.c)
+    );
+    if (!employeeRates || employeeRates?.length === 0) {
+      dispatch({
+        type: FETCH_EMPLOYEE_RATES,
+        payload: {},
+      });
+    }
+    if (!location || location?.length === 0) {
+      dispatch({ type: FETCH_LOCATION });
+    }
+  }, []);
 
   useEffect(() => {
-      if (initialData) {
-        const rowData = {
-          WorkLocation: initialData.WorkLocation,
-          HRLevel: initialData.HRLevel,
-          HourlyRate: initialData.HourlyRate,
-          ValidityEndDate: initialData.ValidityEndDate || '',
-          ValidityStartDate: initialData.ValidityStartDate || '',
-          HourlyRateCurrency: initialData.HourlyRateCurrency || 'USD',
-          Status: initialData.Status || 'Active',
-        };
-        setFormValue(rowData);
-        formikProps.resetForm({ values: rowData });
-        formikProps.setTouched({});
-      }
-    }, [initialData]);
+    if (location && Array.isArray(location)) {
+      const locationNames =
+        location
+          ?.filter(loc => loc.Status === 'Active')
+          .sort((a, b) => a.Name.localeCompare(b.Name))
+          .map(loc => ({
+          value: loc.Id,
+          label: loc.Name,
+        })) || [];
+      setLocationOptions(locationNames);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (initialData) {
+      const matchedLocation = location?.find(
+        loc => loc.Name === initialData.WorkLocation
+      );
+
+      const rowData = {
+        WorkLocation: matchedLocation?.Id || '',
+        HRLevel: initialData.HRLevel,
+        HourlyRate: initialData.HourlyRate,
+        ValidityEndDate: initialData.ValidityEndDate || '',
+        ValidityStartDate: initialData.ValidityStartDate || '',
+        HourlyRateCurrency: initialData.HourlyRateCurrency || 'USD',
+        Status: initialData.Status || 'Active',
+      };
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
+    }
+  }, [initialData]);
 
   return (
     <Box>
@@ -68,15 +101,15 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
         <StyledLabel>
           Location <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <StyledInput
-          as={TextField}
+        <StyledAutocomplete
+          disabled={readOnly}
           name="WorkLocation"
+          label="Location"
           placeholder="Select Location"
           value={values.WorkLocation || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={touched.WorkLocation && Boolean(errors.WorkLocation)}
-          helperText={touched.WorkLocation && formikProps.errors.WorkLocation}
+          options={locationOptions}
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
       <Box
@@ -94,6 +127,8 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
             HR Level <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             as={TextField}
             name="HRLevel"
             placeholder="Select Level"
@@ -110,6 +145,7 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
             Is Active <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledAutocomplete
+            disabled={readOnly}
             name="Status"
             label="Status"
             placeholder="Select"
@@ -138,6 +174,8 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
             Rate/Hr <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
+            disabled={readOnly}
+            readOnly={readOnly}
             as={TextField}
             type="number"
             name="HourlyRate"
@@ -167,6 +205,7 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
             Currency <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledAutocomplete
+            disabled={readOnly}
             name="HourlyRateCurrency"
             label="Currency"
             options={currencyOptions}
@@ -191,6 +230,7 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
       >
         <Box sx={{ flex: 1 }}>
           <CustomDatePicker
+            readOnly={readOnly}
             name="ValidityStartDate"
             value={formikProps.values.ValidityStartDate || null}
             formikProps={formikProps}
@@ -214,6 +254,7 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
 
         <Box sx={{ flex: 1 }}>
           <CustomDatePicker
+            readOnly={readOnly}
             name="ValidityEndDate"
             value={formikProps.values.ValidityEndDate || null}
             formikProps={formikProps}
@@ -239,4 +280,4 @@ const AddRatesForm = ({ formikProps, setFormValue = () => {} }) => {
   );
 };
 
-export default AddRatesForm;
+export default withRBAC(AddRatesForm, ['EmployeeRate']);

@@ -12,7 +12,7 @@ import {
 import { AddRowButton } from './AddRowButton';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { CustomAddIcon } from './CustomAddIcon';
+import CustomAddIcon from './CustomAddIcon';
 import { useState } from 'react';
 import {
   IconButton,
@@ -89,6 +89,7 @@ const CellWithMenu = ({
   const { currentView, splitView } = useSelector(state => state.allocationView);
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
+  const { loginUserPrivileges } = useSelector(state => state.rbac);
 
   const handleDeleteClick = params => {
     setDeleteParams(params);
@@ -334,21 +335,25 @@ const CellWithMenu = ({
     //   label: 'Clone',
     //   icon: <ContentCopyIcon fontSize="small" />,
     //   func: () => handleCloneClick(params),
+    //   allowed: oginUserPrivileges['Allocation'].c
     // },
     // {
     //   label: 'Transfer',
     //   icon: <SwapHorizIcon fontSize="small" />,
     //   func: () => handleTranferClick(params),
+    //   allowed: oginUserPrivileges['Allocation'].c,
     // },
     {
       label: 'History',
       icon: <HistoryIcon fontSize="small" />,
       func: () => handleOpenHistory(params),
+      allowed: true,
     },
     {
       label: 'Delete',
       icon: <DeleteIcon fontSize="small" />,
       func: () => handleDeleteClick(params),
+      allowed: loginUserPrivileges?.['Allocation']?.d ?? false,
     },
   ];
 
@@ -377,34 +382,36 @@ const CellWithMenu = ({
         anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
       >
-        {menuItems.map(item => (
-          <StyledMenuItem
-            key={item.label}
-            onClick={() => {
-              item.func && item.func(params);
-              handleMenuClose();
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText
-              primary={
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: ' #424242',
-                    fontFamily: 'Manrope',
-                    fontSize: '12px',
-                    fontStyle: 'normal',
-                    fontWeight: '600',
-                    lineHeight: ' 18px',
-                  }}
-                >
-                  {item.label}
-                </Typography>
-              }
-            />
-          </StyledMenuItem>
-        ))}
+        {menuItems
+          .filter(i => i.allowed)
+          .map(item => (
+            <StyledMenuItem
+              key={item.label}
+              onClick={() => {
+                item.func && item.func(params);
+                handleMenuClose();
+              }}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: ' #424242',
+                      fontFamily: 'Manrope',
+                      fontSize: '12px',
+                      fontStyle: 'normal',
+                      fontWeight: '600',
+                      lineHeight: ' 18px',
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                }
+              />
+            </StyledMenuItem>
+          ))}
       </StyledMenu>
     </>
   );
@@ -568,7 +575,7 @@ export const getFinalColumns = (
     dispatch(
       openDialog({
         title: 'Allocation History',
-        cancelButtonText: 'View All History',
+        cancelButtonText: 'Cancel',
         formType: 'open_history',
         initialData:
           params.field === 'project'
@@ -1163,6 +1170,7 @@ export const getCellClassName = (
   allocationTheme = [],
   type = 'allocation',
   allProjects = [],
+  projectTypes = [],
   isCellEditable,
   groupBy = ''
 ) => {
@@ -1283,12 +1291,18 @@ export const getCellClassName = (
           parseISO(project.StartDate) <= parseISO(currentWeekData?.period) &&
           parseISO(project.EndDate) >= parseISO(currentWeekData?.period);
         if (isWithinProjectDateRange && project.Type) {
+          const projectType = projectTypes.find(
+            type => type.Id === project.Type
+          );
+
           const isTopLevelProject =
             params.rowNode.depth === 0 || groupBy === 'project';
           const prefix = isTopLevelProject
             ? 'firstGroupsRow'
             : 'secondGroupsRow';
-          return `${prefix} project-type-${project.Type.toLowerCase().replace(/\s+/g, '_')}`;
+          if (!projectType) return `${prefix}`;
+
+          return `${prefix} project-type-${projectType?.Name?.toLowerCase().replace(/\s+/g, '_')}`;
         }
       }
     }

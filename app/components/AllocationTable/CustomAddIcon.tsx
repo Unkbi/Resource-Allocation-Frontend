@@ -1,18 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { Box, Tooltip } from '@mui/material';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
-interface CustomAddIconProps {
+interface CustomAddIconOwnProps {
   value?: string | React.ReactNode | null;
   count?: number | null;
   onClick?: () => void;
   menu?: React.ReactNode | null;
   columnType?: 'teams' | 'resource';
   showAddButton?: boolean;
-  isFormatWithK?: boolean
+  isFormatWithK?: boolean;
 }
 
-export const CustomAddIcon = ({
+interface WithPermissionsProps {
+  permissions: Record<string, CrudPermissions>;
+}
+
+type CustomAddIconProps = CustomAddIconOwnProps & WithPermissionsProps;
+
+const CustomAddIcon = ({
   value = null,
   count = null,
   onClick = () => {},
@@ -20,6 +27,7 @@ export const CustomAddIcon = ({
   columnType = 'teams',
   isFormatWithK,
   showAddButton = isFormatWithK === true ? false : true,
+  permissions,
 }: CustomAddIconProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -108,21 +116,23 @@ export const CustomAddIcon = ({
             overflow: 'visible',
           }}
         >
-          <AddIcon
-            onClick={onClick}
-            sx={{
-              width: 22,
-              height: 22,
-              fontSize: 20,
-              backgroundColor: '#1C2D5F',
-              color: '#fff',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              '&:hover': {
+          {(permissions['Allocation'].c || permissions['Allocation'].u) && (
+            <AddIcon
+              onClick={onClick}
+              sx={{
+                width: 22,
+                height: 22,
+                fontSize: 20,
                 backgroundColor: '#1C2D5F',
-              },
-            }}
-          />
+                color: '#fff',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: '#1C2D5F',
+                },
+              }}
+            />
+          )}
           {menu}
         </Box>
       )}
@@ -154,3 +164,5 @@ export const CustomAddIcon = ({
     </Box>
   );
 };
+
+export default withRBAC(CustomAddIcon, ['Allocation']);

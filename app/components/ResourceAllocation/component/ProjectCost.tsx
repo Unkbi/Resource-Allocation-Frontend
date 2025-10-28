@@ -20,10 +20,14 @@ import ProjectTotalCustomToolTip from '../../AllocationTable/components/ProjectT
 import { getProjectTypeColorLine } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
   endDate: string | null;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 
 interface Resource {
@@ -34,7 +38,12 @@ interface Resource {
   [key: string]: any;
 }
 
-const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
+const ProjectCost = ({
+  startDate,
+  endDate,
+  permissions,
+  loadingPermissions,
+}: ProjectCostAllocationProps) => {
   const dispatch: AppDispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('');
   const { costs: projectCosts, dataProcessing } = useSelector(
@@ -42,6 +51,7 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   );
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   // @ts-ignore
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
@@ -52,7 +62,14 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   const { setRows, ready } = useAllocationGrid('main');
 
   useEffect(() => {
-    if (ready && projectCosts) {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loadingPermissions) return;
+    if (permissions['AllocationCost'].r && ready && projectCosts) {
       const filteredResources = removeResourcesWithNoProjects(projectCosts);
 
       const formattedResources = filteredResources?.map(allocation => ({
@@ -66,21 +83,25 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
       }));
       setRows(formattedResources || []);
     }
-  }, [ready, projectCosts]);
+  }, [ready, projectCosts, loadingPermissions]);
 
   useEffect(() => {
-    dispatch({
-      type: 'FETCH_ALLOCATIONS_COST',
-      payload: {
-        teams: teams,
-        projects: projects,
-        resources: resources,
-        allResourcesDetail: allResourcesDetail,
-        startDate: startDate,
-        endDate: endDate,
-      },
-    });
-  }, [startDate, endDate, teams, projects, resources]);
+    if (loadingPermissions) return;
+    if (permissions['AllocationCost'].r) {
+      dispatch({
+        type: 'FETCH_ALLOCATIONS_COST',
+        payload: {
+          teams: teams,
+          projects: projects,
+          resources: resources,
+          allResourcesDetail: allResourcesDetail,
+          projectTypes: projectTypes,
+          startDate: startDate,
+          endDate: endDate,
+        },
+      });
+    }
+  }, [startDate, endDate, teams, projects, resources, loadingPermissions]);
 
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
@@ -662,4 +683,4 @@ const ProjectCost = ({ startDate, endDate }: ProjectCostAllocationProps) => {
   );
 };
 
-export default ProjectCost;
+export default withRBAC(ProjectCost, ['AllocationCost']);

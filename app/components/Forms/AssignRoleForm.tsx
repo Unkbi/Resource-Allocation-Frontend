@@ -1,16 +1,19 @@
 'use client';
 
-import { Box, TextField, Autocomplete } from '@mui/material';
+import { Box } from '@mui/material';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
-import { Role, UserRbac, } from '@/app/types';
+import { Role, UserRbac } from '@/app/types';
 import { FormikProps } from 'formik';
 import { GET_USER } from '@/app/redux/actions/rbacActions';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import StyledAutocomplete from '../Select/Autocomplete';
+import { RootState } from '@/app/redux/store';
 
 interface FormValues {
-  Assignee: UserRbac | null;
+  Assignee: string;
   Role: string;
   Status: string;
   [key: string]: any;
@@ -19,57 +22,79 @@ interface FormValues {
 interface AssignRoleFormProps {
   formikProps: FormikProps<FormValues>;
   setFormValue?: (values: FormValues) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
-const AssignRoleForm = ({ formikProps , setFormValue = () => {}}: AssignRoleFormProps) => {
+const AssignRoleForm = ({
+  formikProps,
+  setFormValue = () => {},
+  permissions,
+}: AssignRoleFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const { initialData } = useSelector((state: any) => state.globalDialog.formState);
-  const roles: Role[] = useSelector((state: any) => state.rbac.roles);
-  const user: UserRbac[] = useSelector((state: any) => state.rbac.user) 
+  const { initialData, formType } = useSelector(
+    (state: RootState) => state.globalDialog.formState
+  );
+  const roles: Role[] = useSelector((state: RootState) => state.rbac.roles);
+  const user: UserRbac[] = useSelector((state: any) => state.rbac.user);
   const dispatch = useDispatch();
-   const roleAssignments = useSelector(
-    (state: any) => state.rbac.roleAssignments
+  const roleAssignments = useSelector(
+    (state: RootState) => state.rbac.roleAssignments
+  );
+  const [readOnly, setReadOnly] = useState(true);
+
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_role_assignment' && !permissions['Role']?.u) ||
+        (formType === 'add_role_assignment' && !permissions['Role']?.c)
+    );
+  }, []);
+
+  useEffect(() => {
+    if (initialData) {
+      const userId = initialData.User?.replace('agentlang.auth$User/', '');
+      const rowData: FormValues = {
+        Assignee: userId || '',
+        Role: initialData.Role || '',
+        Status: initialData.Status || 'Active',
+      };
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
+    }
+  }, [initialData, user]);
+
+  useEffect(() => {
+    if (!user || user.length === 0) {
+      dispatch({ type: GET_USER });
+    }
+  }, [dispatch, user]);
+
+  const assignedUserIds = new Set(
+    roleAssignments.map((r: any) => r.User.replace('agentlang.auth$User/', ''))
+  );
+  const filteredUsers = user.filter(
+    u =>
+      u.id === initialData.User?.replace('agentlang.auth$User/', '') ||
+      !assignedUserIds.has(u.id)
   );
 
+  const userNameOptions =
+    filteredUsers?.map((u: UserRbac) => {
+      const name = [u?.firstName, u?.lastName].filter(Boolean).join(' ');
+      return {
+        value: u.id,
+        label: name || u?.email || '',
+      };
+    }) || [];
 
-  const commonAutocompleteStyles = {
-    '& .MuiInputBase-root': { fontSize: '12px' },
-    '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
-    '& input': { fontSize: '12px' },
-    '& .MuiAutocomplete-popper': { fontSize: '12px' },
-    '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
-  };
+  const roleNameOptions =
+    roles?.map((role: Role) => ({
+      value: role.name,
+      label: role.name ?? '',
+    })) || [];
 
-   useEffect(() => {
-    if (initialData) {
-    const userId = initialData.User?.replace("agentlang.auth$User/", "");
-    const roleName = initialData.Role?.split("/")[1] || initialData.Role;
-    const assigneeUser = user.find((u: UserRbac) => u.id === userId) || null;
-    const rowData: FormValues = {
-      Assignee: assigneeUser,
-      Role: roleName || '',
-      Status: initialData.Status || 'Active',
-    };
-    setFormValue(rowData);
-    formikProps.resetForm({ values: rowData });
-    formikProps.setTouched({});
-  }
-}, [initialData, user]);
-
-
-    useEffect(() => {
-    if (!user || user.length === 0) {
-    dispatch({ type: GET_USER });
-    }
-    },[dispatch,user]);
-  const handleAutocompleteChange =
-    (field: string) => (_event: any, newValue: any) => {
-      setFieldValue(field, newValue || '');
-    };
-
-    const assignedUserIds = new Set(roleAssignments.map((r :any) => r.User.replace("agentlang.auth$User/", ""))); 
-    const filteredUsers = user.filter(u => !assignedUserIds.has(u.id));
+  const statusOptions = [{ value: 'Active', label: 'Active' }];
 
   return (
     <Box>
@@ -77,29 +102,13 @@ const AssignRoleForm = ({ formikProps , setFormValue = () => {}}: AssignRoleForm
         <StyledLabel>
           Select User <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <Autocomplete
-          sx={commonAutocompleteStyles}
-          size="small"
-          options={filteredUsers}
-          getOptionLabel={(option: UserRbac) => {
-          const name = [option?.firstName, option?.lastName].filter(Boolean).join(' ');
-          return name || option?.email || '';
-           }}
-          value={values.Assignee || null}
-          onChange={handleAutocompleteChange('Assignee')}
-          isOptionEqualToValue={(option, value) => option?.id === value?.id}
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder="Select User"
-              variant="outlined"
-              error={touched.Assignee && Boolean(errors.Assignee)}
-              helperText={touched.Assignee && errors.Assignee}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-              }}
-            />
-          )}
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="Assignee"
+          label="Select User"
+          options={userNameOptions}
+          value={values.Assignee || ''}
+          formikProps={formikProps}
         />
       </Box>
 
@@ -108,51 +117,29 @@ const AssignRoleForm = ({ formikProps , setFormValue = () => {}}: AssignRoleForm
           {' '}
           Select Role <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <Autocomplete
-          sx={commonAutocompleteStyles}
-          size="small"
-          options={roles.map(r => r.name)}
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="Role"
+          label="Select Role"
+          options={roleNameOptions}
           value={values.Role || ''}
-          onChange={handleAutocompleteChange('Role')}
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder="Select Role"
-              variant="outlined"
-              error={touched.Role && Boolean(errors.Role)}
-              helperText={touched.Role && errors.Role}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-              }}
-            />
-          )}
+          formikProps={formikProps}
         />
       </Box>
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Status</StyledLabel>
-        <Autocomplete
-          sx={commonAutocompleteStyles}
-          size="small"
-          options={['Active']}
-          value={values.Status || 'Active'}
-          onChange={handleAutocompleteChange('Status')}
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder="Select Status"
-              variant="outlined"
-              error={touched.Status && Boolean(errors.Status)}
-              helperText={touched.Status && errors.Status}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-              }}
-            />
-          )}
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="Status"
+          label="Status"
+          options={statusOptions}
+          value={values.Status || ''}
+          formikProps={formikProps}
         />
       </Box>
     </Box>
   );
 };
 
-export default AssignRoleForm;
+export default withRBAC(AssignRoleForm, ['Role']);
