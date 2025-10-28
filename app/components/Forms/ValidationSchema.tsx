@@ -109,9 +109,9 @@ export const addResourceValidationSchema = (allResourcesDetail = [], currentEmai
   FirstName: Yup.string().required('First Name is required'),
   LastName: Yup.string().required('Last Name is required'),
   Email: Yup.string()
-    .required('Email is required')
+    .required('Email Id is required')
     .matches(emailRegex, 'Enter a valid email address')
-    .test('unique-email', 'This Email already exists. Please choose another Email.', function (value) {
+    .test('unique-email', 'This Email Id already exists. Please choose another Email Id.', function (value) {
         if (!value) return true;
         const emailLower = value.toLowerCase().trim();
         const isDuplicate =
@@ -177,9 +177,9 @@ export const editResourceValidationSchema = (
   FirstName: Yup.string().required('First Name is required'),
   LastName: Yup.string().required('Last Name is required'),
   Email: Yup.string()
-    .required('Email is required')
+    .required('Email Id is required')
     .matches(emailRegex, 'Enter a valid email address')
-    .test('unique-email', 'This Email already exists. Please choose another Email.', function (value) {
+    .test('unique-email', 'This Email Id already exists. Please choose another Email Id.', function (value) {
         if (!value) return true;
         const emailLower = value.toLowerCase().trim();
         const isDuplicate =

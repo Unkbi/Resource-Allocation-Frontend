@@ -34,6 +34,7 @@ import { StatusPill, commonTabSx } from './styled';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { LOCATION_VALID_TABS } from '@/app/constants/constants';
+import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
 
 const baseURLAccessManagement = '/settings?menu=location-setting';
 const StyledMenu = styled(Menu)(({ theme }) => ({
@@ -232,6 +233,14 @@ function LocationSettingPage({
 
     return () => clearTimeout(timeout);
   }, [highlightedRowId, locationData, tab]);
+
+  useEffect(() => {
+    if (!employeeRates?.length)
+      dispatch({
+          type: FETCH_EMPLOYEE_RATES,
+          payload: {},
+        });
+}, [dispatch]);
 
   const handleAddNewLocationGroup = () => {
     dispatch(
