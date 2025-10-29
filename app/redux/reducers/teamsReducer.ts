@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
+  deleteTeam,
   getAllAllocationsForPeriod,
   getAllTeams,
   getResourcesAgainstTeams,
@@ -108,7 +109,7 @@ const teamsSlice = createSlice({
       .addCase(getTeamAllocations.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string | null;
-      });
+      })
     /*
      * Not being used currently in application
      * Uncomment the following code if you want to handle postTeamResource API call
@@ -124,6 +125,24 @@ const teamsSlice = createSlice({
     //   state.loading = false;
     //   state.error = action.payload;
     // });
+
+      // delete team
+      .addCase(deleteTeam.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteTeam.fulfilled, (state, action) => {
+        state.loading = false;
+        const deletedId = action.payload; 
+        if (Array.isArray(state.teams)) {
+          state.teams = state.teams.filter(team => team.Id !== deletedId);
+        }
+      })
+      .addCase(deleteTeam.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string | null;
+      })
+
   },
 });
 

@@ -22,6 +22,7 @@ import {
   getTeamForResource,
   isCurrentOrPastWeek,
   isCurrentWeek,
+  getSundayOfISO,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -72,8 +73,9 @@ import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
-import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 function AllocationGrid({
   groupBy,
@@ -93,6 +95,7 @@ function AllocationGrid({
   showActuals = false,
   rowGroupingColumnMode = 'single',
   permissions = null,
+  loadingPermissions = true,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -133,9 +136,10 @@ function AllocationGrid({
     } ?? {}
   );
   const { user } = useSelector(state => state.user);
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
+  const { projectTypes } = useSelector(state => state.allSettings);
   const { portfolios } = useSelector(state => state.portfolios);
   const { splitView, splitViewCurrentProject } = useSelector(
     state => state.allocationView
@@ -231,7 +235,7 @@ function AllocationGrid({
           initialData: {
             Resource: resourcesSelected,
             StartDate,
-            EndDate,
+            EndDate: getSundayOfISO(EndDate),
             Project: projectsSelected,
           },
         })
@@ -280,6 +284,12 @@ function AllocationGrid({
 
     return normalized;
   };
+
+  useEffect(() => {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
 
   // Set the apiRef in the context when it's available
   useEffect(() => {
@@ -434,7 +444,6 @@ function AllocationGrid({
             currentView?.Filters.map((filter, index) => {
               return {
                 ...filter,
-                id: index,
               };
             }) ?? [],
         });
@@ -690,6 +699,7 @@ function AllocationGrid({
             allocationTheme,
             type,
             projects,
+            projectTypes,
             isCellEditable
           );
           const showTooltip =
@@ -1112,8 +1122,9 @@ function AllocationGrid({
       const rowNode = apiRef.current.getRowNode(params.id);
       if (
         rowNode &&
-        rowNode.type === 'group' &&
-        rowNode.groupingField != 'teams'
+        rowNode.type === 'group'
+        // Commenting to allow expansion of teams groups as well on click anywhere on row Teams View
+        // && rowNode.groupingField != 'teams'
       ) {
         apiRef.current.setRowChildrenExpansion(
           params.id,
@@ -1205,11 +1216,11 @@ function AllocationGrid({
       };
 
       // Get Only Valid Fields, i.e. Fields starting with 'W\d'
-      const getNewModelWithValidFields = row => {
+      const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
-        Object.keys(row).forEach(key => {
-          if (/^W\d+/.test(key)) {
-            newModelWithValidFields[key] = row[key];
+        Object.keys(row).forEach(field => {
+          if (/^W\d+/.test(field) && isCellEditableInRow(rowId, field)) {
+            newModelWithValidFields[field] = row[field];
           }
         });
         return newModelWithValidFields;
@@ -1230,15 +1241,17 @@ function AllocationGrid({
           filteredModel = cellSelectionModel;
         } else {
           const key = Object.keys(newModel)[0];
+          const rowNode = apiRef.current.getRowNode(key);
           const newModelWithValidFields = getNewModelWithValidFields(
+            rowNode?.children[0],
             newModel[key]
           );
+
           filteredModel = {
             [key]: newModelWithValidFields,
           };
         }
       }
-
       rowIds.forEach(rowId => {
         if (!rowId.startsWith('auto-generated')) {
           const row = apiRef.current.getRow(rowId);
@@ -1291,12 +1304,11 @@ function AllocationGrid({
   };
 
   const handleFilterModelChange = newModel => {
-    // setFilterModel(newModel);
-
     const filterData = newModel.items.map(item => ({
       field: item.field,
       operator: item.operator,
       value: item.value,
+      id: item.id,
     }));
     dispatch(
       updateCurrentView({
@@ -1393,6 +1405,7 @@ function AllocationGrid({
       isCellEditable={isCellEditable}
       onCellKeyDown={handleCellKeyDown}
       type={type}
+      projectTypes={projectTypes}
       getRowHeight={params => {
         if (params?.model?.projectId === '') {
           // Sahadev: really small value, it doesnt accept 0
@@ -1410,14 +1423,10 @@ function AllocationGrid({
       aggregationModel={aggregation}
       columns={finalColumns}
       rowSelection={true}
-      onRowClick={
-        groupBy === 'teams' || groupBy === 'organisationName'
-          ? onRowClick
-          : () => null
-      }
+      onRowClick={onRowClick}
       apiRef={apiRef}
       groupBy={groupBy}
-      loading={loading}
+      loading={loading || loadingPermissions}
       disableRowSelectionOnClick
       initialState={initialState}
       rowGroupingColumnMode={rowGroupingColumnMode}
@@ -1446,6 +1455,7 @@ function AllocationGrid({
           allocationTheme,
           type,
           projects,
+          projectTypes,
           isCellEditable,
           groupBy
         );

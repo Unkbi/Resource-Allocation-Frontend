@@ -46,7 +46,7 @@ import {
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_PAGE_VALID_TABS,
 } from '@/app/constants/constants';
-import { parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { StatusPill } from '@/app/components/Settings/styled';
 
 import {
@@ -58,6 +58,9 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import dayjs from 'dayjs';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -96,7 +99,12 @@ const AddAllocationIcon = () => (
   <img src="/images/icons/AddAllocation.svg" alt="AddAllocation" />
 );
 
-function Project({ permissions }) {
+const accessMap = [
+  { key: 'Project', value: 'project' },
+  { key: 'Portfolio', value: 'portfolio' },
+];
+
+function Project({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const apiRef = useGridApiRef();
@@ -125,15 +133,11 @@ function Project({ permissions }) {
   });
 
   useEffect(() => {
-    const accessMap = [
-      { key: 'Project', value: 'project' },
-      { key: 'Portfolio', value: 'portfolio' },
-    ];
+    if (loadingPermissions) return;
 
     const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/dashboard');
       return;
     }
 
@@ -149,7 +153,7 @@ function Project({ permissions }) {
     if (tab !== value) {
       setValue(tab);
     }
-  }, []);
+  }, [loadingPermissions]);
 
   useEffect(() => {
     const newTab = searchParams.get('tab');
@@ -244,10 +248,7 @@ function Project({ permissions }) {
           ?.FullName,
         ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
           ?.FullName,
-        Type:
-          projectTypes?.find(pt => pt.Id === project.Type)?.Name ||
-          project.Type ||
-          '',
+        Type: projectTypes?.find(pt => pt.Id === project.Type)?.Name || '',
       };
     });
   };
@@ -338,10 +339,21 @@ function Project({ permissions }) {
           );
           dispatch(fetchAllProjects());
         } else {
+          const allocations = response;
+          const sortedAllocations = allocations.sort(
+            (a, b) => parseISO(a.Period) - parseISO(b.Period)
+          );
+
+          const firstPeriod = sortedAllocations[0]?.Period;
+          const lastPeriod =
+            sortedAllocations[sortedAllocations.length - 1]?.Period;
+
+          const formattedFirst = format(parseISO(firstPeriod), 'MM/dd/yyyy');
+          const formattedLast = format(parseISO(lastPeriod), 'MM/dd/yyyy');
           dispatch(
             showToast({
               open: true,
-              message: 'Cannot delete project with active allocations',
+              message: `Cannot delete project with active allocations for period: ${formattedFirst} to ${formattedLast}`,
               type: 'error',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -550,12 +562,13 @@ function Project({ permissions }) {
         );
       },
     },
-    {
-      field: 'Location',
-      headerName: 'Location',
-      flex: 1,
-      minWidth: 150,
-    },
+    // Commenting out location from project table
+    // {
+    //   field: 'Location',
+    //   headerName: 'Location',
+    //   flex: 1,
+    //   minWidth: 150,
+    // },
     {
       field: 'Budget',
       headerName: 'Project Budget',
@@ -927,7 +940,7 @@ function Project({ permissions }) {
       case 'project':
         return (
           <ProjectTable
-            loading={loading || resourceLoading}
+            loading={loading || resourceLoading || loadingPermissions}
             columns={columns}
             rows={modifyData(rows)}
             apiRef={apiRef}
@@ -939,7 +952,7 @@ function Project({ permissions }) {
       case 'portfolio':
         return (
           <PortfolioTable
-            loading={loadingPortfolio}
+            loading={loadingPortfolio || loadingPermissions}
             columns={portfolioColumns}
             rows={modifyPortfolioData(portfolioRows)}
             apiRef={apiRef}
@@ -965,7 +978,9 @@ function Project({ permissions }) {
     }
   };
 
-  return (
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : accessMap.some(tab => permissions[tab.key].r) ? (
     <Box
       sx={{
         backgroundColor: '#fff',
@@ -993,6 +1008,8 @@ function Project({ permissions }) {
           : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
       </ConfirmDialog>
     </Box>
+  ) : (
+    <ErrorPage type="accessDenied" redirectPath="/dashboard" />
   );
 }
 

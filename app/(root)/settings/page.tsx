@@ -39,6 +39,8 @@ import Location from '@/app/components/Settings/Location';
 import UserManagement from '@/app/components/Settings/UserManagement';
 import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 interface MenuItem {
   id: string;
@@ -65,6 +67,7 @@ interface ValidationErrors {
 
 interface SettingsPanelProps {
   permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 
 // Function to validate ranges
@@ -137,7 +140,10 @@ export const validateRanges = (ranges: AllocationRange[]): ValidationErrors => {
   return errors;
 };
 
-const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
+const SettingsPanel = ({
+  permissions,
+  loadingPermissions,
+}: SettingsPanelProps) => {
   const { allocationTheme } = useSelector((state: RootState) => state.settings);
   const dispatch: AppDispatch = useDispatch();
   const [allocationRanges, setAllocationRanges] =
@@ -158,17 +164,28 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
 
   const hasAnyAccess = {
     'user-profile': true,
-    notification: true,
-    'access-management': true,
+    notification: false,
+    'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
     'allocation-setting':
       permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
-    'location-setting': true,
-    theme: true,
-    'holiday-calendar': true,
-    'global-default-view': true,
-    'help-centre': true,
+    'location-setting':
+      permissions['WorkLocation'].r || permissions['WorkLocationGroup'].r,
+    theme: false,
+    'holiday-calendar': false,
+    'global-default-view': false,
+    'help-centre': false,
+  };
+
+  const anyChildHasAccess = (menuCategory: MenuCategory) => {
+    if (
+      menuCategory.items.some(
+        item => hasAnyAccess[item.id as keyof typeof hasAnyAccess]
+      )
+    )
+      return true;
+    return false;
   };
 
   useEffect(() => {
@@ -331,35 +348,26 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
 
   useEffect(() => {
     const menu = searchParams.get('menu');
-    const updatedMenuItems = createMenuItems();
-    // Only allow menus that are accessible
-    const accessibleMenus = Object.keys(hasAnyAccess).filter(
-      key => hasAnyAccess[key as keyof typeof hasAnyAccess]
-    );
-    if (!menu || !accessibleMenus.includes(menu)) {
-      router.replace('/settings?menu=user-profile');
-      setActiveItem(updatedMenuItems[0].items[0]);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    const menu = searchParams.get('menu');
     if (activeItem && (!menu || (menu && activeItem.id !== menu))) {
       const menuParam =
         activeItem.id === 'access-management'
-          ? `?menu=${activeItem.id}&tab=role-management`
+          ? `?menu=${activeItem.id}&tab=role-assignments`
           : `?menu=${activeItem.id}`;
       const newUrl = `/settings${menuParam}`;
       router.replace(newUrl, { scroll: false });
     }
   }, [activeItem?.id]);
 
-  return (
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : (
     <PageContainer>
       <BodyContainer>
         <Box sx={{ padding: '16px', borderRight: '1px solid #e0e0e0' }}>
           <SettingsSidebar>
-            {MenuItems.map(category => (
+            {MenuItems.filter(menuCategory =>
+              anyChildHasAccess(menuCategory)
+            ).map(category => (
               <Box key={category.name}>
                 <CategoryLabel color="red">{category.name}</CategoryLabel>
                 <List disablePadding>
@@ -420,7 +428,16 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
               {activeItem?.description}
             </Typography>
           </ContentHeader>
-          <ScrollableContent>{activeItem?.content}</ScrollableContent>
+          {hasAnyAccess[activeItem?.id as keyof typeof hasAnyAccess] ? (
+            <ScrollableContent>{activeItem?.content}</ScrollableContent>
+          ) : (
+            <ErrorPage
+              type="accessDenied"
+              redirectPath="/settings?menu=user-profile"
+              buttonLabel="Go to User Profile"
+              feedbackFunc={() => setActiveItem(MenuItems[0].items[0])}
+            />
+          )}
         </ContentContainer>
       </BodyContainer>
     </PageContainer>
@@ -428,8 +445,12 @@ const SettingsPanel = ({ permissions }: SettingsPanelProps) => {
 };
 
 export default withRBAC(SettingsPanel, [
+  'Role',
+  'Permission',
   'ProjectType',
   'ProjectTypeGroup',
   'AllocationRangeSetting',
   'ScalarSetting',
+  'WorkLocation',
+  'WorkLocationGroup',
 ]);

@@ -91,7 +91,8 @@ interface ValidationErrors {
 }
 
 interface AllocationThemeProps {
-  permissions: Record<string, CrudPermissions>;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
 const commonTabSx = {
@@ -140,8 +141,13 @@ const tabConfig = [
   },
 ];
 
-function AllocationTheme({ permissions }: AllocationThemeProps) {
-  const { allocationTheme } = useSelector((state: RootState) => state.settings);
+function AllocationTheme({
+  permissions,
+  loadingPermissions,
+}: AllocationThemeProps) {
+  const { allocationTheme, loading } = useSelector(
+    (state: RootState) => state.settings
+  );
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const [activeColorRow, setActiveColorRow] = React.useState<string | null>(
     null
@@ -192,6 +198,7 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
   }, [allocationTheme]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     if (scalarSettings && Object.keys(scalarSettings).length > 0) {
       if (scalarSettings['History_Archive_month'] !== undefined) {
         setAllocationHistoryDuration(
@@ -232,19 +239,19 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
         ),
       });
     }
-  }, [scalarSettings]);
+  }, [scalarSettings, loadingPermissions]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     const accessMap = [
       { key: 'AllocationRangeSetting', value: 'color-settings' },
       { key: 'ScalarSetting', value: 'alerts-threshold' },
       { key: 'ScalarSetting', value: 'allocation-history' },
     ];
 
-    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+    const accessible = accessMap.filter(({ key }) => permissions![key]?.r);
 
     if (accessible.length === 0) {
-      router.replace('/settings?menu=user-profile');
       return;
     }
 
@@ -266,7 +273,7 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
     if (tabParam !== tab) {
       setTab(tabParam);
     }
-  }, [searchParams]);
+  }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -489,7 +496,7 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
           size="small"
           value={row.To}
           disabled={
-            !permissions['AllocationRangeSetting'].u ||
+            !permissions!['AllocationRangeSetting'].u ||
             row.To === max_allocation_error
           }
           onChange={e => handleRangeChange(id, 'To', e.target.value)}
@@ -506,7 +513,7 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
     const handleColorPickerClick = (
       event: React.MouseEvent<HTMLDivElement>
     ) => {
-      if (permissions['AllocationRangeSetting'].u) {
+      if (permissions!['AllocationRangeSetting'].u) {
         setAnchorEl(event.currentTarget);
         setActiveColorRow(id as string);
       }
@@ -745,7 +752,7 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
     return (
       <CustomFooter>
         <AddButton
-          disabled={!permissions['AllocationRangeSetting'].c}
+          disabled={!permissions!['AllocationRangeSetting'].c}
           startIcon={<AddIcon sx={{ width: '16px', height: '16px' }} />}
           onClick={handleAddAllocationRange}
         >
@@ -797,7 +804,7 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
       align: 'center',
       headerClassName: 'border-header-icon',
     },
-    ...(permissions['AllocationRangeSetting'].d
+    ...(permissions!['AllocationRangeSetting'].d
       ? [
           {
             field: 'actions',
@@ -1074,7 +1081,7 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
         }}
       >
         {tabConfig
-          .filter(tab => permissions[tab.entity].r)
+          .filter(tab => permissions![tab.entity].r)
           .map(({ label, value, icon }) => (
             <Tab
               key={value}
@@ -1115,13 +1122,14 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
             <StyledTableHeader>Allocation Range</StyledTableHeader>
             <Box sx={{ height: 'auto', width: '60%' }}>
               <StyledDataGrid
+                loading={loading || loadingPermissions}
                 rows={
-                  permissions['AllocationRangeSetting'].r
+                  permissions!['AllocationRangeSetting'].r
                     ? allocationRanges
                     : []
                 }
                 disableColumnMenu
-                isCellEditable={() => permissions['AllocationRangeSetting'].u}
+                isCellEditable={() => permissions!['AllocationRangeSetting'].u}
                 columns={columns}
                 editMode="row"
                 processRowUpdate={handleProcessRowUpdate}
@@ -1137,6 +1145,12 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                 autoHeight
                 slots={{
                   footer: CustomFooterComponent,
+                }}
+                slotProps={{
+                  loadingOverlay: {
+                    variant: 'skeleton',
+                    noRowsVariant: 'skeleton',
+                  },
                 }}
               />
             </Box>
@@ -1179,8 +1193,8 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                   </Typography>
                   <TextField
                     disabled={
-                      !permissions['ScalarSetting'].c &&
-                      !permissions['ScalarSetting'].u
+                      !permissions!['ScalarSetting'].c &&
+                      !permissions!['ScalarSetting'].u
                     }
                     type="number"
                     size="small"
@@ -1198,6 +1212,11 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                             : parseFloat(numValue.toFixed(1))
                         );
                         setHasUnsavedChanges(true);
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
                       }
                     }}
                     onBlur={e => {
@@ -1284,8 +1303,8 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                   </Typography>
                   <TextField
                     disabled={
-                      !permissions['ScalarSetting'].c &&
-                      !permissions['ScalarSetting'].u
+                      !permissions!['ScalarSetting'].c &&
+                      !permissions!['ScalarSetting'].u
                     }
                     type="number"
                     size="small"
@@ -1301,6 +1320,11 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                             : parseFloat(numValue.toFixed(1))
                         );
                         setHasUnsavedChanges(true);
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
                       }
                     }}
                     onBlur={e => {
@@ -1396,8 +1420,8 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                 </Typography>
                 <TextField
                   disabled={
-                    !permissions['ScalarSetting'].c &&
-                    !permissions['ScalarSetting'].u
+                    !permissions!['ScalarSetting'].c &&
+                    !permissions!['ScalarSetting'].u
                   }
                   size="small"
                   placeholder="Enter Value in number  1 to 9  month"
@@ -1418,6 +1442,21 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                   }}
                   inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
                 />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  {allocationHistoryDuration
+                    ? allocationHistoryDuration === '1'
+                      ? 'month'
+                      : 'months'
+                    : ''}
+                </Typography>
               </Box>
             </Box>
 
@@ -1441,8 +1480,8 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                 </Typography>
                 <TextField
                   disabled={
-                    !permissions['ScalarSetting'].c &&
-                    !permissions['ScalarSetting'].u
+                    !permissions!['ScalarSetting'].c &&
+                    !permissions!['ScalarSetting'].u
                   }
                   size="small"
                   placeholder="Enter Value in number  1 to 9  month"
@@ -1463,6 +1502,21 @@ function AllocationTheme({ permissions }: AllocationThemeProps) {
                   }}
                   inputProps={{ inputMode: 'numeric', pattern: '[1-9]?' }}
                 />
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    pt: 1,
+                    color: '#374151',
+                  }}
+                >
+                  {commentsHistoryDuration
+                    ? commentsHistoryDuration === '1'
+                      ? 'month'
+                      : 'months'
+                    : ''}
+                </Typography>
               </Box>
             </Box>
           </Box>

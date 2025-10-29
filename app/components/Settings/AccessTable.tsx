@@ -23,7 +23,8 @@ import {
   ColumnManagementStyles,
   FilterPanelStyles,
 } from '../AllocationTable/styles/StyledDataGrid';
-
+import SettingsToolbar from '../Toolbar/SettingsToolbar';
+import { DataGridPremium } from '@mui/x-data-grid-premium';
 interface AccessTableProps {
   title: string;
   data: any[];
@@ -36,6 +37,7 @@ interface AccessTableProps {
   setAnchorEl: (el: HTMLElement | null) => void;
   anchorEl: HTMLElement | null;
   buttonLabel?: string;
+  toolbarType?: 'filter' | 'none';
   columns?: any[];
   apiRef?: any;
   loading?: boolean;
@@ -63,6 +65,7 @@ export default function AccessTable({
   anchorEl,
   buttonLabel = '',
   columns = [],
+  toolbarType,
   apiRef,
   loading = false,
   checkboxSelection = false,
@@ -213,6 +216,14 @@ export default function AccessTable({
       </GridToolbarContainer>
     );
   };
+
+  const AccessToolbar = () => (
+    <SettingsToolbar
+      title={title}
+      buttonLabel={buttonLabel}
+      onButtonClick={onAdd}
+    />
+  );
 
   return (
     <Box
@@ -721,49 +732,11 @@ export default function AccessTable({
             </Box>
           </Box>
         )
-      ) : (
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          px={2}
-          py={3}
-          sx={{ borderBottom: '0.667px solid #E5E7EB' }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              fontSize: '18px',
-              color: '#1F2937',
-              fontFamily: 'Open Sans',
-              fontStyle: 'normal',
-              lineHeight: ' 28px',
-            }}
-          >
-            {title}
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={onAdd}
-            sx={{
-              height: 40,
-              borderRadius: 2,
-              background: '#152E75',
-              color: '#FFF',
-              textTransform: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-              px: 2,
-            }}
-          >
-            {buttonLabel}
-          </Button>
-        </Box>
-      )}
+      ): null
+      }
 
       <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
-        <DataGrid
+        <DataGridPremium
           rows={filteredRows}
           checkboxSelection={checkboxSelection}
           columns={columns}
@@ -780,13 +753,50 @@ export default function AccessTable({
           onFilterModelChange={handleFilterModelChange}
           columnVisibilityModel={columnVisibilityModel}
           onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
-          localeText={{
-            toolbarFilters: '',
-            toolbarColumns: '',
-            toolbarExport: '',
+          slotProps={{
+            loadingOverlay: {
+              variant: 'skeleton',
+              noRowsVariant: 'skeleton',
+            },
+            panel: {
+              className: 'parent-grid-panel',
+              placement: 'bottom-end',
+              sx: {
+                transform: 'translate3d(-50px, 250px, 0px) !important',
+                top: '40px !important',
+              },
+            },
+            filterPanel: {
+              columnsSort: 'asc',
+              filterFormProps: {
+                 filterColumns,
+                columnInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                operatorInputProps: {
+                  size: 'small',
+                  sx: { mt: 'auto' },
+                },
+                valueInputProps: {
+                  InputComponentProps: { size: 'small' },
+                },
+                deleteIconProps: {
+                  sx: { '& .MuiSvgIcon-root': { color: '#d32f2f' } },
+                },
+              },
+              sx: FilterPanelStyles,
+            },
+            columnsPanel: {
+              className: 'styleColumnMenu',
+              sx: ColumnManagementStyles,
+            },
           }}
           slots={{
-            toolbar: CustomToolbar,
+            toolbar: toolbarType === 'filter' ? AccessToolbar : undefined,
+          }}
+          localeText={{
+            toolbarFilters: '',
           }}
           sx={{
             border: 'none',
@@ -794,7 +804,6 @@ export default function AccessTable({
             '.MuiDataGrid-columnHeaders': {
               color: '#6B7280',
               fontSize: '12px',
-              fontStyle: 'normal',
               fontWeight: 600,
               lineHeight: '16px',
               letterSpacing: '0.6px',
@@ -819,48 +828,6 @@ export default function AccessTable({
             '.MuiDataGrid-cell': {
               borderBottom: '1px solid #f0f0f0',
               fontSize: 13,
-            },
-          }}
-          slotProps={{
-            loadingOverlay: {
-              variant: 'skeleton',
-              noRowsVariant: 'skeleton',
-            },
-            panel: {
-              anchorEl: currentAnchorEl,
-              className: 'parent-grid-panel',
-            },
-            columnsManagement: {
-              getTogglableColumns: () => getTogglableColumns(columns),
-            },
-            filterPanel: {
-              columnsSort: 'asc',
-              filterFormProps: {
-                filterColumns,
-                columnInputProps: {
-                  size: 'small',
-                  sx: { mt: 'auto' },
-                },
-                operatorInputProps: {
-                  size: 'small',
-                  sx: { mt: 'auto' },
-                },
-                valueInputProps: {
-                  InputComponentProps: {
-                    size: 'small',
-                  },
-                },
-                deleteIconProps: {
-                  sx: {
-                    '& .MuiSvgIcon-root': { color: '#d32f2f' },
-                  },
-                },
-              },
-              sx: FilterPanelStyles,
-            },
-            columnsPanel: {
-              className: 'styleColumnMenu',
-              sx: ColumnManagementStyles,
             },
           }}
         />

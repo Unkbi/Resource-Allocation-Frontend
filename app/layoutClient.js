@@ -123,9 +123,11 @@ export default function LayoutClient({ children }) {
       setIsUserLoginIn(isLoggedIn);
       // Fetch user data and,
       dispatch(getUserData(userId));
-
       // Fetch essential login user privileges data
-      if (!loginUserPrivileges) {
+      if (
+        !loginUserPrivileges ||
+        Object.keys(loginUserPrivileges).length === 0
+      ) {
         dispatch({ type: GET_USER_AND_PRIVILEGES, payload: { userId } });
       }
 

@@ -18,6 +18,9 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 interface TopContentProps {
   startDate: string;
@@ -30,7 +33,8 @@ interface BottomContentProps {
 }
 
 interface AllocationInitProps {
-  permissions: Record<string, CrudPermissions>;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
 const TopContent = ({ startDate, endDate }: TopContentProps) => (
@@ -41,7 +45,10 @@ const BottomContent = ({ startDate, endDate }: BottomContentProps) => (
   <BottomTeamsView startDate={startDate} endDate={endDate} />
 );
 
-function AllocationInit({ permissions }: AllocationInitProps) {
+function AllocationInit({
+  permissions,
+  loadingPermissions,
+}: AllocationInitProps) {
   const router = useRouter();
   const { splitView, currentView } = useSelector(
     (state: RootState) => state.allocationView
@@ -61,6 +68,10 @@ function AllocationInit({ permissions }: AllocationInitProps) {
   );
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
+  );
+
+  const { projectTypes } = useSelector(
+    (state: RootState) => state.allSettings
   );
 
   const { allAllocations, calendarDate } = useSelector(
@@ -85,12 +96,11 @@ function AllocationInit({ permissions }: AllocationInitProps) {
   );
 
   useEffect(() => {
-    if (!permissions['Allocation'].r) {
-      router.replace('/dashboard');
-    }
-  }, []);
+    if (loadingPermissions) return;
+  }, [loadingPermissions]);
 
   useEffect(() => {
+    if (loadingPermissions) return;
     if (!teams?.length) {
       dispatch(fetchAllTeams());
     }
@@ -121,75 +131,89 @@ function AllocationInit({ permissions }: AllocationInitProps) {
     if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
     }
+  }, [loadingPermissions]);
+
+  useEffect(() => {
+    if(projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
   }, []);
 
   useEffect(() => {
-    if (
-      (teams?.length ?? 0) > 0 &&
-      (projects?.length ?? 0) > 0 &&
-      (resources?.length ?? 0) > 0 &&
-      (allResourcesDetail?.length ?? 0) > 0 &&
-      allAllocations?.length === 0
-    ) {
-      dispatch(resetAllocations());
-      dispatch({
-        type: 'FETCH_ALL_ALLOCATIONS_INIT',
-        payload: {
-          teams: teams,
-          projects: projects,
-          resources: resources,
-          portfolios: portfolios,
-          allResourcesDetail: allResourcesDetail,
-          startDate: currentViewStartDate,
-          endDate: currentViewEndDate,
-        },
-      });
+    if (loadingPermissions) return;
+    if (permissions && permissions['Allocation'].r) {
+      if (
+        (teams?.length ?? 0) > 0 &&
+        (projects?.length ?? 0) > 0 &&
+        (resources?.length ?? 0) > 0 &&
+        (allResourcesDetail?.length ?? 0) > 0 &&
+        allAllocations?.length === 0
+      ) {
+        dispatch(resetAllocations());
+        dispatch({
+          type: 'FETCH_ALL_ALLOCATIONS_INIT',
+          payload: {
+            teams: teams,
+            projects: projects,
+            resources: resources,
+            portfolios: portfolios,
+            allResourcesDetail: allResourcesDetail,
+            projectTypes: projectTypes,
+            startDate: currentViewStartDate,
+            endDate: currentViewEndDate,
+          },
+        });
+      }
     }
-  }, [teams, projects, resources, allResourcesDetail]);
+  }, [teams, projects, resources, allResourcesDetail, loadingPermissions]);
 
   useEffect(() => {
-    if (
-      (teams?.length ?? 0) > 0 &&
-      (projects?.length ?? 0) > 0 &&
-      (resources?.length ?? 0) > 0 &&
-      (allResourcesDetail?.length ?? 0) > 0
-    ) {
-      dispatch(resetAllocations());
-      dispatch({
-        type: 'FETCH_ALL_ALLOCATIONS',
-        payload: {
-          teams: teams,
-          projects: projects,
-          resources: resources,
-          portfolios: portfolios,
-          allResourcesDetail: allResourcesDetail,
-          startDate: currentView?.isDynamicRange
+    if (loadingPermissions) return;
+    if (permissions && permissions['Allocation'].r) {
+      if (
+        (teams?.length ?? 0) > 0 &&
+        (projects?.length ?? 0) > 0 &&
+        (resources?.length ?? 0) > 0 &&
+        (allResourcesDetail?.length ?? 0) > 0
+      ) {
+        dispatch(resetAllocations());
+        dispatch({
+          type: 'FETCH_ALL_ALLOCATIONS',
+          payload: {
+            teams: teams,
+            projects: projects,
+            resources: resources,
+            portfolios: portfolios,
+            allResourcesDetail: allResourcesDetail,
+            projectTypes: projectTypes,
+            startDate: currentView?.isDynamicRange
+              ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
+              : currentView?.isFixedRange
+                ? currentView?.StartDate
+                : startDate,
+            endDate: currentView?.isDynamicRange
+              ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
+              : currentView?.isFixedRange
+                ? currentView?.EndDate
+                : endDate,
+          },
+        });
+
+        setCurrentViewStartDate(
+          currentView?.isDynamicRange
             ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
             : currentView?.isFixedRange
               ? currentView?.StartDate
-              : startDate,
-          endDate: currentView?.isDynamicRange
+              : startDate
+        );
+        setCurrentViewEndDate(
+          currentView?.isDynamicRange
             ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
             : currentView?.isFixedRange
               ? currentView?.EndDate
-              : endDate,
-        },
-      });
-
-      setCurrentViewStartDate(
-        currentView?.isDynamicRange
-          ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
-          : currentView?.isFixedRange
-            ? currentView?.StartDate
-            : startDate
-      );
-      setCurrentViewEndDate(
-        currentView?.isDynamicRange
-          ? generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus)
-          : currentView?.isFixedRange
-            ? currentView?.EndDate
-            : endDate
-      );
+              : endDate
+        );
+      }
     }
   }, [
     currentView?.isDynamicRange,
@@ -198,28 +222,38 @@ function AllocationInit({ permissions }: AllocationInitProps) {
     currentView?.WeekMinus,
     currentView?.StartDate,
     currentView?.EndDate,
+    loadingPermissions,
   ]);
 
-  return splitView ? (
-    <HorizontalSplitView
-      top={
-        <TopContent
-          startDate={currentViewStartDate || ''}
-          endDate={currentViewEndDate || ''}
-        />
-      }
-      bottom={
-        <BottomContent
-          startDate={currentViewStartDate || ''}
-          endDate={currentViewEndDate || ''}
-        />
-      }
-      initialTopHeight={300}
-      syncHorizontalScroll={true}
-      // {...(dataProcessing ? { topCSSHeight: 'var(--height)' } : {})}
-    />
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : permissions!['Allocation'].r ? (
+    splitView ? (
+      <HorizontalSplitView
+        top={
+          <TopContent
+            startDate={currentViewStartDate || ''}
+            endDate={currentViewEndDate || ''}
+          />
+        }
+        bottom={
+          <BottomContent
+            startDate={currentViewStartDate || ''}
+            endDate={currentViewEndDate || ''}
+          />
+        }
+        initialTopHeight={300}
+        syncHorizontalScroll={true}
+        // {...(dataProcessing ? { topCSSHeight: 'var(--height)' } : {})}
+      />
+    ) : (
+      <Allocation
+        startDate={currentViewStartDate}
+        endDate={currentViewEndDate}
+      />
+    )
   ) : (
-    <Allocation startDate={currentViewStartDate} endDate={currentViewEndDate} />
+    <ErrorPage type="accessDenied" redirectPath="/dashboard" />
   );
 }
 

@@ -105,7 +105,6 @@ const AddResourceToUserForm = ({
       sx={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-start',
         mt: 1,
       }}
     >
@@ -129,7 +128,7 @@ const AddResourceToUserForm = ({
         }
         label=""
       />
-      <StyledLabel sx={{ pt: 1.5, pb: 0, ml: 0, pl: 0, color: '#555555', fontWeight: 400 }}>
+      <StyledLabel sx={{ pb: 0, ml: 0, pl: 0, color: '#555555', fontWeight: 400 }}>
         Activate user(s) and send email invite to this user(s).
       </StyledLabel>
     </Box>
