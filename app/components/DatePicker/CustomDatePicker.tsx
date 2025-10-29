@@ -165,6 +165,7 @@ export default function CustomDatePicker({
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
+          minDate={minDate}
           slots={{
             textField: CustomTextField,
             openPickerIcon: () => (
