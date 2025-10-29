@@ -75,6 +75,7 @@ import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import ContextMenu from './ContextMenu';
 
 function AllocationGrid({
   groupBy,
@@ -117,8 +118,6 @@ function AllocationGrid({
     columns: _columns,
   } = useSelector(state => state.allocationView);
 
-  const [contextMenu, setContextMenu] = useState(null);
-  // const contextMenuRef = useRef(null);
 
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
@@ -668,104 +667,10 @@ function AllocationGrid({
       dispatch(setRowState(updatedRows));
     }
   };
-  // const finalColumns = getFinalColumns(
-  //   columns,
-  //   groupBy,
-  //   mode,
-  //   setSelectedTeam,
-  //   handleAddProject,
-  //   setSelectedResourceId,
-  //   dispatch,
-  //   currentView?.isFixedRange
-  //     ? currentView.startDate || startDate
-  //     : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) || startDate,
-  //   currentView?.isFixedRange
-  //     ? currentView.endDate || endDate
-  //     : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
-  //   type === 'cost'
-  // ).map(column => {
-  //   if (column.field.startsWith('W')) {
-  //     return {
-  //       ...column,
-  //       renderCell: params => {
-  //         const editable = isCellEditable(params);
-  //         const cellClass = getCellClassName(
-  //           params,
-  //           getAllRowsForView(viewId),
-  //           allocationTheme,
-  //           type,
-  //           projects,
-  //           isCellEditable
-  //         );
-  //         const showTooltip =
-  //           cellClass.split(' ').includes('non-editable-cell') ||
-  //           cellClass.split(' ').includes('non-editable-darker');
 
-  //         const value = params.formattedValue ?? '';
-  //         const cellData = params.row[params.field];
-  //         const notes = cellData?.notes || '';
-  //         const actuals = cellData?.actuals || null;
-  //         const period = cellData?.period;
-  //         const isFutureWeek =
-  //           period &&
-  //           !isCurrentWeek(parseISO(period)) &&
-  //           !isCurrentOrPastWeek(parseISO(period));
-  //         const cellContent = (() => {
-  //           if (showTooltip) {
-  //             return (
-  //               <Tooltip
-  //                 title="This resource is inactive for this period. Allocation not allowed."
-  //                 arrow
-  //                 placement="top"
-  //               >
-  //                 <span
-  //                   style={{
-  //                     display: 'inline-block',
-  //                     width: '100%',
-  //                     cursor: 'not-allowed',
-  //                   }}
-  //                 >
-  //                   {'' || <>&nbsp;</>}
-  //                 </span>
-  //               </Tooltip>
-  //             );
-  //           }
-  //           if (isFutureWeek || !editable) {
-  //             return <span>{value}</span>;
-  //           }
-  //           return (
-  //             <Box
-  //               sx={{
-  //                 width: '100%',
-  //                 height: '100%',
-  //                 display: 'flex',
-  //                 alignItems: 'stretch',
-  //                 justifyContent: 'center',
-  //                 position: 'relative',
-  //               }}
-  //             >
-  //               {showActuals && params.rowNode?.type !== 'group' ? (
-  //                 <AllocationCellWithActuals params={cellData} />
-  //               ) : (
-  //                 <span>{value}</span>
-  //               )}
-  //             </Box>
-  //           );
-  //         })();
-  //         return (
-  //           <CommentTooltip notes={notes} actuals={actuals}>
-  //             {cellContent}
-  //           </CommentTooltip>
-  //         );
-  //       },
-  //     };
-  //   }
-  //   return column;
-  // });
-
-  const isCellEditable = useCallback(
-    params => isCellEditableUtils(params, type, resources),
-    [type, resources]
+   const isCellEditable = useCallback(
+     params => isCellEditableUtils(params, type, resources),
+     [type, resources]
   );
 
   const finalColumns = getFinalColumns(
@@ -788,8 +693,6 @@ function AllocationGrid({
       return {
         ...column,
         renderCell: params => {
-          console.log(params, 'param');
-
           const editable = isCellEditable(params);
           const cellClass = getCellClassName(
             params,
@@ -812,8 +715,6 @@ function AllocationGrid({
             period &&
             !isCurrentWeek(parseISO(period)) &&
             !isCurrentOrPastWeek(parseISO(period));
-
-          // 🔹 Build the cell content logic
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -1496,25 +1397,46 @@ function AllocationGrid({
         },
       }
     : {};
-    const handleContextMenu = event => {
-      event.preventDefault();
-      event.stopPropagation();
-      setContextMenu(
-        contextMenu === null
-          ? { mouseX: event.clientX, mouseY: event.clientY }
-          : null
-      );
-    };
-    
-    
-    const handleClose = () => {
-      setContextMenu(null);
-    };
+  
+  // Context Menu State and Implementation will move state at the top level later , keeping it here for POC 
+  const [contextMenu, setContextMenu] = useState(null);
+ 
+  const handleCellContextMenu = (params) => {
+    const e = window.event; 
+    if (e && e.preventDefault) {
+      e.preventDefault(); 
+      e.stopPropagation(); 
+    }
+    const cellElement = event.target.closest('.MuiDataGrid-cell');
+    if (!cellElement) return;
+
+    const field = cellElement.getAttribute('data-field');
+    const value = cellElement.textContent;
+    const rowNode = cellElement.parentElement; 
+    const rowId = rowNode.getAttribute('data-id');
+
+    let row ;
+    if (rowId.startsWith('auto-generated')) {
+      row = apiRef.current.getRowNode(rowId);
+    } else {
+      row = apiRef.current.getRow(rowId);
+    }
+    setContextMenu({
+      mouseX: params.clientX + 2,
+      mouseY: params.clientY - 6,
+      row: row,
+      field: field,
+      value: value,
+    });
+  };
+
+  const handleClose = () => {
+    setContextMenu(null);
+  };
   
 
   return (
     <>
-      <div onContextMenu={handleContextMenu}>
         <StyledDataGrid
           cellSelection
           allocationTheme={allocationTheme}
@@ -1592,6 +1514,11 @@ function AllocationGrid({
             },
           }}
           slotProps={{
+          cell: {
+            onContextMenu: (params, event) => {
+              handleCellContextMenu(params);
+            },
+          },
             loadingOverlay: {
               variant: 'skeleton',
               noRowsVariant: 'skeleton',
@@ -1646,22 +1573,7 @@ function AllocationGrid({
             return params.rowNode.children?.length || 1;
           }}
         />
-      </div>
-      <Menu
-        open={contextMenu !== null}
-        onClose={handleClose}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          contextMenu !== null
-            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-            : undefined
-        }
-      >
-        <MenuItem onClick={handleClose}>Copy</MenuItem>
-        <MenuItem onClick={handleClose}>Print</MenuItem>
-        <MenuItem onClick={handleClose}>Highlight</MenuItem>
-        <MenuItem onClick={handleClose}>Email</MenuItem>
-      </Menu>
+    <ContextMenu contextMenu={contextMenu} handleClose={handleClose} />
     </>
   );
 }
