@@ -1,7 +1,11 @@
-export const allowedQueries: Record<
-  string,
-  (startDate: string, endDate: string, bucket: string, projectTypeFilter: string[] | null, projectTypeGroupFilter: string[] | null, portfolioFilter: string[] | null, teamFilter: string[] | null, teamAllocMgrFilter: string[] | null, orgFilter: string[] | null) => string
-> = {
+// Helper to safely convert JS arrays to SQL array literals or NULL
+const toSqlArray = (arr: string[] | null | undefined): string => {
+    if (!arr || arr.length === 0) return 'NULL';
+    const escaped = arr.map(v => `'${String(v).replace(/'/g, "''")}'`);
+    return `ARRAY[${escaped.join(',')}]`;
+};
+
+export const allowedQueries: Record<string, (...args: any[]) => string> = {
   //002 - Fractional units breakdown of resources allocation by duration trend based on project types.
 projectFTE: (startDate, endDate, bucket) => `
 /* ========= 1. Parameter block ========== */
@@ -143,13 +147,13 @@ WITH params AS (
         '${bucket}'::text                     AS bucket,
         'Contractor - PT'                     AS excluded_type,
         -- Resource/Team filter parameters (NULL means no filtering)
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filter parameters (NULL means no filtering)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= 2. Calendar buckets ========== */
@@ -186,9 +190,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -382,13 +387,13 @@ params AS (
         '${bucket}'::text                     AS bucket,
         'Contractor - PT'                     AS excluded_type,
         -- Resource/Team filter parameters (NULL means no filtering)
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filter parameters (NULL means no filtering)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= 2. Calendar buckets ========== */
@@ -425,9 +430,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -582,12 +588,12 @@ ORDER BY b.team_name, b.period_start;
     startDate,
     endDate,
     bucket,
-    projectTypeFilter = null,
-    projectTypeGroupFilter = null,
-    portfolioFilter = null,
-    teamFilter = null,
-    teamAllocMgrFilter = null,
-    orgFilter = null
+        teamFilter = null,
+        teamAllocMgrFilter = null,
+        orgFilter = null,
+        projectTypeFilter = null,
+        projectTypeGroupFilter = null,
+        portfolioFilter = null
   ) => `-- ENHANCED QUERY: Budget vs Plan vs Actual with Dynamic Filters
 -- Description: Compares project budget against planned costs and actual costs to date
 --              Enhanced with Project and Resource entity filters
@@ -619,14 +625,14 @@ WITH params AS (
     SELECT
         DATE '${startDate}'                   AS start_date,
         DATE '${endDate}'                     AS end_date,
-        -- Project filter parameters
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter,
-        -- Resource/Team filter parameters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter
+    -- Project filter parameters
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter,
+    -- Resource/Team filter parameters
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter
 ),
 
 /* ======== 2. PROJECT TYPE FILTERS ================================== */
@@ -635,9 +641,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -803,14 +810,14 @@ WITH params AS (
         DATE '${endDate}'                     AS end_date,               -- ← window end
         '${bucket}'::text                     AS bucket,                 -- 'week' | 'month' | 'quarter'
         ''                                    AS excluded_resource_type,
-        -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
-        -- Project filters (to filter which allocations/projects are counted)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    -- Resource/Team filters
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
+    -- Project filters (to filter which allocations/projects are counted)
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -818,9 +825,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -988,14 +996,14 @@ ORDER BY cal.period_start;`,
     startDate,
     endDate,
     bucket,
-    resourceFilter = null,
     teamFilter = null,
     teamAllocMgrFilter = null,
     orgFilter = null,
-    projectFilter = null,
     projectTypeFilter = null,
     projectTypeGroupFilter = null,
-    portfolioFilter = null
+        portfolioFilter = null,
+        resourceFilter = null,
+        projectFilter = null
   ) => `-- ENHANCED QUERY: Unapproved Project Actuals by Team with Dynamic Filters
 -- Description: Categorizes actuals into Approved Work, Unplanned Projects, Other Work, and Personal Time
 --              Enhanced with all 8 dropdown filters for Actuals entity
@@ -1030,15 +1038,15 @@ WITH params AS (
         DATE '${endDate}'   AS end_date,
         '${bucket}'::text   AS bucket,
         -- Resource/Team filter parameters
-        ${resourceFilter}::text[]             AS resource_filter,
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(resourceFilter)}::text[]             AS resource_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filter parameters
-        ${projectFilter}::uuid[]              AS project_filter,
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    ${toSqlArray(projectFilter)}::uuid[]              AS project_filter,
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= 2. CALENDAR BUCKETS ==================================== */
@@ -1076,9 +1084,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -1263,13 +1272,13 @@ ORDER BY ft.team_name,
 WITH params AS (
     SELECT
         -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filters (to filter which resources are counted based on their project assignments)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -1277,9 +1286,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -1391,12 +1401,12 @@ GROUP BY r."LocationCategory";
     startDate,
     endDate,
     bucket,
-    projectTypeFilter = null,
-    projectTypeGroupFilter = null,
-    portfolioFilter = null,
-    teamFilter = null,
-    teamAllocMgrFilter = null,
-    orgFilter = null
+        teamFilter = null,
+        teamAllocMgrFilter = null,
+        orgFilter = null,
+        projectTypeFilter = null,
+        projectTypeGroupFilter = null,
+        portfolioFilter = null
   ) => `-- ENHANCED QUERY: Active Projects by Type with Dynamic Filters
 -- Entity Type: Project (6 filters required)
 -- Filters: Project Type, Project Type Group, Portfolio, Team, Team Alloc Mgr, Org
@@ -1404,13 +1414,13 @@ GROUP BY r."LocationCategory";
 WITH params AS (
     SELECT
         -- Project filters
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter,
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter,
         -- Resource/Team filters (to filter which projects are counted based on their resource assignments)
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -1418,9 +1428,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -1437,7 +1448,7 @@ filtered_projects AS (
           OR EXISTS (
               SELECT 1 
               FROM filtered_project_types fpt 
-              WHERE fpt.type_id = proj."Type"  -- ⚠️ CRITICAL: Compare UUID to UUID
+              WHERE fpt.type_id = proj."Type"  
           )
       )
 ),
@@ -1551,13 +1562,13 @@ ORDER BY count DESC;`,
 WITH params AS (
     SELECT
         -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filters (to filter which resources are counted based on their project assignments)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -1565,9 +1576,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -1678,14 +1690,14 @@ GROUP BY r."Type";`,
     startDate,
     endDate,
     bucket,
-    resourceFilter = null,
     teamFilter = null,
     teamAllocMgrFilter = null,
     orgFilter = null,
-    projectFilter = null,
     projectTypeFilter = null,
     projectTypeGroupFilter = null,
-    portfolioFilter = null
+        portfolioFilter = null,
+        resourceFilter = null,
+        projectFilter = null
   ) => `-- ENHANCED QUERY: Unapproved Project Allocation with Dynamic Filters
 -- Entity Type: Allocation (8 filters required)
 -- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio, Project, Resource
@@ -1696,16 +1708,16 @@ WITH params AS (
         DATE '${endDate}'                   AS end_date,               -- ← window end
         '${bucket}'::text      AS bucket,           -- 'week' | 'month' | 'quarter'
         -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filters
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter,
-        ${projectFilter}::uuid[]              AS project_filter,
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter,
+    ${toSqlArray(projectFilter)}::uuid[]              AS project_filter,
         -- Resource filter
-        ${resourceFilter}::text[]             AS resource_filter
+    ${toSqlArray(resourceFilter)}::text[]             AS resource_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -1713,9 +1725,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -1953,13 +1966,13 @@ WITH params AS (
             '${bucket}'::text                     AS bucket,
             'Contractor - PT'                     AS excluded_type,
             -- Resource/Team filter parameters (NULL means no filtering)
-            ${teamFilter}::text[]                 AS team_filter,
-            ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-            ${orgFilter}::text[]                  AS org_filter,
+        ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+        ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+        ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
             -- Project filter parameters (NULL means no filtering)
-            ${projectTypeFilter}::text[]          AS project_type_filter,
-            ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-            ${portfolioFilter}::uuid[]            AS portfolio_filter
+        ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+        ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+        ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
     ),
     calendar AS (
         SELECT
@@ -1992,9 +2005,10 @@ WITH params AS (
         SELECT
             pt."Id"::text AS type_id  -- Store UUID as text to match project.Type
         FROM resource_projecttype pt
+        JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
         JOIN params p ON TRUE
         WHERE pt.__is_deleted__ = false
-          AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+          AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
           AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
     ),
     -- Filter projects by type, type group, and portfolio
@@ -2117,12 +2131,12 @@ WITH params AS (
     startDate,
     endDate,
     bucket,
-    projectTypeFilter = null,
-    projectTypeGroupFilter = null,
-    portfolioFilter = null,
-    teamFilter = null,
-    teamAllocMgrFilter = null,
-    orgFilter = null
+        teamFilter = null,
+        teamAllocMgrFilter = null,
+        orgFilter = null,
+        projectTypeFilter = null,
+        projectTypeGroupFilter = null,
+        portfolioFilter = null
   ) => `-- ENHANCED QUERY: Active Projects with Dynamic Filters
 -- Entity Type: Project (6 filters required)
 -- Filters: Project Type, Project Type Group, Portfolio, Team, Team Alloc Mgr, Org
@@ -2130,13 +2144,13 @@ WITH params AS (
 WITH params AS (
     SELECT
         -- Project filters
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter,
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter,
         -- Resource filters (to filter which resources' allocations count)
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -2144,9 +2158,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -2252,13 +2267,13 @@ WHERE (
 WITH params AS (
     SELECT
         -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+        ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+        ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+        ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filters (to filter which allocations/projects are counted)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+        ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+        ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+        ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -2266,9 +2281,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -2352,7 +2368,7 @@ WHERE r.__is_deleted__ = false
       )
   );`,
 
-  actualsConfirmed: (startDate, endDate, bucket, resourceFilter = null, teamFilter = null, teamAllocMgrFilter = null, orgFilter = null, projectTypeFilter = null, projectTypeGroupFilter = null, portfolioFilter = null, projectFilter = null) => `-- ENHANCED QUERY: Actuals Confirmed with Dynamic Filters
+    actualsConfirmed: (startDate, endDate, bucket, teamFilter = null, teamAllocMgrFilter = null, orgFilter = null, projectTypeFilter = null, projectTypeGroupFilter = null, portfolioFilter = null, resourceFilter = null, projectFilter = null) => `-- ENHANCED QUERY: Actuals Confirmed with Dynamic Filters
 -- Entity Type: Actuals (8 filters required)
 -- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio, Project, Resource
 
@@ -2362,16 +2378,16 @@ WITH params AS (
         DATE '${endDate}'                   AS end_date,               -- ← window end
         '${bucket}'::text       AS bucket,        -- 'week' | 'month' | 'quarter'
         -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filters
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter,
-        ${projectFilter}::uuid[]              AS project_filter,
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter,
+    ${toSqlArray(projectFilter)}::uuid[]              AS project_filter,
         -- Resource filter
-        ${resourceFilter}::text[]             AS resource_filter
+    ${toSqlArray(resourceFilter)}::text[]             AS resource_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -2379,9 +2395,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -2530,7 +2547,7 @@ LEFT JOIN bucket_actuals ba
        ON ba.period_start = cal.period_start
 ORDER BY cal.period_start;`,
 
-  totalResourceCost: (startDate, endDate, bucket, resourceFilter = null, teamFilter = null, teamAllocMgrFilter = null, orgFilter = null, projectTypeFilter = null, projectTypeGroupFilter = null, portfolioFilter = null) => `-- ENHANCED QUERY: Total Resource Cost with Dynamic Filters
+    totalResourceCost: (startDate, endDate, bucket, teamFilter = null, teamAllocMgrFilter = null, orgFilter = null, projectTypeFilter = null, projectTypeGroupFilter = null, portfolioFilter = null) => `-- ENHANCED QUERY: Total Resource Cost with Dynamic Filters
 -- Entity Type: Resource (6 filters required)
 -- Filters: Team, Team Alloc Mgr, Org, Project Type, Project Type Group, Portfolio
 
@@ -2539,13 +2556,13 @@ WITH params AS (
         DATE '${startDate}' AS start_date,
         DATE '${endDate}' AS end_date,
         -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filters (to filter which allocations/projects are counted)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -2553,9 +2570,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 
@@ -2667,13 +2685,13 @@ WITH params AS (
         DATE '${endDate}'                   AS end_date,               -- ← window end
         '${bucket}'::text       AS bucket,        -- 'week' | 'month' | 'quarter'
         -- Resource/Team filters
-        ${teamFilter}::text[]                 AS team_filter,
-        ${teamAllocMgrFilter}::text[]         AS team_alloc_mgr_filter,
-        ${orgFilter}::text[]                  AS org_filter,
+    ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
+    ${toSqlArray(teamAllocMgrFilter)}::text[]         AS team_alloc_mgr_filter,
+    ${toSqlArray(orgFilter)}::text[]                  AS org_filter,
         -- Project filters (to filter which allocations/projects are counted)
-        ${projectTypeFilter}::text[]          AS project_type_filter,
-        ${projectTypeGroupFilter}::text[]     AS project_type_group_filter,
-        ${portfolioFilter}::uuid[]            AS portfolio_filter
+    ${toSqlArray(projectTypeFilter)}::text[]          AS project_type_filter,
+    ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
+    ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
 
 /* ========= Filter CTEs ========== */
@@ -2681,9 +2699,10 @@ filtered_project_types AS (
     SELECT
         pt."Id"::text AS type_id  -- UUID to match project.Type
     FROM resource_projecttype pt
+    JOIN resource_projecttypegroup ptg ON pt."Group"::uuid = ptg."Id"
     JOIN params p ON TRUE
     WHERE pt.__is_deleted__ = false
-      AND (p.project_type_group_filter IS NULL OR pt."Group" = ANY(p.project_type_group_filter))
+      AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
 

@@ -31,7 +31,17 @@ export async function GET(
   }
 
   try {
-    const rawSQL = allowedQueries[queryKey](startDate, endDate, bucket, teamFilter, teamAllocMgrFilter, orgFilter, projectTypeFilter, projectTypeGroupFilter, portfolioFilter);
+    const rawSQL = allowedQueries[queryKey](
+      startDate,
+      endDate,
+      bucket,
+      teamFilter,
+      teamAllocMgrFilter,
+      orgFilter,
+      projectTypeFilter,
+      projectTypeGroupFilter,
+      portfolioFilter,
+    );
     const result = await pool.query(rawSQL);
     let filteredRows = result.rows;
   
