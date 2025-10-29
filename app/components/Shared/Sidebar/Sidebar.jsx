@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { Box, List, MenuItem, styled, Typography } from '@mui/material';
+import { Box, List, MenuItem, styled, Tooltip, Typography } from '@mui/material';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
@@ -312,7 +312,8 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
             <List>
               {menuItems
                 .filter(m => hasAnyAccess[m.text])
-                .map((item, index) => (
+                .map((item, index) => {
+                  const menuContent = (
                   <MenuItem
                     className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
                     key={index}
@@ -335,7 +336,20 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
                       </Typography>
                     )}
                   </MenuItem>
-                ))}
+                  );
+                  return sidebarExpanded ? (
+                    menuContent
+                  ) : (
+                    <Tooltip
+                      key={index}
+                      title={item.text}
+                      placement="right"
+                      arrow
+                    >
+                      {menuContent}
+                    </Tooltip>
+                  );
+                })}
             </List>
           </Box>
           {sidebarExpanded && (
@@ -367,6 +381,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
             }}
           >
             <Box className="profile-section">
+              {sidebarExpanded ? (
               <Box
                 onClick={handleToggle}
                 ref={anchorRef}
@@ -406,7 +421,6 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
                     fontWeight: 500,
                   }}
                 />
-                {sidebarExpanded && (
                   <Box
                     sx={{
                       display: 'flex',
@@ -415,8 +429,6 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
                       gap: '30px',
                     }}
                   >
-                    {sidebarExpanded && (
-                      <>
                         <Box
                           sx={{
                             display: 'flex',
@@ -490,11 +502,59 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
                             />
                           </Box>
                         </Box>
-                      </>
-                    )}
+                   </Box>
+                </Box>
+              ) : (
+                <Tooltip
+                  title={
+                    <Box>
+                      <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>
+                        {firstName} {lastName}
+                      </Typography>
+                      <Typography sx={{ fontSize: '12px', opacity: 0.8 }}>
+                        {email}
+                      </Typography>
+                    </Box>
+                  }
+                  placement="right"
+                  arrow
+                >
+                  <Box
+                    onClick={handleToggle}
+                    ref={anchorRef}
+                    id="composition-button"
+                    aria-controls={open ? 'composition-menu' : undefined}
+                    sx={{
+                      cursor: 'pointer',
+                      marginBottom: '9px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0',
+                      marginLeft: '17px',
+                      borderRadius: '8px',
+                      '&:hover': { background: '#0D1F52' },
+                      '&.active': { background: '#0D1F52' },
+                    }}
+                    className={selectedMenu === '/profile' ? 'active' : ''}
+                  >
+                    <CustomAvatar
+                      value={
+                        user && firstName && lastName
+                          ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
+                          : ''
+                      }
+                      showFullName={false}
+                      avatarSx={{
+                        width: '40px',
+                        height: '40px',
+                        fontSize: '16px',
+                        fontWeight: 500,
+                      }}
+                    />
                   </Box>
+                </Tooltip>
                 )}
-              </Box>
+
               <Popper
                 open={open}
                 anchorEl={anchorRef.current}
