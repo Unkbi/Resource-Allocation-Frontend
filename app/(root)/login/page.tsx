@@ -196,7 +196,7 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    localStorage.removeItem("signupEmail");
+    localStorage.removeItem('signupEmail');
     if (isLoggedIn) {
       // Use redirect path if present, otherwise go to dashboard
       router.replace(redirectPath || '/dashboard');
@@ -212,6 +212,15 @@ export default function LoginPage() {
       window.location.href = googleAuthUrl;
     } else {
       console.error('Google Auth URL is not defined');
+    }
+  };
+
+  const handleSSOSignin = () => {
+    const ssoAuthUrl = process.env.NEXT_PUBLIC_SSO_AUTH_URL;
+    if (ssoAuthUrl) {
+      window.location.href = ssoAuthUrl;
+    } else {
+      console.error('SSO Auth URL is not defined');
     }
   };
 
@@ -305,7 +314,12 @@ export default function LoginPage() {
                 <img src={'/images/icons/google.svg'} alt="Google" /> Sign in
                 with Google
               </Button>
-              <Button variant="outlined" fullWidth className="signWithSSO">
+              <Button
+                variant="outlined"
+                fullWidth
+                className="signWithSSO"
+                onClick={handleSSOSignin}
+              >
                 Sign in with SSO
               </Button>
             </Box>

@@ -1,21 +1,22 @@
-"use client";
-import { saveRefreshToken, saveToken } from "@/app/utils/authUtils";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+'use client';
+import { callbackExchangeCode } from '@/app/redux/actions/authActions';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 
 export default function CallbackContent() {
-    const searchParams = useSearchParams();
-    const route = useRouter();
-    const idToken = searchParams.get("id_token");
-    const refreshToken = searchParams.get("refresh_token");
+  const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const route = useRouter();
+  const code = searchParams.get('code');
 
-    useEffect(() => {
-        if (idToken && refreshToken) {
-            saveToken(idToken);
-            saveRefreshToken(refreshToken);
-            route.push("/dashboard")
-        }
-    }, [idToken, refreshToken])
+  useEffect(() => {
+    if (code) {
+      dispatch(callbackExchangeCode(code) as any).then(() => {
+        route.push('/dashboard');
+      });
+    }
+  }, [code]);
 
-    return <p></p>;
+  return <p></p>;
 }
