@@ -131,13 +131,16 @@ export default function CustomDatePicker({
   let minDate: Dayjs | undefined = undefined;
   let maxDate: Dayjs | undefined = undefined;
 
-  if (name === 'StartDate') {
-    const end = values.EndDate ? dayjs(values.EndDate) : null;
+  const startField = values.StartDate || values.ValidityStartDate;
+  const endField = values.EndDate || values.ValidityEndDate;
+ 
+  if (name === 'StartDate' || name === 'ValidityStartDate') {
+    const end = endField ? dayjs(endField) : null;
     maxDate = end?.isValid() ? end.startOf('day') : undefined;
   }
 
-  if (name === 'EndDate') {
-    const start = values.StartDate ? dayjs(values.StartDate) : dayjs();
+  if (name === 'EndDate' || name === 'ValidityEndDate') {
+    const start = startField ? dayjs(startField) : dayjs();
     minDate = start.startOf('day');
     maxDate = start.add(1, 'year');
   }
