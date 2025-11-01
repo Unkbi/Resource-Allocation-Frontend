@@ -406,7 +406,11 @@ export default function ExecutiveDashboardPage() {
 
   // Extract unique project types and periods from projectFTEData
   const ProjectTypes = [
-    ...new Set(filteredProjectFTEData.map(d => d.project_type).filter(type => type !== null))
+    ...new Set(
+      filteredProjectFTEData
+        .map(d => d.project_type)
+        .filter(type => type !== null)
+    ),
   ];
   const projectPeriods = [
     ...new Set(filteredProjectFTEData.map(d => d.period_start)),
@@ -414,9 +418,11 @@ export default function ExecutiveDashboardPage() {
 
   // Create project series with proper name mapping
   const projectSeries = ProjectTypes.map(typeId => {
-    const projectTypeName = projectTypes.find(pt => pt.Id === typeId)?.Name || `Unknown (${typeId})`;
-    const projectTypeColor = projectTypes.find(pt => pt.Id === typeId)?.Color || '#CCCCCC';
-    
+    const projectTypeName =
+      projectTypes.find(pt => pt.Id === typeId)?.Name || `Unknown (${typeId})`;
+    const projectTypeColor =
+      projectTypes.find(pt => pt.Id === typeId)?.Color || '#CCCCCC';
+
     return {
       label: projectTypeName,
       data: projectPeriods.map(period => {
@@ -578,10 +584,16 @@ export default function ExecutiveDashboardPage() {
                       data: (filteredActiveProjectsByType || []).map(
                         (item, idx) => {
                           // Map UUID project type to name
-                          const projectType = projectTypes?.find(pt => pt.Name === item._type);
-                          const typeName = projectType ? projectType.Name : item._type;
-                          const typeColor = projectType ? projectType.Color : item.Color;
-                          
+                          const projectType = projectTypes?.find(
+                            pt => pt.Name === item._type
+                          );
+                          const typeName = projectType
+                            ? projectType.Name
+                            : item._type;
+                          const typeColor = projectType
+                            ? projectType.Color
+                            : item.Color;
+
                           return {
                             id: idx,
                             value: Number(item.count),

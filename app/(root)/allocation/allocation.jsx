@@ -25,7 +25,7 @@ import PortfolioAllocation from '@/app/components/ResourceAllocation/component/P
 import OrganisationAllocation from '@/app/components/ResourceAllocation/component/OrganizationAllocation';
 import ResourceAllocation from '@/app/components/ResourceAllocation/component/ResourceAllocation';
 import FlatAllocation from '@/app/components/ResourceAllocation/component/FlatAllocation';
-import { getUserAttributes } from '@/app/utils/authUtils';
+import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 export default function Allocation({ startDate, endDate }) {
@@ -34,7 +34,7 @@ export default function Allocation({ startDate, endDate }) {
     state => state.allocationView
   );
   const { user } = useSelector(state => state.user);
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
   const { teams } = useSelector(state => state.teams);
   const { projects } = useSelector(state => state.projects);
   const { resources } = useSelector(state => state.resources);

@@ -32,7 +32,7 @@ import {
   setSplitViewCurrentProject,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
-import { getUserAttributes } from '@/app/utils/authUtils';
+import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 const MainAppBar = styled(AppBar, {
@@ -85,9 +85,9 @@ const Header = ({ sidebarExpanded }) => {
   const { user } = useSelector(state => state.user);
   const {
     email = '',
-    given_name: firstName = '',
-    family_name: lastName = '',
-  } = getUserAttributes(user, []) || {};
+    firstName = '',
+    lastName = '',
+  } = getLoginUserDetails(user) || {};
   const { splitView } = useSelector(state => state.allocationView);
   const { calendarDate } = useSelector(state => state.allAllocations);
   const anchorRefAdd = React.useRef(null);

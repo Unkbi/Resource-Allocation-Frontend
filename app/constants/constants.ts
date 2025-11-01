@@ -278,3 +278,9 @@ export const ACCESS_MANAGEMENT_VALID_TABS = [
   'privilege-assignments',
   'privilege-management',
 ];
+
+//creating array  constant for storing project active and inactive status
+
+export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
+
+export const PROJECT_INACTIVE_STATUS = [ 'Proposed','Paused','Completed'];

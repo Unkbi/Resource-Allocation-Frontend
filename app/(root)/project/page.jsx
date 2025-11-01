@@ -46,7 +46,7 @@ import {
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_PAGE_VALID_TABS,
 } from '@/app/constants/constants';
-import { parseISO ,format } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { StatusPill } from '@/app/components/Settings/styled';
 
 import {
@@ -248,10 +248,7 @@ function Project({ permissions, loadingPermissions }) {
           ?.FullName,
         ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
           ?.FullName,
-        Type:
-          projectTypes?.find(pt => pt.Id === project.Type)?.Name ||
-          project.Type ||
-          '',
+        Type: projectTypes?.find(pt => pt.Id === project.Type)?.Name || '',
       };
     });
   };
@@ -346,13 +343,13 @@ function Project({ permissions, loadingPermissions }) {
           const sortedAllocations = allocations.sort(
             (a, b) => parseISO(a.Period) - parseISO(b.Period)
           );
-          
+
           const firstPeriod = sortedAllocations[0]?.Period;
           const lastPeriod =
             sortedAllocations[sortedAllocations.length - 1]?.Period;
-          
-         const formattedFirst = format(parseISO(firstPeriod), 'MM/dd/yyyy');
-         const formattedLast = format(parseISO(lastPeriod), 'MM/dd/yyyy');
+
+          const formattedFirst = format(parseISO(firstPeriod), 'MM/dd/yyyy');
+          const formattedLast = format(parseISO(lastPeriod), 'MM/dd/yyyy');
           dispatch(
             showToast({
               open: true,
@@ -565,12 +562,13 @@ function Project({ permissions, loadingPermissions }) {
         );
       },
     },
-    {
-      field: 'Location',
-      headerName: 'Location',
-      flex: 1,
-      minWidth: 150,
-    },
+    // Commenting out location from project table
+    // {
+    //   field: 'Location',
+    //   headerName: 'Location',
+    //   flex: 1,
+    //   minWidth: 150,
+    // },
     {
       field: 'Budget',
       headerName: 'Project Budget',
