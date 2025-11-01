@@ -33,12 +33,12 @@ const ChipInput: React.FC<ChipInputProps> = ({
   helperText,
   disabled = false,
   chipProps = {
-    backgroundColor: '#E3F2FD',
-    color: '#152E75',
+    backgroundColor: '#E7E7E7',
+    color: '#000000BD',
     fontSize: '12px',
     fontWeight: 400,
     height: '22px',
-    borderRadius: '5px',
+    borderRadius: '27px',
   },
   containerProps = {
     border: '1px solid #E5E7EB',
@@ -89,7 +89,7 @@ const ChipInput: React.FC<ChipInputProps> = ({
               fontWeight: chipProps.fontWeight,
               height: chipProps.height,
               '& .MuiChip-deleteIcon': {
-                color: chipProps.color,
+                color: '#4A4A5485',
                 fontSize: '18px',
                 '&:hover': {
                   color: chipProps.color === '#1565C0' ? '#0D47A1' : 'rgba(0, 0, 0, 0.7)',

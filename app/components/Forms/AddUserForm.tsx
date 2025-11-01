@@ -16,7 +16,7 @@ interface AddUserFormProps {
 
 const AddUserForm = ({
   formikProps,
-  setFormValue = () => {},
+  setFormValue = () => { },
 }: AddUserFormProps) => {
   const {
     values,
@@ -32,10 +32,9 @@ const AddUserForm = ({
   const { initialData } = useSelector(
     (state: any) => state.globalDialog.formState || {}
   );
-  // const { resources } = useSelector((state: any) => state.resources || {});
-  const {roles} = useSelector((state:any)=> state.rbac || {})
+  const { roles } = useSelector((state: any) => state.rbac || {})
   const seenValues = new Set<string>();
-
+  const [showMessage, setShowMessage] = React.useState(true);
   const roleOptions: { value: string; label: string; id: string }[] = (
     roles || []
   )
@@ -58,7 +57,6 @@ const AddUserForm = ({
         LastName: lastName || '',
         Email: initialData?.email || '',
         Role: initialData?.role || 'CEO',
-        sendActivationEmail: initialData?.sendActivationEmail || false,
       };
       setFormValue(obj);
       resetForm({ values: obj });
@@ -68,7 +66,7 @@ const AddUserForm = ({
 
   useEffect(() => {
     if (!roles || roles.length === 0) {
-      dispatch({type: FETCH_ROLES});
+      dispatch({ type: FETCH_ROLES });
     }
   }, [dispatch, roles]);
 
@@ -79,7 +77,7 @@ const AddUserForm = ({
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
-          name="firstName"
+          name="FirstName"
           placeholder="Enter First Name"
           value={values?.FirstName || ''}
           onChange={(e: any) => {
@@ -97,7 +95,7 @@ const AddUserForm = ({
           Last Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
-          name="lastName"
+          name="LastName"
           placeholder="Enter Last Name"
           value={values?.LastName || ''}
           onChange={(e: any) => {
@@ -115,7 +113,7 @@ const AddUserForm = ({
           Email-Id <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
-          name="email"
+          name="Email"
           placeholder="Enter Email"
           value={values?.Email || ''}
           onChange={(e: any) => {
@@ -143,32 +141,78 @@ const AddUserForm = ({
           fullWidth
         />
       </Box>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          mt: 1,
+        }}
+      >
+        <img src='/images/icons/ErrorOutline.svg' alt='Error Icon' style={{ width: 18, height: 18, marginRight: 8 }} />
+        <StyledLabel sx={{ pb: 0, ml: 0, pl: 0, color: '#555555', fontWeight: 400 }}>
+          Send account activation email to this user
+        </StyledLabel>
+      </Box>
 
-      <Box sx={{ pb: 2, mt: 2, display: 'flex', alignItems: 'center' }}>
-        <input
-          type="checkbox"
-          id="sendActivationEmail"
-          checked={values.sendActivationEmail || false}
-          onChange={(e) => {
-        setFieldValue('sendActivationEmail', e.target.checked);
-          }}
-          style={{
-        marginRight: '8px',
-        width: '18px',
-        height: '18px',
-        accentColor: '#1976d2'
-          }}
-        />
-        <label 
-          htmlFor="sendActivationEmail" 
-          style={{ 
-        fontSize: '14px', 
-        color: '#666',
-        cursor: 'pointer'
-          }}
-        >
-          Send account activation email to this user.
-        </label>
+      <Box sx={{
+        display: showMessage ? 'block' : 'none',
+        mt: 2,
+        p: 2,
+        backgroundColor: '#f5f5f5',
+        borderRadius: '4px',
+        border: '1px solid #e0e0e0',
+        position: 'relative'
+      }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 1
+        }}>
+          <img
+            src="/images/icons/ErrorIcon.svg"
+            alt="Error"
+            style={{
+              width: 20,
+              height: 20,
+              marginTop: 2,
+              flexShrink: 0
+            }}
+          />
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{
+              fontWeight: 500,
+              fontSize: '14px',
+              color: '#030712',
+              mb: 0.5
+            }}>
+              Important Message
+            </Box>
+            <Box sx={{
+              fontSize: '12px',
+              color: '#030712',
+              fontWeight: 400,
+              lineHeight: 1.4
+            }}>
+              The interface restricts a user to a single role at any given time.<br />
+              Assign user roles through this interface; permissions are managed by RBAC.
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              cursor: 'pointer',
+              color: '#666',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              lineHeight: 1,
+              '&:hover': {
+                color: '#030712'
+              }
+            }}
+            onClick={() => setShowMessage(false)}
+          >
+            ×
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

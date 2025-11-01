@@ -102,7 +102,6 @@ export default function AccessTable({
   const quickFilterOptions = [
     { label: 'All', value: 'All' },
     { label: 'Not Created', value: 'Not Created' },
-    { label: 'Created', value: 'Created' },
     { label: 'Invited', value: 'Invited' },
     { label: 'Active', value: 'Active' },
     { label: 'Inactive', value: 'Inactive' },
@@ -163,18 +162,18 @@ export default function AccessTable({
 
     const canAddUser =
       title === 'Resources'
-        ? selectedRows.some(row => getStatus(row) === 'Not Created')
+        ? selectedRows.every(row => getStatus(row) === 'Not Created')
         : false;
-    const canSendInvite = selectedRows.some(
+    const canSendInvite = selectedRows.every(
       row => getStatus(row) === 'Created'
     );
-    const canResendInvite = selectedRows.some(
+    const canResendInvite = selectedRows.every(
       row => getStatus(row) === 'Invited'
     );
-    const canDeactivate = selectedRows.some(row =>
+    const canDeactivate = selectedRows.every(row =>
       ['Created', 'Invited', 'Active'].includes(getStatus(row))
     );
-    const canReactivate = selectedRows.some(
+    const canReactivate = selectedRows.every(
       row => getStatus(row) === 'Inactive'
     );
 
@@ -188,6 +187,9 @@ export default function AccessTable({
   };
 
   const availableActions = getAvailableActions();
+
+  // Check if any action is available
+  const hasAnyAction = Object.values(availableActions).some(action => action === true);
 
   const handleFilterModelChange = (newModel: any) => {
     setFilterModel(newModel);
@@ -230,8 +232,8 @@ export default function AccessTable({
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
     >
       {checkboxSelection ? (
-        showToolbar ? (
-          // Selection action toolbar when rows are selected
+        showToolbar && hasAnyAction ? (
+          // Selection action toolbar when rows are selected AND actions are available
           <Box
             px={2}
             py={2}
@@ -265,7 +267,7 @@ export default function AccessTable({
                         fontWeight: 700,
                       }}
                     >
-                      Add
+                      Invite
                     </Button>
                   )}
 
@@ -678,18 +680,25 @@ export default function AccessTable({
                 }}
                 sx={{
                   height: 40,
-                  borderRadius: 2,
-                  background: '#152E75',
+                  borderRadius: '6px',
+                  background: '#1C2D5F',
                   color: '#FFF',
                   textTransform: 'none',
                   fontSize: 14,
                   fontWeight: 600,
                   px: 2,
-                  display: title === 'Resources' ? 'none' : 'block',
+                  display: title === 'Resources' ? 'none' : 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  '&:hover': {
+                    background: '#1C2D5F',
+                  },
                 }}
-                endIcon={title === 'Users' ? <ArrowDropDownIcon /> : null}
               >
                 {buttonLabel}
+                {title === 'Users' && (
+                  <ArrowDropDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
+                )}
               </Button>
               {anchorEl && menuId === 'add-dropdown' && title === 'Users' && (
                 <Box
@@ -701,14 +710,28 @@ export default function AccessTable({
                       anchorEl.getBoundingClientRect().left + window.scrollX,
                     zIndex: 1300,
                     background: '#fff',
-                    boxShadow: 3,
-                    borderRadius: 1,
-                    width: 123,
-                    py: 1,
+                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+                    // borderRadius: '4px',
+                    width: 130,
+                    py: 0.5,
+                    border: '1px solid #E5E7EB',
                   }}
                 >
                   <Button
-                    sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      color: '#333333',
+                      width: '100%',
+                      px: 2,
+                      py: 1,
+                      textTransform: 'none',
+                      '&:hover': {
+                        background: '#142B51B2',
+                        color: '#FFFFFF'
+                      },
+                    }}
                     onClick={() => {
                       setMenuId(null);
                       setAnchorEl(null);
@@ -718,7 +741,20 @@ export default function AccessTable({
                     From resource list
                   </Button>
                   <Button
-                    sx={{ justifyContent: 'flex-start', fontSize: '13px' }}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      color: '#333333',
+                      width: '100%',
+                      px: 2,
+                      py: 1,
+                      textTransform: 'none',
+                      '&:hover': {
+                        background: '#142B51B2',
+                        color: '#FFFFFF'
+                      },
+                    }}
                     onClick={() => {
                       setMenuId(null);
                       setAnchorEl(null);
@@ -732,7 +768,7 @@ export default function AccessTable({
             </Box>
           </Box>
         )
-      ): null
+      ) : null
       }
 
       <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
@@ -769,7 +805,7 @@ export default function AccessTable({
             filterPanel: {
               columnsSort: 'asc',
               filterFormProps: {
-                 filterColumns,
+                filterColumns,
                 columnInputProps: {
                   size: 'small',
                   sx: { mt: 'auto' },
@@ -793,7 +829,7 @@ export default function AccessTable({
             },
           }}
           slots={{
-            toolbar: toolbarType === 'filter' ? AccessToolbar : undefined,
+            toolbar: checkboxSelection ? (toolbarType === 'filter' ? AccessToolbar : CustomToolbar) : (toolbarType === 'filter' ? AccessToolbar : undefined),
           }}
           localeText={{
             toolbarFilters: '',

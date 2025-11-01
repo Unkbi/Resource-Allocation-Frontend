@@ -23,11 +23,9 @@ export interface UserFormValues {
   LastName: string | null;
   Email: string | null;
   Role: string | null;
-  sendActivationEmail: boolean;
 }
 
 export interface ResourceToUserFormValues {
   Resources: Array<string> | null;
   Role: string | null;
-  sendInviteEmail: boolean;
 }

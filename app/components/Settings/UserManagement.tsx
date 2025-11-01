@@ -17,6 +17,10 @@ import {
   MoreVert as MoreHorizontal,
   Edit as Pencil,
   Delete as Trash2,
+  Mail as MailIcon,
+  PersonAdd as PersonAddIcon,
+  Block as BlockIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
@@ -26,6 +30,8 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
+import { sendInvite } from '@/app/services/userManagementServices';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const tabMenuNames = ['users', 'resources'];
 const baseURLAccessManagement = '/settings?menu=user-management';
@@ -225,7 +231,7 @@ export default function UserManagementPage() {
       accessLevel: 'Allocation Manager',
       location: 'Chicago, USA',
       resourceStatus: 'Active',
-      userStatus: 'Created',
+      userStatus: 'Not Created',
     },
     {
       id: 'r4',
@@ -340,8 +346,8 @@ export default function UserManagementPage() {
   const handleAddNewUsers = () => {
     dispatch(
       openDialog({
-        title: 'Add User',
-        submitButtonText: 'Save',
+        title: 'Invite User',
+        submitButtonText: 'Invite',
         cancelButtonText: 'Cancel',
         formType: 'add_user',
       })
@@ -408,8 +414,8 @@ export default function UserManagementPage() {
   const handleAddUser = (rowOrRows: any) => {
     dispatch(
       openDialog({
-        title: 'Add User',
-        submitButtonText: 'Add',
+        title: 'Invite User',
+        submitButtonText: 'Invite',
         cancelButtonText: 'Cancel',
         formType: 'add_resource_to_user',
         initialData: rowOrRows,
@@ -417,14 +423,43 @@ export default function UserManagementPage() {
     );
   };
 
-  const handleSendInvite = (rowOrRows: any) => {
-    // Implement send invite logic
-    // API call to send invitation
+  const handleSendInvite = async (rowOrRows: any) => {
+    try {
+      rowOrRows = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
+      await Promise.all(rowOrRows.map(async (row: any) => {
+        const [firstName, lastName] = row.Name.split(' ') || [];
+        const postData = {
+          email: row.email,
+          firstName: firstName,
+          lastName: lastName
+        };
+        await sendInvite(postData);
+      }));
+      dispatch(
+        showToast({
+          open: true,
+          message: `User invitation sent successfully`,
+          type: 'success',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    } catch (error) {
+      console.error('Error sending invite:', error);
+      dispatch(
+        showToast({
+          open: true,
+          message: `Failed to send user invitation`,
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    }
   };
 
-  const handleResendInvite = (rowOrRows: any) => {
-    // Implement resend invite logic
-    // API call to resend invitation
+  const handleResendInvite = async (rowOrRows: any) => {
+    handleSendInvite(rowOrRows);
   };
 
   const handleDeactivateUser = (rowOrRows: any) => {
@@ -534,133 +569,30 @@ export default function UserManagementPage() {
     {
       field: 'actions',
       headerName: 'Actions',
-      flex: 1,
+      width: 100,
       sortable: false,
       filterable: false,
       renderCell: (params: any) => {
-        const status = params.row.status;
-
         const rowId = String(
           params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
         );
         const isThisRowSelected = selectedRowIds.has(rowId);
 
-        const enableSendInvite = status === 'Created';
-        const enableResendInvite = status === 'Invited';
-        const enableDeactivate = ['Created', 'Invited', 'Active'].includes(
-          status
-        );
-        const enableReactivate = status === 'Inactive';
-
-        // If this specific row is selected, disable its individual buttons
-        const disabled = isThisRowSelected;
-
-        const buttonBaseStyle = {
-          height: 30,
-          borderRadius: 1,
-          fontSize: 12,
-          fontWeight: 400,
-          textTransform: 'none',
-          border: '1px solid #D1D5DB',
-        };
-
         return (
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 0.5,
-              justifyContent: 'start',
-              alignItems: 'center',
-              height: '100%',
-              minHeight: '52px',
-            }}
-          >
-            {status === 'Invited' ? (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableResendInvite}
-                sx={{
-                  ...buttonBaseStyle,
-                  color:
-                    disabled || !enableResendInvite ? '#94A3B8' : '#229E60',
-                  backgroundColor:
-                    disabled || !enableResendInvite ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableResendInvite ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled &&
-                  enableResendInvite &&
-                  handleResendInvite(params.row)
-                }
-              >
-                Re-invite
-              </Button>
-            ) : (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableSendInvite}
-                sx={{
-                  ...buttonBaseStyle,
-                  color: disabled || !enableSendInvite ? '#94A3B8' : '#229E60',
-                  backgroundColor:
-                    disabled || !enableSendInvite ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableSendInvite ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled && enableSendInvite && handleSendInvite(params.row)
-                }
-              >
-                Invite
-              </Button>
-            )}
-
-            {status === 'Inactive' ? (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableReactivate}
-                sx={{
-                  ...buttonBaseStyle,
-                  color: disabled || !enableReactivate ? '#94A3B8' : '#1C2D5F',
-                  backgroundColor:
-                    disabled || !enableReactivate ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableReactivate ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled &&
-                  enableReactivate &&
-                  handleReactivateUser(params.row)
-                }
-              >
-                Re-activate
-              </Button>
-            ) : (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableDeactivate}
-                sx={{
-                  ...buttonBaseStyle,
-                  color: disabled || !enableDeactivate ? '#94A3B8' : '#DC2626',
-                  backgroundColor:
-                    disabled || !enableDeactivate ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableDeactivate ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled &&
-                  enableDeactivate &&
-                  handleDeactivateUser(params.row)
-                }
-              >
-                Deactivate
-              </Button>
-            )}
+          <Box sx={{ ...commonCellStyle }}>
+            <IconButton
+              onClick={(e) => {
+                setAnchorEl(e.currentTarget);
+                setMenuUserId(params.row.Name);
+              }}
+              disabled={isThisRowSelected}
+              sx={{
+                color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
+              }}
+            >
+              <MoreHorizontal sx={{ fontSize: 20 }} />
+            </IconButton>
+            {renderUsersMenu(params.row.Name, params.row)}
           </Box>
         );
       },
@@ -730,220 +662,226 @@ export default function UserManagementPage() {
     {
       field: 'actions',
       headerName: 'Actions',
-      flex: 1.5,
+      width: 100,
       sortable: false,
       filterable: false,
-      width: 360,
       renderCell: (params: any) => {
-        const status = params.row.userStatus;
         const rowId = String(
           params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
         );
         const isThisRowSelected = selectedRowIds.has(rowId);
 
-        const enableAddUser = status === 'Not Created';
-        const enableSendInvite = status === 'Created';
-        const enableResendInvite = status === 'Invited';
-        const enableDeactivate = ['Created', 'Invited', 'Active'].includes(
-          status
-        );
-        const enableReactivate = status === 'Inactive';
-
-        // If this specific row is selected, disable its individual buttons
-        const disabled = isThisRowSelected;
-
-        const buttonBaseStyle = {
-          height: 30,
-          borderRadius: 1,
-          fontSize: 12,
-          fontWeight: 400,
-          textTransform: 'none',
-          border: '1px solid #D1D5DB',
-        };
-
         return (
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 0.5,
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-              minHeight: '52px',
-            }}
-          >
-            <Button
-              variant="outlined"
-              size="small"
-              disabled={disabled || !enableAddUser}
-              sx={{
-                ...buttonBaseStyle,
-                color: disabled || !enableAddUser ? '#94A3B8' : '#6B7280',
-                backgroundColor:
-                  disabled || !enableAddUser ? '#FFFFFF' : '#FFFFFF',
-                borderColor: disabled || !enableAddUser ? '#E2E8F0' : '#D1D5DB',
+          <Box sx={{ ...commonCellStyle }}>
+            <IconButton
+              onClick={(e) => {
+                setAnchorEl(e.currentTarget);
+                setMenuUserId(params.row.Name);
               }}
-              onClick={() =>
-                !disabled && enableAddUser && handleAddUser([params.row])
-              }
+              disabled={isThisRowSelected}
+              sx={{
+                color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
+              }}
             >
-              Add
-            </Button>
-            {status === 'Invited' ? (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableResendInvite}
-                sx={{
-                  ...buttonBaseStyle,
-                  color:
-                    disabled || !enableResendInvite ? '#94A3B8' : '#229E60',
-                  backgroundColor:
-                    disabled || !enableResendInvite ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableResendInvite ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled &&
-                  enableResendInvite &&
-                  handleResendInvite(params.row)
-                }
-              >
-                Re-invite
-              </Button>
-            ) : (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableSendInvite}
-                sx={{
-                  ...buttonBaseStyle,
-                  color: disabled || !enableSendInvite ? '#94A3B8' : '#229E60',
-                  backgroundColor:
-                    disabled || !enableSendInvite ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableSendInvite ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled && enableSendInvite && handleSendInvite(params.row)
-                }
-              >
-                Invite
-              </Button>
-            )}
-
-            {status === 'Inactive' ? (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableReactivate}
-                sx={{
-                  ...buttonBaseStyle,
-                  color: disabled || !enableReactivate ? '#94A3B8' : '#1C2D5F',
-                  backgroundColor:
-                    disabled || !enableReactivate ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableReactivate ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled &&
-                  enableReactivate &&
-                  handleReactivateUser(params.row)
-                }
-              >
-                Re-activate
-              </Button>
-            ) : (
-              <Button
-                variant="outlined"
-                size="small"
-                disabled={disabled || !enableDeactivate}
-                sx={{
-                  ...buttonBaseStyle,
-                  color: disabled || !enableDeactivate ? '#94A3B8' : '#DC2626',
-                  backgroundColor:
-                    disabled || !enableDeactivate ? '#FFFFFF' : '#FFFFFF',
-                  borderColor:
-                    disabled || !enableDeactivate ? '#E2E8F0' : '#D1D5DB',
-                }}
-                onClick={() =>
-                  !disabled &&
-                  enableDeactivate &&
-                  handleDeactivateUser(params.row)
-                }
-              >
-                Deactivate
-              </Button>
-            )}
+              <MoreHorizontal sx={{ fontSize: 20 }} />
+            </IconButton>
+            {renderResourcesMenu(params.row.Name, params.row)}
           </Box>
         );
       },
     },
   ];
 
-  const renderUsersMenu = (id: string) => (
-    <StyledMenu
-      anchorEl={anchorEl}
-      open={menuUserId === id}
-      onClose={() => setMenuUserId(null)}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-    >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = UsersData.find(r => r.Name === id);
-          if (assignment) {
-            handleEditUser(assignment);
-          }
-          setMenuUserId(null);
-        }}
-      >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeleteUser(id);
-          setMenuUserId(null);
-        }}
-      >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
-    </StyledMenu>
-  );
+  const renderUsersMenu = (id: string, row: any) => {
+    const status = row.status;
+    const enableSendInvite = status === 'Not Created';
+    const enableResendInvite = status === 'Invited';
+    const enableDeactivate = ['Invited', 'Active'].includes(status);
+    const enableReactivate = status === 'Inactive';
 
-  const renderResourcesMenu = (id: string) => (
-    <StyledMenu
-      anchorEl={anchorEl}
-      open={menuUserId === id}
-      onClose={() => setMenuUserId(null)}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-    >
-      <StyledMenuItem
-        onClick={() => {
-          const assignment = ResourcesData.find(r => r.Name === id);
-          if (assignment) {
-            handleEditResources(assignment);
-          }
-          setMenuUserId(null);
-        }}
+    return (
+      <StyledMenu
+        anchorEl={anchorEl}
+        open={menuUserId === id}
+        onClose={() => setMenuUserId(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Pencil sx={{ mr: 1, fontSize: 18 }} />
-        Edit
-      </StyledMenuItem>
-      <StyledMenuItem
-        onClick={() => {
-          handleDeleteResources(id);
-          setMenuUserId(null);
-        }}
+        <StyledMenuItem
+          onClick={() => {
+            const user = UsersData.find(r => r.Name === id);
+            if (user) {
+              handleEditUser(user);
+            }
+            setMenuUserId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
+
+        {enableSendInvite && (
+          <StyledMenuItem
+            onClick={() => {
+              handleSendInvite(row);
+              setMenuUserId(null);
+            }}
+          >
+            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
+            Invite
+          </StyledMenuItem>
+        )}
+
+        {enableResendInvite && (
+          <StyledMenuItem
+            onClick={() => {
+              handleResendInvite(row);
+              setMenuUserId(null);
+            }}
+          >
+            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
+            Re-invite
+          </StyledMenuItem>
+        )}
+
+        {enableDeactivate && (
+          <StyledMenuItem
+            onClick={() => {
+              handleDeactivateUser(row);
+              setMenuUserId(null);
+            }}
+          >
+            <BlockIcon sx={{ mr: 1, fontSize: 18 }} />
+            Deactivate
+          </StyledMenuItem>
+        )}
+
+        {enableReactivate && (
+          <StyledMenuItem
+            onClick={() => {
+              handleReactivateUser(row);
+              setMenuUserId(null);
+            }}
+          >
+            <CheckCircleIcon sx={{ mr: 1, fontSize: 18 }} />
+            Re-activate
+          </StyledMenuItem>
+        )}
+
+        <StyledMenuItem
+          onClick={() => {
+            handleDeleteUser(id);
+            setMenuUserId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
+      </StyledMenu>
+    );
+  };
+
+  const renderResourcesMenu = (id: string, row: any) => {
+    const status = row.userStatus;
+    // const enableAddUser = status === 'Not Created';
+    const enableSendInvite = status === 'Not Created';
+    const enableResendInvite = status === 'Invited';
+    const enableDeactivate = ['Invited', 'Active'].includes(status);
+    const enableReactivate = status === 'Inactive';
+
+    return (
+      <StyledMenu
+        anchorEl={anchorEl}
+        open={menuUserId === id}
+        onClose={() => setMenuUserId(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-        Delete
-      </StyledMenuItem>
-    </StyledMenu>
-  );
+        {/* <StyledMenuItem
+          onClick={() => {
+            const resource = ResourcesData.find(r => r.Name === id);
+            if (resource) {
+              handleEditResources(resource);
+            }
+            setMenuUserId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem> */}
+
+        {enableSendInvite && (
+          <StyledMenuItem
+            onClick={() => {
+              handleAddUser([row]);
+              setMenuUserId(null);
+            }}
+          >
+            <PersonAddIcon sx={{ mr: 1, fontSize: 18 }} />
+            Invite
+          </StyledMenuItem>
+        )}
+
+        {/* {enableSendInvite && (
+          <StyledMenuItem
+            onClick={() => {
+              handleSendInvite(row);
+              setMenuUserId(null);
+            }}
+          >
+            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
+            Invite
+          </StyledMenuItem>
+        )} */}
+
+        {enableResendInvite && (
+          <StyledMenuItem
+            onClick={() => {
+              handleResendInvite(row);
+              setMenuUserId(null);
+            }}
+          >
+            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
+            Re-invite
+          </StyledMenuItem>
+        )}
+
+        {enableDeactivate && (
+          <StyledMenuItem
+            onClick={() => {
+              handleDeactivateUser(row);
+              setMenuUserId(null);
+            }}
+          >
+            <BlockIcon sx={{ mr: 1, fontSize: 18 }} />
+            Deactivate
+          </StyledMenuItem>
+        )}
+
+        {enableReactivate && (
+          <StyledMenuItem
+            onClick={() => {
+              handleReactivateUser(row);
+              setMenuUserId(null);
+            }}
+          >
+            <CheckCircleIcon sx={{ mr: 1, fontSize: 18 }} />
+            Re-activate
+          </StyledMenuItem>
+        )}
+
+        {/* <StyledMenuItem
+          onClick={() => {
+            handleDeleteResources(id);
+            setMenuUserId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem> */}
+      </StyledMenu>
+    );
+  };
 
   return (
     <div
@@ -968,8 +906,8 @@ export default function UserManagementPage() {
           setMenuId={setMenuUserId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Add User"
-          renderMenu={renderUsersMenu}
+          buttonLabel="Invite User"
+          renderMenu={() => null}
           columns={UsersPageColumns}
           apiRef={apiRef}
           loading={loading}
@@ -995,7 +933,7 @@ export default function UserManagementPage() {
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
           buttonLabel="Add Resource"
-          renderMenu={renderResourcesMenu}
+          renderMenu={() => null}
           columns={ResourcesColumns}
           apiRef={apiRef}
           loading={loading}

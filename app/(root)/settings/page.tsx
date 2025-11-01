@@ -165,6 +165,7 @@ const SettingsPanel = ({
   const hasAnyAccess = {
     'user-profile': true,
     notification: false,
+    'user-management': true,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,

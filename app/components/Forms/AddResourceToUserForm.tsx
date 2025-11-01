@@ -52,9 +52,8 @@ const AddResourceToUserForm = ({
   useEffect(() => {
     if (initialData) {
       const obj = {
-        Resources: initialData?.map((item: any) => item.Name) || [],
+        Resources: initialData?.map((item: any) => item.email) || [],
         Role: initialData?.role || 'CEO',
-        sendInviteEmail: initialData?.sendInviteEmail || false,
       };
       setFormValue(obj);
       resetForm({ values: obj });
@@ -108,28 +107,9 @@ const AddResourceToUserForm = ({
         mt: 1,
       }}
     >
-      <FormControlLabel
-        sx={{ mr: 0 }}
-        control={
-          <Checkbox
-            name="sendInviteEmail"
-            checked={values.sendInviteEmail || false}
-            onChange={(e) => {
-              setFieldValue('sendInviteEmail', e.target.checked);
-            }}
-            color="primary"
-            sx={{ 
-              m: 0,
-              '& .MuiSvgIcon-root': {
-                fontSize: '18px',
-              }
-            }}
-          />
-        }
-        label=""
-      />
+      <img src='/images/icons/ErrorOutline.svg' alt='Error Icon' style={{ width: 18, height: 18, marginRight: 8 }} />
       <StyledLabel sx={{ pb: 0, ml: 0, pl: 0, color: '#555555', fontWeight: 400 }}>
-        Activate user(s) and send email invite to this user(s).
+        An invite will be sent to the user via email.
       </StyledLabel>
     </Box>
 
@@ -172,7 +152,8 @@ const AddResourceToUserForm = ({
           fontWeight: 400,
           lineHeight: 1.4
         }}>
-          This interface allows for user-role assignment. The underlying role definitions and permissions are maintained within the RBAC system.
+          The interface restricts a user to a single role at any given time.<br/>
+          Assign user roles through this interface; permissions are managed by RBAC.
         </Box>
         </Box>
         <Box 

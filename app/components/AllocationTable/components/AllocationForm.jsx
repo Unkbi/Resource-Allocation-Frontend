@@ -161,6 +161,8 @@ import {
   UPDATE_LOCATION,
   UPDATE_LOCATION_GROUPS,
   ADD_LOCATION_GROUPS,
+  CREATE_USER,
+  UPDATE_USER,
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
@@ -395,24 +397,20 @@ const initialValuesMap = {
     LastName: '',
     Email: '',
     Role: '',
-    sendActivationEmail: false,
   },
   edit_user: {
     FirstName: '',
     LastName: '',
     Email: '',
     Role: '',
-    sendActivationEmail: false,
   },
   add_resource_to_user: {
     Resources: [],
     Role: '',
-    sendInviteEmail: false,
   },
-  edit_resource_to_user:{
+  edit_resource_to_user: {
     Resources: [],
     Role: '',
-    sendInviteEmail: false,
   }
 };
 
@@ -694,10 +692,10 @@ const AllocationForm = () => {
     const allRows = splitView
       ? bottomTeamAllocationGrid?.getAllRows()
       : getAllRowsForView(
-          currentView?.GroupBy === 'Project'
-            ? 'projectAllocation'
-            : 'teamAllocation'
-        );
+        currentView?.GroupBy === 'Project'
+          ? 'projectAllocation'
+          : 'teamAllocation'
+      );
 
     for (let i = 0; i < allRows?.length; i++) {
       if (
@@ -1344,10 +1342,10 @@ const AllocationForm = () => {
                   splitView
                     ? bottomTeamAllocationGrid?.getAllRows()
                     : getAllRowsForView(
-                        currentView?.GroupBy === 'Project'
-                          ? 'projectAllocation'
-                          : 'teamAllocation'
-                      ),
+                      currentView?.GroupBy === 'Project'
+                        ? 'projectAllocation'
+                        : 'teamAllocation'
+                    ),
                   resource,
                   weekKey,
                   values.AllocationEntered,
@@ -1445,21 +1443,20 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Updating allocation for ${
-                Array.isArray(values.Resource)
-                  ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.find(
-                        r => r.Id === resourceId
-                      );
-                      if (!resource) return acc;
-                      return (
-                        acc +
-                        resources?.find(resource => resource.Id === resourceId)
-                          ?.FullName +
-                        ', '
-                      );
-                    }, '').slice(0, -2)
-                  : resources?.find(r => r.Id === values.Resource)?.FullName
+              `Updating allocation for ${Array.isArray(values.Resource)
+                ? values.Resource.reduce((acc, resourceId) => {
+                  const resource = resources?.find(
+                    r => r.Id === resourceId
+                  );
+                  if (!resource) return acc;
+                  return (
+                    acc +
+                    resources?.find(resource => resource.Id === resourceId)
+                      ?.FullName +
+                    ', '
+                  );
+                }, '').slice(0, -2)
+                : resources?.find(r => r.Id === values.Resource)?.FullName
               }...`,
               'info'
             )
@@ -1672,21 +1669,20 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Failed to create allocation for ${
-                Array.isArray(values.Resource)
-                  ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.find(
-                        r => r.Id === resourceId
-                      );
-                      if (!resource) return acc;
-                      return (
-                        acc +
-                        resources?.find(resource => resource.Id === resourceId)
-                          ?.FullName +
-                        ', '
-                      );
-                    }, '').slice(0, -2)
-                  : resources?.find(r => r.Id === values.Resource)?.FullName
+              `Failed to create allocation for ${Array.isArray(values.Resource)
+                ? values.Resource.reduce((acc, resourceId) => {
+                  const resource = resources?.find(
+                    r => r.Id === resourceId
+                  );
+                  if (!resource) return acc;
+                  return (
+                    acc +
+                    resources?.find(resource => resource.Id === resourceId)
+                      ?.FullName +
+                    ', '
+                  );
+                }, '').slice(0, -2)
+                : resources?.find(r => r.Id === values.Resource)?.FullName
               }`,
               'error',
               4000
@@ -3199,51 +3195,127 @@ const AllocationForm = () => {
         }
         break;
       }
-      case 'add_resource_to_user': {
-        Object.keys(cleanedValues).forEach(key => {
-          if (cleanedValues[key] === '') {
-            cleanedValues[key] = null;
+      case 'add_user': {
+        try {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+
+          const userItem = {
+            email: cleanedValues.Email || null,
+            firstName: cleanedValues.FirstName || null,
+            lastName: cleanedValues.LastName || null,
+            role: cleanedValues.Role || '*',
+          };
+
+          const postData = {
+            users: [userItem],
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_USER,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User added successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+          setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
           }
-        });
-        const postData = {
-          ...cleanedValues,
-          User: cleanedValues.User?.id || null,
-        };
-        new Promise((resolve, reject) => {
-          dispatch({
-            type: 'CREATE_USER',
-            payload: {
-              postData,
-              resolve,
-              reject,
-            },
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'add_resource_to_user': {
+        try {
+          const finalData = cleanedValues.Resources.map(resource => {
+            const [firstName, lastName] = resource.split(' ') || [];
+            const data = initialData.find(res => {
+              if (resource === res.Name) {
+                return res.email;
+              }
+            });
+            return {
+              email: data.email || null,
+              firstName: firstName || null,
+              lastName: lastName || null,
+              role: cleanedValues.Role || '*',
+            };
           });
-        })
-          .then(response => {
-            dispatch(
-              showToast({
-                open: true,
-                message: 'User added successfully.',
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
+          const postData = {
+            users: [...finalData],
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: CREATE_USER,
+              payload: {
+                postData,
+                resolve,
+                reject,
+              },
+            });
           })
-          .catch(error => {
-            console.error('Failed to add user:', error);
-            const message =
-              error?.response?.data?.exception || 'Failed to add user.';
-            dispatch(
-              showToast({
-                open: true,
-                message: message,
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Users added successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+          setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
+          }
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
       }
       case 'edit_resource_to_user': {
         Object.keys(cleanedValues).forEach(key => {
@@ -3635,9 +3707,8 @@ const AllocationForm = () => {
                   fromVersion:
                     fromVersion !== undefined ? String(fromVersion) : '',
                   toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: `${modifingUserDetails?.firstName || ''} ${
-                    modifingUserDetails?.lastName || ''
-                  }`,
+                  byUser: `${modifingUserDetails?.firstName || ''} ${modifingUserDetails?.lastName || ''
+                    }`,
                   _timestampRaw: Math.floor(
                     new Date(log.Timestamp)?.getTime() / 1000
                   ), // Add raw timestamp for sorting
