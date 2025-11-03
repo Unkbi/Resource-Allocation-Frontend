@@ -16,13 +16,11 @@ const DashboardToolbar = ({
   onFilterChange,
   teamNames = [],
   projectTypes = [],
-  projectTypeGroups = [],
   teamfilter: externalTeamFilter = 'all',
 }) => {
   const [timeFilter, setTimeFilter] = useState('week');
   const [teamFilter, setTeamFilter] = useState(externalTeamFilter);
   const [projectTypeFilter, setProjectTypeFilter] = useState('all');
-  const [projectTypeGroupFilter, setProjectTypeGroupFilter] = useState('all');
 
   useEffect(() => {
     setTeamFilter(externalTeamFilter);
@@ -46,13 +44,6 @@ const DashboardToolbar = ({
     setProjectTypeFilter(event.target.value);
     if (onFilterChange) {
       onFilterChange({ type: 'projectType', value: event.target.value });
-    }
-  };
-
-  const handleProjectTypeGroupFilterChange = event => {
-    setProjectTypeGroupFilter(event.target.value);
-    if (onFilterChange) {
-      onFilterChange({ type: 'projectTypeGroup', value: event.target.value });
     }
   };
 
@@ -136,7 +127,7 @@ const DashboardToolbar = ({
         </Box>
 
         {/* Project Types Filter */}
-        {/* <Box
+        <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -186,62 +177,6 @@ const DashboardToolbar = ({
             {projectTypes.map(type => (
               <MenuItem key={type} value={type} sx={{ color: '#344665' }}>
                 {type}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box> */}
-
-        {/* Project Type Groups Filter */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            minWidth: 200,
-            flex: 1,
-            maxWidth: 300,
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{ fontSize: '14px', whiteSpace: 'nowrap' }}
-          >
-            Project Type Groups
-          </Typography>
-          <Select
-            value={projectTypeGroupFilter}
-            onChange={handleProjectTypeGroupFilterChange}
-            displayEmpty
-            IconComponent={KeyboardArrowDownIcon}
-            size="small"
-            fullWidth
-            sx={{
-              borderRadius: 1.5,
-              bgcolor: 'white',
-              borderColor: '#D1D5DB',
-              fontSize: '14px',
-              ml: 2,
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-            }}
-            MenuProps={{
-              disableScrollLock: true,
-              PaperProps: {
-                sx: {
-                  '& .MuiMenuItem-root': { fontSize: '16px' },
-                },
-              },
-            }}
-          >
-            <MenuItem value="all" sx={{ color: '#344665' }}>
-              All Groups
-            </MenuItem>
-            {projectTypeGroups.map(group => (
-              <MenuItem key={group} value={group} sx={{ color: '#344665' }}>
-                {group}
               </MenuItem>
             ))}
           </Select>

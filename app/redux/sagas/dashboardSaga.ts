@@ -4,7 +4,7 @@ import { fetchDashboardChart } from '../actions/dashboardAction';
 import { setDashboardChart } from '../reducers/dashboardReducer';
 
 function* fetchDashboardChartSaga(action: { payload: ChartParams }) {
-  const { chartKey, queryKey, startDate, endDate, bucket, projectTypeFilter, projectTypeGroupFilter, portfolioFilter, teamFilter, teamAllocMgrFilter, orgFilter } = action.payload;
+  const { chartKey, queryKey, startDate, endDate, bucket } = action.payload;
   try {
     // const paramString = new URLSearchParams(queryParams).toString();
 
@@ -12,12 +12,6 @@ function* fetchDashboardChartSaga(action: { payload: ChartParams }) {
       startDate,
       endDate,
       bucket,
-      projectTypeFilter: projectTypeFilter ? projectTypeFilter.join(',') : '',
-      projectTypeGroupFilter: projectTypeGroupFilter ? projectTypeGroupFilter.join(',') : '',
-      portfolioFilter: portfolioFilter ? portfolioFilter.join(',') : '',
-      teamFilter: teamFilter ? teamFilter.join(',') : '',
-      teamAllocMgrFilter: teamAllocMgrFilter ? teamAllocMgrFilter.join(',') : '',
-      orgFilter: orgFilter ? orgFilter.join(',') : '',
     }).toString();
 
     const res: Response = yield call(
