@@ -51,6 +51,7 @@ import {
   isResourceWithinDate,
   getMondayOfISO,
   getUserFromUid,
+  getOnlyFilterSettings,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -90,7 +91,7 @@ import {
 import { postTeamResource } from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { DATE_FORMAT, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
+import { DATE_FORMAT, DEFAULT_PROJECT_WEEK_MINUS, DEFAULT_PROJECT_WEEK_PLUS, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
   createTeam,
@@ -159,6 +160,8 @@ import {
   ADD_LOCATION_GROUPS,
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+import { compressToEncodedURIComponent } from 'lz-string';
+import { weeksToDays } from 'date-fns';
 
 const initialValuesMap = {
   add_project: {
@@ -1627,8 +1630,45 @@ const AllocationForm = () => {
                   )
                 );
               }
+          
+              const startDate = values.StartDate ? new Date(values.StartDate) : null;
+              const endDate = values.EndDate ? new Date(values.EndDate) : null;
+              const diffInWeeks = Math.floor((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+              let adjustedEndDate;
+              if (diffInWeeks < 20) {
+                adjustedEndDate = generateDateWeekMath(
+                  'WEEK_PLUS',
+                  DEFAULT_PROJECT_WEEK_PLUS ,
+                  startDate
+                );
+              } else if (diffInWeeks >= 20 && diffInWeeks < 52) {
+                adjustedEndDate = values.EndDate; 
+              } else {
+                adjustedEndDate = generateDateWeekMath('WEEK_PLUS', 51, startDate);
+              }
+              const reviewLink = compressToEncodedURIComponent(
+                JSON.stringify(
+                  getOnlyFilterSettings({
+                    GroupBy: 'Teams',
+                    StartDate: values.StartDate,
+                    EndDate: format(adjustedEndDate, DATE_FORMAT),
+                    ColumnsVisible: [
+                      '__row_group_by_columns_group_teams__',
+                      '__row_group_by_columns_group_resource__',
+                      'project',
+                      'resourceType',
+                    ],
+                    isFixedRange: true,
+                  })
+                )
+              );
+              const link = `${window.location.origin}/allocation?settings=${reviewLink}`;
+         
               handleOnAdd(new_resources, filteredProjects);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);
+                if (pathname !== '/allocation') {
+                  router.replace(link);
+                }
             }
           );
         } catch (e) {
