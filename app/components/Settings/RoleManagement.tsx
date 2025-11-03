@@ -225,29 +225,22 @@ function RoleManagementPage({
     }
   }, [dispatch, user]);
 
+ 
   useEffect(() => {
-    if (tab === 'role-management' && (!roles || roles.length === 0)) {
-      dispatch({ type: FETCH_ROLES });
-    }
-    if (
-      tab === 'role-assignments' &&
-      (!roleAssignments || roleAssignments.length === 0)
-    ) {
-      dispatch({ type: FETCH_ROLESASSIGNMENTS });
-    }
-    if (
-      tab === 'privilege-management' &&
-      (!privileges || privileges.length === 0)
-    ) {
-      dispatch({ type: FETCH_PRIVILEGES });
-    }
-    if (
-      tab === 'privilege-assignments' &&
-      (!privilegeAssignments || privilegeAssignments.length === 0)
-    ) {
-      dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
-    }
-  }, [tab]);
+  if (loadingPermissions) return;
+  if (!roles?.length) {
+    dispatch({ type: FETCH_ROLES });
+  }
+  if (!roleAssignments?.length) {
+    dispatch({ type: FETCH_ROLESASSIGNMENTS });
+  }
+  if (!privileges?.length) {
+    dispatch({ type: FETCH_PRIVILEGES });
+  }
+  if (!privilegeAssignments?.length) {
+    dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
+  }
+}, [loadingPermissions, roles, roleAssignments, privileges, privilegeAssignments]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;

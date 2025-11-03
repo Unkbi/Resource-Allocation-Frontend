@@ -30,7 +30,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ConfirmDialog from '@/app/components/Dialog/ConfirmDialog';
-import { getUserAttributes } from '@/app/utils/authUtils';
+import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
@@ -49,7 +49,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
   // @ts-ignore
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
   const { projects } = useSelector((state: RootState) => state.projects);
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<

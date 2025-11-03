@@ -495,6 +495,7 @@ export const getUpdatedFiltersOnMyTeamsAllTeams = (
         field: 'teamAllocationManager',
         operator: 'equals',
         value: allocationManagerFullName,
+        id : 0 // This is hardcoded to avoid Id issues for My Teams filter
       },
     ];
   } else {
@@ -534,6 +535,7 @@ export const getUpdatedFiltersOnMyProjectsAllProjects = (
         field: 'projectManager',
         operator: 'equals',
         value: projectManagerName,
+        id : 1 // This is hardcoded to avoid Id issues for My Project filter
       },
     ];
   } else {

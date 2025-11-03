@@ -32,7 +32,9 @@ export interface UserRBAC {
 
 export interface LoginUser {
   id: string;
-  username: string | null;
+  username: string | null; // EmailId.
+  firstName: string | null;
+  lastName: string | null;
   systemUserInfo: {
     localUser: {
       record: {

@@ -36,6 +36,33 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+//callback SSO Login User
+export const callback = createAsyncThunk(
+  'auth/callback',
+  async (code, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('/agentlang.auth/callback', {
+        code,
+      });
+      const data = response.data;
+      const token =
+        data.userId && data.sessionId
+          ? `${data.userId}/${data.sessionId}`
+          : data.id_Token;
+      saveToken(token);
+      saveUserId(data.userId);
+      saveRefreshToken(data.refresh_token);
+      return data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.reason ||
+        'Login failed';
+      return rejectWithValue(message);
+    }
+  }
+);
+
 // Get User
 export const getUser = createAsyncThunk('auth/getUser', async userId => {
   try {
@@ -64,7 +91,10 @@ export const confirmSignUp = createAsyncThunk(
   'auth/confirmSignUp',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/agentlang.auth/confirmSignup', data);
+      const response = await axiosInstance.post(
+        '/agentlang.auth/confirmSignup',
+        data
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.reason || 'Signup failed');
@@ -82,7 +112,10 @@ export const forgotPassword = createAsyncThunk(
   'auth/forgotPassword',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('agentlang.auth/forgotPassword', data);
+      const response = await axiosInstance.post(
+        'agentlang.auth/forgotPassword',
+        data
+      );
       return response;
     } catch (error) {
       return rejectWithValue(
