@@ -31,6 +31,7 @@ import {
 } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { PROJECT_TYPE_VALID_TABS } from '@/app/constants/constants';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 interface ProjectSettingPageProps {
   permissions?: Record<string, CrudPermissions>;
@@ -114,6 +115,7 @@ function ProjectSettingPage({
   const { projectTypes, projectTypeGroups, loading } = useSelector(
     (state: any) => state.allSettings
   );
+  const { projects, updating } = useSelector( (state: any) => state.projects);
   const [ProjectTypesData, setProjectTypesData] = useState<any[]>([]);
   const [ProjectTypesGroupData, setProjectTypesGroupData] = useState<any[]>([]);
 
@@ -299,23 +301,65 @@ function ProjectSettingPage({
     if (!deletingProjectTypes && !deletingProjectTypesGroup) return;
     try {
       if (tab === 'project-types' && deletingProjectTypes) {
-        dispatch({
-          type: DELETE_PROJECT_TYPE,
-          payload: {
-            projectTypeId: projectTypes.find((e: any) => {
-              return e.Name === deletingProjectTypes;
-            })?.Id,
-          },
-        });
-      } else if (tab === 'project-types-group' && deletingProjectTypesGroup) {
+         const typeToDelete = projectTypes.find(
+           (e: any) => e.Name === deletingProjectTypes
+        );
+        const isTypeInUse = projects.some(
+          (p: any) => p.Type === typeToDelete?.Id
+        );
+        if (isTypeInUse) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Cannot delete "${deletingProjectTypes}" because it is assigned to one or more Projects.`,
+              type: 'error',
+              position: 'bottom-right',
+              autoHideTimer: 4000,
+        })
+      );
+  } else {
+    dispatch({
+      type: DELETE_PROJECT_TYPE,
+      payload: { projectTypeId: typeToDelete?.Id },
+    });
+
+    dispatch(
+      showToast({
+        open: true,
+        message: `"${deletingProjectTypes}" deleted successfully.`,
+        type: 'success',
+        position: 'bottom-right',
+        autoHideTimer: 3000,
+      })
+    );
+  }
+      }
+      else if (tab === 'project-types-group' && deletingProjectTypesGroup) {
+        const groupToDelete = projectTypeGroups.find(
+          (g: any) => g.Name === deletingProjectTypesGroup);
+        const isGroupInUse = projectTypes.some(
+          (pt: any) => pt.Group === groupToDelete?.Id
+        );
+       if (isGroupInUse) {
+        dispatch(
+          showToast({
+            open: true,
+            message: `Cannot delete "${deletingProjectTypesGroup}" because it is already used in one or more Project Types.`,
+            type: 'error',
+            position: 'bottom-right',
+            autoHideTimer: 4000,
+          })
+        );
+      } else {
         dispatch({
           type: DELETE_PROJECT_TYPE_GROUPS,
           payload: {
-            projectTypeGroupId: projectTypeGroups.find((e: any) => {
-              return e.Name === deletingProjectTypesGroup;
-            })?.Id,
+            projectTypeGroupId: projectTypeGroups.find((e: any) =>
+              e.Name === deletingProjectTypesGroup
+            )?.Id,
           },
         });
+      }
       }
     } catch (error) {
       console.error('Delete failed:', error);

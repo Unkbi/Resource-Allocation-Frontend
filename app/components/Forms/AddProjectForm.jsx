@@ -236,7 +236,8 @@ const AddProjectForm = ({
           formikProps={formikProps}
         />
       </Box>
-      <Box sx={{ pb: 2 }}>
+      {/* Commenting out location field from  add/edit project form */}
+      {/* <Box sx={{ pb: 2 }}>
         <StyledLabel>Location</StyledLabel>
         <StyledInput
           as={TextField}
@@ -250,7 +251,7 @@ const AddProjectForm = ({
           error={touched.Location && Boolean(errors.Location)}
           helperText={touched.Location && formikProps.errors.Location}
         />
-      </Box>
+      </Box> */}
       <Box
         sx={{
           pb: 2,

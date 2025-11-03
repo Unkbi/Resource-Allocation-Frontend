@@ -1,5 +1,6 @@
 import { updateSignup } from '../reducers/authReducer';
 import {
+  callback,
   confirmForgotPassword,
   confirmSignUp,
   forgotPassword,
@@ -16,6 +17,14 @@ export const performLogin = credentials => async dispatch => {
     await dispatch(loginUser(credentials)).unwrap();
   } catch (error) {
     console.log('Login failed:', error);
+  }
+};
+
+export const callbackExchangeCode = code => async dispatch => {
+  try {
+    await dispatch(callback(code)).unwrap();
+  } catch (error) {
+    console.log('SSO Login failed:', error);
   }
 };
 

@@ -104,6 +104,35 @@ export const getLoginUserId = (user: LoginUser | null) => {
   return user.id || null;
 };
 
+export const getLoginUserFirstName = (user: LoginUser | null) => {
+  if (!user) return null;
+  return user?.firstName || '';
+};
+
+export const getLoginUserlastName = (user: LoginUser | null) => {
+  if (!user) return null;
+  return user?.lastName || '';
+};
+
+export const getLoginUserEmail = (user: LoginUser | null) => {
+  if (!user) {
+    return null;
+  }
+  return user?.username || null;
+};
+
+export const getLoginUserDetails = (user: LoginUser | null) => {
+  if (!user) {
+    return null;
+  }
+  return {
+    id: user.id,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    email: user.username || '',
+  };
+};
+
 export const getUserAttributes = (
   user: LoginUser | null,
   name: string | string[]

@@ -1300,7 +1300,9 @@ export const getCellClassName = (
           const prefix = isTopLevelProject
             ? 'firstGroupsRow'
             : 'secondGroupsRow';
-          return `${prefix} project-type-${projectType.Name.toLowerCase().replace(/\s+/g, '_')}`;
+          if (!projectType) return `${prefix}`;
+
+          return `${prefix} project-type-${projectType?.Name?.toLowerCase().replace(/\s+/g, '_')}`;
         }
       }
     }

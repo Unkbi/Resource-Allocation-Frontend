@@ -22,6 +22,7 @@ import {
   getTeamForResource,
   isCurrentOrPastWeek,
   isCurrentWeek,
+  getSundayOfISO,
 } from '@/app/utils/common';
 import { demoRows } from './data';
 import {
@@ -72,7 +73,7 @@ import { startOfWeek, addDays, isValid } from 'date-fns';
 import { isCellEditableUtils } from '@/app/utils/common';
 import { CommentTooltip } from './components/AllocationCommentTooltip';
 import AllocationCellWithActuals from './components/AllocationCellWithActuals';
-import { formatAPIResponse, getUserAttributes } from '@/app/utils/authUtils';
+import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
@@ -135,7 +136,7 @@ function AllocationGrid({
     } ?? {}
   );
   const { user } = useSelector(state => state.user);
-  const { email = '' } = getUserAttributes(user, []) || {};
+  const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
   const { projects } = useSelector(state => state.projects);
   const { projectTypes } = useSelector(state => state.allSettings);
@@ -234,7 +235,7 @@ function AllocationGrid({
           initialData: {
             Resource: resourcesSelected,
             StartDate,
-            EndDate,
+            EndDate: getSundayOfISO(EndDate),
             Project: projectsSelected,
           },
         })
@@ -443,7 +444,6 @@ function AllocationGrid({
             currentView?.Filters.map((filter, index) => {
               return {
                 ...filter,
-                id: index,
               };
             }) ?? [],
         });
@@ -1216,11 +1216,11 @@ function AllocationGrid({
       };
 
       // Get Only Valid Fields, i.e. Fields starting with 'W\d'
-      const getNewModelWithValidFields = row => {
+      const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
-        Object.keys(row).forEach(key => {
-          if (/^W\d+/.test(key)) {
-            newModelWithValidFields[key] = row[key];
+        Object.keys(row).forEach(field => {
+          if (/^W\d+/.test(field) && isCellEditableInRow(rowId, field)) {
+            newModelWithValidFields[field] = row[field];
           }
         });
         return newModelWithValidFields;
@@ -1241,15 +1241,17 @@ function AllocationGrid({
           filteredModel = cellSelectionModel;
         } else {
           const key = Object.keys(newModel)[0];
+          const rowNode = apiRef.current.getRowNode(key);
           const newModelWithValidFields = getNewModelWithValidFields(
+            rowNode?.children[0],
             newModel[key]
           );
+
           filteredModel = {
             [key]: newModelWithValidFields,
           };
         }
       }
-
       rowIds.forEach(rowId => {
         if (!rowId.startsWith('auto-generated')) {
           const row = apiRef.current.getRow(rowId);
@@ -1302,12 +1304,11 @@ function AllocationGrid({
   };
 
   const handleFilterModelChange = newModel => {
-    // setFilterModel(newModel);
-
     const filterData = newModel.items.map(item => ({
       field: item.field,
       operator: item.operator,
       value: item.value,
+      id: item.id,
     }));
     dispatch(
       updateCurrentView({
