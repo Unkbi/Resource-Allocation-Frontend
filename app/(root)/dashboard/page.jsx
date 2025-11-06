@@ -337,28 +337,6 @@ export default function ExecutiveDashboardPage() {
 
   }, []);
 
-  useEffect(() => {
-    if (
-      capacityAvailability.length > 0 &&
-      resourceUtilization.length > 0 &&
-      unapprovedProjectAllocation.length > 0 &&
-      actualsConfirmed.length > 0 &&
-      unapprovedProjectActualsByTeam.length > 0 &&
-      resourceActualsDeviation.length > 0 &&
-      allocationPercentage.length > 0
-    ) {
-      filterDataByDate(selectedDate);
-    }
-  }, [
-    capacityAvailability,
-    resourceUtilization,
-    actualsConfirmed,
-    unapprovedProjectAllocation,
-    unapprovedProjectActualsByTeam,
-    resourceActualsDeviation,
-    allocationPercentage,
-    selectedDate,
-  ]);
 
   const handleFilterChange = filter => {
     if (filter.type === 'time') setBucket(filter.value);
