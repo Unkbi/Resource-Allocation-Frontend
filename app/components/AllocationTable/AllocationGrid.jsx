@@ -321,6 +321,7 @@ function AllocationGrid({
   }, [apiRef.current, groupBy, teams]);
 
   useEffect(() => {
+    if (loading) return;
     try {
       if (
         (groupBy === 'teams' ||
@@ -333,7 +334,7 @@ function AllocationGrid({
           if (row) {
             setTimeout(() => {
               apiRef.current.setRowChildrenExpansion(rowId, true);
-            }, 50);
+            }, 40);
           } else {
             // Row not ready yet, retry after small delay
             setTimeout(() => {
@@ -348,7 +349,7 @@ function AllocationGrid({
     } catch (error) {
       console.warn('Error in setting row expansion', error);
     }
-  }, [expandRowId, groupBy, apiRef]);
+  }, [expandRowId, groupBy, apiRef,loading]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -364,6 +365,7 @@ function AllocationGrid({
   }, [cellSelectionModel]);
 
   useEffect(() => {
+    if(loading) return;
     const handleScrollAndFocus = () => {
       if (
         !apiRef.current ||
@@ -393,11 +395,11 @@ function AllocationGrid({
       }
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
       setCellSelectionModel(cellSelectionData);
+      setExpandRowId(null);
     };
     const timeoutId = setTimeout(handleScrollAndFocus, 50);
-    setExpandRowId(null);
     return () => clearTimeout(timeoutId);
-  }, [apiRef, cellSelectionData]);
+  }, [apiRef, cellSelectionData,loading]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
