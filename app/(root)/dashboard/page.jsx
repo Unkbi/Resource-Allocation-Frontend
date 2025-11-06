@@ -50,6 +50,7 @@ import CommonToolbar from '@/app/components/Toolbar/CommonToolbar';
 import { getWeekNumber } from '@/app/utils/common';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { getAllTeams } from '@/app/services/teamServices';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -162,6 +163,32 @@ export default function ExecutiveDashboardPage() {
   const {projectTypes, projectTypeGroups} = useSelector(state => state.allSettings);
   // Guard to avoid repeated init dispatches causing render loops
   const initRequestedRef = useRef({ projectTypes: false, projectTypeGroups: false, teams: false });
+
+  // Memoize groupColorMap at component level so it's available for CSS generation
+  const groupColorMap = useMemo(() => {
+    if (!filteredProjectFTEData || filteredProjectFTEData.length === 0) return {};
+    
+    const colorPalette = [
+      '#0080FF', '#00C9A7', '#FFA500', '#e66767ff', '#9C27B0',
+      '#FF5722', '#4CAF50', '#FFB74D', '#80CBC4', '#9FA8DA',
+      '#FF884D', '#FFC233', '#FFB6B6', '#CE93D8', '#A1887F'
+    ];
+    
+    // Group data by project_type_group
+    const groupedData = {};
+    filteredProjectFTEData.forEach(item => {
+      const group = item.project_type_group || 'Unknown';
+      if (!groupedData[group]) {
+        groupedData[group] = true;
+      }
+    });
+    
+    const map = {};
+    Object.keys(groupedData).forEach((group, index) => {
+      map[group] = colorPalette[index % colorPalette.length];
+    });
+    return map;
+  }, [filteredProjectFTEData]);
 
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
@@ -303,8 +330,9 @@ export default function ExecutiveDashboardPage() {
     return date.subtract(day === 0 ? 6 : day - 1, 'day'); // Adjust for Sunday (day 0)
   };
 
+  const filterDataByDate = date => {
+    const monday = getMonday(date).format('YYYY-MM-DD');
 
-  useEffect(() => {
     const capacityData = capacityAvailability;
     const underAllocated = resourceUtilization.filter(
       d => d.allocation_status === 'under-allocated'
@@ -313,6 +341,7 @@ export default function ExecutiveDashboardPage() {
     const overAllocated = resourceUtilization.filter(
       d => d.allocation_status === 'over-allocated'
     );
+
     const unapprovedAllocation = unapprovedProjectAllocation;
 
     const actualsconfirmed = actualsConfirmed;
@@ -334,8 +363,34 @@ export default function ExecutiveDashboardPage() {
     setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
     setFilteredActualDeviation(actualdeviation);
     setFilteredAllocationPercentage(filterallocationpercentage);
+  };
 
+  useEffect(() => {
+    filterDataByDate(selectedDate);
   }, []);
+
+  useEffect(() => {
+    if (
+      capacityAvailability.length > 0 &&
+      resourceUtilization.length > 0 &&
+      unapprovedProjectAllocation.length > 0 &&
+      actualsConfirmed.length > 0 &&
+      unapprovedProjectActualsByTeam.length > 0 &&
+      resourceActualsDeviation.length > 0 &&
+      allocationPercentage.length > 0
+    ) {
+      filterDataByDate(selectedDate);
+    }
+  }, [
+    capacityAvailability,
+    resourceUtilization,
+    actualsConfirmed,
+    unapprovedProjectAllocation,
+    unapprovedProjectActualsByTeam,
+    resourceActualsDeviation,
+    allocationPercentage,
+    selectedDate,
+  ]);
 
 
   const handleFilterChange = filter => {
@@ -465,7 +520,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Actual Vs Plan Deviation
+                Actual Vs Plan Deviation (Previous week)
               </Typography>
               <Box
                 sx={{
@@ -866,9 +921,7 @@ export default function ExecutiveDashboardPage() {
           const allSeries = [];
           
           Object.keys(groupedData).forEach(group => {
-            const groupColor =  group === 'Run' ? '#FFA500' :
-                               group === 'Grow' ? '#0080FF' :
-                               group === 'Transform' ? '#00C9A7' : '#e66767ff';
+            const groupColor = groupColorMap[group];
             
             // Planned series (dotted line) - show for all weeks
             allSeries.push({
@@ -1470,12 +1523,12 @@ export default function ExecutiveDashboardPage() {
               stroke-dasharray: 5 5 !important;
             }
 
-            /* Map stroke to the series color based on the rect's fill attribute (kept as attribute by MUI) */
-            .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='#0080FF'] { stroke: #0080FF !important; }
-            .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='#FFA500'] { stroke: #FFA500 !important; }
-            .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='#00C9A7'] { stroke: #00C9A7 !important; }
-            .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='#FF884D'] { stroke: #FF884D !important; }
-            .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='#CCCCCC'] { stroke: #CCCCCC !important; }
+            /* Dynamically generate stroke colors for each group */
+            ${Object.entries(groupColorMap).map(([group, color]) => `
+              .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='${color}'] { 
+                stroke: ${color} !important; 
+              }
+            `).join('\n')}
 
             [class*='MuiLineElement-series-'][class*='-planned'] {
               stroke-dasharray: 5 5 !important;
