@@ -53,7 +53,8 @@ const AddResourceToUserForm = ({
     if (initialData) {
       const obj = {
         Resources: initialData?.map((item: any) => item.email) || [],
-        Role: initialData?.role || 'CEO',
+        Role: initialData?.role || '',
+        sendInviteEmail: initialData?.sendInviteEmail || true,
       };
       setFormValue(obj);
       resetForm({ values: obj });
@@ -107,7 +108,26 @@ const AddResourceToUserForm = ({
         mt: 1,
       }}
     >
-      <img src='/images/icons/ErrorOutline.svg' alt='Error Icon' style={{ width: 18, height: 18, marginRight: 8 }} />
+      <FormControlLabel
+        sx={{ mr: 0 }}
+        control={
+          <Checkbox
+            name="sendInviteEmail"
+            checked={values.sendInviteEmail || false}
+            onChange={(e) => {
+              setFieldValue('sendInviteEmail', e.target.checked);
+            }}
+            color="primary"
+            sx={{ 
+              m: 0,
+              '& .MuiSvgIcon-root': {
+                fontSize: '18px',
+              }
+            }}
+          />
+        }
+        label=""
+      />
       <StyledLabel sx={{ pb: 0, ml: 0, pl: 0, color: '#555555', fontWeight: 400 }}>
         An invite will be sent to the user via email.
       </StyledLabel>

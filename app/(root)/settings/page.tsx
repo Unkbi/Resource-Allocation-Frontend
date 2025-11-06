@@ -345,7 +345,7 @@ const SettingsPanel = ({
     } else {
       setActiveItem(updatedMenuItems[0].items[0]);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const menu = searchParams.get('menu');

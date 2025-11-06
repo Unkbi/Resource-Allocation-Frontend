@@ -11,7 +11,7 @@ import {
   Chip,
 } from '@mui/material';
 import { StyledInput } from '../Input/StyledInput';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
   DataGrid,
   GridRowSelectionModel,
@@ -686,7 +686,7 @@ export default function AccessTable({
                   textTransform: 'none',
                   fontSize: 14,
                   fontWeight: 600,
-                  px: 2,
+                  px: 1.5,
                   display: title === 'Resources' ? 'none' : 'flex',
                   alignItems: 'center',
                   gap: 1,
@@ -697,7 +697,7 @@ export default function AccessTable({
               >
                 {buttonLabel}
                 {title === 'Users' && (
-                  <ArrowDropDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
+                  <KeyboardArrowDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
                 )}
               </Button>
               {anchorEl && menuId === 'add-dropdown' && title === 'Users' && (
@@ -712,7 +712,7 @@ export default function AccessTable({
                     background: '#fff',
                     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
                     // borderRadius: '4px',
-                    width: 130,
+                    width: 123,
                     py: 0.5,
                     border: '1px solid #E5E7EB',
                   }}
@@ -724,7 +724,7 @@ export default function AccessTable({
                       fontWeight: 400,
                       color: '#333333',
                       width: '100%',
-                      px: 2,
+                      px: 1,
                       py: 1,
                       textTransform: 'none',
                       '&:hover': {
@@ -747,7 +747,7 @@ export default function AccessTable({
                       fontWeight: 400,
                       color: '#333333',
                       width: '100%',
-                      px: 2,
+                      px: 1,
                       py: 1,
                       textTransform: 'none',
                       '&:hover': {
@@ -761,7 +761,7 @@ export default function AccessTable({
                       onAdd();
                     }}
                   >
-                    New user
+                    Invite new user
                   </Button>
                 </Box>
               )}
@@ -782,7 +782,6 @@ export default function AccessTable({
           disableRowSelectionOnClick
           rowSelectionModel={selectionModel}
           onRowSelectionModelChange={handleSelectionChange}
-          autoHeight
           apiRef={apiRef}
           loading={loading}
           filterModel={filterModel}

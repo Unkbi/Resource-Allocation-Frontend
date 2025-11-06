@@ -30,7 +30,7 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
-import { sendInvite } from '@/app/services/userManagementServices';
+import { SEND_INVITATION, FETCH_USER, DEACTIVATE_USER, ACTIVATE_USER, FETCH_USER_RESOURCE, RESEND_INVITATION, DELETE_USER } from '@/app/redux/actions/allSettingsActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const tabMenuNames = ['users', 'resources'];
@@ -167,91 +167,10 @@ export default function UserManagementPage() {
   >('delete');
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
-  const UsersData = useMemo(() => [
-    {
-      id: 'u1',
-      Name: 'Emily Carter',
-      email: 'jane.doe@company.com',
-      resourceLink: 'Active',
-      status: 'Active',
-    },
-    {
-      id: 'u2',
-      Name: 'Rajesh Kumar',
-      email: 'rajesh.kumar@company.com',
-      resourceLink: 'Active',
-      status: 'Inactive',
-    },
-    {
-      id: 'u3',
-      Name: 'Samantha Lee',
-      email: 'samantha.lee@company.com',
-      resourceLink: 'NA',
-      status: 'Invited',
-    },
-    {
-      id: 'u4',
-      Name: 'Michael Thompson',
-      email: 'michael.thompson@company.com',
-      resourceLink: 'Active',
-      status: 'Invited',
-    },
-    {
-      id: 'u5',
-      Name: 'Jessica Taylor',
-      email: 'jessica.taylor@company.com',
-      resourceLink: 'NA',
-      status: 'Inactive',
-    },
-  ], []);
+  const usersDataFromRedux = useSelector((state: any) => state.allSettings.users);
+  const UsersData = useMemo(() => usersDataFromRedux || [], [usersDataFromRedux]);
+  const ResourcesData = useSelector((state: any) => state.allSettings.userResources) || [];
 
-  const ResourcesData: any[] = [
-    {
-      id: 'r1',
-      Name: 'Emily Carter',
-      email: 'jane.doe@company.com',
-      accessLevel: 'Admin',
-      location: 'Los Angeles, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Active',
-    },
-    {
-      id: 'r2',
-      Name: 'Rajesh Kumar',
-      email: 'rajesh.kumar@company.com',
-      accessLevel: 'Allocation Manager',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Not Created',
-    },
-    {
-      id: 'r3',
-      Name: 'Samantha Lee',
-      email: 'samantha.lee@company.com',
-      accessLevel: 'Allocation Manager',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Not Created',
-    },
-    {
-      id: 'r4',
-      Name: 'Michael Thompson',
-      email: 'michael.thompson@company.com',
-      accessLevel: 'General User',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Invited',
-    },
-    {
-      id: 'r5',
-      Name: 'Jessica Taylor',
-      email: 'jessica.taylor@company.com',
-      accessLevel: 'Allocation Manager',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Inactive',
-    },
-  ];
   const loading = false;
   const { id: highlightedRowId } = useSelector(
     (state: any) => state.highlightedRow
@@ -261,14 +180,37 @@ export default function UserManagementPage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (UsersData.length === 0) {
+      dispatch({
+        type: FETCH_USER,
+      });
+    }
+  }, [UsersData]);
+
+  useEffect(() => {
+    if (ResourcesData.length === 0) {
+      dispatch({
+        type: FETCH_USER_RESOURCE,
+      });
+    }
+  }, [ResourcesData]);
+
+  useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && tabMenuNames.includes(tabParam)) {
+    
+    // If no tab parameter in URL, set the default tab
+    if (!tabParam || !tabMenuNames.includes(tabParam)) {
+      const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
+      router.replace(newUrl);
+      return;
+    }
+    if (tabParam !== tab) {
       setTab(tabParam);
     }
   }, [searchParams]);
 
   useEffect(() => {
-    // Always ensure URL has the tab parameter
+    // Ensure URL stays in sync with tab state
     const currentTabParam = searchParams.get('tab');
     if (currentTabParam !== tab && tabMenuNames.includes(tab)) {
       const newUrl = `${baseURLAccessManagement}&tab=${tab}`;
@@ -375,22 +317,76 @@ export default function UserManagementPage() {
     try {
       if (actionType === 'delete') {
         if (tab === 'users' && deletingUsers) {
-          // Add actual delete user API call here
-        } else if (tab === 'resources' && deletingResources) {
-          // Add actual delete resource API call here
+
+          const user = UsersData.find((user: any) => user.Name === deletingUsers);
+
+          await new Promise((resolve, reject) => {
+            dispatch({ type: DELETE_USER, payload: { userId: user.id, resolve, reject } });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: `User deleted successfully`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
         }
       } else if (actionType === 'deactivate') {
         if (tab === 'users' && deactivatingUser) {
-          // Add actual deactivate user API call here
-          // Example: await deactivateUsersAPI(deactivatingUser.map(user => user.id));
+          try {
+          await Promise.all(deactivatingUser.map((user: any) => dispatch({ type: DEACTIVATE_USER, payload: { userData: { userId: user.id } } })));
+          dispatch(
+            showToast({
+              open: true,
+              message: `User(s) deactivated successfully`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } catch (error) {
+          console.error('Error deactivating user(s):', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to deactivate user(s)`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
         } else if (tab === 'resources' && deactivatingResource) {
           // Add actual deactivate resource API call here
           // Example: await deactivateResourcesAPI(deactivatingResource.map(resource => resource.id));
         }
       } else if (actionType === 'reactivate') {
         if (tab === 'users' && reactivatingUser) {
-          // Add actual reactivate user API call here
-          // Example: await reactivateUsersAPI(reactivatingUser.map(user => user.id));
+          try {
+          await Promise.all(reactivatingUser.map((user: any) => dispatch({ type: ACTIVATE_USER, payload: { userData: { userId: user.id } } })));
+          dispatch(
+            showToast({
+              open: true,
+              message: `User(s) reactivated successfully`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        } catch (error) {
+          console.error('Error reactivating user(s):', error);
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to reactivate user(s)`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
         } else if (tab === 'resources' && reactivatingResource) {
           // Add actual reactivate resource API call here
           // Example: await reactivateResourcesAPI(reactivatingResource.map(resource => resource.id));
@@ -426,15 +422,29 @@ export default function UserManagementPage() {
   const handleSendInvite = async (rowOrRows: any) => {
     try {
       rowOrRows = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
-      await Promise.all(rowOrRows.map(async (row: any) => {
+
+      const finaldata = rowOrRows.map(async (row: any) => {
         const [firstName, lastName] = row.Name.split(' ') || [];
-        const postData = {
+        return {
           email: row.email,
           firstName: firstName,
           lastName: lastName
         };
-        await sendInvite(postData);
-      }));
+      });
+      const userData = {
+        users: [...finaldata]
+      }
+
+      await new Promise((resolve, reject) => {
+        dispatch({
+          type: SEND_INVITATION,
+          payload: {
+            userData,
+            resolve,
+            reject,
+          },
+        });
+      });
       dispatch(
         showToast({
           open: true,
@@ -459,7 +469,38 @@ export default function UserManagementPage() {
   };
 
   const handleResendInvite = async (rowOrRows: any) => {
-    handleSendInvite(rowOrRows);
+    try {
+      rowOrRows = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
+      await Promise.all(rowOrRows.map(async (row: any) => {
+        const postData = {
+          email: row.email,
+        };
+        dispatch({
+          type: RESEND_INVITATION,
+          userData: postData
+        });
+      }));
+      dispatch(
+        showToast({
+          open: true,
+          message: `User invitation resent successfully`,
+          type: 'success',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    } catch (error) {
+      console.error('Error resending invite:', error);
+      dispatch(
+        showToast({
+          open: true,
+          message: `Failed to resend user invitation`,
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+    }
   };
 
   const handleDeactivateUser = (rowOrRows: any) => {
@@ -550,14 +591,14 @@ export default function UserManagementPage() {
         <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
       ),
     },
-    {
-      field: 'resourceLink',
-      headerName: 'Resource Link',
-      flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
-    },
+    // {
+    //   field: 'resourceLink',
+    //   headerName: 'Resource Link',
+    //   flex: 1,
+    //   renderCell: (params: any) => (
+    //     <Typography sx={commonCellStyle}>{params.value}</Typography>
+    //   ),
+    // },
     {
       field: 'status',
       headerName: 'Status',
@@ -605,272 +646,225 @@ export default function UserManagementPage() {
       headerName: 'Resource',
       flex: 1,
       renderCell: (params: any) => (
-        <Typography
-          onClick={() => handleEditResources([params.row])}
-          sx={{
-            ...commonCellStyle,
-            cursor: 'pointer',
-            '&:hover': {
-              textDecoration: 'underline',
-            },
-          }}
-        >
-          {params.value}
-        </Typography>
-      ),
-    },
-    {
-      field: 'email',
-      headerName: 'Email ID',
-      flex: 1,
-      renderCell: (params: any) => (
         <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
       ),
     },
-    {
-      field: 'accessLevel',
-      headerName: 'Access Level',
+{
+  field: 'email',
+    headerName: 'Email ID',
       flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
+        renderCell: (params: any) => (
+          <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        ),
     },
-    {
-      field: 'location',
-      headerName: 'Location',
+{
+  field: 'accessLevel',
+    headerName: 'Access Level',
       flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
+        renderCell: (params: any) => (
+          <Typography sx={commonCellStyle}>{params.value}</Typography>
+        ),
     },
-    {
-      field: 'resourceStatus',
-      headerName: 'Resource Status',
+{
+  field: 'location',
+    headerName: 'Location',
       flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
+        renderCell: (params: any) => (
+          <Typography sx={commonCellStyle}>{params.value}</Typography>
+        ),
     },
-    {
-      field: 'userStatus',
-      headerName: 'User Status',
+{
+  field: 'resourceStatus',
+    headerName: 'Resource Status',
       flex: 1,
-      renderCell: (params: any) => (
-        <StatusPill status={params.value}>{params.value}</StatusPill>
-      ),
+        renderCell: (params: any) => (
+          <Typography sx={commonCellStyle}>{params.value}</Typography>
+        ),
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
+{
+  field: 'userStatus',
+    headerName: 'User Status',
+      flex: 1,
+        renderCell: (params: any) => (
+          <StatusPill status={params.value}>{params.value}</StatusPill>
+        ),
+    },
+{
+  field: 'actions',
+    headerName: 'Actions',
       width: 100,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => {
-        const rowId = String(
-          params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
-        );
-        const isThisRowSelected = selectedRowIds.has(rowId);
+        sortable: false,
+          filterable: false,
+            renderCell: (params: any) => {
+              const rowId = String(
+                params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
+              );
+              const isThisRowSelected = selectedRowIds.has(rowId);
 
-        return (
-          <Box sx={{ ...commonCellStyle }}>
-            <IconButton
-              onClick={(e) => {
-                setAnchorEl(e.currentTarget);
-                setMenuUserId(params.row.Name);
-              }}
-              disabled={isThisRowSelected}
-              sx={{
-                color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
-              }}
-            >
-              <MoreHorizontal sx={{ fontSize: 20 }} />
-            </IconButton>
-            {renderResourcesMenu(params.row.Name, params.row)}
-          </Box>
-        );
-      },
+              return (
+                <Box sx={{ ...commonCellStyle }}>
+                  <IconButton
+                    onClick={(e) => {
+                      setAnchorEl(e.currentTarget);
+                      setMenuUserId(params.row.Name);
+                    }}
+                    disabled={isThisRowSelected}
+                    sx={{
+                      color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
+                    }}
+                  >
+                    <MoreHorizontal sx={{ fontSize: 20 }} />
+                  </IconButton>
+                  {renderResourcesMenu(params.row.Name, params.row)}
+                </Box>
+              );
+            },
     },
   ];
 
-  const renderUsersMenu = (id: string, row: any) => {
-    const status = row.status;
-    const enableSendInvite = status === 'Not Created';
-    const enableResendInvite = status === 'Invited';
-    const enableDeactivate = ['Invited', 'Active'].includes(status);
-    const enableReactivate = status === 'Inactive';
+const renderUsersMenu = (id: string, row: any) => {
+  const status = row.status;
+  const enableResendInvite = status === 'Invited';
+  const enableDeactivate = ['Invited', 'Active'].includes(status);
+  const enableReactivate = status === 'Inactive';
 
-    return (
-      <StyledMenu
-        anchorEl={anchorEl}
-        open={menuUserId === id}
-        onClose={() => setMenuUserId(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+  return (
+    <StyledMenu
+      anchorEl={anchorEl}
+      open={menuUserId === id}
+      onClose={() => setMenuUserId(null)}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+    >
+      <StyledMenuItem
+        onClick={() => {
+          const user = UsersData.find((r: any) => r.Name === id);
+          if (user) {
+            handleEditUser(user);
+          }
+          setMenuUserId(null);
+        }}
       >
+        <Pencil sx={{ mr: 1, fontSize: 18 }} />
+        Edit
+      </StyledMenuItem>
+
+
+      {enableResendInvite && (
         <StyledMenuItem
           onClick={() => {
-            const user = UsersData.find(r => r.Name === id);
-            if (user) {
-              handleEditUser(user);
-            }
+            handleResendInvite(row);
             setMenuUserId(null);
           }}
         >
-          <Pencil sx={{ mr: 1, fontSize: 18 }} />
-          Edit
+          <MailIcon sx={{ mr: 1, fontSize: 18 }} />
+          Re-invite
         </StyledMenuItem>
+      )}
 
-        {enableSendInvite && (
-          <StyledMenuItem
-            onClick={() => {
-              handleSendInvite(row);
-              setMenuUserId(null);
-            }}
-          >
-            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
-            Invite
-          </StyledMenuItem>
-        )}
-
-        {enableResendInvite && (
-          <StyledMenuItem
-            onClick={() => {
-              handleResendInvite(row);
-              setMenuUserId(null);
-            }}
-          >
-            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
-            Re-invite
-          </StyledMenuItem>
-        )}
-
-        {enableDeactivate && (
-          <StyledMenuItem
-            onClick={() => {
-              handleDeactivateUser(row);
-              setMenuUserId(null);
-            }}
-          >
-            <BlockIcon sx={{ mr: 1, fontSize: 18 }} />
-            Deactivate
-          </StyledMenuItem>
-        )}
-
-        {enableReactivate && (
-          <StyledMenuItem
-            onClick={() => {
-              handleReactivateUser(row);
-              setMenuUserId(null);
-            }}
-          >
-            <CheckCircleIcon sx={{ mr: 1, fontSize: 18 }} />
-            Re-activate
-          </StyledMenuItem>
-        )}
-
+      {enableDeactivate && (
         <StyledMenuItem
           onClick={() => {
-            handleDeleteUser(id);
+            handleDeactivateUser(row);
             setMenuUserId(null);
           }}
         >
-          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-          Delete
+          <BlockIcon sx={{ mr: 1, fontSize: 18 }} />
+          Deactivate
         </StyledMenuItem>
-      </StyledMenu>
-    );
-  };
+      )}
 
-  const renderResourcesMenu = (id: string, row: any) => {
-    const status = row.userStatus;
-    // const enableAddUser = status === 'Not Created';
-    const enableSendInvite = status === 'Not Created';
-    const enableResendInvite = status === 'Invited';
-    const enableDeactivate = ['Invited', 'Active'].includes(status);
-    const enableReactivate = status === 'Inactive';
-
-    return (
-      <StyledMenu
-        anchorEl={anchorEl}
-        open={menuUserId === id}
-        onClose={() => setMenuUserId(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        {/* <StyledMenuItem
+      {enableReactivate && (
+        <StyledMenuItem
           onClick={() => {
-            const resource = ResourcesData.find(r => r.Name === id);
-            if (resource) {
-              handleEditResources(resource);
-            }
+            handleReactivateUser(row);
             setMenuUserId(null);
           }}
         >
-          <Pencil sx={{ mr: 1, fontSize: 18 }} />
-          Edit
-        </StyledMenuItem> */}
+          <CheckCircleIcon sx={{ mr: 1, fontSize: 18 }} />
+          Re-activate
+        </StyledMenuItem>
+      )}
 
-        {enableSendInvite && (
-          <StyledMenuItem
-            onClick={() => {
-              handleAddUser([row]);
-              setMenuUserId(null);
-            }}
-          >
-            <PersonAddIcon sx={{ mr: 1, fontSize: 18 }} />
-            Invite
-          </StyledMenuItem>
-        )}
+      <StyledMenuItem
+        onClick={() => {
+          handleDeleteUser(id);
+          setMenuUserId(null);
+        }}
+      >
+        <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+        Delete
+      </StyledMenuItem>
+    </StyledMenu>
+  );
+};
 
-        {/* {enableSendInvite && (
-          <StyledMenuItem
-            onClick={() => {
-              handleSendInvite(row);
-              setMenuUserId(null);
-            }}
-          >
-            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
-            Invite
-          </StyledMenuItem>
-        )} */}
+const renderResourcesMenu = (id: string, row: any) => {
+  const status = row.userStatus;
+  // const enableAddUser = status === 'Not Created';
+  const enableSendInvite = status === 'Not Created';
+  const enableResendInvite = status === 'Invited';
+  const enableDeactivate = ['Invited', 'Active'].includes(status);
+  const enableReactivate = status === 'Inactive';
 
-        {enableResendInvite && (
-          <StyledMenuItem
-            onClick={() => {
-              handleResendInvite(row);
-              setMenuUserId(null);
-            }}
-          >
-            <MailIcon sx={{ mr: 1, fontSize: 18 }} />
-            Re-invite
-          </StyledMenuItem>
-        )}
+  return (
+    <StyledMenu
+      anchorEl={anchorEl}
+      open={menuUserId === id}
+      onClose={() => setMenuUserId(null)}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+    >
 
-        {enableDeactivate && (
-          <StyledMenuItem
-            onClick={() => {
-              handleDeactivateUser(row);
-              setMenuUserId(null);
-            }}
-          >
-            <BlockIcon sx={{ mr: 1, fontSize: 18 }} />
-            Deactivate
-          </StyledMenuItem>
-        )}
+      {enableSendInvite && (
+        <StyledMenuItem
+          onClick={() => {
+            handleAddUser([row]);
+            setMenuUserId(null);
+          }}
+        >
+          <PersonAddIcon sx={{ mr: 1, fontSize: 18 }} />
+          Invite
+        </StyledMenuItem>
+      )}
 
-        {enableReactivate && (
-          <StyledMenuItem
-            onClick={() => {
-              handleReactivateUser(row);
-              setMenuUserId(null);
-            }}
-          >
-            <CheckCircleIcon sx={{ mr: 1, fontSize: 18 }} />
-            Re-activate
-          </StyledMenuItem>
-        )}
+      {enableResendInvite && (
+        <StyledMenuItem
+          onClick={() => {
+            handleResendInvite(row);
+            setMenuUserId(null);
+          }}
+        >
+          <MailIcon sx={{ mr: 1, fontSize: 18 }} />
+          Re-invite
+        </StyledMenuItem>
+      )}
 
-        {/* <StyledMenuItem
+      {enableDeactivate && (
+        <StyledMenuItem
+          onClick={() => {
+            handleDeactivateUser(row);
+            setMenuUserId(null);
+          }}
+        >
+          <BlockIcon sx={{ mr: 1, fontSize: 18 }} />
+          Deactivate
+        </StyledMenuItem>
+      )}
+
+      {enableReactivate && (
+        <StyledMenuItem
+          onClick={() => {
+            handleReactivateUser(row);
+            setMenuUserId(null);
+          }}
+        >
+          <CheckCircleIcon sx={{ mr: 1, fontSize: 18 }} />
+          Re-activate
+        </StyledMenuItem>
+      )}
+
+      {/* <StyledMenuItem
           onClick={() => {
             handleDeleteResources(id);
             setMenuUserId(null);
@@ -879,123 +873,124 @@ export default function UserManagementPage() {
           <Trash2 sx={{ mr: 1, fontSize: 18 }} />
           Delete
         </StyledMenuItem> */}
-      </StyledMenu>
-    );
-  };
-
-  return (
-    <div
-      className="min-h-screen bg-[#f8f9fa] p-8"
-      style={{
-        fontFamily: 'open sans',
-        padding: '1.5%',
-        backgroundColor: 'rgba(217, 217, 217, 0.27)',
-      }}
-    >
-      <TabHeader tab={tab} setTab={setTab} />
-
-      {tab === 'users' && (
-        <AccessTable
-          title="Users"
-          data={UsersData}
-          checkboxSelection={true}
-          onAdd={handleAddNewUsers}
-          onEdit={handleEditUser}
-          onDelete={handleDeleteUser}
-          menuId={menuUserId}
-          setMenuId={setMenuUserId}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
-          buttonLabel="Invite User"
-          renderMenu={() => null}
-          columns={UsersPageColumns}
-          apiRef={apiRef}
-          loading={loading}
-          setMode={() => setTab('resources')}
-          selectedRowIds={selectedRowIds}
-          onSelectionChange={handleSelectionChange}
-          onBulkSendInvite={handleBulkSendInvite}
-          onBulkResendInvite={handleBulkResendInvite}
-          onBulkDeactivateUser={handleBulkDeactivateUser}
-          onBulkReactivateUser={handleBulkReactivateUser}
-        />
-      )}
-      {tab === 'resources' && (
-        <AccessTable
-          title="Resources"
-          data={ResourcesData}
-          checkboxSelection={true}
-          onAdd={handleAddNewResources}
-          onEdit={handleEditResources}
-          onDelete={handleDeleteResources}
-          menuId={menuUserId}
-          setMenuId={setMenuUserId}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
-          buttonLabel="Add Resource"
-          renderMenu={() => null}
-          columns={ResourcesColumns}
-          apiRef={apiRef}
-          loading={loading}
-          onBulkAddUser={handleBulkAddUser}
-          onBulkSendInvite={handleBulkSendInvite}
-          onBulkResendInvite={handleBulkResendInvite}
-          onBulkDeactivateUser={handleBulkDeactivateUser}
-          onBulkReactivateUser={handleBulkReactivateUser}
-          selectedRowIds={selectedRowIds}
-          onSelectionChange={handleSelectionChange}
-        />
-      )}
-
-      <ConfirmDialog
-        open={isDialogOpen}
-        onCancel={() => {
-          setIsDialogOpen(false);
-          setDeletingUsers(null);
-          setDeletingResources(null);
-          setDeactivatingUser(null);
-          setReactivatingUser(null);
-          setDeactivatingResource(null);
-          setReactivatingResource(null);
-          setActionType('delete');
-        }}
-        onConfirm={handleConfirmAction}
-        title="Alert"
-      >
-        {actionType === 'delete' && (
-          <>
-            Are you sure you want to delete{' '}
-            {deletingUsers || deletingResources
-              ? tab === 'users'
-                ? `the user "${deletingUsers}"`
-                : `resource "${deletingResources}"`
-              : 'this item'}
-            ?
-          </>
-        )}
-        {actionType === 'deactivate' && (
-          <>
-            Are you sure you want to deactivate{' '}
-            {deactivatingUser || deactivatingResource
-              ? tab === 'users'
-                ? `${deactivatingUser?.length === 1 ? `"${deactivatingUser[0]?.Name}"` : `${deactivatingUser?.map((u: any) => u.Name).join(', ')}`}`
-                : `${deactivatingResource?.length === 1 ? `"${deactivatingResource[0]?.Name}"` : `${deactivatingResource?.map((r: any) => r.Name).join(', ')}`}`
-              : 'this item'}
-            ?
-          </>
-        )}
-        {actionType === 'reactivate' && (
-          <>
-            Are you sure you want to reactivate{' '}
-            {reactivatingUser || reactivatingResource
-              ? tab === 'users'
-                ? `${reactivatingUser?.length === 1 ? `"${reactivatingUser[0]?.Name}"` : `${reactivatingUser?.map((u: any) => u.Name).join(', ')}`}`
-                : `${reactivatingResource?.length === 1 ? `"${reactivatingResource[0]?.Name}"` : ` ${reactivatingResource?.map((r: any) => r.Name).join(', ')}`}`
-              : 'this item'}
-            ?
-          </>
-        )}
-      </ConfirmDialog>
-    </div>
+    </StyledMenu>
   );
+};
+
+return (
+  <div
+    className="bg-[#f8f9fa] p-8"
+    style={{
+      minHeight: '-webkit-fill-available',
+      fontFamily: 'open sans',
+      padding: '1.5%',
+      backgroundColor: 'rgba(217, 217, 217, 0.27)',
+    }}
+  >
+    <TabHeader tab={tab} setTab={setTab} />
+
+    {tab === 'users' && (
+      <AccessTable
+        title="Users"
+        data={UsersData}
+        checkboxSelection={true}
+        onAdd={handleAddNewUsers}
+        onEdit={handleEditUser}
+        onDelete={handleDeleteUser}
+        menuId={menuUserId}
+        setMenuId={setMenuUserId}
+        anchorEl={anchorEl}
+        setAnchorEl={setAnchorEl}
+        buttonLabel="Invite User"
+        renderMenu={() => null}
+        columns={UsersPageColumns}
+        apiRef={apiRef}
+        loading={loading}
+        setMode={() => setTab('resources')}
+        selectedRowIds={selectedRowIds}
+        onSelectionChange={handleSelectionChange}
+        onBulkSendInvite={handleBulkSendInvite}
+        onBulkResendInvite={handleBulkResendInvite}
+        onBulkDeactivateUser={handleBulkDeactivateUser}
+        onBulkReactivateUser={handleBulkReactivateUser}
+      />
+    )}
+    {tab === 'resources' && (
+      <AccessTable
+        title="Resources"
+        data={ResourcesData}
+        checkboxSelection={true}
+        onAdd={handleAddNewResources}
+        onEdit={handleEditResources}
+        onDelete={handleDeleteResources}
+        menuId={menuUserId}
+        setMenuId={setMenuUserId}
+        anchorEl={anchorEl}
+        setAnchorEl={setAnchorEl}
+        buttonLabel="Add Resource"
+        renderMenu={() => null}
+        columns={ResourcesColumns}
+        apiRef={apiRef}
+        loading={loading}
+        onBulkAddUser={handleBulkAddUser}
+        onBulkSendInvite={handleBulkSendInvite}
+        onBulkResendInvite={handleBulkResendInvite}
+        onBulkDeactivateUser={handleBulkDeactivateUser}
+        onBulkReactivateUser={handleBulkReactivateUser}
+        selectedRowIds={selectedRowIds}
+        onSelectionChange={handleSelectionChange}
+      />
+    )}
+
+    <ConfirmDialog
+      open={isDialogOpen}
+      onCancel={() => {
+        setIsDialogOpen(false);
+        setDeletingUsers(null);
+        setDeletingResources(null);
+        setDeactivatingUser(null);
+        setReactivatingUser(null);
+        setDeactivatingResource(null);
+        setReactivatingResource(null);
+        setActionType('delete');
+      }}
+      onConfirm={handleConfirmAction}
+      title="Alert"
+    >
+      {actionType === 'delete' && (
+        <>
+          Are you sure you want to delete{' '}
+          {deletingUsers || deletingResources
+            ? tab === 'users'
+              ? `the user "${deletingUsers}"`
+              : `resource "${deletingResources}"`
+            : 'this item'}
+          ?
+        </>
+      )}
+      {actionType === 'deactivate' && (
+        <>
+          Are you sure you want to deactivate{' '}
+          {deactivatingUser || deactivatingResource
+            ? tab === 'users'
+              ? `${deactivatingUser?.length === 1 ? `"${deactivatingUser[0]?.Name}"` : `${deactivatingUser?.map((u: any) => u.Name).join(', ')}`}`
+              : `${deactivatingResource?.length === 1 ? `"${deactivatingResource[0]?.Name}"` : `${deactivatingResource?.map((r: any) => r.Name).join(', ')}`}`
+            : 'this item'}
+          ?
+        </>
+      )}
+      {actionType === 'reactivate' && (
+        <>
+          Are you sure you want to reactivate{' '}
+          {reactivatingUser || reactivatingResource
+            ? tab === 'users'
+              ? `${reactivatingUser?.length === 1 ? `"${reactivatingUser[0]?.Name}"` : `${reactivatingUser?.map((u: any) => u.Name).join(', ')}`}`
+              : `${reactivatingResource?.length === 1 ? `"${reactivatingResource[0]?.Name}"` : ` ${reactivatingResource?.map((r: any) => r.Name).join(', ')}`}`
+            : 'this item'}
+          ?
+        </>
+      )}
+    </ConfirmDialog>
+  </div>
+);
 }

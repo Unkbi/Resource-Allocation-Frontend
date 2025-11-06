@@ -18,14 +18,25 @@ export interface User {
   Email: string;
 }
 
+export interface UserResource {
+  Id: string;
+  FirstName: string;
+  LastName: string;
+  Email: string;
+  Role: string;
+  IsActive: boolean;
+}
+
 export interface UserFormValues {
   FirstName: string | null;
   LastName: string | null;
   Email: string | null;
   Role: string | null;
+  sendInviteEmail: boolean;
 }
 
 export interface ResourceToUserFormValues {
   Resources: Array<string> | null;
   Role: string | null;
+  sendInviteEmail: boolean;
 }

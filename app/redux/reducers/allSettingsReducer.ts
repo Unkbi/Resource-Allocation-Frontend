@@ -13,6 +13,7 @@ const initialState: AllSettings = {
   location: [],
   locationGroups: [],
   users: [],
+  userResources: [],
   scalarSettings: null,
   loading: false,
   error: null,
@@ -148,6 +149,25 @@ const allSettingsSlice = createSlice({
         };
       }
     },
+    setUserResources: (state, action) => {
+      state.userResources = formatAPIResponse('Resource', action.payload);
+    },
+    clearUserResources: state => {
+      state.userResources = [];
+    },
+    updateUserResources: (state, action) => {
+      const updatedUserResource = action.payload;
+      if (!state.userResources) return;
+      const index = state.userResources.findIndex(
+        resource => resource.Id === updatedUserResource.Id
+      );
+      if (index !== -1) {
+        state.userResources[index] = {
+          ...state.userResources[index],
+          ...updatedUserResource,
+        };
+      }
+    },
     setScalarSettings: (state, action) => {
       const newSettings = formatAPIResponse(
         'ScalarSetting',
@@ -198,5 +218,8 @@ export const {
   setUsers,
   clearUsers,
   updateUsers,
+  setUserResources,
+  clearUserResources,
+  updateUserResources,
 } = allSettingsSlice.actions;
 export default allSettingsSlice.reducer;

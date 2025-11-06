@@ -163,6 +163,7 @@ import {
   ADD_LOCATION_GROUPS,
   CREATE_USER,
   UPDATE_USER,
+  SEND_INVITATION
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
@@ -397,20 +398,24 @@ const initialValuesMap = {
     LastName: '',
     Email: '',
     Role: '',
+    sendInviteEmail: true
   },
   edit_user: {
     FirstName: '',
     LastName: '',
     Email: '',
     Role: '',
+    sendInviteEmail: true
   },
   add_resource_to_user: {
     Resources: [],
     Role: '',
+    sendInviteEmail: true,
   },
   edit_resource_to_user: {
     Resources: [],
     Role: '',
+    sendInviteEmail: true,
   }
 };
 
@@ -3203,11 +3208,19 @@ const AllocationForm = () => {
             }
           });
 
+          const sendInvitation = cleanedValues.SendInviteEmail || true;
+
           const userItem = {
             email: cleanedValues.Email || null,
             firstName: cleanedValues.FirstName || null,
             lastName: cleanedValues.LastName || null,
             role: cleanedValues.Role || '*',
+          };
+
+          const invitationData = {
+            email: cleanedValues.Email || null,
+            firstName: cleanedValues.FirstName || null,
+            lastName: cleanedValues.LastName || null,
           };
 
           const postData = {
@@ -3223,15 +3236,47 @@ const AllocationForm = () => {
               },
             });
           });
+          let inviteResponse;
+          if (sendInvitation) {
+              inviteResponse = await new Promise((resolve, reject) => {
+                dispatch({
+                  type: SEND_INVITATION,
+                  payload: {
+                    userData: invitationData,
+                    resolve,
+                    reject,
+                  },
+                });
+              });
+            }
+          
+          if(inviteResponse && inviteResponse.error){
+            throw new Error(
+              inviteResponse.error ||
+                'User created but failed to send invitation email.'
+            );
+          }
+          if(inviteResponse && inviteResponse.invitationId){
           dispatch(
             showToast({
               open: true,
-              message: 'User added successfully.',
+              message: 'User created and invited successfully.',
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
             })
           );
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User created successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
           dispatch(closeDialog());
           setFormValue({});
           const highlightId = response?.[0].User?.id || response?.User?.id;
@@ -3271,6 +3316,15 @@ const AllocationForm = () => {
               role: cleanedValues.Role || '*',
             };
           });
+
+          const sendInvitation = cleanedValues.SendInviteEmail|| true;
+
+          const invitationData = {
+            email: data.email || null,
+            firstName: firstName || null,
+            lastName: lastName || null,
+          }
+
           const postData = {
             users: [...finalData],
           };
@@ -3283,17 +3337,47 @@ const AllocationForm = () => {
                 reject,
               },
             });
-          })
+          });
+          let inviteResponse;
+          if (sendInvitation) {
+              inviteResponse = await new Promise((resolve, reject) => {
+                dispatch({
+                  type: SEND_INVITATION,
+                  userData: invitationData,
+                  payload: {
+                    resolve,
+                    reject,
+                  },
+                });
+              });
+          }
+          if(inviteResponse && inviteResponse.error){
+            throw new Error(
+              inviteResponse.error || 'Failed to send invitation.'
+            );
+          }
 
+          if(inviteResponse && inviteResponse.invitationId){
           dispatch(
             showToast({
               open: true,
-              message: 'Users added successfully.',
+              message: 'Users created and invited successfully.',
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
             })
           );
+        } else {
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Users created successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
           dispatch(closeDialog());
           setFormValue({});
           const highlightId = response?.[0].User?.id || response?.User?.id;
@@ -3317,36 +3401,73 @@ const AllocationForm = () => {
         }
         break;
       }
-      case 'edit_resource_to_user': {
+
+      case 'edit_user': {
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
           }
         });
+        const sendInvitation = cleanedValues.SendInviteEmail || true;
+
         const postData = {
-          ...cleanedValues,
-          User: cleanedValues.User?.id || null,
+            email: cleanedValues.Email || null,
+            firstName: cleanedValues.FirstName || null,
+            lastName: cleanedValues.LastName || null,
         };
+
+          if (sendInvitation) {
+            const invitationData = {
+              email: cleanedValues.Email || null,
+              firstName: cleanedValues.FirstName || null,
+              lastName: cleanedValues.LastName || null,
+            };
+          }
+
         try {
-          const result = await dispatch(
-            updateUser({
-              postData,
-              userId: initialData.Id,
+          const result = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_USER,
+              payload: {
+                postData,
+                userId: initialData.id,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          let inviteResponse;
+          if (sendInvitation) {
+              inviteResponse = await new Promise((resolve, reject) => {
+                  dispatch({
+                      type: SEND_INVITATION,
+                      userData: invitationData,
+                      payload: {
+                          resolve,
+                          reject,
+                      },
+                  });
+              });
+          }
+
+          if(inviteResponse && inviteResponse.error){
+            throw new Error(
+              inviteResponse.error ||
+                'User updated but failed to send invitation email.'
+            );
+          }
+           if(inviteResponse && inviteResponse.invitationId){
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User updated and invited successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
             })
           );
-
-          if (result.meta.requestStatus === 'rejected') {
-            dispatch(
-              showToast({
-                open: true,
-                message: `Failed to update user.`,
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-            return;
-          }
+        } else {
           dispatch(
             showToast({
               open: true,
@@ -3356,6 +3477,10 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
+        }
+          dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(result?.User?.id));
         } catch (e) {
           console.error('Failed to update user:', e);
           dispatch(
@@ -3368,8 +3493,9 @@ const AllocationForm = () => {
             })
           );
         }
-        return;
+        break;
       }
+      
       default:
         return;
     }

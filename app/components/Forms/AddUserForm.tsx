@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { Box } from '@mui/material';
+import { Box, FormControlLabel, Checkbox } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
+import {useRouter} from 'next/navigation';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import CustomSelect from '../Select/CustomSelect';
@@ -8,6 +9,7 @@ import { FormikProps } from 'formik';
 import { UserFormValues } from '@/app/types';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { FETCH_ROLES } from '@/app/redux/actions/rbacActions';
+import { closeDialog } from '@/app/redux/reducers/dialogReducer';
 
 interface AddUserFormProps {
   formikProps: FormikProps<UserFormValues>;
@@ -29,11 +31,12 @@ const AddUserForm = ({
     errors,
   } = formikProps;
   const dispatch = useDispatch<any>();
-  const { initialData } = useSelector(
+  const { initialData, formType } = useSelector(
     (state: any) => state.globalDialog.formState || {}
   );
   const { roles } = useSelector((state: any) => state.rbac || {})
   const seenValues = new Set<string>();
+  const router = useRouter();
   const [showMessage, setShowMessage] = React.useState(true);
   const roleOptions: { value: string; label: string; id: string }[] = (
     roles || []
@@ -56,13 +59,19 @@ const AddUserForm = ({
         FirstName: firstName || '',
         LastName: lastName || '',
         Email: initialData?.email || '',
-        Role: initialData?.role || 'CEO',
+        Role: initialData?.roleAssignment || '',
+        sendInviteEmail: initialData?.sendInviteEmail || true,
       };
       setFormValue(obj);
       resetForm({ values: obj });
       setTouched({});
     }
   }, [initialData]);
+
+  const handleNavigate = () => {
+  dispatch(closeDialog()); // Close the dialog first
+  router.push("/settings?menu=access-management&tab=role-assignments");
+};
 
   useEffect(() => {
     if (!roles || roles.length === 0) {
@@ -137,18 +146,32 @@ const AddUserForm = ({
           value={values.Role || ''}
           options={roleOptions}
           required
+          disabled={formType === 'edit_user' ? true : false}
           formikProps={formikProps}
           fullWidth
         />
       </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          mt: 1,
-        }}
-      >
-        <img src='/images/icons/ErrorOutline.svg' alt='Error Icon' style={{ width: 18, height: 18, marginRight: 8 }} />
+      <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+        <FormControlLabel
+                sx={{ mr: 0 }}
+                control={
+                  <Checkbox
+                    name="sendInviteEmail"
+                    checked={values.sendInviteEmail || false}
+                    onChange={(e) => {
+                      setFieldValue('sendInviteEmail', e.target.checked);
+                    }}
+                    color="primary"
+                    sx={{ 
+                      m: 0,
+                      '& .MuiSvgIcon-root': {
+                        fontSize: '18px',
+                      }
+                    }}
+                  />
+                }
+                label=""
+              />
         <StyledLabel sx={{ pb: 0, ml: 0, pl: 0, color: '#555555', fontWeight: 400 }}>
           Send account activation email to this user
         </StyledLabel>
@@ -194,7 +217,8 @@ const AddUserForm = ({
               lineHeight: 1.4
             }}>
               The interface restricts a user to a single role at any given time.<br />
-              Assign user roles through this interface; permissions are managed by RBAC.
+              Assign user roles through this interface; 
+              permissions are managed by Settings {`->`} <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={handleNavigate}>Access Management</span>.
             </Box>
           </Box>
           <Box

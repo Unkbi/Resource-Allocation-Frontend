@@ -150,6 +150,9 @@ export default function LayoutClient({ children }) {
           payload: {},
         });
       }
+      if (!roles?.length) {
+        dispatch({ type: FETCH_ROLES });
+      }
     }
   }, [dispatch, isLoggedIn, isClient]);
 
