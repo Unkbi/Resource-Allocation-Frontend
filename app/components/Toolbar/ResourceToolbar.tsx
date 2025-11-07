@@ -1,10 +1,11 @@
-import React, { SyntheticEvent } from 'react';
-import { Box, Tabs, Tab, styled, Button } from '@mui/material';
+import React, { SyntheticEvent, useEffect, useState } from 'react';
+import { Box, Tabs, Tab, styled, Button, Badge } from '@mui/material';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
   GridToolbarFilterButton,
-} from '@mui/x-data-grid';
+  useGridApiContext,
+} from '@mui/x-data-grid-premium';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import CommonToolbar from './CommonToolbar';
@@ -124,6 +125,60 @@ const ratesButtonStyle = {
   },
 };
 
+
+const FilterButtonWithCount = () => {
+  const apiRef = useGridApiContext();
+  const [filterCount, setFilterCount] = useState(0);
+
+  useEffect(() => {
+    if (!apiRef?.current) return;
+
+    const updateFilterCount = () => {
+      const filters = apiRef.current.state.filter.filterModel.items;
+      const activeCount = filters.filter(f => !!f.value).length;
+      setFilterCount(activeCount);
+    };
+
+    updateFilterCount();
+    return apiRef.current.subscribeEvent('filterModelChange', updateFilterCount);
+  }, [apiRef]);
+
+  return (
+    <Badge
+      badgeContent={filterCount > 0 ? filterCount : 0}
+      color="primary"
+      sx={{
+        '& .MuiBadge-badge': {
+          top: '-6px',
+          right: '-6px',
+          backgroundColor: '#1C2D5F',
+          fontSize: '10px',
+          height: '16px',
+          minWidth: '16px',
+        },
+      }}
+    >
+      <GridToolbarFilterButton
+        slotProps={{
+          tooltip: { title: 'Filter' },
+          button: {
+            variant: 'outlined',
+            startIcon: (
+              <img
+                src="/images/icons/newFilterPeople.svg"
+                alt="filter"
+                style={{ marginLeft: '8px' }}
+              />
+            ),
+            className: 'columns-button',
+            sx: commonButtonStyles,
+          },
+        }}
+      />
+    </Badge>
+  );
+};
+
 const ResourceToolbar = ({
   setFilterButtonEl,
   value,
@@ -216,28 +271,8 @@ const ResourceToolbar = ({
             gap: 1,
           }}
         >
-          <GridToolbarContainer ref={setFilterButtonEl}>
-            <GridToolbarFilterButton
-              slotProps={{
-                tooltip: { title: 'Filter' },
-                button: {
-                  variant: 'outlined',
-                  startIcon: (
-                    <img
-                      src="/images/icons/newFilterPeople.svg"
-                      alt="filter"
-                      style={{
-                        marginLeft: '10px',
-                        height: '36px',
-                        width: '36px',
-                      }}
-                    />
-                  ),
-                  className: 'columns-button',
-                  sx: commonButtonStyles,
-                },
-              }}
-            />
+          <GridToolbarContainer ref={setFilterButtonEl} sx={{ gap: '12px' }}>
+            <FilterButtonWithCount />
             <StyledGridToolbarColumnsButton
               slotProps={{
                 tooltip: { title: 'Columns' },
