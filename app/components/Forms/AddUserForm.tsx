@@ -59,7 +59,7 @@ const AddUserForm = ({
         FirstName: firstName || '',
         LastName: lastName || '',
         Email: initialData?.email || '',
-        Role: initialData?.roleAssignment || '',
+        Role: initialData?.role || '',
         sendInviteEmail: initialData?.sendInviteEmail || true,
       };
       setFormValue(obj);
@@ -70,7 +70,7 @@ const AddUserForm = ({
 
   const handleNavigate = () => {
   dispatch(closeDialog()); // Close the dialog first
-  router.push("/settings?menu=access-management&tab=role-assignments");
+  router.replace("/settings?menu=access-management&tab=role-assignments");
 };
 
   useEffect(() => {
@@ -217,8 +217,7 @@ const AddUserForm = ({
               lineHeight: 1.4
             }}>
               The interface restricts a user to a single role at any given time.<br />
-              Assign user roles through this interface; 
-              permissions are managed by Settings {`->`} <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={handleNavigate}>Access Management</span>.
+              Modification & Permissions are managed in <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={handleNavigate}>Access Management</span>.
             </Box>
           </Box>
           <Box

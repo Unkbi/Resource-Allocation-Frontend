@@ -7,6 +7,8 @@ import { FormikProps } from 'formik';
 import { ResourceToUserFormValues } from '@/app/types';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { FETCH_ROLES } from '@/app/redux/actions/rbacActions';
+import { closeDialog } from '@/app/redux/reducers/dialogReducer';
+import {useRouter} from 'next/navigation';
 
 interface AddResourceToUserFormProps {
   formikProps: FormikProps<ResourceToUserFormValues>;
@@ -34,6 +36,7 @@ const AddResourceToUserForm = ({
   // const { resources } = useSelector((state: any) => state.resources || {});
   const {roles} = useSelector((state:any)=> state.rbac || {})
   const seenValues = new Set<string>();
+  const router = useRouter();
   const [showMessage, setShowMessage] = React.useState(true);
   const roleOptions: { value: string; label: string; id: string }[] = (
     roles || []
@@ -67,6 +70,12 @@ const AddResourceToUserForm = ({
       dispatch({type: FETCH_ROLES});
     }
   }, [dispatch, roles]);
+
+  const handleNavigate = () => {
+    dispatch(closeDialog());
+    router.replace("/settings?menu=access-management&tab=role-assignments");
+  };
+
 
   return (
     <Box>
@@ -173,7 +182,7 @@ const AddResourceToUserForm = ({
           lineHeight: 1.4
         }}>
           The interface restricts a user to a single role at any given time.<br/>
-          Assign user roles through this interface; permissions are managed by RBAC.
+          Modification & Permissions are managed in <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={handleNavigate}>Access Management</span>.
         </Box>
         </Box>
         <Box 

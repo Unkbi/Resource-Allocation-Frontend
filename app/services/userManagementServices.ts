@@ -62,8 +62,8 @@ const RESOURCE_MOCK_DATA = [
 
 // Fetch users from API
 export const fetchUser = async () => {
-  const response = await axiosInstance.get(
-    `${API_AGENTLANG_KERNEL_RBAC}/User`
+  const response = await axiosInstance.post(
+    `${API_AGENTLANG_KERNEL_RBAC}/getUsersDetail`
   );
   return response.data;
 };

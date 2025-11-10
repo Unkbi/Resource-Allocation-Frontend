@@ -5,20 +5,16 @@ import {
   setUserResources,
 } from '../reducers/allSettingsReducer';
 import {
-    fetchUser,
-    addUser,
-    updateUser,
-    deleteUser,
-    sendInvite,
-    deactivateUser,
-    activateUser,
-    fetchUserResource,
-    resendInvite,
+  fetchUser,
+  addUser,
+  updateUser,
+  deleteUser,
+  sendInvite,
+  deactivateUser,
+  activateUser,
+  fetchUserResource,
+  resendInvite,
 } from '../../services/userManagementServices';
-import {fetchRoleAssignments,
-    fetchRoles,
-    } from '../../services/rbacServices';
-import {fetchAllResourcesDetail} from '../../services/allResourcesDetailServices';
 import {
   CREATE_USER,
   UPDATE_USER,
@@ -30,46 +26,24 @@ import {
   FETCH_USER_RESOURCE,
   RESEND_INVITATION,
 } from '../actions/allSettingsActions';
-import { formatAPIResponse } from '@/app/utils/authUtils';
 
 function* fetchUserSaga(): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
-
-    // Fetch all required data in parallel using saga's all() effect
-    const [users, roleAssignments, roles, allResourcesDetail] = yield all([
-      call(fetchUser),
-      call(fetchRoleAssignments),
-      call(fetchRoles),
-      call(fetchAllResourcesDetail),
-    ]);
-    
-    const finaluser = formatAPIResponse('User', users);
-    const finalroleAssignments = formatAPIResponse('UserRole', roleAssignments);
-    const finalroles = formatAPIResponse('Role', roles);
-    const finalallResourcesDetail = formatAPIResponse('ResourceDetail', allResourcesDetail);
-    // Transform the data
-    const userData = finaluser.map((usr: any) => {
-      const resource = finalallResourcesDetail.find(
-        (res: any) => res.Resource?.Resource?.Email === usr.email
-      );
-      const roleAssignment = finalroleAssignments.find(
-        (role: any) => role.User === usr.__path__
-      );
-      const role = finalroles.find(
-        (r: any) => r.__path__ === roleAssignment?.Role
-      );
+    const users = yield call(fetchUser);
+    const userData = users.map((usr: any) => {
       return {
-        User:{
-        id: usr.id,
-        Name: usr.firstName + ' ' + usr.lastName,
-        email: usr.email,
-        resourceLink: resource ? resource.Resource?.Resource?.Status : 'NA',
-        roleAssignment: roleAssignment && role ? role.name : 'user',
-        status: usr.status,
-      }
-    };
+        User: {
+          id: usr.id,
+          Name: usr.firstName + ' ' + usr.lastName,
+          email: usr.email,
+          resourceLink: 'NA',
+          role: usr.role || 'user',
+          status: usr.status,
+        }
+      };
     });
+
     yield put(setUsers(userData));
   } catch (error) {
     console.error('Saga error, Failed to fetch Users : ', error);
