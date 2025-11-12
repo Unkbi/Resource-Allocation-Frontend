@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, Typography, Badge } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import {
   GridToolbarContainer,
 } from '@mui/x-data-grid-premium';

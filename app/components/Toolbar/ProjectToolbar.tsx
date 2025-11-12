@@ -1,5 +1,5 @@
-import { Box, Tabs, Tab, styled, Button, Theme, Badge } from '@mui/material';
-import { SyntheticEvent, useState, useEffect } from 'react';
+import { Box, Tabs, Tab, styled, Button } from '@mui/material';
+import { SyntheticEvent } from 'react';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
