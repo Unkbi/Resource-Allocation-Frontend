@@ -3,14 +3,13 @@ import { Box, Tabs, Tab, styled, Button, Badge } from '@mui/material';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
-  GridToolbarFilterButton,
-  useGridApiContext,
 } from '@mui/x-data-grid-premium';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import CommonToolbar from './CommonToolbar';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
+import FilterButtonWithCount from './FilterButtonWithCount';
 
 interface ResourceToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -125,60 +124,6 @@ const ratesButtonStyle = {
   },
 };
 
-
-const FilterButtonWithCount = () => {
-  const apiRef = useGridApiContext();
-  const [filterCount, setFilterCount] = useState(0);
-
-  useEffect(() => {
-    if (!apiRef?.current) return;
-
-    const updateFilterCount = () => {
-      const filters = apiRef.current.state.filter.filterModel.items;
-      const activeCount = filters.filter(f => !!f.value).length;
-      setFilterCount(activeCount);
-    };
-
-    updateFilterCount();
-    return apiRef.current.subscribeEvent('filterModelChange', updateFilterCount);
-  }, [apiRef]);
-
-  return (
-    <Badge
-      badgeContent={filterCount > 0 ? filterCount : 0}
-      color="primary"
-      sx={{
-        '& .MuiBadge-badge': {
-          top: '-6px',
-          right: '-6px',
-          backgroundColor: '#1C2D5F',
-          fontSize: '10px',
-          height: '16px',
-          minWidth: '16px',
-        },
-      }}
-    >
-      <GridToolbarFilterButton
-        slotProps={{
-          tooltip: { title: 'Filter' },
-          button: {
-            variant: 'outlined',
-            startIcon: (
-              <img
-                src="/images/icons/newFilterPeople.svg"
-                alt="filter"
-                style={{ marginLeft: '8px' }}
-              />
-            ),
-            className: 'columns-button',
-            sx: commonButtonStyles,
-          },
-        }}
-      />
-    </Badge>
-  );
-};
-
 const ResourceToolbar = ({
   setFilterButtonEl,
   value,
@@ -272,7 +217,7 @@ const ResourceToolbar = ({
           }}
         >
           <GridToolbarContainer ref={setFilterButtonEl} sx={{ gap: '12px' }}>
-            <FilterButtonWithCount />
+            <FilterButtonWithCount/>
             <StyledGridToolbarColumnsButton
               slotProps={{
                 tooltip: { title: 'Columns' },

@@ -3,10 +3,8 @@
 import { Box, Button, Typography, Badge } from '@mui/material';
 import {
   GridToolbarContainer,
-  GridToolbarFilterButton,
-  useGridApiContext,
 } from '@mui/x-data-grid-premium';
-import { useEffect, useState } from 'react';
+import FilterButtonWithCount from './FilterButtonWithCount';
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -22,62 +20,6 @@ const commonButtonStyles = {
   minWidth: '0px',
 };
 
-const FilterButtonWithCount = () => {
-  const apiRef = useGridApiContext();
-  const [filterCount, setFilterCount] = useState(0);
-
-  useEffect(() => {
-    if (!apiRef?.current) return;
-
-    const updateFilterCount = () => {
-      const filters = apiRef.current.state.filter.filterModel.items;
-      const activeCount = filters.filter(f => !!f.value).length;
-      setFilterCount(activeCount);
-    };
-
-    updateFilterCount(); // initial
-    return apiRef.current.subscribeEvent('filterModelChange', updateFilterCount);
-  }, [apiRef]);
-
-  return (
-    <Badge
-      badgeContent={filterCount > 0 ? filterCount : 0}
-      color="primary"
-      sx={{
-        '& .MuiBadge-badge': {
-          top: '-6px',
-          right: '-6px',
-          backgroundColor: '#1C2D5F',
-          fontSize: '10px',
-          height: '16px',
-          minWidth: '16px',
-        },
-      }}
-    >
-      <GridToolbarFilterButton
-        slotProps={{
-          tooltip: { title: 'Filter' },
-          button: {
-            variant: 'outlined',
-            startIcon: (
-              <img
-                src="/images/icons/newFilterPeople.svg"
-                alt="filter"
-                style={{
-                  marginLeft: '10px',
-                  height: '48px',
-                  width: '42.5px',
-                }}
-              />
-            ),
-            className: 'columns-button',
-            sx: commonButtonStyles,
-          },
-        }}
-      />
-    </Badge>
-  );
-};
 
 interface SettingsToolbarProps {
   title: string;
