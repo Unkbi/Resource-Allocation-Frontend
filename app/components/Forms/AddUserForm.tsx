@@ -158,6 +158,7 @@ const AddUserForm = ({
                   <Checkbox
                     name="sendInviteEmail"
                     checked={values.sendInviteEmail || false}
+                    disabled={true}
                     onChange={(e) => {
                       setFieldValue('sendInviteEmail', e.target.checked);
                     }}

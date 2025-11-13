@@ -1,64 +1,5 @@
-import { API_AGENTLANG_KERNEL_RBAC } from '../constants/constants';
+import { API_AGENTLANG_KERNEL_RBAC, API_PROJECT_PORTFOLIO } from '../constants/constants';
 import axiosInstance from '../utils/apiClient';
-
-const RESOURCE_MOCK_DATA = [
-  {
-    Resource: {
-      id: 'r1',
-      Name: 'Emily Carter',
-      email: 'jane.doe@company.com',
-      accessLevel: 'Admin',
-      location: 'Los Angeles, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Active',
-    }
-  },
-  {
-    Resource: {
-      id: 'r2',
-      Name: 'Rajesh Kumar',
-      email: 'rajesh.kumar@company.com',
-      accessLevel: 'Allocation Manager',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Not Created',
-    }
-  },
-  {
-    Resource: {
-      id: 'r3',
-      Name: 'Samantha Lee',
-      email: 'samantha.lee@company.com',
-      accessLevel: 'Allocation Manager',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Not Created',
-    }
-  },
-  {
-    Resource: {
-      id: 'r4',
-      Name: 'Michael Thompson',
-      email: 'michael.thompson@company.com',
-      accessLevel: 'General User',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Invited',
-    }
-  },
-  {
-    Resource:
-    {
-      id: 'r5',
-      Name: 'Jessica Taylor',
-      email: 'jessica.taylor@company.com',
-      accessLevel: 'Allocation Manager',
-      location: 'Chicago, USA',
-      resourceStatus: 'Active',
-      userStatus: 'Inactive',
-    }
-  },
-];
 
 // Fetch users from API
 export const fetchUser = async () => {
@@ -96,7 +37,7 @@ export const deleteUser = async (id: string, hardDelete: boolean = true) => {
 
 export const sendInvite = async (userData: any) => {
   const response = await axiosInstance.post(
-    `${API_AGENTLANG_KERNEL_RBAC}/inviteUser`,
+    `${API_AGENTLANG_KERNEL_RBAC}/inviteUsers`,
     userData
   );
   return response.data;
@@ -129,14 +70,10 @@ export const activateUser = async (userData: any) => {
 };
 
 export const fetchUserResource = async () => {
-  // Simulate API delay for realistic behavior
-  await new Promise(resolve => setTimeout(resolve, 500));
-  // Return mock data
-  return RESOURCE_MOCK_DATA;
-  // When API is ready, uncomment below:
-  // const response = await axiosInstance.get(
-  //   `${API_PROJECT_PORTFOLIO}/Resource`
-  // );
-  // return response.data;
+  
+  const response = await axiosInstance.get(
+    `${API_PROJECT_PORTFOLIO}/Resource?@leftJoinOn=UserId`
+  );
+  return response.data;
 };
 

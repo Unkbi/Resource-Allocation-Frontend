@@ -323,85 +323,117 @@ export default function UserManagementPage() {
 
   const handleConfirmAction = async () => {
     try {
-      if (actionType === 'delete') {
-        if (tab === 'users' && deletingUsers) {
+      // Helper function to show toast messages
+      const showToastMessage = (message: string, type: 'success' | 'error') => {
+        dispatch(
+          showToast({
+            open: true,
+            message,
+            type,
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+      };
 
-          const user = UsersData.find((user: any) => user.Name === deletingUsers);
-
-          await new Promise((resolve, reject) => {
-            dispatch({ type: DELETE_USER, payload: { userId: user.id, resolve, reject } });
-          });
-          dispatch(
-            showToast({
-              open: true,
-              message: `User deleted successfully`,
-              type: 'success',
-              position: 'bottom-left',
-              autoHideTimer: 4000,
+      // Helper function to handle batch operations with detailed feedback
+      const handleBatchOperation = async (
+        items: any[],
+        actionType: 'deactivate' | 'reactivate',
+        entityType: 'user' | 'resource'
+      ) => {
+        const actionVerb = actionType === 'deactivate' ? 'deactivated' : 'reactivated';
+        const reduxAction = actionType === 'deactivate' ? DEACTIVATE_USER : ACTIVATE_USER;
+        
+        const results = await Promise.allSettled(
+          items.map((item: any) => 
+            new Promise((resolve, reject) => {
+              dispatch({
+                type: reduxAction,
+                payload: {
+                  userData: { userId: entityType === 'user' ? item.id : item.UserId },
+                  resolve,
+                  reject,
+                },
+              });
             })
+          )
+        );
+
+        const successCount = results.filter((r) => r.status === 'fulfilled').length;
+        const failureCount = results.filter((r) => r.status === 'rejected').length;
+
+        if (failureCount === 0) {
+          showToastMessage(
+            `${entityType}(s) ${actionVerb} successfully`,
+            'success'
+          );
+        } else if (successCount === 0) {
+          showToastMessage(
+            `Failed to ${actionType} ${entityType}(s)`,
+            'error'
+          );
+        } else {
+          showToastMessage(
+            `${successCount} ${entityType}(s) ${actionVerb} successfully, ${failureCount} failed`,
+            'success'
           );
         }
-      } else if (actionType === 'deactivate') {
-        if (tab === 'users' && deactivatingUser) {
-          try {
-            await Promise.all(deactivatingUser.map((user: any) => dispatch({ type: DEACTIVATE_USER, payload: { userData: { userId: user.id } } })));
-            dispatch(
-              showToast({
-                open: true,
-                message: `User(s) deactivated successfully`,
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          } catch (error) {
-            console.error('Error deactivating user(s):', error);
-            dispatch(
-              showToast({
-                open: true,
-                message: `Failed to deactivate user(s)`,
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          }
-        } else if (tab === 'resources' && deactivatingResource) {
-          // Add actual deactivate resource API call here
-          // Example: await deactivateResourcesAPI(deactivatingResource.map(resource => resource.id));
+      };
+
+      // Handle delete action
+      if (actionType === 'delete' && tab === 'users' && deletingUsers) {
+        const user = UsersData.find((user: any) => user.Name === deletingUsers);
+        
+        if (!user) {
+          showToastMessage('User not found', 'error');
+          return;
         }
-      } else if (actionType === 'reactivate') {
+
+        await new Promise((resolve, reject) => {
+          dispatch({
+            type: DELETE_USER,
+            payload: { userId: user.id, resolve, reject },
+          });
+        });
+        
+        showToastMessage('User deleted successfully', 'success');
+      }
+      // Handle deactivate action
+      else if (actionType === 'deactivate') {
+        if (tab === 'users' && deactivatingUser) {
+          await handleBatchOperation(deactivatingUser, 'deactivate', 'user');
+        } else if (tab === 'resources' && deactivatingResource) {
+          await handleBatchOperation(deactivatingResource, 'deactivate', 'resource');
+        }
+      }
+      // Handle reactivate action
+      else if (actionType === 'reactivate') {
         if (tab === 'users' && reactivatingUser) {
-          try {
-            await Promise.all(reactivatingUser.map((user: any) => dispatch({ type: ACTIVATE_USER, payload: { userData: { userId: user.id } } })));
-            dispatch(
-              showToast({
-                open: true,
-                message: `User(s) reactivated successfully`,
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          } catch (error) {
-            console.error('Error reactivating user(s):', error);
-            dispatch(
-              showToast({
-                open: true,
-                message: `Failed to reactivate user(s)`,
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          }
+          await handleBatchOperation(reactivatingUser, 'reactivate', 'user');
         } else if (tab === 'resources' && reactivatingResource) {
-          // Add actual reactivate resource API call here
-          // Example: await reactivateResourcesAPI(reactivatingResource.map(resource => resource.id));
+          await handleBatchOperation(reactivatingResource, 'reactivate', 'resource');
         }
       }
     } catch (error) {
-      console.error(`${actionType} failed:`, error);
+      console.error(`${actionType} operation failed:`, error);
+      
+      // Specific error messages based on action type
+      const errorMessages: Record<typeof actionType, string> = {
+        delete: 'Failed to delete user',
+        deactivate: `Failed to deactivate ${tab === 'users' ? 'user(s)' : 'resource(s)'}`,
+        reactivate: `Failed to reactivate ${tab === 'users' ? 'user(s)' : 'resource(s)'}`,
+      };
+      
+      dispatch(
+        showToast({
+          open: true,
+          message: errorMessages[actionType],
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
     } finally {
       // Reset all state variables
       setDeletingUsers(null);
@@ -514,9 +546,9 @@ export default function UserManagementPage() {
 
   const handleDeactivateUser = (rowOrRows: any) => {
     if (Array.isArray(rowOrRows)) {
-      setDeactivatingUser(rowOrRows);
+      tab === 'users' ? setDeactivatingUser(rowOrRows) : setDeactivatingResource(rowOrRows);
     } else {
-      setDeactivatingUser([rowOrRows]);
+      tab === 'users' ? setDeactivatingUser([rowOrRows]) : setDeactivatingResource([rowOrRows]);
     }
     setActionType('deactivate');
     setIsDialogOpen(true);
@@ -524,9 +556,9 @@ export default function UserManagementPage() {
 
   const handleReactivateUser = (rowOrRows: any) => {
     if (Array.isArray(rowOrRows)) {
-      setReactivatingUser(rowOrRows);
+      tab === 'users' ? setReactivatingUser(rowOrRows) : setReactivatingResource(rowOrRows);
     } else {
-      setReactivatingUser([rowOrRows]);
+      tab === 'users' ? setReactivatingUser([rowOrRows]) : setReactivatingResource([rowOrRows]);
     }
     setActionType('reactivate');
     setIsDialogOpen(true);
@@ -664,14 +696,6 @@ export default function UserManagementPage() {
       flex: 1,
       renderCell: (params: any) => (
         <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
-      ),
-    },
-    {
-      field: 'accessLevel',
-      headerName: 'Access Level',
-      flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
       ),
     },
     {

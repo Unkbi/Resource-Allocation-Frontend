@@ -58,6 +58,7 @@ function* createUserSaga(action: any): Generator<any, void, any> {
     yield put(setLoading(true));
     const response = yield call(addUser, postData);
     yield call(fetchUserSaga);
+    yield call(fetchUserResourceSaga);
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to create User : ', error);
@@ -74,6 +75,7 @@ function* updateUserSaga(action: any): Generator<any, void, any> {
     const response = yield call(updateUser, postData, userId);
 
     yield call(fetchUserSaga);
+    yield call(fetchUserResourceSaga);
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to update User : ', error);
@@ -89,6 +91,7 @@ function* deleteUserSaga(action: any): Generator<any, void, any> {
     yield put(setLoading(true));
     const response = yield call(deleteUser, userId);
     yield call(fetchUserSaga);
+    yield call(fetchUserResourceSaga);
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to delete User : ', error);
@@ -103,6 +106,8 @@ function* sendInviteSaga(action: any): Generator<any, void, any> {
   try {
     yield put(setLoading(true));
     const response = yield call(sendInvite, userData);
+    yield call(fetchUserSaga);
+    yield call(fetchUserResourceSaga);
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to send invite : ', error);
@@ -132,6 +137,7 @@ function* deactivateUserSaga(action: any): Generator<any, void, any> {
     yield put(setLoading(true));
     const response = yield call(deactivateUser, userData);
     yield call(fetchUserSaga);
+    yield call(fetchUserResourceSaga);
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to deactivate User : ', error);
@@ -147,6 +153,7 @@ function* activateUserSaga(action: any): Generator<any, void, any> {
     yield put(setLoading(true));
     const response = yield call(activateUser, userData);
     yield call(fetchUserSaga);
+    yield call(fetchUserResourceSaga);
     if (resolve) resolve(response);
   } catch (error) {
     console.error('Saga error, Failed to reactivate User : ', error);
@@ -161,7 +168,20 @@ function* fetchUserResourceSaga(): Generator<any, void, any> {
     yield put(setLoading(true));
 
     const responses = yield call(fetchUserResource);
-    yield put(setUserResources(responses));
+    const formattedResources = responses.map((res: any) => {
+      return {
+        Resource: {
+          id: res.Resource_Id,
+          Name: res.Resource_FullName,
+          email: res.Resource_Email,
+          UserId: res.Resource_UserId,
+          location: res.Resource_WorkLocation,
+          resourceStatus: res.Resource_Status,
+          userStatus: res.User_status === null ? 'Not Created' : res.User_status,
+        }
+      };
+    });
+    yield put(setUserResources(formattedResources));
   } catch (error) {
     console.error('Saga error, Failed to fetch User Resources : ', error);
   } finally {
