@@ -139,7 +139,7 @@ function SetInvitePassword() {
           <TextField
             className='textField'
             fullWidth
-            placeholder="Enter new password"
+            placeholder="Enter New Password"
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -188,7 +188,7 @@ function SetInvitePassword() {
           <TextField
             className='textField'
             fullWidth
-            placeholder="Enter Confirm password"
+            placeholder="Enter Confirm Password"
             type={showConfirmPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
