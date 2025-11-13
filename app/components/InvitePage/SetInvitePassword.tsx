@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -29,36 +29,36 @@ const MainBox = styled(Box)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    },
-    '& .textField': {
-      width: '100%',
-      marginBottom: '12px',
-      '& .MuiOutlinedInput-input': {
-        height: '46px',
-        lineHeight: '40px',
-        background: '#FFFFFF 0% 0% no-repeat padding-box',
-        padding: '2px 12px 3px 12px',
-        borderRadius: '5px',
+  },
+  '& .textField': {
+    width: '100%',
+    marginBottom: '12px',
+    '& .MuiOutlinedInput-input': {
+      height: '46px',
+      lineHeight: '40px',
+      background: '#FFFFFF 0% 0% no-repeat padding-box',
+      padding: '2px 12px 3px 12px',
+      borderRadius: '5px',
+      fontFamily: theme.typography.fontFamily,
+      fontSize: '14px',
+      fontWeight: 'normal',
+      color: '#212121',
+      boxSizing: 'border-box',
+      '&::placeholder': {
+        color: '#424242',
+        opacity: 1,
         fontFamily: theme.typography.fontFamily,
         fontSize: '14px',
-        fontWeight: 'normal',
-        color: '#212121',
-        boxSizing: 'border-box',
-        '&::placeholder': {
-          color: '#424242',
-          opacity: 1,
-          fontFamily: theme.typography.fontFamily,
-          fontSize: '14px',
-        },
-      },
-      '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-        border: '1px solid #E0E0E0',
-      },
-      '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        border: '1px solid #E0E0E0',
-        borderRadius: '5px',
       },
     },
+    '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+      border: '1px solid #E0E0E0',
+    },
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      border: '1px solid #E0E0E0',
+      borderRadius: '5px',
+    },
+  },
 }));
 
 const passwordRequirementBoxStyle = {
@@ -91,6 +91,24 @@ function SetInvitePassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const validations = useMemo(() => ({
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    number: /\d/.test(password),
+    symbol: /[^A-Za-z0-9]/.test(password),
+  }), [password]);
+
+  const allValid = Object.values(validations).every(Boolean);
+  const passwordsMatch = password && confirmPassword && password === confirmPassword;
+
+  const isButtonDisabled = !(allValid && passwordsMatch);
+
+  const getIcon = (isValid :any) =>
+    isValid
+      ? '/images/icons/tickMark.svg'
+      : '/images/icons/ErrorIcon.svg'; 
 
   return (
     <MainBox>
@@ -131,12 +149,12 @@ function SetInvitePassword() {
                   <IconButton
                     onClick={() => setShowPassword(!showPassword)}
                     edge="end"
-                        >
-            {showPassword ? (
-                <img src="/images/icons/visibility.svg" alt="show password" />
-          ) : (
-            <img src="/images/icons/visibilityOff.svg" alt="hide password" />
-          )}
+                  >
+                    {showPassword ? (
+                      <img src="/images/icons/visibility.svg" alt="show password" />
+                    ) : (
+                      <img src="/images/icons/visibilityOff.svg" alt="hide password" />
+                    )}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -144,26 +162,26 @@ function SetInvitePassword() {
           />
 
           {/* Password Requirements */}
-                  <Box mb={1}>
-                      <Box sx={passwordRequirementBoxStyle}>
-                          <Box sx={passwordRequirementColumnStyle}>
-                              <Typography sx={passwordRequirementTextStyle}>
-                                  <img src="/images/icons/tickMark.svg" alt="tickMark" /> At least 8 characters
-                              </Typography>
-                              <Typography sx={passwordRequirementTextStyle}>
-                                  <img src="/images/icons/tickMark.svg" alt="tickMark" /> At least 1 uppercase letter
-                              </Typography>
-                          </Box>
-                          <Box sx={passwordRequirementColumnStyle}>
-                              <Typography sx={passwordRequirementTextStyle}>
-                                  <img src="/images/icons/tickMark.svg" alt="tickMark" /> Must contain min 1 number
-                              </Typography>
-                              <Typography sx={passwordRequirementTextStyle}>
-                                  <img src="/images/icons/tickMark.svg" alt="tickMark" /> Must contain min 1 symbol
-                              </Typography>
-                          </Box>
-                      </Box>
-                  </Box>
+          <Box mb={1}>
+            <Box sx={passwordRequirementBoxStyle}>
+              <Box sx={passwordRequirementColumnStyle}>
+                <Typography sx={passwordRequirementTextStyle}>
+                  <img src={getIcon(validations.length)} alt="tickMark" /> At least 8 characters
+                </Typography>
+                <Typography sx={passwordRequirementTextStyle}>
+                  <img src={getIcon(validations.uppercase)} alt="tickMark" /> At least 1 uppercase letter
+                </Typography>
+              </Box>
+              <Box sx={passwordRequirementColumnStyle}>
+                <Typography sx={passwordRequirementTextStyle} >
+                  <img src={getIcon(validations.number)} alt="tickMark" /> Must contain min 1 number
+                </Typography>
+                <Typography sx={passwordRequirementTextStyle}>
+                  <img src={getIcon(validations.symbol)} alt="tickMark" /> Must contain min 1 symbol
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
           <Typography fontSize={14} fontWeight={600} mb={0.5} ml={0.2}>
             Confirm password
           </Typography>
@@ -172,6 +190,14 @@ function SetInvitePassword() {
             fullWidth
             placeholder="Enter Confirm password"
             type={showConfirmPassword ? 'text' : 'password'}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={confirmPassword.length > 0 && !passwordsMatch}
+            helperText={
+              confirmPassword.length > 0 && !passwordsMatch
+                ? 'Passwords do not match'
+                : ''
+            }
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -181,12 +207,12 @@ function SetInvitePassword() {
                     }
                     edge="end"
                   >
-            {showConfirmPassword  ? (
-                <img src="/images/icons/visibility.svg" alt="show password" />
-          ) : (
-            <img src="/images/icons/visibilityOff.svg" alt="hide password" />
-          )}
-              </IconButton>
+                    {showConfirmPassword ? (
+                      <img src="/images/icons/visibility.svg" alt="show password" />
+                    ) : (
+                      <img src="/images/icons/visibilityOff.svg" alt="hide password" />
+                    )}
+                  </IconButton>
                 </InputAdornment>
               ),
             }}
@@ -194,29 +220,31 @@ function SetInvitePassword() {
           <Button
             fullWidth
             variant="contained"
+            disabled={isButtonDisabled}
             sx={{
               mt: 1,
-              backgroundColor: '#1567CA',
+              backgroundColor: isButtonDisabled ? '#C5CAE9' : '#1567CA',
               height: '48px',
               fontWeight: 600,
               textTransform: 'none',
               '&:hover': {
-                backgroundColor: '#0042a8',
+                backgroundColor: isButtonDisabled ? '#C5CAE9' : '#0042a8',
               },
-            }}
-                  >
-                      <Typography
-                          sx={{
-                          fontSize: '15px',
-                          fontFamily: 'Open-Sans',
-                          fontWeight: 600,
-                          }}>
-                          Set Password & Continue
-                      </Typography>
-                  </Button>
-              </Box>
-          </Box>
-      </MainBox>
+                      }}
+           onClick={() => console.log("ok")} 
+          >
+            <Typography
+              sx={{
+                fontSize: '15px',
+                fontFamily: 'Open-Sans',
+                fontWeight: 600,
+              }}>
+              Set Password & Continue
+            </Typography>
+          </Button>
+        </Box>
+      </Box>
+    </MainBox>
   );
 }
 
