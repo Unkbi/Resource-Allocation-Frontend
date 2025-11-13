@@ -32,6 +32,7 @@ import {
   performChangeView,
 } from '@/app/redux/actions/allocationViewAction';
 import {
+  gridExpandedSortedRowIdsSelector,
   GridToolbarColumnsButton,
   GridToolbarContainer,
   GridToolbarFilterButton,
@@ -75,6 +76,7 @@ import AllProjectIcon from '../TableIcons/AllProjectIcon';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
   setCurrentView,
+  setExpandRowId,
   setShowActuals,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
@@ -101,6 +103,7 @@ import MyTeamsIcon from '../TableIcons/MyNewTeamsIcon';
 import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
+import { useDataGrid } from '@/app/context/dataGridContext';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -627,6 +630,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const anchorRef = React.useRef(null);
   const [allApiSuccess, setAllApiSuccess] = useState(false);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { getApiRef } = useDataGrid();
 
   const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources);
@@ -963,13 +967,36 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
       dispatch(updateCurrentView({ MyProjects: isMine }));
     }
   };
+  const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
 
   const handleAllocationCostSwitch = () => {
+    const apiRef = getApiRef('teamAllocation');
     const isCost = currentView?.GroupBy.includes('Cost');
     const newGroupBy = isCost
       ? currentView?.GroupBy.replace(' Cost', '')
       : `${currentView?.GroupBy} Cost`;
+    
     dispatch(performChangeView(newGroupBy));
+
+    let exp = gridExpandedSortedRowIdsSelector({ current: apiRef });
+
+    const filteredExp = exp.filter(rowId => !rowId.startsWith('auto-generated-row-teams/'));
+    const expandedRowData = filteredExp.map(rowId => apiRef.getRowNode(rowId));
+
+    const parentData = expandedRowData.map(row => {
+      if (row && row.parent) {
+        return apiRef.getRowNode(row.parent);
+      } 
+      return null;
+    });
+
+    const uniqueParentIds = [...new Set(parentData
+      .filter(parent => parent !== null)
+      .map(parent => parent.id))];
+    
+    const uniqueParentIdsArr = Array.from(uniqueParentIds);
+    
+    dispatch(setExpandRowId(uniqueParentIdsArr));
   };
 
   const open = Boolean(anchorEl);
