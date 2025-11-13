@@ -131,7 +131,7 @@ function SetInvitePassword() {
             Set New Password
           </Typography>
           <Typography mb={1.5} fontSize={14} fontWeight={400}> 
-            Create a secure password to access your CIOptimize account.
+            Create a Secure Password To Access Your CIOptimize Account.
           </Typography>
           <Typography fontSize={14} fontWeight={600} mb={0.5} ml={0.2}>
             New password
