@@ -108,6 +108,22 @@ export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
   return;
 });
 
+// Invite Password Reset
+export const setPasswordInvite = createAsyncThunk(
+  'auth/setPasswordInvite',
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        '/agentlang.auth/acceptInvitation',
+        data
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to Set Password');
+    }
+  }
+);
+
 export const forgotPassword = createAsyncThunk(
   'auth/forgotPassword',
   async (data, { rejectWithValue }) => {

@@ -40,7 +40,7 @@ function* fetchUserSaga(): Generator<any, void, any> {
           resourceLink: 'NA',
           role: usr.role || 'user',
           status: usr.status,
-        }
+        },
       };
     });
 
@@ -177,8 +177,9 @@ function* fetchUserResourceSaga(): Generator<any, void, any> {
           UserId: res.Resource_UserId,
           location: res.Resource_WorkLocation,
           resourceStatus: res.Resource_Status,
-          userStatus: res.User_status === null ? 'Not Created' : res.User_status,
-        }
+          userStatus:
+            res.User_status === null ? 'Not Created' : res.User_status,
+        },
       };
     });
     yield put(setUserResources(formattedResources));
