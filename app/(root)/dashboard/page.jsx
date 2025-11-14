@@ -520,7 +520,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Actual Vs Plan Deviation (Previous week)
+                Actual Vs Plan Deviation <span style={{fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)'}}>(Previous week)</span>
               </Typography>
               <Box
                 sx={{

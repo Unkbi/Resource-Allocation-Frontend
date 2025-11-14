@@ -36,6 +36,7 @@ import ProjectSetting from '@/app/components/Settings/ProjectSettings';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
+import UserManagement from '@/app/components/Settings/UserManagement';
 import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
@@ -164,6 +165,7 @@ const SettingsPanel = ({
   const hasAnyAccess = {
     'user-profile': true,
     notification: false,
+    'user-management': true,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
@@ -229,6 +231,14 @@ const SettingsPanel = ({
       {
         name: 'Admin Settings',
         items: [
+          {
+            id: 'user-management',
+            title: 'User Management',
+            headerText: 'User Management',
+            icon: '',
+            content: <UserManagement />,
+            description: 'Easily add and manage your users and resources in one place.',
+          },
           {
             id: 'access-management',
             title: 'Access Management',
@@ -335,7 +345,7 @@ const SettingsPanel = ({
     } else {
       setActiveItem(updatedMenuItems[0].items[0]);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const menu = searchParams.get('menu');
