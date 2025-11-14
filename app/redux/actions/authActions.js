@@ -8,6 +8,7 @@ import {
   loginUser,
   logoutUser,
   resendConfirmationCode,
+  setPasswordInvite,
   signupUser,
 } from '../../services/authServices.js';
 
@@ -16,7 +17,7 @@ export const performLogin = credentials => async dispatch => {
   try {
     await dispatch(loginUser(credentials)).unwrap();
   } catch (error) {
-    console.log('Login failed:', error);
+    console.error('Login failed:', error);
   }
 };
 
@@ -24,7 +25,7 @@ export const callbackExchangeCode = code => async dispatch => {
   try {
     await dispatch(callback(code)).unwrap();
   } catch (error) {
-    console.log('SSO Login failed:', error);
+    console.error('SSO Login failed:', error);
   }
 };
 
@@ -64,6 +65,16 @@ export const getUserData = userId => async dispatch => {
     await dispatch(getUser(userId));
   } catch (error) {
     console.error('get user failed:', error);
+  }
+};
+
+// Invite Set Password Action
+export const performInviteSetPassword = data => async dispatch => {
+  try {
+    const res = await dispatch(setPasswordInvite(data)).unwrap();
+    return res;
+  } catch (error) {
+    console.error('Set Password failed:', error);
   }
 };
 

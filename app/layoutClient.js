@@ -94,6 +94,8 @@ export default function LayoutClient({ children }) {
           return 'Forgot Password';
         case '/reset-password':
           return 'Reset Password';
+        case '/invite':
+          return 'Set Password'  
         default:
           return 'CIOptimize';
       }

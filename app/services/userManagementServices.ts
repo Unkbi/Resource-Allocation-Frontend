@@ -1,4 +1,7 @@
-import { API_AGENTLANG_KERNEL_RBAC, API_PROJECT_PORTFOLIO } from '../constants/constants';
+import {
+  API_AGENTLANG_KERNEL_RBAC,
+  API_PROJECT_PORTFOLIO,
+} from '../constants/constants';
 import axiosInstance from '../utils/apiClient';
 
 // Fetch users from API
@@ -52,7 +55,6 @@ export const resendInvite = async (userData: any) => {
 };
 
 export const deactivateUser = async (userData: any) => {
-  console.log('Deactivating user with data:', userData);
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/inactivateUser`,
     userData
@@ -61,7 +63,6 @@ export const deactivateUser = async (userData: any) => {
 };
 
 export const activateUser = async (userData: any) => {
-  console.log('Activating user with data:', userData);
   const response = await axiosInstance.post(
     `${API_AGENTLANG_KERNEL_RBAC}/activateUser`,
     userData
@@ -70,10 +71,8 @@ export const activateUser = async (userData: any) => {
 };
 
 export const fetchUserResource = async () => {
-  
   const response = await axiosInstance.get(
     `${API_PROJECT_PORTFOLIO}/Resource?@leftJoinOn=UserId`
   );
   return response.data;
 };
-
