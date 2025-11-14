@@ -65,7 +65,7 @@ function InvitationSuccess() {
                 backgroundColor: '#0042a8',
               },
                       }}
-           onClick={() => console.log("ok")} 
+         onClick={() => window.close()} 
           >
             <Typography
               sx={{
