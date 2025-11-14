@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { RootState, AppDispatch } from '@/app/redux/store';
@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { performResetPassword } from '@/app/redux/actions/authActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { passwordRequirementBoxStyle, passwordRequirementColumnStyle, passwordRequirementTextStyle } from '@/app/components/InvitePage/SetInvitePassword';
 
 const MainBox = styled(Box)(({ theme }) => ({
   '& .loginLeft': {
@@ -172,6 +173,9 @@ const MainBox = styled(Box)(({ theme }) => ({
   },
 }));
 
+const getIcon = (isValid: any) =>
+    isValid ? '/images/icons/tickMark.svg' : '/images/icons/ErrorIcon.svg';
+  
 export default function ResetPasswordPageWrapper() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -195,10 +199,26 @@ function RestPasswordPage() {
   const username = searchParams.get('username');
   const code = searchParams.get('code');
 
+    const validations = useMemo(
+    () => ({
+      length: newPassword.length >= 8,
+      uppercase: /[A-Z]/.test(newPassword),
+      number: /\d/.test(newPassword),
+      symbol: /[^A-Za-z0-9]/.test(newPassword),
+    }),
+    [newPassword]
+  );
+
+  const allValid = Object.values(validations).every(Boolean);
+  const passwordsMatch =
+    newPassword && confirmPassword && newPassword === confirmPassword;
+
+  const isButtonDisabled = !(allValid && passwordsMatch);
+
+
   const handleResetPassword = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setErrorMessage('Passwords do not match');
       return;
     }
     dispatch(
@@ -285,6 +305,31 @@ function RestPasswordPage() {
                   ),
                 }}
               />
+              {/* Password Requirements */}
+                        <Box mb={1}>
+                          <Box sx={passwordRequirementBoxStyle}>
+                            <Box sx={passwordRequirementColumnStyle}>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.length)} alt="tickMark" /> At
+                                least 8 characters
+                              </Typography>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.uppercase)} alt="tickMark" /> At
+                                least 1 uppercase letter
+                              </Typography>
+                            </Box>
+                            <Box sx={passwordRequirementColumnStyle}>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.number)} alt="tickMark" /> Must
+                                contain min 1 number
+                              </Typography>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.symbol)} alt="tickMark" /> Must
+                                contain min 1 symbol
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
 
               <TextField
                 className="textField"
@@ -314,6 +359,13 @@ function RestPasswordPage() {
                   ),
                 }}
               />
+              <Box sx={passwordRequirementBoxStyle}>
+                <Box sx={passwordRequirementColumnStyle}>
+                    <Typography sx={passwordRequirementTextStyle}>
+                        <img src={getIcon(passwordsMatch)} alt="tickMark" /> Passwords do not match
+                          </Typography>
+                </Box>
+              </Box>
               {errorMessage && (
                 <Typography variant="body2" color="error" sx={{ mb: 2 }}>
                   {errorMessage}
@@ -324,9 +376,18 @@ function RestPasswordPage() {
                 variant="contained"
                 color="primary"
                 fullWidth
-                disabled={loading}
-                sx={{ mt: 2 }}
-                className="signInButton"
+                disabled={loading || isButtonDisabled }
+                sx={{
+                  mt: 1,
+                 backgroundColor: isButtonDisabled ? '#C5CAE9' : '#1567CA',
+                 height: '48px',
+                 fontWeight: 600,
+                 textTransform: 'none',
+                '&:hover': {
+                backgroundColor: isButtonDisabled ? '#C5CAE9' : '#0042a8',
+               },
+             }}
+                // className="signInButton"  //Commenting this , added new css 
               >
                 {loading ? <CircularProgress size={24} /> : 'Reset Password'}
               </Button>
