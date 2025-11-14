@@ -51,31 +51,6 @@ function InvitationSuccess() {
                    <br/><br/>
                         Once confirmed, you can Log In to Your Account.</Typography>
                   </Box>
-         <Button
-            fullWidth
-            variant="contained"
-            sx={{
-              mt: 3,
-              backgroundColor: '#1567CA',
-              height: '40px',
-              width : '220px',
-              fontWeight: 600,
-              textTransform: 'none',
-              '&:hover': {
-                backgroundColor: '#0042a8',
-              },
-                      }}
-         onClick={() => window.close()} 
-          >
-            <Typography
-              sx={{
-                fontSize: '15px',
-                fontFamily: 'Open-Sans',
-                fontWeight: 600,
-              }}>
-            Close
-            </Typography>
-          </Button>
         </Box>
       </Box>
     </Box>
