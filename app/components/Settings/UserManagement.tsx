@@ -30,7 +30,7 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
-import { SEND_INVITATION, FETCH_USER, DEACTIVATE_USER, ACTIVATE_USER, FETCH_USER_RESOURCE, RESEND_INVITATION, DELETE_USER } from '@/app/redux/actions/allSettingsActions';
+import { SEND_INVITATION, FETCH_USER, DEACTIVATE_USER, ACTIVATE_USER, FETCH_USER_RESOURCE, RESEND_INVITATION, DELETE_USER, FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const tabMenuNames = ['users', 'resources'];
@@ -166,7 +166,7 @@ export default function UserManagementPage() {
     'delete' | 'deactivate' | 'reactivate'
   >('delete');
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
-
+  const {location} = useSelector((state: any) => state.allSettings);
   const usersDataFromRedux = useSelector((state: any) => state.allSettings.users);
   const UsersData = useMemo(() => usersDataFromRedux || [], [usersDataFromRedux]);
   const ResourcesData = useSelector((state: any) => state.allSettings.userResources) || [];
@@ -194,6 +194,14 @@ export default function UserManagementPage() {
       });
     }
   }, [ResourcesData]);
+
+  useEffect(() => {
+    if (location.length === 0) {
+      dispatch({
+        type: FETCH_LOCATION,
+      });
+    }
+  }, [location]);
 
   useEffect(() => {
     const menuParam = searchParams.get('menu');
@@ -702,9 +710,10 @@ export default function UserManagementPage() {
       field: 'location',
       headerName: 'Location',
       flex: 1,
-      renderCell: (params: any) => (
-        <Typography sx={commonCellStyle}>{params.value}</Typography>
-      ),
+      renderCell: (params: any) => {
+        const locationName = location.find((loc: any) => loc.Id === params.value)?.Name || '';
+        return <Typography sx={commonCellStyle}>{locationName}</Typography>;
+      },
     },
     {
       field: 'resourceStatus',
