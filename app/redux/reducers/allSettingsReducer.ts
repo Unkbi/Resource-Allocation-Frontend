@@ -12,6 +12,8 @@ const initialState: AllSettings = {
   projectTypeGroups: [],
   location: [],
   locationGroups: [],
+  users: [],
+  userResources: [],
   scalarSettings: null,
   loading: false,
   error: null,
@@ -130,6 +132,42 @@ const allSettingsSlice = createSlice({
         };
       }
     },
+    setUsers: (state, action) => {
+      state.users = formatAPIResponse('User', action.payload);
+    },
+    clearUsers: state => {
+      state.users = [];
+    },
+    updateUsers: (state, action) => {
+      const updatedUser = action.payload;
+      if (!state.users) return;
+      const index = state.users.findIndex(user => user.AppId === updatedUser.AppId);
+      if (index !== -1) {
+        state.users[index] = {
+          ...state.users[index],
+          ...updatedUser,
+        };
+      }
+    },
+    setUserResources: (state, action) => {
+      state.userResources = formatAPIResponse('Resource', action.payload);
+    },
+    clearUserResources: state => {
+      state.userResources = [];
+    },
+    updateUserResources: (state, action) => {
+      const updatedUserResource = action.payload;
+      if (!state.userResources) return;
+      const index = state.userResources.findIndex(
+        resource => resource.Id === updatedUserResource.Id
+      );
+      if (index !== -1) {
+        state.userResources[index] = {
+          ...state.userResources[index],
+          ...updatedUserResource,
+        };
+      }
+    },
     setScalarSettings: (state, action) => {
       const newSettings = formatAPIResponse(
         'ScalarSetting',
@@ -177,5 +215,11 @@ export const {
   updateLocationGroup,
   setLoading,
   setError,
+  setUsers,
+  clearUsers,
+  updateUsers,
+  setUserResources,
+  clearUserResources,
+  updateUserResources,
 } = allSettingsSlice.actions;
 export default allSettingsSlice.reducer;

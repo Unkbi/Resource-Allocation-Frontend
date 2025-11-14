@@ -123,7 +123,13 @@ export default function Overview({
                 color="text.secondary"
                 sx={{ fontWeight: 400, fontSize: '0.875rem' }}
               >
-                {item.label}
+                {item.label === 'Actuals Confirmed' ? (
+                  <>
+                    {item.label} <span style={{fontSize: '0.75rem'}}>(Previous week)</span>
+                  </>
+                ) : (
+                  item.label
+                )}
               </Typography>
               <Typography
                 variant="h5"
