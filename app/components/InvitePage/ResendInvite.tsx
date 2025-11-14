@@ -35,8 +35,14 @@ export const StyledTextField = styled(TextField)(({ theme }) => ({
 
 function ResendInvite() {
     return (
-        <Box className = 'parentContainer'>
-            <Box className = 'TopLogo' display={"flex"} justifyContent={'center'} alignContent={'center'} mt={4}>
+        <>
+           <Box className='parentContainer'
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                minHeight="100vh"
+                flexDirection="column">
+            <Box className = 'TopLogo' display={"flex"} justifyContent={'center'} alignContent={'center'} >
                 <img src='/images/icons/CIOptimizeImg.svg' alt="CIO" />
             </Box>
             <Box className='ContentContainer' display={"flex"} justifyContent={'center'} alignItems={'center'} mt={3}>
@@ -102,7 +108,8 @@ function ResendInvite() {
                     </Box>
                 </Box>
             </Box> 
-        </Box>
+            </Box>
+            </>
     )
 }
 
