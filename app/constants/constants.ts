@@ -230,6 +230,7 @@ export const PUBLIC_ROUTES = [
   '/signup-otp',
   '/reset-password',
   '/callback',
+  '/invite',
 ];
 
 export const DEFAULT_LOCALE = 'en-gb';

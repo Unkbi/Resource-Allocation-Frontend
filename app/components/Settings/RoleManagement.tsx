@@ -180,7 +180,11 @@ function RoleManagementPage({
   }, [dispatch, meta]);
 
   useEffect(() => {
+    const menuParam = searchParams.get('menu');
+    // Only process if this is the active menu
+    if (menuParam !== 'access-management') return;
     if (loadingPermissions) return;
+
     const accessMap = [
       { key: 'Role', value: 'role-assignments' },
       { key: 'Role', value: 'role-management' },
@@ -213,6 +217,10 @@ function RoleManagementPage({
   }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
+    const menuParam = searchParams.get('menu');
+    // Only process if this is the active menu
+    if (menuParam !== 'access-management') return;
+
     const tabParam = searchParams.get('tab');
     if (tabParam && ACCESS_MANAGEMENT_VALID_TABS.includes(tabParam)) {
       setTab(tabParam);

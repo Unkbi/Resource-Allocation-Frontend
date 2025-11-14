@@ -317,7 +317,7 @@ export default function LoginPage() {
               <Button
                 variant="outlined"
                 fullWidth
-                className="signWithSSO"
+                className="googleButton"
                 onClick={handleSSOSignin}
               >
                 Sign in with SSO

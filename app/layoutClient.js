@@ -94,6 +94,8 @@ export default function LayoutClient({ children }) {
           return 'Forgot Password';
         case '/reset-password':
           return 'Reset Password';
+        case '/invite':
+          return 'Set Password'  
         default:
           return 'CIOptimize';
       }
@@ -149,6 +151,9 @@ export default function LayoutClient({ children }) {
           type: FETCH_PORTFOLIOS,
           payload: {},
         });
+      }
+      if (!roles?.length) {
+        dispatch({ type: FETCH_ROLES });
       }
     }
   }, [dispatch, isLoggedIn, isClient]);
