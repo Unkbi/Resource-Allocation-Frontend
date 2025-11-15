@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Global, css } from '@emotion/react';
+import { useSelector, useDispatch } from 'react-redux';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
   Box,
   Typography,
@@ -9,6 +11,7 @@ import {
   MenuItem,
   styled,
   FormControl,
+  Badge,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
@@ -18,6 +21,11 @@ import { KeyboardArrowDown } from '@mui/icons-material';
 import EventIcon from '@mui/icons-material/Event';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { DEFAULT_LOCALE } from '@/app/constants/constants';
+import {
+  GridToolbarContainer,
+  GridToolbarFilterButton,
+} from '@mui/x-data-grid';
+import FilterChips from './FilterChips';
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
   padding: '10px 12px',
@@ -88,6 +96,21 @@ const Topbar = ({
   anchorEl,
   setAnchorEl,
 }) => {
+  const dispatch = useDispatch();
+  const advancedFilters = useSelector((state) => state.dashboard.advancedFilters);
+
+  // Calculate active filter count
+  const activeFilterCount = useMemo(() => {
+    if (!advancedFilters) return 0;
+
+    return Object.entries(advancedFilters).filter(([key, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== '' && value !== null && value !== undefined;
+    }).length;
+  }, [advancedFilters]);
+
   const handleMenuOpen = event => {
     setAnchorEl(event.currentTarget);
   };
@@ -98,6 +121,18 @@ const Topbar = ({
       setSelectedOption(option); // Update the selected option
     }
   };
+
+  const handleFilters = () => {
+    dispatch(
+      openDialog({
+        title: 'Advanced Filters',
+        submitButtonText: 'Apply Filters',
+        cancelButtonText: 'Cancel',
+        formType: 'advanced_filters',
+        initialData: advancedFilters,
+      })
+    );
+  }
 
   return (
     <>
@@ -116,10 +151,57 @@ const Topbar = ({
           mt: 2,
           pl: 2,
           pb: 2,
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           borderBottom: '1px solid #ddd',
         }}
       >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
+          <Badge
+            badgeContent=''
+            color="error"
+            sx={{
+              '& .MuiBadge-badge': {
+                right: 3,
+                display: activeFilterCount > 0 ? 'flex' : 'none',
+                top: 3,
+                backgroundColor: '#F86D6C',
+                padding: '0 4px',
+                height: '14px',
+                minWidth: '14px',
+                fontSize: '10px',
+                fontWeight: 600,
+              },
+            }}
+          >
+            <Button
+              onClick={handleFilters}
+              sx={{
+                minWidth: 'unset',
+                width: '41px',
+                height: '36px',
+                padding: '20px 10px 20px 17px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0,
+                borderRadius: '6px',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                '.MuiButton-startIcon': { marginRight: '0px' },
+              }}
+              alt="Filter"
+              variant='outlined'
+              startIcon={
+                <img
+                  src="/images/icons/NewFilterIcon.svg"
+                  alt="filter"
+                />
+              }
+            />
+          </Badge>
+          <FilterChips />
+        </Box>
         <Box sx={{ display: 'flex' }}>
           <Box>
             <StyledFormControl size="small">
@@ -189,7 +271,7 @@ const Topbar = ({
                 sx={{
                   pl: 2.5,
                   '& .MuiInputBase-root': {
-                    height: '44px', 
+                    height: '44px',
                     width: '170px',
                   },
                   '& .MuiOutlinedInput-notchedOutline': {},
@@ -201,11 +283,11 @@ const Topbar = ({
                   },
                   '& .MuiOutlinedInput-input': {
                     color: '#5D6979',
-                      fontFamily: 'Open Sans',
-                      fontSize: '14px',
-                      fontStyle: 'normal',
-                      fontWeight: 500,
-                      lineHeight: '20px',
+                    fontFamily: 'Open Sans',
+                    fontSize: '14px',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    lineHeight: '20px',
                   },
                 }}
                 onChange={newValue => setSelectedDate(newValue)}
@@ -219,18 +301,6 @@ const Topbar = ({
           </LocalizationProvider>
         </Box>
       </Box>
-      <Typography
-        variant="h2"
-        sx={{
-          fontSize: '24px',
-          fontWeight: 700,
-          color: '#000000',
-          paddingLeft: '24px',
-          paddingBottom: '8px',
-        }}
-      >
-        {text}
-      </Typography>
     </>
   );
 };

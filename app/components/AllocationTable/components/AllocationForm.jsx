@@ -149,6 +149,8 @@ import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
 import AddUserForm from '../../Forms/AddUserForm';
 import { formatAPIResponse, getUserAttributes, getLoginUserDetails } from '@/app/utils/authUtils';
+import AdvancedFiltersForm from '../../Forms/AdvancedFiltersForm';
+import { setAdvancedFilters, clearAdvancedFilters } from '@/app/redux/reducers/dashboardReducer';
 import {
   ADD_PROJECT_TYPE,
   UPDATE_PROJECT_TYPE,
@@ -166,6 +168,7 @@ import {
   SEND_INVITATION
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
+
 
 const initialValuesMap = {
   add_project: {
@@ -416,7 +419,18 @@ const initialValuesMap = {
     Resources: [],
     Role: '',
     sendInviteEmail: true,
-  }
+  },
+  advanced_filters: {
+    ProjectTypeGroup: '',
+    ProjectType: '',
+    Team: [],
+    Portfolio: '',
+    Organization: '',
+    Resource: '',
+    Project: [],
+    ProjectManager: '',
+    AllocationManager: '',
+  },
 };
 
 const AllocationForm = () => {
@@ -3380,6 +3394,34 @@ const AllocationForm = () => {
         break;
       }
       
+      case 'advanced_filters': {
+        // For advanced filters, use the full values object (don't exclude any fields)
+        // Support both single values (strings) and multiple values (arrays)
+        const filterValues = {
+          ProjectTypeGroup: values.ProjectTypeGroup || '',
+          ProjectType: values.ProjectType || '',
+          Team: values.Team || '',
+          Resource: values.Resource || '',
+          AllocationManager: values.AllocationManager || '',
+          ProjectManager: values.ProjectManager || '',
+          Project: values.Project || '',
+          Portfolio: values.Portfolio || '',
+          Organization: values.Organization || '',
+        };
+        dispatch(setAdvancedFilters(filterValues));
+        dispatch(closeDialog());
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Advanced filters applied successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 3000,
+          })
+        );
+        break;
+      }
+
       default:
         return;
     }
@@ -4005,6 +4047,13 @@ const AllocationForm = () => {
       case 'edit_resource_to_user':
         return (
           <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'advanced_filters':
+        return (
+          <AdvancedFiltersForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

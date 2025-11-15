@@ -14,13 +14,14 @@ interface StyledAutocompleteProps {
   label: string;
   options: Option[];
   placeholder?: string;
-  value: string;
+  value: string | string[];
   formikProps: FormikProps<any>;
   required?: boolean;
   FormHelperTextProps?: any;
   disabled?: boolean;
   disableClearable?: boolean;
   fullWidth?: boolean;
+  multiple?: boolean;
   onChange?: (value: any) => void;
 }
 
@@ -40,23 +41,38 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
   },
   disableClearable = false,
   disabled = false,
+  multiple = false,
   onChange,
 }) => {
   const { touched, errors, setFieldValue, setFieldTouched } = formikProps;
   const [open, setOpen] = useState(false);
 
-  const selectedOption = options?.find(opt => opt.value === value) || null;
-  const hasError = touched[name] && errors[name] && !value;
+  // Handle both single and multiple select
+  const selectedOption = multiple
+    ? options?.filter(opt => Array.isArray(value) && value.includes(opt.value)) || []
+    : options?.find(opt => opt.value === value) || null;
+  
+  const hasError = touched[name] && errors[name] && (multiple ? !value || (Array.isArray(value) && value.length === 0) : !value);
   const theme = useTheme();
 
-  const effectivePlaceholder = disabled && !value ? '' : label;
+  const effectivePlaceholder = disabled 
+  ? '' 
+  : (multiple 
+      ? (!value || (Array.isArray(value) && value.length === 0)) 
+      : !value) 
+    ? label 
+    : '';
 
   return (
     <Autocomplete
       disabled={disabled}
+      multiple={multiple}
       options={options}
       getOptionLabel={option => option.label || ''}
-      value={value === '' ? null : selectedOption}
+      value={multiple 
+        ? (value === '' || !Array.isArray(value) ? [] : selectedOption)
+        : (value === '' ? null : selectedOption)
+      }
       disableClearable={disableClearable}
       isOptionEqualToValue={(opt, val) => opt.value === val?.value}
       open={open}
@@ -66,13 +82,26 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
         setFieldTouched(name, true);
       }}
       onChange={(_, newValue) => {
-        const currentValue = formikProps.values[name];
-        const isSameValue = currentValue === newValue?.value;
-        const finalValue = isSameValue ? '' : (newValue?.value ?? '');
+        if (multiple) {
+          // Multiple select mode
+          const selectedValues = Array.isArray(newValue) 
+            ? newValue.map(opt => opt.value)
+            : [];
+          setFieldValue(name, selectedValues, true);
+          if (onChange) {
+            onChange(selectedValues);
+          }
+        } else {
+          // Single select mode
+          const currentValue = formikProps.values[name];
+          const singleValue = Array.isArray(newValue) ? null : newValue;
+          const isSameValue = currentValue === singleValue?.value;
+          const finalValue = isSameValue ? '' : (singleValue?.value ?? '');
 
-        setFieldValue(name, finalValue, true);
-        if (onChange) {
-          onChange(finalValue);
+          setFieldValue(name, finalValue, true);
+          if (onChange) {
+            onChange(finalValue);
+          }
         }
       }}
       onBlur={() => {
@@ -82,28 +111,42 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
       }}
       renderOption={(props, option) => {
         const { key, ...restProps } = props;
-        const isSelected = selectedOption?.value === option.value;
+        
+        if (multiple) {
+          // Multiple select: use default checkbox behavior
+          const isSelected = Array.isArray(selectedOption) && 
+            selectedOption.some(opt => opt.value === option.value);
+          
+          return (
+            <li key={key} {...restProps}>
+              {option.label}
+            </li>
+          );
+        } else {
+          // Single select: toggle behavior
+          const isSelected = !Array.isArray(selectedOption) && selectedOption?.value === option.value;
 
-        return (
-          <li
-            key={key}
-            {...restProps}
-            onClick={e => {
-              e.stopPropagation();
-              if (isSelected) {
-                setFieldValue(name, '', true);
-                if (onChange) onChange('');
-              } else {
-                setFieldValue(name, option.value, true);
-                if (onChange) onChange(option.value);
-              }
-              setFieldTouched(name, true, true);
-              setOpen(false);
-            }}
-          >
-            {option.label}
-          </li>
-        );
+          return (
+            <li
+              key={key}
+              {...restProps}
+              onClick={e => {
+                e.stopPropagation();
+                if (isSelected) {
+                  setFieldValue(name, '', true);
+                  if (onChange) onChange('');
+                } else {
+                  setFieldValue(name, option.value, true);
+                  if (onChange) onChange(option.value);
+                }
+                setFieldTouched(name, true, true);
+                setOpen(false);
+              }}
+            >
+              {option.label}
+            </li>
+          );
+        }
       }}
       renderInput={params => (
         <TextField
@@ -116,13 +159,19 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
           FormHelperTextProps={FormHelperTextProps}
           sx={{
             '& .MuiInputBase-root': {
-              height: '34px',
+              minHeight: '34px',
+              height: multiple ? 'auto' : '34px',
               fontSize: '12px',
+              padding: multiple ? '2px 8px' : '0',
+              alignItems: 'flex-start',
             },
             '& input': {
-              padding: '0 8px',
+              padding: '8px !important',
             },
-
+            '& .MuiAutocomplete-endAdornment': {
+              top: multiple ? '50%' : 'calc(50% - 14px)',
+              transform: multiple ? 'translateY(-50%)' : 'none',
+            },
             '& .Mui-disabled': {
               backgroundColor: disabled
                 ? // @ts-ignore
@@ -142,9 +191,26 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
         />
       )}
       sx={{
-        '& .MuiInputBase-root': { fontSize: '12px' },
-        '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
-        '& input': { fontSize: '12px' },
+        '& .MuiInputBase-root': { 
+          fontSize: '12px',
+          flexWrap: 'wrap',
+        },
+        '& .MuiAutocomplete-tag': { 
+          fontSize: '12px', 
+          height: '22px',
+          margin: '2px',
+          '& .MuiChip-label': {
+            padding: '0 6px',
+          },
+          '& .MuiChip-deleteIcon': {
+            fontSize: '14px',
+            margin: '0 2px 0 -2px',
+          },
+        },
+        '& input': { 
+          fontSize: '12px',
+          minWidth: multiple ? '30px' : 'auto',
+        },
         '& .MuiAutocomplete-popper': { fontSize: '12px' },
         '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
       }}
