@@ -70,7 +70,7 @@ const MainBox = styled(Box)(({ theme }) => ({
   },
 }));
 
-const passwordRequirementBoxStyle = {
+export const passwordRequirementBoxStyle = {
   display: 'flex',
   justifyContent: 'space-around',
   gap: 4,
@@ -80,14 +80,14 @@ const passwordRequirementBoxStyle = {
   px: 2,
 };
 
-const passwordRequirementColumnStyle = {
+export const passwordRequirementColumnStyle = {
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   gap: 1.5,
 };
 
-const passwordRequirementTextStyle = {
+export const passwordRequirementTextStyle = {
   display: 'flex',
   alignItems: 'center',
   fontSize: 13,

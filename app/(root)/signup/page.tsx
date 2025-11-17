@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { RootState, AppDispatch } from '@/app/redux/store';
@@ -16,6 +16,7 @@ import {
   styled,
 } from '@mui/material';
 import { signUp } from '@/app/redux/actions/authActions';
+import { passwordRequirementBoxStyle, passwordRequirementColumnStyle, passwordRequirementTextStyle } from '@/app/components/InvitePage/SetInvitePassword';
 
 const MainBox = styled(Box)(({ theme }) => ({
   '& .loginLeft': {
@@ -177,6 +178,9 @@ const commonHelperText = {
   lineHeight: '16px',
 };
 
+ const getIcon = (isValid: any) =>
+  isValid ? '/images/icons/tickMark.svg' : '/images/icons/ErrorIcon.svg';
+ 
 export default function SingupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -192,31 +196,32 @@ export default function SingupPage() {
 
   const [showPassword, setShowPassword] = React.useState(false);
 
+   const validations = useMemo(
+      () => ({
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        number: /\d/.test(password),
+        symbol: /[^A-Za-z0-9]/.test(password),
+      }),
+      [password]
+  );
+  const allValid = Object.values(validations).every(Boolean);
+  
+  const isButtonDisabled =  !firstName.trim() ||!lastName.trim() ||!email.trim() ||Object.values(errors).some(err => err) || !(allValid);
+
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
     if (!firstName.trim()) newErrors.firstName = 'First Name is required';
     if (!lastName.trim()) newErrors.lastName = 'Last Name is required';
     if (!email.trim()) newErrors.email = 'Email is required';
-    if (!password.trim()) newErrors.password = 'Password is required';
+    if (!password.trim()) newErrors.password = '';
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!emailRegex.test(email)) {
       newErrors.email = 'Please enter a valid email address';
-    }
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters long';
-    } else if (!/[A-Z]/.test(password)) {
-      newErrors.password = 'Password must contain at least 1 uppercase letter';
-    } else if (!/[a-z]/.test(password)) {
-      newErrors.password = 'Password must contain at least 1 lowercase letter';
-    } else if (!/[^a-zA-Z0-9]/.test(password)) {
-      newErrors.password =
-        'Password must contain at least 1 special character(@,#, $, %, &, *, etc.)';
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -371,6 +376,31 @@ export default function SingupPage() {
                   ),
                 }}
               />
+               {/* Password Requirements */}
+                        <Box mb={1}>
+                          <Box sx={passwordRequirementBoxStyle}>
+                            <Box sx={passwordRequirementColumnStyle}>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.length)} alt="tickMark" /> At
+                                least 8 characters
+                              </Typography>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.uppercase)} alt="tickMark" /> At
+                                least 1 uppercase letter
+                              </Typography>
+                            </Box>
+                            <Box sx={passwordRequirementColumnStyle}>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.number)} alt="tickMark" /> Must
+                                contain min 1 number
+                              </Typography>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.symbol)} alt="tickMark" /> Must
+                                contain min 1 symbol
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
               {error && (
                 <Typography variant="body2" color="error">
                   {error}
@@ -381,9 +411,17 @@ export default function SingupPage() {
                 variant="contained"
                 color="primary"
                 fullWidth
-                disabled={loading}
-                sx={{ mt: 2 }}
-                className="signInButton"
+                disabled={isButtonDisabled}
+                sx={{
+                  mt: 1,
+                  backgroundColor: isButtonDisabled ? '#C5CAE9' : '#1567CA',
+                  height: '48px',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  '&:hover': {
+                   backgroundColor: isButtonDisabled ? '#C5CAE9' : '#0042a8',
+                  },
+                }}
               >
                 {loading ? <CircularProgress size={24} /> : 'Sign up'}
               </Button>
