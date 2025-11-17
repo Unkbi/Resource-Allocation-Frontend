@@ -1785,6 +1785,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                       checked={currentView?.GroupBy.includes('Cost')}
                       onChange={handleAllocationCostSwitch}
                       disabled={
+                        (showActuals &&
+                          !currentView?.GroupBy.includes('Cost')) ||
                         currentView?.GroupBy === 'Portfolio' ||
                         currentView?.GroupBy === 'Organisations' ||
                         currentView?.GroupBy === 'Resources' ||
@@ -1829,6 +1831,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                     control={
                       <Checkbox
                         checked={showActuals}
+                        disabled={currentView?.GroupBy.includes('Cost')}
                         onChange={handleShowActualsToggle}
                         size="small"
                         sx={{ padding: 0, gap: '12px', marginRight: '4px' }}
