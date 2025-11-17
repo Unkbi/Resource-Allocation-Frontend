@@ -98,7 +98,7 @@ export default function ExecutiveDashboardPage() {
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
   const advancedFilters = useSelector(state => state.dashboard.advancedFilters || {});
-  
+
   const capacityAvailability = useSelector(
     state => state.dashboard.capacityAvailability || []
   );
@@ -524,7 +524,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Actual Vs Plan Deviation <span style={{fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)'}}>(Previous week)</span>
+                Actual Vs Plan Deviation <span style={{ fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)' }}>(Previous week)</span>
               </Typography>
               <Box
                 sx={{
@@ -1596,24 +1596,17 @@ export default function ExecutiveDashboardPage() {
               label="Projects"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-            {/* <DashboardToolbar
-              onFilterChange={handleFilterChange}
-              timeFilter={bucket}
-              teamfilter={teamFilter}
-              projectTypes={projectTypeNames}
-              projectTypeGroups={projectTypeGroupNames}
-              teamNames={teamNames}
-            /> */}
+            <DashboardToolbar
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              anchorEl={anchorEl}
+              setAnchorEl={setAnchorEl}
+            />
           </Tabs>
         </CommonToolbar>
-        <Topbar
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          selectedOption={selectedOption}
-          setSelectedOption={setSelectedOption}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
-        />
+        <Topbar />
         {activeTab === 'overview' && (
           <>
             <Typography

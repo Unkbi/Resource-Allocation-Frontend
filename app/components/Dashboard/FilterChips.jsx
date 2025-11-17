@@ -182,7 +182,7 @@ const FilterChips = () => {
         const showTooltip = filter.count > 2;
         const remainingCount = filter.count - 2;
         
-        const chipLabel = filter.count > 2 
+        const chipLabel = filter.count >= 2 
           ? (
               <Box sx={{ 
                 display: 'flex', 
@@ -200,6 +200,7 @@ const FilterChips = () => {
                 }}>
                   <strong>{filter.label}:</strong> {filter.displayName.slice(0, 2).join(', ')}
                 </span>
+                {showTooltip && (
                 <Tooltip 
                   title={
                     <Box sx={{ maxWidth: 300 }}>
@@ -213,6 +214,7 @@ const FilterChips = () => {
                 >
                   <CountBadge>+{remainingCount}</CountBadge>
                 </Tooltip>
+                )}
               </Box>
             )
           : (

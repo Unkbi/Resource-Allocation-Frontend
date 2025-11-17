@@ -27,75 +27,7 @@ import {
 } from '@mui/x-data-grid';
 import FilterChips from './FilterChips';
 
-const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
-  padding: '10px 12px',
-  color: '#212121',
-  fontWeight: 400,
-  fontSize: '14px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-  '&:hover': {
-    backgroundColor: 'rgba(52, 70, 101, 0.04)',
-  },
-  '&.Mui-selected': {
-    backgroundColor: 'rgba(52, 70, 101, 0.08)',
-    fontWeight: 600,
-  },
-  '&.Mui-selected:hover': {
-    backgroundColor: 'rgba(52, 70, 101, 0.12)',
-  },
-}));
-
-const StyledSelect = styled(Select)(({ theme }) => ({
-  display: 'flex',
-  // width: ' 128px',
-  height: '44px',
-  marginLeft: '6px',
-  justifyContent: 'center',
-  alignitems: 'center',
-  gap: '6px',
-  flexShrink: 0,
-  borderradius: '8px',
-  border: '1px solid #CBD0DB',
-  background: '#FFF',
-  '& .MuiSelect-select': {
-    // marginLeft: '12px',
-    padding: '0px 12px',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-}));
-
-const MenuItemContent = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-});
-
-const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  minWidth: 140,
-  margin: 0,
-}));
-
-const Topbar = ({
-  text,
-  selectedDate,
-  setSelectedDate,
-  selectedOption,
-  setSelectedOption,
-  anchorEl,
-  setAnchorEl,
-}) => {
+const Topbar = () => {
   const dispatch = useDispatch();
   const advancedFilters = useSelector((state) => state.dashboard.advancedFilters);
 
@@ -110,17 +42,6 @@ const Topbar = ({
       return value !== '' && value !== null && value !== undefined;
     }).length;
   }, [advancedFilters]);
-
-  const handleMenuOpen = event => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = option => {
-    setAnchorEl(null);
-    if (option) {
-      setSelectedOption(option); // Update the selected option
-    }
-  };
 
   const handleFilters = () => {
     dispatch(
@@ -201,104 +122,6 @@ const Topbar = ({
             />
           </Badge>
           <FilterChips />
-        </Box>
-        <Box sx={{ display: 'flex' }}>
-          <Box>
-            <StyledFormControl size="small">
-              <StyledSelect
-                value={selectedOption}
-                className="projectDropdown"
-                IconComponent={KeyboardArrowDown}
-                MenuProps={{
-                  disableScrollLock: true,
-                  PaperProps: {
-                    sx: {
-                      backgroundColor: '#FFFFFF',
-                      ml: '2px',
-                    },
-                  },
-                }}
-                renderValue={selectedOption => {
-                  let displayText = '';
-                  if (selectedOption === 'week') displayText = 'Weekly';
-                  else if (selectedOption === 'month') displayText = 'Monthly';
-                  else if (selectedOption === 'quarter')
-                    displayText = 'Quarterly';
-                  else displayText = selectedOption;
-
-                  return (
-                    <MenuItemContent>
-                      <EventIcon sx={{ fontSize: 24, color: '#5D6979' }} />
-                      <Typography
-                        sx={{
-                          color: '#5D6979',
-                          fontFamily: 'Open Sans',
-                          fontSize: '14px',
-                          fontStyle: 'normal',
-                          fontWeight: 500,
-                          lineHeight: '20px',
-                          paddingRight: '8px',
-                        }}
-                      >
-                        {displayText}
-                      </Typography>
-                    </MenuItemContent>
-                  );
-                }}
-              >
-                <StyledMenuItem onClick={() => handleMenuClose('week')}>
-                  Weekly
-                </StyledMenuItem>
-                <StyledMenuItem onClick={() => handleMenuClose('month')}>
-                  Monthly
-                </StyledMenuItem>
-                <StyledMenuItem onClick={() => handleMenuClose('quarter')}>
-                  Quarterly
-                </StyledMenuItem>
-              </StyledSelect>
-            </StyledFormControl>
-          </Box>
-          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
-            <DemoContainer components={['DatePicker']}>
-              <DatePicker
-                displayWeekNumber
-                slots={{
-                  openPickerIcon: CalendarMonthIcon, // Change the icon here
-                }}
-                // views={['']}
-                label="Select a Date"
-                value={selectedDate}
-                sx={{
-                  pl: 2.5,
-                  '& .MuiInputBase-root': {
-                    height: '44px',
-                    width: '170px',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {},
-                  '& .MuiStack-root': {
-                    overflow: 'unset !important',
-                  },
-                  '& .MuiInputLabel-root': {
-                    left: 'unset !important',
-                  },
-                  '& .MuiOutlinedInput-input': {
-                    color: '#5D6979',
-                    fontFamily: 'Open Sans',
-                    fontSize: '14px',
-                    fontStyle: 'normal',
-                    fontWeight: 500,
-                    lineHeight: '20px',
-                  },
-                }}
-                onChange={newValue => setSelectedDate(newValue)}
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                  />
-                )}
-              />
-            </DemoContainer>
-          </LocalizationProvider>
         </Box>
       </Box>
     </>

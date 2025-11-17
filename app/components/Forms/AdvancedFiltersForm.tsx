@@ -189,69 +189,41 @@ const AdvancedFiltersForm = ({
 
     return (
         <Box>
-            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
+            <Box sx={{ pb: 1 }}>
                 <StyledLabel>Project Type Group</StyledLabel>
                 <StyledAutocomplete
                     name="ProjectTypeGroup"
                     label="Select Project Type Group"
+                    multiple={true}
                     options={projectTypeGroupNameOptions}
-                    value={values.ProjectTypeGroup || ''}
+                    value={values.ProjectTypeGroup || []}
                     formikProps={formikProps}
                 />
             </Box>
 
-            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
+            <Box sx={{ pb: 1}}>
                 <StyledLabel>Project Type</StyledLabel>
                 <StyledAutocomplete
                     name="ProjectType"
                     label="Project Type"
-                    options={projectTypeOptions}
-                    value={values.ProjectType || ''}
-                    formikProps={formikProps}
-                />
-            </Box>
-            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
-                <StyledLabel>Team</StyledLabel>
-                <StyledAutocomplete
-                    name="Team"
-                    label="Team"
                     multiple={true}
-                    options={teamOptions}
-                    value={values.Team || []}
+                    options={projectTypeOptions}
+                    value={values.ProjectType || []}
                     formikProps={formikProps}
                 />
             </Box>
-            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
-                <StyledLabel>Resource</StyledLabel>
-                <StyledAutocomplete
-                    name="Resource"
-                    label="Resource"
-                    options={resourceOptions}
-                    value={values.Resource || ''}
-                    formikProps={formikProps}
-                />
-            </Box>
-            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
-                <StyledLabel>Allocation Manager</StyledLabel>
-                <StyledAutocomplete
-                    name="AllocationManager"
-                    label="Allocation Manager"
-                    options={allocationManagerOptions}
-                    value={values.AllocationManager || ''}
-                    formikProps={formikProps}
-                />
-            </Box>
-            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
+            <Box sx={{ pb: 1 }}>
                 <StyledLabel>Project Manager</StyledLabel>
                 <StyledAutocomplete
                     name="ProjectManager"
                     label="Project Manager"
+                    multiple={true}
                     options={projectManagerOptions}
-                    value={values.ProjectManager || ''}
+                    value={values.ProjectManager || []}
                     formikProps={formikProps}
                 />
             </Box>
-            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
+            <Box sx={{ pb: 1}}>
                 <StyledLabel>Project</StyledLabel>
                 <StyledAutocomplete
                     name="Project"
@@ -267,8 +239,42 @@ const AdvancedFiltersForm = ({
                 <StyledAutocomplete
                     name="Portfolio"
                     label="Portfolio"
+                    multiple={true}
                     options={portfolioOptions}
-                    value={values.Portfolio || ''}
+                    value={values.Portfolio || []}
+                    formikProps={formikProps}
+                />
+            </Box>
+            <Box sx={{ pb: 1 }}>
+                <StyledLabel>Team</StyledLabel>
+                <StyledAutocomplete
+                    name="Team"
+                    label="Team"
+                    multiple={true}
+                    options={teamOptions}
+                    value={values.Team || []}
+                    formikProps={formikProps}
+                />
+            </Box>
+            <Box sx={{ pb: 1 }}>
+                <StyledLabel>Resource</StyledLabel>
+                <StyledAutocomplete
+                    name="Resource"
+                    label="Resource"
+                    multiple={true}
+                    options={resourceOptions}
+                    value={values.Resource || []}
+                    formikProps={formikProps}
+                />
+            </Box>
+            <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
+                <StyledLabel>Allocation Manager</StyledLabel>
+                <StyledAutocomplete
+                    name="AllocationManager"
+                    label="Allocation Manager"
+                    multiple={true}
+                    options={allocationManagerOptions}
+                    value={values.AllocationManager || []}
                     formikProps={formikProps}
                 />
             </Box>
@@ -277,8 +283,9 @@ const AdvancedFiltersForm = ({
                 <StyledAutocomplete
                     name="Organization"
                     label="Organization"
+                    multiple={true}
                     options={organizationOptions}
-                    value={values.Organization || ''}
+                    value={values.Organization || []}
                     formikProps={formikProps}
                 />
             </Box>

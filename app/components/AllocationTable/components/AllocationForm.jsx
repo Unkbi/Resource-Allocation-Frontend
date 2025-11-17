@@ -421,15 +421,15 @@ const initialValuesMap = {
     sendInviteEmail: true,
   },
   advanced_filters: {
-    ProjectTypeGroup: '',
-    ProjectType: '',
+    ProjectTypeGroup: [],
+    ProjectType: [],
     Team: [],
-    Portfolio: '',
-    Organization: '',
-    Resource: '',
+    Portfolio: [],
+    Organization: [],
+    Resource: [],
     Project: [],
-    ProjectManager: '',
-    AllocationManager: '',
+    ProjectManager: [],
+    AllocationManager: [],
   },
 };
 

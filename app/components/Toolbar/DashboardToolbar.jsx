@@ -1,71 +1,126 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
+import { Global, css } from '@emotion/react';
+import { useSelector, useDispatch } from 'react-redux';
+import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
   Box,
   Typography,
   Button,
+  Menu,
   Select,
   MenuItem,
-  Paper,
-  Grid,
+  styled,
+  FormControl,
+  Badge,
+  Paper, TextField,
 } from '@mui/material';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { KeyboardArrowDown } from '@mui/icons-material';
+import EventIcon from '@mui/icons-material/Event';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { DEFAULT_LOCALE } from '@/app/constants/constants';
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  padding: '10px 12px',
+  color: '#212121',
+  fontWeight: 400,
+  fontSize: '14px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  '&:hover': {
+    backgroundColor: 'rgba(52, 70, 101, 0.04)',
+  },
+  '&.Mui-selected': {
+    backgroundColor: 'rgba(52, 70, 101, 0.08)',
+    fontWeight: 600,
+  },
+  '&.Mui-selected:hover': {
+    backgroundColor: 'rgba(52, 70, 101, 0.12)',
+  },
+}));
+
+const StyledSelect = styled(Select)(({ theme }) => ({
+  display: 'flex',
+  // width: ' 128px',
+  height: '34px',
+  marginLeft: '6px',
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: '6px',
+  flexShrink: 0,
+  borderRadius: '8px',
+  border: '1px solid #CBD0DB',
+  background: '#FFF',
+  '& .MuiSelect-select': {
+    // marginLeft: '12px',
+    padding: '0px 12px',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+}));
+
+const MenuItemContent = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+});
+
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  minWidth: 140,
+  margin: 0,
+}));
 
 const DashboardToolbar = ({
-  onFilterChange,
-  teamNames = [],
-  projectTypes = [],
-  projectTypeGroups = [],
-  teamfilter: externalTeamFilter = 'all',
+  selectedDate,
+  setSelectedDate,
+  selectedOption,
+  setSelectedOption,
+  anchorEl,
+  setAnchorEl,
 }) => {
-  const [timeFilter, setTimeFilter] = useState('week');
-  const [teamFilter, setTeamFilter] = useState(externalTeamFilter);
-  const [projectTypeFilter, setProjectTypeFilter] = useState('all');
-  const [projectTypeGroupFilter, setProjectTypeGroupFilter] = useState('all');
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    setTeamFilter(externalTeamFilter);
-  }, [externalTeamFilter]);
-
-  const handleTimeFilterChange = filter => {
-    setTimeFilter(filter);
-    if (onFilterChange) {
-      onFilterChange({ type: 'time', value: filter });
-    }
+  const handleMenuOpen = event => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleTeamFilterChange = event => {
-    setTeamFilter(event.target.value);
-    if (onFilterChange) {
-      onFilterChange({ type: 'team', value: event.target.value });
-    }
-  };
-
-  const handleProjectTypeFilterChange = event => {
-    setProjectTypeFilter(event.target.value);
-    if (onFilterChange) {
-      onFilterChange({ type: 'projectType', value: event.target.value });
-    }
-  };
-
-  const handleProjectTypeGroupFilterChange = event => {
-    setProjectTypeGroupFilter(event.target.value);
-    if (onFilterChange) {
-      onFilterChange({ type: 'projectTypeGroup', value: event.target.value });
+  const handleMenuClose = option => {
+    setAnchorEl(null);
+    if (option) {
+      setSelectedOption(option); // Update the selected option
     }
   };
 
   return (
-    <Paper
+    <>
+      <Global
+        styles={css`
+          .MuiStack-root {
+            overflow: unset !important; /* Override the overflow property */
+            padding-top: 0 !important; /* Override the padding */
+          }
+        `}
+      />
+      <Paper
       elevation={0}
       sx={{
-        mb: 1,
         borderRadius: 0,
         width: '100%',
         position: 'relative',
         backgroundColor: 'inherit',
-        overflowX: 'auto', 
       }}
     >
       <Box
@@ -74,180 +129,117 @@ const DashboardToolbar = ({
           flexWrap: 'wrap', 
           alignItems: 'center',
           justifyContent: 'flex-end',
-          gap: { xs: 1, sm: 2, md: 4 }, 
           width: '100%',
+          marginTop: 0.5,
           minWidth: 0, 
         }}
       >
-        {/* Teams Filter */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            minWidth: 200, 
-            flex: 1, 
-            maxWidth: 300,
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{ fontSize: '14px', whiteSpace: 'nowrap' }}
-          >
-            Teams
-          </Typography>
-          <Select
-            value={teamFilter}
-            onChange={handleTeamFilterChange}
-            displayEmpty
-            size="small"
-            fullWidth
-            IconComponent={KeyboardArrowDownIcon}
-            sx={{
-              borderRadius: 1.5,
-              bgcolor: 'white',
-              borderColor: '#D1D5DB',
-              fontSize: '14px',
-              ml: 2,
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-            }}
-            MenuProps={{
-              disableScrollLock: true,
-              PaperProps: {
-                sx: {
-                  '& .MuiMenuItem-root': { fontSize: '16px' },
-                },
-              },
-            }}
-          >
-            <MenuItem value="all" sx={{ color: '#344665' }}>
-              All Teams
-            </MenuItem>
-            {teamNames.map(team => (
-              <MenuItem key={team} value={team} sx={{ color: '#344665' }}>
-                {team}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
+          <Box>
+            <StyledFormControl size="small">
+              <StyledSelect
+                value={selectedOption}
+                className="projectDropdown"
+                IconComponent={KeyboardArrowDown}
+                MenuProps={{
+                  disableScrollLock: true,
+                  PaperProps: {
+                    sx: {
+                      backgroundColor: '#FFFFFF',
+                      ml: '2px',
+                    },
+                  },
+                }}
+                renderValue={selectedOption => {
+                  let displayText = '';
+                  if (selectedOption === 'week') displayText = 'Weekly';
+                  else if (selectedOption === 'month') displayText = 'Monthly';
+                  else if (selectedOption === 'quarter')
+                    displayText = 'Quarterly';
+                  else displayText = selectedOption;
 
-        {/* Project Types Filter */}
-        {/* <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            minWidth: 200,
-            flex: 1,
-            maxWidth: 300,
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{ fontSize: '14px', whiteSpace: 'nowrap' }}
-          >
-            Project Types
-          </Typography>
-          <Select
-            value={projectTypeFilter}
-            onChange={handleProjectTypeFilterChange}
-            displayEmpty
-            IconComponent={KeyboardArrowDownIcon}
-            size="small"
-            fullWidth
-            sx={{
-              borderRadius: 1.5,
-              bgcolor: 'white',
-              borderColor: '#D1D5DB',
-              fontSize: '14px',
-              ml: 2,
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-            }}
-            MenuProps={{
-              disableScrollLock: true,
-              PaperProps: {
-                sx: {
-                  '& .MuiMenuItem-root': { fontSize: '16px' },
-                },
-              },
-            }}
-          >
-            <MenuItem value="all" sx={{ color: '#344665' }}>
-              All Project Type
-            </MenuItem>
-            {projectTypes.map(type => (
-              <MenuItem key={type} value={type} sx={{ color: '#344665' }}>
-                {type}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box> */}
-
-        {/* Project Type Groups Filter */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            minWidth: 200,
-            flex: 1,
-            maxWidth: 300,
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{ fontSize: '14px', whiteSpace: 'nowrap' }}
-          >
-            Project Type Groups
-          </Typography>
-          <Select
-            value={projectTypeGroupFilter}
-            onChange={handleProjectTypeGroupFilterChange}
-            displayEmpty
-            IconComponent={KeyboardArrowDownIcon}
-            size="small"
-            fullWidth
-            sx={{
-              borderRadius: 1.5,
-              bgcolor: 'white',
-              borderColor: '#D1D5DB',
-              fontSize: '14px',
-              ml: 2,
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#D1D5DB',
-              },
-            }}
-            MenuProps={{
-              disableScrollLock: true,
-              PaperProps: {
-                sx: {
-                  '& .MuiMenuItem-root': { fontSize: '16px' },
-                },
-              },
-            }}
-          >
-            <MenuItem value="all" sx={{ color: '#344665' }}>
-              All Groups
-            </MenuItem>
-            {projectTypeGroups.map(group => (
-              <MenuItem key={group} value={group} sx={{ color: '#344665' }}>
-                {group}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
+                  return (
+                    <MenuItemContent>
+                      <EventIcon sx={{ fontSize: 24, color: '#5D6979' }} />
+                      <Typography
+                        sx={{
+                          color: '#5D6979',
+                          fontFamily: 'Open Sans',
+                          fontSize: '14px',
+                          fontStyle: 'normal',
+                          fontWeight: 500,
+                          lineHeight: '20px',
+                          paddingRight: '8px',
+                        }}
+                      >
+                        {displayText}
+                      </Typography>
+                    </MenuItemContent>
+                  );
+                }}
+              >
+                <StyledMenuItem onClick={() => handleMenuClose('week')}>
+                  Weekly
+                </StyledMenuItem>
+                <StyledMenuItem onClick={() => handleMenuClose('month')}>
+                  Monthly
+                </StyledMenuItem>
+                <StyledMenuItem onClick={() => handleMenuClose('quarter')}>
+                  Quarterly
+                </StyledMenuItem>
+              </StyledSelect>
+            </StyledFormControl>
+          </Box>
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={DEFAULT_LOCALE}>
+            <DemoContainer components={['DatePicker']}>
+              <DatePicker
+                displayWeekNumber
+                slots={{
+                  openPickerIcon: CalendarMonthIcon, // Change the icon here
+                }}
+                // views={['']}
+                label="Select a Date"
+                value={selectedDate}
+                sx={{
+                  pl: 2.5,
+                  '& .MuiInputBase-root': {
+                    height: '34px',
+                    width: '170px',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '8px',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {},
+                  '& .MuiStack-root': {
+                    overflow: 'unset !important',
+                  },
+                  '& .MuiInputLabel-root': {
+                    left: 'unset !important',
+                    paddingTop: '4px',
+                    fontSize: '14px',
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: '14px',
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    color: '#5D6979',
+                    fontFamily: 'Open Sans',
+                    fontSize: '14px',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    lineHeight: '20px',
+                  },
+                }}
+                onChange={newValue => setSelectedDate(newValue)}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                  />
+                )}
+              />
+            </DemoContainer>
+          </LocalizationProvider>
       </Box>
     </Paper>
+    </>
   );
 };
 
