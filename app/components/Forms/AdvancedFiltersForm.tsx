@@ -9,7 +9,7 @@ import { RootState, AppDispatch } from '@/app/redux/store';
 import { CrudPermissions } from '../HOC/withRBAC';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { ProjectTypeGroup } from '@/app/types';
-import { FETCH_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_PROJECT_TYPE_GROUPS, FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
@@ -86,6 +86,9 @@ const AdvancedFiltersForm = ({
                 type: FETCH_ORGANISATIONS,
                 payload: {},
             });
+        }
+        if (projectTypes.length === 0) {
+            dispatch({ type: FETCH_PROJECT_TYPES });
         }
 
     }, []);
