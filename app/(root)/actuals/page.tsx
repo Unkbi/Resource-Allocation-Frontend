@@ -184,7 +184,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       };
 
       if ((!isPostFriday || isModified) && !hasInvalidRows) {
-        debugger;
         new Promise((resolve, reject) => {
           dispatch({
             type: CONFIRM_ACTUAL_ALLOCATIONS,
