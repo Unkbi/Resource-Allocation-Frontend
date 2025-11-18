@@ -28,8 +28,7 @@ import 'react-resizable/css/styles.css';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDashboardChart } from '../../redux/actions/dashboardAction';
-import { allowedQueries as queries } from '@/app/utils/queries';
+import { fetchDashboardChart, fetchInventoryMetrics } from '../../redux/actions/dashboardAction';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -60,8 +59,27 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 dayjs.extend(quarterOfYear);
 
-// Dynamically generate layouts for all charts in allowedQueries
-const chartKeys = [...Object.keys(queries), 'underAllocated', 'overAllocated'];
+// Define all dashboard chart keys
+const chartKeys = [
+  'activeProjects',
+  'activeProjectsByType',
+  'activeResources',
+  'resourceFTEContractorRatio',
+  'totalHeadcount',
+  'capacityAvailability',
+  'resourceCoverage',
+  'resourceUtilization',
+  'unapprovedProjectActualsByTeam',
+  'unapprovedProjectAllocation',
+  'budgetVsPlanVsActual',
+  'totalResourceCost',
+  'allocationPercentage',
+  'projectFTE',
+  'actualsConfirmed',
+  'resourceActualsDeviation',
+  'underAllocated',
+  'overAllocated'
+];
 
 const layouts = {
   lg: chartKeys.map((key, idx) => ({
@@ -98,7 +116,7 @@ export default function ExecutiveDashboardPage() {
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
   const advancedFilters = useSelector(state => state.dashboard.advancedFilters || {});
-
+  
   const capacityAvailability = useSelector(
     state => state.dashboard.capacityAvailability || []
   );
@@ -235,53 +253,85 @@ export default function ExecutiveDashboardPage() {
         endDate = selectedDate.endOf(selectedOption).format('YYYY-MM-DD');
       }
 
-      Object.keys(queries).forEach(queryKey => {
+      // Define charts that need to be fetched (excluding computed ones like underAllocated/overAllocated)
+      // Inventory metrics charts (grouped - single API call)
+      const inventoryMetricsCharts = [
+        'activeProjects',
+        'activeProjectsByType',
+        'activeResources',
+        'resourceFTEContractorRatio',
+        'totalHeadcount',
+      ];
+      
+      // Individual charts (separate API calls)
+      const individualCharts = [
+        'capacityAvailability',
+        'resourceCoverage',
+        'resourceUtilization',
+        'unapprovedProjectActualsByTeam',
+        'unapprovedProjectAllocation',
+        'budgetVsPlanVsActual',
+        'totalResourceCost',
+        'allocationPercentage',
+        'projectFTE',
+        'actualsConfirmed',
+        'resourceActualsDeviation',
+      ];
+
+      // Fetch inventory metrics as a batch (single API call)
+      const inventoryMetricsKey = 'inventoryMetrics';
+      const inventoryParamsForKey = {
+        chartKey: inventoryMetricsKey,
+        startDate: startDate,
+        endDate: endDate,
+        bucket: selectedOption,
+        advancedFilters, // Only advanced filters matter now
+      };
+
+      const inventoryRequestKey = JSON.stringify(inventoryParamsForKey);
+      if (lastRequestKeyRef.current[inventoryMetricsKey] !== inventoryRequestKey) {
+        lastRequestKeyRef.current[inventoryMetricsKey] = inventoryRequestKey;
+        
+        dispatch(
+          fetchInventoryMetrics({
+            startDate: startDate,
+            endDate: endDate,
+            bucket: selectedOption,
+          })
+        );
+      }
+
+      // Fetch individual charts
+      individualCharts.forEach(chartKey => {
         const queryStart =
-          (queryKey === 'resourceActualsDeviation' || queryKey === 'actualsConfirmed') && selectedOption === 'week'
+          (chartKey === 'resourceActualsDeviation' || chartKey === 'actualsConfirmed') && selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
-          (queryKey === 'resourceActualsDeviation' || queryKey === 'actualsConfirmed') && selectedOption === 'week'
+          (chartKey === 'resourceActualsDeviation' || chartKey === 'actualsConfirmed') && selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').add(6, 'day').format('YYYY-MM-DD')
             : endDate;
 
         const paramsForKey = {
-          chartKey: queryKey,
+          chartKey: chartKey,
           startDate: queryStart,
           endDate: queryEnd,
           bucket: selectedOption,
-          projectTypeFilter:
-            selectedProjectType === 'all' ? null : [selectedProjectType],
-          projectTypeGroupFilter:
-            selectedProjectTypeGroup === 'all' ? null : [selectedProjectTypeGroup],
-          portfolioFilter: null,
-          teamFilter: selectedTeamPaths,
-          teamAllocMgrFilter: null,
-          orgFilter: null,
-          advancedFilters, // Include advanced filters in request key
+          advancedFilters, // Only advanced filters matter now
         };
 
         const requestKey = JSON.stringify(paramsForKey);
-        if (lastRequestKeyRef.current[queryKey] === requestKey) {
+        if (lastRequestKeyRef.current[chartKey] === requestKey) {
           return;
         }
-        lastRequestKeyRef.current[queryKey] = requestKey;
+        lastRequestKeyRef.current[chartKey] = requestKey;
 
         dispatch(
           fetchDashboardChart({
-            chartKey: queryKey,
-            queryKey: queryKey,
+            chartKey: chartKey,
             startDate: queryStart,
             endDate: queryEnd,
             bucket: selectedOption,
-            projectTypeFilter:
-              selectedProjectType === 'all' ? null : [selectedProjectType],
-            projectTypeGroupFilter:
-              selectedProjectTypeGroup === 'all' ? null : [selectedProjectTypeGroup],
-            portfolioFilter: null,
-            teamFilter: selectedTeamPaths,
-            teamAllocMgrFilter: null,
-            orgFilter: null,
           })
         );
       });
@@ -524,7 +574,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Actual Vs Plan Deviation <span style={{ fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)' }}>(Previous week)</span>
+                Actual Vs Plan Deviation <span style={{fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)'}}>(Previous week)</span>
               </Typography>
               <Box
                 sx={{
@@ -1598,11 +1648,11 @@ export default function ExecutiveDashboardPage() {
             />
             <DashboardToolbar
               selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              selectedOption={selectedOption}
-              setSelectedOption={setSelectedOption}
-              anchorEl={anchorEl}
-              setAnchorEl={setAnchorEl}
+          setSelectedDate={setSelectedDate}
+          selectedOption={selectedOption}
+          setSelectedOption={setSelectedOption}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
             />
           </Tabs>
         </CommonToolbar>

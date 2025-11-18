@@ -1,15 +1,15 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 interface AdvancedFilters {
-  ProjectTypeGroup?: string;
-  ProjectType?: string;
-  Team?: string;
-  Resource?: string;
-  AllocationManager?: string;
-  ProjectManager?: string;
-  Project?: string;
-  Portfolio?: string;
-  Organization?: string;
+  ProjectTypeGroup?: string[];
+  ProjectType?: string[];
+  Team?: string[];
+  Resource?: string[];
+  AllocationManager?: string[];
+  ProjectManager?: string[];
+  Project?: string[];
+  Portfolio?: string[];
+  Organization?: string[];
 }
 
 interface DashboardChartState {
@@ -19,15 +19,15 @@ interface DashboardChartState {
 
 const initialState: DashboardChartState = {
   advancedFilters: {
-    ProjectTypeGroup: '',
-    ProjectType: '',
-    Team: '',
-    Resource: '',
-    AllocationManager: '',
-    ProjectManager: '',
-    Project: '',
-    Portfolio: '',
-    Organization: '',
+    ProjectTypeGroup: [],
+    ProjectType: [],
+    Team: [],
+    Resource: [],
+    AllocationManager: [],
+    ProjectManager: [],
+    Project: [],
+    Portfolio: [],
+    Organization: [],
   },
 };
 
@@ -40,7 +40,6 @@ const dashboardSlice = createSlice({
       state[chartKey] = data;
     },
     setAdvancedFilters: (state, action) => {
-      console.log('Reducer - Setting advanced filters:', action.payload, state.advancedFilters);
       state.advancedFilters = {
         ...state.advancedFilters,
         ...action.payload,
@@ -48,15 +47,15 @@ const dashboardSlice = createSlice({
     },
     clearAdvancedFilters: (state) => {
       state.advancedFilters = {
-        ProjectTypeGroup: '',
-        ProjectType: '',
-        Team: '',
-        Resource: '',
-        AllocationManager: '',
-        ProjectManager: '',
-        Project: '',
-        Portfolio: '',
-        Organization: '',
+        ProjectTypeGroup: [],
+        ProjectType: [],
+        Team: [],
+        Resource: [],
+        AllocationManager: [],
+        ProjectManager: [],
+        Project: [],
+        Portfolio: [],
+        Organization: [],
       };
     },
     resetDashboardCharts: (state) => {
