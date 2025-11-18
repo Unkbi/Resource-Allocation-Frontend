@@ -69,7 +69,6 @@ const commonCellStyle = {
   fontWeight: 400,
   lineHeight: '24px',
   fontFamily: 'Open Sans',
-  px: 1,
   py: 1.1,
   display: 'flex',
   alignItems: 'center',
@@ -526,7 +525,9 @@ export default function UserManagementPage() {
         };
         dispatch({
           type: RESEND_INVITATION,
-          userData: postData
+          payload:{
+            userData: postData
+          }
         });
       }));
       dispatch(
@@ -689,6 +690,20 @@ export default function UserManagementPage() {
     },
   ];
 
+  // Sort users data alphabetically by Name
+  const sortedUsersData = useMemo(() => {
+    return [...UsersData].sort((a, b) => 
+      (a.Name || '').localeCompare(b.Name || '', undefined, { sensitivity: 'base' })
+    );
+  }, [UsersData]);
+
+  // Sort resources data alphabetically by Name
+  const sortedResourcesData = useMemo(() => {
+    return [...ResourcesData].sort((a, b) => 
+      (a.Name || '').localeCompare(b.Name || '', undefined, { sensitivity: 'base' })
+    );
+  }, [ResourcesData]);
+
   const ResourcesColumns = [
     {
       field: 'Name',
@@ -701,7 +716,7 @@ export default function UserManagementPage() {
     {
       field: 'email',
       headerName: 'Email ID',
-      flex: 1,
+      flex: 1.5,
       renderCell: (params: any) => (
         <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
       ),
@@ -718,6 +733,7 @@ export default function UserManagementPage() {
     {
       field: 'resourceStatus',
       headerName: 'Resource Status',
+      align:'center',
       flex: 1,
       renderCell: (params: any) => (
         <Typography sx={commonCellStyle}>{params.value}</Typography>
@@ -726,7 +742,7 @@ export default function UserManagementPage() {
     {
       field: 'userStatus',
       headerName: 'User Status',
-      flex: 1,
+      flex: 0.7,
       renderCell: (params: any) => (
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
@@ -735,6 +751,7 @@ export default function UserManagementPage() {
       field: 'actions',
       headerName: 'Actions',
       width: 100,
+      flex: 0.5,
       sortable: false,
       filterable: false,
       renderCell: (params: any) => {
@@ -934,7 +951,7 @@ export default function UserManagementPage() {
       {tab === 'users' && (
         <AccessTable
           title="Users"
-          data={UsersData}
+          data={sortedUsersData}
           checkboxSelection={true}
           onAdd={handleAddNewUsers}
           onEdit={handleEditUser}
@@ -960,7 +977,7 @@ export default function UserManagementPage() {
       {tab === 'resources' && (
         <AccessTable
           title="Resources"
-          data={ResourcesData}
+          data={sortedResourcesData}
           checkboxSelection={true}
           onAdd={handleAddNewResources}
           onEdit={handleEditResources}
