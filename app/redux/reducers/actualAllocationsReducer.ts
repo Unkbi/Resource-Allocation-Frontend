@@ -1,12 +1,16 @@
-import { ActualAllocationsState } from '@/app/types';
+import { ActualAllocationsState, ActualStatus } from '@/app/types';
 import { formatAPIResponse } from '@/app/utils/authUtils';
 import { getMondayOfISO, getSundayOfISO } from '@/app/utils/common';
 import { createSlice } from '@reduxjs/toolkit';
+// @ts-ignore
+import { isMonday, parseISO } from 'date-fns';
 
 const initialState: ActualAllocationsState = {
   actualAllocations: [],
+  actualsStatus: [],
   status: null,
   dataProcessing: true,
+  actualsStatusLoading: true,
   loading: false,
   calendarDate: {
     startDate: getMondayOfISO(new Date().toISOString()),
@@ -29,11 +33,28 @@ const actualAllocationsSlice = createSlice({
     setActualAllocationsStatus: (state, action) => {
       state.status = action.payload;
     },
+    setActualsStatus: (state, action) => {
+      state.actualsStatus = action.payload
+        ? action.payload
+            .filter((status: ActualStatus) => {
+              const date = parseISO(status.Period);
+              return isMonday(date); // Check if the date is a Monday
+            })
+            .sort((a: ActualStatus, b: ActualStatus) => {
+              return (
+                new Date(a.Period).getTime() - new Date(b.Period).getTime()
+              );
+            })
+        : [];
+    },
     resetActualAllocations: state => {
       state.actualAllocations = [];
     },
     setDataProcessing: (state, action) => {
       state.dataProcessing = action.payload;
+    },
+    setActualsStatusLoading: (state, action) => {
+      state.actualsStatusLoading = action.payload;
     },
     setCalendarDate: (state, action) => {
       state.calendarDate = action.payload;
@@ -50,7 +71,9 @@ export const {
   setActualAllocations,
   resetActualAllocations,
   setActualAllocationsStatus,
+  setActualsStatus,
   setDataProcessing,
+  setActualsStatusLoading,
   setCalendarDate,
 } = actualAllocationsSlice.actions;
 
