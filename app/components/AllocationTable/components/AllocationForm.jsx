@@ -3396,17 +3396,17 @@ const AllocationForm = () => {
       
       case 'advanced_filters': {
         // For advanced filters, use the full values object (don't exclude any fields)
-        // Support both single values (strings) and multiple values (arrays)
+        // All values are arrays from the multi-select autocomplete components
         const filterValues = {
-          ProjectTypeGroup: values.ProjectTypeGroup || '',
-          ProjectType: values.ProjectType || '',
-          Team: values.Team || '',
-          Resource: values.Resource || '',
-          AllocationManager: values.AllocationManager || '',
-          ProjectManager: values.ProjectManager || '',
-          Project: values.Project || '',
-          Portfolio: values.Portfolio || '',
-          Organization: values.Organization || '',
+          ProjectTypeGroup: values.ProjectTypeGroup || [],
+          ProjectType: values.ProjectType || [],
+          Team: values.Team || [],
+          Resource: values.Resource || [],
+          AllocationManager: values.AllocationManager || [],
+          ProjectManager: values.ProjectManager || [],
+          Project: values.Project || [],
+          Portfolio: values.Portfolio || [],
+          Organization: values.Organization || [],
         };
         dispatch(setAdvancedFilters(filterValues));
         dispatch(closeDialog());
