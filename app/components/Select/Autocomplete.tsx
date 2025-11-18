@@ -163,7 +163,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
               height: multiple ? 'auto' : '34px',
               fontSize: '12px',
               padding: multiple ? '2px 8px' : '0',
-              alignItems: 'flex-start',
+              alignItems: 'center',
             },
             '& input': {
               padding: '8px !important',

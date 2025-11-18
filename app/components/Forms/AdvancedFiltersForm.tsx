@@ -1,17 +1,15 @@
 'use client';
 
-import { Box, TextField } from '@mui/material';
+import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
-import { Location, LocationGroup } from '@/app/types';
 import { FormikProps } from 'formik';
-import { StyledInput } from '../Input/StyledInput';
 import { RootState, AppDispatch } from '@/app/redux/store';
-import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { CrudPermissions } from '../HOC/withRBAC';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { ProjectTypeGroup } from '@/app/types';
-import { FETCH_PROJECT_TYPE_GROUPS, FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
