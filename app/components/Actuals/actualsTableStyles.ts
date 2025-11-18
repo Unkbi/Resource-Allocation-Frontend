@@ -15,6 +15,9 @@ export const actualsTableStyles = {
   '.col-cell-actuals, .col-cell-planned': {
     padding: 0,
   },
+  '.col-cell-actuals .MuiInputBase-input': {
+    marginLeft: '6.5px',
+  },
   '.error-cell': {
     border: '1px solid #D24546 !important',
     borderRight: '0.5px solid #D24546 !important',
@@ -90,6 +93,12 @@ export const actualsTableStyles = {
   },
   '.disabled-cell': {
     backgroundColor: '#F8F9FA',
+  },
+  '.disabled-cell-dark': {
+    backgroundColor: '#E0E0E0',
+  },
+  '.col-cell-comments': {
+    padding: 0.1,
   },
   /* You can adjust the color and thickness as needed */
   '.section-end-planned .MuiDataGrid-cell, .section-end-unplanned .MuiDataGrid-cell, .section-end-other .MuiDataGrid-cell':

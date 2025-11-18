@@ -27,7 +27,6 @@ import { AppDispatch } from '@/app/redux/store';
 import type { RootState } from '@/app/redux/store';
 import ProjectMenu from './ProjectMenu';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
-import { showToastAction } from '@/app/redux/actions/toastAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ActualAllocationTableRow } from '@/app/types';
@@ -35,6 +34,7 @@ import { isCurrentWeek } from '@/app/utils/common';
 //@ts-ignore
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
+import ProjectActualsStatusCell from './ProjectActualsStatusCell';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -78,6 +78,14 @@ const roundToOneDecimal = (num: number) => {
 interface ActualTableProps {
   data: ActualAllocationTableRow[];
   dataProcessing: boolean;
+  rows: ActualAllocationTableRow[];
+  setRows: React.Dispatch<React.SetStateAction<ActualAllocationTableRow[]>>;
+  rowValidationErrors: Record<string, { actuals: boolean; comments: boolean }>;
+  setRowValidationErrors: React.Dispatch<
+    React.SetStateAction<
+      Record<string, { actuals: boolean; comments: boolean }>
+    >
+  >;
   startDate: string | null;
   endDate: string | null;
   apiRef: React.RefObject<GridApi>;
@@ -86,11 +94,19 @@ interface ActualTableProps {
   setShow?: (val: boolean) => void;
   onModificationChange?: (isModified: boolean) => void;
   confirmSignal?: number;
+  handleProcessRowUpdate: (
+    newRow: GridValidRowModel,
+    oldRow: GridValidRowModel
+  ) => GridValidRowModel;
 }
 
 export default function ActualTable({
   data,
   dataProcessing,
+  rows,
+  setRows,
+  rowValidationErrors,
+  setRowValidationErrors,
   startDate,
   endDate,
   apiRef,
@@ -99,8 +115,8 @@ export default function ActualTable({
   onValidationChange,
   onModificationChange,
   confirmSignal,
+  handleProcessRowUpdate,
 }: ActualTableProps) {
-  const [rows, setRows] = useState(data || []);
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -111,7 +127,6 @@ export default function ActualTable({
     (state: RootState) => state.settings.allocationTheme
   );
   const { status } = useSelector((state: RootState) => state.actualAllocations);
-  const { scalarSettings } = useSelector((state: RootState) => state.allSettings);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -129,13 +144,8 @@ export default function ActualTable({
 
   const [hasOtherWork, setHasOtherWork] = useState(false);
   const [hasPersonalTime, setHasPersonalTime] = useState(false);
-  const [rowValidationErrors, setRowValidationErrors] = useState<
-    Record<string, { actuals: boolean; comments: boolean }>
-  >({});
   const [baselineRows, setBaselineRows] =
     useState<ActualAllocationTableRow[]>(data);
-  let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
-  let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
@@ -232,103 +242,6 @@ export default function ActualTable({
     return organizedRows;
   };
 
-  const handleProcessRowUpdate = (
-    newRow: GridValidRowModel,
-    oldRow: GridValidRowModel
-  ) => {
-    if (newRow.id === 'total' || newRow.id === 'second-total') {
-      return oldRow;
-    }
-    const actualsChanged = newRow.actuals !== oldRow.actuals;
-    let newActual = parseFloat(newRow.actuals) || 0;
-    if (actualsChanged) {
-      newActual = Math.round(newActual * 10) / 10;
-      const updatedTotal = rows.reduce((sum, row) => {
-        if (row.id === newRow.id) {
-          return sum + newActual;
-        }
-        if (row.id !== 'total' && row.id !== 'second-total') {
-          return (
-            Math.round(
-              (sum +
-                (row?.actuals ? parseFloat(row?.actuals?.toFixed(1)) : 0)) *
-                10
-            ) / 10
-          );
-        }
-        return sum;
-      }, 0);
-
-      if (updatedTotal > Number(max_allocation_error)) {
-        dispatch(
-          showToastAction(
-            true,
-            `Total of Actuals cannot exceed ${max_allocation_error} (Current sum: ${updatedTotal.toFixed(1)})`,
-            'error'
-          )
-        );
-        return oldRow;
-      } else if (updatedTotal >= Number(max_allocation_warning)) {
-        dispatch(
-          showToastAction(
-            true,
-            `Warning: Total actuals is approaching the maximum of ${max_allocation_warning}. Current sum: ${updatedTotal.toFixed(1)}`,
-            'warning'
-          )
-        );
-      }
-    }
-
-    setRows(prev => {
-      const existingRow = prev.find(r => r.id === newRow.id);
-      if (JSON.stringify(existingRow) === JSON.stringify(newRow)) return prev;
-      return prev.map(row =>
-        row.id === newRow.id
-          ? {
-              ...row,
-              ...newRow,
-              actuals: actualsChanged ? newActual : row.actuals,
-            }
-          : row
-      );
-    });
-
-    // Validation logic for comments
-    const isUnplannedProject =
-      newRow.planned === 0 &&
-      newRow.project !== 'Other Work' &&
-      newRow.project !== 'Personal Time';
-
-    const actualsInvalid =
-      (isUnplannedProject ||
-        newRow.project === 'Other Work' ||
-        newRow.project === 'Personal Time') &&
-      (!newRow.actuals || newRow.actuals === 0);
-    const commentsInvalid =
-      (isUnplannedProject ||
-        newRow.project === 'Other Work' ||
-        newRow.project === 'Personal Time') &&
-      (!newRow.comments || !newRow.comments.trim());
-    setRowValidationErrors(prev => {
-      const updated = { ...prev };
-
-      if (actualsInvalid || commentsInvalid) {
-        // Only update if there are errors
-        updated[newRow.id] = {
-          actuals: actualsInvalid,
-          comments: commentsInvalid,
-        };
-      } else {
-        // Remove the row from validation errors if both fields are valid
-        delete updated[newRow.id];
-      }
-
-      return updated;
-    });
-
-    return { ...newRow, actuals: actualsChanged ? newActual : newRow.actuals };
-  };
-
   const handleCellKeyDown = (
     params: GridCellParams,
     event: React.KeyboardEvent
@@ -398,7 +311,8 @@ export default function ActualTable({
       flex: 1,
       minWidth: 200,
       headerClassName: 'header-project',
-      cellClassName: 'col-cell-project',
+      cellClassName: params =>
+        params.id === 'total' ? 'disabled-cell-dark' : 'col-cell-project',
       renderCell: params => {
         // Don't show menu for total, divider, and initial rows
         if (
@@ -475,26 +389,61 @@ export default function ActualTable({
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
-      field: 'comments',
-      headerName: 'Comments',
-      editable: !disableView,
-      flex: 1,
-      minWidth: 158,
+      field: 'projectActualsStatus',
+      headerName: 'Status',
+      editable: false,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       headerClassName: 'header-comments',
       cellClassName: params =>
-        `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
-          params.row.planned === 0 &&
-          rowValidationErrors[params.id as string]?.comments &&
-          (!params.row.comments || !params.row.comments.trim())
-            ? 'comment-error-cell'
-            : ''
-        }`,
+        params.id === 'total'
+          ? 'disabled-cell-dark'
+          : disableView
+            ? 'disabled-cell'
+            : '',
+      renderCell: params => {
+        return params.id !== 'total' ? (
+          <ProjectActualsStatusCell
+            disabled={disableView}
+            row={params.row}
+            status={params.value ?? 'No Data'}
+            handleProcessRowUpdate={handleProcessRowUpdate}
+            setRowValidationErrors={setRowValidationErrors}
+          />
+        ) : (
+          <></>
+        );
+      },
+    },
+    {
+      field: 'comments',
+      headerName: 'Comments / Project updates',
+      editable: !disableView,
+      flex: 2,
+      minWidth: 200,
+      headerClassName: 'header-comments',
+      cellClassName: params =>
+        params.id === 'total'
+          ? 'disabled-cell-dark'
+          : `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
+              rowValidationErrors[params.id as string]?.comments &&
+              (!params.row.comments || !params.row.comments.trim())
+                ? 'comment-error-cell'
+                : ''
+            }`,
       renderEditCell: params => (
         <CommentCell
           {...params}
           showInitialError={rowValidationErrors[params.id as string]?.comments}
         />
       ),
+      renderCell: params =>
+        params.id === 'total' ? (
+          <Box sx={{ height: '100%', width: '100%' }} />
+        ) : (
+          <CommentCell {...params} readonly={true} disableView={disableView} />
+        ),
     },
   ];
 
@@ -548,7 +497,7 @@ export default function ActualTable({
   };
 
   const addNewRow = (newRow: GridValidRowModel) => {
-    setRows(prevRows => {
+    setRows((prevRows: ActualAllocationTableRow[]) => {
       const updatedRows = [...prevRows];
 
       updatedRows.push(newRow as ActualAllocationTableRow);
@@ -658,7 +607,7 @@ export default function ActualTable({
   ];
   return (
     <>
-      <Box borderRadius={1} overflow="hidden" width={530}>
+      <Box borderRadius={1} overflow="hidden" width={700}>
         <Box
           display="flex"
           justifyContent="space-between"
@@ -683,6 +632,7 @@ export default function ActualTable({
 
         <Box sx={{ height: 350 }}>
           <DataGridPremium
+            rowHeight={60}
             apiRef={apiRef}
             rows={getOrganizedRows()}
             columns={columns}
@@ -749,8 +699,9 @@ export default function ActualTable({
         px={2}
         py={1}
         sx={{
-          paddingBottom: '0',
           paddingLeft: '0',
+          background: '#F9FAFB',
+          border: '1px solid #E5E7EB',
         }}
       >
         <Button
@@ -758,7 +709,7 @@ export default function ActualTable({
           size="small"
           disabled={disableView}
           sx={{
-            color: '#0D1F52',
+            color: '#2563EB',
             textTransform: 'none',
             fontWeight: 600,
             cursor: 'pointer',
