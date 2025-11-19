@@ -599,9 +599,9 @@ const AllocationForm = () => {
           initialData?.Name || ''
         );
       case 'add_user':
-        return addUserValidationSchema;
+        return addUserValidationSchema(allUsers, initialData?.Email || '');
       case 'edit_user':
-        return addUserValidationSchema;
+        return addUserValidationSchema(allUsers, initialData?.Email || '');
       case 'add_resource_to_user':
         return addResourceToUserValidationSchema;
       case 'edit_resource_to_user':
