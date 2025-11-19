@@ -1,4 +1,5 @@
 import { ProjectsTableRow } from './component';
+import { GridScrollParams } from '@mui/x-data-grid-premium';
 
 export interface Allocation {
   ProjectName: string | null;
@@ -106,6 +107,7 @@ export interface AllocationGridViewState {
   columns: AllColumns;
   expandRowId: any[]; // This has to be changed to a Specific type.
   cellSelectionData: any; // This has to be changed to a Specific type.
+  scrollPosition: GridScrollParams | null;
   currentView: AllocationGridView;
   savedViews: AllocationGridView[];
 }

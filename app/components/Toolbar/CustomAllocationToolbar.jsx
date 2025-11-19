@@ -77,6 +77,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
   setCurrentView,
   setExpandRowId,
+  setScrollPosition,
   setShowActuals,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
@@ -969,33 +970,49 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   };
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
 
+  
   const handleAllocationCostSwitch = () => {
+  
     const apiRef = getApiRef('teamAllocation');
+    const costRef = getApiRef('main');
     const isCost = currentView?.GroupBy.includes('Cost');
     const newGroupBy = isCost
       ? currentView?.GroupBy.replace(' Cost', '')
       : `${currentView?.GroupBy} Cost`;
-    
+    //cost view block
+    if (isCost) {
+      const scroll = costRef.getScrollPosition();
+      dispatch(setScrollPosition(scroll));
+      dispatch(performChangeView(newGroupBy));
+      return;
+    }
+
+    // Set Current Scroll Position.
+    dispatch(setScrollPosition(apiRef.getScrollPosition()));
     dispatch(performChangeView(newGroupBy));
 
     let exp = gridExpandedSortedRowIdsSelector({ current: apiRef });
 
-    const filteredExp = exp.filter(rowId => !rowId.startsWith('auto-generated-row-teams/'));
+    const filteredExp = exp.filter(
+      rowId => !rowId.startsWith('auto-generated-row-teams/')
+    );
     const expandedRowData = filteredExp.map(rowId => apiRef.getRowNode(rowId));
 
     const parentData = expandedRowData.map(row => {
       if (row && row.parent) {
         return apiRef.getRowNode(row.parent);
-      } 
+      }
       return null;
     });
 
-    const uniqueParentIds = [...new Set(parentData
-      .filter(parent => parent !== null)
-      .map(parent => parent.id))];
-    
+    const uniqueParentIds = [
+      ...new Set(
+        parentData.filter(parent => parent !== null).map(parent => parent.id)
+      ),
+    ];
+
     const uniqueParentIdsArr = Array.from(uniqueParentIds);
-    
+
     dispatch(setExpandRowId(uniqueParentIdsArr));
   };
 

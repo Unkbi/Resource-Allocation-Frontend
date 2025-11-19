@@ -51,6 +51,7 @@ import ToolbarMod from '../Toolbar/ToolbarMod';
 import {
   setExpandRowId,
   updateCurrentView,
+  setScrollPosition,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
@@ -112,11 +113,14 @@ function AllocationGrid({
   const {
     expandRowId,
     cellSelectionData,
+    scrollPosition,
     view,
     savedViews,
     currentView,
     columns: _columns,
   } = useSelector(state => state.allocationView);
+
+  console.log(viewId , "viewid")
 
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
@@ -395,6 +399,20 @@ useEffect(() => {
     setExpandRowId(null);
     return () => clearTimeout(timeoutId);
   }, [apiRef, cellSelectionData]);
+
+  useEffect(() => {
+      if (
+        apiRef &&
+        apiRef.current.getAllRowIds().length &&
+        scrollPosition &&
+        !loading
+      ) {
+        setTimeout(() => {
+          apiRef.current.scroll(scrollPosition);
+          dispatch(setScrollPosition(null));
+        }, 0);
+      }
+    }, [apiRef, scrollPosition, loading]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
