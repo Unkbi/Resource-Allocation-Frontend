@@ -753,6 +753,9 @@ export function isCellEditableUtils(params, type, resources) {
   );
   if (!matchingResource) return false;
 
+  // If not StartDate then allow to edit no checks
+  if (!matchingResource.StartDate) return true;
+
   const resourceStart = parseISO(matchingResource.StartDate);
   const resourceEnd = matchingResource.EndDate
     ? parseISO(matchingResource.EndDate)
