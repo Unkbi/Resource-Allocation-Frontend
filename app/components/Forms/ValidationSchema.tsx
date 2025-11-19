@@ -692,7 +692,10 @@ export const addUserValidationSchema = (
           if (currentEmail && trimmedValue === trimmedCurrent) {
             return true; // Allow same email when editing
           }
-          return !allUsers.some((user: any) => user.Email?.toLowerCase().trim() === trimmedValue);
+          return !allUsers.some((user: any) => {
+            const userEmail = (user.email || user.Email || '').toLowerCase().trim();
+            return userEmail === trimmedValue;
+          });
         }
       ),
     Role: Yup.string().required('Role is required'),

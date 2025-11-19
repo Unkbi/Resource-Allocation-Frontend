@@ -29,6 +29,7 @@ const AddUserForm = ({
     setTouched,
     resetForm,
     errors,
+    validateField,
   } = formikProps;
   const dispatch = useDispatch<any>();
   const { initialData, formType } = useSelector(
@@ -70,7 +71,7 @@ const AddUserForm = ({
 
   const handleNavigate = () => {
   dispatch(closeDialog()); // Close the dialog first
-  router.replace("/settings?menu=access-management&tab=role-assignments");
+  window.open("/settings?menu=access-management&tab=role-assignments", "_blank");
 };
 
   useEffect(() => {
@@ -126,10 +127,16 @@ const AddUserForm = ({
           placeholder="Enter Email"
           value={values?.Email || ''}
           onChange={(e: any) => {
+            const newValue = e.target.value;
+            setFieldValue('Email', newValue);
             handleChange(e);
-            setFieldValue('Email', e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={(e: any) => {
+            handleBlur(e);
+            setTimeout(() => {
+              validateField('Email');
+            }, 0);
+          }}
           error={touched?.Email && Boolean(errors?.Email)}
           helperText={touched?.Email && errors?.Email}
         />

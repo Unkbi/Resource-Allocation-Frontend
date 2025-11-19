@@ -39,7 +39,7 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: 4,
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
-    width: '120px',
+    width: '125px',
   },
 }));
 
@@ -690,20 +690,6 @@ export default function UserManagementPage() {
     },
   ];
 
-  // Sort users data alphabetically by Name
-  const sortedUsersData = useMemo(() => {
-    return [...UsersData].sort((a, b) => 
-      (a.Name || '').localeCompare(b.Name || '', undefined, { sensitivity: 'base' })
-    );
-  }, [UsersData]);
-
-  // Sort resources data alphabetically by Name
-  const sortedResourcesData = useMemo(() => {
-    return [...ResourcesData].sort((a, b) => 
-      (a.Name || '').localeCompare(b.Name || '', undefined, { sensitivity: 'base' })
-    );
-  }, [ResourcesData]);
-
   const ResourcesColumns = [
     {
       field: 'Name',
@@ -767,7 +753,7 @@ export default function UserManagementPage() {
                 setAnchorEl(e.currentTarget);
                 setMenuUserId(params.row.Name);
               }}
-              disabled={isThisRowSelected}
+              disabled={isThisRowSelected || params.row.resourceStatus === 'Inactive'}
               sx={{
                 color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
               }}
@@ -860,8 +846,9 @@ export default function UserManagementPage() {
 
   const renderResourcesMenu = (id: string, row: any) => {
     const status = row.userStatus;
+    const resStatus = row.resourceStatus;
     // const enableAddUser = status === 'Not Created';
-    const enableSendInvite = status === 'Not Created';
+    const enableSendInvite = status === 'Not Created' && resStatus === 'Active';
     const enableResendInvite = status === 'Invited';
     const enableDeactivate = ['Invited', 'Active'].includes(status);
     const enableReactivate = status === 'Inactive';
@@ -951,7 +938,7 @@ export default function UserManagementPage() {
       {tab === 'users' && (
         <AccessTable
           title="Users"
-          data={sortedUsersData}
+          data={UsersData}
           checkboxSelection={true}
           onAdd={handleAddNewUsers}
           onEdit={handleEditUser}
@@ -977,7 +964,7 @@ export default function UserManagementPage() {
       {tab === 'resources' && (
         <AccessTable
           title="Resources"
-          data={sortedResourcesData}
+          data={ResourcesData}
           checkboxSelection={true}
           onAdd={handleAddNewResources}
           onEdit={handleEditResources}
