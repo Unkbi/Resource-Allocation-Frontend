@@ -672,14 +672,32 @@ export const addLocationGroupValidationSchema = (
   });
 };
 
-export const addUserValidationSchema = Yup.object({
-  FirstName: Yup.string().required('First Name is required'),
-  LastName: Yup.string().required('Last Name is required'),
-  Email: Yup.string()
-    .required('Email is required')
-    .matches(emailRegex, 'Enter a valid email address'),
-  Role: Yup.string().required('Role is required'),
-});
+export const addUserValidationSchema = (
+  allUsers: any[] = [],
+  currentEmail = ''
+) => {
+  return Yup.object({
+    FirstName: Yup.string().required('First Name is required'),
+    LastName: Yup.string().required('Last Name is required'),
+    Email: Yup.string()
+      .required('Email is required')
+      .matches(emailRegex, 'Enter a valid email address')
+      .test(
+        'unique-email',
+        'Email already exists. Please choose another email.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedCurrent = currentEmail.toLowerCase().trim();
+          if (currentEmail && trimmedValue === trimmedCurrent) {
+            return true; // Allow same email when editing
+          }
+          return !allUsers.some((user: any) => user.Email?.toLowerCase().trim() === trimmedValue);
+        }
+      ),
+    Role: Yup.string().required('Role is required'),
+  });
+};
 
 export const addResourceToUserValidationSchema = Yup.object({
   Resources: Yup.array()
