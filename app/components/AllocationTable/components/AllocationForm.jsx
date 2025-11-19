@@ -1090,7 +1090,7 @@ const AllocationForm = () => {
           const result = await dispatch(
             createResourceWithTeamAndOrg({
               resourceData: postData,
-              teamId: values.Team,
+              teamId: values.Team ? values.Team : null,
               organizationId: values.Organisation,
             })
           );
