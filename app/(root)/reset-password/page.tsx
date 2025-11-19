@@ -9,7 +9,6 @@ import {
   Typography,
   TextField,
   Button,
-  Link,
   CircularProgress,
   styled,
   InputAdornment,
@@ -24,31 +23,30 @@ const MainBox = styled(Box)(({ theme }) => ({
     width: '45%',
     backgroundImage: 'linear-gradient(180deg, #FFFDF9 0%, #FFFAEF 100%);',
     textAlign: 'left',
-    padding: '30px 90px',
+    padding: '15px 90px',
     '& img': {
       maxWidth: '100%',
     },
   },
   '& .loginRight': {
-    width: '55%',
+    width: '45%',
     display: 'flex',
     alignItems: 'center',
     backgroundColor: '#fff',
     '& .formBox': {
-      width: '360px',
+      width: '472px',
       margin: '0 auto',
       '& h4': {
         fontFamily: theme.typography.fontFamily,
         color: '#000',
         fontSize: '32px',
         fontWeight: '800',
-        marginBottom: '4px',
+        // marginBottom: '4px',
       },
       '& .subHeadingText': {
-        color: '#757575',
-        fontSize: '15px',
+        // color: '#757575',
+        fontSize: '14px',
         fontWeight: '400',
-        marginBottom: '20px',
         fontFamily: theme.typography.fontFamily,
       },
     },
@@ -143,7 +141,7 @@ const MainBox = styled(Box)(({ theme }) => ({
     },
     '& .textField': {
       width: '100%',
-      marginBottom: '22px',
+      marginBottom: '14px',
       '& .MuiOutlinedInput-input': {
         height: '46px',
         lineHeight: '40px',
@@ -275,15 +273,15 @@ function RestPasswordPage() {
         {/* Right Section */}
         <Box className="loginRight">
           <Box className="formBox">
-            <Typography variant="h4">Reset Password</Typography>
-            <Typography className="subHeadingText" whiteSpace={'nowrap'}>
+            <Typography variant="h4" fontSize={'32px'} fontWeight={800} mb={0.2}>Reset Password</Typography>
+            <Typography mb={1.5} className="subHeadingText" whiteSpace={'nowrap'}>
               Your new password must be different from previous one
             </Typography>
             <Box component="form" onSubmit={handleResetPassword}>
               <TextField
                 className="textField"
                 variant="outlined"
-                placeholder="New Password"
+                placeholder="Enter New Password"
                 type={showNewPassword ? 'text' : 'password'}
                 fullWidth
                 value={newPassword}
@@ -334,7 +332,7 @@ function RestPasswordPage() {
               <TextField
                 className="textField"
                 variant="outlined"
-                placeholder="Confirm Password"
+                placeholder="Enter Confirm Password"
                 type={showConfirmPassword ? 'text' : 'password'}
                 fullWidth
                 value={confirmPassword}
