@@ -310,8 +310,8 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
             <img
                 src={
                   sidebarExpanded
-                    ? '/images/icons/cio-expanded-logo.svg'
-                    : '/images/icons/sidebar-left.svg'
+                    ? '/images/icons/sidebar-expand.svg'
+                    : '/images/icons/sidebar-collapse.svg'
                 }
               className="expand-img"
               alt="Toogle"
