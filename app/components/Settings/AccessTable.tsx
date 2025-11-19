@@ -574,7 +574,7 @@ export default function AccessTable({
                       minWidth: 'unset',
                       width: '41px',
                       height: '36px',
-                      padding: '20px 10px 20px 17px',
+                      padding: '20px 10px 20px 10px',
                       justifyContent: 'center',
                       alignItems: 'center',
                       gap: '6px',
