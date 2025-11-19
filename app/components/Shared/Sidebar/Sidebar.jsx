@@ -272,36 +272,57 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
               display: sidebarExpanded ? 'flex' : 'none',
             }}
           />
-
-          <Button
-            onClick={toggleSidebar}
-            disableRipple
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.3s ease-in-out, gap 0.3s ease-in-out',
-              transform: `translateY(${sidebarExpanded ? '0' : '4px'})`,
-              justifyContent: sidebarExpanded ? 'flex-start' : 'center',
-              width: '100%',
-              marginBottom: '10px',
-              marginLeft: sidebarExpanded ? '3px' : '',
-              padding: '0px',
-              background: 'transparent',
-              boxShadow: 'none',
-              minWidth: '0px',
+          <Tooltip
+            title={sidebarExpanded ? '' : 'Expand'}
+            placement="right"
+            arrow
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, 30], 
+                    },
+                  },
+                ],
+              },
             }}
           >
-            <img
-              src={'/images/icons/sidebar-left.svg'}
-              className="expand-img"
-              alt=""
-              style={{
-                marginRight: sidebarExpanded ? '10px' : '0',
-                // transition: 'margin 0.7s ease-in-out',
+            <Button
+              onClick={toggleSidebar}
+              disableRipple
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'all 0.3s ease-in-out, gap 0.3s ease-in-out',
+                transform: `translateY(${sidebarExpanded ? '0' : '4px'})`,
+                justifyContent: sidebarExpanded ? 'flex-start' : 'center',
+                width: '100%',
+                marginBottom: '10px',
+                marginLeft: sidebarExpanded ? '3px' : '',
                 padding: '0px',
+                background: 'transparent',
+                boxShadow: 'none',
+                minWidth: '0px',
               }}
-            />
-          </Button>
+            >
+              <img
+                src={
+                  sidebarExpanded
+                    ? '/images/icons/cio-expanded-logo.svg'
+                    : '/images/icons/sidebar-left.svg'
+                }
+                className="expand-img"
+                alt=""
+                style={{
+                  marginRight: sidebarExpanded ? '10px' : '0',
+                  // transition: 'margin 0.7s ease-in-out',
+                  padding: '0px',
+                }}
+              />
+            </Button>
+          </Tooltip>
         </Box>
         <img src="/images/icons/line1-expand.svg" />
       </Box>
@@ -314,28 +335,28 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
                 .filter(m => hasAnyAccess[m.text])
                 .map((item, index) => {
                   const menuContent = (
-                  <MenuItem
-                    className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
-                    key={index}
-                    onClick={() => handleMenuClick(item.url, item.disabled)}
-                    sx={{
-                      opacity: item.disabled ? 0.5 : 1,
-                      cursor: item.disabled ? 'not-allowed' : 'pointer',
-                      margin: '8px',
-                      color: '#95979E',
-                    }}
-                  >
-                    <img
-                      src={item.icon}
-                      alt={item.text}
-                      sx={{ width: '16px', height: '16px' }}
-                    />
-                    {sidebarExpanded && (
-                      <Typography sx={{ marginLeft: '10px' }}>
-                        {item.text}
-                      </Typography>
-                    )}
-                  </MenuItem>
+                    <MenuItem
+                      className={`menuList ${selectedMenu === item.url ? 'active' : ''}`}
+                      key={index}
+                      onClick={() => handleMenuClick(item.url, item.disabled)}
+                      sx={{
+                        opacity: item.disabled ? 0.5 : 1,
+                        cursor: item.disabled ? 'not-allowed' : 'pointer',
+                        margin: '8px',
+                        color: '#95979E',
+                      }}
+                    >
+                      <img
+                        src={item.icon}
+                        alt={item.text}
+                        sx={{ width: '16px', height: '16px' }}
+                      />
+                      {sidebarExpanded && (
+                        <Typography sx={{ marginLeft: '10px' }}>
+                          {item.text}
+                        </Typography>
+                      )}
+                    </MenuItem>
                   );
                   return sidebarExpanded ? (
                     menuContent
@@ -382,45 +403,45 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
           >
             <Box className="profile-section">
               {sidebarExpanded ? (
-              <Box
-                onClick={handleToggle}
-                ref={anchorRef}
-                id="composition-button"
-                aria-controls={open ? 'composition-menu' : undefined}
-                sx={{
-                  cursor: 'pointer',
-                  marginBottom: '9px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: sidebarExpanded ? '15px' : '0',
-                  marginLeft: sidebarExpanded ? '10px' : '17px',
-                  width: sidebarExpanded ? '250px' : '',
-                  height: sidebarExpanded ? '52px' : '',
-                  borderRadius: '8px',
-                  '&:hover': {
-                    background: '#0D1F52',
-                  },
-                  '&.active': {
-                    background: '#0D1F52',
-                  },
-                }}
-                className={selectedMenu === '/profile' ? 'active' : ''}
-              >
-                {/* <img src={"/images/icons/profile.svg"} className="profle-img" alt='' /> */}
-                <CustomAvatar
-                  value={
-                    user && firstName && lastName
-                      ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
-                      : ''
-                  }
-                  showFullName={false}
-                  avatarSx={{
-                    width: '40px',
-                    height: '40px',
-                    fontSize: '16px',
-                    fontWeight: 500,
+                <Box
+                  onClick={handleToggle}
+                  ref={anchorRef}
+                  id="composition-button"
+                  aria-controls={open ? 'composition-menu' : undefined}
+                  sx={{
+                    cursor: 'pointer',
+                    marginBottom: '9px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: sidebarExpanded ? '15px' : '0',
+                    marginLeft: sidebarExpanded ? '10px' : '17px',
+                    width: sidebarExpanded ? '250px' : '',
+                    height: sidebarExpanded ? '52px' : '',
+                    borderRadius: '8px',
+                    '&:hover': {
+                      background: '#0D1F52',
+                    },
+                    '&.active': {
+                      background: '#0D1F52',
+                    },
                   }}
-                />
+                  className={selectedMenu === '/profile' ? 'active' : ''}
+                >
+                  {/* <img src={"/images/icons/profile.svg"} className="profle-img" alt='' /> */}
+                  <CustomAvatar
+                    value={
+                      user && firstName && lastName
+                        ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
+                        : ''
+                    }
+                    showFullName={false}
+                    avatarSx={{
+                      width: '40px',
+                      height: '40px',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                    }}
+                  />
                   <Box
                     sx={{
                       display: 'flex',
@@ -429,80 +450,80 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
                       gap: '30px',
                     }}
                   >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          overflow: 'hidden',
+                          width: '160px',
+                        }}
+                      >
                         <Box
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            width: '100%',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            color: '#95979E',
+                            padding: '2px 0',
+                            textAlign: 'left',
+                            whiteSpace: 'nowrap',
                             overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            width: '100%',
                           }}
                         >
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              overflow: 'hidden',
-                              width: '160px',
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                fontSize: '14px',
-                                fontWeight: 500,
-                                color: '#95979E',
-                                padding: '2px 0',
-                                textAlign: 'left',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                width: '100%',
-                              }}
-                            >
-                              <EllipsisNameCell
-                                value={
-                                  user && firstName && lastName
-                                    ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
-                                    : ''
-                                }
-                              />
-                            </Box>
-                            <Box
-                              sx={{
-                                fontSize: '14px',
-                                fontWeight: 500,
-                                color: '#95979E',
-                                padding: '2px 0',
-                                textAlign: 'left',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                width: '100%',
-                              }}
-                            >
-                              <EllipsisNameCell value={email || ''} />
-                            </Box>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <img
-                              src={
-                                open
-                                  ? '/images/icons/iconUp.svg'
-                                  : '/images/icons/icon.svg'
-                              }
-                              className="down-img"
-                              alt="Toggle"
-                            />
-                          </Box>
+                          <EllipsisNameCell
+                            value={
+                              user && firstName && lastName
+                                ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} ${lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase()}`
+                                : ''
+                            }
+                          />
                         </Box>
-                   </Box>
+                        <Box
+                          sx={{
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            color: '#95979E',
+                            padding: '2px 0',
+                            textAlign: 'left',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            width: '100%',
+                          }}
+                        >
+                          <EllipsisNameCell value={email || ''} />
+                        </Box>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <img
+                          src={
+                            open
+                              ? '/images/icons/iconUp.svg'
+                              : '/images/icons/icon.svg'
+                          }
+                          className="down-img"
+                          alt="Toggle"
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
                 </Box>
               ) : (
                 <Tooltip
@@ -553,7 +574,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
                     />
                   </Box>
                 </Tooltip>
-                )}
+              )}
 
               <Popper
                 open={open}
