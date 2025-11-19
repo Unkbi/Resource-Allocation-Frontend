@@ -632,6 +632,7 @@ function PortfolioAllocation({
                   field: '__row_group_by_columns_group_portfolioName__',
                   sort: 'asc',
                 },
+                { field :'resource' ,sort :'asc'}
               ],
             },
           }}

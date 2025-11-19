@@ -15,7 +15,7 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { normalizeRow } from '@/app/utils/allocationUtils';
+import { normalizeRow, sortAllAllocations } from '@/app/utils/allocationUtils';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
@@ -71,7 +71,7 @@ const TeamsCost = ({
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['AllocationCost'].r && ready && teamsCost) {
-      const filteredResources = removeResourcesWithNoTeams(teamsCost || []);
+      const filteredResources =sortAllAllocations(removeResourcesWithNoTeams(teamsCost || []))
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
         totalEffort: calculateTotalEffort(normalizeRow(allocation)),
@@ -81,7 +81,7 @@ const TeamsCost = ({
           _resources || []
         )?.FullName,
       }));
-      setRows(formattedResources);
+      setRows((formattedResources));
     }
   }, [ready, teamsCost, loadingPermissions]);
 
@@ -541,7 +541,26 @@ const TeamsCost = ({
   ];
 
   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
-    return allocations.filter(allocation => allocation.teams);
+    return allocations.filter(allocation => allocation.teams &&
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.EndDate
+          ? new Date(
+              (_resources as Resource[])?.find(
+                res => res.Id === allocation.resourceId
+              )?.EndDate
+            ) >= new Date(startDate)
+          : true) &&
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.StartDate
+          ? new Date(
+              (_resources as Resource[])?.find(
+                res => res.Id === allocation.resourceId
+              )?.StartDate
+            ) <= new Date(endDate)
+          : true)
+    );
   };
   return (
     <>

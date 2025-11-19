@@ -320,35 +320,32 @@ function AllocationGrid({
     setRowsForView(viewId, new_row_state);
   }, [apiRef.current, groupBy, teams]);
 
-  useEffect(() => {
+useEffect(() => {
+  if (
+    !expandRowId?.length ||
+    !(
+      groupBy === 'teams' ||
+      groupBy === 'organisationName' ||
+      groupBy === 'portfolioName'
+    )
+  ) {
+    return;
+  }
+  // Expand rows after grid renders new data
+  const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
     try {
-      if (
-        (groupBy === 'teams' ||
-          groupBy === 'organisationName' ||
-          groupBy === 'portfolioName') &&
-        expandRowId?.length
-      ) {
-        expandRowId.forEach(rowId => {
-          const row = apiRef.current.getRow(rowId);
-          if (row) {
-            setTimeout(() => {
-              apiRef.current.setRowChildrenExpansion(rowId, true);
-            }, 50);
-          } else {
-            // Row not ready yet, retry after small delay
-            setTimeout(() => {
-              const delayedRow = apiRef.current.getRow(rowId);
-              if (delayedRow) {
-                apiRef.current.setRowChildrenExpansion(rowId, true);
-              }
-            }, 50);
-          }
-        });
-      }
-    } catch (error) {
-      console.warn('Error in setting row expansion', error);
+      expandRowId.forEach(rowId => {
+        const row = apiRef.current.getRow(rowId);
+        if (row) {
+          apiRef.current.setRowChildrenExpansion(rowId, true);
+        }
+      });
+    } catch (err) {
+      console.warn('Error expanding rows:', err);
     }
-  }, [expandRowId, groupBy, apiRef]);
+  });
+  return () => unsubscribe();
+}, [expandRowId, groupBy]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
