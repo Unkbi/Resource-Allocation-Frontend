@@ -120,8 +120,6 @@ function AllocationGrid({
     columns: _columns,
   } = useSelector(state => state.allocationView);
 
-  console.log(viewId , "viewid")
-
   const dispatch = useDispatch();
   const { teams, teamsResources, teamAllocations } = useSelector(
     state => state.teams
@@ -324,32 +322,32 @@ function AllocationGrid({
     setRowsForView(viewId, new_row_state);
   }, [apiRef.current, groupBy, teams]);
 
-useEffect(() => {
-  if (
-    !expandRowId?.length ||
-    !(
-      groupBy === 'teams' ||
-      groupBy === 'organisationName' ||
-      groupBy === 'portfolioName'
-    )
-  ) {
-    return;
-  }
-  // Expand rows after grid renders new data
-  const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
-    try {
-      expandRowId.forEach(rowId => {
-        const row = apiRef.current.getRow(rowId);
-        if (row) {
-          apiRef.current.setRowChildrenExpansion(rowId, true);
-        }
-      });
-    } catch (err) {
-      console.warn('Error expanding rows:', err);
+  useEffect(() => {
+    if (
+      !expandRowId?.length ||
+      !(
+        groupBy === 'teams' ||
+        groupBy === 'organisationName' ||
+        groupBy === 'portfolioName'
+      )
+    ) {
+      return;
     }
-  });
-  return () => unsubscribe();
-}, [expandRowId, groupBy]);
+    // Expand rows after grid renders new data
+    const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
+      try {
+        expandRowId.forEach(rowId => {
+          const row = apiRef.current.getRow(rowId);
+          if (row) {
+            apiRef.current.setRowChildrenExpansion(rowId, true);
+          }
+        });
+      } catch (err) {
+        console.warn('Error expanding rows:', err);
+      }
+    });
+    return () => unsubscribe();
+  }, [expandRowId, groupBy]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -401,18 +399,21 @@ useEffect(() => {
   }, [apiRef, cellSelectionData]);
 
   useEffect(() => {
-      if (
-        apiRef &&
-        apiRef.current.getAllRowIds().length &&
-        scrollPosition &&
-        !loading
-      ) {
-        setTimeout(() => {
-          apiRef.current.scroll(scrollPosition);
-          dispatch(setScrollPosition(null));
-        }, 0);
-      }
-    }, [apiRef, scrollPosition, loading]);
+    if (apiRef && !loadingPermissions && scrollPosition && !loading) {
+      // Expand rows after grid renders new data
+      const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
+        try {
+          setTimeout(() => {
+            apiRef.current.scroll(scrollPosition);
+            dispatch(setScrollPosition(null));
+          }, 0);
+        } catch (err) {
+          console.warn('Error scrolling to position:', err);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [apiRef.current, scrollPosition, loading, loadingPermissions]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
