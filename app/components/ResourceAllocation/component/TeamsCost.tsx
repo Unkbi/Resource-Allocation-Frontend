@@ -71,7 +71,10 @@ const TeamsCost = ({
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['AllocationCost'].r && ready && teamsCost) {
-      const filteredResources =sortAllAllocations(removeResourcesWithNoTeams(teamsCost || []))
+      const filteredResources = sortAllAllocations(removeResourcesWithNoTeams(teamsCost || []))
+       .sort((a, b) =>
+         (a?.resource || "") < (b?.resource || "") ? -1 : 1
+       )
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
         totalEffort: calculateTotalEffort(normalizeRow(allocation)),
@@ -611,6 +614,11 @@ const TeamsCost = ({
                 projectStatus: false,
                 projectType: false,
               },
+            },
+             sorting: {
+              sortModel: [
+                { field :'__row_group_by_columns_group_teams__' ,sort :'asc' }
+              ],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}

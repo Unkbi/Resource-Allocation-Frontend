@@ -166,13 +166,6 @@ export function sortAllAllocations(allocations: AllAllocations[], by = 'team') {
   return allocations;
 }
 
-export const sortResources = (rows :any) => {
-  return [...rows].sort((a, b) => {
-    return (a.resource || "").localeCompare(b.resource || ""
-    );
-  });
-};
-
 export function formatAllAllocations(
   allocations: Allocation[],
   teams: Team[],

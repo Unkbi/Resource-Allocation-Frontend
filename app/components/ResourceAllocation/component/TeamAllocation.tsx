@@ -105,7 +105,10 @@ function TeamAllocation({
             )
           );
         } else if (allAllocations) {
-          filteredResources = sortAllAllocations(removeResourcesWithNoTeams(allAllocations || []))
+          filteredResources = (removeResourcesWithNoTeams(allAllocations || []))
+            .sort((a, b) =>
+              (a?.resource || "") < (b?.resource || "") ? -1 : 1
+            )
           dispatch(setLoading(false));
         }
 
@@ -640,7 +643,7 @@ function TeamAllocation({
             },
              sorting: {
               sortModel: [
-                { field :'__row_group_by_columns_group_resource__' ,sort :'asc' }
+                { field :'__row_group_by_columns_group_teams__' ,sort :'asc' }
               ],
             },
           }}

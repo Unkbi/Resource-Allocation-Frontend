@@ -473,8 +473,6 @@ export const getInitialState = (
   sorting: {
     sortModel: [
       { field: GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, sort: 'asc' },
-      { field: 'resource', sort: 'asc' },
-      { field: '__row_group_by_columns_group_resource__', sort: 'asc' },
     ],
   },
   pinnedColumns: {

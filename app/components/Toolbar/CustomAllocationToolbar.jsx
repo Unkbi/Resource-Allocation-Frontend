@@ -971,43 +971,50 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   };
   const { allResourcesDetail } = useSelector(state => state.allResourcesDetail);
 
-  const getScrollPositionOfAssociatedView = (isCost, groupBy) => {
-    // Handle All Views using a switch case.
-    // Ex : teamAllocation <-> teamCost
-    //      projectAllocation <-> projectCost
+  const viewRefMap = {
+    Teams: 'teamAllocation',
+    'Teams Cost': 'main', 
+    Project: 'projectAllocation',
+    'Project Cost': 'main',
+  };
+
+  const getRefForGroup = groupName => {
+    const refKey = viewRefMap[groupName];
+    if (!refKey) {
+      return null ;
+    }
+    return getApiRef(refKey);
+  };
+
+  const getScrollPositionOfAssociatedView = (currentGroupBy, newGroupBy) => {
+    const currentRef = getRefForGroup(currentGroupBy);
+    const scrollPosition = currentRef.getScrollPosition();
+    dispatch(setScrollPosition(scrollPosition));
+    dispatch(performChangeView(newGroupBy));
   };
 
   const handleAllocationCostSwitch = () => {
-    const teamAllocationRef = getApiRef('teamAllocation');
-    const projectAllocationRef = getApiRef('projectAllocation');
-    const costRef = getApiRef('main');
-    const isCost = currentView?.GroupBy.includes('Cost');
+    const currentGroupBy = currentView?.GroupBy; 
+ const isCost = currentView?.GroupBy.includes('Cost');
     const newGroupBy = isCost
       ? currentView?.GroupBy.replace(' Cost', '')
       : `${currentView?.GroupBy} Cost`;
-    //cost view block
-    // call getScrollPositionOfAssociatedView
-    if (isCost) {
-      // Set Current Scroll Position.
-      dispatch(setScrollPosition(costRef.getScrollPosition()));
-      dispatch(performChangeView(newGroupBy));
-    } else {
-      dispatch(setScrollPosition(allocationRef.getScrollPosition()));
-      dispatch(performChangeView(newGroupBy));
-    }
+    getScrollPositionOfAssociatedView(currentGroupBy, newGroupBy);
 
-    let exp = gridExpandedSortedRowIdsSelector({ current: allocationRef });
+    const teamAllocationRef = getApiRef('teamAllocation');
+
+    let exp = gridExpandedSortedRowIdsSelector({ current: teamAllocationRef });
 
     const filteredExp = exp.filter(
       rowId => !rowId.startsWith('auto-generated-row-teams/')
     );
     const expandedRowData = filteredExp.map(rowId =>
-      allocationRef.getRowNode(rowId)
+      teamAllocationRef.getRowNode(rowId)
     );
 
     const parentData = expandedRowData.map(row => {
       if (row && row.parent) {
-        return allocationRef.getRowNode(row.parent);
+        return teamAllocationRef.getRowNode(row.parent);
       }
       return null;
     });
