@@ -272,7 +272,23 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
               display: sidebarExpanded ? 'flex' : 'none',
             }}
           />
-
+           <Tooltip
+            title={sidebarExpanded ? '' : 'Expand'}
+            placement="right"
+            arrow
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, 30], 
+                    },
+                  },
+                ],
+              },
+            }}
+          >
           <Button
             onClick={toggleSidebar}
             disableRipple
@@ -292,16 +308,21 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
             }}
           >
             <img
-              src={'/images/icons/sidebar-left.svg'}
+                src={
+                  sidebarExpanded
+                    ? '/images/icons/sidebar-expand.svg'
+                    : '/images/icons/sidebar-collapse.svg'
+                }
               className="expand-img"
-              alt=""
+              alt="Toogle"
               style={{
                 marginRight: sidebarExpanded ? '10px' : '0',
                 // transition: 'margin 0.7s ease-in-out',
                 padding: '0px',
               }}
             />
-          </Button>
+            </Button>
+            </Tooltip>
         </Box>
         <img src="/images/icons/line1-expand.svg" />
       </Box>
