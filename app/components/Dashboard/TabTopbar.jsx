@@ -92,6 +92,7 @@ const Topbar = () => {
                 minWidth: '14px',
                 fontSize: '10px',
                 fontWeight: 600,
+                zIndex:'0'
               },
             }}
           >

@@ -71,7 +71,7 @@ const ResourceTable = ({
             columnVisibilityModel: {
               team: false,
               organization: false,
-              WorkLocation: false,
+              Manager: false,
               AverageWeeklyHours: false,
               ContractorHourlyRate: false,
               PhoneNumber: false,

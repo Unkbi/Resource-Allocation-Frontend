@@ -39,7 +39,7 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: 4,
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
-    width: '120px',
+    width: '125px',
   },
 }));
 
@@ -69,7 +69,6 @@ const commonCellStyle = {
   fontWeight: 400,
   lineHeight: '24px',
   fontFamily: 'Open Sans',
-  px: 1,
   py: 1.1,
   display: 'flex',
   alignItems: 'center',
@@ -526,7 +525,9 @@ export default function UserManagementPage() {
         };
         dispatch({
           type: RESEND_INVITATION,
-          userData: postData
+          payload:{
+            userData: postData
+          }
         });
       }));
       dispatch(
@@ -701,7 +702,7 @@ export default function UserManagementPage() {
     {
       field: 'email',
       headerName: 'Email ID',
-      flex: 1,
+      flex: 1.5,
       renderCell: (params: any) => (
         <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
       ),
@@ -718,6 +719,7 @@ export default function UserManagementPage() {
     {
       field: 'resourceStatus',
       headerName: 'Resource Status',
+      align:'center',
       flex: 1,
       renderCell: (params: any) => (
         <Typography sx={commonCellStyle}>{params.value}</Typography>
@@ -726,7 +728,7 @@ export default function UserManagementPage() {
     {
       field: 'userStatus',
       headerName: 'User Status',
-      flex: 1,
+      flex: 0.7,
       renderCell: (params: any) => (
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
@@ -735,6 +737,7 @@ export default function UserManagementPage() {
       field: 'actions',
       headerName: 'Actions',
       width: 100,
+      flex: 0.5,
       sortable: false,
       filterable: false,
       renderCell: (params: any) => {
@@ -750,7 +753,7 @@ export default function UserManagementPage() {
                 setAnchorEl(e.currentTarget);
                 setMenuUserId(params.row.Name);
               }}
-              disabled={isThisRowSelected}
+              disabled={isThisRowSelected || params.row.resourceStatus === 'Inactive'}
               sx={{
                 color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
               }}
@@ -843,8 +846,9 @@ export default function UserManagementPage() {
 
   const renderResourcesMenu = (id: string, row: any) => {
     const status = row.userStatus;
+    const resStatus = row.resourceStatus;
     // const enableAddUser = status === 'Not Created';
-    const enableSendInvite = status === 'Not Created';
+    const enableSendInvite = status === 'Not Created' && resStatus === 'Active';
     const enableResendInvite = status === 'Invited';
     const enableDeactivate = ['Invited', 'Active'].includes(status);
     const enableReactivate = status === 'Inactive';

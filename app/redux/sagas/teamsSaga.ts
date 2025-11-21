@@ -10,7 +10,13 @@ import {
   postTeamResource,
 } from '@/app/services/teamServices';
 import { setAllocations } from '../reducers/dataGridReducer';
-import { Allocation, AllocationGridCell, Resource, Team } from '@/app/types';
+import {
+  Allocation,
+  AllocationGridCell,
+  AllResourceDetail,
+  Resource,
+  Team,
+} from '@/app/types';
 import {
   getMonday,
   getMondayOfISO,
@@ -323,7 +329,7 @@ function* fetchResourcesAgainstTeamsSaga(
 }
 
 function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
-  const { teams } = action.payload;
+  const { teams, allResourcesDetail } = action.payload;
   try {
     yield put(setTeamsDataProcessing(true));
 
@@ -334,36 +340,25 @@ function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
     }
 
     const teamResults = yield all(
-      allTeams.map((team: any) =>
+      teams.map((team: any) =>
         call(function* () {
-          const resourcesPostData = {
-            'ResourceAllocation.Core/GetTeamResources': { TeamId: team.Id },
+          const resourcesResult = {
+            result: allResourcesDetail
+              .filter((r: AllResourceDetail) => r.Team?.Id === team?.Id)
+              .map((r: AllResourceDetail) => r.Resource),
           };
-          //@ts-ignore
-          const resourcesResult = yield call(
-            fetchResourcesAgainstTeamsForSaga,
-            resourcesPostData
-          );
 
           return { resourcesResult, team };
         })
       )
     );
 
-    let teamResourceObject: Record<string, Resource[]> = {};
     const formatedTeamResults = teamResults
       // @ts-ignore
       ?.map(teamResult => ({
         id: teamResult?.team?.Id,
         resource: teamResult?.resourcesResult?.result,
       }));
-
-    formatedTeamResults.forEach(
-      (payload: { id: string; resource: Resource[] }) => {
-        teamResourceObject = teamResourceObject || {};
-        teamResourceObject[payload.id] = payload.resource;
-      }
-    );
 
     if (teamResults) {
       yield put(setAllTeamsResources(formatedTeamResults));

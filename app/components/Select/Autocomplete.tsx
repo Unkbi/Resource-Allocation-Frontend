@@ -49,19 +49,28 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
 
   // Handle both single and multiple select
   const selectedOption = multiple
-    ? options?.filter(opt => Array.isArray(value) && value.includes(opt.value)) || []
+    ? options?.filter(
+        opt => Array.isArray(value) && value.includes(opt.value)
+      ) || []
     : options?.find(opt => opt.value === value) || null;
-  
-  const hasError = touched[name] && errors[name] && (multiple ? !value || (Array.isArray(value) && value.length === 0) : !value);
+
+  const hasError =
+    touched[name] &&
+    errors[name] &&
+    (multiple
+      ? !value || (Array.isArray(value) && value.length === 0)
+      : !value);
   const theme = useTheme();
 
-  const effectivePlaceholder = disabled 
-  ? '' 
-  : (multiple 
-      ? (!value || (Array.isArray(value) && value.length === 0)) 
-      : !value) 
-    ? label 
-    : '';
+  const effectivePlaceholder = disabled
+    ? ''
+    : (
+          multiple
+            ? !value || (Array.isArray(value) && value.length === 0)
+            : !value
+        )
+      ? label
+      : '';
 
   return (
     <Autocomplete
@@ -69,9 +78,14 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
       multiple={multiple}
       options={options}
       getOptionLabel={option => option.label || ''}
-      value={multiple 
-        ? (value === '' || !Array.isArray(value) ? [] : selectedOption)
-        : (value === '' ? null : selectedOption)
+      value={
+        multiple
+          ? value === '' || !Array.isArray(value)
+            ? []
+            : selectedOption
+          : value === ''
+            ? null
+            : selectedOption
       }
       disableClearable={disableClearable}
       isOptionEqualToValue={(opt, val) => opt.value === val?.value}
@@ -84,7 +98,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
       onChange={(_, newValue) => {
         if (multiple) {
           // Multiple select mode
-          const selectedValues = Array.isArray(newValue) 
+          const selectedValues = Array.isArray(newValue)
             ? newValue.map(opt => opt.value)
             : [];
           setFieldValue(name, selectedValues, true);
@@ -111,12 +125,13 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
       }}
       renderOption={(props, option) => {
         const { key, ...restProps } = props;
-        
+
         if (multiple) {
           // Multiple select: use default checkbox behavior
-          const isSelected = Array.isArray(selectedOption) && 
+          const isSelected =
+            Array.isArray(selectedOption) &&
             selectedOption.some(opt => opt.value === option.value);
-          
+
           return (
             <li key={key} {...restProps}>
               {option.label}
@@ -124,7 +139,9 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
           );
         } else {
           // Single select: toggle behavior
-          const isSelected = !Array.isArray(selectedOption) && selectedOption?.value === option.value;
+          const isSelected =
+            !Array.isArray(selectedOption) &&
+            selectedOption?.value === option.value;
 
           return (
             <li
@@ -162,11 +179,11 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
               minHeight: '34px',
               height: multiple ? 'auto' : '34px',
               fontSize: '12px',
-              padding: multiple ? '2px 8px' : '0',
+              padding: multiple ? '2px 8px' : '0px 8px',
               alignItems: 'center',
             },
             '& input': {
-              padding: '8px !important',
+              padding: '8px 6px !important',
             },
             '& .MuiAutocomplete-endAdornment': {
               top: multiple ? '50%' : 'calc(50% - 14px)',
@@ -191,12 +208,18 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
         />
       )}
       sx={{
-        '& .MuiInputBase-root': { 
+        '& .Mui-disabled': {
+          opacity: '100% !important',
+        },
+        '& .Mui-disabled .MuiChip-label': {
+          color: '#1E293B !important',
+        },
+        '& .MuiInputBase-root': {
           fontSize: '12px',
           flexWrap: 'wrap',
         },
-        '& .MuiAutocomplete-tag': { 
-          fontSize: '12px', 
+        '& .MuiAutocomplete-tag': {
+          fontSize: '12px',
           height: '22px',
           margin: '2px',
           '& .MuiChip-label': {
@@ -207,9 +230,10 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
             margin: '0 2px 0 -2px',
           },
         },
-        '& input': { 
+        '& input': {
           fontSize: '12px',
           minWidth: multiple ? '30px' : 'auto',
+          padding: '8px 6px !important',
         },
         '& .MuiAutocomplete-popper': { fontSize: '12px' },
         '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },

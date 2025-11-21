@@ -51,6 +51,7 @@ import { getWeekNumber } from '@/app/utils/common';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { getAllTeams } from '@/app/services/teamServices';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import { FETCH_DASHBOARD_QUERY_KEYS } from '@/app/redux/actions/rbacActions';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -148,7 +149,8 @@ export default function ExecutiveDashboardPage() {
   const [bucket, setBucket] = useState('week');
   const [teamFilter, setTeamFilter] = useState('all');
   const [selectedProjectType, setSelectedProjectType] = useState('all');
-  const [selectedProjectTypeGroup, setSelectedProjectTypeGroup] = useState('all');
+  const [selectedProjectTypeGroup, setSelectedProjectTypeGroup] =
+    useState('all');
   const [chartVisibility, setChartVisibility] = useState({
     resourceCoverage: true,
     projectFTE: true,
@@ -183,18 +185,42 @@ export default function ExecutiveDashboardPage() {
   const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
-  const { projectTypes, projectTypeGroups } = useSelector(state => state.allSettings);
+  const { projectTypes, projectTypeGroups } = useSelector(
+    state => state.allSettings
+  );
+  const {
+    dashboardQueryKeys,
+    loginUserPrivileges,
+    loadingLoginUserPrivileges,
+  } = useSelector(state => state.rbac);
   // Guard to avoid repeated init dispatches causing render loops
-  const initRequestedRef = useRef({ projectTypes: false, projectTypeGroups: false, teams: false });
+  const initRequestedRef = useRef({
+    projectTypes: false,
+    projectTypeGroups: false,
+    teams: false,
+  });
 
   // Memoize groupColorMap at component level so it's available for CSS generation
   const groupColorMap = useMemo(() => {
-    if (!filteredProjectFTEData || filteredProjectFTEData.length === 0) return {};
+    if (!filteredProjectFTEData || filteredProjectFTEData.length === 0)
+      return {};
 
     const colorPalette = [
-      '#0080FF', '#00C9A7', '#FFA500', '#e66767ff', '#9C27B0',
-      '#FF5722', '#4CAF50', '#FFB74D', '#80CBC4', '#9FA8DA',
-      '#FF884D', '#FFC233', '#FFB6B6', '#CE93D8', '#A1887F'
+      '#0080FF',
+      '#00C9A7',
+      '#FFA500',
+      '#e66767ff',
+      '#9C27B0',
+      '#FF5722',
+      '#4CAF50',
+      '#FFB74D',
+      '#80CBC4',
+      '#9FA8DA',
+      '#FF884D',
+      '#FFC233',
+      '#FFB6B6',
+      '#CE93D8',
+      '#A1887F',
     ];
 
     // Group data by project_type_group
@@ -220,11 +246,38 @@ export default function ExecutiveDashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (dashboardQueryKeys.length === 0) {
+      dispatch({ type: FETCH_DASHBOARD_QUERY_KEYS });
+    }
+  }, []);
+
+  useEffect(() => {
     if (!initRequestedRef.current.projectTypes && projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
       initRequestedRef.current.projectTypes = true;
     }
-    if (!initRequestedRef.current.projectTypeGroups && projectTypeGroups.length === 0) {
+    if (
+      !initRequestedRef.current.projectTypeGroups &&
+      projectTypeGroups.length === 0
+    ) {
+      dispatch({ type: 'FETCH_PROJECT_TYPE_GROUPS' });
+      initRequestedRef.current.projectTypeGroups = true;
+    }
+    if (!initRequestedRef.current.teams && teams.length === 0) {
+      dispatch(getAllTeams());
+      initRequestedRef.current.teams = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!initRequestedRef.current.projectTypes && projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+      initRequestedRef.current.projectTypes = true;
+    }
+    if (
+      !initRequestedRef.current.projectTypeGroups &&
+      projectTypeGroups.length === 0
+    ) {
       dispatch({ type: 'FETCH_PROJECT_TYPE_GROUPS' });
       initRequestedRef.current.projectTypeGroups = true;
     }
@@ -242,7 +295,9 @@ export default function ExecutiveDashboardPage() {
     const path = match?.__path__ || match?.Id || null;
     return path ? [path] : null;
   }, [teamFilter, teams]);
-  const selectedTeamPathsKey = selectedTeamPaths ? selectedTeamPaths.join(',') : 'null';
+  const selectedTeamPathsKey = selectedTeamPaths
+    ? selectedTeamPaths.join(',')
+    : 'null';
   const advancedFiltersKey = JSON.stringify(advancedFilters);
 
   useEffect(() => {
@@ -349,7 +404,15 @@ export default function ExecutiveDashboardPage() {
     } catch {
       console.error('Error fetching dashboard data. Please try again later.');
     }
-  }, [dispatch, selectedDate, selectedOption, selectedProjectType, selectedProjectTypeGroup, selectedTeamPathsKey, advancedFiltersKey]);
+  }, [
+    dispatch,
+    selectedDate,
+    selectedOption,
+    selectedProjectType,
+    selectedProjectTypeGroup,
+    selectedTeamPathsKey,
+    advancedFiltersKey,
+  ]);
 
   useEffect(() => {
     if (coverageData.length > 0) {
@@ -372,8 +435,12 @@ export default function ExecutiveDashboardPage() {
     if (originalUnapprovedActualsByTeam.length > 0) {
       setFilteredUnapprovedActualsByTeam(originalUnapprovedActualsByTeam);
     }
-
-  }, [overAllocated, underAllocated, originalCapacityData, originalUnapprovedActualsByTeam]);
+  }, [
+    overAllocated,
+    underAllocated,
+    originalCapacityData,
+    originalUnapprovedActualsByTeam,
+  ]);
 
   useEffect(() => {
     if (projectFTEData.length > 0) {
@@ -474,12 +541,12 @@ export default function ExecutiveDashboardPage() {
     initialLoad,
   ]);
 
-
   const handleFilterChange = filter => {
     if (filter.type === 'time') setBucket(filter.value);
     if (filter.type === 'team') setTeamFilter(filter.value);
     if (filter.type === 'projectType') setSelectedProjectType(filter.value);
-    if (filter.type === 'projectTypeGroup') setSelectedProjectTypeGroup(filter.value);
+    if (filter.type === 'projectTypeGroup')
+      setSelectedProjectTypeGroup(filter.value);
   };
 
   const handleLayoutChange = newLayout => {
@@ -499,6 +566,60 @@ export default function ExecutiveDashboardPage() {
 
   const toggleChartVisibility = chartKey => {
     setChartVisibility(prev => ({ ...prev, [chartKey]: !prev[chartKey] }));
+  };
+
+  const hasAccessToQueryKey = queryKey => {
+    if (!dashboardQueryKeys) return false;
+    if (loadingLoginUserPrivileges) return false;
+
+    const queryDetails = dashboardQueryKeys?.find(
+      qk => qk.QueryKey === queryKey
+    );
+    if (!queryDetails) return false;
+    if (loginUserPrivileges === null) return false;
+
+    const hasAccess = queryDetails?.Entities.every(
+      entity => loginUserPrivileges[entity]?.r
+    );
+
+    return hasAccess;
+  };
+
+  // Dynamically generate layouts for all charts in allowedQueries
+  const chartKeys = [
+    ...Object.keys(queries),
+    'underAllocated',
+    'overAllocated',
+  ].filter(queryKey => hasAccessToQueryKey(queryKey));
+
+  const layouts = {
+    lg: chartKeys.map((key, idx) => ({
+      i: key,
+      x: (idx % 2) * 6,
+      y: Math.floor(idx / 2) * 3,
+      w: 6,
+      h: 3,
+      minW: 5, // Minimum width in grid units (adjust as needed)
+      minH: 3,
+    })),
+    md: chartKeys.map((key, idx) => ({
+      i: key,
+      x: 0,
+      y: idx * 3,
+      w: 12,
+      h: 3,
+      minW: 6, // Minimum width for medium screens
+      minH: 3,
+    })),
+    sm: chartKeys.map((key, idx) => ({
+      i: key,
+      x: 0,
+      y: idx * 3,
+      w: 12,
+      h: 3,
+      minW: 12, // Minimum width for small screens
+      minH: 3,
+    })),
   };
 
   const Teams = filteredCoverageData?.length
@@ -602,7 +723,15 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Actual Vs Plan Deviation <span style={{ fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)' }}>(Previous week)</span>
+                Actual Vs Plan Deviation{' '}
+                <span
+                  style={{
+                    fontSize: dimensions.width < 400 ? '12px' : '14px',
+                    color: 'rgba(0, 0, 0, 0.6)',
+                  }}
+                >
+                  (Previous week)
+                </span>
               </Typography>
               <Box
                 sx={{
@@ -619,23 +748,23 @@ export default function ExecutiveDashboardPage() {
                       data:
                         filteredActualDeviation.length > 0
                           ? [
-                            {
-                              id: 0,
-                              value: Number.parseFloat(
-                                filteredActualDeviation[0].deviation_pct
-                              ),
-                              label: 'Deviation',
-                              color: '#FF7043',
-                            },
-                            {
-                              id: 1,
-                              value: Number.parseFloat(
-                                filteredActualDeviation[0].in_plan_pct
-                              ),
-                              label: 'In Plan',
-                              color: '#80CBC4',
-                            },
-                          ]
+                              {
+                                id: 0,
+                                value: Number.parseFloat(
+                                  filteredActualDeviation[0].deviation_pct
+                                ),
+                                label: 'Deviation',
+                                color: '#FF7043',
+                              },
+                              {
+                                id: 1,
+                                value: Number.parseFloat(
+                                  filteredActualDeviation[0].in_plan_pct
+                                ),
+                                label: 'In Plan',
+                                color: '#80CBC4',
+                              },
+                            ]
                           : [],
                       innerRadius: 0,
                       outerRadius: config.outerRadius || 80,
@@ -659,7 +788,9 @@ export default function ExecutiveDashboardPage() {
 
     activeProjectsByType: (
       <DashboardWidget
-        onClick={() => handleChartClick('Active Projects by Project Type Group')}
+        onClick={() =>
+          handleChartClick('Active Projects by Project Type Group')
+        }
         minWidth={320}
         minHeight={280}
       >
@@ -977,7 +1108,9 @@ export default function ExecutiveDashboardPage() {
   const projectCharts = {
     projectFTE: (
       <DashboardWidget
-        onClick={() => handleChartClick('Monthly Allocation Trends - Planned vs Actual')}
+        onClick={() =>
+          handleChartClick('Monthly Allocation Trends - Planned vs Actual')
+        }
         minWidth={320}
         minHeight={280}
       >
@@ -989,7 +1122,9 @@ export default function ExecutiveDashboardPage() {
           // Generate week range: 3 weeks in past, current week, 2 weeks in future (total 6 weeks)
           const weekRange = [];
           for (let i = -3; i <= 2; i++) {
-            weekRange.push(currentWeekStart.add(i, 'week').format('YYYY-MM-DD'));
+            weekRange.push(
+              currentWeekStart.add(i, 'week').format('YYYY-MM-DD')
+            );
           }
 
           // Group data by project_type_group and week
@@ -1003,12 +1138,16 @@ export default function ExecutiveDashboardPage() {
             if (!groupedData[group][weekStart]) {
               groupedData[group][weekStart] = {
                 planned_pct: 0,
-                actual_pct: 0
+                actual_pct: 0,
               };
             }
             // Use percentage fields from the data
-            groupedData[group][weekStart].planned_pct += parseFloat(item.planned_pct || 0);
-            groupedData[group][weekStart].actual_pct += parseFloat(item.actual_pct || 0);
+            groupedData[group][weekStart].planned_pct += parseFloat(
+              item.planned_pct || 0
+            );
+            groupedData[group][weekStart].actual_pct += parseFloat(
+              item.actual_pct || 0
+            );
           });
 
           // Create series for each project type group
@@ -1031,22 +1170,38 @@ export default function ExecutiveDashboardPage() {
             });
 
             // Actual series (solid line) - show only for past weeks (not future)
+            // Stop the line at the last week with actual data (don't connect to 0 in current week)
+            const actualData = weekRange.map((week, idx) => {
+              // For future weeks (idx > 3), return null
+              if (idx > 3) {
+                return null;
+              }
+              
+              // For past and current weeks, check if actual_pct exists
+              const actual_pct = groupedData[group][week]?.actual_pct;
+              
+              // For current week (idx === 3): treat 0 as null to stop the line
+              if (idx === 3 && (actual_pct === null || actual_pct === undefined || actual_pct === 0)) {
+                return null;
+              }
+              
+              // For past weeks (idx < 3): treat null/undefined as null, but keep 0 as 0
+              if (idx < 3 && (actual_pct === null || actual_pct === undefined)) {
+                return null;
+              }
+              
+              const value = parseFloat(actual_pct);
+              return isNaN(value) ? null : value;
+            });
+
             allSeries.push({
               label: `${group} - Actual`,
               id: `${group}-actual`,
-              data: weekRange.map((week, idx) => {
-                // Show actual only for past weeks and current week (idx <= 3)
-                // For future weeks (idx > 3), return null
-                if (idx <= 3) {
-                  const value = groupedData[group][week]?.actual_pct || 0;
-                  return isNaN(value) ? 0 : parseFloat(value);
-                }
-                return null; // No actual data for future weeks
-              }),
+              data: actualData,
               curve: 'linear',
               showMark: true,
               color: groupColor,
-              connectNulls: false,
+              connectNulls: false, // Don't connect across null values - line stops at last valid point
             });
           });
 
@@ -1071,7 +1226,9 @@ export default function ExecutiveDashboardPage() {
                   series={allSeries.map(series => ({
                     ...series,
                     // Make planned lines dotted/dashed
-                    strokeDasharray: series.label.includes('Planned') ? '5 5' : undefined,
+                    strokeDasharray: series.label.includes('Planned')
+                      ? '5 5'
+                      : undefined,
                     strokeWidth: 2,
                   }))}
                   xAxis={[
@@ -1588,9 +1745,7 @@ export default function ExecutiveDashboardPage() {
   };
 
   const teamNames = [...new Set(teams.map(d => d.Name))];
-  const projectTypeNames = [
-    ...new Set(projectTypes.map(d => d.Name)),
-  ];
+  const projectTypeNames = [...new Set(projectTypes.map(d => d.Name))];
   const projectTypeGroupNames = [
     ...new Set(projectTypeGroups.map(d => d.Name)),
   ];
@@ -1600,7 +1755,9 @@ export default function ExecutiveDashboardPage() {
     return <LoadingScreen />;
   }
 
-  return (
+  return loadingLoginUserPrivileges ? (
+    <LoadingScreen />
+  ) : (
     <>
       {dashboardLoading && !initialLoad && (
         <Box
@@ -1634,18 +1791,23 @@ export default function ExecutiveDashboardPage() {
               transition-property: transform;
             }
 
-            .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill {
+            .MuiChartsLegend-item[data-series$='-planned']
+              .MuiChartsLabelMark-fill {
               fill: transparent !important;
               stroke-width: 4 !important;
               stroke-dasharray: 5 5 !important;
             }
 
             /* Dynamically generate stroke colors for each group */
-            ${Object.entries(groupColorMap).map(([group, color]) => `
+            ${Object.entries(groupColorMap)
+              .map(
+                ([group, color]) => `
               .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='${color}'] { 
                 stroke: ${color} !important; 
               }
-            `).join('\n')}
+            `
+              )
+              .join('\n')}
 
             [class*='MuiLineElement-series-'][class*='-planned'] {
               stroke-dasharray: 5 5 !important;
@@ -1699,16 +1861,24 @@ export default function ExecutiveDashboardPage() {
               label="Overview"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-            <Tab
-              value="teams"
-              label="Teams"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            />
-            <Tab
-              value="projects"
-              label="Projects"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            />
+            {Object.entries(teamCharts).filter(([queryKey, _]) =>
+              hasAccessToQueryKey(queryKey)
+            ).length > 0 && (
+              <Tab
+                value="teams"
+                label="Teams"
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              />
+            )}
+            {Object.entries(projectCharts).filter(([queryKey, _]) =>
+              hasAccessToQueryKey(queryKey)
+            ).length > 0 && (
+              <Tab
+                value="projects"
+                label="Projects"
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              />
+            )}
             <DashboardToolbar
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -1741,6 +1911,7 @@ export default function ExecutiveDashboardPage() {
               actualsConfirmed={filteredActualsConfirmed}
               totalResourceCost={totalResourceCost}
               allocationPercentage={filteredAllocationPercentage}
+              hasAccessToQueryKey={hasAccessToQueryKey}
             />
             <ResponsiveGridLayout
               className="layout"
@@ -1753,9 +1924,11 @@ export default function ExecutiveDashboardPage() {
               isResizable
               style={{ padding: '0 16px' }}
             >
-              {Object.entries(overviewcharts).map(([key, component]) => (
-                <div key={key}>{component}</div>
-              ))}
+              {Object.entries(overviewcharts)
+                .filter(([queryKey, _]) => hasAccessToQueryKey(queryKey))
+                .map(([key, component]) => (
+                  <div key={key}>{component}</div>
+                ))}
             </ResponsiveGridLayout>
           </>
         )}
@@ -1786,9 +1959,11 @@ export default function ExecutiveDashboardPage() {
               isResizable
               style={{ padding: '0 16px' }}
             >
-              {Object.entries(teamCharts).map(([key, component]) => (
-                <div key={key}>{component}</div>
-              ))}
+              {Object.entries(teamCharts)
+                .filter(([queryKey, _]) => hasAccessToQueryKey(queryKey))
+                .map(([key, component]) => (
+                  <div key={key}>{component}</div>
+                ))}
             </ResponsiveGridLayout>
           </>
         )}
@@ -1818,9 +1993,11 @@ export default function ExecutiveDashboardPage() {
               isResizable
               style={{ padding: '0 16px' }}
             >
-              {Object.entries(projectCharts).map(([key, component]) => (
-                <div key={key}>{component}</div>
-              ))}
+              {Object.entries(projectCharts)
+                .filter(([queryKey, _]) => hasAccessToQueryKey(queryKey))
+                .map(([key, component]) => (
+                  <div key={key}>{component}</div>
+                ))}
             </ResponsiveGridLayout>
           </>
         )}

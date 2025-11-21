@@ -123,7 +123,7 @@ export const addResourceValidationSchema = (allResourcesDetail = [], currentEmai
   Role: Yup.string().required('Role is required'),
   Type: Yup.string().required('Resource type is required'),
   Manager: Yup.string(),
-  Team: Yup.string().required('Team is required'),
+  // Team: Yup.string().required('Team is required'),  
   ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
   AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
   Organisation: Yup.string().required('Organization is required'),
@@ -190,7 +190,7 @@ export const editResourceValidationSchema = (
   Role: Yup.string().required('Role is required'),
   Type: Yup.string().required('Resource type is required'),
   Manager: Yup.string(),
-  Team: Yup.string().required('Team is required'),
+  // Team: Yup.string().required('Team is required'),
   Organisation: Yup.string().required('Organization is required'),
   ContractorHourlyRate: Yup.number().nullable().typeError('Must be a number'),
   AverageWeeklyHours: Yup.number().nullable().typeError('Must be a number'),
@@ -672,14 +672,35 @@ export const addLocationGroupValidationSchema = (
   });
 };
 
-export const addUserValidationSchema = Yup.object({
-  FirstName: Yup.string().required('First Name is required'),
-  LastName: Yup.string().required('Last Name is required'),
-  Email: Yup.string()
-    .required('Email is required')
-    .matches(emailRegex, 'Enter a valid email address'),
-  Role: Yup.string().required('Role is required'),
-});
+export const addUserValidationSchema = (
+  allUsers: any[] = [],
+  currentEmail = ''
+) => {
+  return Yup.object({
+    FirstName: Yup.string().required('First Name is required'),
+    LastName: Yup.string().required('Last Name is required'),
+    Email: Yup.string()
+      .required('Email is required')
+      .matches(emailRegex, 'Enter a valid email address')
+      .test(
+        'unique-email',
+        'Email already exists. Please choose another email.',
+        value => {
+          if (!value) return true;
+          const trimmedValue = value.toLowerCase().trim();
+          const trimmedCurrent = currentEmail.toLowerCase().trim();
+          if (currentEmail && trimmedValue === trimmedCurrent) {
+            return true; // Allow same email when editing
+          }
+          return !allUsers.some((user: any) => {
+            const userEmail = (user.email || user.Email || '').toLowerCase().trim();
+            return userEmail === trimmedValue;
+          });
+        }
+      ),
+    Role: Yup.string().required('Role is required'),
+  });
+};
 
 export const addResourceToUserValidationSchema = Yup.object({
   Resources: Yup.array()

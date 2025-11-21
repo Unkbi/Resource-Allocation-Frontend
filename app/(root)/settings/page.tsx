@@ -165,7 +165,7 @@ const SettingsPanel = ({
   const hasAnyAccess = {
     'user-profile': true,
     notification: false,
-    'user-management': true,
+    'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
       permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
@@ -237,7 +237,8 @@ const SettingsPanel = ({
             headerText: 'User Management',
             icon: '',
             content: <UserManagement />,
-            description: 'Easily add and manage your users and resources in one place.',
+            description:
+              'Easily add and manage your users and resources in one place.',
           },
           {
             id: 'access-management',
@@ -446,6 +447,7 @@ const SettingsPanel = ({
 };
 
 export default withRBAC(SettingsPanel, [
+  'User',
   'Role',
   'Permission',
   'ProjectType',

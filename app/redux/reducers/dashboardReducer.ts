@@ -49,6 +49,9 @@ const dashboardSlice = createSlice({
         state.loading = false;
       }
     },
+    setDefaultAdvancedFilters: (state, action) => {
+      state.defualtAdvancedFilters = action.payload;
+    },
     setAdvancedFilters: (state, action) => {
       state.advancedFilters = {
         ...state.advancedFilters,
@@ -68,7 +71,7 @@ const dashboardSlice = createSlice({
         Organization: [],
       };
     },
-    resetDashboardCharts: (state) => {
+    resetDashboardCharts: state => {
       // Reset all chart data but preserve advanced filters
       const filters = state.advancedFilters;
       return {

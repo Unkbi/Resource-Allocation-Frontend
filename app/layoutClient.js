@@ -23,6 +23,7 @@ import {
   FETCH_ROLES,
   FETCH_ROLESASSIGNMENTS,
   GET_USER_AND_PRIVILEGES,
+  SETUP_ADVANCED_FILTERS,
 } from './redux/actions/rbacActions';
 
 const MainContent = styled(Box, {
@@ -95,7 +96,7 @@ export default function LayoutClient({ children }) {
         case '/reset-password':
           return 'Reset Password';
         case '/invite':
-          return 'Set Password'  
+          return 'Set Password';
         default:
           return 'CIOptimize';
       }
@@ -157,6 +158,26 @@ export default function LayoutClient({ children }) {
       }
     }
   }, [dispatch, isLoggedIn, isClient]);
+
+  useEffect(() => {
+    if (!isClient || !isLoggedIn || !userId) return;
+    if (
+      loginUserPrivileges &&
+      Object.keys(loginUserPrivileges).length &&
+      resources.length
+    ) {
+      dispatch({
+        type: SETUP_ADVANCED_FILTERS,
+        payload: {
+          loginUserPrivileges,
+          userId,
+          resources,
+          projects,
+          teams,
+        },
+      });
+    }
+  }, [dispatch, isLoggedIn, isClient, userId, loginUserPrivileges, resources]);
 
   if (!isClient) return null;
   if (!isLoggedIn && !isPublicRoute) return null;

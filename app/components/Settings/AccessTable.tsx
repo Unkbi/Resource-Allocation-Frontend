@@ -574,7 +574,7 @@ export default function AccessTable({
                       minWidth: 'unset',
                       width: '41px',
                       height: '36px',
-                      padding: '20px 10px 20px 17px',
+                      padding: '20px 10px 20px 10px',
                       justifyContent: 'center',
                       alignItems: 'center',
                       gap: '6px',
@@ -712,7 +712,7 @@ export default function AccessTable({
                     background: '#fff',
                     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
                     // borderRadius: '4px',
-                    width: 123,
+                    width: 125,
                     py: 0.5,
                     border: '1px solid #E5E7EB',
                   }}
@@ -788,6 +788,11 @@ export default function AccessTable({
           onFilterModelChange={handleFilterModelChange}
           columnVisibilityModel={columnVisibilityModel}
           onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+          initialState={{
+          sorting: {
+            sortModel: [{ field: 'Name', sort: 'asc' }],
+          },
+        }}
           slotProps={{
             loadingOverlay: {
               variant: 'skeleton',

@@ -95,13 +95,13 @@ const AddResourceForm = ({
   const [readOnly, setReadOnly] = useState(true);
 
   const resourceListOptions =
-   resources
-     ?.filter(resource => resource.Status === 'Active') 
-     .sort((a, b) => a.FullName.localeCompare(b.FullName)) 
-     .map(resource => ({
-       value: resource.Id,
-       label: resource.FullName,
-     })) || [];
+    resources
+      ?.filter(resource => resource.Status === 'Active')
+      .sort((a, b) => a.FullName.localeCompare(b.FullName))
+      .map(resource => ({
+        value: resource.Id,
+        label: resource.FullName,
+      })) || [];
   const organisationListOptions =
     organisations
       ?.filter(org => org.Status === 'Active')
@@ -116,9 +116,9 @@ const AddResourceForm = ({
       ?.filter(team => team.Status === 'Active')
       .sort((a, b) => a.Name.localeCompare(b.Name))
       ?.map(team => ({
-      value: team.Id,
-      label: team.Name,
-    })) || [];
+        value: team.Id,
+        label: team.Name,
+      })) || [];
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -235,18 +235,18 @@ const AddResourceForm = ({
           ?.filter(loc => loc.Status === 'Active')
           .sort((a, b) => a.Name.localeCompare(b.Name))
           .map(loc => ({
-          value: loc.Id,
-          label: loc.Name,
-        })) || [];
+            value: loc.Id,
+            label: loc.Name,
+          })) || [];
       setLocationOptions(locationNames);
     }
   }, [location]);
 
   // Add effect to watch Team and Organisation changes
   useEffect(() => {
-    if (onValuesChange && values.Team && values.Organisation) {
+    if (onValuesChange && values.Organisation) {
       onValuesChange({
-        teamId: values.Team,
+        teamId: values.Team ?? '',
         organisationId: values.Organisation,
         teamName: teamListOptions.find(t => t.value === values.Team)?.label,
         organisationName: organisationListOptions.find(
@@ -665,7 +665,7 @@ const AddResourceForm = ({
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>
-          Team <span style={{ color: 'red' }}>*</span>
+          Team <span style={{ color: 'red' }}></span>
         </StyledLabel>
         <StyledAutocomplete
           disabled={readOnly}
