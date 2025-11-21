@@ -328,7 +328,7 @@ function AllocationGrid({
       !(
         groupBy === 'teams' ||
         groupBy === 'organisationName' ||
-        groupBy === 'portfolioName'
+        groupBy === 'portfolioName' || groupBy === 'project'
       )
     ) {
       return;
@@ -336,12 +336,12 @@ function AllocationGrid({
     // Expand rows after grid renders new data
     const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
       try {
-        expandRowId.forEach(rowId => {
-          const row = apiRef.current.getRow(rowId);
-          if (row) {
-            apiRef.current.setRowChildrenExpansion(rowId, true);
-          }
-        });
+          expandRowId.forEach(rowId => {
+            const row = apiRef.current.getRow(rowId);
+            if (row) {
+              apiRef.current.setRowChildrenExpansion(rowId, true);
+            }
+          });
       } catch (err) {
         console.warn('Error expanding rows:', err);
       }
