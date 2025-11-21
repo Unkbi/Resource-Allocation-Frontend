@@ -1060,22 +1060,38 @@ export default function ExecutiveDashboardPage() {
             });
 
             // Actual series (solid line) - show only for past weeks (not future)
+            // Stop the line at the last week with actual data (don't connect to 0 in current week)
+            const actualData = weekRange.map((week, idx) => {
+              // For future weeks (idx > 3), return null
+              if (idx > 3) {
+                return null;
+              }
+              
+              // For past and current weeks, check if actual_pct exists
+              const actual_pct = groupedData[group][week]?.actual_pct;
+              
+              // For current week (idx === 3): treat 0 as null to stop the line
+              if (idx === 3 && (actual_pct === null || actual_pct === undefined || actual_pct === 0)) {
+                return null;
+              }
+              
+              // For past weeks (idx < 3): treat null/undefined as null, but keep 0 as 0
+              if (idx < 3 && (actual_pct === null || actual_pct === undefined)) {
+                return null;
+              }
+              
+              const value = parseFloat(actual_pct);
+              return isNaN(value) ? null : value;
+            });
+
             allSeries.push({
               label: `${group} - Actual`,
               id: `${group}-actual`,
-              data: weekRange.map((week, idx) => {
-                // Show actual only for past weeks and current week (idx <= 3)
-                // For future weeks (idx > 3), return null
-                if (idx <= 3) {
-                  const value = groupedData[group][week]?.actual_pct || 0;
-                  return isNaN(value) ? 0 : parseFloat(value);
-                }
-                return null; // No actual data for future weeks
-              }),
+              data: actualData,
               curve: 'linear',
               showMark: true,
               color: groupColor,
-              connectNulls: false,
+              connectNulls: false, // Don't connect across null values - line stops at last valid point
             });
           });
 
