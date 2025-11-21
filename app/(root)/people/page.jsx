@@ -301,17 +301,6 @@ function Resources({ permissions, loadingPermissions }) {
       },
     },
     {
-      field: 'WorkLocation',
-      headerName: 'Work Location',
-      flex: 1,
-      minWidth: 150,
-      renderCell: params => {
-        params.value && (
-          <EllipsisNameCell value={params.value} showAvatar={false} />
-        );
-      },
-    },
-    {
       field: 'PhoneNumber',
       headerName: 'Phone Number',
       flex: 1,
@@ -331,6 +320,17 @@ function Resources({ permissions, loadingPermissions }) {
         params.value && (
           <EllipsisNameCell value={params.value} showAvatar={false} />
         ),
+    },
+    {
+      field: 'WorkLocation',
+      headerName: 'Work Location',
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
+      },
     },
     {
       field: 'HRLevel',

@@ -183,6 +183,13 @@ export interface ActualAllocationsForPeriodPayload {
   EndDate: string;
 }
 
+export interface ActualStatusForPeriodPayload {
+  Resource: string;
+  Status: string;
+  StartDate: string;
+  EndDate: string;
+}
+
 export interface ConfirmActuals {
   Project: string;
   ActualsEntered: number;
@@ -205,6 +212,7 @@ export interface ActualAllocations {
   Project: string | null;
   ProjectName: string | null;
   Resource: string | null;
+  ProjectActualsStatus: string | null;
 }
 
 export interface ActualAllocationsForPeriodResponse {
@@ -212,10 +220,18 @@ export interface ActualAllocationsForPeriodResponse {
   Status: string | null;
 }
 
+export interface ActualStatus {
+  Resource: string;
+  Status: string;
+  Period: string;
+}
+
 export interface ActualAllocationsState {
   actualAllocations: ActualAllocations[] | null;
+  actualsStatus: ActualStatus[] | null;
   status: string | null;
   dataProcessing: boolean | null;
+  actualsStatusLoading: boolean | null;
   loading: boolean | null;
   calendarDate: {
     startDate: string | null;

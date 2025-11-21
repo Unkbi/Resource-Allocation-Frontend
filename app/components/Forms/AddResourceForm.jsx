@@ -665,7 +665,7 @@ const AddResourceForm = ({
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel sx={{ flex: 1 }}>
-          Team <span style={{ color: 'red' }}>*</span>
+          Team <span style={{ color: 'red' }}></span>
         </StyledLabel>
         <StyledAutocomplete
           disabled={readOnly}

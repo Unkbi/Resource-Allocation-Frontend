@@ -149,6 +149,8 @@ import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
 import AddUserForm from '../../Forms/AddUserForm';
 import { formatAPIResponse, getUserAttributes, getLoginUserDetails } from '@/app/utils/authUtils';
+import AdvancedFiltersForm from '../../Forms/AdvancedFiltersForm';
+import { setAdvancedFilters, clearAdvancedFilters } from '@/app/redux/reducers/dashboardReducer';
 import {
   ADD_PROJECT_TYPE,
   UPDATE_PROJECT_TYPE,
@@ -167,13 +169,14 @@ import {
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
+
 const initialValuesMap = {
   add_project: {
     StartDate: new Date().toISOString().split('T')[0],
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
-    AllowOvertime: '',
+    AllowOvertime: 'No',
     Location: '',
     ProjectManager: '',
     Status: 'Active',
@@ -416,7 +419,18 @@ const initialValuesMap = {
     Resources: [],
     Role: '',
     sendInviteEmail: true,
-  }
+  },
+  advanced_filters: {
+    ProjectTypeGroup: [],
+    ProjectType: [],
+    Team: [],
+    Portfolio: [],
+    Organization: [],
+    Resource: [],
+    Project: [],
+    ProjectManager: [],
+    AllocationManager: [],
+  },
 };
 
 const AllocationForm = () => {
@@ -585,9 +599,9 @@ const AllocationForm = () => {
           initialData?.Name || ''
         );
       case 'add_user':
-        return addUserValidationSchema;
+        return addUserValidationSchema(allUsers, initialData?.email || '');
       case 'edit_user':
-        return addUserValidationSchema;
+        return addUserValidationSchema(allUsers, initialData?.email || '');
       case 'add_resource_to_user':
         return addResourceToUserValidationSchema;
       case 'edit_resource_to_user':
@@ -1076,7 +1090,7 @@ const AllocationForm = () => {
           const result = await dispatch(
             createResourceWithTeamAndOrg({
               resourceData: postData,
-              teamId: values.Team,
+              teamId: values.Team ? values.Team : null,
               organizationId: values.Organisation,
             })
           );
@@ -3380,6 +3394,34 @@ const AllocationForm = () => {
         break;
       }
       
+      case 'advanced_filters': {
+        // For advanced filters, use the full values object (don't exclude any fields)
+        // All values are arrays from the multi-select autocomplete components
+        const filterValues = {
+          ProjectTypeGroup: values.ProjectTypeGroup || [],
+          ProjectType: values.ProjectType || [],
+          Team: values.Team || [],
+          Resource: values.Resource || [],
+          AllocationManager: values.AllocationManager || [],
+          ProjectManager: values.ProjectManager || [],
+          Project: values.Project || [],
+          Portfolio: values.Portfolio || [],
+          Organization: values.Organization || [],
+        };
+        dispatch(setAdvancedFilters(filterValues));
+        dispatch(closeDialog());
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Advanced filters applied successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 3000,
+          })
+        );
+        break;
+      }
+
       default:
         return;
     }
@@ -4005,6 +4047,13 @@ const AllocationForm = () => {
       case 'edit_resource_to_user':
         return (
           <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'advanced_filters':
+        return (
+          <AdvancedFiltersForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

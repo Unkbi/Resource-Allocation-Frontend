@@ -45,7 +45,7 @@ function TopProjectsView({
         ) || []
       );
     }
-  }, [ready, allAllocations, loadingPermissions]);
+  }, [ready, allAllocations, loadingPermissions, splitViewCurrentProject]);
 
   const projectColumnConfig = [
     {
@@ -237,8 +237,8 @@ function TopProjectsView({
       <Box
         sx={{
           flexGrow: 1,
-          minHeight: 0, 
-          overflow: 'hidden', 
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         <AllocationGrid

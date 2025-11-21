@@ -38,6 +38,7 @@ const AddResourceToUserForm = ({
   const seenValues = new Set<string>();
   const router = useRouter();
   const [showMessage, setShowMessage] = React.useState(true);
+  const {userResources:resources} = useSelector((state:any) => state.allSettings || {});
   const roleOptions: { value: string; label: string; id: string }[] = (
     roles || []
   )
@@ -71,9 +72,22 @@ const AddResourceToUserForm = ({
     }
   }, [dispatch, roles]);
 
+  const resourceOptions: { value: string; label: string; id: string }[] = (
+    resources || []
+  )
+    .filter((resource: any) => 
+      resource.userStatus === "Not Created" && 
+      resource.resourceStatus === "Active"
+    )
+    .map((resource: any) => ({
+      value: resource.email,
+      label: resource.Name || resource.email,
+      id: resource.id,
+    }));
+
   const handleNavigate = () => {
     dispatch(closeDialog());
-    router.replace("/settings?menu=access-management&tab=role-assignments");
+    window.open("/settings?menu=access-management&tab=role-assignments", "_blank");
   };
 
 
@@ -83,14 +97,16 @@ const AddResourceToUserForm = ({
         Resources <span style={{ color: 'red' }}>*</span>
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
-        <ChipInput
+        <StyledAutocomplete
+          name="Resources"
+          label="Resources"
+          placeholder="Select Resources"
+          multiple={true}
           value={values?.Resources || []}
-          onChange={(updatedResources) => {
-            setFieldValue('Resources', updatedResources);
-          }}
-          placeholder="No resources selected"
-          error={touched?.Resources && Boolean(errors?.Resources)}
-          helperText={touched?.Resources && errors?.Resources ? String(errors.Resources) : undefined}
+          options={resourceOptions}
+          required
+          formikProps={formikProps}
+          fullWidth
         />
       </Box>
 

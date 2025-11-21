@@ -97,6 +97,8 @@ export default function ExecutiveDashboardPage() {
   const dispatch = useDispatch();
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
+  const advancedFilters = useSelector(state => state.dashboard.advancedFilters || {});
+
   const capacityAvailability = useSelector(
     state => state.dashboard.capacityAvailability || []
   );
@@ -160,20 +162,20 @@ export default function ExecutiveDashboardPage() {
   const [filteredActualDeviation, setFilteredActualDeviation] = useState([]);
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
-  const {projectTypes, projectTypeGroups} = useSelector(state => state.allSettings);
+  const { projectTypes, projectTypeGroups } = useSelector(state => state.allSettings);
   // Guard to avoid repeated init dispatches causing render loops
   const initRequestedRef = useRef({ projectTypes: false, projectTypeGroups: false, teams: false });
 
   // Memoize groupColorMap at component level so it's available for CSS generation
   const groupColorMap = useMemo(() => {
     if (!filteredProjectFTEData || filteredProjectFTEData.length === 0) return {};
-    
+
     const colorPalette = [
       '#0080FF', '#00C9A7', '#FFA500', '#e66767ff', '#9C27B0',
       '#FF5722', '#4CAF50', '#FFB74D', '#80CBC4', '#9FA8DA',
       '#FF884D', '#FFC233', '#FFB6B6', '#CE93D8', '#A1887F'
     ];
-    
+
     // Group data by project_type_group
     const groupedData = {};
     filteredProjectFTEData.forEach(item => {
@@ -182,7 +184,7 @@ export default function ExecutiveDashboardPage() {
         groupedData[group] = true;
       }
     });
-    
+
     const map = {};
     Object.keys(groupedData).forEach((group, index) => {
       map[group] = colorPalette[index % colorPalette.length];
@@ -220,6 +222,7 @@ export default function ExecutiveDashboardPage() {
     return path ? [path] : null;
   }, [teamFilter, teams]);
   const selectedTeamPathsKey = selectedTeamPaths ? selectedTeamPaths.join(',') : 'null';
+  const advancedFiltersKey = JSON.stringify(advancedFilters);
 
   useEffect(() => {
     try {
@@ -255,6 +258,7 @@ export default function ExecutiveDashboardPage() {
           teamFilter: selectedTeamPaths,
           teamAllocMgrFilter: null,
           orgFilter: null,
+          advancedFilters, // Include advanced filters in request key
         };
 
         const requestKey = JSON.stringify(paramsForKey);
@@ -284,7 +288,7 @@ export default function ExecutiveDashboardPage() {
     } catch {
       console.error('Error fetching dashboard data. Please try again later.');
     }
-  }, [dispatch, selectedDate, selectedOption, selectedProjectType, selectedProjectTypeGroup, selectedTeamPathsKey]);
+  }, [dispatch, selectedDate, selectedOption, selectedProjectType, selectedProjectTypeGroup, selectedTeamPathsKey, advancedFiltersKey]);
 
   useEffect(() => {
     if (coverageData.length > 0) {
@@ -520,7 +524,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Actual Vs Plan Deviation <span style={{fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)'}}>(Previous week)</span>
+                Actual Vs Plan Deviation <span style={{ fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)' }}>(Previous week)</span>
               </Typography>
               <Box
                 sx={{
@@ -537,23 +541,23 @@ export default function ExecutiveDashboardPage() {
                       data:
                         filteredActualDeviation.length > 0
                           ? [
-                              {
-                                id: 0,
-                                value: Number.parseFloat(
-                                  filteredActualDeviation[0].deviation_pct
-                                ),
-                                label: 'Deviation',
-                                color: '#FF7043',
-                              },
-                              {
-                                id: 1,
-                                value: Number.parseFloat(
-                                  filteredActualDeviation[0].in_plan_pct
-                                ),
-                                label: 'In Plan',
-                                color: '#80CBC4',
-                              },
-                            ]
+                            {
+                              id: 0,
+                              value: Number.parseFloat(
+                                filteredActualDeviation[0].deviation_pct
+                              ),
+                              label: 'Deviation',
+                              color: '#FF7043',
+                            },
+                            {
+                              id: 1,
+                              value: Number.parseFloat(
+                                filteredActualDeviation[0].in_plan_pct
+                              ),
+                              label: 'In Plan',
+                              color: '#80CBC4',
+                            },
+                          ]
                           : [],
                       innerRadius: 0,
                       outerRadius: config.outerRadius || 80,
@@ -889,15 +893,15 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'line');
-          
+
           const currentWeekStart = getMonday(selectedDate);
-          
+
           // Generate week range: 3 weeks in past, current week, 2 weeks in future (total 6 weeks)
           const weekRange = [];
           for (let i = -3; i <= 2; i++) {
             weekRange.push(currentWeekStart.add(i, 'week').format('YYYY-MM-DD'));
           }
-          
+
           // Group data by project_type_group and week
           const groupedData = {};
           filteredProjectFTEData.forEach(item => {
@@ -916,13 +920,13 @@ export default function ExecutiveDashboardPage() {
             groupedData[group][weekStart].planned_pct += parseFloat(item.planned_pct || 0);
             groupedData[group][weekStart].actual_pct += parseFloat(item.actual_pct || 0);
           });
-          
+
           // Create series for each project type group
           const allSeries = [];
-          
+
           Object.keys(groupedData).forEach(group => {
             const groupColor = groupColorMap[group];
-            
+
             // Planned series (dotted line) - show for all weeks
             allSeries.push({
               label: `${group} - Planned`,
@@ -935,7 +939,7 @@ export default function ExecutiveDashboardPage() {
               showMark: true,
               color: groupColor,
             });
-            
+
             // Actual series (solid line) - show only for past weeks (not future)
             allSeries.push({
               label: `${group} - Actual`,
@@ -955,7 +959,7 @@ export default function ExecutiveDashboardPage() {
               connectNulls: false,
             });
           });
-          
+
           return (
             <Box
               sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
@@ -986,7 +990,7 @@ export default function ExecutiveDashboardPage() {
                         const weekDate = dayjs(week);
                         const isCurrentWeek = idx === 3;
                         const weekNumber = getWeekNumber(week);
-                        return isCurrentWeek 
+                        return isCurrentWeek
                           ? `${weekNumber} (Current)`
                           : `${weekNumber}`;
                       }),
@@ -1593,19 +1597,6 @@ export default function ExecutiveDashboardPage() {
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <DashboardToolbar
-              onFilterChange={handleFilterChange}
-              timeFilter={bucket}
-              teamfilter={teamFilter}
-              projectTypes={projectTypeNames}
-              projectTypeGroups={projectTypeGroupNames}
-              teamNames={teamNames}
-            />
-          </Tabs>
-        </CommonToolbar>
-        {activeTab === 'overview' && (
-          <>
-            <Topbar
-              text="Overview"
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
               selectedOption={selectedOption}
@@ -1613,6 +1604,24 @@ export default function ExecutiveDashboardPage() {
               anchorEl={anchorEl}
               setAnchorEl={setAnchorEl}
             />
+          </Tabs>
+        </CommonToolbar>
+        <Topbar />
+        {activeTab === 'overview' && (
+          <>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#000000',
+                paddingLeft: '24px',
+                paddingBottom: '8px',
+              }}
+            >
+              Overview
+            </Typography>
+
             <Overview
               activeProjects={activeProjects}
               activeResources={activeResources}
@@ -1640,15 +1649,18 @@ export default function ExecutiveDashboardPage() {
 
         {activeTab === 'teams' && (
           <>
-            <Topbar
-              text="Teams Overview"
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              selectedOption={selectedOption}
-              setSelectedOption={setSelectedOption}
-              anchorEl={anchorEl}
-              setAnchorEl={setAnchorEl}
-            />
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#000000',
+                paddingLeft: '24px',
+                paddingBottom: '8px',
+              }}
+            >
+              Teams Overview
+            </Typography>
 
             <ResponsiveGridLayout
               className="layout"
@@ -1670,15 +1682,18 @@ export default function ExecutiveDashboardPage() {
 
         {activeTab === 'projects' && (
           <>
-            <Topbar
-              text="Project Tracking"
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              selectedOption={selectedOption}
-              setSelectedOption={setSelectedOption}
-              anchorEl={anchorEl}
-              setAnchorEl={setAnchorEl}
-            />
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#000000',
+                paddingLeft: '24px',
+                paddingBottom: '8px',
+              }}
+            >
+              Project Tracking
+            </Typography>
             <ResponsiveGridLayout
               className="layout"
               layouts={layouts}

@@ -204,6 +204,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
                 transition
                 disablePortal
                 modifiers={[{ name: 'offset', options: { offset: [0, 4] } }]}
+                sx={{ zIndex: 9999999999 }}
               >
                 {({ TransitionProps, placement }) => (
                   <Grow
@@ -217,7 +218,9 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
                   >
                     <Paper
                       className="AddMenu"
-                      sx={{ boxShadow: '0px 4px 20px rgba(0,0,0,0.06)' }}
+                      sx={{
+                        boxShadow: '0px 4px 20px rgba(0,0,0,0.06)',
+                      }}
                     >
                       <ClickAwayListener onClickAway={handleAddMenuClose}>
                         <MenuList

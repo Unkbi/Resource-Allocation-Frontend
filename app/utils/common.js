@@ -297,6 +297,15 @@ export const getSundayOfISO = date => {
   return format(endOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
 };
 
+export const getFridayOfISO = date => {
+  if (!date) return null;
+  const isoDate = parseISO(date);
+  return format(
+    endOfISOWeek(subDays(isoDate, 2), { weekStartsOn: 1 }),
+    DATE_FORMAT
+  );
+};
+
 export const generateTMinusOneStartEndDate = isStartDate => {
   let today = parseISO(new Date().toISOString());
   const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
