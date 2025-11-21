@@ -586,14 +586,14 @@ export default function ExecutiveDashboardPage() {
   };
 
   // Dynamically generate layouts for all charts in allowedQueries
-  const chartKeys = [
-    ...Object.keys(queries),
+  const chartkeys = [
+    ...chartKeys,
     'underAllocated',
     'overAllocated',
   ].filter(queryKey => hasAccessToQueryKey(queryKey));
 
   const layouts = {
-    lg: chartKeys.map((key, idx) => ({
+    lg: chartkeys.map((key, idx) => ({
       i: key,
       x: (idx % 2) * 6,
       y: Math.floor(idx / 2) * 3,
@@ -602,7 +602,7 @@ export default function ExecutiveDashboardPage() {
       minW: 5, // Minimum width in grid units (adjust as needed)
       minH: 3,
     })),
-    md: chartKeys.map((key, idx) => ({
+    md: chartkeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
@@ -611,7 +611,7 @@ export default function ExecutiveDashboardPage() {
       minW: 6, // Minimum width for medium screens
       minH: 3,
     })),
-    sm: chartKeys.map((key, idx) => ({
+    sm: chartkeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,

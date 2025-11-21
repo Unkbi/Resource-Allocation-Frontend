@@ -10,3 +10,15 @@ export interface ChartParams {
   teamAllocMgrFilter?: string[] | null;
   orgFilter?: string[] | null;
 }
+
+export interface AdvancedFilters {
+  ProjectTypeGroup?: string[];
+  ProjectType?: string[];
+  Team?: string[];
+  Resource?: string[];
+  AllocationManager?: string[];
+  ProjectManager?: string[];
+  Project?: string[];
+  Portfolio?: string[];
+  Organization?: string[];
+}
