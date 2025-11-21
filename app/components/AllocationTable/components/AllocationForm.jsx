@@ -1234,12 +1234,12 @@ const AllocationForm = () => {
           }
 
           // Check if team changed and update if needed
-          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
+          if (teamOrgData.teamName !== initialData.Team) {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
                 Resource: initialData.Id,
-                Team: teamOrgData.teamId,
+                Team: teamOrgData.teamId === '' ? null : teamOrgData.teamId,
               },
             });
           }
