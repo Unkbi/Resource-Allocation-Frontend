@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { FormikProps } from 'formik';
 import { RootState, AppDispatch } from '@/app/redux/store';
-import { CrudPermissions } from '../HOC/withRBAC';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { ProjectTypeGroup } from '@/app/types';
 import { FETCH_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
@@ -190,6 +190,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Project Type Group</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['ProjectTypeGroup'].r}
                     name="ProjectTypeGroup"
                     label="Select Project Type Group"
                     multiple={true}
@@ -202,6 +203,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1}}>
                 <StyledLabel>Project Type</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['ProjectType'].r}
                     name="ProjectType"
                     label="Project Type"
                     multiple={true}
@@ -213,6 +215,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Project Manager</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Resource'].r}
                     name="ProjectManager"
                     label="Project Manager"
                     multiple={true}
@@ -224,6 +227,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1}}>
                 <StyledLabel>Project</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Project'].r}
                     name="Project"
                     label="Project"
                     multiple={true}
@@ -235,6 +239,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
                 <StyledLabel>Portfolio</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Portfolio'].r}
                     name="Portfolio"
                     label="Portfolio"
                     multiple={true}
@@ -246,6 +251,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Team</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Team'].r}
                     name="Team"
                     label="Team"
                     multiple={true}
@@ -257,6 +263,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Resource</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Resource'].r}
                     name="Resource"
                     label="Resource"
                     multiple={true}
@@ -268,6 +275,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
                 <StyledLabel>Allocation Manager</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Resource'].r}
                     name="AllocationManager"
                     label="Allocation Manager"
                     multiple={true}
@@ -279,6 +287,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Organization</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Organization'].r}
                     name="Organization"
                     label="Organization"
                     multiple={true}
@@ -291,4 +300,12 @@ const AdvancedFiltersForm = ({
     );
 };
 
-export default AdvancedFiltersForm;
+export default withRBAC(AdvancedFiltersForm, [
+  'ProjectType',
+  'ProjectTypeGroup',
+  'Project',
+  'Portfolio',
+  'Team',
+  'Resource',
+  'Organization',
+]);
