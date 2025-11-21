@@ -1,3 +1,4 @@
+import axiosInstance from '../utils/apiClient';
 import apiClient from '../utils/apiClient';
 
 export interface DashboardFilterPayload {
@@ -28,14 +29,11 @@ export interface DashboardFilterPayload {
   GroupByClause?: string;
 }
 
-// Map chart keys to their API endpoints based on the query groups
 const CHART_API_MAPPING: Record<string, string> = {
-  // Group 1: Resource Project Inventory Metrics - Single API call for all 5 charts
-  activeProjects: '/Resource/ExecuteResourceProjectInventoryMetricsQuery',
-  activeProjectsByType: '/Resource/ExecuteResourceProjectInventoryMetricsQuery',
-  activeResources: '/Resource/ExecuteResourceProjectInventoryMetricsQuery',
-  resourceFTEContractorRatio: '/Resource/ExecuteResourceProjectInventoryMetricsQuery',
-  totalHeadcount: '/Resource/ExecuteResourceProjectInventoryMetricsQuery',
+
+  // Group 1: Actuals Status Plan Deviation Analytics
+  actualsConfirmed: '/Resource/ExecuteActualsStatusPlanDeviationAnalyticsQuery',
+  resourceActualsDeviation: '/Resource/ExecuteActualsStatusPlanDeviationAnalyticsQuery',
   
   // Group 2: Team Capacity Utilization Analytics
   capacityAvailability: '/Resource/ExecuteTeamCapacityUtilizationAnalyticsQuery',
@@ -45,18 +43,15 @@ const CHART_API_MAPPING: Record<string, string> = {
   // Group 3: Actual Hours Work Distribution
   unapprovedProjectActualsByTeam: '/Resource/ExecuteActualHoursWorkDistributionQuery',
   unapprovedProjectAllocation: '/Resource/ExecuteActualHoursWorkDistributionQuery',
-  
-  // Group 4: Cost Budget Variance Analytics
-  budgetVsPlanVsActual: '/Resource/ExecuteCostBudgetVarianceAnalyticsQuery',
-  totalResourceCost: '/Resource/ExecuteCostBudgetVarianceAnalyticsQuery',
-  
-  // Group 5: Allocation Percentage Project FTE Metrics
+
+   // Group 4: Allocation Percentage Project FTE Metrics
   allocationPercentage: '/Resource/ExecuteAllocationPercentageProjectFTEMetricsQuery',
   projectFTE: '/Resource/ExecuteAllocationPercentageProjectFTEMetricsQuery',
   
-  // Group 6: Actuals Status Plan Deviation Analytics
-  actualsConfirmed: '/Resource/ExecuteActualsStatusPlanDeviationAnalyticsQuery',
-  resourceActualsDeviation: '/Resource/ExecuteActualsStatusPlanDeviationAnalyticsQuery',
+  // Group 5: Cost Budget Variance Analytics
+  budgetVsPlanVsActual: '/Resource/ExecuteCostBudgetVarianceAnalyticsQuery',
+  totalResourceCost: '/Resource/ExecuteCostBudgetVarianceAnalyticsQuery',
+
 };
 
 /**
@@ -78,52 +73,6 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
 
   // Chart-specific payload configurations
   const payloadConfigs: Record<string, Partial<DashboardFilterPayload>> = {
-    // Group 1: Resource Project Inventory Metrics
-    activeProjects: {
-      StartDate: filters.StartDate,
-      EndDate: filters.EndDate,
-      TimeBucket: filters.TimeBucket || 'week',
-      StatusFilter: "AND proj.\"Status\" IN ('Active','Approved') ",
-      SelectColumns: '',
-      OrderByClause: '1',
-      ...baseFilters,
-    },
-    activeProjectsByType: {
-      StartDate: filters.StartDate,
-      EndDate: filters.EndDate,
-      TimeBucket: filters.TimeBucket || 'week',
-      StatusFilter: "AND proj.\"Status\" IN ('Active','Approved') ",
-      SelectColumns: '',
-      OrderByClause: '1',
-      ...baseFilters,
-    },
-    activeResources: {
-      StartDate: filters.StartDate,
-      EndDate: filters.EndDate,
-      TimeBucket: filters.TimeBucket || 'week',
-      StatusFilter: "AND proj.\"Status\" IN ('Active','Approved') ",
-      SelectColumns: '',
-      OrderByClause: '1',
-      ...baseFilters,
-    },
-    resourceFTEContractorRatio: {
-      StartDate: filters.StartDate,
-      EndDate: filters.EndDate,
-      TimeBucket: filters.TimeBucket || 'week',
-      StatusFilter: "AND proj.\"Status\" IN ('Active','Approved') ",
-      SelectColumns: '',
-      OrderByClause: '1',
-      ...baseFilters,
-    },
-    totalHeadcount: {
-      StartDate: filters.StartDate,
-      EndDate: filters.EndDate,
-      TimeBucket: filters.TimeBucket || 'week',
-      StatusFilter: "AND proj.\"Status\" IN ('Active','Approved') ",
-      SelectColumns: '',
-      OrderByClause: '1',
-      ...baseFilters,
-    },
 
     // Group 2: Team Capacity Utilization Analytics
     capacityAvailability: {
@@ -171,20 +120,20 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       TimeBucket: filters.TimeBucket || 'week',
       GroupByDimension: 'tm.team_id',
       ...baseFilters,
-      SelectColumns: 'ft.team_name, cal.period_start, cat.category, cat.units, ROUND(CASE WHEN bt.total_actuals = 0 THEN 0 ELSE ((cat.units::numeric / NULLIF(bt.total_actuals, 0)::numeric) * 100)::numeric END, 2) AS pct_of_actuals',
-      OrderByClause: 'ft.team_name, cal.period_start, cat.category',
+      SelectColumns: '',
+      OrderByClause: '',
       DynamicWhere: '',
     },
     unapprovedProjectAllocation: {
       StartDate: filters.StartDate,
       EndDate: filters.EndDate,
       TimeBucket: filters.TimeBucket || 'week',
-      GroupByDimension: 'tm.team_id',
       ...baseFilters,
-      SelectColumns: 'ft.team_name, cal.period_start, SUM(CASE WHEN cat.category = \'Unplanned Projects\' THEN cat.units ELSE 0 END)::numeric AS unapproved_actual_units',
-      OrderByClause: 'ft.team_name, cal.period_start',
+      SelectColumns: '',
+      OrderByClause: '',
       DynamicWhere: '',
-      GroupByClause: 'ft.team_name, cal.period_start',
+      GroupByClause: '',
+      GroupByDimension: ''
     },
 
     // Group 4: Cost Budget Variance Analytics
@@ -193,7 +142,8 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       EndDate: filters.EndDate,
       AnalysisType: 'budget_comparison',
       ...baseFilters,
-      ExcludedResourceType: '',
+      ExcludedResourceType: 'Contractor - PT',
+      OrderByClause: '1',
       DynamicWhere: 'AND x.analysis_type = \'budget_comparison\'',
     },
     totalResourceCost: {
@@ -201,7 +151,8 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       EndDate: filters.EndDate,
       AnalysisType: 'total_cost',
       ...baseFilters,
-      ExcludedResourceType: '',
+      ExcludedResourceType: 'Contractor - PT',
+      OrderByClause: '1',
       DynamicWhere: 'AND x.analysis_type = \'total_cost\'',
     },
 
@@ -214,21 +165,21 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       ...baseFilters,
       ExcludedResourceType: 'Contractor - PT',
       ExcludedProjectTypes: '',
-      SelectColumns: 'period_start, headcount, allocated_units, metric_value AS pct_allocated',
-      OrderByClause: 'period_start',
-      DynamicWhere: 'AND metric_type = \'allocation_percentage\'',
+      SelectColumns: '',
+      OrderByClause: '',
+      DynamicWhere: '',
     },
     projectFTE: {
       StartDate: filters.StartDate,
-      EndDate: filters.EndDate,
+      EndDate: '',
       TimeBucket: filters.TimeBucket || 'week',
       MetricType: 'project_fte',
       ...baseFilters,
       ExcludedResourceType: 'Contractor - PT',
       ExcludedProjectTypes: '',
-      SelectColumns: 'project_type, period_start, metric_value AS avg_weekly_fte',
-      OrderByClause: 'project_type, period_start',
-      DynamicWhere: 'AND metric_type = \'project_fte\'',
+      SelectColumns: '',
+      OrderByClause: '',
+      DynamicWhere: '',
     },
 
     // Group 6: Actuals Status Plan Deviation Analytics
@@ -239,8 +190,8 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       MetricType: 'actuals_confirmed',
       ...baseFilters,
       ExcludedResourceType: '',
-      SelectColumns: 'period_start, period_end, total_rows, confirmed_rows, pct_confirmed',
-      OrderByClause: 'period_start',
+      SelectColumns: '',
+      OrderByClause: '1',
       DynamicWhere: 'AND metric_type = \'actuals_confirmed\'',
     },
     resourceActualsDeviation: {
@@ -250,8 +201,7 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       MetricType: 'actuals_deviation',
       ...baseFilters,
       ExcludedResourceType: '',
-      SelectColumns: 'period_start, deviation_pct, in_plan_pct',
-      OrderByClause: 'period_start',
+      OrderByClause: '1',
       DynamicWhere: 'AND metric_type = \'actuals_deviation\'',
     },
   };
@@ -281,7 +231,7 @@ const extractChartData = (chartKey: string, apiResponse: any): any[] => {
       return responseData.shore_split || [];
     
     case 'totalHeadcount':
-      return responseData.resource_type_split || [];
+      return responseData.total_head_breakdown || [];
     
     default:
       // For non-grouped charts, return the full response
@@ -320,41 +270,11 @@ export const fetchDashboardChartData = async (
 /**
  * Batch fetch multiple charts from the same query group
  */
-export const fetchDashboardChartsByGroup = async (
-  chartKeys: string[],
-  filters: DashboardFilterPayload
-): Promise<Record<string, any[]>> => {
-  // Group charts by their API endpoint
-  const groupedCharts: Record<string, string[]> = {};
+export const fetchDashboardChartsByGroup = async (payload: DashboardFilterPayload) => {
+  const response = await axiosInstance.post(
+        '/Resource/ExecuteResourceProjectInventoryMetricsQuery',
+        payload
+      );
   
-  chartKeys.forEach(chartKey => {
-    const endpoint = CHART_API_MAPPING[chartKey];
-    if (endpoint) {
-      if (!groupedCharts[endpoint]) {
-        groupedCharts[endpoint] = [];
-      }
-      groupedCharts[endpoint].push(chartKey);
-    }
-  });
-
-  // Fetch each group once
-  const results: Record<string, any[]> = {};
-  
-  for (const [endpoint, charts] of Object.entries(groupedCharts)) {
-    try {
-      const data = await fetchDashboardChartData(charts[0], filters);
-      // Assign the same data to all charts in this group
-      charts.forEach(chartKey => {
-        results[chartKey] = data;
-      });
-    } catch (error) {
-      console.error(`Error fetching chart group for endpoint ${endpoint}:`, error);
-      // Set empty array for failed charts
-      charts.forEach(chartKey => {
-        results[chartKey] = [];
-      });
-    }
-  }
-  
-  return results;
+  return response.data || [];
 };

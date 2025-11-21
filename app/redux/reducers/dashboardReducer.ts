@@ -14,7 +14,9 @@ interface AdvancedFilters {
 
 interface DashboardChartState {
   advancedFilters: AdvancedFilters;
-  [chartKey: string]: any[] | AdvancedFilters;
+  loading: boolean;
+  loadingCharts: Record<string, boolean>;
+  [chartKey: string]: any[] | AdvancedFilters | boolean | Record<string, boolean>;
 }
 
 const initialState: DashboardChartState = {
@@ -29,6 +31,8 @@ const initialState: DashboardChartState = {
     Portfolio: [],
     Organization: [],
   },
+  loading: false,
+  loadingCharts: {},
 };
 
 const dashboardSlice = createSlice({
@@ -38,6 +42,12 @@ const dashboardSlice = createSlice({
     setDashboardChart: (state, action) => {
       const { chartKey, data } = action.payload;
       state[chartKey] = data;
+      // Remove from loading object when data is received
+      delete state.loadingCharts[chartKey];
+      // Turn off loading if no more charts are loading
+      if (Object.keys(state.loadingCharts).length === 0) {
+        state.loading = false;
+      }
     },
     setAdvancedFilters: (state, action) => {
       state.advancedFilters = {
@@ -66,9 +76,24 @@ const dashboardSlice = createSlice({
         advancedFilters: filters,
       };
     },
+    setDashboardLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    startChartLoading: (state, action) => {
+      // Add chart to loading object and set loading to true
+      state.loadingCharts[action.payload] = true;
+      state.loading = true;
+    },
+    startMultipleChartsLoading: (state, action) => {
+      // Add multiple charts to loading object
+      action.payload.forEach((chartKey: string) => {
+        state.loadingCharts[chartKey] = true;
+      });
+      state.loading = true;
+    },
   },
 });
 
-export const { setDashboardChart, setAdvancedFilters, clearAdvancedFilters, resetDashboardCharts } = dashboardSlice.actions;
+export const { setDashboardChart, setAdvancedFilters, clearAdvancedFilters, resetDashboardCharts, setDashboardLoading, startChartLoading, startMultipleChartsLoading } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

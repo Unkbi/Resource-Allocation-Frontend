@@ -1,22 +1,23 @@
 import { call, put, takeEvery, select, all } from 'redux-saga/effects';
 import { ChartParams } from '../../types/dashboardTypes';
 import { fetchDashboardChart, fetchInventoryMetrics } from '../actions/dashboardAction';
-import { setDashboardChart } from '../reducers/dashboardReducer';
+import { setDashboardChart, startChartLoading, startMultipleChartsLoading } from '../reducers/dashboardReducer';
 import { RootState } from '../store';
-import { fetchDashboardChartData, DashboardFilterPayload } from '../../services/dashboardServices';
+import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup } from '../../services/dashboardServices';
 import apiClient from '../../utils/apiClient';
 
 function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<any, void, any> {
   const { chartKey, startDate, endDate, bucket } = action.payload;
   
+  // Mark this chart as loading
+  yield put(startChartLoading(chartKey));
+  
   // Selector to get advanced filters
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
   
   try {
-    // Get advanced filters from Redux state
     const advancedFilters: ReturnType<typeof selectAdvancedFilters> = yield select(selectAdvancedFilters);
     
-    // Build the filter payload using only advanced filters (already in correct array format)
     const filterPayload: DashboardFilterPayload = {
       StartDate: startDate,
       EndDate: endDate,
@@ -32,13 +33,11 @@ function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<a
       AllocationManagers: advancedFilters.AllocationManager || [],
     };
 
-    // Call the new service to fetch data
     const data: any[] = yield call(fetchDashboardChartData, chartKey, filterPayload);
 
     yield put(setDashboardChart({ chartKey, data }));
   } catch (err) {
     console.error(`Dashboard chart fetch failed for ${chartKey}`, err);
-    // Set empty data on error
     yield put(setDashboardChart({ chartKey, data: [] }));
   }
 }
@@ -46,14 +45,20 @@ function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<a
 function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator<any, void, any> {
   const { startDate, endDate, bucket } = action.payload;
   
-  // Selector to get advanced filters
+  // Mark all inventory charts as loading
+  yield put(startMultipleChartsLoading([
+    'activeProjects',
+    'activeProjectsByType', 
+    'activeResources',
+    'resourceFTEContractorRatio',
+    'totalHeadcount'
+  ]));
+  
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
   
   try {
-    // Get advanced filters from Redux state
     const advancedFilters: ReturnType<typeof selectAdvancedFilters> = yield select(selectAdvancedFilters);
     
-    // Build the payload using only advanced filters (already in correct array format)
     const payload = {
       StartDate: startDate,
       EndDate: endDate,
@@ -67,21 +72,17 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       ProjectManagers: advancedFilters.ProjectManager || [],
       Resources: advancedFilters.Resource || [],
       AllocationManagers: advancedFilters.AllocationManager || [],
+      StatusFilter: "AND proj.\"Status\" IN ('Active','Approved') ",
+      SelectColumns: '',
+      OrderByClause: '1',
     };
 
     // Single API call for all inventory metrics
-    const response: any = yield call(
-      apiClient.post,
-      '/Resource/ExecuteResourceProjectInventoryMetricsQuery',
-      payload
-    );
-    
-    const rawData = response.data || [];
+    const rawData = yield call(fetchDashboardChartsByGroup,payload);
     
     if (rawData.length > 0) {
       const responseData = rawData[0];
       
-      // Distribute data to individual charts
       yield all([
         put(setDashboardChart({ 
           chartKey: 'activeProjects', 
@@ -101,28 +102,32 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         })),
         put(setDashboardChart({ 
           chartKey: 'totalHeadcount', 
-          data: responseData.resource_type_split || [] 
+          data: responseData.total_head_breakdown || [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'headcountByTeam', 
+          data: responseData.headcount_by_team || [] 
         })),
       ]);
     } else {
-      // Set empty data for all charts if no response
       yield all([
         put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
         put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
         put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
         put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),
         put(setDashboardChart({ chartKey: 'totalHeadcount', data: [] })),
+        put(setDashboardChart({ chartKey: 'headcountByTeam', data: [] })),
       ]);
     }
   } catch (err) {
     console.error('Inventory metrics fetch failed', err);
-    // Set empty data on error for all charts
     yield all([
       put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
       put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
       put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
       put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),
       put(setDashboardChart({ chartKey: 'totalHeadcount', data: [] })),
+      put(setDashboardChart({ chartKey: 'headcountByTeam', data: [] })),
     ]);
   }
 }

@@ -20,7 +20,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import { LineChart, PieChart, BarChart } from '@mui/x-charts';
+import { LineChart, PieChart, BarChart, pieArcLabelClasses } from '@mui/x-charts';
 import DashboardWidget from '../../components/Dashboard/DashboardWidget';
 import DashboardToolbar from '../../components/Toolbar/DashboardToolbar';
 import 'react-grid-layout/css/styles.css';
@@ -29,6 +29,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardChart, fetchInventoryMetrics } from '../../redux/actions/dashboardAction';
+import { startMultipleChartsLoading, setDashboardLoading } from '../../redux/reducers/dashboardReducer';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -116,7 +117,9 @@ export default function ExecutiveDashboardPage() {
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
   const advancedFilters = useSelector(state => state.dashboard.advancedFilters || {});
-  
+  const dashboardLoading = useSelector(state => state.dashboard.loading);
+  const [initialLoad, setInitialLoad] = useState(true);
+
   const capacityAvailability = useSelector(
     state => state.dashboard.capacityAvailability || []
   );
@@ -259,24 +262,32 @@ export default function ExecutiveDashboardPage() {
         'activeProjects',
         'activeProjectsByType',
         'activeResources',
-        'resourceFTEContractorRatio',
         'totalHeadcount',
+        'resourceFTEContractorRatio',
       ];
-      
+
       // Individual charts (separate API calls)
       const individualCharts = [
+        'resourceActualsDeviation',
+        'unapprovedProjectAllocation',
+        'projectFTE',
         'capacityAvailability',
         'resourceCoverage',
         'resourceUtilization',
         'unapprovedProjectActualsByTeam',
-        'unapprovedProjectAllocation',
         'budgetVsPlanVsActual',
         'totalResourceCost',
         'allocationPercentage',
-        'projectFTE',
         'actualsConfirmed',
-        'resourceActualsDeviation',
+        
       ];
+
+      // Set loading state at the start of data fetch only on initial load or when filters change
+      if (initialLoad) {
+        // Start loading for all charts that will be fetched
+        const allChartKeys = [...inventoryMetricsCharts, ...individualCharts];
+        dispatch(startMultipleChartsLoading(allChartKeys));
+      }
 
       // Fetch inventory metrics as a batch (single API call)
       const inventoryMetricsKey = 'inventoryMetrics';
@@ -291,7 +302,7 @@ export default function ExecutiveDashboardPage() {
       const inventoryRequestKey = JSON.stringify(inventoryParamsForKey);
       if (lastRequestKeyRef.current[inventoryMetricsKey] !== inventoryRequestKey) {
         lastRequestKeyRef.current[inventoryMetricsKey] = inventoryRequestKey;
-        
+
         dispatch(
           fetchInventoryMetrics({
             startDate: startDate,
@@ -424,16 +435,26 @@ export default function ExecutiveDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (
+    // Check if all required data is loaded
+    const allDataLoaded =
       capacityAvailability.length > 0 &&
       resourceUtilization.length > 0 &&
       unapprovedProjectAllocation.length > 0 &&
       actualsConfirmed.length > 0 &&
       unapprovedProjectActualsByTeam.length > 0 &&
       resourceActualsDeviation.length > 0 &&
-      allocationPercentage.length > 0
-    ) {
-      filterDataByDate(selectedDate);
+      allocationPercentage.length > 0 &&
+      // Check inventory metrics data
+      (activeProjects.length > 0 || activeProjectsByType.length > 0) &&
+      (activeResources.length > 0 || resourceFTEContractorRatio.length > 0 || totalHeadcount.length > 0);
+    filterDataByDate(selectedDate);
+    if (allDataLoaded) {
+
+      // Turn off loading when all data is loaded
+      if (initialLoad) {
+        setInitialLoad(false);
+        // Loading will be turned off automatically by the reducer when all charts are loaded
+      }
     }
   }, [
     capacityAvailability,
@@ -443,7 +464,14 @@ export default function ExecutiveDashboardPage() {
     unapprovedProjectActualsByTeam,
     resourceActualsDeviation,
     allocationPercentage,
+    activeProjects,
+    activeProjectsByType,
+    activeResources,
+    resourceFTEContractorRatio,
+    totalHeadcount,
     selectedDate,
+    dashboardLoading,
+    initialLoad,
   ]);
 
 
@@ -574,7 +602,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Actual Vs Plan Deviation <span style={{fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)'}}>(Previous week)</span>
+                Actual Vs Plan Deviation <span style={{ fontSize: dimensions.width < 400 ? '12px' : '14px', color: 'rgba(0, 0, 0, 0.6)' }}>(Previous week)</span>
               </Typography>
               <Box
                 sx={{
@@ -692,7 +720,9 @@ export default function ExecutiveDashboardPage() {
                           };
                         }
                       ),
-                      innerRadius: 0,
+                      innerRadius: 70,
+                      arcLabel: (item) => `${item.data}`,
+                      arcLabelRadius: '70%',
                       outerRadius: config.outerRadius || 80,
                       cornerRadius: 3,
                       highlightScope: { faded: 'global', highlighted: 'item' },
@@ -701,6 +731,12 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   width={config.width}
                   height={config.height}
+                  sx={{
+                    [`& .${pieArcLabelClasses.root}`]: {
+                      fontSize: '12px',
+                      fontWeight: 600,
+                    },
+                  }}
                   slotProps={{
                     legend: config.legend,
                   }}
@@ -719,7 +755,29 @@ export default function ExecutiveDashboardPage() {
         minHeight={280}
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'pie');
+          const config = useResponsiveChart(dimensions, 'bar');
+          
+          // Transform the data structure from API
+          // API returns: [{shore_flag: "Onshore", FTE: 55, "Contractor - FT": 10, ...}, {...}]
+          const shoreLabels = (totalHeadcount || []).map(item => item.shore_flag);
+          
+          // Define employee types and their colors
+          const employeeTypes = [
+            { key: 'FTE', label: 'FTE', color: '#0080FF' },
+            { key: 'Contractor - FT', label: 'Contractor - FT', color: '#00C9A7' },
+            { key: 'Contractor - PT', label: 'Contractor - PT', color: '#FFB6B6' },
+            { key: 'Intern', label: 'Intern', color: '#FF884D' },
+          ];
+          
+          // Create series data for each employee type
+          const seriesData = employeeTypes.map(type => ({
+            label: type.label,
+            id: type.key,
+            data: (totalHeadcount || []).map(item => Number(item[type.key] || 0)),
+            color: type.color,
+            stack: 'total',
+          }));
+          
           return (
             <Box
               sx={{
@@ -739,48 +797,32 @@ export default function ExecutiveDashboardPage() {
               >
                 Total Headcount Breakdown
               </Typography>
-              <Box
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  width: '100%',
-                }}
-              >
-                <PieChart
-                  series={[
-                    {
-                      data: (totalHeadcount || []).map((item, idx) => ({
-                        id: idx,
-                        value: Number(item.count),
-                        label: truncateLabel(
-                          item._type,
-                          dimensions.width < 400 ? 14 : 18
-                        ),
-                        color:
-                          item._type === 'FTE'
-                            ? '#0080FF'
-                            : item._type === 'Contractor - FT'
-                              ? '#00C9A7'
-                              : item._type === 'Intern'
-                                ? '#FF884D'
-                                : item._type === 'Contractor - PT'
-                                  ? '#FFB6B6'
-                                  : undefined,
-                      })),
-                      innerRadius: 0,
-                      outerRadius: config.outerRadius || 80,
-                      cornerRadius: 3,
-                      highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -10, color: 'gray' },
-                    },
-                  ]}
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                <BarChart
                   width={config.width}
                   height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      data: shoreLabels,
+                      label: '',
+                      scaleType: 'band',
+                      categoryGapRatio: 0.7,
+                      barGapRatio: 0.1,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Resources',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
                   slotProps={{
                     legend: config.legend,
                   }}
+                  margin={{ left: 20, right: 20, top: 20, bottom: 60 }}
                 />
               </Box>
             </Box>
@@ -855,83 +897,81 @@ export default function ExecutiveDashboardPage() {
       </DashboardWidget>
     ),
 
-    resourceFTEContractorRatio: (
-      <DashboardWidget
-        onClick={() => handleChartClick('FTE vs Contractor Ratio')}
-        minWidth={320}
-        minHeight={280}
-      >
-        {dimensions => {
-          const config = useResponsiveChart(dimensions, 'bar');
-          return (
-            <Box
-              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 1,
-                  fontSize: dimensions.width < 400 ? '16px' : '18px',
-                  fontWeight: 600,
-                }}
-              >
-                FTE vs Contractor Ratio
-              </Typography>
-              <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                <BarChart
-                  width={config.width}
-                  height={config.height}
-                  series={[
-                    {
-                      data: resourceFTEContractorRatio.map(d =>
-                        Number.parseFloat(d.fte_cnt)
-                      ),
-                      label: 'FTE',
-                      id: 'fteCount',
-                      color: '#4CAF50',
-                      stack: 'total',
-                    },
-                    {
-                      data: resourceFTEContractorRatio.map(d =>
-                        Number.parseFloat(d.contractor_cnt)
-                      ),
-                      label: 'Contractor',
-                      id: 'contractorCount',
-                      color: '#FF5722',
-                      stack: 'total',
-                    },
-                  ]}
-                  xAxis={[
-                    {
-                      data: resourceFTEContractorRatio.map(d =>
-                        formatTeamName(
-                          d.shore_flag,
-                          dimensions.width < 400 ? 6 : 10,
-                          resourceFTEContractorRatio.length
-                        )
-                      ),
-                      label: 'Workforce Distribution',
-                      //tickLabelStyle: config.xAxis?.tickLabelStyle,
-                    },
-                  ]}
-                  yAxis={[
-                    {
-                      label: 'No. of Resources',
-                      min: 0,
-                      width: config.yAxis?.width || 50,
-                      labelStyle: config.yAxis?.labelStyle,
-                    },
-                  ]}
-                  slotProps={{
-                    legend: config.legend,
-                  }}
-                />
-              </Box>
-            </Box>
-          );
-        }}
-      </DashboardWidget>
-    ),
+    // resourceFTEContractorRatio: (
+    //   <DashboardWidget
+    //     onClick={() => handleChartClick('FTE vs Contractor Ratio')}
+    //     minWidth={320}
+    //     minHeight={280}
+    //   >
+    //     {dimensions => {
+    //       const config = useResponsiveChart(dimensions, 'bar');
+          
+    //       // Use the same data as totalHeadcount but show only FTE vs Contractor summary
+    //       const shoreLabels = (resourceFTEContractorRatio || []).map(item => item.shore_flag);
+          
+    //       return (
+    //         <Box
+    //           sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+    //         >
+    //           <Typography
+    //             variant="h6"
+    //             sx={{
+    //               mb: 1,
+    //               fontSize: dimensions.width < 400 ? '16px' : '18px',
+    //               fontWeight: 600,
+    //             }}
+    //           >
+    //             FTE vs Contractor Ratio
+    //           </Typography>
+    //           <Box sx={{ flex: 1, overflow: 'hidden' }}>
+    //             <BarChart
+    //               width={config.width}
+    //               height={config.height}
+    //               series={[
+    //                 {
+    //                   data: (resourceFTEContractorRatio || []).map(d =>
+    //                     Number(d.fte_cnt || d.FTE || 0)
+    //                   ),
+    //                   label: 'FTE',
+    //                   id: 'fteCount',
+    //                   color: '#4CAF50',
+    //                   stack: 'total',
+    //                 },
+    //                 {
+    //                   data: (resourceFTEContractorRatio || []).map(d =>
+    //                     Number(d.contractor_cnt || 0)
+    //                   ),
+    //                   label: 'Contractor',
+    //                   id: 'contractorCount',
+    //                   color: '#FF5722',
+    //                   stack: 'total',
+    //                 },
+    //               ]}
+    //               xAxis={[
+    //                 {
+    //                   data: shoreLabels,
+    //                   label: 'Location',
+    //                   scaleType: 'band',
+    //                 },
+    //               ]}
+    //               yAxis={[
+    //                 {
+    //                   label: 'No. of Resources',
+    //                   min: 0,
+    //                   width: config.yAxis?.width || 50,
+    //                   labelStyle: config.yAxis?.labelStyle,
+    //                 },
+    //               ]}
+    //               slotProps={{
+    //                 legend: config.legend,
+    //               }}
+    //             />
+    //           </Box>
+    //         </Box>
+    //       );
+    //     }}
+    //   </DashboardWidget>
+    // ),
   };
 
   const projectCharts = {
@@ -1555,8 +1595,31 @@ export default function ExecutiveDashboardPage() {
     ...new Set(projectTypeGroups.map(d => d.Name)),
   ];
 
+  // Show loading screen while data is being fetched
+  if (dashboardLoading && initialLoad) {
+    return <LoadingScreen />;
+  }
+
   return (
     <>
+      {dashboardLoading && !initialLoad && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <LoadingScreen />
+        </Box>
+      )}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Global
           styles={css`
@@ -1648,11 +1711,11 @@ export default function ExecutiveDashboardPage() {
             />
             <DashboardToolbar
               selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          selectedOption={selectedOption}
-          setSelectedOption={setSelectedOption}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
+              setSelectedDate={setSelectedDate}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              anchorEl={anchorEl}
+              setAnchorEl={setAnchorEl}
             />
           </Tabs>
         </CommonToolbar>
