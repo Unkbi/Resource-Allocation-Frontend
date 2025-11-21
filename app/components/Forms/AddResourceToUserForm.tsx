@@ -86,7 +86,6 @@ const AddResourceToUserForm = ({
     }));
 
   const handleNavigate = () => {
-    dispatch(closeDialog());
     window.open("/settings?menu=access-management&tab=role-assignments", "_blank");
   };
 
