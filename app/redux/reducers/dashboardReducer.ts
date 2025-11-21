@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-interface AdvancedFilters {
+export interface AdvancedFilters {
   ProjectTypeGroup?: string;
   ProjectType?: string;
   Team?: string;
@@ -13,11 +13,23 @@ interface AdvancedFilters {
 }
 
 interface DashboardChartState {
+  defualtAdvancedFilters: AdvancedFilters;
   advancedFilters: AdvancedFilters;
   [chartKey: string]: any[] | AdvancedFilters;
 }
 
 const initialState: DashboardChartState = {
+  defualtAdvancedFilters: {
+    ProjectTypeGroup: '',
+    ProjectType: '',
+    Team: '',
+    Resource: '',
+    AllocationManager: '',
+    ProjectManager: '',
+    Project: '',
+    Portfolio: '',
+    Organization: '',
+  },
   advancedFilters: {
     ProjectTypeGroup: '',
     ProjectType: '',
@@ -39,27 +51,19 @@ const dashboardSlice = createSlice({
       const { chartKey, data } = action.payload;
       state[chartKey] = data;
     },
+    setDefaultAdvancedFilters: (state, action) => {
+      state.defualtAdvancedFilters = action.payload;
+    },
     setAdvancedFilters: (state, action) => {
-      console.log('Reducer - Setting advanced filters:', action.payload, state.advancedFilters);
       state.advancedFilters = {
         ...state.advancedFilters,
         ...action.payload,
       };
     },
-    clearAdvancedFilters: (state) => {
-      state.advancedFilters = {
-        ProjectTypeGroup: '',
-        ProjectType: '',
-        Team: '',
-        Resource: '',
-        AllocationManager: '',
-        ProjectManager: '',
-        Project: '',
-        Portfolio: '',
-        Organization: '',
-      };
+    clearAdvancedFilters: state => {
+      state.advancedFilters = state.defualtAdvancedFilters;
     },
-    resetDashboardCharts: (state) => {
+    resetDashboardCharts: state => {
       // Reset all chart data but preserve advanced filters
       const filters = state.advancedFilters;
       return {
@@ -70,6 +74,12 @@ const dashboardSlice = createSlice({
   },
 });
 
-export const { setDashboardChart, setAdvancedFilters, clearAdvancedFilters, resetDashboardCharts } = dashboardSlice.actions;
+export const {
+  setDashboardChart,
+  setDefaultAdvancedFilters,
+  setAdvancedFilters,
+  clearAdvancedFilters,
+  resetDashboardCharts,
+} = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;
