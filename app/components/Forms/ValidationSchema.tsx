@@ -1,6 +1,5 @@
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
-import { RootState } from '@/app/redux/store';
-import { useSelector } from 'react-redux';
+import { ScalarSettings } from '@/app/types';
 import * as Yup from 'yup';
 
 interface Project {
@@ -444,11 +443,9 @@ export const openHistoryValidationSchema = Yup.object({
 });
 export const addPortfolioValidationSchema = (
   portfolios: any,
+  scalarSettings: ScalarSettings,
   initialName = ''
 ) => {
-  const { scalarSettings } = useSelector(
-    (state: RootState) => state.allSettings
-  );
   const portfolioNames = Array.isArray(portfolios)
     ? portfolios.map(p => p.Name?.toLowerCase().trim())
     : [];
