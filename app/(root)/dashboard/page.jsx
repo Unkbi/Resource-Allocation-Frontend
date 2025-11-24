@@ -25,7 +25,7 @@ import {
   LineChart,
   PieChart,
   BarChart,
-  pieArcLabelClasses
+  pieArcLabelClasses,
 } from '@mui/x-charts';
 import {
   ChartContainer,
@@ -35,7 +35,7 @@ import {
   ChartsXAxis,
   ChartsYAxis,
   ChartsLegend,
-  ChartsTooltip
+  ChartsTooltip,
 } from '@mui/x-charts';
 import DashboardWidget from '../../components/Dashboard/DashboardWidget';
 import DashboardToolbar from '../../components/Toolbar/DashboardToolbar';
@@ -44,8 +44,14 @@ import 'react-resizable/css/styles.css';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDashboardChart, fetchInventoryMetrics } from '../../redux/actions/dashboardAction';
-import { startMultipleChartsLoading, setDashboardLoading } from '../../redux/reducers/dashboardReducer';
+import {
+  fetchDashboardChart,
+  fetchInventoryMetrics,
+} from '../../redux/actions/dashboardAction';
+import {
+  startMultipleChartsLoading,
+  setDashboardLoading,
+} from '../../redux/reducers/dashboardReducer';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -86,13 +92,9 @@ const OVERVIEW_CHART_SEQUENCE = [
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
-
 ];
 
-const PROJECT_CHART_SEQUENCE = [
-  'projectFTE',
-  'budgetVsPlanVsActual',
-];
+const PROJECT_CHART_SEQUENCE = ['projectFTE', 'budgetVsPlanVsActual'];
 
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
@@ -103,7 +105,7 @@ const TEAM_CHART_SEQUENCE = [
   'overAllocated',
 ];
 
-const generateLayouts = (chartKeys) => ({
+const generateLayouts = chartKeys => ({
   lg: chartKeys.map((key, idx) => ({
     i: key,
     x: (idx % 2) * 6,
@@ -137,7 +139,9 @@ export default function ExecutiveDashboardPage() {
   const dispatch = useDispatch();
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
-  const advancedFilters = useSelector(state => state.dashboard.advancedFilters || {});
+  const advancedFilters = useSelector(
+    state => state.dashboard.advancedFilters || {}
+  );
   const dashboardLoading = useSelector(state => state.dashboard.loading);
   const [initialLoad, setInitialLoad] = useState(true);
 
@@ -229,8 +233,8 @@ export default function ExecutiveDashboardPage() {
     '#4169E1', // Blue
     '#FFD700', // Yellow
     '#00C9A7', // Green
-    '#FFA500',  // Orange
-    '#FF6B6B',  // Red
+    '#FFA500', // Orange
+    '#FF6B6B', // Red
     '#4ECDC4', // Teal
     '#9C27B0', // Purple
     '#53C1DE', // Light Blue
@@ -266,19 +270,24 @@ export default function ExecutiveDashboardPage() {
 
   // Memoize projectTypeColorMap for pie chart
   const projectTypeColorMap = useMemo(() => {
-    if (!filteredActiveProjectsByType || filteredActiveProjectsByType.length === 0)
+    if (
+      !filteredActiveProjectsByType ||
+      filteredActiveProjectsByType.length === 0
+    )
       return {};
 
     const map = {};
     filteredActiveProjectsByType.forEach((item, index) => {
-      const typeName = projectTypeGroups?.find(pt => pt.Name === item._type)?.Name || item._type;
+      const typeName =
+        projectTypeGroups?.find(pt => pt.Name === item._type)?.Name ||
+        item._type;
       map[typeName] = colorPalette[index % colorPalette.length];
     });
     return map;
   }, [filteredActiveProjectsByType, projectTypeGroups]);
   useEffect(() => {
     const saved = localStorage.getItem('dashboardLayout');
-    const parsed = saved ? JSON.parse(saved) : layouts.md;
+    const parsed = saved ? JSON.parse(saved) : overviewLayouts?.md;
     setLayout(parsed);
   }, []);
 
@@ -357,7 +366,7 @@ export default function ExecutiveDashboardPage() {
         'plan_vs_actual_variance',
         'team_headcount_distribution',
         'top_projects_by_variance',
-        'projects_by_type_distribution'
+        'projects_by_type_distribution',
       ];
 
       // Individual charts (separate API calls)
@@ -392,7 +401,9 @@ export default function ExecutiveDashboardPage() {
       };
 
       const inventoryRequestKey = JSON.stringify(inventoryParamsForKey);
-      if (lastRequestKeyRef.current[inventoryMetricsKey] !== inventoryRequestKey) {
+      if (
+        lastRequestKeyRef.current[inventoryMetricsKey] !== inventoryRequestKey
+      ) {
         lastRequestKeyRef.current[inventoryMetricsKey] = inventoryRequestKey;
 
         dispatch(
@@ -407,12 +418,19 @@ export default function ExecutiveDashboardPage() {
       // Fetch individual charts
       individualCharts.forEach(chartKey => {
         const queryStart =
-          (chartKey === 'plan_vs_actual_variance' || chartKey === 'actualsConfirmed') && selectedOption === 'week'
+          (chartKey === 'plan_vs_actual_variance' ||
+            chartKey === 'actualsConfirmed') &&
+          selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
-          (chartKey === 'plan_vs_actual_variance' || chartKey === 'actualsConfirmed') && selectedOption === 'week'
-            ? getMonday(selectedDate).subtract(1, 'week').add(6, 'day').format('YYYY-MM-DD')
+          (chartKey === 'plan_vs_actual_variance' ||
+            chartKey === 'actualsConfirmed') &&
+          selectedOption === 'week'
+            ? getMonday(selectedDate)
+                .subtract(1, 'week')
+                .add(6, 'day')
+                .format('YYYY-MM-DD')
             : endDate;
 
         const paramsForKey = {
@@ -557,7 +575,6 @@ export default function ExecutiveDashboardPage() {
       (activeResources.length > 0 || totalHeadcount.length > 0);
     filterDataByDate(selectedDate);
     if (allDataLoaded) {
-
       // Turn off loading when all data is loaded
       if (initialLoad) {
         setInitialLoad(false);
@@ -628,9 +645,15 @@ export default function ExecutiveDashboardPage() {
   };
 
   // Filter charts based on user permissions
-  const allowedOverviewCharts = OVERVIEW_CHART_SEQUENCE.filter(queryKey => hasAccessToQueryKey(queryKey));
-  const allowedProjectCharts = PROJECT_CHART_SEQUENCE.filter(queryKey => hasAccessToQueryKey(queryKey));
-  const allowedTeamCharts = TEAM_CHART_SEQUENCE.filter(queryKey => hasAccessToQueryKey(queryKey));
+  const allowedOverviewCharts = OVERVIEW_CHART_SEQUENCE.filter(queryKey =>
+    hasAccessToQueryKey(queryKey)
+  );
+  const allowedProjectCharts = PROJECT_CHART_SEQUENCE.filter(queryKey =>
+    hasAccessToQueryKey(queryKey)
+  );
+  const allowedTeamCharts = TEAM_CHART_SEQUENCE.filter(queryKey =>
+    hasAccessToQueryKey(queryKey)
+  );
   // Generate layouts for each tab
   const overviewLayouts = generateLayouts(allowedOverviewCharts);
   const projectLayouts = generateLayouts(allowedProjectCharts);
@@ -722,24 +745,35 @@ export default function ExecutiveDashboardPage() {
           const config = useResponsiveChart(dimensions, 'bar');
 
           // Extract project type groups for x-axis
-          const projectTypeGroups = plan_vs_actual_variance.length > 0
-            ? [...new Set(plan_vs_actual_variance.map(d => d.project_type_group))]
-            : [];
+          const projectTypeGroups =
+            plan_vs_actual_variance.length > 0
+              ? [
+                  ...new Set(
+                    plan_vs_actual_variance.map(d => d.project_type_group)
+                  ),
+                ]
+              : [];
 
           // Prepare data for bars (Plan and Actuals)
           const planData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(d => d.project_type_group === group);
+            const item = plan_vs_actual_variance.find(
+              d => d.project_type_group === group
+            );
             return item ? Number(item.planned_units || 0) : 0;
           });
 
           const actualsData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(d => d.project_type_group === group);
+            const item = plan_vs_actual_variance.find(
+              d => d.project_type_group === group
+            );
             return item ? Number(item.actual_units || 0) : 0;
           });
 
           // Prepare data for line (Absolute Variance %)
           const varianceData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(d => d.project_type_group === group);
+            const item = plan_vs_actual_variance.find(
+              d => d.project_type_group === group
+            );
             return item ? Number(item.absolute_variance || 0) : 0;
           });
 
@@ -774,48 +808,58 @@ export default function ExecutiveDashboardPage() {
               </Typography>
 
               {/* Custom Legend */}
-              <Box sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 3,
-                mb: 1,
-                fontSize: '14px'
-              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 3,
+                  mb: 1,
+                  fontSize: '14px',
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{
-                    width: 16,
-                    height: 16,
-                    bgcolor: '#FFE66D',
-                    borderRadius: '2px'
-                  }} />
+                  <Box
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      bgcolor: '#FFE66D',
+                      borderRadius: '2px',
+                    }}
+                  />
                   <Typography variant="body2">Plan</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{
-                    width: 16,
-                    height: 16,
-                    bgcolor: '#FF884D',
-                    borderRadius: '2px'
-                  }} />
+                  <Box
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      bgcolor: '#FF884D',
+                      borderRadius: '2px',
+                    }}
+                  />
                   <Typography variant="body2">Actuals</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{
-                    width: 20,
-                    height: 3,
-                    bgcolor: '#0080FF',
-                    position: 'relative'
-                  }}>
-                    <Box sx={{
-                      position: 'absolute',
-                      width: 8,
-                      height: 8,
+                  <Box
+                    sx={{
+                      width: 20,
+                      height: 3,
                       bgcolor: '#0080FF',
-                      borderRadius: '50%',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)'
-                    }} />
+                      position: 'relative',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        width: 8,
+                        height: 8,
+                        bgcolor: '#0080FF',
+                        borderRadius: '50%',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    />
                   </Box>
                   <Typography variant="body2">Absolute Variance</Typography>
                 </Box>
@@ -921,8 +965,10 @@ export default function ExecutiveDashboardPage() {
               flex: 1,
               minWidth: 150,
               headerClassName: 'custom-header',
-              renderCell: (params) => (
-                <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
+              renderCell: params => (
+                <Typography
+                  sx={{ fontSize: '14px', fontWeight: 500, color: '#333' }}
+                >
                   {params.value || 'N/A'}
                 </Typography>
               ),
@@ -933,7 +979,7 @@ export default function ExecutiveDashboardPage() {
               flex: 0.8,
               minWidth: 120,
               headerClassName: 'custom-header',
-              renderCell: (params) => (
+              renderCell: params => (
                 <Typography sx={{ fontSize: '14px', color: '#666' }}>
                   {params.value || 'N/A'}
                 </Typography>
@@ -946,7 +992,7 @@ export default function ExecutiveDashboardPage() {
               align: 'center',
               headerAlign: 'center',
               headerClassName: 'custom-header',
-              renderCell: (params) => (
+              renderCell: params => (
                 <Typography sx={{ fontSize: '14px', color: '#666' }}>
                   {Number(params.value || 0).toFixed(1)}
                 </Typography>
@@ -959,7 +1005,7 @@ export default function ExecutiveDashboardPage() {
               align: 'center',
               headerAlign: 'center',
               headerClassName: 'custom-header',
-              renderCell: (params) => (
+              renderCell: params => (
                 <Typography sx={{ fontSize: '14px', color: '#666' }}>
                   {Number(params.value || 0).toFixed(1)}
                 </Typography>
@@ -972,25 +1018,23 @@ export default function ExecutiveDashboardPage() {
               align: 'center',
               headerAlign: 'center',
               headerClassName: 'custom-header',
-              renderCell: (params) => {
+              renderCell: params => {
                 const variance = Number(params.value || 0);
                 const actualUnits = Number(params.row.actual_units || 0);
-                const varianceColor = variance > 0
-                  ? '#ef5350'
-                  : variance < 0
-                    ? '#26a69a'
-                    : '#666';
+                const varianceColor =
+                  variance > 0 ? '#ef5350' : variance < 0 ? '#26a69a' : '#666';
                 const varianceSign = variance > 0 ? '+' : '';
-                const displayVariance = variance === 0 || actualUnits === 0
-                  ? '--'
-                  : `${varianceSign}${variance.toFixed(1)}`;
+                const displayVariance =
+                  variance === 0 || actualUnits === 0
+                    ? '--'
+                    : `${varianceSign}${variance.toFixed(1)}`;
 
                 return (
                   <Typography
                     sx={{
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: varianceColor
+                      color: varianceColor,
                     }}
                   >
                     {displayVariance}
@@ -1001,10 +1045,12 @@ export default function ExecutiveDashboardPage() {
           ];
 
           // Prepare rows with unique IDs
-          const rows = filteredTop5Projects.slice(0, 5).map((project, index) => ({
-            id: index,
-            ...project,
-          }));
+          const rows = filteredTop5Projects
+            .slice(0, 5)
+            .map((project, index) => ({
+              id: index,
+              ...project,
+            }));
 
           return (
             <Box
@@ -1144,7 +1190,9 @@ export default function ExecutiveDashboardPage() {
                             : item._type;
 
                           // Use memoized color map for consistent colors
-                          const assignedColor = projectTypeColorMap[typeName] || colorPalette[idx % colorPalette.length];
+                          const assignedColor =
+                            projectTypeColorMap[typeName] ||
+                            colorPalette[idx % colorPalette.length];
 
                           return {
                             id: idx,
@@ -1158,7 +1206,7 @@ export default function ExecutiveDashboardPage() {
                         }
                       ),
                       innerRadius: 70,
-                      arcLabel: (item) => `${item.data}`,
+                      arcLabel: item => `${item.data}`,
                       arcLabelRadius: '70%',
                       outerRadius: config.outerRadius || 80,
                       cornerRadius: 3,
@@ -1196,13 +1244,23 @@ export default function ExecutiveDashboardPage() {
 
           // Transform the data structure from API
           // API returns: [{shore_flag: "Onshore", FTE: 55, "Contractor - FT": 10, ...}, {...}]
-          const shoreLabels = (totalHeadcount || []).map(item => item.shore_flag);
+          const shoreLabels = (totalHeadcount || []).map(
+            item => item.shore_flag
+          );
 
           // Define employee types and their colors
           const employeeTypes = [
             { key: 'FTE', label: 'FTE', color: '#0080FF' },
-            { key: 'Contractor - FT', label: 'Contractor - FT', color: '#00C9A7' },
-            { key: 'Contractor - PT', label: 'Contractor - PT', color: '#FFB6B6' },
+            {
+              key: 'Contractor - FT',
+              label: 'Contractor - FT',
+              color: '#00C9A7',
+            },
+            {
+              key: 'Contractor - PT',
+              label: 'Contractor - PT',
+              color: '#FFB6B6',
+            },
             { key: 'Intern', label: 'Intern', color: '#FF884D' },
           ];
 
@@ -1210,7 +1268,9 @@ export default function ExecutiveDashboardPage() {
           const seriesData = employeeTypes.map(type => ({
             label: type.label,
             id: type.key,
-            data: (totalHeadcount || []).map(item => Number(item[type.key] || 0)),
+            data: (totalHeadcount || []).map(item =>
+              Number(item[type.key] || 0)
+            ),
             color: type.color,
             stack: 'total',
           }));
@@ -1270,7 +1330,6 @@ export default function ExecutiveDashboardPage() {
     ),
 
     allocation_by_project_type_group: (
-
       <DashboardWidget
         onClick={() => handleChartClick('Allocation by Project Type Group')}
         minWidth={320}
@@ -1294,7 +1353,9 @@ export default function ExecutiveDashboardPage() {
                 processedData.push({
                   project_type_group: groupKey,
                   project_type_name: typeName,
-                  allocation_percentage: Number(item.allocation_percentage || 0),
+                  allocation_percentage: Number(
+                    item.allocation_percentage || 0
+                  ),
                   allocated_units: Number(item.allocated_units || 0),
                   project_count: Number(item.project_count || 0),
                 });
@@ -1303,7 +1364,9 @@ export default function ExecutiveDashboardPage() {
           });
 
           // Get project type groups (Run, Grow, Transform, etc.)
-          const projectTypeGroups = Object.keys(allocation_by_project_type_group);
+          const projectTypeGroups = Object.keys(
+            allocation_by_project_type_group
+          );
 
           // Create series data for each project type using global colorPalette
           const projectTypeArray = Array.from(projectTypeNames);
@@ -1312,7 +1375,9 @@ export default function ExecutiveDashboardPage() {
             id: typeName,
             data: projectTypeGroups.map(group => {
               const item = processedData.find(
-                d => d.project_type_group === group && d.project_type_name === typeName
+                d =>
+                  d.project_type_group === group &&
+                  d.project_type_name === typeName
               );
               return item ? item.allocation_percentage : 0;
             }),
@@ -1445,7 +1510,6 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
-
   };
 
   const projectCharts = {
@@ -1524,12 +1588,20 @@ export default function ExecutiveDashboardPage() {
               const actual_pct = groupedData[group][week]?.actual_pct;
 
               // For current week (idx === 3): treat 0 as null to stop the line
-              if (idx === 3 && (actual_pct === null || actual_pct === undefined || actual_pct === 0)) {
+              if (
+                idx === 3 &&
+                (actual_pct === null ||
+                  actual_pct === undefined ||
+                  actual_pct === 0)
+              ) {
                 return null;
               }
 
               // For past weeks (idx < 3): treat null/undefined as null, but keep 0 as 0
-              if (idx < 3 && (actual_pct === null || actual_pct === undefined)) {
+              if (
+                idx < 3 &&
+                (actual_pct === null || actual_pct === undefined)
+              ) {
                 return null;
               }
 
@@ -1709,15 +1781,27 @@ export default function ExecutiveDashboardPage() {
 
           // Extract unique team names
           const teamNames = (team_headcount_distribution || []).map(item =>
-            formatTeamName(item.team_name, dimensions.width < 400 ? 8 : 10, team_headcount_distribution.length)
+            formatTeamName(
+              item.team_name,
+              dimensions.width < 400 ? 8 : 10,
+              team_headcount_distribution.length
+            )
           );
 
           // Define employee types and their colors (matching totalHeadcount)
           const employeeTypes = [
             { key: 'FTE', label: 'FTE', color: '#53C1DE' },
             { key: 'Intern', label: 'Interns', color: '#0080FF' },
-            { key: 'Contractor - PT', label: 'Contractors (PT)', color: '#FFE66D' },
-            { key: 'Contractor - FT', label: 'Contractors (FT)', color: '#FF884D' },
+            {
+              key: 'Contractor - PT',
+              label: 'Contractors (PT)',
+              color: '#FFE66D',
+            },
+            {
+              key: 'Contractor - FT',
+              label: 'Contractors (FT)',
+              color: '#FF884D',
+            },
           ];
 
           // Create series data for each employee type
@@ -2199,9 +2283,7 @@ export default function ExecutiveDashboardPage() {
     <LoadingScreen />
   ) : (
     <>
-      {dashboardLoading && !initialLoad && (
-        <LoadingScreen />
-      )}
+      {dashboardLoading && !initialLoad && <LoadingScreen />}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Global
           styles={css`
