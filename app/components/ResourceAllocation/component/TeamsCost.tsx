@@ -13,7 +13,7 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -54,9 +54,7 @@ const TeamsCost = ({
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
-  const { currentView } = useSelector(
-    (state: RootState) => state.allocationView
-  );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { costs: teamsCost, dataProcessing } = useSelector(
     (state: RootState) => state.allocationsCost
   );
@@ -95,6 +93,7 @@ const TeamsCost = ({
           projects: projects,
           resources: resources,
           allResourcesDetail: allResourcesDetail,
+          location: location,
           projectTypes: projectTypes,
           startDate: startDate,
           endDate: endDate,
@@ -249,7 +248,10 @@ const TeamsCost = ({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {

@@ -62,9 +62,7 @@ function FlatAllocation({
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
   );
-  const { organisations } = useSelector(
-    (state: RootState) => state.organisations
-  );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
@@ -103,6 +101,7 @@ function FlatAllocation({
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
+              location,
               startDate,
               endDate
             )
@@ -284,9 +283,7 @@ function FlatAllocation({
       isEditable: 'false',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const allocation = params.row;
-        const workLocation = allocation?.workLocation;
-        return <EllipsisNameCell value={workLocation || ''} />;
+        return <EllipsisNameCell value={(params.value || '') as string} />;
       },
     },
     {
