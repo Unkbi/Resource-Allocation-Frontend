@@ -9,6 +9,7 @@ import {
   getUser,
   resendConfirmationCode,
   callback,
+  setPasswordInvite,
 } from '../../services/authServices.js';
 
 const initialState = {
@@ -93,6 +94,22 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Invite Actions
+      .addCase(setPasswordInvite.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setPasswordInvite.fulfilled, (state, action) => {
+        state.loading = false;
+        state.loginUser = action.payload;
+        state.token = action.payload['id-token'];
+      })
+      .addCase(setPasswordInvite.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       // forgot
       .addCase(forgotPassword.pending, state => {
         state.loading = true;

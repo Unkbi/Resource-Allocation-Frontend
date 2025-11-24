@@ -130,6 +130,16 @@ export interface Meta {
   modules: Modules;
 }
 
+export interface DashboardQueryKeys {
+  Id: string;
+  QueryKey: string;
+  Entities: string[];
+  Description: string | null;
+  Status: string | null;
+  __path__: string | null;
+  __parent__: string | null;
+}
+
 export interface RBACState {
   user: UserRbac[] | null;
   loginUserPrivileges: LoginUserPrivilege | null;
@@ -138,11 +148,13 @@ export interface RBACState {
   privileges: Privilege[];
   privilegeAssignments: PrivilegeAssignment[];
   meta: Meta | null;
+  dashboardQueryKeys: DashboardQueryKeys[];
   loading: boolean;
   loadingLoginUserPrivileges: boolean;
   rolesLoading: boolean;
   roleAssignmentsLoading: boolean;
   privilegesLoading: boolean;
   privilegeAssignmentsLoading: boolean;
+  dashboardQueryKeysLoading: boolean;
   error: boolean;
 }

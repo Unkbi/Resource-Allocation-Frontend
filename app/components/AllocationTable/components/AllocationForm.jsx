@@ -35,6 +35,8 @@ import {
   addProjectTypeGroupValidationSchema,
   addLocationValidationSchema,
   addLocationGroupValidationSchema,
+  addUserValidationSchema,
+  addResourceToUserValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -90,7 +92,11 @@ import {
 import { postTeamResource } from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { DATE_FORMAT, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_ACTIVE_STATUS,
+} from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
   createTeam,
@@ -144,7 +150,18 @@ import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
 import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
-import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
+import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
+import AddUserForm from '../../Forms/AddUserForm';
+import {
+  formatAPIResponse,
+  getUserAttributes,
+  getLoginUserDetails,
+} from '@/app/utils/authUtils';
+import AdvancedFiltersForm from '../../Forms/AdvancedFiltersForm';
+import {
+  setAdvancedFilters,
+  clearAdvancedFilters,
+} from '@/app/redux/reducers/dashboardReducer';
 import {
   ADD_PROJECT_TYPE,
   UPDATE_PROJECT_TYPE,
@@ -157,6 +174,9 @@ import {
   UPDATE_LOCATION,
   UPDATE_LOCATION_GROUPS,
   ADD_LOCATION_GROUPS,
+  CREATE_USER,
+  UPDATE_USER,
+  SEND_INVITATION,
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 
@@ -166,7 +186,7 @@ const initialValuesMap = {
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
-    AllowOvertime: '',
+    AllowOvertime: 'No',
     Location: '',
     ProjectManager: '',
     Status: 'Active',
@@ -386,6 +406,41 @@ const initialValuesMap = {
   edit_location_group: {
     Name: '',
   },
+  add_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
+    sendInviteEmail: true,
+  },
+  edit_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
+    sendInviteEmail: true,
+  },
+  add_resource_to_user: {
+    Resources: [],
+    Role: '',
+    sendInviteEmail: true,
+  },
+  edit_resource_to_user: {
+    Resources: [],
+    Role: '',
+    sendInviteEmail: true,
+  },
+  advanced_filters: {
+    ProjectTypeGroup: [],
+    ProjectType: [],
+    Team: [],
+    Portfolio: [],
+    Organization: [],
+    Resource: [],
+    Project: [],
+    ProjectManager: [],
+    AllocationManager: [],
+  },
 };
 
 const AllocationForm = () => {
@@ -553,6 +608,14 @@ const AllocationForm = () => {
           locationGroups,
           initialData?.Name || ''
         );
+      case 'add_user':
+        return addUserValidationSchema(allUsers, initialData?.email || '');
+      case 'edit_user':
+        return addUserValidationSchema(allUsers, initialData?.email || '');
+      case 'add_resource_to_user':
+        return addResourceToUserValidationSchema;
+      case 'edit_resource_to_user':
+        return addResourceToUserValidationSchema;
       default:
         return null;
     }
@@ -903,6 +966,10 @@ const AllocationForm = () => {
               const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
+                dispatch({
+                  type: FETCH_ALL_RESOURCES_DETAIL,
+                  payload: {},
+                })
                 dispatch(setHighlightedRowId(newTeamId));
                 dispatch(
                   showToast({
@@ -974,6 +1041,10 @@ const AllocationForm = () => {
           }
 
           await dispatch(fetchAllTeams());
+          dispatch({
+            type: FETCH_ALL_RESOURCES_DETAIL,
+            payload: {},
+          })
           dispatch(setHighlightedRowId(initialData.Id));
           dispatch(
             showToast({
@@ -1037,7 +1108,7 @@ const AllocationForm = () => {
           const result = await dispatch(
             createResourceWithTeamAndOrg({
               resourceData: postData,
-              teamId: values.Team,
+              teamId: values.Team ? values.Team : null,
               organizationId: values.Organisation,
             })
           );
@@ -1175,12 +1246,12 @@ const AllocationForm = () => {
           }
 
           // Check if team changed and update if needed
-          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
+          if (teamOrgData.teamName !== initialData.Team) {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
                 Resource: initialData.Id,
-                Team: teamOrgData.teamId,
+                Team: teamOrgData.teamId === '' ? null : teamOrgData.teamId,
               },
             });
           }
@@ -2162,7 +2233,7 @@ const AllocationForm = () => {
             dispatch(
               showToast({
                 open: true,
-                message: 'Portfolio added successfully.',
+                message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} added successfully.`,
                 type: 'success',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -2315,7 +2386,7 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: 'Portfolio updated successfully.',
+              message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} updated successfully.`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -3163,6 +3234,212 @@ const AllocationForm = () => {
         }
         break;
       }
+      case 'add_user': {
+        try {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+
+          const userItem = {
+            email: cleanedValues.Email || null,
+            firstName: cleanedValues.FirstName || null,
+            lastName: cleanedValues.LastName || null,
+            role: cleanedValues.Role || '*',
+          };
+
+          const postData = {
+            users: [userItem],
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: SEND_INVITATION,
+              payload: {
+                userData: postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User invited successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+
+          dispatch(closeDialog());
+          setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
+          }
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'add_resource_to_user': {
+        try {
+          const finalData = cleanedValues.Resources.map(resource => {
+            const data = initialData.find(res => {
+              if (resource === res.email) {
+                return res.Name;
+              }
+            });
+            const [firstName, lastName] = data.Name.split(' ') || [];
+
+            return {
+              email: resource || null,
+              firstName: firstName || null,
+              lastName: lastName || null,
+              role: cleanedValues.Role || '*',
+            };
+          });
+
+          const postData = {
+            users: [...finalData],
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: SEND_INVITATION,
+              payload: {
+                userData: postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Users invited successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+          setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
+          }
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
+      case 'edit_user': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const postData = {
+          email: cleanedValues.Email || null,
+          firstName: cleanedValues.FirstName || null,
+          lastName: cleanedValues.LastName || null,
+        };
+
+        try {
+          const result = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_USER,
+              payload: {
+                postData,
+                userId: initialData.id,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(result?.User?.id));
+        } catch (e) {
+          console.error('Failed to update user:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update user.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
+      case 'advanced_filters': {
+        // For advanced filters, use the full values object (don't exclude any fields)
+        // All values are arrays from the multi-select autocomplete components
+        const filterValues = {
+          ProjectTypeGroup: values.ProjectTypeGroup || [],
+          ProjectType: values.ProjectType || [],
+          Team: values.Team || [],
+          Resource: values.Resource || [],
+          AllocationManager: values.AllocationManager || [],
+          ProjectManager: values.ProjectManager || [],
+          Project: values.Project || [],
+          Portfolio: values.Portfolio || [],
+          Organization: values.Organization || [],
+        };
+        dispatch(setAdvancedFilters(filterValues));
+        dispatch(closeDialog());
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Advanced filters applied successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 3000,
+          })
+        );
+        break;
+      }
 
       default:
         return;
@@ -3762,6 +4039,35 @@ const AllocationForm = () => {
       case 'edit_location_group':
         return (
           <AddLocationGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_user':
+        return (
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_user':
+        return (
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'add_resource_to_user':
+        return (
+          <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_resource_to_user':
+        return (
+          <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'advanced_filters':
+        return (
+          <AdvancedFiltersForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

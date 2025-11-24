@@ -20,6 +20,7 @@ const AddPortfolioForm = ({
   const { projects } = useSelector(state => state.projects);
   const { portfolios } = useSelector(state => state.portfolios);
   const { formType } = useSelector(state => state.globalDialog.formState);
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const [readOnly, setReadOnly] = useState(true);
 
   const {
@@ -72,12 +73,13 @@ const AddPortfolioForm = ({
   return (
     <Box>
       <StyledLabel>
-        {PORTFOLIO_DISPLAY_NAME} Name <span style={{ color: 'red' }}>*</span>
+        {`${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} Name`}
+        <span style={{ color: 'red' }}>*</span>
       </StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Name"
-          placeholder={`Enter ${PORTFOLIO_DISPLAY_NAME.toLowerCase()} name`}
+          placeholder={`Enter ${(scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME).toLowerCase()} name`}
           disabled={readOnly}
           readOnly={readOnly}
           value={values.Name || ''}

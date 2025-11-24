@@ -37,7 +37,6 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { generateEmptyRow, getFirstChild } from '@/app/utils/allocationUtils';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {

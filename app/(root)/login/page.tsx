@@ -306,15 +306,17 @@ export default function LoginPage() {
                 <span>OR</span>
               </Typography>
               <Button
+                disabled={true} // Disable Google Sign-In temporarily
                 variant="outlined"
                 fullWidth
-                className="googleButton"
+                className="signWithSSO"
                 onClick={handleGoogleSignin}
               >
                 <img src={'/images/icons/google.svg'} alt="Google" /> Sign in
                 with Google
               </Button>
               <Button
+                disabled={true} // Disable SSO Sign-In temporarily
                 variant="outlined"
                 fullWidth
                 className="signWithSSO"
@@ -323,12 +325,13 @@ export default function LoginPage() {
                 Sign in with SSO
               </Button>
             </Box>
-            <Typography className="noAccount">
+            {/* Sahadev: Commenting out Sign up link temporarily for corsair. */}
+            {/* <Typography className="noAccount"> 
               Don't have an account?{' '}
               <Link href="/signup" underline="hover" color="primary">
                 Sign up
               </Link>
-            </Typography>
+            </Typography> */}
           </Box>
         </Box>
       </Box>
