@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import Project from '@/app/(root)/project/page';
 import { useDispatch } from 'react-redux';
-import { DATE_FORMAT, PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import { DATE_FORMAT, PORTFOLIO_DISPLAY_NAME, Resource_Team_Project_Status_Filter } from '@/app/constants/constants';
 import StyledAutocomplete from '../Select/Autocomplete';
 import CustomDatePicker from '../DatePicker/CustomDatePicker';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
@@ -39,7 +39,7 @@ const AddProjectForm = ({
 
   const resourceTypeOptions =
     resources
-      ?.filter(resource => resource.Status === 'Active')
+      ?.filter(resource => Resource_Team_Project_Status_Filter.includes(resource.Status))
       ?.sort((a, b) => a.FullName.localeCompare(b.FullName))
       ?.map(resource => ({
       value: resource.Id,

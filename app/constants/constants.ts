@@ -284,4 +284,10 @@ export const ACCESS_MANAGEMENT_VALID_TABS = [
 
 export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
 
-export const PROJECT_INACTIVE_STATUS = [ 'Proposed','Paused','Completed'];
+export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused', 'Completed'];
+
+export const Resource_All_Status = ['Active', 'Inactive', 'Unassigned', 'Not-Planned', 'Pending']
+
+export const AllocationForm_Status_Filter = ['Active', 'Pending'];
+
+export const Resource_Team_Project_Status_Filter = ['Active', 'Not-Planned'];

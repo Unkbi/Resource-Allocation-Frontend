@@ -962,6 +962,10 @@ const AllocationForm = () => {
               const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
+                dispatch({
+                  type: FETCH_ALL_RESOURCES_DETAIL,
+                  payload: {},
+                })
                 dispatch(setHighlightedRowId(newTeamId));
                 dispatch(
                   showToast({
@@ -1033,6 +1037,10 @@ const AllocationForm = () => {
           }
 
           await dispatch(fetchAllTeams());
+          dispatch({
+            type: FETCH_ALL_RESOURCES_DETAIL,
+            payload: {},
+          })
           dispatch(setHighlightedRowId(initialData.Id));
           dispatch(
             showToast({
