@@ -20,6 +20,7 @@ import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 interface FlatAllocationProps {
   startDate: string;
@@ -68,6 +69,9 @@ function FlatAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
+  );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
   );
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
@@ -168,7 +172,7 @@ function FlatAllocation({
     },
     {
       field: 'portfolioName',
-      headerName: 'Portfolio',
+      headerName: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
       width: 201,
       type: 'string',
       isEditable: 'false',

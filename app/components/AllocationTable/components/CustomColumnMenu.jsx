@@ -8,6 +8,7 @@ import GroupIcon from '@mui/icons-material/Groups';
 import PersonIcon from '@mui/icons-material/Person';
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const StyledPopper = styled(GridColumnMenu)(({ theme }) => ({
   backgroundColor: '#ffffff',
@@ -27,6 +28,7 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
   const [teamsExpanded, setTeamsExpanded] = useState(true);
   const [resourcesExpanded, setResourcesExpanded] = useState(false);
   const view = useSelector(state => state.allocationView.view);
+  const { scalarSettings } = useSelector(state => state.allSettings);
 
   /* freeze click not in use
   const handleFreezClick = () => {
@@ -130,7 +132,7 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
                   : view === 'Project Cost'
                     ? 'Collapse All Projects'
                     : view === 'Portfolio'
-                      ? 'Collapse All Portfolios'
+                      ? `Collapse All ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`
                       : view === 'Organisations'
                         ? 'Collapse All Organisations'
                         : view === 'Resources'
@@ -141,7 +143,7 @@ const CustomUserMenuItems = ({ apiRef, field }) => {
                   : view === 'Project Cost'
                     ? 'Expand All Projects'
                     : view === 'Portfolio'
-                      ? 'Expand All Portfolios'
+                      ? `Expand All ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} `
                       : view === 'Organisations'
                         ? 'Expand All Organisations'
                         : view === 'Resources'

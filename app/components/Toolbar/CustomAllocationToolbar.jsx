@@ -54,7 +54,7 @@ import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
   DEFAULT_PROJECT_WEEK_PLUS,
-  PORTFOLIO_DISPLAY_NAME_PLURAL,
+  PORTFOLIO_DISPLAY_NAME,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '@/app/constants/constants';
 import { parseISO } from 'date-fns';
@@ -627,6 +627,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const anchorRef = React.useRef(null);
   const [allApiSuccess, setAllApiSuccess] = useState(false);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { scalarSettings } = useSelector(state => state.allSettings);
 
   const projectsLoaded = Array.isArray(projects);
   const resourcesLoaded = Array.isArray(resources);
@@ -1287,7 +1288,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                   currentView?.GroupBy === 'Project'
                     ? 'Projects'
                     : currentView?.GroupBy === 'Portfolio'
-                      ? PORTFOLIO_DISPLAY_NAME_PLURAL
+                      ? `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`
                       : currentView?.GroupBy === 'Project Cost'
                         ? 'Projects'
                         : currentView?.GroupBy === 'Teams Cost'
@@ -1342,7 +1343,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                         : option.name === 'Organisations'
                           ? 'Organizations'
                           : option.name === 'Portfolio'
-                            ? PORTFOLIO_DISPLAY_NAME_PLURAL
+                            ? `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`
                             : option.name}
                   </StyledMenuItem>
                 ))}
