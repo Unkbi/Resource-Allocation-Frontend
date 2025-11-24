@@ -556,9 +556,10 @@ const AddResourceForm = ({
             value={values.HRLevel || ''}
             onChange={e => {
               const input = e.target.value;
-              if (/^\d*$/.test(input)) {
-                formikProps.setFieldValue('HRLevel', input);
-              }
+              //Commenting code to remove any non-digit characters from input 
+              // if (/^\d*$/.test(input)) {
+                // }
+              formikProps.setFieldValue('HRLevel', input);
             }}
             onBlur={handleBlur}
             error={touched.HRLevel && Boolean(errors.HRLevel)}
