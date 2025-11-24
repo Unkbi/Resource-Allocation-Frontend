@@ -557,9 +557,13 @@ const AllocationForm = () => {
       case 'open_history':
         return openHistoryValidationSchema;
       case 'add_portfolio':
-        return addPortfolioValidationSchema(portfolios);
+        return addPortfolioValidationSchema(portfolios, scalarSettings);
       case 'edit_portfolio':
-        return addPortfolioValidationSchema(portfolios, initialData.Name || '');
+        return addPortfolioValidationSchema(
+          portfolios,
+          scalarSettings,
+          initialData.Name || ''
+        );
       case 'add_role':
         return addRoleValidationSchema(roles);
       case 'edit_role':
@@ -969,7 +973,7 @@ const AllocationForm = () => {
                 dispatch({
                   type: FETCH_ALL_RESOURCES_DETAIL,
                   payload: {},
-                })
+                });
                 dispatch(setHighlightedRowId(newTeamId));
                 dispatch(
                   showToast({
@@ -1044,7 +1048,7 @@ const AllocationForm = () => {
           dispatch({
             type: FETCH_ALL_RESOURCES_DETAIL,
             payload: {},
-          })
+          });
           dispatch(setHighlightedRowId(initialData.Id));
           dispatch(
             showToast({
