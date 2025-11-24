@@ -63,10 +63,10 @@ import {
   buildDefaultDashboardFilter,
   buildLoginUserPrivileges,
 } from '@/app/utils/authUtils';
+import {AdvancedFilters} from '../../types/dashboardTypes';
 import {
-  AdvancedFilters,
+  // AdvancedFilters,
   setAdvancedFilters,
-  setDefaultAdvancedFilters,
 } from '../reducers/dashboardReducer';
 import { LoginUserPrivilege, User } from '@/app/types';
 
@@ -420,7 +420,7 @@ function* setupAdvancedFiltersSage(action: any): Generator<any, void, any> {
         teams
       );
 
-    yield put(setDefaultAdvancedFilters(defaultRBACDashboardFilters));
+    // yield put(setDefaultAdvancedFilters(defaultRBACDashboardFilters));
     yield put(setAdvancedFilters(defaultDashboardFilters));
   } catch (error) {
     console.error(
