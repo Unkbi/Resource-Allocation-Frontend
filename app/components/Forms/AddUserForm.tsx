@@ -70,7 +70,6 @@ const AddUserForm = ({
   }, [initialData]);
 
   const handleNavigate = () => {
-  dispatch(closeDialog()); // Close the dialog first
   window.open("/settings?menu=access-management&tab=role-assignments", "_blank");
 };
 
@@ -126,6 +125,7 @@ const AddUserForm = ({
           name="Email"
           placeholder="Enter Email"
           value={values?.Email || ''}
+          disabled={formType === 'edit_user' ? true : false}
           onChange={(e: any) => {
             const newValue = e.target.value;
             setFieldValue('Email', newValue);
