@@ -3,7 +3,7 @@ import { SyntheticEvent } from 'react';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
-} from '@mui/x-data-grid-premium'; 
+} from '@mui/x-data-grid-premium';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import {
@@ -13,6 +13,8 @@ import {
 import CommonToolbar from './CommonToolbar';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import FilterButtonWithCount from './FilterButtonWithCount';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/redux/store';
 
 interface ProjectToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -105,6 +107,9 @@ const ProjectToolbar = ({
   permissions,
 }: ProjectToolbarProps) => {
   const dispatch = useDispatch();
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
 
   if (!PROJECT_PAGE_VALID_TABS.includes(value)) {
     return null; // or a fallback UI
@@ -113,7 +118,7 @@ const ProjectToolbar = ({
   const handleAddPortfolio = () => {
     dispatch(
       openDialog({
-        title: `Add ${PORTFOLIO_DISPLAY_NAME}`,
+        title: `Add ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
         submitButtonText: 'Add',
         cancelButtonText: 'Cancel',
         formType: 'add_portfolio',
@@ -161,7 +166,7 @@ const ProjectToolbar = ({
               {permissions['Portfolio'].r && (
                 <Tab
                   value="portfolio"
-                  label="Portfolios"
+                  label={`${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`}
                   sx={tabTypographyStyle}
                 />
               )}
@@ -218,7 +223,7 @@ const ProjectToolbar = ({
                   onClick={handleAddPortfolio}
                   sx={portfolioButtonStyle}
                 >
-                  Add Portfolio
+                  {`Add ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`}
                 </Button>
               )}
             </GridToolbarContainer>

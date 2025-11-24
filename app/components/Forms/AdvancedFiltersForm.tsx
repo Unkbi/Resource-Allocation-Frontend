@@ -16,6 +16,7 @@ import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { getAllocationManagerFromPath, getResourceFromUid } from '@/app/utils/common';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 interface FormValues {
     ProjectTypeGroup: string;
@@ -56,6 +57,7 @@ const AdvancedFiltersForm = ({
     const { initialData, formType } = useSelector(
         (state: RootState) => state.globalDialog.formState
     );
+    const { scalarSettings } = useSelector((state: RootState) => state.allSettings);
 
 
     useEffect(() => {
@@ -240,11 +242,11 @@ const AdvancedFiltersForm = ({
                 />
             </Box>
             <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
-                <StyledLabel>Portfolio</StyledLabel>
+                <StyledLabel>{scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}</StyledLabel>
                 <StyledAutocomplete
                     disabled={!permissions['Portfolio'].r}
                     name="Portfolio"
-                    label="Portfolio"
+                    label={(scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME) as string}
                     multiple={true}
                     options={portfolioOptions}
                     value={values.Portfolio || []}

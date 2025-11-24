@@ -168,7 +168,9 @@ const SettingsPanel = ({
     'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
-      permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
+      permissions['Portfolio'].r ||
+      permissions['ProjectType'].r ||
+      permissions['ProjectTypeGroup'].r,
     'allocation-setting':
       permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
     'location-setting':
@@ -191,7 +193,6 @@ const SettingsPanel = ({
 
   useEffect(() => {
     if (scalarSettings === null) {
-      // Sahadev : This is temporary, we will pobably need to call AllSettings API here.
       dispatch({
         type: FETCH_ALL_SETTINGS,
         payload: {},
@@ -450,6 +451,7 @@ export default withRBAC(SettingsPanel, [
   'User',
   'Role',
   'Permission',
+  'Portfolio',
   'ProjectType',
   'ProjectTypeGroup',
   'AllocationRangeSetting',

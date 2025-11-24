@@ -111,6 +111,7 @@ function Project({ permissions, loadingPermissions }) {
 
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const { projects, updating, loading } = useSelector(state => state.projects);
+  const { scalarSettings } = useSelector(state => state.allSettings);
   const { resources, loading: resourceLoading } = useSelector(
     state => state.resources
   );
@@ -589,7 +590,7 @@ function Project({ permissions, loadingPermissions }) {
     },
     {
       field: 'Portfolio',
-      headerName: PORTFOLIO_DISPLAY_NAME,
+      headerName: scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME,
       flex: 1,
       minWidth: 150,
       renderCell: params => {
@@ -757,7 +758,7 @@ function Project({ permissions, loadingPermissions }) {
   const portfolioColumns = [
     {
       field: 'Name',
-      headerName: 'Portfolio Name',
+      headerName: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} Name`,
       minWidth: 230,
       hideable: false,
       renderCell: params => {
@@ -798,7 +799,7 @@ function Project({ permissions, loadingPermissions }) {
     },
     {
       field: 'Description',
-      headerName: 'Portfolio Description',
+      headerName: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} Description`,
       minWidth: 300,
       renderCell: params => {
         const description = params.value;

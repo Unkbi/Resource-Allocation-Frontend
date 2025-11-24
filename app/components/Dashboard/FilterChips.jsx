@@ -6,6 +6,7 @@ import {
   setAdvancedFilters,
   clearAdvancedFilters,
 } from '@/app/redux/reducers/dashboardReducer';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
   height: '32px',
@@ -82,6 +83,7 @@ const FilterChips = () => {
   const { portfolios } = useSelector(state => state.portfolios);
   const { organisations } = useSelector(state => state.organisations);
   const { projects } = useSelector(state => state.projects);
+  const { scalarSettings } = useSelector(state => state.allSettings);
 
   // Create a mapping of filter keys to display labels
   const filterLabels = {
@@ -92,7 +94,7 @@ const FilterChips = () => {
     AllocationManager: 'Allocation Manager',
     ProjectManager: 'Project Manager',
     Project: 'Project Name',
-    Portfolio: 'Portfolio',
+    Portfolio: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
     Organization: 'Organization',
   };
 
@@ -168,7 +170,9 @@ const FilterChips = () => {
 
   const handleRemoveFilter = filterKey => {
     // Reset to default
-    const resetValue = defualtAdvancedFilters[filterKey];
+    const resetValue = defualtAdvancedFilters
+      ? defualtAdvancedFilters[filterKey]
+      : '';
 
     dispatch(
       setAdvancedFilters({

@@ -53,6 +53,9 @@ function PortfolioAllocation({
     (state: RootState) => state.resources.resources
   );
   const { location } = useSelector((state: RootState) => state.allSettings);
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const dispatch: AppDispatch = useDispatch();
   const { setRows, ready } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
@@ -133,7 +136,8 @@ function PortfolioAllocation({
   const portfolioColumnConfig = [
     {
       field: 'portfolioName',
-      headerName: PORTFOLIO_DISPLAY_NAME + ' Name',
+      headerName:
+        scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME + ' Name',
       width: 148,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',

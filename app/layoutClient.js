@@ -25,6 +25,7 @@ import {
   GET_USER_AND_PRIVILEGES,
   SETUP_ADVANCED_FILTERS,
 } from './redux/actions/rbacActions';
+import { FETCH_ALL_SETTINGS } from './redux/actions/allSettingsActions';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -60,6 +61,7 @@ export default function LayoutClient({ children }) {
   const { projects } = useSelector(state => state.projects);
   const { teams } = useSelector(state => state.teams);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { scalarSettings } = useSelector(state => state.allSettings);
 
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
@@ -132,6 +134,14 @@ export default function LayoutClient({ children }) {
         Object.keys(loginUserPrivileges).length === 0
       ) {
         dispatch({ type: GET_USER_AND_PRIVILEGES, payload: { userId } });
+      }
+
+      // Fetch All Settings
+      if (scalarSettings === null) {
+        dispatch({
+          type: FETCH_ALL_SETTINGS,
+          payload: {},
+        });
       }
 
       // Fetch essential data for the app

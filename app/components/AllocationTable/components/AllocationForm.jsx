@@ -92,7 +92,11 @@ import {
 import { postTeamResource } from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { DATE_FORMAT, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_ACTIVE_STATUS,
+} from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
   createTeam,
@@ -2229,7 +2233,7 @@ const AllocationForm = () => {
             dispatch(
               showToast({
                 open: true,
-                message: 'Portfolio added successfully.',
+                message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} added successfully.`,
                 type: 'success',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -2382,7 +2386,7 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: 'Portfolio updated successfully.',
+              message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} updated successfully.`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,

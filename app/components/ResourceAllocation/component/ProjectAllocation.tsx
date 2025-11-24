@@ -118,6 +118,9 @@ function ProjectAllocation({
   const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectName, setMenuProjectName] = useState<string>('');
   const allResources = _resources || [];
@@ -375,7 +378,7 @@ function ProjectAllocation({
     },
     {
       field: 'portfolioName',
-      headerName: PORTFOLIO_DISPLAY_NAME,
+      headerName: scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME,
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
