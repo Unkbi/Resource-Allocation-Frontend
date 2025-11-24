@@ -1,34 +1,27 @@
 import { createSlice } from '@reduxjs/toolkit';
-
-interface AdvancedFilters {
-  ProjectTypeGroup?: string;
-  ProjectType?: string;
-  Team?: string;
-  Resource?: string;
-  AllocationManager?: string;
-  ProjectManager?: string;
-  Project?: string;
-  Portfolio?: string;
-  Organization?: string;
-}
+import { AdvancedFilters } from '@/app/types/dashboardTypes';
 
 interface DashboardChartState {
   advancedFilters: AdvancedFilters;
-  [chartKey: string]: any[] | AdvancedFilters;
+  loading: boolean;
+  loadingCharts: Record<string, boolean>;
+  [chartKey: string]: any[] | AdvancedFilters | boolean | Record<string, boolean>;
 }
 
 const initialState: DashboardChartState = {
   advancedFilters: {
-    ProjectTypeGroup: '',
-    ProjectType: '',
-    Team: '',
-    Resource: '',
-    AllocationManager: '',
-    ProjectManager: '',
-    Project: '',
-    Portfolio: '',
-    Organization: '',
+    ProjectTypeGroup: [],
+    ProjectType: [],
+    Team: [],
+    Resource: [],
+    AllocationManager: [],
+    ProjectManager: [],
+    Project: [],
+    Portfolio: [],
+    Organization: [],
   },
+  loading: false,
+  loadingCharts: {},
 };
 
 const dashboardSlice = createSlice({
@@ -38,9 +31,17 @@ const dashboardSlice = createSlice({
     setDashboardChart: (state, action) => {
       const { chartKey, data } = action.payload;
       state[chartKey] = data;
+      // Remove from loading object when data is received
+      delete state.loadingCharts[chartKey];
+      // Turn off loading if no more charts are loading
+      if (Object.keys(state.loadingCharts).length === 0) {
+        state.loading = false;
+      }
+    },
+    setDefaultAdvancedFilters: (state, action) => {
+      state.defualtAdvancedFilters = action.payload;
     },
     setAdvancedFilters: (state, action) => {
-      console.log('Reducer - Setting advanced filters:', action.payload, state.advancedFilters);
       state.advancedFilters = {
         ...state.advancedFilters,
         ...action.payload,
@@ -48,18 +49,18 @@ const dashboardSlice = createSlice({
     },
     clearAdvancedFilters: (state) => {
       state.advancedFilters = {
-        ProjectTypeGroup: '',
-        ProjectType: '',
-        Team: '',
-        Resource: '',
-        AllocationManager: '',
-        ProjectManager: '',
-        Project: '',
-        Portfolio: '',
-        Organization: '',
+        ProjectTypeGroup: [],
+        ProjectType: [],
+        Team: [],
+        Resource: [],
+        AllocationManager: [],
+        ProjectManager: [],
+        Project: [],
+        Portfolio: [],
+        Organization: [],
       };
     },
-    resetDashboardCharts: (state) => {
+    resetDashboardCharts: state => {
       // Reset all chart data but preserve advanced filters
       const filters = state.advancedFilters;
       return {
@@ -67,9 +68,24 @@ const dashboardSlice = createSlice({
         advancedFilters: filters,
       };
     },
+    setDashboardLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    startChartLoading: (state, action) => {
+      // Add chart to loading object and set loading to true
+      state.loadingCharts[action.payload] = true;
+      state.loading = true;
+    },
+    startMultipleChartsLoading: (state, action) => {
+      // Add multiple charts to loading object
+      action.payload.forEach((chartKey: string) => {
+        state.loadingCharts[chartKey] = true;
+      });
+      state.loading = true;
+    },
   },
 });
 
-export const { setDashboardChart, setAdvancedFilters, clearAdvancedFilters, resetDashboardCharts } = dashboardSlice.actions;
+export const { setDashboardChart, setAdvancedFilters, clearAdvancedFilters, resetDashboardCharts, setDashboardLoading, startChartLoading, startMultipleChartsLoading } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

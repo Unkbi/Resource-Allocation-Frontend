@@ -10,12 +10,14 @@ const initialState: RBACState = {
   privileges: [],
   privilegeAssignments: [],
   meta: null,
+  dashboardQueryKeys: [],
   loading: true,
   loadingLoginUserPrivileges: true,
   rolesLoading: true,
   roleAssignmentsLoading: true,
   privilegesLoading: true,
   privilegeAssignmentsLoading: true,
+  dashboardQueryKeysLoading: true,
   error: false,
 };
 
@@ -112,6 +114,9 @@ const rbacSlice = createSlice({
     setMeta: (state, action) => {
       state.meta = action.payload;
     },
+    setDashboardQueryKeys: (state, action) => {
+      state.dashboardQueryKeys = formatAPIResponse('QueryKey', action.payload);
+    },
     setLoading: (state, action) => {
       state.loading = action.payload;
     },
@@ -129,6 +134,9 @@ const rbacSlice = createSlice({
     },
     setPrivilegeAssignmentsLoading: (state, action) => {
       state.privilegeAssignmentsLoading = action.payload;
+    },
+    setDashboardQueryKeysLoading: (state, action) => {
+      state.dashboardQueryKeysLoading = action.payload;
     },
     setError: (state, action) => {
       state.error = action.payload;
@@ -162,5 +170,7 @@ export const {
   setError,
   setUser,
   setMeta,
+  setDashboardQueryKeys,
+  setDashboardQueryKeysLoading,
 } = rbacSlice.actions;
 export default rbacSlice.reducer;

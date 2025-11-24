@@ -92,7 +92,11 @@ import {
 import { postTeamResource } from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { DATE_FORMAT, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_ACTIVE_STATUS,
+} from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
   createTeam,
@@ -148,9 +152,16 @@ import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
 import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
 import AddUserForm from '../../Forms/AddUserForm';
-import { formatAPIResponse, getUserAttributes, getLoginUserDetails } from '@/app/utils/authUtils';
+import {
+  formatAPIResponse,
+  getUserAttributes,
+  getLoginUserDetails,
+} from '@/app/utils/authUtils';
 import AdvancedFiltersForm from '../../Forms/AdvancedFiltersForm';
-import { setAdvancedFilters, clearAdvancedFilters } from '@/app/redux/reducers/dashboardReducer';
+import {
+  setAdvancedFilters,
+  clearAdvancedFilters,
+} from '@/app/redux/reducers/dashboardReducer';
 import {
   ADD_PROJECT_TYPE,
   UPDATE_PROJECT_TYPE,
@@ -165,10 +176,9 @@ import {
   ADD_LOCATION_GROUPS,
   CREATE_USER,
   UPDATE_USER,
-  SEND_INVITATION
+  SEND_INVITATION,
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
-
 
 const initialValuesMap = {
   add_project: {
@@ -401,14 +411,14 @@ const initialValuesMap = {
     LastName: '',
     Email: '',
     Role: '',
-    sendInviteEmail: true
+    sendInviteEmail: true,
   },
   edit_user: {
     FirstName: '',
     LastName: '',
     Email: '',
     Role: '',
-    sendInviteEmail: true
+    sendInviteEmail: true,
   },
   add_resource_to_user: {
     Resources: [],
@@ -711,10 +721,10 @@ const AllocationForm = () => {
     const allRows = splitView
       ? bottomTeamAllocationGrid?.getAllRows()
       : getAllRowsForView(
-        currentView?.GroupBy === 'Project'
-          ? 'projectAllocation'
-          : 'teamAllocation'
-      );
+          currentView?.GroupBy === 'Project'
+            ? 'projectAllocation'
+            : 'teamAllocation'
+        );
 
     for (let i = 0; i < allRows?.length; i++) {
       if (
@@ -956,6 +966,10 @@ const AllocationForm = () => {
               const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
+                dispatch({
+                  type: FETCH_ALL_RESOURCES_DETAIL,
+                  payload: {},
+                })
                 dispatch(setHighlightedRowId(newTeamId));
                 dispatch(
                   showToast({
@@ -1027,6 +1041,10 @@ const AllocationForm = () => {
           }
 
           await dispatch(fetchAllTeams());
+          dispatch({
+            type: FETCH_ALL_RESOURCES_DETAIL,
+            payload: {},
+          })
           dispatch(setHighlightedRowId(initialData.Id));
           dispatch(
             showToast({
@@ -1228,12 +1246,12 @@ const AllocationForm = () => {
           }
 
           // Check if team changed and update if needed
-          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
+          if (teamOrgData.teamName !== initialData.Team) {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
                 Resource: initialData.Id,
-                Team: teamOrgData.teamId,
+                Team: teamOrgData.teamId === '' ? null : teamOrgData.teamId,
               },
             });
           }
@@ -1361,10 +1379,10 @@ const AllocationForm = () => {
                   splitView
                     ? bottomTeamAllocationGrid?.getAllRows()
                     : getAllRowsForView(
-                      currentView?.GroupBy === 'Project'
-                        ? 'projectAllocation'
-                        : 'teamAllocation'
-                    ),
+                        currentView?.GroupBy === 'Project'
+                          ? 'projectAllocation'
+                          : 'teamAllocation'
+                      ),
                   resource,
                   weekKey,
                   values.AllocationEntered,
@@ -1462,20 +1480,21 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Updating allocation for ${Array.isArray(values.Resource)
-                ? values.Resource.reduce((acc, resourceId) => {
-                  const resource = resources?.find(
-                    r => r.Id === resourceId
-                  );
-                  if (!resource) return acc;
-                  return (
-                    acc +
-                    resources?.find(resource => resource.Id === resourceId)
-                      ?.FullName +
-                    ', '
-                  );
-                }, '').slice(0, -2)
-                : resources?.find(r => r.Id === values.Resource)?.FullName
+              `Updating allocation for ${
+                Array.isArray(values.Resource)
+                  ? values.Resource.reduce((acc, resourceId) => {
+                      const resource = resources?.find(
+                        r => r.Id === resourceId
+                      );
+                      if (!resource) return acc;
+                      return (
+                        acc +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
+                        ', '
+                      );
+                    }, '').slice(0, -2)
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }...`,
               'info'
             )
@@ -1688,20 +1707,21 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Failed to create allocation for ${Array.isArray(values.Resource)
-                ? values.Resource.reduce((acc, resourceId) => {
-                  const resource = resources?.find(
-                    r => r.Id === resourceId
-                  );
-                  if (!resource) return acc;
-                  return (
-                    acc +
-                    resources?.find(resource => resource.Id === resourceId)
-                      ?.FullName +
-                    ', '
-                  );
-                }, '').slice(0, -2)
-                : resources?.find(r => r.Id === values.Resource)?.FullName
+              `Failed to create allocation for ${
+                Array.isArray(values.Resource)
+                  ? values.Resource.reduce((acc, resourceId) => {
+                      const resource = resources?.find(
+                        r => r.Id === resourceId
+                      );
+                      if (!resource) return acc;
+                      return (
+                        acc +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
+                        ', '
+                      );
+                    }, '').slice(0, -2)
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
               }`,
               'error',
               4000
@@ -2213,7 +2233,7 @@ const AllocationForm = () => {
             dispatch(
               showToast({
                 open: true,
-                message: 'Portfolio added successfully.',
+                message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} added successfully.`,
                 type: 'success',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -2366,7 +2386,7 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: 'Portfolio updated successfully.',
+              message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} updated successfully.`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -3241,7 +3261,7 @@ const AllocationForm = () => {
                 reject,
               },
             });
-          });      
+          });
           dispatch(
             showToast({
               open: true,
@@ -3251,7 +3271,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-        
+
           dispatch(closeDialog());
           setFormValue({});
           const highlightId = response?.[0].User?.id || response?.User?.id;
@@ -3278,14 +3298,13 @@ const AllocationForm = () => {
       case 'add_resource_to_user': {
         try {
           const finalData = cleanedValues.Resources.map(resource => {
-            
             const data = initialData.find(res => {
               if (resource === res.email) {
                 return res.Name;
               }
-              });
+            });
             const [firstName, lastName] = data.Name.split(' ') || [];
-            
+
             return {
               email: resource || null,
               firstName: firstName || null,
@@ -3349,9 +3368,9 @@ const AllocationForm = () => {
         });
 
         const postData = {
-            email: cleanedValues.Email || null,
-            firstName: cleanedValues.FirstName || null,
-            lastName: cleanedValues.LastName || null,
+          email: cleanedValues.Email || null,
+          firstName: cleanedValues.FirstName || null,
+          lastName: cleanedValues.LastName || null,
         };
 
         try {
@@ -3393,7 +3412,7 @@ const AllocationForm = () => {
         }
         break;
       }
-      
+
       case 'advanced_filters': {
         // For advanced filters, use the full values object (don't exclude any fields)
         // All values are arrays from the multi-select autocomplete components
@@ -3759,8 +3778,9 @@ const AllocationForm = () => {
                   fromVersion:
                     fromVersion !== undefined ? String(fromVersion) : '',
                   toVersion: toVersion !== undefined ? String(toVersion) : '',
-                  byUser: `${modifingUserDetails?.firstName || ''} ${modifingUserDetails?.lastName || ''
-                    }`,
+                  byUser: `${modifingUserDetails?.firstName || ''} ${
+                    modifingUserDetails?.lastName || ''
+                  }`,
                   _timestampRaw: Math.floor(
                     new Date(log.Timestamp)?.getTime() / 1000
                   ), // Add raw timestamp for sorting
@@ -4025,17 +4045,11 @@ const AllocationForm = () => {
         );
       case 'add_user':
         return (
-          <AddUserForm
-            formikProps={formikProps}
-            setFormValue={setFormValue}
-          />
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
         );
       case 'edit_user':
         return (
-          <AddUserForm
-            formikProps={formikProps}
-            setFormValue={setFormValue}
-          />
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
         );
       case 'add_resource_to_user':
         return (

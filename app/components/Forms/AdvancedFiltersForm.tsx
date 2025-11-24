@@ -6,16 +6,17 @@ import { useSelector, useDispatch } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { FormikProps } from 'formik';
 import { RootState, AppDispatch } from '@/app/redux/store';
-import { CrudPermissions } from '../HOC/withRBAC';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { ProjectTypeGroup } from '@/app/types';
-import { FETCH_PROJECT_TYPE_GROUPS } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_PROJECT_TYPE_GROUPS, FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { fetchAllTeams } from '@/app/redux/actions/fetchTeamsAction';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { getAllocationManagerFromPath, getResourceFromUid } from '@/app/utils/common';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 interface FormValues {
     ProjectTypeGroup: string;
@@ -56,6 +57,7 @@ const AdvancedFiltersForm = ({
     const { initialData, formType } = useSelector(
         (state: RootState) => state.globalDialog.formState
     );
+    const { scalarSettings } = useSelector((state: RootState) => state.allSettings);
 
 
     useEffect(() => {
@@ -86,6 +88,9 @@ const AdvancedFiltersForm = ({
                 type: FETCH_ORGANISATIONS,
                 payload: {},
             });
+        }
+        if (projectTypes.length === 0) {
+            dispatch({ type: FETCH_PROJECT_TYPES });
         }
 
     }, []);
@@ -190,6 +195,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Project Type Group</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['ProjectTypeGroup'].r}
                     name="ProjectTypeGroup"
                     label="Select Project Type Group"
                     multiple={true}
@@ -202,6 +208,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1}}>
                 <StyledLabel>Project Type</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['ProjectType'].r}
                     name="ProjectType"
                     label="Project Type"
                     multiple={true}
@@ -213,6 +220,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Project Manager</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Resource'].r}
                     name="ProjectManager"
                     label="Project Manager"
                     multiple={true}
@@ -224,6 +232,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1}}>
                 <StyledLabel>Project</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Project'].r}
                     name="Project"
                     label="Project"
                     multiple={true}
@@ -233,10 +242,11 @@ const AdvancedFiltersForm = ({
                 />
             </Box>
             <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
-                <StyledLabel>Portfolio</StyledLabel>
+                <StyledLabel>{scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Portfolio'].r}
                     name="Portfolio"
-                    label="Portfolio"
+                    label={(scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME) as string}
                     multiple={true}
                     options={portfolioOptions}
                     value={values.Portfolio || []}
@@ -246,6 +256,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Team</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Team'].r}
                     name="Team"
                     label="Team"
                     multiple={true}
@@ -257,6 +268,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Resource</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Resource'].r}
                     name="Resource"
                     label="Resource"
                     multiple={true}
@@ -268,6 +280,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1, borderBottom: '1px solid #00000040', mb: 1 }}>
                 <StyledLabel>Allocation Manager</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Resource'].r}
                     name="AllocationManager"
                     label="Allocation Manager"
                     multiple={true}
@@ -279,6 +292,7 @@ const AdvancedFiltersForm = ({
             <Box sx={{ pb: 1 }}>
                 <StyledLabel>Organization</StyledLabel>
                 <StyledAutocomplete
+                    disabled={!permissions['Organization'].r}
                     name="Organization"
                     label="Organization"
                     multiple={true}
@@ -291,4 +305,12 @@ const AdvancedFiltersForm = ({
     );
 };
 
-export default AdvancedFiltersForm;
+export default withRBAC(AdvancedFiltersForm, [
+  'ProjectType',
+  'ProjectTypeGroup',
+  'Project',
+  'Portfolio',
+  'Team',
+  'Resource',
+  'Organization',
+]);

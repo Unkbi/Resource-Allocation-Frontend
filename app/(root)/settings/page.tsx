@@ -165,10 +165,12 @@ const SettingsPanel = ({
   const hasAnyAccess = {
     'user-profile': true,
     notification: false,
-    'user-management': true,
+    'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
-      permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
+      permissions['Portfolio'].r ||
+      permissions['ProjectType'].r ||
+      permissions['ProjectTypeGroup'].r,
     'allocation-setting':
       permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
     'location-setting':
@@ -191,7 +193,6 @@ const SettingsPanel = ({
 
   useEffect(() => {
     if (scalarSettings === null) {
-      // Sahadev : This is temporary, we will pobably need to call AllSettings API here.
       dispatch({
         type: FETCH_ALL_SETTINGS,
         payload: {},
@@ -237,7 +238,8 @@ const SettingsPanel = ({
             headerText: 'User Management',
             icon: '',
             content: <UserManagement />,
-            description: 'Easily add and manage your users and resources in one place.',
+            description:
+              'Easily add and manage your users and resources in one place.',
           },
           {
             id: 'access-management',
@@ -446,8 +448,10 @@ const SettingsPanel = ({
 };
 
 export default withRBAC(SettingsPanel, [
+  'User',
   'Role',
   'Permission',
+  'Portfolio',
   'ProjectType',
   'ProjectTypeGroup',
   'AllocationRangeSetting',

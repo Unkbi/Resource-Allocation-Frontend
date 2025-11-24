@@ -7,6 +7,7 @@ import {
   deletePrivilegeAssignment,
   deleteRole,
   deleteRoleAssignment,
+  fetchDashboardQueriesRBAC,
   fetchMeta,
   fetchPrivilegeAssignments,
   fetchPrivileges,
@@ -19,6 +20,8 @@ import {
 } from '@/app/services/rbacServices';
 import { call, put, select, take, takeEvery } from 'redux-saga/effects';
 import {
+  setDashboardQueryKeys,
+  setDashboardQueryKeysLoading,
   setLoading,
   setLoadingLoginUserPrivileges,
   setLoginUserPrivileges,
@@ -52,9 +55,20 @@ import {
   GET_USER_AND_PRIVILEGES,
   GET_META,
   UPDATE_ROLESASSIGNMENT,
+  FETCH_DASHBOARD_QUERY_KEYS,
+  SETUP_ADVANCED_FILTERS,
 } from '../actions/rbacActions';
 import { getUser } from '@/app/services/authServices';
-import { buildLoginUserPrivileges } from '@/app/utils/authUtils';
+import {
+  buildDefaultDashboardFilter,
+  buildLoginUserPrivileges,
+} from '@/app/utils/authUtils';
+import {AdvancedFilters} from '../../types/dashboardTypes';
+import {
+  // AdvancedFilters,
+  setAdvancedFilters,
+} from '../reducers/dashboardReducer';
+import { LoginUserPrivilege, User } from '@/app/types';
 
 function* fetchRolesSaga(): Generator<any, void, any> {
   try {
@@ -365,6 +379,57 @@ function* getMetaSaga(): Generator<any, void, any> {
   }
 }
 
+function* getDashboardQueryKeysSaga(): Generator<any, void, any> {
+  try {
+    yield put(setDashboardQueryKeysLoading(true));
+    const responses = yield call(fetchDashboardQueriesRBAC);
+    yield put(setDashboardQueryKeys(responses));
+  } catch (error) {
+    console.error(
+      'Saga error, Failed to fetch Dashboard QueryKeys Details : ',
+      error
+    );
+  } finally {
+    yield put(setDashboardQueryKeysLoading(false));
+  }
+}
+
+function* setupAdvancedFiltersSage(action: any): Generator<any, void, any> {
+  try {
+    // Building Default Dashboard Filters that will automatically be applied based on privileges.
+    const { loginUserPrivileges, userId, resources, projects, teams } =
+      action.payload;
+    const initialDashboardFilters = yield select(
+      state => state.dashboard.defualtAdvancedFilters
+    ) as AdvancedFilters;
+
+    let user = yield select(state => state.user.user);
+    if (!user) {
+      yield put(getUser(userId));
+      yield take(getUser.fulfilled.type);
+
+      user = yield select(state => state.user.user);
+    }
+    const [defaultRBACDashboardFilters, defaultDashboardFilters] =
+      buildDefaultDashboardFilter(
+        initialDashboardFilters,
+        loginUserPrivileges,
+        user,
+        resources,
+        projects,
+        teams
+      );
+
+    // yield put(setDefaultAdvancedFilters(defaultRBACDashboardFilters));
+    yield put(setAdvancedFilters(defaultDashboardFilters));
+  } catch (error) {
+    console.error(
+      'Saga error, Failed to setup Initial Dashboard Filters : ',
+      error
+    );
+  }
+}
+
 export function* rbacSaga() {
   yield takeEvery(FETCH_ROLES, fetchRolesSaga);
   yield takeEvery(CREATE_ROLE, createRoleSaga);
@@ -384,4 +449,6 @@ export function* rbacSaga() {
   yield takeEvery(GET_USER, getUserSaga);
   yield takeEvery(GET_USER_AND_PRIVILEGES, getUserAndPrivilegesSaga);
   yield takeEvery(GET_META, getMetaSaga);
+  yield takeEvery(FETCH_DASHBOARD_QUERY_KEYS, getDashboardQueryKeysSaga);
+  yield takeEvery(SETUP_ADVANCED_FILTERS, setupAdvancedFiltersSage);
 }

@@ -2,7 +2,11 @@ import React, { useMemo } from 'react';
 import { Box, Chip, styled, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSelector, useDispatch } from 'react-redux';
-import { setAdvancedFilters, clearAdvancedFilters } from '@/app/redux/reducers/dashboardReducer';
+import {
+  setAdvancedFilters,
+  clearAdvancedFilters,
+} from '@/app/redux/reducers/dashboardReducer';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
   height: '32px',
@@ -66,15 +70,20 @@ const ClearAllButton = styled('button')(({ theme }) => ({
 
 const FilterChips = () => {
   const dispatch = useDispatch();
-  const advancedFilters = useSelector((state) => state.dashboard.advancedFilters || {});
-  
+  const { advancedFilters = {}, defualtAdvancedFilters } = useSelector(
+    state => state.dashboard
+  );
+
   // Get all the data needed for display names
-  const { projectTypeGroups, projectTypes } = useSelector((state) => state.allSettings);
-  const { teams } = useSelector((state) => state.teams);
-  const { resources } = useSelector((state) => state.resources);
-  const { portfolios } = useSelector((state) => state.portfolios);
-  const { organisations } = useSelector((state) => state.organisations);
-  const { projects } = useSelector((state) => state.projects);
+  const { projectTypeGroups, projectTypes } = useSelector(
+    state => state.allSettings
+  );
+  const { teams } = useSelector(state => state.teams);
+  const { resources } = useSelector(state => state.resources);
+  const { portfolios } = useSelector(state => state.portfolios);
+  const { organisations } = useSelector(state => state.organisations);
+  const { projects } = useSelector(state => state.projects);
+  const { scalarSettings } = useSelector(state => state.allSettings);
 
   // Create a mapping of filter keys to display labels
   const filterLabels = {
@@ -85,14 +94,14 @@ const FilterChips = () => {
     AllocationManager: 'Allocation Manager',
     ProjectManager: 'Project Manager',
     Project: 'Project Name',
-    Portfolio: 'Portfolio',
+    Portfolio: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
     Organization: 'Organization',
   };
 
   // Function to get display name from ID (handles both single values and arrays)
   const getDisplayName = (key, value) => {
     if (!value) return null;
-    
+
     // Handle array of values
     if (Array.isArray(value)) {
       const names = value.map(v => getDisplayName(key, v)).filter(Boolean);
@@ -133,32 +142,44 @@ const FilterChips = () => {
       .map(([key, value]) => {
         const displayName = getDisplayName(key, value);
         const isArray = Array.isArray(displayName);
-        
+
         return {
           key,
           value,
           label: filterLabels[key] || key,
           displayName: isArray ? displayName : [displayName],
-          displayText: isArray 
-            ? (displayName.length > 2 
-                ? `${displayName.slice(0, 2).join(', ')}...` 
-                : displayName.join(', '))
+          displayText: isArray
+            ? displayName.length > 2
+              ? `${displayName.slice(0, 2).join(', ')}...`
+              : displayName.join(', ')
             : displayName,
           count: isArray ? displayName.length : 1,
         };
       })
       .filter(filter => filter.displayName && filter.displayName.length > 0); // Only show filters with valid display names
-  }, [advancedFilters, projectTypeGroups, projectTypes, teams, resources, portfolios, organisations, projects]);
+  }, [
+    advancedFilters,
+    projectTypeGroups,
+    projectTypes,
+    teams,
+    resources,
+    portfolios,
+    organisations,
+    projects,
+  ]);
 
-  const handleRemoveFilter = (filterKey) => {
-    // Reset to empty string for single values or empty array for multiple values
-    const currentValue = advancedFilters[filterKey];
-    const resetValue = Array.isArray(currentValue) ? [] : '';
-    
-    dispatch(setAdvancedFilters({
-      ...advancedFilters,
-      [filterKey]: resetValue,
-    }));
+  const handleRemoveFilter = filterKey => {
+    // Reset to default
+    const resetValue = defualtAdvancedFilters
+      ? defualtAdvancedFilters[filterKey]
+      : '';
+
+    dispatch(
+      setAdvancedFilters({
+        ...advancedFilters,
+        [filterKey]: resetValue,
+      })
+    );
   };
 
   const handleClearAll = () => {
@@ -178,30 +199,35 @@ const FilterChips = () => {
         flexWrap: 'wrap',
       }}
     >
-      {activeFilters.map((filter) => {
+      {activeFilters.map(filter => {
         const showTooltip = filter.count > 2;
         const remainingCount = filter.count - 2;
-        
-        const chipLabel = filter.count >= 2 
-          ? (
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+
+        const chipLabel =
+          filter.count >= 2 ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
                 gap: '4px',
                 overflow: 'hidden',
                 maxWidth: '100%',
-              }}>
-                <span style={{ 
+              }}
+            >
+              <span
+                style={{
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   flex: 1,
                   minWidth: 0,
-                }}>
-                  <strong>{filter.label}:</strong> {filter.displayName.slice(0, 2).join(', ')}
-                </span>
-                {showTooltip && (
-                <Tooltip 
+                }}
+              >
+                <strong>{filter.label}:</strong>{' '}
+                {filter.displayName.slice(0, 2).join(', ')}
+              </span>
+              {showTooltip && (
+                <Tooltip
                   title={
                     <Box sx={{ maxWidth: 300 }}>
                       {filter.displayName.slice(2).map((name, index) => (
@@ -214,18 +240,19 @@ const FilterChips = () => {
                 >
                   <CountBadge>+{remainingCount}</CountBadge>
                 </Tooltip>
-                )}
-              </Box>
-            )
-          : (
-              <span style={{ 
+              )}
+            </Box>
+          ) : (
+            <span
+              style={{
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-              }}>
+              }}
+            >
               {filter.displayText}
-              </span>
-            );
+            </span>
+          );
 
         return (
           <StyledChip
@@ -236,9 +263,7 @@ const FilterChips = () => {
           />
         );
       })}
-      <ClearAllButton onClick={handleClearAll}>
-        Clear All
-      </ClearAllButton>
+      <ClearAllButton onClick={handleClearAll}>Clear All</ClearAllButton>
     </Box>
   );
 };

@@ -138,6 +138,7 @@ function AllocationGrid({
   const { user } = useSelector(state => state.user);
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
+  const { location } = useSelector(state => state.allSettings);
   const { projects } = useSelector(state => state.projects);
   const { projectTypes } = useSelector(state => state.allSettings);
   const { portfolios } = useSelector(state => state.portfolios);
@@ -1074,6 +1075,7 @@ function AllocationGrid({
               portfolios,
               projects,
               resources,
+              location,
               splitView,
               bottomTeamAllocationGrid,
               teamAllocationGrid,

@@ -7,6 +7,7 @@ import CustomSelect from '../Select/CustomSelect';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 import { withRBAC } from '../HOC/withRBAC';
+import { Resource_Team_Project_Status_Filter } from '@/app/constants/constants';
 
 const AddTeamForm = ({
   formType,
@@ -32,12 +33,12 @@ const AddTeamForm = ({
 
    const resourceListOptions =
      resources
-       ?.filter(resource => resource.Status === 'Active') 
+       ?.filter(resource => Resource_Team_Project_Status_Filter.includes(resource.Status))
        .sort((a, b) => a.FullName.localeCompare(b.FullName))
        .map(resource => ({
-      value: resource.__path__,
-      label: resource.FullName,
-    })) || [];
+         value: resource.__path__,
+         label: resource.FullName,
+       })) || [];
 
   const statusOptions = [
     { value: 'Active', label: 'Active' },

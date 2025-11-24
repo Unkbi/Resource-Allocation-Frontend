@@ -7,7 +7,8 @@ const toSqlArray = (arr: string[] | null | undefined): string => {
 
 export const allowedQueries: Record<string, (...args: any[]) => string> = {
     //002 - Fractional units breakdown of resources allocation by duration trend based on project types.
-    projectFTE: (startDate,
+    projectFTE: (
+        startDate,
         endDate,
         bucket,
         teamFilter = null,
@@ -15,7 +16,8 @@ export const allowedQueries: Record<string, (...args: any[]) => string> = {
         orgFilter = null,
         projectTypeFilter = null,
         projectTypeGroupFilter = null,
-        portfolioFilter = null) => `WITH params AS (
+        portfolioFilter = null
+    ) => `WITH params AS (
     SELECT
         DATE '${startDate}' AS as_of_date,
         ${toSqlArray(teamFilter)}::text[]                 AS team_filter,
@@ -25,7 +27,6 @@ export const allowedQueries: Record<string, (...args: any[]) => string> = {
         ${toSqlArray(projectTypeGroupFilter)}::text[]     AS project_type_group_filter,
         ${toSqlArray(portfolioFilter)}::uuid[]            AS portfolio_filter
 ),
-
 /* ========= Filter CTEs ========== */
 filtered_project_types AS (
     SELECT
@@ -38,7 +39,6 @@ filtered_project_types AS (
       AND (p.project_type_group_filter IS NULL OR ptg."Name" = ANY(p.project_type_group_filter))
       AND (p.project_type_filter IS NULL OR pt."Name" = ANY(p.project_type_filter))
 ),
-
 filtered_projects AS (
     SELECT
         proj."Id" AS project_id
@@ -47,7 +47,6 @@ filtered_projects AS (
     WHERE proj.__is_deleted__ = false
       AND (p.portfolio_filter IS NULL OR proj."PortfolioId" = ANY(p.portfolio_filter))
       AND (
-          
           (p.project_type_filter IS NULL AND p.project_type_group_filter IS NULL)
           OR EXISTS (
               SELECT 1 
@@ -56,7 +55,6 @@ filtered_projects AS (
           )
       )
 ),
-
 filtered_teams AS (
     SELECT
         t.__path__ AS team_id,
@@ -67,7 +65,6 @@ filtered_teams AS (
     WHERE (p.team_filter IS NULL OR t.__path__ = ANY(p.team_filter))
       AND (p.team_alloc_mgr_filter IS NULL OR t."AllocationManager" = ANY(p.team_alloc_mgr_filter))
 ),
-
 team_filtered_resources AS (
     SELECT DISTINCT
         tr."Resource" AS resource_id
@@ -78,7 +75,6 @@ team_filtered_resources AS (
         WHERE ft.team_id = tr."Team"
     )
 ),
-
 org_filtered_resources AS (
     SELECT DISTINCT
         orgr."Resource" AS resource_id
@@ -87,7 +83,6 @@ org_filtered_resources AS (
     WHERE p.org_filter IS NOT NULL
       AND orgr."Organization" = ANY(p.org_filter)
 ),
-
 eligible_resources AS (
     SELECT
         r.__path__                           AS resource_id,
@@ -113,15 +108,13 @@ eligible_resources AS (
           )
       )
 ),
-
-/* ========= 2. Compute 7-week window (3 past + current + 3 future) ========== */
+/* ========= 2. Compute 6-week window (3 past + current + 2 future) ========== */
 date_window AS (
     SELECT
         date_trunc('week', as_of_date - interval '3 week') AS start_date,
-        date_trunc('week', as_of_date + interval '3 week') + interval '6 day' AS end_date
+        date_trunc('week', as_of_date + interval '2 week') + interval '6 day' AS end_date
     FROM params
 ),
-
 /* ========= 3. Weekly calendar buckets ========== */
 calendar AS (
     SELECT gs::date AS week_start
@@ -132,7 +125,6 @@ calendar AS (
         interval '1 week'
     ) gs ON TRUE
 ),
-
 /* ========= 4. Raw allocations (planned + actual) ========== */
 allocations AS (
     SELECT
@@ -156,8 +148,7 @@ allocations AS (
           )
       )
 ),
-
-/* ========= 6. Project lookup (project → type → typegroup) ========== */
+/* ========= 6. Project lookup ========== */
 project_lu AS (
     SELECT
         pr."Id"       AS project_id,
@@ -173,7 +164,6 @@ project_lu AS (
         WHERE fp.project_id = pr."Id"
     )
 ),
-
 /* ========= 7. Aggregate planned + actual per week × project_type_group ========== */
 alloc_by_group_period AS (
     SELECT
@@ -182,10 +172,9 @@ alloc_by_group_period AS (
         SUM(alloc.planned_fte) AS planned_fte,
         SUM(alloc.actual_fte)  AS actual_fte
     FROM allocations alloc
-    JOIN project_lu         lu ON lu.project_id = alloc.project_id
+    JOIN project_lu lu ON lu.project_id = alloc.project_id
     GROUP BY lu.project_type_group, date_trunc('week', alloc.period_date)
 ),
-
 /* ========= 8. Add totals per week ========== */
 weekly_totals AS (
     SELECT
@@ -195,8 +184,7 @@ weekly_totals AS (
     FROM alloc_by_group_period
     GROUP BY week_start
 )
-
-/* ========= 9. Final output with percentages ========== */
+/* ========= 9. Final output ========== */
 SELECT
     cal.week_start::text,
     abgp.project_type_group,
@@ -206,15 +194,20 @@ SELECT
         (COALESCE(abgp.planned_fte, 0) * 100.0 / NULLIF(wt.total_planned, 0))::numeric,
         2
     ) AS planned_pct,
-    ROUND(
-        (COALESCE(abgp.actual_fte, 0) * 100.0 / NULLIF(wt.total_actual, 0))::numeric,
-        2
-    ) AS actual_pct
+    CASE
+        WHEN cal.week_start = date_trunc('week', p.as_of_date)
+             AND COALESCE(abgp.actual_fte,0) = 0 THEN NULL
+        ELSE ROUND(
+            (COALESCE(abgp.actual_fte, 0) * 100.0 / NULLIF(wt.total_actual, 0))::numeric,
+            2
+        )
+    END AS actual_pct
 FROM calendar cal
 LEFT JOIN alloc_by_group_period abgp
        ON abgp.week_start = cal.week_start
 LEFT JOIN weekly_totals wt
        ON wt.week_start = cal.week_start
+JOIN params p ON TRUE
 ORDER BY cal.week_start, abgp.project_type_group;`,
     //003 - What is my capacity available by Teams vs the Capacity allocated by duration trend?
     capacityAvailability: (
