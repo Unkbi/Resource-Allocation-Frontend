@@ -171,7 +171,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           ) // If Every Row has the same period.
             ? actualAllocations[0].Period
             : startDate,
-        status: isPostFriday ? 'Confirmed' : 'In-Progress',
+        status: isFridayOrAfterFriday ? 'Confirmed' : 'In-Progress',
         actuals: [
           ...newData,
           ...(modifiedData?.map((row: ActualAllocations) => ({
@@ -183,7 +183,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         ],
       };
 
-      if ((!isPostFriday || isModified) && !hasInvalidRows) {
+      if ((!isFridayOrAfterFriday || isModified) && !hasInvalidRows) {
         new Promise((resolve, reject) => {
           dispatch({
             type: CONFIRM_ACTUAL_ALLOCATIONS,
@@ -193,7 +193,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           .then(() => {
             dispatch(
               setActualAllocationsStatus(
-                isPostFriday ? 'Confirmed' : 'In-Progress'
+                isFridayOrAfterFriday ? 'Confirmed' : 'In-Progress'
               )
             );
             setIsModified(false);
@@ -516,7 +516,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       );
   };
 
-  const isPostFriday = new Date() > parseISO(getFridayOfISO(endDate || ''));
+  const isFridayOrAfterFriday =
+    new Date() >= parseISO(getFridayOfISO(endDate || ''));
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -757,7 +758,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       textTransform: 'none',
                     }}
                   >
-                    {isPostFriday ? 'Save and Confirm' : 'Save'}
+                    {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
                   </Typography>
                 </Button>
 
