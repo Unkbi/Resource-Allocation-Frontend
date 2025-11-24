@@ -4,7 +4,7 @@ import { fetchDashboardChart, fetchInventoryMetrics } from '../actions/dashboard
 import { setDashboardChart, startChartLoading, startMultipleChartsLoading } from '../reducers/dashboardReducer';
 import { RootState } from '../store';
 import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup } from '../../services/dashboardServices';
-import apiClient from '../../utils/apiClient';
+
 
 function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<any, void, any> {
   const { chartKey, startDate, endDate, bucket } = action.payload;
@@ -51,7 +51,10 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
     'activeProjectsByType', 
     'activeResources',
     'resourceFTEContractorRatio',
-    'totalHeadcount'
+    'totalHeadcount',
+    'team_headcount_distribution',
+    'allocation_by_project_type_group',
+    'plan_vs_actual_variance',
   ]));
   
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
@@ -105,8 +108,24 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
           data: responseData.total_head_breakdown || [] 
         })),
         put(setDashboardChart({ 
-          chartKey: 'headcountByTeam', 
-          data: responseData.headcount_by_team || [] 
+          chartKey: 'team_headcount_distribution', 
+          data: responseData.headcount_by_team || []
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'allocation_by_project_type_group', 
+          data: responseData.allocation_by_project_type_group || [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'plan_vs_actual_variance', 
+          data: responseData.plan_vs_actual_variance || []
+        })),
+        put(setDashboardChart({
+          chartKey: 'top_projects_by_variance',
+          data: responseData.top_5_projects_by_variance || []
+        })),
+        put(setDashboardChart({
+          chartKey: 'projects_by_type_distribution',
+          data: responseData.projects_by_type || []
         })),
       ]);
     } else {
@@ -116,7 +135,11 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
         put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),
         put(setDashboardChart({ chartKey: 'totalHeadcount', data: [] })),
-        put(setDashboardChart({ chartKey: 'headcountByTeam', data: [] })),
+        put(setDashboardChart({ chartKey: 'team_headcount_distribution', data: [] })),
+        put(setDashboardChart({ chartKey: 'allocation_by_project_type_group', data: [] })),
+        put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
+        put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
+        put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
       ]);
     }
   } catch (err) {
@@ -127,7 +150,11 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
       put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),
       put(setDashboardChart({ chartKey: 'totalHeadcount', data: [] })),
-      put(setDashboardChart({ chartKey: 'headcountByTeam', data: [] })),
+      put(setDashboardChart({ chartKey: 'team_headcount_distribution', data: [] })),
+      put(setDashboardChart({ chartKey: 'allocation_by_project_type_group', data: [] })),
+      put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
+      put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
+      put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
     ]);
   }
 }

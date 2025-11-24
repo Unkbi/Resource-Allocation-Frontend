@@ -13,7 +13,7 @@ import {
   Team,
   UserRbac,
 } from '../types';
-import { AdvancedFilters } from '../redux/reducers/dashboardReducer';
+import { AdvancedFilters } from '../types/dashboardTypes';
 import {
   getProjectsIamProjectManager,
   getTeamsIamAllocationManager,

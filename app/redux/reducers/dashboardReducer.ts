@@ -1,16 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-
-interface AdvancedFilters {
-  ProjectTypeGroup?: string[];
-  ProjectType?: string[];
-  Team?: string[];
-  Resource?: string[];
-  AllocationManager?: string[];
-  ProjectManager?: string[];
-  Project?: string[];
-  Portfolio?: string[];
-  Organization?: string[];
-}
+import { AdvancedFilters } from '@/app/types/dashboardTypes';
 
 interface DashboardChartState {
   advancedFilters: AdvancedFilters;

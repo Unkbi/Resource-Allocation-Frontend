@@ -205,7 +205,6 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       DynamicWhere: 'AND metric_type = \'actuals_deviation\'',
     },
   };
-console.log(payloadConfigs[chartKey],"config chartkey");
   return payloadConfigs[chartKey] || baseFilters;
 };
 

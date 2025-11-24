@@ -125,7 +125,7 @@ const DashboardToolbar = ({
     if (selectedOption === 'week') {
       const monday = date.startOf('isoWeek');
       const sunday = date.endOf('isoWeek');
-      return `${monday.format('MMM DD')} - ${sunday.format('MMM DD, YYYY')}`;
+      return `${monday.format('MMM DD')} - ${sunday.format('MMM DD')}`;
     } else if (selectedOption === 'month') {
       return date.format('MMMM YYYY');
         } else if (selectedOption === 'quarter') {
