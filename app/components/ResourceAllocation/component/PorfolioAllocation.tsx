@@ -10,7 +10,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
@@ -52,6 +52,7 @@ function PortfolioAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { setRows, ready } = useAllocationGrid('projectAllocation');
   const { getAllRows: getAllTeamViewRows } =
@@ -236,8 +237,10 @@ function PortfolioAllocation({
       headerClassName: 'secondary-header',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const WorkLocation = resource?.WorkLocation || '';
-        return <EllipsisNameCell value={WorkLocation} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {
