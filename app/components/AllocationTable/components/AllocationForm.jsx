@@ -1592,6 +1592,7 @@ const AllocationForm = () => {
                   portfolios,
                   projects,
                   resources,
+                  location,
                   splitView,
                   bottomTeamAllocationGrid,
                   teamAllocationGrid,
