@@ -639,6 +639,7 @@ export default function ActualTable({
             loading={dataProcessing}
             disableColumnMenu
             disableColumnSorting
+            editMode="cell"
             isRowSelectable={params =>
               params.row.type !== 'divider' &&
               params.row.id !== 'second-total-row'
