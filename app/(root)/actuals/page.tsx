@@ -325,9 +325,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             resource: userId,
             status: userId ? ['In-Progress', 'Not Started'] : [''],
             startDate:
-              generateDateWeekMath('WEEK_MINUS', 7, parseISO(startDate)) || '',
+              generateDateWeekMath('WEEK_MINUS', 7, parseISO(startDate ?? '')) || '',
             endDate:
-              generateDateWeekMath('WEEK_MINUS', 2, parseISO(endDate)) || '',
+              generateDateWeekMath('WEEK_MINUS', 2, parseISO(endDate ?? '')) || '',
           },
         });
       }
@@ -516,8 +516,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       );
   };
 
-  const isFridayOrAfterFriday =
-    new Date() >= parseISO(getFridayOfISO(endDate || ''));
+  const validEndDate: string = endDate ?? '';
+  const isFridayOrAfterFriday = validEndDate
+    ? new Date() >= parseISO(getFridayOfISO(validEndDate))
+    : false;
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
