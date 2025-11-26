@@ -107,11 +107,15 @@ export default function CommentCell(props: CommentCellProps) {
       autoFocus={!readonly}
       multiline
       minRows={1}
-      maxRows={3}
       error={showError}
       placeholder={disableView ? '' : 'Enter Comments / Project updates'}
       InputProps={{
         readOnly: readonly,
+        inputProps: {
+          onMouseDown: (e: React.MouseEvent) => {
+            e.stopPropagation(); //this is to enter edit mode onclick
+            },
+        },
       }}
       // keep your existing styling; tweak if needed
       sx={{
@@ -126,7 +130,6 @@ export default function CommentCell(props: CommentCellProps) {
         },
         '& .MuiOutlinedInput-root': {
           height: '100%',
-          padding: '2px 8px',
           fontSize: 14,
           alignItems: 'center',
           '&.Mui-focused': showError

@@ -112,13 +112,11 @@ const AddResourceForm = ({
       })) || [];
 
   const teamListOptions =
-    teams
-      ?.filter(team => team.Status === 'Active')
-      .sort((a, b) => a.Name.localeCompare(b.Name))
+    (teams
       ?.map(team => ({
         value: team.Id,
         label: team.Name,
-      })) || [];
+      })) || []).sort((a, b) => a.label.localeCompare(b.label));
   const dispatch = useDispatch();
 
   useEffect(() => {

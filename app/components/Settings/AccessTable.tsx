@@ -50,6 +50,7 @@ interface AccessTableProps {
   onBulkReactivateUser?: (resources: any[]) => void;
   selectedRowIds?: Set<string>;
   onSelectionChange?: (hasSelection: boolean, selectedIds: Set<string>) => void;
+  isRowSelectable?: (params: any) => boolean;
 }
 
 export default function AccessTable({
@@ -77,6 +78,7 @@ export default function AccessTable({
   onBulkReactivateUser,
   selectedRowIds = new Set(),
   onSelectionChange,
+  isRowSelectable,
 }: AccessTableProps) {
   const [search, setSearch] = useState('');
   const [gridView, setGridView] = useState<'grid' | 'list'>('grid');
@@ -232,8 +234,8 @@ export default function AccessTable({
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
     >
       {checkboxSelection ? (
-        showToolbar && hasAnyAction ? (
-          // Selection action toolbar when rows are selected AND actions are available
+        showToolbar ? (
+          // Selection action toolbar when rows are selected
           <Box
             px={2}
             py={2}
@@ -250,7 +252,17 @@ export default function AccessTable({
             </Typography>
 
             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-              {title === 'Resources' ? (
+              {!hasAnyAction ? (
+                <Typography
+                  sx={{
+                    color: '#6B7280',
+                    fontSize: 13,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  No bulk actions available for mixed selection
+                </Typography>
+              ) : title === 'Resources' ? (
                 // Resource-specific toolbar buttons
                 <>
                   {availableActions.showAddUser && (
@@ -712,7 +724,7 @@ export default function AccessTable({
                     background: '#fff',
                     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
                     // borderRadius: '4px',
-                    width: 125,
+                    width: 128,
                     py: 0.5,
                     border: '1px solid #E5E7EB',
                   }}
@@ -784,6 +796,7 @@ export default function AccessTable({
           onRowSelectionModelChange={handleSelectionChange}
           apiRef={apiRef}
           loading={loading}
+          isRowSelectable={isRowSelectable}
           filterModel={filterModel}
           onFilterModelChange={handleFilterModelChange}
           columnVisibilityModel={columnVisibilityModel}

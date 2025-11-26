@@ -2645,7 +2645,7 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                id: cleanedValues.Name,
+                id: cleanedValues.Name.replace('/', '__'),
                 updatedFields,
                 resolve,
                 reject,
