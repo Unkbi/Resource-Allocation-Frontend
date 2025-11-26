@@ -421,7 +421,7 @@ export default function ActualTable({
       headerName: 'Comments / Project updates',
       editable: !disableView,
       flex: 2,
-      minWidth: 200,
+      minWidth: 230,
       headerClassName: 'header-comments',
       cellClassName: params =>
         params.id === 'total'
@@ -442,7 +442,14 @@ export default function ActualTable({
         params.id === 'total' ? (
           <Box sx={{ height: '100%', width: '100%' }} />
         ) : (
-          <CommentCell {...params} readonly={true} disableView={disableView} />
+          <CommentCell
+            {...params}
+            readonly={true}
+            disableView={disableView}
+            showInitialError={
+              rowValidationErrors[params.id as string]?.comments
+            }
+          />
         ),
     },
   ];
@@ -607,7 +614,7 @@ export default function ActualTable({
   ];
   return (
     <>
-      <Box borderRadius={1} overflow="hidden" width={700}>
+      <Box borderRadius={1} overflow="hidden" width={730}>
         <Box
           display="flex"
           justifyContent="space-between"
@@ -640,6 +647,24 @@ export default function ActualTable({
             disableColumnMenu
             disableColumnSorting
             editMode="cell"
+            onCellClick={(params, event) => {
+              // prevent MUI from starting edit automatically
+              event.defaultMuiPrevented = true;
+
+              // Ignore clicks on non-editable cells
+              if (!params.isEditable) return;
+
+              const mode = apiRef.current.getCellMode(params.id, params.field);
+
+              // Already editing? skip
+              if (mode === 'edit') return;
+
+              // Trigger edit immediately
+              apiRef.current.startCellEditMode({
+                id: params.id,
+                field: params.field,
+              });
+            }}
             isRowSelectable={params =>
               params.row.type !== 'divider' &&
               params.row.id !== 'second-total-row'
