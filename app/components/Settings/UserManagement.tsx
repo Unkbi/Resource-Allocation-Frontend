@@ -39,7 +39,7 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: 4,
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
-    width: '125px',
+    width: '128px',
   },
 }));
 
@@ -753,7 +753,7 @@ export default function UserManagementPage() {
                 setAnchorEl(e.currentTarget);
                 setMenuUserId(params.row.Name);
               }}
-              disabled={isThisRowSelected || params.row.resourceStatus === 'Inactive'}
+              disabled={isThisRowSelected || params.row.resourceStatus !== 'Active'}
               sx={{
                 color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
               }}
@@ -959,6 +959,7 @@ export default function UserManagementPage() {
           onBulkResendInvite={handleBulkResendInvite}
           onBulkDeactivateUser={handleBulkDeactivateUser}
           onBulkReactivateUser={handleBulkReactivateUser}
+          isRowSelectable={() => true}
         />
       )}
       {tab === 'resources' && (
@@ -985,6 +986,7 @@ export default function UserManagementPage() {
           onBulkReactivateUser={handleBulkReactivateUser}
           selectedRowIds={selectedRowIds}
           onSelectionChange={handleSelectionChange}
+          isRowSelectable={(params) => params.row.resourceStatus === 'Active'}
         />
       )}
 
