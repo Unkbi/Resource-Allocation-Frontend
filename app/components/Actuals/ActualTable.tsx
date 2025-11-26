@@ -650,15 +650,11 @@ export default function ActualTable({
             onCellClick={(params, event) => {
               // prevent MUI from starting edit automatically
               event.defaultMuiPrevented = true;
-
               // Ignore clicks on non-editable cells
               if (!params.isEditable) return;
 
               const mode = apiRef.current.getCellMode(params.id, params.field);
-
-              // Already editing? skip
               if (mode === 'edit') return;
-
               // Trigger edit immediately
               apiRef.current.startCellEditMode({
                 id: params.id,
