@@ -63,7 +63,7 @@ import {
   buildDefaultDashboardFilter,
   buildLoginUserPrivileges,
 } from '@/app/utils/authUtils';
-import {AdvancedFilters} from '../../types/dashboardTypes';
+import { AdvancedFilters } from '../../types/dashboardTypes';
 import {
   // AdvancedFilters,
   setAdvancedFilters,
