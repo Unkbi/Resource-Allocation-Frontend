@@ -83,7 +83,8 @@ const AddResourceToUserForm = ({
       value: resource.email,
       label: resource.Name || resource.email,
       id: resource.id,
-    }));
+    }))
+    .sort((a : any, b : any) => a.label.localeCompare(b.label));;
 
   const handleNavigate = () => {
     window.open("/settings?menu=access-management&tab=role-assignments", "_blank");
