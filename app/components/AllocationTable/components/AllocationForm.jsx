@@ -89,7 +89,10 @@ import {
   createResourceWithTeamAndOrg,
   updateResource,
 } from '@/app/services/resourceServices';
-import { postTeamResource } from '@/app/services/teamServices';
+import {
+  fetchTeamAllocationsForSaga,
+  postTeamResource,
+} from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import {
@@ -1024,6 +1027,32 @@ const AllocationForm = () => {
           Status: cleanedValues.Status,
         };
 
+        // Check if any allocations present for a team if Team is made inactive.
+        if (
+          initialData.Status !== cleanedValues.Status &&
+          cleanedValues.Status === 'Inactive'
+        ) {
+          const teamAllocation = await fetchTeamAllocationsForSaga({
+            TeamId: initialData.Id,
+            StartDate: format(parseISO(new Date().toISOString()), DATE_FORMAT),
+            EndDate: '2099-01-01',
+          });
+
+          if (teamAllocation && teamAllocation.length > 0) {
+            dispatch(
+              showToast({
+                open: true,
+                message:
+                  'Failed to update team. Cannot make a team Inactive with Planned Allocations in the Current and Future Weeks.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 5000,
+              })
+            );
+            break;
+          }
+        }
+
         try {
           const response = await dispatch(
             updateTeam({
@@ -1081,6 +1110,30 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const calculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.FullName.toLowerCase() ===
+              calculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to add resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           FirstName: cleanedValues.FirstName,
           StartDate: cleanedValues.StartDate,
@@ -1165,6 +1218,31 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const newCalculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.Id !== initialData.Id &&
+              resource.FullName.toLowerCase() ===
+                newCalculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to update resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           ...cleanedValues,
           EndDate:
@@ -1734,6 +1812,7 @@ const AllocationForm = () => {
           );
         } finally {
           dispatch(closeDialog());
+          setFormValue({});
         }
         break;
 

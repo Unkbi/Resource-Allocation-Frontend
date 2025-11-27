@@ -126,6 +126,7 @@ const AddUserForm = ({
           placeholder="Enter Email"
           value={values?.Email || ''}
           disabled={formType === 'edit_user' ? true : false}
+          readOnly={formType === 'edit_user' ? true : false}
           onChange={(e: any) => {
             const newValue = e.target.value;
             setFieldValue('Email', newValue);
