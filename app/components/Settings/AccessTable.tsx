@@ -94,6 +94,15 @@ export default function AccessTable({
   });
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
+  // Sync internal selectionModel with parent's selectedRowIds
+  React.useEffect(() => {
+    if (selectedRowIds.size === 0) {
+      setSelectionModel([]);
+      setSelectedRows([]);
+      setShowToolbar(false);
+    }
+  }, [selectedRowIds]);
+
   // Refs for external filter and column buttons to use as anchor elements
   const externalFilterButtonRef = useRef<HTMLButtonElement>(null);
   const externalColumnButtonRef = useRef<HTMLButtonElement>(null);
