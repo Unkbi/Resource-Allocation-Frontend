@@ -485,7 +485,7 @@ const AllocationForm = () => {
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
-  const { projectTypeGroups, projectTypes, location, locationGroups, userResources } =
+  const { projectTypeGroups, projectTypes, location, locationGroups } =
     useSelector(state => state.allSettings);
 
   const _startDate = currentView?.isDynamicRange
@@ -3381,31 +3381,21 @@ const AllocationForm = () => {
       }
       case 'add_resource_to_user': {
         try {
-          
-          const finalData = cleanedValues.Resources.map(resourceEmail => {
-            const resourceData = userResources?.find(res => res.email === resourceEmail);
-            
-            if (!resourceData) {
-              console.warn(`Resource not found for email: ${resourceEmail}`);
-              return null;
-            }
-            
-            const nameParts = resourceData.Name?.split(' ') || [];
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.slice(1).join(' ') || '';
+          const finalData = cleanedValues.Resources.map(resource => {
+            const data = initialData.find(res => {
+              if (resource === res.email) {
+                return res.Name;
+              }
+            });
+            const [firstName, lastName] = data.Name.split(' ') || [];
 
             return {
-              email: resourceEmail || null,
+              email: resource || null,
               firstName: firstName || null,
               lastName: lastName || null,
               role: cleanedValues.Role || '*',
-              resourceId: resourceData.id, // Store ID for highlighting
             };
-          }).filter(Boolean); // Remove any null entries
-
-          if (finalData.length === 0) {
-            throw new Error('No valid resources found to invite');
-          }
+          });
 
           const postData = {
             users: [...finalData],
@@ -3431,29 +3421,12 @@ const AllocationForm = () => {
             })
           );
           dispatch(closeDialog());
-
-          // Compare initialData emails with finalData emails
-          // Only highlight resources that were NOT in the initial checkbox selection
-          const initialEmails = new Set(
-            (initialData || []).map(item => item.email?.toLowerCase())
-          );
-          
-          const newlyInvitedResources = finalData.filter(
-            item => !initialEmails.has(item.email?.toLowerCase())
-          );
-
-          // If there are newly invited resources (dropdown selections that differ from checkbox), highlight the first one
-          if (newlyInvitedResources.length > 0) {
-            const highlightId = newlyInvitedResources[0].resourceId;
-            if (highlightId) {
-              dispatch(setHighlightedRowId(highlightId));
-            }
-          } else if (initialData?.[0]?.id) {
-            // Otherwise, highlight the first resource from initialData
-            dispatch(setHighlightedRowId(initialData[0].id));
-          }
-
           setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
+          }
         } catch (error) {
           console.error('Failed to add user:', error);
           const message =

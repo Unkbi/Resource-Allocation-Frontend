@@ -7,7 +7,7 @@ import { FormikProps } from 'formik';
 import { ResourceToUserFormValues } from '@/app/types';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { FETCH_ROLES } from '@/app/redux/actions/rbacActions';
-import { closeDialog, updateDialogData } from '@/app/redux/reducers/dialogReducer';
+import { closeDialog } from '@/app/redux/reducers/dialogReducer';
 import {useRouter} from 'next/navigation';
 
 interface AddResourceToUserFormProps {
@@ -77,7 +77,7 @@ const AddResourceToUserForm = ({
   )
     .filter((resource: any) => 
       resource.userStatus === "Not Created" && 
-      resource.resourceStatus !== "Inactive"
+      resource.resourceStatus === "Active"
     )
     .map((resource: any) => ({
       value: resource.email,
@@ -90,23 +90,6 @@ const AddResourceToUserForm = ({
     window.open("/settings?menu=access-management&tab=role-assignments", "_blank");
   };
 
-  const handleResourcesChange = (selectedEmails: string[]) => {
-    // Update initialData in Redux store
-    const updatedInitialData = selectedEmails.map((email: string) => {
-      const resourceData = resources?.find((res: any) => res.email === email);
-      return resourceData ? {
-        id: resourceData.id,
-        Name: resourceData.Name,
-        email: resourceData.email,
-        UserId: resourceData.UserId,
-        location: resourceData.location,
-        resourceStatus: resourceData.resourceStatus,
-        userStatus: resourceData.userStatus,
-      } : null;
-    }).filter(Boolean);
-    
-    dispatch(updateDialogData({ initialData: updatedInitialData }));
-  };
 
   return (
     <Box>
@@ -124,7 +107,6 @@ const AddResourceToUserForm = ({
           required
           formikProps={formikProps}
           fullWidth
-          onChange={handleResourcesChange}
         />
       </Box>
 
