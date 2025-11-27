@@ -111,12 +111,12 @@ const AddResourceForm = ({
         label: org.Name,
       })) || [];
 
-  const teamListOptions =
-    (teams
-      ?.map(team => ({
-        value: team.Id,
-        label: team.Name,
-      })) || []).sort((a, b) => a.label.localeCompare(b.label));
+  const teamListOptions = (
+    teams?.map(team => ({
+      value: team.Id,
+      label: team.Name,
+    })) || []
+  ).sort((a, b) => a.label.localeCompare(b.label));
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -554,9 +554,9 @@ const AddResourceForm = ({
             value={values.HRLevel || ''}
             onChange={e => {
               const input = e.target.value;
-              //Commenting code to remove any non-digit characters from input 
+              //Commenting code to remove any non-digit characters from input
               // if (/^\d*$/.test(input)) {
-                // }
+              // }
               formikProps.setFieldValue('HRLevel', input);
             }}
             onBlur={handleBlur}

@@ -1081,6 +1081,30 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const calculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.FullName.toLowerCase() ===
+              calculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to add resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           FirstName: cleanedValues.FirstName,
           StartDate: cleanedValues.StartDate,
@@ -1165,6 +1189,30 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const newCalculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.FullName.toLowerCase() ===
+              newCalculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to update resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           ...cleanedValues,
           EndDate:
