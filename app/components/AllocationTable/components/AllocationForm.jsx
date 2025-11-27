@@ -3311,7 +3311,9 @@ const AllocationForm = () => {
               return null;
             }
             
-            const [firstName, lastName] = resourceData.Name?.split(' ') || ['', ''];
+            const nameParts = resourceData.Name?.split(' ') || [];
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
 
             return {
               email: resourceEmail || null,
