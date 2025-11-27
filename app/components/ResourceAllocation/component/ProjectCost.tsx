@@ -9,7 +9,7 @@ import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import { Box } from '@mui/material';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations, Project } from '@/app/types';
+import { AllAllocations, Location, Project } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
@@ -49,6 +49,7 @@ const ProjectCost = ({
   const { costs: projectCosts, dataProcessing } = useSelector(
     (state: RootState) => state.allocationsCost
   );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
   const { projectTypes } = useSelector((state: RootState) => state.allSettings);
@@ -98,6 +99,7 @@ const ProjectCost = ({
           projects: projects,
           resources: resources,
           allResourcesDetail: allResourcesDetail,
+          location: location,
           projectTypes: projectTypes,
           startDate: startDate,
           endDate: endDate,
@@ -293,7 +295,7 @@ const ProjectCost = ({
       },
     },
     {
-      field: 'WorkLocation',
+      field: 'workLocation',
       headerName: 'Resource Work Location',
       width: 170,
       isEditable: 'false',
@@ -304,8 +306,10 @@ const ProjectCost = ({
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const WorkLocation = resource?.WorkLocation || '';
-        return <EllipsisNameCell value={WorkLocation} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {

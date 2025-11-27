@@ -180,7 +180,11 @@ function RoleManagementPage({
   }, [dispatch, meta]);
 
   useEffect(() => {
+    const menuParam = searchParams.get('menu');
+    // Only process if this is the active menu
+    if (menuParam !== 'access-management') return;
     if (loadingPermissions) return;
+
     const accessMap = [
       { key: 'Role', value: 'role-assignments' },
       { key: 'Role', value: 'role-management' },
@@ -213,6 +217,10 @@ function RoleManagementPage({
   }, [searchParams, loadingPermissions]);
 
   useEffect(() => {
+    const menuParam = searchParams.get('menu');
+    // Only process if this is the active menu
+    if (menuParam !== 'access-management') return;
+
     const tabParam = searchParams.get('tab');
     if (tabParam && ACCESS_MANAGEMENT_VALID_TABS.includes(tabParam)) {
       setTab(tabParam);
@@ -225,22 +233,27 @@ function RoleManagementPage({
     }
   }, [dispatch, user]);
 
- 
   useEffect(() => {
-  if (loadingPermissions) return;
-  if (!roles?.length) {
-    dispatch({ type: FETCH_ROLES });
-  }
-  if (!roleAssignments?.length) {
-    dispatch({ type: FETCH_ROLESASSIGNMENTS });
-  }
-  if (!privileges?.length) {
-    dispatch({ type: FETCH_PRIVILEGES });
-  }
-  if (!privilegeAssignments?.length) {
-    dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
-  }
-}, [loadingPermissions, roles, roleAssignments, privileges, privilegeAssignments]);
+    if (loadingPermissions) return;
+    if (!roles?.length) {
+      dispatch({ type: FETCH_ROLES });
+    }
+    if (!roleAssignments?.length) {
+      dispatch({ type: FETCH_ROLESASSIGNMENTS });
+    }
+    if (!privileges?.length) {
+      dispatch({ type: FETCH_PRIVILEGES });
+    }
+    if (!privilegeAssignments?.length) {
+      dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
+    }
+  }, [
+    loadingPermissions,
+    roles,
+    roleAssignments,
+    privileges,
+    privilegeAssignments,
+  ]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
@@ -427,7 +440,10 @@ function RoleManagementPage({
         });
         dispatch({ type: FETCH_ROLESASSIGNMENTS });
       } else if (tab === 'privilege-management') {
-        await dispatch({ type: DELETE_PRIVILEGE, payload: deletingRole });
+        await dispatch({
+          type: DELETE_PRIVILEGE,
+          payload: deletingRole?.replace('/', '__'),
+        });
         dispatch({ type: FETCH_PRIVILEGES });
       } else if (tab === 'privilege-assignments') {
         await dispatch({

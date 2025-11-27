@@ -1,42 +1,165 @@
-import { call, put, takeEvery } from 'redux-saga/effects';
+import { call, put, takeEvery, select, all } from 'redux-saga/effects';
 import { ChartParams } from '../../types/dashboardTypes';
-import { fetchDashboardChart } from '../actions/dashboardAction';
-import { setDashboardChart } from '../reducers/dashboardReducer';
+import { fetchDashboardChart, fetchInventoryMetrics } from '../actions/dashboardAction';
+import { setDashboardChart, startChartLoading, startMultipleChartsLoading } from '../reducers/dashboardReducer';
+import { RootState } from '../store';
+import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup } from '../../services/dashboardServices';
 
-function* fetchDashboardChartSaga(action: { payload: ChartParams }) {
-  const { chartKey, queryKey, startDate, endDate, bucket, projectTypeFilter, projectTypeGroupFilter, portfolioFilter, teamFilter, teamAllocMgrFilter, orgFilter } = action.payload;
+
+function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<any, void, any> {
+  const { chartKey, startDate, endDate, bucket } = action.payload;
+  
+  // Mark this chart as loading
+  yield put(startChartLoading(chartKey));
+  
+  // Selector to get advanced filters
+  const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
+  
   try {
-    // const paramString = new URLSearchParams(queryParams).toString();
+    const advancedFilters: ReturnType<typeof selectAdvancedFilters> = yield select(selectAdvancedFilters);
+    
+    const filterPayload: DashboardFilterPayload = {
+      StartDate: startDate,
+      EndDate: endDate,
+      TimeBucket: bucket,
+      Teams: advancedFilters.Team || [],
+      Orgs: advancedFilters.Organization || [],
+      ProjectTypeGroups: advancedFilters.ProjectTypeGroup || [],
+      ProjectTypes: advancedFilters.ProjectType || [],
+      Projects: advancedFilters.Project || [],
+      Portfolios: advancedFilters.Portfolio || [],
+      ProjectManagers: advancedFilters.ProjectManager || [],
+      Resources: advancedFilters.Resource || [],
+      AllocationManagers: advancedFilters.AllocationManager || [],
+    };
 
-    const queryParams = new URLSearchParams({
-      startDate,
-      endDate,
-      bucket,
-      projectTypeFilter: projectTypeFilter ? projectTypeFilter.join(',') : '',
-      projectTypeGroupFilter: projectTypeGroupFilter ? projectTypeGroupFilter.join(',') : '',
-      portfolioFilter: portfolioFilter ? portfolioFilter.join(',') : '',
-      teamFilter: teamFilter ? teamFilter.join(',') : '',
-      teamAllocMgrFilter: teamAllocMgrFilter ? teamAllocMgrFilter.join(',') : '',
-      orgFilter: orgFilter ? orgFilter.join(',') : '',
-    }).toString();
-
-    const res: Response = yield call(
-      fetch,
-      `/api/report/${queryKey}?${queryParams}`
-    );
-    const data: any[] = yield res.json();
-
-    if (!res.ok) {
-      // @ts-ignore
-      throw new Error(`Error fetching chart data: ${data?.error}`);
-    }
+    const data: any[] = yield call(fetchDashboardChartData, chartKey, filterPayload);
 
     yield put(setDashboardChart({ chartKey, data }));
   } catch (err) {
     console.error(`Dashboard chart fetch failed for ${chartKey}`, err);
+    yield put(setDashboardChart({ chartKey, data: [] }));
+  }
+}
+
+function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator<any, void, any> {
+  const { startDate, endDate, bucket } = action.payload;
+  
+  // Mark all inventory charts as loading
+  yield put(startMultipleChartsLoading([
+    'activeProjects',
+    'activeProjectsByType', 
+    'activeResources',
+    'resourceFTEContractorRatio',
+    'totalHeadcount',
+    'team_headcount_distribution',
+    'allocation_by_project_type_group',
+    'plan_vs_actual_variance',
+  ]));
+  
+  const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
+  
+  try {
+    const advancedFilters: ReturnType<typeof selectAdvancedFilters> = yield select(selectAdvancedFilters);
+    
+    const payload = {
+      StartDate: startDate,
+      EndDate: endDate,
+      TimeBucket: bucket,
+      Teams: advancedFilters.Team || [],
+      Orgs: advancedFilters.Organization || [],
+      ProjectTypeGroups: advancedFilters.ProjectTypeGroup || [],
+      ProjectTypes: advancedFilters.ProjectType || [],
+      Projects: advancedFilters.Project || [],
+      Portfolios: advancedFilters.Portfolio || [],
+      ProjectManagers: advancedFilters.ProjectManager || [],
+      Resources: advancedFilters.Resource || [],
+      AllocationManagers: advancedFilters.AllocationManager || [],
+      StatusFilter: "AND proj.\"Status\" IN ('Active','Approved') ",
+      SelectColumns: '',
+      OrderByClause: '1',
+    };
+
+    // Single API call for all inventory metrics
+    const rawData = yield call(fetchDashboardChartsByGroup,payload);
+    
+    if (rawData.length > 0) {
+      const responseData = rawData[0];
+      
+      yield all([
+        put(setDashboardChart({ 
+          chartKey: 'activeProjects', 
+          data: responseData.active_project ? [responseData.active_project] : [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'activeProjectsByType', 
+          data: responseData.projects_by_type || [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'activeResources', 
+          data: responseData.active_resource ? [responseData.active_resource] : [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'resourceFTEContractorRatio', 
+          data: responseData.shore_split || [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'totalHeadcount', 
+          data: responseData.total_head_breakdown || [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'team_headcount_distribution', 
+          data: responseData.headcount_by_team || []
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'allocation_by_project_type_group', 
+          data: responseData.allocation_by_project_type_group || [] 
+        })),
+        put(setDashboardChart({ 
+          chartKey: 'plan_vs_actual_variance', 
+          data: responseData.plan_vs_actual_variance || []
+        })),
+        put(setDashboardChart({
+          chartKey: 'top_projects_by_variance',
+          data: responseData.top_5_projects_by_variance || []
+        })),
+        put(setDashboardChart({
+          chartKey: 'projects_by_type_distribution',
+          data: responseData.projects_by_type || []
+        })),
+      ]);
+    } else {
+      yield all([
+        put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
+        put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
+        put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
+        put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),
+        put(setDashboardChart({ chartKey: 'totalHeadcount', data: [] })),
+        put(setDashboardChart({ chartKey: 'team_headcount_distribution', data: [] })),
+        put(setDashboardChart({ chartKey: 'allocation_by_project_type_group', data: [] })),
+        put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
+        put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
+        put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
+      ]);
+    }
+  } catch (err) {
+    console.error('Inventory metrics fetch failed', err);
+    yield all([
+      put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
+      put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
+      put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
+      put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),
+      put(setDashboardChart({ chartKey: 'totalHeadcount', data: [] })),
+      put(setDashboardChart({ chartKey: 'team_headcount_distribution', data: [] })),
+      put(setDashboardChart({ chartKey: 'allocation_by_project_type_group', data: [] })),
+      put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
+      put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
+      put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
+    ]);
   }
 }
 
 export function* dashboardSaga() {
   yield takeEvery(fetchDashboardChart, fetchDashboardChartSaga);
+  yield takeEvery(fetchInventoryMetrics, fetchInventoryMetricsSaga);
 }

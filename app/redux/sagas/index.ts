@@ -12,6 +12,7 @@ import { rbacSaga } from './rbacSaga';
 import { projectTypesSaga } from './projectTypesSaga';
 import { allSettingsSaga } from './allSettingsSaga';
 import { locationSaga } from './locationSaga';
+import { userManagementSaga } from './userManagementSaga';
 
 // listening for all sagas based on actions
 export default function* rootSaga() {
@@ -29,6 +30,7 @@ export default function* rootSaga() {
     projectTypesSaga(),
     allSettingsSaga(),
     locationSaga(),
+    userManagementSaga(),
     // ...add more watchers here
   ]);
 }

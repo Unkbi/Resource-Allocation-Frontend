@@ -10,7 +10,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
@@ -114,9 +114,13 @@ function ProjectAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectName, setMenuProjectName] = useState<string>('');
   const allResources = _resources || [];
@@ -374,7 +378,7 @@ function ProjectAllocation({
     },
     {
       field: 'portfolioName',
-      headerName: PORTFOLIO_DISPLAY_NAME,
+      headerName: scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME,
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
@@ -472,8 +476,10 @@ function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const WorkLocation = resource?.WorkLocation || '';
-        return <EllipsisNameCell value={WorkLocation} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {

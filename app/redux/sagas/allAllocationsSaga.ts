@@ -51,6 +51,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
     projectTypes,
     portfolios,
     allResourcesDetail,
+    location,
     startDate,
     endDate,
     resolve,
@@ -108,6 +109,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       resources,
       portfolios || [],
       allResourcesDetail || [],
+      location || [],
       startDate,
       endDate
     );
@@ -117,6 +119,7 @@ function* fetchAllAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       teamResourceObject,
       allResourcesDetail || [],
+      location || [],
       startDate,
       endDate
     );
@@ -143,6 +146,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
     teams,
     resources,
     allResourcesDetail,
+    location,
     projectTypes,
     startDate,
     endDate,
@@ -210,6 +214,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       projects,
       projectTypes || [],
       resources,
+      location,
       teamResourceObject,
       startDate,
       endDate
@@ -220,6 +225,7 @@ function* fetchAllocationsCostSaga(action: any): Generator<any, void, any> {
       teams,
       teamResourceObject,
       [],
+      location,
       startDate,
       endDate
     );
@@ -246,6 +252,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
     resources,
     portfolios,
     allResourcesDetail,
+    location,
     teamsResources,
     startDate,
     projectTypes,
@@ -291,6 +298,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       projectTypes || [],
       portfolios || [],
       allResourcesDetail || [],
+      location || [],
       startDate,
       endDate
     );
@@ -300,6 +308,7 @@ function* updateTeamAllocationsSaga(action: any): Generator<any, void, any> {
       teams,
       teamsResources,
       allResourcesDetail || [],
+      location || [],
       startDate,
       endDate
     );
@@ -323,6 +332,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
     resources,
     portfolios,
     allResourcesDetail,
+    location,
     projectTypes,
     teamsResources,
     startDate,
@@ -367,6 +377,7 @@ function* updateProjectAllocationsSaga(action: any): Generator<any, void, any> {
       projectTypes || [],
       portfolios || [],
       allResourcesDetail || [],
+      location || [],
       startDate,
       endDate
     );
@@ -425,6 +436,7 @@ function* updateResourceAllocationsSaga(
     portfolios,
     projectTypes,
     allResourcesDetail,
+    location,
     teamsResources,
     startDate,
     endDate,
@@ -467,6 +479,7 @@ function* updateResourceAllocationsSaga(
       projectTypes || [],
       portfolios,
       allResourcesDetail || [],
+      location || [],
       startDate,
       endDate
     );
@@ -476,6 +489,7 @@ function* updateResourceAllocationsSaga(
       teams,
       teamsResources,
       allResourcesDetail || [],
+      location || [],
       startDate,
       endDate
     );

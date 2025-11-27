@@ -23,7 +23,9 @@ import {
   FETCH_ROLES,
   FETCH_ROLESASSIGNMENTS,
   GET_USER_AND_PRIVILEGES,
+  SETUP_ADVANCED_FILTERS,
 } from './redux/actions/rbacActions';
+import { FETCH_ALL_SETTINGS } from './redux/actions/allSettingsActions';
 
 const MainContent = styled(Box, {
   shouldForwardProp: prop => !['isLoggedIn', 'sidebarExpanded'].includes(prop),
@@ -59,6 +61,7 @@ export default function LayoutClient({ children }) {
   const { projects } = useSelector(state => state.projects);
   const { teams } = useSelector(state => state.teams);
   const { portfolios } = useSelector(state => state.portfolios);
+  const { scalarSettings } = useSelector(state => state.allSettings);
 
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
@@ -94,6 +97,8 @@ export default function LayoutClient({ children }) {
           return 'Forgot Password';
         case '/reset-password':
           return 'Reset Password';
+        case '/invite':
+          return 'Set Password';
         default:
           return 'CIOptimize';
       }
@@ -131,6 +136,14 @@ export default function LayoutClient({ children }) {
         dispatch({ type: GET_USER_AND_PRIVILEGES, payload: { userId } });
       }
 
+      // Fetch All Settings
+      if (scalarSettings === null) {
+        dispatch({
+          type: FETCH_ALL_SETTINGS,
+          payload: {},
+        });
+      }
+
       // Fetch essential data for the app
       if (!teams?.length) {
         dispatch(fetchAllTeams());
@@ -150,8 +163,31 @@ export default function LayoutClient({ children }) {
           payload: {},
         });
       }
+      if (!roles?.length) {
+        dispatch({ type: FETCH_ROLES });
+      }
     }
   }, [dispatch, isLoggedIn, isClient]);
+
+  useEffect(() => {
+    if (!isClient || !isLoggedIn || !userId) return;
+    if (
+      loginUserPrivileges &&
+      Object.keys(loginUserPrivileges).length &&
+      resources.length
+    ) {
+      dispatch({
+        type: SETUP_ADVANCED_FILTERS,
+        payload: {
+          loginUserPrivileges,
+          userId,
+          resources,
+          projects,
+          teams,
+        },
+      });
+    }
+  }, [dispatch, isLoggedIn, isClient, userId, loginUserPrivileges, resources]);
 
   if (!isClient) return null;
   if (!isLoggedIn && !isPublicRoute) return null;

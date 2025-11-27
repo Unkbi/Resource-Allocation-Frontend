@@ -14,7 +14,7 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { injectBlankRows, normalizeRow,sortAllAllocations } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
@@ -68,6 +68,7 @@ function TeamAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -100,6 +101,7 @@ function TeamAllocation({
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
+              location,
               startDate,
               endDate
             )
@@ -273,7 +275,11 @@ function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+
+        return <EllipsisNameCell value={locationDetails?.Name as string} />;
       },
     },
     {
