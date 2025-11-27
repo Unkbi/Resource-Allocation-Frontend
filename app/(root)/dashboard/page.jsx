@@ -1610,10 +1610,10 @@ export default function ExecutiveDashboardPage() {
                       direction: 'column',
                       position: { vertical: 'middle', horizontal: 'right' },
                       padding: { right: 5 },
-                      itemMarkWidth: 12,
-                      itemMarkHeight: 12,
-                      markGap: 8,
-                      itemGap: 12,
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
+                      markgap: 8,
+                      itemgap: 12,
                     },
                   }}
                 />
