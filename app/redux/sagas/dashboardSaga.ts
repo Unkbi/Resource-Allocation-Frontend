@@ -56,7 +56,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
     'allocation_by_project_type_group',
     'plan_vs_actual_variance',
     'actuals_confirmation_status',
-    'actuals_trend',
   ]));
   
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
@@ -136,41 +135,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
             { status: 'Planned', percentage: responseData.actuals_confirmation_status.planned_percentage }
           ]
         })),
-        put(setDashboardChart({
-          chartKey: 'actuals_trend',
-          data: [
-            // Week 45
-            { week: 'Wk 45', category: 'Personal Time', percentage: 30 },
-            { week: 'Wk 45', category: 'Other Work', percentage: 25 },
-            { week: 'Wk 45', category: 'Unplanned Projects', percentage: 15 },
-            { week: 'Wk 45', category: 'Approved Work', percentage: 20 },
-            { week: 'Wk 45', category: 'Pending', percentage: 10 },
-            // Week 46
-            { week: 'Wk 46', category: 'Personal Time', percentage: 25 },
-            { week: 'Wk 46', category: 'Other Work', percentage: 30 },
-            { week: 'Wk 46', category: 'Unplanned Projects', percentage: 20 },
-            { week: 'Wk 46', category: 'Approved Work', percentage: 20 },
-            { week: 'Wk 46', category: 'Pending', percentage: 5 },
-            // Week 47
-            { week: 'Wk 47', category: 'Personal Time', percentage: 20 },
-            { week: 'Wk 47', category: 'Other Work', percentage: 30 },
-            { week: 'Wk 47', category: 'Unplanned Projects', percentage: 15 },
-            { week: 'Wk 47', category: 'Approved Work', percentage: 20 },
-            { week: 'Wk 47', category: 'Pending', percentage: 15 },
-            // Week 48
-            { week: 'Wk 48', category: 'Personal Time', percentage: 35 },
-            { week: 'Wk 48', category: 'Other Work', percentage: 30 },
-            { week: 'Wk 48', category: 'Unplanned Projects', percentage: 15 },
-            { week: 'Wk 48', category: 'Approved Work', percentage: 15 },
-            { week: 'Wk 48', category: 'Pending', percentage: 5 },
-            // Week 49 (Current)
-            { week: 'Wk 49', category: 'Personal Time', percentage: 20 },
-            { week: 'Wk 49', category: 'Other Work', percentage: 15 },
-            { week: 'Wk 49', category: 'Unplanned Projects', percentage: 45 },
-            { week: 'Wk 49', category: 'Approved Work', percentage: 10 },
-            { week: 'Wk 49', category: 'Pending', percentage: 10 },
-          ]
-        })),
       ]);
     } else {
       yield all([
@@ -185,7 +149,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
         put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
-        put(setDashboardChart({ chartKey: 'actuals_trend', data: [] })),
       ]);
     }
   } catch (err) {
@@ -202,7 +165,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
       put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
-      put(setDashboardChart({ chartKey: 'actuals_trend', data: [] })),
     ]);
   }
 }
