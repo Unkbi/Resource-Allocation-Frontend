@@ -1811,6 +1811,7 @@ const AllocationForm = () => {
           );
         } finally {
           dispatch(closeDialog());
+          setFormValue({});
         }
         break;
 
