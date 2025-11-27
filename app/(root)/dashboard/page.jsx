@@ -110,6 +110,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
+  'actuals_confirmation_status',
 ];
 
 const PROJECT_CHART_SEQUENCE = ['projectFTE', 'budgetVsPlanVsActual'];
@@ -121,6 +122,7 @@ const TEAM_CHART_SEQUENCE = [
   'resourceCoverage',
   'underAllocated',
   'overAllocated',
+  'actuals_trend',
 ];
 
 const generateLayouts = chartKeys => ({
@@ -187,6 +189,8 @@ export default function ExecutiveDashboardPage() {
     allocationPercentage = [],
     allocation_by_project_type_group = [],
     top_projects_by_variance = [],
+    actuals_confirmation_status = [],
+    actuals_trend = [],
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -758,38 +762,30 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
+          // Sort by planned_units descending
+          const sortedVarianceData = sortBarChartData(
+            plan_vs_actual_variance,
+            'planned_units'
+          );
+
           // Extract project type groups for x-axis
-          const projectTypeGroups =
-            plan_vs_actual_variance.length > 0
-              ? [
-                  ...new Set(
-                    plan_vs_actual_variance.map(d => d.project_type_group)
-                  ),
-                ]
-              : [];
+          const projectTypeGroups = sortedVarianceData.map(
+            d => d.project_type_group
+          );
 
           // Prepare data for bars (Plan and Actuals)
-          const planData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.planned_units || 0) : 0;
-          });
+          const planData = sortedVarianceData.map(d =>
+            Number(d.planned_units || 0)
+          );
 
-          const actualsData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.actual_units || 0) : 0;
-          });
+          const actualsData = sortedVarianceData.map(d =>
+            Number(d.actual_units || 0)
+          );
 
           // Prepare data for line (Absolute Variance %)
-          const varianceData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.absolute_variance || 0) : 0;
-          });
+          const varianceData = sortedVarianceData.map(d =>
+            Number(d.absolute_variance || 0)
+          );
 
           const maxVariance = Math.max(...varianceData, 1);
 
@@ -1528,6 +1524,108 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   slotProps={{
                     legend: config.legend,
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    actuals_confirmation_status: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Actuals Confirmation Status')}
+        minWidth={320}
+        minHeight={280}
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'pie');
+          
+          // Transform data for pie chart with fixed colors
+          const chartData = (actuals_confirmation_status || []).map(item => ({
+            id: item.status,
+            value: parseFloat(item.percentage || 0),
+            label: item.status,
+            color: item.status === 'Actuals' ? '#4169E1' : '#FFD700',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Confirmation Status{' '}
+                <span
+                  style={{
+                    fontSize: dimensions.width < 400 ? '12px' : '14px',
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    fontWeight: 400,
+                  }}
+                >
+                  (Previous period)
+                </span>
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <PieChart
+                  series={[
+                    {
+                      data: chartData,
+                      innerRadius: 0,
+                      outerRadius: config.outerRadius || 80,
+                      cornerRadius: 3,
+                      arcLabel: (item) => `${item.value}%`,
+                      arcLabelMinAngle: 20,
+                      highlightScope: { faded: 'global', highlighted: 'item' },
+                      faded: { additionalRadius: -10, color: 'gray' },
+                    },
+                  ]}
+                  width={config.width}
+                  height={config.height}
+                  sx={{
+                    [`& .${pieArcLabelClasses.root}`]: {
+                      fill: '#000000',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      paintOrder: 'stroke',
+                      stroke: '#ffffff',
+                      strokeWidth: 20,
+                      strokeLinecap: 'round',
+                      strokeLinejoin: 'round',
+                      filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.15))',
+                    },
+                  }}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'middle', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemMarkWidth: 12,
+                      itemMarkHeight: 12,
+                      markGap: 8,
+                      itemGap: 12,
+                    },
                   }}
                 />
               </Box>
@@ -2322,6 +2420,106 @@ export default function ExecutiveDashboardPage() {
                   slotProps={{
                     legend: config.legend,
                   }}
+                  grid={{ horizontal: true }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    actuals_trend: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Actuals Trend')}
+        minWidth={320}
+        minHeight={280}
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Extract unique weeks for x-axis
+          const weeks = [...new Set((actuals_trend || []).map(d => d.week))];
+
+          // Define categories and their colors matching the image
+          const categories = [
+            { key: 'Personal Time', label: 'Personal Time', color: '#FFD700' },
+            { key: 'Other Work', label: 'Other Work', color: '#FFA500' },
+            { key: 'Unplanned Projects', label: 'Unplanned Projects', color: '#4169E1' },
+            { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
+            { key: 'Pending', label: 'Pending', color: '#E0E0E0' },
+          ];
+
+          // Create series data for each category
+          const seriesData = categories.map(category => ({
+            label: category.label,
+            id: category.key,
+            data: weeks.map(week => {
+              const match = (actuals_trend || []).find(
+                d => d.week === week && d.category === category.key
+              );
+              return match ? parseFloat(match.percentage) : 0;
+            }),
+            color: category.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Trend
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      data: weeks,
+                      scaleType: 'band',
+                      categoryGapRatio: 0.3,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'Y axis name (%)',
+                      min: 0,
+                      max: 100,
+                      valueFormatter: value => `${value}`,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'middle', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemMarkWidth: 12,
+                      itemMarkHeight: 12,
+                      markGap: 8,
+                      itemGap: 12,
+                    },
+                  }}
+                  margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
                 />
               </Box>
