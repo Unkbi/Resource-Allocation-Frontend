@@ -1197,8 +1197,9 @@ const AllocationForm = () => {
         if (
           resources.find(
             resource =>
+              resource.Id !== initialData.Id &&
               resource.FullName.toLowerCase() ===
-              newCalculatedFullName.toLowerCase()
+                newCalculatedFullName.toLowerCase()
           )
         ) {
           dispatch(
