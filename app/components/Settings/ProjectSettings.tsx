@@ -108,7 +108,7 @@ function ProjectSettingPage({
 }: ProjectSettingPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tab, setTab] = useState('project-types');
+  const [tab, setTab] = useState('project-general');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectTypeId, setMenuProjectTypeId] = useState<string | null>(
     null
