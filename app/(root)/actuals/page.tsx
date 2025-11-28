@@ -323,7 +323,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           type: GET_ACTUAL_STATUS,
           payload: {
             resource: userId,
-            status: ['In-Progress', 'Not Started'],
+            status: userId ? ['In-Progress', 'Not Started'] : [''],
             startDate:
               generateDateWeekMath('WEEK_MINUS', 7, parseISO(startDate ?? '')) || '',
             endDate:

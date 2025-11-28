@@ -36,7 +36,6 @@ const CHART_API_MAPPING: Record<string, string> = {
   resourceActualsDeviation: '/Resource/ExecuteActualsStatusPlanDeviationAnalyticsQuery',
   
   // Group 2: Team Capacity Utilization Analytics
-  capacityAvailability: '/Resource/ExecuteTeamCapacityUtilizationAnalyticsQuery',
   resourceCoverage: '/Resource/ExecuteTeamCapacityUtilizationAnalyticsQuery',
   resourceUtilization: '/Resource/ExecuteTeamCapacityUtilizationAnalyticsQuery',
   
@@ -51,6 +50,9 @@ const CHART_API_MAPPING: Record<string, string> = {
   // Group 5: Cost Budget Variance Analytics
   budgetVsPlanVsActual: '/Resource/ExecuteCostBudgetVarianceAnalyticsQuery',
   totalResourceCost: '/Resource/ExecuteCostBudgetVarianceAnalyticsQuery',
+
+  //Group 6: Actuals Trend Analytics
+  actualsTrendWeekly: '/Resource/ExecuteActualsTrendWeeklyQuery',
 
 };
 
@@ -75,19 +77,6 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
   const payloadConfigs: Record<string, Partial<DashboardFilterPayload>> = {
 
     // Group 2: Team Capacity Utilization Analytics
-    capacityAvailability: {
-      StartDate: filters.StartDate,
-      EndDate: filters.EndDate,
-      TimeBucket: filters.TimeBucket || 'week',
-      MetricType: 'capacity',
-      ExcludedResourceType: 'Contractor - PT',
-      ...baseFilters,
-      OverAllocThreshold: 100,
-      UnderAllocThreshold: 80,
-      SelectColumns: '',
-      OrderByClause: 'team_name, period_start',
-      DynamicWhere: '',
-    },
     resourceUtilization: {
       StartDate: filters.StartDate,
       EndDate: filters.EndDate,
@@ -135,7 +124,7 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       GroupByClause: '',
       GroupByDimension: ''
     },
-
+    
     // Group 4: Cost Budget Variance Analytics
     budgetVsPlanVsActual: {
       StartDate: filters.StartDate,
@@ -204,6 +193,17 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       OrderByClause: '1',
       DynamicWhere: 'AND metric_type = \'actuals_deviation\'',
     },
+
+    actualsTrendWeekly: {
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+      TimeBucket: filters.TimeBucket || 'week',
+      ...baseFilters,
+      SelectColumns: '',
+      OrderByClause: '',
+      DynamicWhere: '',
+    },
+
   };
   return payloadConfigs[chartKey] || baseFilters;
 };

@@ -89,7 +89,10 @@ import {
   createResourceWithTeamAndOrg,
   updateResource,
 } from '@/app/services/resourceServices';
-import { postTeamResource } from '@/app/services/teamServices';
+import {
+  fetchTeamAllocationsForSaga,
+  postTeamResource,
+} from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
 import {
@@ -482,7 +485,7 @@ const AllocationForm = () => {
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
-  const { projectTypeGroups, projectTypes, location, locationGroups } =
+  const { projectTypeGroups, projectTypes, location, locationGroups, userResources } =
     useSelector(state => state.allSettings);
 
   const _startDate = currentView?.isDynamicRange
@@ -1024,6 +1027,32 @@ const AllocationForm = () => {
           Status: cleanedValues.Status,
         };
 
+        // Check if any allocations present for a team if Team is made inactive.
+        if (
+          initialData.Status !== cleanedValues.Status &&
+          cleanedValues.Status === 'Inactive'
+        ) {
+          const teamAllocation = await fetchTeamAllocationsForSaga({
+            TeamId: initialData.Id,
+            StartDate: format(parseISO(new Date().toISOString()), DATE_FORMAT),
+            EndDate: '2099-01-01',
+          });
+
+          if (teamAllocation && teamAllocation.length > 0) {
+            dispatch(
+              showToast({
+                open: true,
+                message:
+                  'Failed to update team. Cannot make a team Inactive with Planned Allocations in the Current and Future Weeks.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 5000,
+              })
+            );
+            break;
+          }
+        }
+
         try {
           const response = await dispatch(
             updateTeam({
@@ -1081,6 +1110,30 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const calculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.FullName.toLowerCase() ===
+              calculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to add resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           FirstName: cleanedValues.FirstName,
           StartDate: cleanedValues.StartDate,
@@ -1165,6 +1218,31 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const newCalculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.Id !== initialData.Id &&
+              resource.FullName.toLowerCase() ===
+                newCalculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to update resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           ...cleanedValues,
           EndDate:
@@ -1734,6 +1812,7 @@ const AllocationForm = () => {
           );
         } finally {
           dispatch(closeDialog());
+          setFormValue({});
         }
         break;
 
@@ -2645,7 +2724,7 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                id: cleanedValues.Name,
+                id: cleanedValues.Name.replace('/', '__'),
                 updatedFields,
                 resolve,
                 reject,
@@ -3302,21 +3381,31 @@ const AllocationForm = () => {
       }
       case 'add_resource_to_user': {
         try {
-          const finalData = cleanedValues.Resources.map(resource => {
-            const data = initialData.find(res => {
-              if (resource === res.email) {
-                return res.Name;
-              }
-            });
-            const [firstName, lastName] = data.Name.split(' ') || [];
+          
+          const finalData = cleanedValues.Resources.map(resourceEmail => {
+            const resourceData = userResources?.find(res => res.email === resourceEmail);
+            
+            if (!resourceData) {
+              console.warn(`Resource not found for email: ${resourceEmail}`);
+              return null;
+            }
+            
+            const nameParts = resourceData.Name?.split(' ') || [];
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
 
             return {
-              email: resource || null,
+              email: resourceEmail || null,
               firstName: firstName || null,
               lastName: lastName || null,
               role: cleanedValues.Role || '*',
+              resourceId: resourceData.id, // Store ID for highlighting
             };
-          });
+          }).filter(Boolean); // Remove any null entries
+
+          if (finalData.length === 0) {
+            throw new Error('No valid resources found to invite');
+          }
 
           const postData = {
             users: [...finalData],
@@ -3342,12 +3431,29 @@ const AllocationForm = () => {
             })
           );
           dispatch(closeDialog());
-          setFormValue({});
-          const highlightId = response?.[0].User?.id || response?.User?.id;
 
-          if (highlightId) {
-            dispatch(setHighlightedRowId(highlightId));
+          // Compare initialData emails with finalData emails
+          // Only highlight resources that were NOT in the initial checkbox selection
+          const initialEmails = new Set(
+            (initialData || []).map(item => item.email?.toLowerCase())
+          );
+          
+          const newlyInvitedResources = finalData.filter(
+            item => !initialEmails.has(item.email?.toLowerCase())
+          );
+
+          // If there are newly invited resources (dropdown selections that differ from checkbox), highlight the first one
+          if (newlyInvitedResources.length > 0) {
+            const highlightId = newlyInvitedResources[0].resourceId;
+            if (highlightId) {
+              dispatch(setHighlightedRowId(highlightId));
+            }
+          } else if (initialData?.[0]?.id) {
+            // Otherwise, highlight the first resource from initialData
+            dispatch(setHighlightedRowId(initialData[0].id));
           }
+
+          setFormValue({});
         } catch (error) {
           console.error('Failed to add user:', error);
           const message =

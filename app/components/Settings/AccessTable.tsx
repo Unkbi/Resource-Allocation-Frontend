@@ -50,6 +50,7 @@ interface AccessTableProps {
   onBulkReactivateUser?: (resources: any[]) => void;
   selectedRowIds?: Set<string>;
   onSelectionChange?: (hasSelection: boolean, selectedIds: Set<string>) => void;
+  isRowSelectable?: (params: any) => boolean;
 }
 
 export default function AccessTable({
@@ -77,6 +78,7 @@ export default function AccessTable({
   onBulkReactivateUser,
   selectedRowIds = new Set(),
   onSelectionChange,
+  isRowSelectable,
 }: AccessTableProps) {
   const [search, setSearch] = useState('');
   const [gridView, setGridView] = useState<'grid' | 'list'>('grid');
@@ -91,6 +93,15 @@ export default function AccessTable({
     items: [],
   });
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+
+  // Sync internal selectionModel with parent's selectedRowIds
+  React.useEffect(() => {
+    if (selectedRowIds.size === 0) {
+      setSelectionModel([]);
+      setSelectedRows([]);
+      setShowToolbar(false);
+    }
+  }, [selectedRowIds]);
 
   // Refs for external filter and column buttons to use as anchor elements
   const externalFilterButtonRef = useRef<HTMLButtonElement>(null);
@@ -189,7 +200,9 @@ export default function AccessTable({
   const availableActions = getAvailableActions();
 
   // Check if any action is available
-  const hasAnyAction = Object.values(availableActions).some(action => action === true);
+  const hasAnyAction = Object.values(availableActions).some(
+    action => action === true
+  );
 
   const handleFilterModelChange = (newModel: any) => {
     setFilterModel(newModel);
@@ -232,8 +245,8 @@ export default function AccessTable({
       sx={{ mt: 2, mb: 2, background: '#fff', borderRadius: 2, boxShadow: 1 }}
     >
       {checkboxSelection ? (
-        showToolbar && hasAnyAction ? (
-          // Selection action toolbar when rows are selected AND actions are available
+        showToolbar ? (
+          // Selection action toolbar when rows are selected
           <Box
             px={2}
             py={2}
@@ -250,7 +263,17 @@ export default function AccessTable({
             </Typography>
 
             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-              {title === 'Resources' ? (
+              {!hasAnyAction ? (
+                <Typography
+                  sx={{
+                    color: '#6B7280',
+                    fontSize: 13,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  No bulk actions available for mixed selection
+                </Typography>
+              ) : title === 'Resources' ? (
                 // Resource-specific toolbar buttons
                 <>
                   {availableActions.showAddUser && (
@@ -712,7 +735,7 @@ export default function AccessTable({
                     background: '#fff',
                     boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
                     // borderRadius: '4px',
-                    width: 125,
+                    width: 128,
                     py: 0.5,
                     border: '1px solid #E5E7EB',
                   }}
@@ -729,7 +752,7 @@ export default function AccessTable({
                       textTransform: 'none',
                       '&:hover': {
                         background: '#142B51B2',
-                        color: '#FFFFFF'
+                        color: '#FFFFFF',
                       },
                     }}
                     onClick={() => {
@@ -752,7 +775,7 @@ export default function AccessTable({
                       textTransform: 'none',
                       '&:hover': {
                         background: '#142B51B2',
-                        color: '#FFFFFF'
+                        color: '#FFFFFF',
                       },
                     }}
                     onClick={() => {
@@ -768,8 +791,7 @@ export default function AccessTable({
             </Box>
           </Box>
         )
-      ) : null
-      }
+      ) : null}
 
       <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGridPremium
@@ -784,15 +806,16 @@ export default function AccessTable({
           onRowSelectionModelChange={handleSelectionChange}
           apiRef={apiRef}
           loading={loading}
+          isRowSelectable={isRowSelectable}
           filterModel={filterModel}
           onFilterModelChange={handleFilterModelChange}
           columnVisibilityModel={columnVisibilityModel}
           onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
           initialState={{
-          sorting: {
-            sortModel: [{ field: 'Name', sort: 'asc' }],
-          },
-        }}
+            sorting: {
+              sortModel: [{ field: 'Name', sort: 'asc' }],
+            },
+          }}
           slotProps={{
             loadingOverlay: {
               variant: 'skeleton',
@@ -833,7 +856,13 @@ export default function AccessTable({
             },
           }}
           slots={{
-            toolbar: checkboxSelection ? (toolbarType === 'filter' ? AccessToolbar : CustomToolbar) : (toolbarType === 'filter' ? AccessToolbar : undefined),
+            toolbar: checkboxSelection
+              ? toolbarType === 'filter'
+                ? AccessToolbar
+                : CustomToolbar
+              : toolbarType === 'filter'
+                ? AccessToolbar
+                : undefined,
           }}
           localeText={{
             toolbarFilters: '',

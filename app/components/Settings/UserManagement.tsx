@@ -39,7 +39,7 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
     borderRadius: 4,
     boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
-    width: '125px',
+    width: '128px',
   },
 }));
 
@@ -169,6 +169,7 @@ export default function UserManagementPage() {
   const usersDataFromRedux = useSelector((state: any) => state.allSettings.users);
   const UsersData = useMemo(() => usersDataFromRedux || [], [usersDataFromRedux]);
   const ResourcesData = useSelector((state: any) => state.allSettings.userResources) || [];
+  const { isOpen: dialogIsOpen } = useSelector((state: any) => state.globalDialog);
 
   const loading = false;
   const { id: highlightedRowId } = useSelector(
@@ -177,6 +178,13 @@ export default function UserManagementPage() {
   const apiRef = useGridApiRef();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Clear checkbox selection when dialog closes
+  useEffect(() => {
+    if (!dialogIsOpen) {
+      setSelectedRowIds(new Set());
+    }
+  }, [dialogIsOpen]);
 
   useEffect(() => {
     if (UsersData.length === 0) {
@@ -664,11 +672,6 @@ export default function UserManagementPage() {
       sortable: false,
       filterable: false,
       renderCell: (params: any) => {
-        const rowId = String(
-          params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
-        );
-        const isThisRowSelected = selectedRowIds.has(rowId);
-
         return (
           <Box sx={{ ...commonCellStyle }}>
             <IconButton
@@ -676,9 +679,8 @@ export default function UserManagementPage() {
                 setAnchorEl(e.currentTarget);
                 setMenuUserId(params.row.Name);
               }}
-              disabled={isThisRowSelected}
               sx={{
-                color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
+                color: '#1C2D5F',
               }}
             >
               <MoreHorizontal sx={{ fontSize: 20 }} />
@@ -741,11 +743,6 @@ export default function UserManagementPage() {
       sortable: false,
       filterable: false,
       renderCell: (params: any) => {
-        const rowId = String(
-          params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
-        );
-        const isThisRowSelected = selectedRowIds.has(rowId);
-
         return (
           <Box sx={{ ...commonCellStyle }}>
             <IconButton
@@ -753,9 +750,9 @@ export default function UserManagementPage() {
                 setAnchorEl(e.currentTarget);
                 setMenuUserId(params.row.Name);
               }}
-              disabled={isThisRowSelected || params.row.resourceStatus === 'Inactive'}
+              disabled={params.row.resourceStatus === 'Inactive'}
               sx={{
-                color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
+                color: '#1C2D5F',
               }}
             >
               <MoreHorizontal sx={{ fontSize: 20 }} />
@@ -848,7 +845,7 @@ export default function UserManagementPage() {
     const status = row.userStatus;
     const resStatus = row.resourceStatus;
     // const enableAddUser = status === 'Not Created';
-    const enableSendInvite = status === 'Not Created' && resStatus === 'Active';
+    const enableSendInvite = status === 'Not Created' && resStatus !== 'Inactive';
     const enableResendInvite = status === 'Invited';
     const enableDeactivate = ['Invited', 'Active'].includes(status);
     const enableReactivate = status === 'Inactive';
@@ -959,6 +956,7 @@ export default function UserManagementPage() {
           onBulkResendInvite={handleBulkResendInvite}
           onBulkDeactivateUser={handleBulkDeactivateUser}
           onBulkReactivateUser={handleBulkReactivateUser}
+          isRowSelectable={() => true}
         />
       )}
       {tab === 'resources' && (
@@ -985,6 +983,7 @@ export default function UserManagementPage() {
           onBulkReactivateUser={handleBulkReactivateUser}
           selectedRowIds={selectedRowIds}
           onSelectionChange={handleSelectionChange}
+          isRowSelectable={(params) => params.row.resourceStatus !== 'Inactive'}
         />
       )}
 

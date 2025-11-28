@@ -110,6 +110,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
+  'actuals_confirmation_status',
 ];
 
 const PROJECT_CHART_SEQUENCE = ['projectFTE', 'budgetVsPlanVsActual'];
@@ -117,8 +118,8 @@ const PROJECT_CHART_SEQUENCE = ['projectFTE', 'budgetVsPlanVsActual'];
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
   'unapprovedProjectActualsByTeam',
-  'capacityAvailability',
   'resourceCoverage',
+  'actualsTrendWeekly',
   'underAllocated',
   'overAllocated',
 ];
@@ -163,9 +164,6 @@ export default function ExecutiveDashboardPage() {
   const dashboardLoading = useSelector(state => state.dashboard.loading);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  const capacityAvailability = useSelector(
-    state => state.dashboard.capacityAvailability || []
-  );
   const coverageData = useSelector(
     state => state.dashboard.resourceCoverage || []
   );
@@ -187,6 +185,8 @@ export default function ExecutiveDashboardPage() {
     allocationPercentage = [],
     allocation_by_project_type_group = [],
     top_projects_by_variance = [],
+    actuals_confirmation_status = [],
+    actualsTrendWeekly = [],
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -391,7 +391,6 @@ export default function ExecutiveDashboardPage() {
       const individualCharts = [
         'unapprovedProjectAllocation',
         'projectFTE',
-        'capacityAvailability',
         'resourceCoverage',
         'resourceUtilization',
         'unapprovedProjectActualsByTeam',
@@ -399,6 +398,7 @@ export default function ExecutiveDashboardPage() {
         'totalResourceCost',
         'allocationPercentage',
         'actualsConfirmed',
+        'actualsTrendWeekly',
       ];
 
       // Set loading state at the start of data fetch only on initial load or when filters change
@@ -511,13 +511,6 @@ export default function ExecutiveDashboardPage() {
   }, [resourceUtilization]);
 
   useEffect(() => {
-    if (capacityAvailability.length > 0) {
-      setFilteredCapacityData(capacityAvailability);
-      setOriginalCapacityData(capacityAvailability);
-    }
-  }, [capacityAvailability]);
-
-  useEffect(() => {
     if (unapprovedProjectActualsByTeam.length > 0) {
       setFilteredUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
       setOriginalUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
@@ -577,7 +570,6 @@ export default function ExecutiveDashboardPage() {
   useEffect(() => {
     // Check if all required data is loaded
     const allDataLoaded =
-      capacityAvailability.length > 0 &&
       resourceUtilization.length > 0 &&
       unapprovedProjectAllocation.length > 0 &&
       actualsConfirmed.length > 0 &&
@@ -590,14 +582,11 @@ export default function ExecutiveDashboardPage() {
       (activeResources.length > 0 || totalHeadcount.length > 0);
     
     if (allDataLoaded) {
-      // Turn off loading when all data is loaded
       if (initialLoad) {
         setInitialLoad(false);
-        // Loading will be turned off automatically by the reducer when all charts are loaded
       }
     }
   }, [
-    capacityAvailability,
     resourceUtilization,
     actualsConfirmed,
     unapprovedProjectAllocation,
@@ -668,10 +657,19 @@ export default function ExecutiveDashboardPage() {
   const allowedTeamCharts = TEAM_CHART_SEQUENCE.filter(queryKey =>
     hasAccessToQueryKey(queryKey)
   );
-  // Generate layouts for each tab
-  const overviewLayouts = generateLayouts(allowedOverviewCharts);
-  const projectLayouts = generateLayouts(allowedProjectCharts);
-  const teamLayouts = generateLayouts(allowedTeamCharts);
+  
+  const overviewLayouts = useMemo(
+    () => generateLayouts(allowedOverviewCharts),
+    [allowedOverviewCharts.join(',')]
+  );
+  const projectLayouts = useMemo(
+    () => generateLayouts(allowedProjectCharts),
+    [allowedProjectCharts.join(',')]
+  );
+  const teamLayouts = useMemo(
+    () => generateLayouts(allowedTeamCharts),
+    [allowedTeamCharts.join(',')]
+  );
 
   const Teams = filteredCoverageData?.length
     ? [...new Set(filteredCoverageData.map(d => d.team_name))]
@@ -758,38 +756,30 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
+          // Sort by planned_units descending
+          const sortedVarianceData = sortBarChartData(
+            plan_vs_actual_variance,
+            'planned_units'
+          );
+
           // Extract project type groups for x-axis
-          const projectTypeGroups =
-            plan_vs_actual_variance.length > 0
-              ? [
-                  ...new Set(
-                    plan_vs_actual_variance.map(d => d.project_type_group)
-                  ),
-                ]
-              : [];
+          const projectTypeGroups = sortedVarianceData.map(
+            d => d.project_type_group
+          );
 
           // Prepare data for bars (Plan and Actuals)
-          const planData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.planned_units || 0) : 0;
-          });
+          const planData = sortedVarianceData.map(d =>
+            Number(d.planned_units || 0)
+          );
 
-          const actualsData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.actual_units || 0) : 0;
-          });
+          const actualsData = sortedVarianceData.map(d =>
+            Number(d.actual_units || 0)
+          );
 
           // Prepare data for line (Absolute Variance %)
-          const varianceData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.absolute_variance || 0) : 0;
-          });
+          const varianceData = sortedVarianceData.map(d =>
+            Number(d.absolute_variance || 0)
+          );
 
           const maxVariance = Math.max(...varianceData, 1);
 
@@ -1536,6 +1526,103 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+
+    actuals_confirmation_status: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Actuals Confirmation Status')}
+        minWidth={320}
+        minHeight={280}
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'pie');
+          
+          // Transform data for pie chart with fixed colors
+          const chartData = (actuals_confirmation_status || []).map(item => ({
+            id: item.status,
+            value: parseFloat(item.percentage || 0),
+            label: item.status,
+            color: item.status === 'Actuals' ? '#4169E1' : '#FFD700',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Confirmation Status{' '}
+                <span
+                  style={{
+                    fontSize: dimensions.width < 400 ? '12px' : '14px',
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    fontWeight: 400,
+                  }}
+                >
+                  (Previous period)
+                </span>
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <PieChart
+                  series={[
+                    {
+                      data: chartData,
+                      innerRadius: 0,
+                      outerRadius: config.outerRadius || 80,
+                      cornerRadius: 3,
+                      arcLabel: (item) => `${item.value}%`,
+                      arcLabelMinAngle: 20,
+                      arcLabelRadius: '70%',
+                      highlightScope: { faded: 'global', highlighted: 'item' },
+                      faded: { additionalRadius: -10, color: 'gray' },
+                    },
+                  ]}
+                  width={config.width}
+                  height={config.height}
+                  sx={{
+                    [`& .${pieArcLabelClasses.root}`]: {
+                      fill: '#000000',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                    },
+                  }}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'middle', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
+                      markgap: 8,
+                      itemgap: 12,
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
   };
 
   const projectCharts = {
@@ -2021,90 +2108,6 @@ export default function ExecutiveDashboardPage() {
       </DashboardWidget>
     ),
 
-    capacityAvailability: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Capacity vs Utilization by Team')}
-        minWidth={320}
-        minHeight={280}
-      >
-        {dimensions => {
-          const config = useResponsiveChart(dimensions, 'bar');
-          
-          // Sort by total capacity (available + allocated) descending
-          const sortedCapacityData = sortByTotal(
-            filteredCapacityData,
-            ['capacity_available_fte', 'capacity_allocated_fte']
-          );
-
-          return (
-            <Box
-              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 1,
-                  fontSize: dimensions.width < 400 ? '16px' : '18px',
-                  fontWeight: 600,
-                }}
-              >
-                Capacity vs Utilization by Team
-              </Typography>
-              <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                <BarChart
-                  width={config.width}
-                  height={config.height}
-                  series={[
-                    {
-                      data: sortedCapacityData.map(d =>
-                        Number.parseFloat(d.capacity_available_fte)
-                      ),
-                      label: 'Available Capacity',
-                      id: 'availableCapacity',
-                      color: '#9FA8DA',
-                    },
-                    {
-                      data: sortedCapacityData.map(d =>
-                        Number.parseFloat(d.capacity_allocated_fte)
-                      ),
-                      label: 'Utilized Capacity',
-                      id: 'utilizedCapacity',
-                      color: '#80CBC4',
-                    },
-                  ]}
-                  xAxis={[
-                    {
-                      data: sortedCapacityData.map(d =>
-                        formatTeamName(
-                          d.team_name,
-                          dimensions.width < 400 ? 10 : 12,
-                          sortedCapacityData.length
-                        )
-                      ),
-                      label: 'Team',
-                      tickLabelStyle: config.xAxis?.tickLabelStyle,
-                    },
-                  ]}
-                  yAxis={[
-                    {
-                      label: 'Capacity',
-                      min: 0,
-                      width: config.yAxis?.width || 50,
-                      labelStyle: config.yAxis?.labelStyle,
-                    },
-                  ]}
-                  slotProps={{
-                    legend: config.legend,
-                  }}
-                  grid={{ horizontal: true }}
-                />
-              </Box>
-            </Box>
-          );
-        }}
-      </DashboardWidget>
-    ),
-
     resourceCoverage: (
       <DashboardWidget
         onClick={() => handleChartClick('Resource Allocation Coverage')}
@@ -2322,6 +2325,115 @@ export default function ExecutiveDashboardPage() {
                   slotProps={{
                     legend: config.legend,
                   }}
+                  grid={{ horizontal: true }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    actualsTrendWeekly: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Actuals Trend')}
+        minWidth={320}
+        minHeight={280}
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Process the API data structure
+          // Data format: [{ period_start: "2025-10-20", actuals: [{ category: "Approved Work", units: 26.4, percentage: 99.25 }, ...] }, ...]
+          
+          // Extract unique periods and calculate week numbers
+          const periodData = (actualsTrendWeekly || []).map(item => ({
+            period_start: item.period_start,
+            week: getWeekNumber(item.period_start),
+            actuals: item.actuals || []
+          })).sort((a, b) => new Date(a.period_start) - new Date(b.period_start));
+
+          const weeks = periodData.map(d => d.week);
+
+          // Define categories and their colors matching the image
+          const categories = [
+            { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
+            { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
+            { key: 'Unplanned Projects', label: 'Unplanned Projects', color: '#FF884D' },
+            { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
+          ];
+
+          // Create series data for each category
+          const seriesData = categories.map(category => ({
+            label: category.label,
+            id: category.key,
+            data: periodData.map(weekData => {
+              const match = weekData.actuals.find(
+                a => a.category === category.key
+              );
+              return match ? parseFloat(match.percentage || 0) : 0;
+            }),
+            color: category.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Trend
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      label: 'Previous weeks',
+                      data: weeks,
+                      scaleType: 'band',
+                      categoryGapRatio: 0.3,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'Actuals (%)',
+                      min: 0,
+                      max: 100,
+                      valueFormatter: value => `${value}`,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'middle', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemMarkWidth: 12,
+                      itemMarkHeight: 12,
+                      markGap: 8,
+                      itemGap: 12,
+                    },
+                  }}
+                  margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
                 />
               </Box>
