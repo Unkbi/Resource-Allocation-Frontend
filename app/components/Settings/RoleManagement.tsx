@@ -479,11 +479,20 @@ function RoleManagementPage({
       ...assignment,
       id: assignment.__path__,
     })) || [];
+  
+  const filteredRoleAssignmentData = roleAssignments?.filter((assignment: RoleAssignment) => {
+    const userId = assignment.User?.includes('/')
+      ? assignment.User.split('/').pop()
+      : assignment.User;
+    const matchedUser = user?.find(u => u.id === userId);
+    return !!matchedUser;
+  }) || [];
+  
   const data =
     tab === 'role-management'
       ? modifyRolesData(roles)
       : tab === 'role-assignments'
-        ? modifyRoleAssignmentsData(roleAssignments)
+        ? modifyRoleAssignmentsData(filteredRoleAssignmentData)
         : tab === 'privilege-management'
           ? modifyPrivilegesData(privileges)
           : modifyPrivilegeAssignmentsData(privilegeAssignments);
