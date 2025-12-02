@@ -16,7 +16,11 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { initSortAllocations, injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
+import {
+  initSortAllocations,
+  injectBlankRows,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -62,54 +66,54 @@ export type GridComparator<T = string> = (
   args: GridComparatorArgs<T>
 ) => number;
 
-  export const compareNumberEmptyLast = (
-    a?: number | any,
-    b?: number | any,
-    direction: 'asc' | 'desc' = 'asc'
-  ) => {
-    const aEmpty = a === null || a === undefined || Number.isNaN(a);
-    const bEmpty = b === null || b === undefined || Number.isNaN(b);
-    if (aEmpty && !bEmpty) return 1;
-    if (!aEmpty && bEmpty) return -1;
-    if (aEmpty && bEmpty) return 0;
+export const compareNumberEmptyLast = (
+  a?: number | any,
+  b?: number | any,
+  direction: 'asc' | 'desc' = 'asc'
+) => {
+  const aEmpty = a === null || a === undefined || Number.isNaN(a);
+  const bEmpty = b === null || b === undefined || Number.isNaN(b);
+  if (aEmpty && !bEmpty) return 1;
+  if (!aEmpty && bEmpty) return -1;
+  if (aEmpty && bEmpty) return 0;
 
-    const result = a - b;
-    return direction === 'asc' ? result : -result;
-  };
-  
-  export const compareStringEmptyLast = (
-    a?: string | null,
-    b?: string | null,
-    direction: 'asc' | 'desc' = 'asc'
-  ) => {
-    const aVal = a?.trim() ?? '';
-    const bVal = b?.trim() ?? '';
-    const aEmpty = !aVal;
-    const bEmpty = !bVal;
-    if (aEmpty && !bEmpty) return 1;
-    if (!aEmpty && bEmpty) return -1;
-    if (aEmpty && bEmpty) return 0;
-    const result = aVal.localeCompare(bVal);
-    return direction === 'asc' ? result : -result;
-  };
+  const result = a - b;
+  return direction === 'asc' ? result : -result;
+};
 
-  export const compareDateEmptyLast = (
-    a?: string | null,
-    b?: string | null,
-    direction: 'asc' | 'desc' = 'asc'
-  ) => {
-    const aTime = a ? new Date(a).getTime() : NaN;
-    const bTime = b ? new Date(b).getTime() : NaN;
+export const compareStringEmptyLast = (
+  a?: string | null,
+  b?: string | null,
+  direction: 'asc' | 'desc' = 'asc'
+) => {
+  const aVal = a?.trim() ?? '';
+  const bVal = b?.trim() ?? '';
+  const aEmpty = !aVal;
+  const bEmpty = !bVal;
+  if (aEmpty && !bEmpty) return 1;
+  if (!aEmpty && bEmpty) return -1;
+  if (aEmpty && bEmpty) return 0;
+  const result = aVal.localeCompare(bVal);
+  return direction === 'asc' ? result : -result;
+};
 
-    const aEmpty = Number.isNaN(aTime);
-    const bEmpty = Number.isNaN(bTime);
-    
-    if (aEmpty && !bEmpty) return 1;
-    if (!aEmpty && bEmpty) return -1;
-    if (aEmpty && bEmpty) return 0;
-    const result = aTime - bTime;
-    return direction === 'asc' ? result : -result;
-  };
+export const compareDateEmptyLast = (
+  a?: string | null,
+  b?: string | null,
+  direction: 'asc' | 'desc' = 'asc'
+) => {
+  const aTime = a ? new Date(a).getTime() : NaN;
+  const bTime = b ? new Date(b).getTime() : NaN;
+
+  const aEmpty = Number.isNaN(aTime);
+  const bEmpty = Number.isNaN(bTime);
+
+  if (aEmpty && !bEmpty) return 1;
+  if (!aEmpty && bEmpty) return -1;
+  if (aEmpty && bEmpty) return 0;
+  const result = aTime - bTime;
+  return direction === 'asc' ? result : -result;
+};
 
 function TeamAllocation({
   startDate,
@@ -157,14 +161,14 @@ function TeamAllocation({
           filteredResources = initSortAllocations(
             removeResourcesWithNoTeams(
               injectBlankRows(
-              getAllProjectViewRows() as AllAllocations[],
-              teams || [],
-              // @ts-ignore
-              teamsResources,
-              allResourcesDetail,
-              location,
-              startDate,
-              endDate
+                getAllProjectViewRows() as AllAllocations[],
+                teams || [],
+                // @ts-ignore
+                teamsResources,
+                allResourcesDetail,
+                location,
+                startDate,
+                endDate
               )
             )
           );
@@ -230,13 +234,12 @@ function TeamAllocation({
     }
     return null;
   };
-  
-  const resourceTypeComparator: GridComparator = ({ p1, p2, }) => {
+
+  const resourceTypeComparator: GridComparator = ({ p1, p2 }) => {
     const r1 = getResource(p1)?.Type ?? '';
     const r2 = getResource(p2)?.Type ?? '';
     return r1.localeCompare(r2);
   };
-
 
   const teamsColumnConfig = [
     {
@@ -302,23 +305,23 @@ function TeamAllocation({
       sortable: true,
       primaryColumn: true,
       getSortComparator: (sortDirection: 'asc' | 'desc') => {
-       return (
-        _v1: string | null,
-        _v2: string | null,
-        p1: GridCellParams,
-        p2: GridCellParams
-       ) => {
-         const raw1 = getResource(p1)?.PhoneNumber;
-         const raw2 = getResource(p2)?.PhoneNumber;
-         const n1 =
-           raw1 === null || raw1 === undefined || raw1.trim() === ''
-             ? null
-             : Number(raw1);
-         const n2 =
-           raw2 === null || raw2 === undefined || raw2.trim() === ''
-             ? null
-             : Number(raw2);
-         return compareNumberEmptyLast(n1, n2, sortDirection);
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const raw1 = getResource(p1)?.PhoneNumber;
+          const raw2 = getResource(p2)?.PhoneNumber;
+          const n1 =
+            raw1 === null || raw1 === undefined || raw1.trim() === ''
+              ? null
+              : Number(raw1);
+          const n2 =
+            raw2 === null || raw2 === undefined || raw2.trim() === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(n1, n2, sortDirection);
         };
       },
       renderCell: (params: GridCellParams) => {
@@ -336,11 +339,11 @@ function TeamAllocation({
       primaryColumn: true,
       getSortComparator: (sortDirection: 'asc' | 'desc') => {
         return (
-         _v1: string | null,
-         _v2: string | null,
-         p1: GridCellParams,
-         p2: GridCellParams
-       ) => {
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
           const r1 = getResource(p1)?.Department ?? '';
           const r2 = getResource(p2)?.Department ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -398,7 +401,7 @@ function TeamAllocation({
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.Role ?? '';
           const r2 = getResource(p2)?.Role ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -423,7 +426,7 @@ function TeamAllocation({
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.WorkLocation ?? '';
           const r2 = getResource(p2)?.WorkLocation ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -447,10 +450,10 @@ function TeamAllocation({
       primaryColumn: true,
       getSortComparator: (sortDirection: 'asc' | 'desc') => {
         return (
-      _v1: string | null,
-      _v2: string | null,
-       p1: GridCellParams,
-       p2: GridCellParams
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
         ) => {
           const d1 = getResource(p1)?.StartDate ?? null;
           const d2 = getResource(p2)?.StartDate ?? null;
@@ -501,7 +504,7 @@ function TeamAllocation({
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.LocationCategory ?? '';
           const r2 = getResource(p2)?.LocationCategory ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -531,11 +534,11 @@ function TeamAllocation({
           const raw2 = getResource(p2)?.AverageWeeklyHours;
           const h1 =
             raw1 === null || raw1 === undefined || raw1 === ''
-          ? null
-          : Number(raw1);
+              ? null
+              : Number(raw1);
           const h2 =
             raw2 === null || raw2 === undefined || raw2 === ''
-          ? null
+              ? null
               : Number(raw2);
           return compareNumberEmptyLast(h1, h2, sortDirection);
         };
@@ -560,17 +563,17 @@ function TeamAllocation({
           p1: GridCellParams,
           p2: GridCellParams
         ) => {
-      const raw1 = getResource(p1)?.ContractorHourlyRate;
-      const raw2 = getResource(p2)?.ContractorHourlyRate;
-      const r1 =
-        raw1 === null || raw1 === undefined || raw1 === ''
-          ? null
-          : Number(raw1);
-      const r2 =
-        raw2 === null || raw2 === undefined || raw2 === ''
-          ? null
-          : Number(raw2);
-      return compareNumberEmptyLast(r1, r2, sortDirection);
+          const raw1 = getResource(p1)?.ContractorHourlyRate;
+          const raw2 = getResource(p2)?.ContractorHourlyRate;
+          const r1 =
+            raw1 === null || raw1 === undefined || raw1 === ''
+              ? null
+              : Number(raw1);
+          const r2 =
+            raw2 === null || raw2 === undefined || raw2 === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(r1, r2, sortDirection);
         };
       },
       renderCell: (params: GridCellParams) => {
@@ -594,7 +597,7 @@ function TeamAllocation({
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.ContractorHourlyRateCurrency ?? '';
           const r2 = getResource(p2)?.ContractorHourlyRateCurrency ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -617,7 +620,8 @@ function TeamAllocation({
       primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',
-      sortComparator: (_v1 :any, _v2 :any, p1 :any, p2 :any) => resourceTypeComparator({ v1: _v1, v2: _v2, p1, p2 }),
+      sortComparator: (_v1: any, _v2: any, p1: any, p2: any) =>
+        resourceTypeComparator({ v1: _v1, v2: _v2, p1, p2 }),
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Type || ''} />;
@@ -904,6 +908,11 @@ function TeamAllocation({
                 projectType: false,
                 projectTypeGroup: false,
               },
+            },
+            sorting: {
+              sortModel: [
+                { field: '__row_group_by_columns_group_teams__', sort: 'asc' },
+              ],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}

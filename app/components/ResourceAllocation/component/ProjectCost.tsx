@@ -82,7 +82,10 @@ const ProjectCost = ({
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['AllocationCost'].r && ready && projectCosts) {
-      const filteredResources = removeResourcesWithNoProjects(projectCosts);
+      const filteredResources = removeResourcesWithNoProjects(projectCosts)
+         .sort((a, b) =>
+         (a?.resource || "") < (b?.resource || "") ? -1 : 1
+       );
 
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
