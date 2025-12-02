@@ -182,11 +182,10 @@ export default function SingupPage() {
 
   // disable signup page for users 
   const isLoggedIn = getToken();
-  const pathname = usePathname();
 
   if (typeof window !== "undefined") {
-    if (isLoggedIn && pathname === '/signup') {
-      window.history.back(); 
+    if (isLoggedIn) {
+      window.location.href = "/dashboard";
       return null;
     }else{
     window.location.href = "/login";
