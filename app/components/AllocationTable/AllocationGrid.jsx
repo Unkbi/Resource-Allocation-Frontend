@@ -97,6 +97,7 @@ function AllocationGrid({
   rowGroupingColumnMode = 'single',
   permissions = null,
   loadingPermissions = true,
+  defaultGroupingExpansionDepth = 0,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -1457,7 +1458,7 @@ function AllocationGrid({
         endDate,
         finalColumns
       )}
-      defaultGroupingExpansionDepth={0}
+      defaultGroupingExpansionDepth={defaultGroupingExpansionDepth}
       disableAutosize
       getCellClassName={params => {
         if (
