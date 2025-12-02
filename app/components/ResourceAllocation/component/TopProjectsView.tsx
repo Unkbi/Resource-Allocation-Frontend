@@ -282,6 +282,7 @@ function TopProjectsView({
           NoRowsOverlay={NoRowsOverlay}
           toolbarComponent={''}
           viewId="topProject"
+          defaultGroupingExpansionDepth={1}
         />
       </Box>
     </Box>
