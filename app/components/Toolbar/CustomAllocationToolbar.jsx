@@ -105,7 +105,6 @@ import MyAllTeamsIcon from '../TableIcons/MyAllTeamsIcon';
 import { getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { useDataGrid } from '@/app/context/dataGridContext';
-import Allocation from '@/app/(root)/allocation/allocation';
 
 const ToolBox1 = styled(Box)(({ theme }) => ({
   display: 'flex',
