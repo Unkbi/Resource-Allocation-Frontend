@@ -2479,9 +2479,8 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
-          console.error('Failed to update portfolio:', error);
           const message =
-            error?.response?.data?.exception || 'Failed to update portfolio.';
+            error?.response?.data || 'Failed to update portfolio.';
           dispatch(
             showToast({
               open: true,
