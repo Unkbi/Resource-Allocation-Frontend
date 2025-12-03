@@ -439,6 +439,12 @@ export function formatCostAllocations(
     const project = projects.find(p => p.Id === alloc.Project);
     const projectType = projectTypes.find(pt => pt.Id === project?.Type);
     const resource = resources.find(r => r.Id === alloc.Resource);
+    // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+    if (
+      resource?.Status &&
+      !AllocationForm_Status_Filter.includes(resource?.Status)
+    )
+      continue;
     const locationDetails = location?.find(
       l => l?.Id === resource?.WorkLocation
     );
