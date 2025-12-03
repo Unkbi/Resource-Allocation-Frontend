@@ -88,6 +88,7 @@ const initialState: AllocationGridViewState = {
   error: null,
   expandRowId: [],
   cellSelectionData: {},
+  scrollPosition: null,
   columns: {
     team: [
       '__row_group_by_columns_group_teams__',
@@ -350,6 +351,9 @@ const viewSlice = createSlice({
     setCellSelectionData: (state, action) => {
       state.cellSelectionData = action.payload;
     },
+    setScrollPosition: (state, action) => {
+      state.scrollPosition = action.payload;
+    },
     setInitialCurrentView: state => {
       if (state.savedViews && state.savedViews.length > 1) {
         state.savedViews.some(view => {
@@ -557,6 +561,7 @@ export const {
   setShowActuals,
   setExpandRowId,
   setCellSelectionData,
+  setScrollPosition,
   setInitialCurrentView,
   setCurrentView,
   updateCurrentView,
