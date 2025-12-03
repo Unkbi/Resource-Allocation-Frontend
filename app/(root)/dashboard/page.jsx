@@ -1,6 +1,7 @@
 'use client';
 
 import Overview from '../../components/Dashboard/OverviewCards';
+import ScoreCard from '../../components/Dashboard/ScoreCard';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { Global, css } from '@emotion/react';
 import {
@@ -117,18 +118,21 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
+  'engagementScoreOverview',
   'top_projects_by_variance',
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
   'actuals_confirmation_status',
+
 ];
 
-const PROJECT_CHART_SEQUENCE = ['projectFTE', 'budgetVsPlanVsActual'];
+const PROJECT_CHART_SEQUENCE = ['projectHealthOverview', 'projectFTE', 'budgetVsPlanVsActual'];
 
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
+  'teamEngagementScore',
   'unapprovedProjectActualsByTeam',
   'resourceCoverage',
   'actualsTrendWeekly',
@@ -136,35 +140,40 @@ const TEAM_CHART_SEQUENCE = [
   'overAllocated',
 ];
 
-const generateLayouts = chartKeys => ({
-  lg: chartKeys.map((key, idx) => ({
-    i: key,
-    x: (idx % 2) * 6,
-    y: Math.floor(idx / 2) * 3,
-    w: 6,
-    h: 3,
-    minW: 5,
-    minH: 3,
-  })),
-  md: chartKeys.map((key, idx) => ({
-    i: key,
-    x: 0,
-    y: idx * 3,
-    w: 12,
-    h: 3,
-    minW: 6,
-    minH: 3,
-  })),
-  sm: chartKeys.map((key, idx) => ({
-    i: key,
-    x: 0,
-    y: idx * 3,
-    w: 12,
-    h: 3,
-    minW: 12,
-    minH: 3,
-  })),
-});
+const generateLayouts = chartKeys => {
+  // Auto-height widgets that should take less vertical space
+  const autoHeightWidgets = ['engagementScoreOverview', 'projectHealthOverview'];
+
+  return {
+    lg: chartKeys.map((key, idx) => ({
+      i: key,
+      x: (idx % 2) * 6,
+      y: Math.floor(idx / 2) * 3,
+      w: 6,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minW: 5,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+    })),
+    md: chartKeys.map((key, idx) => ({
+      i: key,
+      x: 0,
+      y: idx * 3,
+      w: 12,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minW: 6,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+    })),
+    sm: chartKeys.map((key, idx) => ({
+      i: key,
+      x: 0,
+      y: idx * 3,
+      w: 12,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minW: 12,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+    })),
+  };
+};
 
 export default function ExecutiveDashboardPage() {
   const dispatch = useDispatch();
@@ -199,6 +208,9 @@ export default function ExecutiveDashboardPage() {
     top_projects_by_variance = [],
     actuals_confirmation_status = [],
     actualsTrendWeekly = [],
+    teamEngagementScore = [],
+    projectHealthOverview = [],
+    engagementScoreOverview = [],
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -411,6 +423,9 @@ export default function ExecutiveDashboardPage() {
         'allocationPercentage',
         'actualsConfirmed',
         'actualsTrendWeekly',
+        'teamEngagementScore',
+        'projectHealthOverview',
+        'engagementScoreOverview',
       ];
 
       // Set loading state at the start of data fetch only on initial load or when filters change
@@ -450,17 +465,17 @@ export default function ExecutiveDashboardPage() {
         const queryStart =
           (chartKey === 'plan_vs_actual_variance' ||
             chartKey === 'actualsConfirmed') &&
-          selectedOption === 'week'
+            selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
             chartKey === 'actualsConfirmed') &&
-          selectedOption === 'week'
+            selectedOption === 'week'
             ? getMonday(selectedDate)
-                .subtract(1, 'week')
-                .add(6, 'day')
-                .format('YYYY-MM-DD')
+              .subtract(1, 'week')
+              .add(6, 'day')
+              .format('YYYY-MM-DD')
             : endDate;
 
         const paramsForKey = {
@@ -513,7 +528,7 @@ export default function ExecutiveDashboardPage() {
     const over = resourceUtilization.filter(
       d => d.allocation_status === 'over-allocated'
     );
-    
+
     if (under.length > 0) {
       setFilteredUnderAllocated(under);
     }
@@ -592,7 +607,7 @@ export default function ExecutiveDashboardPage() {
       // Check inventory metrics data
       (activeProjects.length > 0 || activeProjectsByType.length > 0) &&
       (activeResources.length > 0 || totalHeadcount.length > 0);
-    
+
     if (allDataLoaded) {
       if (initialLoad) {
         setInitialLoad(false);
@@ -669,7 +684,7 @@ export default function ExecutiveDashboardPage() {
   const allowedTeamCharts = TEAM_CHART_SEQUENCE.filter(queryKey =>
     hasAccessToQueryKey(queryKey)
   );
-  
+
   const overviewLayouts = useMemo(
     () => generateLayouts(allowedOverviewCharts),
     [allowedOverviewCharts.join(',')]
@@ -1357,7 +1372,6 @@ export default function ExecutiveDashboardPage() {
           const config = useResponsiveChart(dimensions, 'bar');
 
           // Process the nested data structure from API
-          // Data format: { Run: [...], Grow: [...], Transform: [...] }
           const processedData = [];
           const projectTypeNames = new Set();
 
@@ -1381,27 +1395,22 @@ export default function ExecutiveDashboardPage() {
             }
           });
 
-          // Get project type groups (Run, Grow, Transform, etc.)
+          // Sort project type groups in Transform -> Grow -> Run order
+          const groupOrder = ['Transform', 'Grow', 'Run'];
           const projectTypeGroups = Object.keys(
             allocation_by_project_type_group
-          );
-
-          // Calculate total allocation per group and sort descending
-          const groupTotals = projectTypeGroups.map(group => ({
-            group,
-            total: processedData
-              .filter(d => d.project_type_group === group)
-              .reduce((sum, d) => sum + d.allocation_percentage, 0),
-          }));
-          groupTotals.sort((a, b) => b.total - a.total);
-          const sortedProjectTypeGroups = groupTotals.map(g => g.group);
+          ).sort((a, b) => {
+            const aIdx = groupOrder.indexOf(a);
+            const bIdx = groupOrder.indexOf(b);
+            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+          });
 
           // Create series data for each project type using global colorPalette
           const projectTypeArray = Array.from(projectTypeNames);
           const seriesData = projectTypeArray.map((typeName, index) => ({
             label: typeName,
             id: typeName,
-            data: sortedProjectTypeGroups.map(group => {
+            data: projectTypeGroups.map(group => {
               const item = processedData.find(
                 d =>
                   d.project_type_group === group &&
@@ -1439,7 +1448,7 @@ export default function ExecutiveDashboardPage() {
                   series={seriesData}
                   xAxis={[
                     {
-                      data: sortedProjectTypeGroups,
+                      data: projectTypeGroups,
                       scaleType: 'band',
                       categoryGapRatio: 0.4,
                       barGapRatio: 0.1,
@@ -1547,7 +1556,6 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'pie');
-          
           // Transform data for pie chart with fixed colors
           const chartData = (actuals_confirmation_status || []).map(item => ({
             id: item.status,
@@ -1635,9 +1643,91 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+
+    engagementScoreOverview: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Engagement Score Overview')}
+        minWidth={650}
+        minHeight={280}
+        autoHeight={true}
+      >
+        {() => {
+          const data = engagementScoreOverview?.[0] || {};
+
+          return (
+            <ScoreCard
+              title="Engagement Overview"
+              tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
+              overallScore={parseFloat(data.overall_engagement || 0)}
+              overallChange={parseFloat(data.overall_engagement_change || 0)}
+              overallDirection={data.overall_engagement_direction}
+              subScores={[
+                {
+                  score: parseFloat(data.planned_score || 0),
+                  label: 'Planned Score',
+                  change: parseFloat(data.planned_score_change || 0),
+                  positive: data.planned_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.actual_score || 0),
+                  label: 'Actual Score',
+                  change: parseFloat(data.actual_score_change || 0),
+                  positive: data.actual_score_direction !== 'down',
+                },
+              ]}
+              hasAccess={true}
+            />
+          );
+        }}
+      </DashboardWidget>
+    ),
   };
 
   const projectCharts = {
+    projectHealthOverview: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Project Health Score Overview')}
+        minWidth={650}
+        minHeight={100}
+        autoHeight={true}
+      >
+        {() => {
+          const data = projectHealthOverview?.[0] || {};
+
+          return (
+            <ScoreCard
+              title="Projects Health Score"
+              tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
+              overallScore={parseFloat(data.overall_health_score || 0)}
+              overallChange={parseFloat(data.overall_health_score_change || 0)}
+              overallDirection={data.overall_health_score_direction}
+              subScores={[
+                {
+                  score: parseFloat(data.adherence_score || 0),
+                  label: 'Adherence Score',
+                  change: parseFloat(data.adherence_score_change || 0),
+                  positive: data.adherence_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.actuals_score || 0),
+                  label: 'Actuals Score',
+                  change: parseFloat(data.actuals_score_change || 0),
+                  positive: data.actuals_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.engagement_score || 0),
+                  label: 'Engagement Score',
+                  change: parseFloat(data.engagement_score_change || 0),
+                  positive: data.engagement_score_direction !== 'down',
+                },
+              ]}
+              hasAccess={true}
+            />
+          );
+        }}
+      </DashboardWidget>
+    ),
+
     projectFTE: (
       <DashboardWidget
         onClick={() =>
@@ -1826,7 +1916,7 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
-          
+
           // Sort by budget total descending
           const sortedBudgetData = sortBarChartData(
             filteredbudgetVsPlanVsActual,
@@ -2030,12 +2120,12 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
-          
+
           // Get unique teams and calculate total actuals for each
           const uniqueTeams = [
             ...new Set(filteredUnapprovedActualsByTeam.map(d => d.team_name)),
           ];
-          
+
           // Calculate total actuals per team and sort descending
           const teamTotals = uniqueTeams.map(team => ({
             team,
@@ -2134,7 +2224,7 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'line');
-          
+
           // Sort by coverage percentage descending
           const sortedCoverageData = sortBarChartData(
             filteredCoverageData,
@@ -2212,7 +2302,7 @@ export default function ExecutiveDashboardPage() {
       <DashboardWidget minWidth={320} minHeight={280}>
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
-          
+
           // Sort by utilization percentage descending
           const sortedUnderAllocated = sortBarChartData(
             filteredUnderAllocated,
@@ -2284,7 +2374,7 @@ export default function ExecutiveDashboardPage() {
       <DashboardWidget minWidth={320} minHeight={280}>
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
-          
+
           // Sort by utilization percentage descending
           const sortedOverAllocated = sortBarChartData(
             filteredOverAllocated,
@@ -2361,10 +2451,6 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          // Process the API data structure
-          // Data format: [{ period_start: "2025-10-20", actuals: [{ category: "Approved Work", units: 26.4, percentage: 99.25 }, ...] }, ...]
-          
-          // Extract unique periods and calculate week numbers
           const periodData = (actualsTrendWeekly || []).map(item => ({
             period_start: item.period_start,
             week: getWeekNumber(item.period_start),
@@ -2460,6 +2546,83 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+
+    teamEngagementScore: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Engagement Score by Teams')}
+        minWidth={320}
+        minHeight={280}
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Sort by engagement score descending
+          const sortedEngagementData = sortBarChartData(
+            teamEngagementScore || [],
+            'avg_engagement_score'
+          );
+
+          return (
+            <Box
+              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Engagement Score by Teams
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={[
+                    {
+                      data: sortedEngagementData.map(d =>
+                        Number.parseFloat(d.avg_engagement_score || 0)
+                      ),
+                      label: 'Engagement Score',
+                      id: 'engagementScore',
+                      color: '#7C93F5',
+                    },
+                  ]}
+                  xAxis={[
+                    {
+                      data: sortedEngagementData.map(d =>
+                        formatTeamName(
+                          d.team_name,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedEngagementData.length
+                        )
+                      ),
+                      label: 'Team',
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      min: 0,
+                      max: 100,
+                      width: config.yAxis?.width || 50,
+                      valueFormatter: value => `${value}`,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: config.legend,
+                  }}
+                  grid={{ horizontal: true }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
   };
 
   const teamNames = [...new Set(teams.map(d => d.Name))];
@@ -2490,6 +2653,15 @@ export default function ExecutiveDashboardPage() {
             }
             .react-grid-item.cssTransforms {
               transition-property: transform;
+            }
+
+            /* Fix resize handle for auto-height widgets */
+            .react-grid-item.auto-height-widget {
+              height: auto !important;
+            }
+            .react-grid-item.auto-height-widget .react-resizable-handle {
+              position: absolute;
+              bottom: 0;
             }
 
             .MuiChartsLegend-item[data-series$='-planned']
@@ -2619,10 +2791,13 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
+              compactType="vertical"
               style={{ padding: '0 16px' }}
             >
               {allowedOverviewCharts.map(key => (
-                <div key={key}>{overviewcharts[key]}</div>
+                <div key={key} className={key === 'engagementScoreOverview' ? 'auto-height-widget' : ''}>
+                  {overviewcharts[key]}
+                </div>
               ))}
             </ResponsiveGridLayout>
           </>
@@ -2651,6 +2826,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
+              compactType="vertical"
               style={{ padding: '0 16px' }}
             >
               {allowedTeamCharts.map(key => (
@@ -2683,10 +2859,13 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={handleLayoutChange}
               isDraggable
               isResizable
+              compactType="vertical"
               style={{ padding: '0 16px' }}
             >
               {allowedProjectCharts.map(key => (
-                <div key={key}>{projectCharts[key]}</div>
+                <div key={key} className={key === 'projectHealthOverview' ? 'auto-height-widget' : ''}>
+                  {projectCharts[key]}
+                </div>
               ))}
             </ResponsiveGridLayout>
           </>
