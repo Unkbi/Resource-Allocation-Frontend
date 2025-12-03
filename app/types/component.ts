@@ -27,4 +27,5 @@ export interface ActualAllocationTableRow {
   comments?: string | null;
   type?: string | null;
   sectionEnd?: string;
+  projectActualsStatus: string | null;
 }

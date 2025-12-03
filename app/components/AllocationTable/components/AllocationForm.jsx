@@ -35,6 +35,8 @@ import {
   addProjectTypeGroupValidationSchema,
   addLocationValidationSchema,
   addLocationGroupValidationSchema,
+  addUserValidationSchema,
+  addResourceToUserValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -88,10 +90,19 @@ import {
   createResourceWithTeamAndOrg,
   updateResource,
 } from '@/app/services/resourceServices';
-import { postTeamResource } from '@/app/services/teamServices';
+import {
+  fetchTeamAllocationsForSaga,
+  postTeamResource,
+} from '@/app/services/teamServices';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import ConfirmDialog from '../../Dialog/ConfirmDialog';
-import { DATE_FORMAT, DEFAULT_PROJECT_WEEK_MINUS, DEFAULT_PROJECT_WEEK_PLUS, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  PORTFOLIO_DISPLAY_NAME,
+  DEFAULT_PROJECT_WEEK_MINUS,
+  DEFAULT_PROJECT_WEEK_PLUS,
+  PROJECT_ACTIVE_STATUS,
+} from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
   createTeam,
@@ -145,7 +156,18 @@ import AddProjectTypesForm from '../../Forms/AddProjectTypesForm';
 import AddProjectTypesGroupForm from '../../Forms/AddProjectTypesGroupForm';
 import AddLocationForm from '../../Forms/AddLocationForm';
 import AddLocationGroupForm from '../../Forms/AddLocationGroupForm';
-import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
+import AddResourceToUserForm from '../../Forms/AddResourceToUserForm';
+import AddUserForm from '../../Forms/AddUserForm';
+import {
+  formatAPIResponse,
+  getUserAttributes,
+  getLoginUserDetails,
+} from '@/app/utils/authUtils';
+import AdvancedFiltersForm from '../../Forms/AdvancedFiltersForm';
+import {
+  setAdvancedFilters,
+  clearAdvancedFilters,
+} from '@/app/redux/reducers/dashboardReducer';
 import {
   ADD_PROJECT_TYPE,
   UPDATE_PROJECT_TYPE,
@@ -158,6 +180,9 @@ import {
   UPDATE_LOCATION,
   UPDATE_LOCATION_GROUPS,
   ADD_LOCATION_GROUPS,
+  CREATE_USER,
+  UPDATE_USER,
+  SEND_INVITATION,
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { compressToEncodedURIComponent } from 'lz-string';
@@ -169,7 +194,7 @@ const initialValuesMap = {
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
-    AllowOvertime: '',
+    AllowOvertime: 'No',
     Location: '',
     ProjectManager: '',
     Status: 'Active',
@@ -389,6 +414,41 @@ const initialValuesMap = {
   edit_location_group: {
     Name: '',
   },
+  add_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
+    sendInviteEmail: true,
+  },
+  edit_user: {
+    FirstName: '',
+    LastName: '',
+    Email: '',
+    Role: '',
+    sendInviteEmail: true,
+  },
+  add_resource_to_user: {
+    Resources: [],
+    Role: '',
+    sendInviteEmail: true,
+  },
+  edit_resource_to_user: {
+    Resources: [],
+    Role: '',
+    sendInviteEmail: true,
+  },
+  advanced_filters: {
+    ProjectTypeGroup: [],
+    ProjectType: [],
+    Team: [],
+    Portfolio: [],
+    Organization: [],
+    Resource: [],
+    Project: [],
+    ProjectManager: [],
+    AllocationManager: [],
+  },
 };
 
 const AllocationForm = () => {
@@ -430,8 +490,13 @@ const AllocationForm = () => {
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
-  const { projectTypeGroups, projectTypes, location, locationGroups } =
-    useSelector(state => state.allSettings);
+  const {
+    projectTypeGroups,
+    projectTypes,
+    location,
+    locationGroups,
+    userResources,
+  } = useSelector(state => state.allSettings);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -505,9 +570,13 @@ const AllocationForm = () => {
       case 'open_history':
         return openHistoryValidationSchema;
       case 'add_portfolio':
-        return addPortfolioValidationSchema(portfolios);
+        return addPortfolioValidationSchema(portfolios, scalarSettings);
       case 'edit_portfolio':
-        return addPortfolioValidationSchema(portfolios, initialData.Name || '');
+        return addPortfolioValidationSchema(
+          portfolios,
+          scalarSettings,
+          initialData.Name || ''
+        );
       case 'add_role':
         return addRoleValidationSchema(roles);
       case 'edit_role':
@@ -556,6 +625,14 @@ const AllocationForm = () => {
           locationGroups,
           initialData?.Name || ''
         );
+      case 'add_user':
+        return addUserValidationSchema(allUsers, initialData?.email || '');
+      case 'edit_user':
+        return addUserValidationSchema(allUsers, initialData?.email || '');
+      case 'add_resource_to_user':
+        return addResourceToUserValidationSchema;
+      case 'edit_resource_to_user':
+        return addResourceToUserValidationSchema;
       default:
         return null;
     }
@@ -906,6 +983,10 @@ const AllocationForm = () => {
               const newTeamId = response.payload?.Team?.Id;
               if (newTeamId) {
                 await dispatch(fetchAllTeams());
+                dispatch({
+                  type: FETCH_ALL_RESOURCES_DETAIL,
+                  payload: {},
+                });
                 dispatch(setHighlightedRowId(newTeamId));
                 dispatch(
                   showToast({
@@ -956,6 +1037,32 @@ const AllocationForm = () => {
           Status: cleanedValues.Status,
         };
 
+        // Check if any allocations present for a team if Team is made inactive.
+        if (
+          initialData.Status !== cleanedValues.Status &&
+          cleanedValues.Status === 'Inactive'
+        ) {
+          const teamAllocation = await fetchTeamAllocationsForSaga({
+            TeamId: initialData.Id,
+            StartDate: format(parseISO(new Date().toISOString()), DATE_FORMAT),
+            EndDate: '2099-01-01',
+          });
+
+          if (teamAllocation && teamAllocation.length > 0) {
+            dispatch(
+              showToast({
+                open: true,
+                message:
+                  'Failed to update team. Cannot make a team Inactive with Planned Allocations in the Current and Future Weeks.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 5000,
+              })
+            );
+            break;
+          }
+        }
+
         try {
           const response = await dispatch(
             updateTeam({
@@ -977,6 +1084,10 @@ const AllocationForm = () => {
           }
 
           await dispatch(fetchAllTeams());
+          dispatch({
+            type: FETCH_ALL_RESOURCES_DETAIL,
+            payload: {},
+          });
           dispatch(setHighlightedRowId(initialData.Id));
           dispatch(
             showToast({
@@ -1009,6 +1120,30 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const calculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.FullName.toLowerCase() ===
+              calculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to add resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           FirstName: cleanedValues.FirstName,
           StartDate: cleanedValues.StartDate,
@@ -1040,7 +1175,7 @@ const AllocationForm = () => {
           const result = await dispatch(
             createResourceWithTeamAndOrg({
               resourceData: postData,
-              teamId: values.Team,
+              teamId: values.Team ? values.Team : null,
               organizationId: values.Organisation,
             })
           );
@@ -1093,6 +1228,31 @@ const AllocationForm = () => {
             cleanedValues[key] = null;
           }
         });
+
+        // Check if calculated Name has duplicates
+        const newCalculatedFullName = cleanedValues.PreferredFirstName
+          ? `${cleanedValues.PreferredFirstName} ${cleanedValues.LastName}`
+          : `${cleanedValues.FirstName} ${cleanedValues.LastName}`;
+        if (
+          resources.find(
+            resource =>
+              resource.Id !== initialData.Id &&
+              resource.FullName.toLowerCase() ===
+                newCalculatedFullName.toLowerCase()
+          )
+        ) {
+          dispatch(
+            showToast({
+              open: true,
+              message: `Failed to update resource. Resource cannot have the same Name. Please change First Name, Last Name, Or Preferred First Name.`,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          break;
+        }
+
         postData = {
           ...cleanedValues,
           EndDate:
@@ -1178,12 +1338,12 @@ const AllocationForm = () => {
           }
 
           // Check if team changed and update if needed
-          if (teamOrgData.teamId && teamOrgData.teamName !== initialData.Team) {
+          if (teamOrgData.teamName !== initialData.Team) {
             await dispatch({
               type: 'UPDATE_RESOURCE_TEAM',
               payload: {
                 Resource: initialData.Id,
-                Team: teamOrgData.teamId,
+                Team: teamOrgData.teamId === '' ? null : teamOrgData.teamId,
               },
             });
           }
@@ -1520,6 +1680,7 @@ const AllocationForm = () => {
                   portfolios,
                   projects,
                   resources,
+                  location,
                   splitView,
                   bottomTeamAllocationGrid,
                   teamAllocationGrid,
@@ -1630,21 +1791,29 @@ const AllocationForm = () => {
                   )
                 );
               }
-          
-              const startDate = values.StartDate ? new Date(values.StartDate) : null;
+
+              const startDate = values.StartDate
+                ? new Date(values.StartDate)
+                : null;
               const endDate = values.EndDate ? new Date(values.EndDate) : null;
-              const diffInWeeks = Math.floor((endDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+              const diffInWeeks = Math.floor(
+                (endDate - startDate) / (7 * 24 * 60 * 60 * 1000)
+              );
               let adjustedEndDate;
               if (diffInWeeks < 20) {
                 adjustedEndDate = generateDateWeekMath(
                   'WEEK_PLUS',
-                  DEFAULT_PROJECT_WEEK_PLUS ,
+                  DEFAULT_PROJECT_WEEK_PLUS,
                   startDate
                 );
               } else if (diffInWeeks >= 20 && diffInWeeks < 52) {
-                adjustedEndDate = values.EndDate; 
+                adjustedEndDate = values.EndDate;
               } else {
-                adjustedEndDate = generateDateWeekMath('WEEK_PLUS', 51, startDate);
+                adjustedEndDate = generateDateWeekMath(
+                  'WEEK_PLUS',
+                  51,
+                  startDate
+                );
               }
               const reviewLink = compressToEncodedURIComponent(
                 JSON.stringify(
@@ -1663,12 +1832,12 @@ const AllocationForm = () => {
                 )
               );
               const link = `${window.location.origin}/allocation?settings=${reviewLink}`;
-         
+
               handleOnAdd(new_resources, filteredProjects);
               handleScrollAndFocus(new_resources, allMondays, filteredProjects);
-                if (pathname !== '/allocation') {
-                  router.replace(link);
-                }
+              if (pathname !== '/allocation') {
+                router.replace(link);
+              }
             }
           );
         } catch (e) {
@@ -1698,6 +1867,7 @@ const AllocationForm = () => {
           );
         } finally {
           dispatch(closeDialog());
+          setFormValue({});
         }
         break;
 
@@ -2202,7 +2372,7 @@ const AllocationForm = () => {
             dispatch(
               showToast({
                 open: true,
-                message: 'Portfolio added successfully.',
+                message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} added successfully.`,
                 type: 'success',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -2355,7 +2525,7 @@ const AllocationForm = () => {
           dispatch(
             showToast({
               open: true,
-              message: 'Portfolio updated successfully.',
+              message: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME} updated successfully.`,
               type: 'success',
               position: 'bottom-left',
               autoHideTimer: 4000,
@@ -2364,16 +2534,15 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
-          console.error('Failed to update portfolio:', error);
           const message =
-            error?.response?.data?.exception || 'Failed to update portfolio.';
+            error?.response?.data || 'Failed to update portfolio.';
           dispatch(
             showToast({
               open: true,
               message: message,
               type: 'error',
               position: 'bottom-left',
-              autoHideTimer: 4000,
+              autoHideTimer: 6000,
             })
           );
         }
@@ -2609,7 +2778,7 @@ const AllocationForm = () => {
             dispatch({
               type: UPDATE_PRIVILEGE,
               payload: {
-                id: cleanedValues.Name,
+                id: cleanedValues.Name.replace('/', '__'),
                 updatedFields,
                 resolve,
                 reject,
@@ -3201,6 +3370,240 @@ const AllocationForm = () => {
             })
           );
         }
+        break;
+      }
+      case 'add_user': {
+        try {
+          Object.keys(cleanedValues).forEach(key => {
+            if (cleanedValues[key] === '') {
+              cleanedValues[key] = null;
+            }
+          });
+
+          const userItem = {
+            email: cleanedValues.Email || null,
+            firstName: cleanedValues.FirstName || null,
+            lastName: cleanedValues.LastName || null,
+            role: cleanedValues.Role || '*',
+          };
+
+          const postData = {
+            users: [userItem],
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: SEND_INVITATION,
+              payload: {
+                userData: postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User invited successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+
+          dispatch(closeDialog());
+          setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
+          }
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+      case 'add_resource_to_user': {
+        try {
+          const finalData = cleanedValues.Resources.map(resourceEmail => {
+            const resourceData = userResources?.find(
+              res => res.email === resourceEmail
+            );
+
+            if (!resourceData) {
+              console.warn(`Resource not found for email: ${resourceEmail}`);
+              return null;
+            }
+
+            const nameParts = resourceData.Name?.split(' ') || [];
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            return {
+              email: resourceEmail || null,
+              firstName: firstName || null,
+              lastName: lastName || null,
+              role: cleanedValues.Role || '*',
+              resourceId: resourceData.id, // Store ID for highlighting
+            };
+          }).filter(Boolean); // Remove any null entries
+
+          if (finalData.length === 0) {
+            throw new Error('No valid resources found to invite');
+          }
+
+          const postData = {
+            users: [...finalData],
+          };
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: SEND_INVITATION,
+              payload: {
+                userData: postData,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Users invited successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+
+          // Compare initialData emails with finalData emails
+          // Only highlight resources that were NOT in the initial checkbox selection
+          const initialEmails = new Set(
+            (initialData || []).map(item => item.email?.toLowerCase())
+          );
+
+          const newlyInvitedResources = finalData.filter(
+            item => !initialEmails.has(item.email?.toLowerCase())
+          );
+
+          // If there are newly invited resources (dropdown selections that differ from checkbox), highlight the first one
+          if (newlyInvitedResources.length > 0) {
+            const highlightId = newlyInvitedResources[0].resourceId;
+            if (highlightId) {
+              dispatch(setHighlightedRowId(highlightId));
+            }
+          } else if (initialData?.[0]?.id) {
+            // Otherwise, highlight the first resource from initialData
+            dispatch(setHighlightedRowId(initialData[0].id));
+          }
+
+          setFormValue({});
+        } catch (error) {
+          console.error('Failed to add user:', error);
+          const message =
+            error?.response?.data?.exception || 'Failed to add user.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
+      case 'edit_user': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const postData = {
+          email: cleanedValues.Email || null,
+          firstName: cleanedValues.FirstName || null,
+          lastName: cleanedValues.LastName || null,
+        };
+
+        try {
+          const result = await new Promise((resolve, reject) => {
+            dispatch({
+              type: UPDATE_USER,
+              payload: {
+                postData,
+                userId: initialData.id,
+                resolve,
+                reject,
+              },
+            });
+          });
+
+          dispatch(
+            showToast({
+              open: true,
+              message: 'User updated successfully.',
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(closeDialog());
+          setFormValue({});
+          dispatch(setHighlightedRowId(result?.User?.id));
+        } catch (e) {
+          console.error('Failed to update user:', e);
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Failed to update user.',
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+        }
+        break;
+      }
+
+      case 'advanced_filters': {
+        // For advanced filters, use the full values object (don't exclude any fields)
+        // All values are arrays from the multi-select autocomplete components
+        const filterValues = {
+          ProjectTypeGroup: values.ProjectTypeGroup || [],
+          ProjectType: values.ProjectType || [],
+          Team: values.Team || [],
+          Resource: values.Resource || [],
+          AllocationManager: values.AllocationManager || [],
+          ProjectManager: values.ProjectManager || [],
+          Project: values.Project || [],
+          Portfolio: values.Portfolio || [],
+          Organization: values.Organization || [],
+        };
+        dispatch(setAdvancedFilters(filterValues));
+        dispatch(closeDialog());
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Advanced filters applied successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 3000,
+          })
+        );
         break;
       }
 
@@ -3802,6 +4205,35 @@ const AllocationForm = () => {
       case 'edit_location_group':
         return (
           <AddLocationGroupForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_user':
+        return (
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'edit_user':
+        return (
+          <AddUserForm formikProps={formikProps} setFormValue={setFormValue} />
+        );
+      case 'add_resource_to_user':
+        return (
+          <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_resource_to_user':
+        return (
+          <AddResourceToUserForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'advanced_filters':
+        return (
+          <AdvancedFiltersForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

@@ -36,6 +36,7 @@ import ProjectSetting from '@/app/components/Settings/ProjectSettings';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Location from '@/app/components/Settings/Location';
+import UserManagement from '@/app/components/Settings/UserManagement';
 import { FETCH_ALL_SETTINGS } from '@/app/redux/actions/allSettingsActions';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
@@ -164,9 +165,12 @@ const SettingsPanel = ({
   const hasAnyAccess = {
     'user-profile': true,
     notification: false,
+    'user-management': permissions['User'].r,
     'access-management': permissions['Role'].r || permissions['Permission'].r,
     'project-setting':
-      permissions['ProjectType'].r || permissions['ProjectTypeGroup'].r,
+      permissions['Portfolio'].r ||
+      permissions['ProjectType'].r ||
+      permissions['ProjectTypeGroup'].r,
     'allocation-setting':
       permissions['AllocationRangeSetting'].r || permissions['ScalarSetting'].r,
     'location-setting':
@@ -189,7 +193,6 @@ const SettingsPanel = ({
 
   useEffect(() => {
     if (scalarSettings === null) {
-      // Sahadev : This is temporary, we will pobably need to call AllSettings API here.
       dispatch({
         type: FETCH_ALL_SETTINGS,
         payload: {},
@@ -229,6 +232,15 @@ const SettingsPanel = ({
       {
         name: 'Admin Settings',
         items: [
+          {
+            id: 'user-management',
+            title: 'User Management',
+            headerText: 'User Management',
+            icon: '',
+            content: <UserManagement />,
+            description:
+              'Easily add and manage your users and resources in one place.',
+          },
           {
             id: 'access-management',
             title: 'Access Management',
@@ -335,7 +347,7 @@ const SettingsPanel = ({
     } else {
       setActiveItem(updatedMenuItems[0].items[0]);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const menu = searchParams.get('menu');
@@ -436,8 +448,10 @@ const SettingsPanel = ({
 };
 
 export default withRBAC(SettingsPanel, [
+  'User',
   'Role',
   'Permission',
+  'Portfolio',
   'ProjectType',
   'ProjectTypeGroup',
   'AllocationRangeSetting',

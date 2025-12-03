@@ -37,7 +37,6 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { generateEmptyRow, getFirstChild } from '@/app/utils/allocationUtils';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -90,6 +89,7 @@ const CellWithMenu = ({
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
   const { loginUserPrivileges } = useSelector(state => state.rbac);
+  const { location } = useSelector(state => state.allSettings);
 
   const handleDeleteClick = params => {
     setDeleteParams(params);
@@ -270,6 +270,7 @@ const CellWithMenu = ({
             null,
             null,
             allResources,
+            location,
             {
               ProjectName: row?.project || '',
               Id: '',

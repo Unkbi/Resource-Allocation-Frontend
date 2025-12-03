@@ -297,6 +297,15 @@ export const getSundayOfISO = date => {
   return format(endOfISOWeek(isoDate, { weekStartsOn: 1 }), DATE_FORMAT);
 };
 
+export const getFridayOfISO = date => {
+  if (!date) return null;
+  const isoDate = parseISO(date);
+  return format(
+    endOfISOWeek(subDays(isoDate, 2), { weekStartsOn: 1 }),
+    DATE_FORMAT
+  );
+};
+
 export const generateTMinusOneStartEndDate = isStartDate => {
   let today = parseISO(new Date().toISOString());
   const lastWeeksMonday = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1 });
@@ -495,7 +504,7 @@ export const getUpdatedFiltersOnMyTeamsAllTeams = (
         field: 'teamAllocationManager',
         operator: 'equals',
         value: allocationManagerFullName,
-        id : 0 // This is hardcoded to avoid Id issues for My Teams filter
+        id: 0, // This is hardcoded to avoid Id issues for My Teams filter
       },
     ];
   } else {
@@ -535,7 +544,7 @@ export const getUpdatedFiltersOnMyProjectsAllProjects = (
         field: 'projectManager',
         operator: 'equals',
         value: projectManagerName,
-        id : 1 // This is hardcoded to avoid Id issues for My Project filter
+        id: 1, // This is hardcoded to avoid Id issues for My Project filter
       },
     ];
   } else {
@@ -743,6 +752,9 @@ export function isCellEditableUtils(params, type, resources) {
     resource => resource.Id === params.row.resourceId
   );
   if (!matchingResource) return false;
+
+  // If not StartDate then allow to edit no checks
+  if (!matchingResource.StartDate) return true;
 
   const resourceStart = parseISO(matchingResource.StartDate);
   const resourceEnd = matchingResource.EndDate

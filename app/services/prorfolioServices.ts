@@ -30,13 +30,14 @@ export const updatePortfolio = async (
   updatedFields: any
 ) => {
   const payload = {
+    Id: portfolioId,
     Name: updatedFields.Name,
     Description: updatedFields.Description,
     Status: updatedFields.Status,
     SidebarColor: updatedFields.SidebarColor,
   };
-  const response = await axiosInstance.put(
-    `${API_PROJECT_PORTFOLIO}/Portfolio/${portfolioId}`,
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/UpdatePortfolio`,
     payload
   );
   return response.data;

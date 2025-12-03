@@ -19,7 +19,10 @@ import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
-import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import {
+  FETCH_LOCATION,
+  FETCH_PROJECT_TYPES,
+} from '@/app/redux/actions/allSettingsActions';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 
 interface TopContentProps {
@@ -66,13 +69,12 @@ function AllocationInit({
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
+  const { location } = useSelector((state: any) => state.allSettings);
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
 
-  const { projectTypes } = useSelector(
-    (state: RootState) => state.allSettings
-  );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
 
   const { allAllocations, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
@@ -128,13 +130,18 @@ function AllocationInit({
         payload: {},
       });
     }
+    if (!location?.length) {
+      dispatch({
+        type: FETCH_LOCATION,
+      });
+    }
     if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
     }
   }, [loadingPermissions]);
 
   useEffect(() => {
-    if(projectTypes.length === 0) {
+    if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
   }, []);
@@ -158,6 +165,7 @@ function AllocationInit({
             resources: resources,
             portfolios: portfolios,
             allResourcesDetail: allResourcesDetail,
+            location: location,
             projectTypes: projectTypes,
             startDate: currentViewStartDate,
             endDate: currentViewEndDate,
@@ -165,7 +173,14 @@ function AllocationInit({
         });
       }
     }
-  }, [teams, projects, resources, allResourcesDetail, loadingPermissions]);
+  }, [
+    teams,
+    projects,
+    resources,
+    allResourcesDetail,
+    location,
+    loadingPermissions,
+  ]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -185,6 +200,7 @@ function AllocationInit({
             resources: resources,
             portfolios: portfolios,
             allResourcesDetail: allResourcesDetail,
+            location: location,
             projectTypes: projectTypes,
             startDate: currentView?.isDynamicRange
               ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)

@@ -20,6 +20,7 @@ import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 interface FlatAllocationProps {
   startDate: string;
@@ -62,14 +63,15 @@ function FlatAllocation({
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
   );
-  const { organisations } = useSelector(
-    (state: RootState) => state.organisations
-  );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
+  );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
   );
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
@@ -103,6 +105,7 @@ function FlatAllocation({
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
+              location,
               startDate,
               endDate
             )
@@ -169,7 +172,7 @@ function FlatAllocation({
     },
     {
       field: 'portfolioName',
-      headerName: 'Portfolio',
+      headerName: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
       width: 201,
       type: 'string',
       isEditable: 'false',
@@ -284,9 +287,7 @@ function FlatAllocation({
       isEditable: 'false',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const allocation = params.row;
-        const workLocation = allocation?.workLocation;
-        return <EllipsisNameCell value={workLocation || ''} />;
+        return <EllipsisNameCell value={(params.value || '') as string} />;
       },
     },
     {

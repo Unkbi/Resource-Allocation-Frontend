@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { RootState, AppDispatch } from '@/app/redux/store';
 import {
   Box,
@@ -16,6 +16,7 @@ import {
   styled,
 } from '@mui/material';
 import { signUp } from '@/app/redux/actions/authActions';
+import { getToken } from '@/app/utils/authUtils';
 
 const MainBox = styled(Box)(({ theme }) => ({
   '& .loginLeft': {
@@ -178,6 +179,20 @@ const commonHelperText = {
 };
 
 export default function SingupPage() {
+
+  // disable signup page for users 
+  const isLoggedIn = getToken();
+
+  if (typeof window !== "undefined") {
+    if (isLoggedIn) {
+      window.location.href = "/dashboard";
+      return null;
+    }else{
+    window.location.href = "/login";
+      return null;
+    }
+  }
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');

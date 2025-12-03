@@ -3,13 +3,13 @@ import { Box, Tabs, Tab, styled, Button } from '@mui/material';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
-  GridToolbarFilterButton,
-} from '@mui/x-data-grid';
+} from '@mui/x-data-grid-premium';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import CommonToolbar from './CommonToolbar';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
+import FilterButtonWithCount from './FilterButtonWithCount';
 
 interface ResourceToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -216,28 +216,8 @@ const ResourceToolbar = ({
             gap: 1,
           }}
         >
-          <GridToolbarContainer ref={setFilterButtonEl}>
-            <GridToolbarFilterButton
-              slotProps={{
-                tooltip: { title: 'Filter' },
-                button: {
-                  variant: 'outlined',
-                  startIcon: (
-                    <img
-                      src="/images/icons/newFilterPeople.svg"
-                      alt="filter"
-                      style={{
-                        marginLeft: '10px',
-                        height: '36px',
-                        width: '36px',
-                      }}
-                    />
-                  ),
-                  className: 'columns-button',
-                  sx: commonButtonStyles,
-                },
-              }}
-            />
+          <GridToolbarContainer ref={setFilterButtonEl} sx={{ gap: '12px' }}>
+            <FilterButtonWithCount/>
             <StyledGridToolbarColumnsButton
               slotProps={{
                 tooltip: { title: 'Columns' },

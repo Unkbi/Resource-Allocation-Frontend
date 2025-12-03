@@ -51,6 +51,7 @@ import ToolbarMod from '../Toolbar/ToolbarMod';
 import {
   setExpandRowId,
   updateCurrentView,
+  setScrollPosition,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
@@ -96,6 +97,7 @@ function AllocationGrid({
   rowGroupingColumnMode = 'single',
   permissions = null,
   loadingPermissions = true,
+  defaultGroupingExpansionDepth = 0,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -112,6 +114,7 @@ function AllocationGrid({
   const {
     expandRowId,
     cellSelectionData,
+    scrollPosition,
     view,
     savedViews,
     currentView,
@@ -138,6 +141,7 @@ function AllocationGrid({
   const { user } = useSelector(state => state.user);
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector(state => state.resources);
+  const { location } = useSelector(state => state.allSettings);
   const { projects } = useSelector(state => state.projects);
   const { projectTypes } = useSelector(state => state.allSettings);
   const { portfolios } = useSelector(state => state.portfolios);
@@ -321,35 +325,33 @@ function AllocationGrid({
   }, [apiRef.current, groupBy, teams]);
 
   useEffect(() => {
-    if (loading) return;
-    try {
-      if (
-        (groupBy === 'teams' ||
-          groupBy === 'organisationName' ||
-          groupBy === 'portfolioName') &&
-        expandRowId?.length
-      ) {
+    if (
+      !expandRowId?.length ||
+      !(
+        groupBy === 'teams' ||
+        groupBy === 'organisationName' ||
+        groupBy === 'resource' ||
+        groupBy === 'portfolioName' ||
+        groupBy === 'project'
+      )
+    ) {
+      return;
+    }
+    // Expand rows after grid renders new data
+    const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
+      try {
         expandRowId.forEach(rowId => {
           const row = apiRef.current.getRow(rowId);
           if (row) {
-            setTimeout(() => {
-              apiRef.current.setRowChildrenExpansion(rowId, true);
-            }, 40);
-          } else {
-            // Row not ready yet, retry after small delay
-            setTimeout(() => {
-              const delayedRow = apiRef.current.getRow(rowId);
-              if (delayedRow) {
-                apiRef.current.setRowChildrenExpansion(rowId, true);
-              }
-            }, 50);
+            apiRef.current.setRowChildrenExpansion(rowId, true);
           }
         });
+      } catch (err) {
+        console.warn('Error expanding rows:', err);
       }
-    } catch (error) {
-      console.warn('Error in setting row expansion', error);
-    }
-  }, [expandRowId, groupBy, apiRef,loading]);
+    });
+    return () => unsubscribe();
+  }, [expandRowId, groupBy]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -365,7 +367,7 @@ function AllocationGrid({
   }, [cellSelectionModel]);
 
   useEffect(() => {
-    if(loading) return;
+    if (loading) return;
     const handleScrollAndFocus = () => {
       if (
         !apiRef.current ||
@@ -397,9 +399,27 @@ function AllocationGrid({
       setCellSelectionModel(cellSelectionData);
       setExpandRowId(null);
     };
-    const timeoutId = setTimeout(handleScrollAndFocus, 50);
+    const timeoutId = setTimeout(handleScrollAndFocus, 100);
+    setExpandRowId(null);
     return () => clearTimeout(timeoutId);
-  }, [apiRef, cellSelectionData,loading]);
+  }, [apiRef, cellSelectionData]);
+
+  useEffect(() => {
+    if (apiRef && !loadingPermissions && scrollPosition && !loading) {
+      // Expand rows after grid renders new data
+      const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
+        try {
+          setTimeout(() => {
+            apiRef.current.scroll(scrollPosition);
+            dispatch(setScrollPosition(null));
+          }, 0);
+        } catch (err) {
+          console.warn('Error scrolling to position:', err);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [apiRef.current, scrollPosition, loading, loadingPermissions]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -1076,6 +1096,7 @@ function AllocationGrid({
               portfolios,
               projects,
               resources,
+              location,
               splitView,
               bottomTeamAllocationGrid,
               teamAllocationGrid,
@@ -1439,7 +1460,7 @@ function AllocationGrid({
         endDate,
         finalColumns
       )}
-      defaultGroupingExpansionDepth={1}
+      defaultGroupingExpansionDepth={defaultGroupingExpansionDepth}
       disableAutosize
       getCellClassName={params => {
         if (
