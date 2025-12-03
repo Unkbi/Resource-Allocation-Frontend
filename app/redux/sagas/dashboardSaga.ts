@@ -55,6 +55,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
     'team_headcount_distribution',
     'allocation_by_project_type_group',
     'plan_vs_actual_variance',
+    'actuals_confirmation_status',
   ]));
   
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
@@ -127,6 +128,13 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
           chartKey: 'projects_by_type_distribution',
           data: responseData.projects_by_type || []
         })),
+        put(setDashboardChart({
+          chartKey: 'actuals_confirmation_status',
+          data: [
+            { status: 'Actuals', percentage: responseData.actuals_confirmation_status.actuals_percentage },
+            { status: 'Planned', percentage: responseData.actuals_confirmation_status.planned_percentage }
+          ]
+        })),
       ]);
     } else {
       yield all([
@@ -140,6 +148,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
+        put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
       ]);
     }
   } catch (err) {
@@ -155,6 +164,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
+      put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
     ]);
   }
 }

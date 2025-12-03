@@ -89,6 +89,7 @@ const CellWithMenu = ({
   const { getAllRowsForView, setRowsForView, updateRowsForView } =
     useAllGridRowsByView();
   const { loginUserPrivileges } = useSelector(state => state.rbac);
+  const { location } = useSelector(state => state.allSettings);
 
   const handleDeleteClick = params => {
     setDeleteParams(params);
@@ -269,6 +270,7 @@ const CellWithMenu = ({
             null,
             null,
             allResources,
+            location,
             {
               ProjectName: row?.project || '',
               Id: '',

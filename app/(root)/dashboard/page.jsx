@@ -83,6 +83,24 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 dayjs.extend(quarterOfYear);
 
+// Helper functions for sorting bar chart data in descending order
+const sortBarChartData = (data, sortKey, descending = true) => {
+  return [...data].sort((a, b) => {
+    const aVal = Number(a[sortKey]) || 0;
+    const bVal = Number(b[sortKey]) || 0;
+    return descending ? bVal - aVal : aVal - bVal;
+  });
+};
+
+// For stacked charts with multiple values to sum
+const sortByTotal = (data, sumKeys, descending = true) => {
+  return [...data].sort((a, b) => {
+    const aTotal = sumKeys.reduce((sum, key) => sum + (Number(a[key]) || 0), 0);
+    const bTotal = sumKeys.reduce((sum, key) => sum + (Number(b[key]) || 0), 0);
+    return descending ? bTotal - aTotal : aTotal - bTotal;
+  });
+};
+
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
@@ -92,6 +110,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
+  'actuals_confirmation_status',
 ];
 
 const PROJECT_CHART_SEQUENCE = ['projectFTE', 'budgetVsPlanVsActual'];
@@ -99,8 +118,8 @@ const PROJECT_CHART_SEQUENCE = ['projectFTE', 'budgetVsPlanVsActual'];
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
   'unapprovedProjectActualsByTeam',
-  'capacityAvailability',
   'resourceCoverage',
+  'actualsTrendWeekly',
   'underAllocated',
   'overAllocated',
 ];
@@ -145,9 +164,6 @@ export default function ExecutiveDashboardPage() {
   const dashboardLoading = useSelector(state => state.dashboard.loading);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  const capacityAvailability = useSelector(
-    state => state.dashboard.capacityAvailability || []
-  );
   const coverageData = useSelector(
     state => state.dashboard.resourceCoverage || []
   );
@@ -169,6 +185,8 @@ export default function ExecutiveDashboardPage() {
     allocationPercentage = [],
     allocation_by_project_type_group = [],
     top_projects_by_variance = [],
+    actuals_confirmation_status = [],
+    actualsTrendWeekly = [],
   } = useSelector(state => state.dashboard);
   const [layout, setLayout] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -373,7 +391,6 @@ export default function ExecutiveDashboardPage() {
       const individualCharts = [
         'unapprovedProjectAllocation',
         'projectFTE',
-        'capacityAvailability',
         'resourceCoverage',
         'resourceUtilization',
         'unapprovedProjectActualsByTeam',
@@ -381,6 +398,7 @@ export default function ExecutiveDashboardPage() {
         'totalResourceCost',
         'allocationPercentage',
         'actualsConfirmed',
+        'actualsTrendWeekly',
       ];
 
       // Set loading state at the start of data fetch only on initial load or when filters change
@@ -476,26 +494,58 @@ export default function ExecutiveDashboardPage() {
   }, [coverageData]);
 
   useEffect(() => {
-    if (overAllocated.length > 0) {
-      setFilteredOverAllocated(overAllocated);
+    // Derive under/over allocated from resourceUtilization
+    const under = resourceUtilization.filter(
+      d => d.allocation_status === 'under-allocated'
+    );
+    const over = resourceUtilization.filter(
+      d => d.allocation_status === 'over-allocated'
+    );
+    
+    if (under.length > 0) {
+      setFilteredUnderAllocated(under);
     }
-    if (underAllocated.length > 0) {
-      setFilteredUnderAllocated(underAllocated);
+    if (over.length > 0) {
+      setFilteredOverAllocated(over);
     }
+  }, [resourceUtilization]);
 
-    if (originalCapacityData.length > 0) {
-      setFilteredCapacityData(originalCapacityData);
+  useEffect(() => {
+    if (unapprovedProjectActualsByTeam.length > 0) {
+      setFilteredUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
+      setOriginalUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
     }
+  }, [unapprovedProjectActualsByTeam]);
 
-    if (originalUnapprovedActualsByTeam.length > 0) {
-      setFilteredUnapprovedActualsByTeam(originalUnapprovedActualsByTeam);
+  useEffect(() => {
+    if (unapprovedProjectAllocation.length > 0) {
+      setFilteredUnapprovedProjectAllocation(unapprovedProjectAllocation);
     }
-  }, [
-    overAllocated,
-    underAllocated,
-    originalCapacityData,
-    originalUnapprovedActualsByTeam,
-  ]);
+  }, [unapprovedProjectAllocation]);
+
+  useEffect(() => {
+    if (actualsConfirmed.length > 0) {
+      setFilteredActualsConfirmed(actualsConfirmed);
+    }
+  }, [actualsConfirmed]);
+
+  useEffect(() => {
+    if (plan_vs_actual_variance.length > 0) {
+      setFilteredActualDeviation(plan_vs_actual_variance);
+    }
+  }, [plan_vs_actual_variance]);
+
+  useEffect(() => {
+    if (allocationPercentage.length > 0) {
+      setFilteredAllocationPercentage(allocationPercentage);
+    }
+  }, [allocationPercentage]);
+
+  useEffect(() => {
+    if (top_projects_by_variance.length > 0) {
+      setFilteredTop5Projects(top_projects_by_variance);
+    }
+  }, [top_projects_by_variance]);
 
   useEffect(() => {
     if (projectFTEData.length > 0) {
@@ -517,52 +567,9 @@ export default function ExecutiveDashboardPage() {
     return date.subtract(day === 0 ? 6 : day - 1, 'day'); // Adjust for Sunday (day 0)
   };
 
-  const filterDataByDate = date => {
-    const monday = getMonday(date).format('YYYY-MM-DD');
-
-    const capacityData = capacityAvailability;
-    const underAllocated = resourceUtilization.filter(
-      d => d.allocation_status === 'under-allocated'
-    );
-
-    const overAllocated = resourceUtilization.filter(
-      d => d.allocation_status === 'over-allocated'
-    );
-
-    const unapprovedAllocation = unapprovedProjectAllocation;
-
-    const actualsconfirmed = actualsConfirmed;
-
-    const unapprovedActualsByTeam = unapprovedProjectActualsByTeam;
-
-    const actualdeviation = plan_vs_actual_variance;
-
-    const filterallocationpercentage = allocationPercentage;
-
-    const filtertop5projects = top_projects_by_variance;
-
-    setOverAllocated(overAllocated);
-    setUnderAllocated(underAllocated);
-    setFilteredCapacityData(capacityData);
-    setOriginalCapacityData(capacityData);
-    setFilteredUnderAllocated(underAllocated);
-    setFilteredOverAllocated(overAllocated);
-    setFilteredUnapprovedProjectAllocation(unapprovedAllocation);
-    setFilteredActualsConfirmed(actualsconfirmed);
-    setOriginalUnapprovedActualsByTeam(unapprovedActualsByTeam);
-    setFilteredActualDeviation(actualdeviation);
-    setFilteredAllocationPercentage(filterallocationpercentage);
-    setFilteredTop5Projects(filtertop5projects);
-  };
-
-  useEffect(() => {
-    filterDataByDate(selectedDate);
-  }, []);
-
   useEffect(() => {
     // Check if all required data is loaded
     const allDataLoaded =
-      capacityAvailability.length > 0 &&
       resourceUtilization.length > 0 &&
       unapprovedProjectAllocation.length > 0 &&
       actualsConfirmed.length > 0 &&
@@ -573,16 +580,13 @@ export default function ExecutiveDashboardPage() {
       // Check inventory metrics data
       (activeProjects.length > 0 || activeProjectsByType.length > 0) &&
       (activeResources.length > 0 || totalHeadcount.length > 0);
-    filterDataByDate(selectedDate);
+    
     if (allDataLoaded) {
-      // Turn off loading when all data is loaded
       if (initialLoad) {
         setInitialLoad(false);
-        // Loading will be turned off automatically by the reducer when all charts are loaded
       }
     }
   }, [
-    capacityAvailability,
     resourceUtilization,
     actualsConfirmed,
     unapprovedProjectAllocation,
@@ -595,7 +599,6 @@ export default function ExecutiveDashboardPage() {
     activeResources,
     resourceFTEContractorRatio,
     totalHeadcount,
-    selectedDate,
     dashboardLoading,
     initialLoad,
   ]);
@@ -655,10 +658,19 @@ export default function ExecutiveDashboardPage() {
   const allowedTeamCharts = TEAM_CHART_SEQUENCE.filter(queryKey =>
     hasAccessToQueryKey(queryKey)
   );
-  // Generate layouts for each tab
-  const overviewLayouts = generateLayouts(allowedOverviewCharts);
-  const projectLayouts = generateLayouts(allowedProjectCharts);
-  const teamLayouts = generateLayouts(allowedTeamCharts);
+  
+  const overviewLayouts = useMemo(
+    () => generateLayouts(allowedOverviewCharts),
+    [allowedOverviewCharts.join(',')]
+  );
+  const projectLayouts = useMemo(
+    () => generateLayouts(allowedProjectCharts),
+    [allowedProjectCharts.join(',')]
+  );
+  const teamLayouts = useMemo(
+    () => generateLayouts(allowedTeamCharts),
+    [allowedTeamCharts.join(',')]
+  );
 
   const Teams = filteredCoverageData?.length
     ? [...new Set(filteredCoverageData.map(d => d.team_name))]
@@ -745,38 +757,30 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
+          // Sort by planned_units descending
+          const sortedVarianceData = sortBarChartData(
+            plan_vs_actual_variance,
+            'planned_units'
+          );
+
           // Extract project type groups for x-axis
-          const projectTypeGroups =
-            plan_vs_actual_variance.length > 0
-              ? [
-                  ...new Set(
-                    plan_vs_actual_variance.map(d => d.project_type_group)
-                  ),
-                ]
-              : [];
+          const projectTypeGroups = sortedVarianceData.map(
+            d => d.project_type_group
+          );
 
           // Prepare data for bars (Plan and Actuals)
-          const planData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.planned_units || 0) : 0;
-          });
+          const planData = sortedVarianceData.map(d =>
+            Number(d.planned_units || 0)
+          );
 
-          const actualsData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.actual_units || 0) : 0;
-          });
+          const actualsData = sortedVarianceData.map(d =>
+            Number(d.actual_units || 0)
+          );
 
           // Prepare data for line (Absolute Variance %)
-          const varianceData = projectTypeGroups.map(group => {
-            const item = plan_vs_actual_variance.find(
-              d => d.project_type_group === group
-            );
-            return item ? Number(item.absolute_variance || 0) : 0;
-          });
+          const varianceData = sortedVarianceData.map(d =>
+            Number(d.absolute_variance || 0)
+          );
 
           const maxVariance = Math.max(...varianceData, 1);
 
@@ -1245,10 +1249,6 @@ export default function ExecutiveDashboardPage() {
 
           // Transform the data structure from API
           // API returns: [{shore_flag: "Onshore", FTE: 55, "Contractor - FT": 10, ...}, {...}]
-          const shoreLabels = (totalHeadcount || []).map(
-            item => item.shore_flag
-          );
-
           // Define employee types and their colors
           const employeeTypes = [
             { key: 'FTE', label: 'FTE', color: '#0080FF' },
@@ -1265,13 +1265,19 @@ export default function ExecutiveDashboardPage() {
             { key: 'Intern', label: 'Intern', color: '#FF884D' },
           ];
 
+          // Sort by total headcount (sum of all employee types) descending
+          const sortedHeadcount = sortByTotal(
+            totalHeadcount || [],
+            employeeTypes.map(t => t.key)
+          );
+
+          const shoreLabels = sortedHeadcount.map(item => item.shore_flag);
+
           // Create series data for each employee type
           const seriesData = employeeTypes.map(type => ({
             label: type.label,
             id: type.key,
-            data: (totalHeadcount || []).map(item =>
-              Number(item[type.key] || 0)
-            ),
+            data: sortedHeadcount.map(item => Number(item[type.key] || 0)),
             color: type.color,
             stack: 'total',
           }));
@@ -1369,12 +1375,22 @@ export default function ExecutiveDashboardPage() {
             allocation_by_project_type_group
           );
 
+          // Calculate total allocation per group and sort descending
+          const groupTotals = projectTypeGroups.map(group => ({
+            group,
+            total: processedData
+              .filter(d => d.project_type_group === group)
+              .reduce((sum, d) => sum + d.allocation_percentage, 0),
+          }));
+          groupTotals.sort((a, b) => b.total - a.total);
+          const sortedProjectTypeGroups = groupTotals.map(g => g.group);
+
           // Create series data for each project type using global colorPalette
           const projectTypeArray = Array.from(projectTypeNames);
           const seriesData = projectTypeArray.map((typeName, index) => ({
             label: typeName,
             id: typeName,
-            data: projectTypeGroups.map(group => {
+            data: sortedProjectTypeGroups.map(group => {
               const item = processedData.find(
                 d =>
                   d.project_type_group === group &&
@@ -1412,7 +1428,7 @@ export default function ExecutiveDashboardPage() {
                   series={seriesData}
                   xAxis={[
                     {
-                      data: projectTypeGroups,
+                      data: sortedProjectTypeGroups,
                       scaleType: 'band',
                       categoryGapRatio: 0.4,
                       barGapRatio: 0.1,
@@ -1503,6 +1519,103 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   slotProps={{
                     legend: config.legend,
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    actuals_confirmation_status: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Actuals Confirmation Status')}
+        minWidth={320}
+        minHeight={280}
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'pie');
+          
+          // Transform data for pie chart with fixed colors
+          const chartData = (actuals_confirmation_status || []).map(item => ({
+            id: item.status,
+            value: parseFloat(item.percentage || 0),
+            label: item.status,
+            color: item.status === 'Actuals' ? '#4169E1' : '#FFD700',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Confirmation Status{' '}
+                <span
+                  style={{
+                    fontSize: dimensions.width < 400 ? '12px' : '14px',
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    fontWeight: 400,
+                  }}
+                >
+                  (Previous period)
+                </span>
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <PieChart
+                  series={[
+                    {
+                      data: chartData,
+                      innerRadius: 0,
+                      outerRadius: config.outerRadius || 80,
+                      cornerRadius: 3,
+                      arcLabel: (item) => `${item.value}%`,
+                      arcLabelMinAngle: 20,
+                      arcLabelRadius: '70%',
+                      highlightScope: { faded: 'global', highlighted: 'item' },
+                      faded: { additionalRadius: -10, color: 'gray' },
+                    },
+                  ]}
+                  width={config.width}
+                  height={config.height}
+                  sx={{
+                    [`& .${pieArcLabelClasses.root}`]: {
+                      fill: '#000000',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                    },
+                  }}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'middle', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
+                      markgap: 8,
+                      itemgap: 12,
+                    },
                   }}
                 />
               </Box>
@@ -1696,6 +1809,13 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
+          
+          // Sort by budget total descending
+          const sortedBudgetData = sortBarChartData(
+            filteredbudgetVsPlanVsActual,
+            'budget_total'
+          );
+
           return (
             <Box
               sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
@@ -1716,7 +1836,7 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   series={[
                     {
-                      data: filteredbudgetVsPlanVsActual.map(d =>
+                      data: sortedBudgetData.map(d =>
                         Number.parseFloat(d.budget_total)
                       ),
                       label: 'Budget',
@@ -1724,7 +1844,7 @@ export default function ExecutiveDashboardPage() {
                       color: '#9FA8DA',
                     },
                     {
-                      data: filteredbudgetVsPlanVsActual.map(d =>
+                      data: sortedBudgetData.map(d =>
                         Number.parseFloat(d.planned_to_date)
                       ),
                       label: 'Planned',
@@ -1732,7 +1852,7 @@ export default function ExecutiveDashboardPage() {
                       color: '#80CBC4',
                     },
                     {
-                      data: filteredbudgetVsPlanVsActual.map(d =>
+                      data: sortedBudgetData.map(d =>
                         Number.parseFloat(d.actuals_to_date)
                       ),
                       label: 'Actuals',
@@ -1742,9 +1862,7 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: filteredbudgetVsPlanVsActual.map(
-                        d => d.project_name
-                      ),
+                      data: sortedBudgetData.map(d => d.project_name),
                       label: 'Project',
                       //tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -1780,15 +1898,6 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          // Extract unique team names
-          const teamNames = (team_headcount_distribution || []).map(item =>
-            formatTeamName(
-              item.team_name,
-              dimensions.width < 400 ? 8 : 10,
-              team_headcount_distribution.length
-            )
-          );
-
           // Define employee types and their colors (matching totalHeadcount)
           const employeeTypes = [
             { key: 'FTE', label: 'FTE', color: '#53C1DE' },
@@ -1805,11 +1914,33 @@ export default function ExecutiveDashboardPage() {
             },
           ];
 
+          // Sort teams by total headcount descending
+          const sortedTeamHeadcount = [...(team_headcount_distribution || [])].sort((a, b) => {
+            const aTotal = employeeTypes.reduce(
+              (sum, type) => sum + Number(a.resource_type_split?.[type.key] || 0),
+              0
+            );
+            const bTotal = employeeTypes.reduce(
+              (sum, type) => sum + Number(b.resource_type_split?.[type.key] || 0),
+              0
+            );
+            return bTotal - aTotal;
+          });
+
+          // Extract team names from sorted data
+          const teamNames = sortedTeamHeadcount.map(item =>
+            formatTeamName(
+              item.team_name,
+              dimensions.width < 400 ? 8 : 10,
+              sortedTeamHeadcount.length
+            )
+          );
+
           // Create series data for each employee type
           const seriesData = employeeTypes.map(type => ({
             label: type.label,
             id: type.key,
-            data: (team_headcount_distribution || []).map(item =>
+            data: sortedTeamHeadcount.map(item =>
               Number(item.resource_type_split?.[type.key] || 0)
             ),
             color: type.color,
@@ -1882,9 +2013,21 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
+          
+          // Get unique teams and calculate total actuals for each
           const uniqueTeams = [
             ...new Set(filteredUnapprovedActualsByTeam.map(d => d.team_name)),
           ];
+          
+          // Calculate total actuals per team and sort descending
+          const teamTotals = uniqueTeams.map(team => ({
+            team,
+            total: filteredUnapprovedActualsByTeam
+              .filter(d => d.team_name === team)
+              .reduce((sum, d) => sum + Number.parseFloat(d.pct_of_actuals || 0), 0),
+          }));
+          teamTotals.sort((a, b) => b.total - a.total);
+          const sortedUniqueTeams = teamTotals.map(t => t.team);
 
           return (
             <Box
@@ -1912,7 +2055,7 @@ export default function ExecutiveDashboardPage() {
                     label: category, //truncateLabel(category, dimensions.width < 400 ? 16 : 18),
                     id: category,
                     stack: 'total',
-                    data: uniqueTeams.map(team => {
+                    data: sortedUniqueTeams.map(team => {
                       const match = filteredUnapprovedActualsByTeam.find(
                         d => d.category === category && d.team_name === team
                       );
@@ -1933,17 +2076,13 @@ export default function ExecutiveDashboardPage() {
                   }))}
                   xAxis={[
                     {
-                      data: [
-                        ...new Set(
-                          filteredUnapprovedActualsByTeam.map(d => {
-                            return formatTeamName(
-                              d.team_name,
-                              dimensions.width < 400 ? 10 : 12,
-                              filteredUnapprovedActualsByTeam.length
-                            );
-                          })
-                        ),
-                      ],
+                      data: sortedUniqueTeams.map(team =>
+                        formatTeamName(
+                          team,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedUniqueTeams.length
+                        )
+                      ),
                       label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -1970,87 +2109,6 @@ export default function ExecutiveDashboardPage() {
       </DashboardWidget>
     ),
 
-    capacityAvailability: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Capacity vs Utilization by Team')}
-        minWidth={320}
-        minHeight={280}
-      >
-        {dimensions => {
-          const config = useResponsiveChart(dimensions, 'bar');
-          return (
-            <Box
-              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 1,
-                  fontSize: dimensions.width < 400 ? '16px' : '18px',
-                  fontWeight: 600,
-                }}
-              >
-                Capacity vs Utilization by Team
-              </Typography>
-              <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                <BarChart
-                  width={config.width}
-                  height={config.height}
-                  series={[
-                    {
-                      data: filteredCapacityData.map(d =>
-                        Number.parseFloat(d.capacity_available_fte)
-                      ),
-                      label: 'Available Capacity',
-                      id: 'availableCapacity',
-                      color: '#9FA8DA',
-                    },
-                    {
-                      data: filteredCapacityData.map(d =>
-                        Number.parseFloat(d.capacity_allocated_fte)
-                      ),
-                      label: 'Utilized Capacity',
-                      id: 'utilizedCapacity',
-                      color: '#80CBC4',
-                    },
-                  ]}
-                  xAxis={[
-                    {
-                      data: [
-                        ...new Set(
-                          filteredCapacityData.map(d =>
-                            formatTeamName(
-                              d.team_name,
-                              dimensions.width < 400 ? 10 : 12,
-                              filteredCapacityData.length
-                            )
-                          )
-                        ),
-                      ],
-                      label: 'Team',
-                      tickLabelStyle: config.xAxis?.tickLabelStyle,
-                    },
-                  ]}
-                  yAxis={[
-                    {
-                      label: 'Capacity',
-                      min: 0,
-                      width: config.yAxis?.width || 50,
-                      labelStyle: config.yAxis?.labelStyle,
-                    },
-                  ]}
-                  slotProps={{
-                    legend: config.legend,
-                  }}
-                  grid={{ horizontal: true }}
-                />
-              </Box>
-            </Box>
-          );
-        }}
-      </DashboardWidget>
-    ),
-
     resourceCoverage: (
       <DashboardWidget
         onClick={() => handleChartClick('Resource Allocation Coverage')}
@@ -2059,6 +2117,13 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'line');
+          
+          // Sort by coverage percentage descending
+          const sortedCoverageData = sortBarChartData(
+            filteredCoverageData,
+            'coverage_pct'
+          );
+
           return (
             <Box
               sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
@@ -2079,7 +2144,7 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   series={[
                     {
-                      data: filteredCoverageData.map(d =>
+                      data: sortedCoverageData.map(d =>
                         parseFloat(d.coverage_pct)
                       ),
                       label: 'Coverage',
@@ -2089,17 +2154,13 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: [
-                        ...new Set(
-                          filteredCoverageData.map(d => {
-                            return formatTeamName(
-                              d.team_name,
-                              dimensions.width < 400 ? 10 : 12,
-                              filteredCoverageData.length
-                            );
-                          })
-                        ),
-                      ], // Team names as x-axis labels
+                      data: sortedCoverageData.map(d =>
+                        formatTeamName(
+                          d.team_name,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedCoverageData.length
+                        )
+                      ), // Team names as x-axis labels
                       label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -2134,6 +2195,13 @@ export default function ExecutiveDashboardPage() {
       <DashboardWidget minWidth={320} minHeight={280}>
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
+          
+          // Sort by utilization percentage descending
+          const sortedUnderAllocated = sortBarChartData(
+            filteredUnderAllocated,
+            'utilization_pct'
+          );
+
           return (
             <Box
               sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
@@ -2154,7 +2222,7 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   series={[
                     {
-                      data: filteredUnderAllocated.map(d =>
+                      data: sortedUnderAllocated.map(d =>
                         Number.parseFloat(d.utilization_pct)
                       ),
                       label: 'Under-allocation',
@@ -2164,17 +2232,13 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: [
-                        ...new Set(
-                          filteredUnderAllocated.map(d => {
-                            return formatTeamName(
-                              d.team_name,
-                              dimensions.width < 400 ? 10 : 12,
-                              filteredUnderAllocated.length
-                            );
-                          })
-                        ),
-                      ],
+                      data: sortedUnderAllocated.map(d =>
+                        formatTeamName(
+                          d.team_name,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedUnderAllocated.length
+                        )
+                      ),
                       label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -2203,6 +2267,13 @@ export default function ExecutiveDashboardPage() {
       <DashboardWidget minWidth={320} minHeight={280}>
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
+          
+          // Sort by utilization percentage descending
+          const sortedOverAllocated = sortBarChartData(
+            filteredOverAllocated,
+            'utilization_pct'
+          );
+
           return (
             <Box
               sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
@@ -2223,7 +2294,7 @@ export default function ExecutiveDashboardPage() {
                   height={config.height}
                   series={[
                     {
-                      data: filteredOverAllocated.map(d =>
+                      data: sortedOverAllocated.map(d =>
                         Number.parseFloat(d.utilization_pct)
                       ),
                       label: 'Over-allocation',
@@ -2233,17 +2304,13 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: [
-                        ...new Set(
-                          filteredOverAllocated.map(d => {
-                            return formatTeamName(
-                              d.team_name,
-                              dimensions.width < 400 ? 10 : 12,
-                              filteredOverAllocated.length
-                            );
-                          })
-                        ),
-                      ],
+                      data: sortedOverAllocated.map(d =>
+                        formatTeamName(
+                          d.team_name,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedOverAllocated.length
+                        )
+                      ),
                       label: 'Team',
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
@@ -2259,6 +2326,115 @@ export default function ExecutiveDashboardPage() {
                   slotProps={{
                     legend: config.legend,
                   }}
+                  grid={{ horizontal: true }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    actualsTrendWeekly: (
+      <DashboardWidget
+        onClick={() => handleChartClick('Actuals Trend')}
+        minWidth={320}
+        minHeight={280}
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Process the API data structure
+          // Data format: [{ period_start: "2025-10-20", actuals: [{ category: "Approved Work", units: 26.4, percentage: 99.25 }, ...] }, ...]
+          
+          // Extract unique periods and calculate week numbers
+          const periodData = (actualsTrendWeekly || []).map(item => ({
+            period_start: item.period_start,
+            week: getWeekNumber(item.period_start),
+            actuals: item.actuals || []
+          })).sort((a, b) => new Date(a.period_start) - new Date(b.period_start));
+
+          const weeks = periodData.map(d => d.week);
+
+          // Define categories and their colors matching the image
+          const categories = [
+            { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
+            { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
+            { key: 'Unplanned Projects', label: 'Unplanned Projects', color: '#FF884D' },
+            { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
+          ];
+
+          // Create series data for each category
+          const seriesData = categories.map(category => ({
+            label: category.label,
+            id: category.key,
+            data: periodData.map(weekData => {
+              const match = weekData.actuals.find(
+                a => a.category === category.key
+              );
+              return match ? parseFloat(match.percentage || 0) : 0;
+            }),
+            color: category.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Trend
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      label: 'Previous weeks',
+                      data: weeks,
+                      scaleType: 'band',
+                      categoryGapRatio: 0.3,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'Actuals (%)',
+                      min: 0,
+                      max: 100,
+                      valueFormatter: value => `${value}`,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'middle', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemMarkWidth: 12,
+                      itemMarkHeight: 12,
+                      markGap: 8,
+                      itemGap: 12,
+                    },
+                  }}
+                  margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
                 />
               </Box>
