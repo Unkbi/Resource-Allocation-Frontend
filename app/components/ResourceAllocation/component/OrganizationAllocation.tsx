@@ -110,10 +110,7 @@ function OrganisationAllocation({
             )
           );
         } else if (allAllocations) {
-          filteredResources = removeResourcesWithNoTeams(allAllocations || [])
-            .sort((a, b) =>
-              (a?.resource || "") < (b?.resource || "") ? -1 : 1
-            );
+          filteredResources = removeResourcesWithNoTeams(allAllocations || []);
           dispatch(setLoading(false));
         }
 
@@ -677,11 +674,6 @@ function OrganisationAllocation({
                 projectStatus: false,
                 projectType: false,
               },
-            },
-           sorting: {
-              sortModel: [
-                { field :'__row_group_by_columns_group_organisationName__' ,sort :'asc' }
-              ],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
