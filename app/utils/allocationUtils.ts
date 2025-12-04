@@ -22,6 +22,7 @@ import {
   Team,
   ProjectType,
   Location,
+  ProjectTypeGroup,
 } from '../types';
 import {
   generateAllWeeks,
@@ -175,6 +176,7 @@ export function formatAllAllocations(
   teams: Team[],
   projects: Project[],
   projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
   portfolios: Portfolio[],
   allResourcesDetail: AllResourceDetail[],
@@ -192,6 +194,9 @@ export function formatAllAllocations(
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
     const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+    const projectTypeGroup = projectTypeGroups.find(
+      ptg => ptg.Id === projectType?.Group
+    );
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
     const resourceDetails = allResourcesDetail?.find(
       r => r?.Resource?.Id === alloc.Resource
@@ -234,6 +239,7 @@ export function formatAllAllocations(
         projectLocation: project?.Location || null,
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
+        projectTypeGroup: projectTypeGroup?.Name || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -345,6 +351,7 @@ export function injectBlankRows(
           projectStatus: '',
           projectLocation: '',
           projectType: '',
+          projectTypeGroup: '',
           projectOvertimeAllowed: null,
           projectCost: null,
           projectCurrency: '',
@@ -404,6 +411,7 @@ export function formatCostAllocations(
   teams: Team[],
   projects: Project[],
   projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
   location: Location[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
@@ -438,6 +446,9 @@ export function formatCostAllocations(
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
     const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+    const projectTypeGroup = projectTypeGroups.find(
+      ptg => ptg.Id === projectType?.Group
+    );
     const resource = resources.find(r => r.Id === alloc.Resource);
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
     if (
@@ -475,6 +486,7 @@ export function formatCostAllocations(
         projectLocation: project?.Location || null,
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
+        projectTypeGroup: projectTypeGroup?.Name || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -611,6 +623,7 @@ export const generateEmptyRow = (
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,
+    projectTypeGroup: null,
     projectOvertimeAllowed: project?.AllowOvertime ?? null,
     projectCost: project?.Budget ?? null,
     projectCurrency: project?.BudgetCurrency || null,
