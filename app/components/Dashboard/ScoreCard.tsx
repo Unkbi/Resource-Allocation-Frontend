@@ -48,7 +48,7 @@ export default function MuiDashboardCard({
           // borderBottom: "1px solid #e0e0e0",
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
+        <Typography variant="h6" sx={{ fontSize: "18px", fontWeight: 600, color: "#333" }}>
           {title}
         </Typography>
         {tooltipText && (

@@ -2081,6 +2081,7 @@ export default function ExecutiveDashboardPage() {
                   xAxis={[
                     {
                       data: teamNames,
+                      label: 'Team',
                       scaleType: 'band',
                       categoryGapRatio: 0.5,
                       barGapRatio: 0.1,
