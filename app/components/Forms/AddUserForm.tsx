@@ -225,7 +225,7 @@ const AddUserForm = ({
               fontWeight: 400,
               lineHeight: 1.4
             }}>
-              The interface restricts a user to a single role at any given time.<br />
+              The interface allows a single role assignment to users selected.<br />
               Modification & Permissions are managed in <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={handleNavigate}>Access Management</span>.
             </Box>
           </Box>
