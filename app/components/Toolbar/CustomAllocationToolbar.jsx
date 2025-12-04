@@ -1474,7 +1474,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 {view.includes('Project') || view.includes('Portfolio') ? (
                   <>
                     <TooltipButton
-                      msg="My Project"
+                      msg="My Projects"
                       placement="bottom"
                       onClick={() => handleToggle(true)}
                     >
