@@ -16,7 +16,7 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { injectBlankRows, normalizeRow,sortAllAllocations } from '@/app/utils/allocationUtils';
+import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -107,10 +107,7 @@ function TeamAllocation({
             )
           );
         } else if (allAllocations) {
-          filteredResources = (removeResourcesWithNoTeams(allAllocations || []))
-            .sort((a, b) =>
-              (a?.resource || "") < (b?.resource || "") ? -1 : 1
-            )
+          filteredResources = removeResourcesWithNoTeams(allAllocations || []);
           dispatch(setLoading(false));
         }
 
@@ -646,11 +643,6 @@ function TeamAllocation({
                 projectStatus: false,
                 projectType: false,
               },
-            },
-             sorting: {
-              sortModel: [
-                { field :'__row_group_by_columns_group_teams__' ,sort :'asc' }
-              ],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
