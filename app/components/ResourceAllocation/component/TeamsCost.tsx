@@ -17,7 +17,10 @@ import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
-import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import {
+  FETCH_PROJECT_TYPE_GROUPS,
+  FETCH_PROJECT_TYPES,
+} from '@/app/redux/actions/allSettingsActions';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -43,7 +46,9 @@ const TeamsCost = ({
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
+  const { projectTypes, projectTypeGroups } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   // @ts-ignore
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
@@ -63,6 +68,12 @@ const TeamsCost = ({
   useEffect(() => {
     if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (projectTypeGroups.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPE_GROUPS });
     }
   }, []);
 
@@ -95,6 +106,7 @@ const TeamsCost = ({
           allResourcesDetail: allResourcesDetail,
           location: location,
           projectTypes: projectTypes,
+          projectTypeGroups: projectTypeGroups,
           startDate: startDate,
           endDate: endDate,
         },
@@ -519,6 +531,20 @@ const TeamsCost = ({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        console.log('allocation.projectTypeGroup', allocation);
+        return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
+      },
+    },
+    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 170,
@@ -593,6 +619,7 @@ const TeamsCost = ({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
               },
             },
           }}

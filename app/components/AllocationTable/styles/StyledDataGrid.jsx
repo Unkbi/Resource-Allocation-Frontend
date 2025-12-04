@@ -732,6 +732,20 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           ? '#F1F6FF !important'
           : '#F0F7FF !important'),
     },
+    [`& .${gridClasses.cell}[data-field="projectTypeGroup"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectTypeGroup"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
     [`& .${gridClasses.cell}[data-field="Name"]`]: {
       backgroundColor:
         !loading &&
