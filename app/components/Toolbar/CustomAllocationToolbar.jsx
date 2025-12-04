@@ -1774,7 +1774,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         />
 
         {/* Right Section: Search Bar */}
-        <Box
+        {/* Sahadev : Search bar temporarily removed as per UX decision */}
+        {/* <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -1823,7 +1824,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               }}
             />
           </Box>
-        </Box>
+        </Box> */}
       </Box>
 
       {/* Bottom Toolbar  */}
