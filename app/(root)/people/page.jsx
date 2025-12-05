@@ -10,6 +10,7 @@ import {
   Stack,
   Tab,
   Tabs,
+  Tooltip,
 } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -204,6 +205,31 @@ function Resources({ permissions, loadingPermissions }) {
       setValue(newTab);
     }
   }, [searchParams]);
+
+  const getTooltipForStatus = (status, params) => {
+    switch (status) {
+      case 'Active':
+        return 'The Resource is available for Allocation.';
+      case 'Inactive':
+        return 'The Resource is unavailable for Allocation.';
+      case 'Pending':
+        const date = parseISO(params.row.StartDate);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `The Resource will be available for Allocation from ${month}/${day}/${year}.`;
+      case 'Not-Planned':
+        return `The Resource is not planned for any Allocation. Team, ${params.row.Team} is Inactive.`;
+      case 'Unassigned':
+        if (!params.row.StartDate && !params.row.Team) {
+          return 'The Resource has no Start Date and is not part of any Team.';
+        } else if (!params.row.StartDate) {
+          return `The Resource has no Start Date`;
+        } else if (!params.row.Team) {
+          return `The Resource is not part of any Team.`;
+        }
+    }
+  };
 
   const columns = [
     {
@@ -439,7 +465,12 @@ function Resources({ permissions, loadingPermissions }) {
                 width: '100%',
               }}
             >
-              <StatusPill status={status}>{status}</StatusPill>
+              <Tooltip
+                title={getTooltipForStatus(status, params)}
+                sx={{ cursor: 'default' }}
+              >
+                <StatusPill status={status}>{status}</StatusPill>
+              </Tooltip>
               {(permissions['Resource']?.u || permissions['Resource']?.d) && (
                 <Box>
                   <IconButton
