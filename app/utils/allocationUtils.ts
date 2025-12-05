@@ -31,7 +31,10 @@ import {
   getTeamForResource,
   getWeekNumber,
 } from './common';
-import { DATE_FORMAT } from '../constants/constants';
+import {
+  AllocationForm_Status_Filter,
+  DATE_FORMAT,
+} from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
 import {
@@ -194,6 +197,13 @@ export function formatAllAllocations(
       r => r?.Resource?.Id === alloc.Resource
     );
     const resource = resourceDetails?.Resource;
+    // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+    if (
+      resource?.Status &&
+      !AllocationForm_Status_Filter.includes(resource?.Status)
+    )
+      continue;
+
     const locationDetails = location?.find(
       l => l?.Id === resource?.WorkLocation
     );
@@ -310,6 +320,13 @@ export function injectBlankRows(
   teams.forEach(team => {
     const teamRes = teamsResources?.[team.Id] || [];
     teamRes.forEach(resource => {
+      // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+      if (
+        resource?.Status &&
+        !AllocationForm_Status_Filter.includes(resource?.Status)
+      )
+        return;
+
       const key = `${team.Name}___${resource.Id}`;
       const organisation = allResourcesDetail?.find(
         r => r.Resource?.Id === resource.Id
@@ -422,6 +439,12 @@ export function formatCostAllocations(
     const project = projects.find(p => p.Id === alloc.Project);
     const projectType = projectTypes.find(pt => pt.Id === project?.Type);
     const resource = resources.find(r => r.Id === alloc.Resource);
+    // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+    if (
+      resource?.Status &&
+      !AllocationForm_Status_Filter.includes(resource?.Status)
+    )
+      continue;
     const locationDetails = location?.find(
       l => l?.Id === resource?.WorkLocation
     );

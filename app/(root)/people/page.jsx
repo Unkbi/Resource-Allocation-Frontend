@@ -59,6 +59,7 @@ import RatesTable from '@/app/components/Resources/RatesTable';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import { parseISO } from 'date-fns';
 
 const demoResources = {
   result: [
@@ -393,7 +394,7 @@ function Resources({ permissions, loadingPermissions }) {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -409,7 +410,7 @@ function Resources({ permissions, loadingPermissions }) {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -757,7 +758,7 @@ function Resources({ permissions, loadingPermissions }) {
       headerAlign: 'left',
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -777,7 +778,7 @@ function Resources({ permissions, loadingPermissions }) {
       headerAlign: 'left',
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();

@@ -101,6 +101,18 @@ const sortByTotal = (data, sumKeys, descending = true) => {
   });
 };
 
+// Sort project type groups in Transform -> Grow -> Run order
+const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
+  const order = { 'Transform': 0, 'Grow': 1, 'Run': 2 };
+  return [...data].sort((a, b) => {
+    const aGroup = a[groupKey] || '';
+    const bGroup = b[groupKey] || '';
+    const aOrder = order[aGroup] !== undefined ? order[aGroup] : 999;
+    const bOrder = order[bGroup] !== undefined ? order[bGroup] : 999;
+    return aOrder - bOrder;
+  });
+};
+
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
@@ -757,10 +769,10 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          // Sort by planned_units descending
-          const sortedVarianceData = sortBarChartData(
+          // Sort by Transform -> Grow -> Run order
+          const sortedVarianceData = sortByProjectTypeGroupOrder(
             plan_vs_actual_variance,
-            'planned_units'
+            'project_type_group'
           );
 
           // Extract project type groups for x-axis
@@ -1671,10 +1683,16 @@ export default function ExecutiveDashboardPage() {
             );
           });
 
-          // Create series for each project type group
+          // Create series for each project type group in Transform-Grow-Run order
           const allSeries = [];
+          const groupOrder = ['Transform', 'Grow', 'Run'];
+          const sortedGroups = Object.keys(groupedData).sort((a, b) => {
+            const aIdx = groupOrder.indexOf(a);
+            const bIdx = groupOrder.indexOf(b);
+            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+          });
 
-          Object.keys(groupedData).forEach(group => {
+          sortedGroups.forEach(group => {
             const groupColor = groupColorMap[group];
 
             // Planned series (dotted line) - show for all weeks
