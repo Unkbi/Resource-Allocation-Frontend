@@ -553,7 +553,6 @@ function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        console.log('allocation.projectTypeGroup', allocation);
         return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
       },
     },
