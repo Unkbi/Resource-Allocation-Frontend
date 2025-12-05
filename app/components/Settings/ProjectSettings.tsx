@@ -19,7 +19,6 @@ import {
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import AccessTable from './AccessTable';
 import { clearHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
@@ -33,6 +32,7 @@ import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { PROJECT_TYPE_VALID_TABS } from '@/app/constants/constants';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import ProjectGeneral from './ProjectGeneral';
+import SettingsTable from './SettingsTable';
 
 interface ProjectSettingPageProps {
   permissions?: Record<string, CrudPermissions>;
@@ -108,7 +108,7 @@ function ProjectSettingPage({
 }: ProjectSettingPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tab, setTab] = useState('project-types');
+  const [tab, setTab] = useState('project-general');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectTypeId, setMenuProjectTypeId] = useState<string | null>(
     null
@@ -711,43 +711,25 @@ function ProjectSettingPage({
 
       {tab == 'project-general' && <ProjectGeneral />}
       {tab === 'project-types' && (
-        <AccessTable
+        <SettingsTable
           title="Project Types"
           data={permissions!['ProjectType'].r ? ProjectTypesData : []}
           onAdd={handleAddNewProjectTypes}
-          onEdit={handleEditProjectTypes}
-          onDelete={handleDeleteProjectTypes}
-          menuId={menuProjectTypeId}
-          setMenuId={setMenuProjectTypeId}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
           buttonLabel={permissions!['ProjectType'].c ? 'Add Project Type' : ''}
-          renderMenu={renderProjectTypesMenu}
           columns={ProjectTypesPageColumns}
-          apiRef={apiRef}
           loading={loading || loadingPermissions}
-          toolbarType="filter"
         />
       )}
       {tab === 'project-types-group' && (
-        <AccessTable
+        <SettingsTable
           title="Project Types Group"
           data={permissions!['ProjectTypeGroup'].r ? ProjectTypesGroupData : []}
           onAdd={handleAddNewProjectTypesGroup}
-          onEdit={handleEditProjectTypesGroup}
-          onDelete={handleDeleteProjectTypesGroup}
-          menuId={menuProjectTypeId}
-          setMenuId={setMenuProjectTypeId}
-          anchorEl={anchorEl}
-          setAnchorEl={setAnchorEl}
           buttonLabel={
             permissions!['ProjectTypeGroup'].c ? 'Add Project Type Group' : ''
           }
-          renderMenu={ProjectTypesGroupMenu}
           columns={ProjectTypesGroupColumns}
-          apiRef={apiRef}
           loading={loading || loadingPermissions}
-          toolbarType="filter"
         />
       )}
 

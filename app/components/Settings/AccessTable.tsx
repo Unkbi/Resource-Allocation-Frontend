@@ -94,6 +94,15 @@ export default function AccessTable({
   });
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
+  // Sync internal selectionModel with parent's selectedRowIds
+  React.useEffect(() => {
+    if (selectedRowIds.size === 0) {
+      setSelectionModel([]);
+      setSelectedRows([]);
+      setShowToolbar(false);
+    }
+  }, [selectedRowIds]);
+
   // Refs for external filter and column buttons to use as anchor elements
   const externalFilterButtonRef = useRef<HTMLButtonElement>(null);
   const externalColumnButtonRef = useRef<HTMLButtonElement>(null);
@@ -191,7 +200,9 @@ export default function AccessTable({
   const availableActions = getAvailableActions();
 
   // Check if any action is available
-  const hasAnyAction = Object.values(availableActions).some(action => action === true);
+  const hasAnyAction = Object.values(availableActions).some(
+    action => action === true
+  );
 
   const handleFilterModelChange = (newModel: any) => {
     setFilterModel(newModel);
@@ -741,7 +752,7 @@ export default function AccessTable({
                       textTransform: 'none',
                       '&:hover': {
                         background: '#142B51B2',
-                        color: '#FFFFFF'
+                        color: '#FFFFFF',
                       },
                     }}
                     onClick={() => {
@@ -764,7 +775,7 @@ export default function AccessTable({
                       textTransform: 'none',
                       '&:hover': {
                         background: '#142B51B2',
-                        color: '#FFFFFF'
+                        color: '#FFFFFF',
                       },
                     }}
                     onClick={() => {
@@ -780,8 +791,7 @@ export default function AccessTable({
             </Box>
           </Box>
         )
-      ) : null
-      }
+      ) : null}
 
       <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGridPremium
@@ -802,10 +812,10 @@ export default function AccessTable({
           columnVisibilityModel={columnVisibilityModel}
           onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
           initialState={{
-          sorting: {
-            sortModel: [{ field: 'Name', sort: 'asc' }],
-          },
-        }}
+            sorting: {
+              sortModel: [{ field: 'Name', sort: 'asc' }],
+            },
+          }}
           slotProps={{
             loadingOverlay: {
               variant: 'skeleton',
@@ -846,7 +856,13 @@ export default function AccessTable({
             },
           }}
           slots={{
-            toolbar: checkboxSelection ? (toolbarType === 'filter' ? AccessToolbar : CustomToolbar) : (toolbarType === 'filter' ? AccessToolbar : undefined),
+            toolbar: checkboxSelection
+              ? toolbarType === 'filter'
+                ? AccessToolbar
+                : CustomToolbar
+              : toolbarType === 'filter'
+                ? AccessToolbar
+                : undefined,
           }}
           localeText={{
             toolbarFilters: '',
