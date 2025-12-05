@@ -1,5 +1,6 @@
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { ScalarSettings } from '@/app/types';
+import { Description } from '@mui/icons-material';
 import * as Yup from 'yup';
 
 interface Project {
@@ -734,3 +735,15 @@ export const addResourceToUserValidationSchema = Yup.object({
     .required('Resource is required'),
   Role: Yup.string().required('Role is required'),
 });
+
+export const addBusinessImpactValidationSchema = Yup.object({
+  Project: Yup.string().required('Project is required'),
+  BusinessImpactType: Yup.string().required('Business Impact Type is required'),
+  Amount: Yup.number()
+    .typeError('Annualized Amount must be a number')
+    .required('Annualized Amount is required')
+    .min(0, 'Annualized Amount must be a positive number'),
+  Description :Yup.string().required('Description is required'),
+  Status : Yup.string().required('Status is required'),
+});
+

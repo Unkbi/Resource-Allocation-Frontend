@@ -126,6 +126,18 @@ const ProjectToolbar = ({
       })
     );
   };
+  const handleAddBusinessImpact = () => {
+    dispatch(
+      openDialog({  
+        title: `Add Business Impact`,
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: 'add_business_impact',
+        initialData: '',
+      })
+    );
+  };
+  
   return (
     <CommonToolbar>
       <Box
@@ -171,12 +183,12 @@ const ProjectToolbar = ({
                 />
               )}
               {
-                // Sahadev : Hard Code, once this tab is developed remove Hard Code.
-                false && (
+                // permissions['BusinessImpact']?.r
+                true
+                && (
                   <Tab
                     value="businessImpact"
                     label="Business Impact"
-                    disabled
                     sx={tabTypographyStyle}
                   />
                 )
@@ -224,6 +236,18 @@ const ProjectToolbar = ({
                   sx={portfolioButtonStyle}
                 >
                   {`Add ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`}
+                </Button>
+              )}
+              {
+                // permissions['BusinessImpact']?.c &&
+                value === 'businessImpact' && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleAddBusinessImpact}
+                  sx={portfolioButtonStyle}
+                >
+                  Add Business Impact
                 </Button>
               )}
             </GridToolbarContainer>

@@ -782,6 +782,48 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           ? '#FFF3E0'
           : '#F7FBFF'),
     },
+    [`& .${gridClasses.cell}[data-field="ProjectUUID"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="BusinessImpactType"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Amount"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Date"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Description"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Action"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
     [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_project__"] .MuiAvatar-root`]:
       {
         display: 'none !important',

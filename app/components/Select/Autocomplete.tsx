@@ -23,6 +23,7 @@ interface StyledAutocompleteProps {
   fullWidth?: boolean;
   multiple?: boolean;
   onChange?: (value: any) => void;
+  readOnly?: boolean
 }
 
 const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
@@ -43,6 +44,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
   disabled = false,
   multiple = false,
   onChange,
+  readOnly = false
 }) => {
   const { touched, errors, setFieldValue, setFieldTouched } = formikProps;
   const [open, setOpen] = useState(false);
@@ -77,6 +79,7 @@ const StyledAutocomplete: React.FC<StyledAutocompleteProps> = ({
       disabled={disabled}
       multiple={multiple}
       options={options}
+      readOnly={readOnly} 
       getOptionLabel={option => option.label || ''}
       value={
         multiple
