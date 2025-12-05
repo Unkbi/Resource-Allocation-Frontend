@@ -55,7 +55,9 @@ const AddUserForm = ({
 
   useEffect(() => {
     if (initialData) {
-      const [firstName, lastName] = initialData?.Name?.split(' ') || [];
+      const nameparts = initialData?.Name?.split(' ') || [];
+      const firstName = nameparts[0] || '';
+      const lastName = nameparts.slice(1).join(' ') || '';
       const obj = {
         FirstName: firstName || '',
         LastName: lastName || '',
