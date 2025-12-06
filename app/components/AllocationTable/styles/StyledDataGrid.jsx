@@ -782,7 +782,7 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           ? '#FFF3E0'
           : '#F7FBFF'),
     },
-    [`& .${gridClasses.cell}[data-field="ProjectUUID"]`]: {
+    [`& .${gridClasses.cell}[data-field="Project"]`]: {
       backgroundColor:
         !loading &&
         (groupBy === 'project' || groupBy === 'resource'

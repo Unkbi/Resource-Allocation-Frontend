@@ -3611,7 +3611,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response.Project));
+            dispatch( setHighlightedRowId(response?.BusinessImpact?.ProjectUUID));
           })
           .catch(error => {
             console.error('Failed to add Business Impact:', error);
@@ -3656,7 +3656,7 @@ const AllocationForm = () => {
               autoHideTimer: 4000,
             })
           );
-          dispatch(setHighlightedRowId(response?.Project));
+          dispatch(setHighlightedRowId(response?.ProjectUUID));
           dispatch(closeDialog());
         } catch (error) {
           const message =

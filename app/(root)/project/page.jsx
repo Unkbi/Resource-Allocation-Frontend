@@ -300,45 +300,32 @@ function Project({ permissions, loadingPermissions }) {
     return [];
   };
 
-  // const modifyBusinessImpactData = data => {
-  //   if (data) {
-  //      return data.map(item => ({
-  //        id: item.Id,
-  //        Id: item.Id,
-  //        Project: item.ProjectUUID || '',
-  //        BusinessImpactType: item.BusinessImpactType,
-  //        Amount: item.AnnualizedAmount,
-  //        Date: item.__created,
-  //        Description: item.Description,
-  //        Status: item.Status,
-  //      }));
-  //    }
-  // };
-  const modifyBusinessImpactData = (data) => {
-    if (!data) return [];
-    return data.map(item => {
-      const projectName =
-        projects?.find(proj => proj.Id === item.ProjectUUID)?.Name ||
-        item.ProjectUUID;
-      const businessImpactTypeName =
-        businessImpactType?.find(type => type.Id === item.BusinessImpactType)
-          ?.Name || item.BusinessImpactType;
-      return {
-        id: item.Id,
-        Id: item.Id,
-        Project: item.ProjectUUID, 
-        BusinessImpactType: item.BusinessImpactType, 
-        Amount: item.AnnualizedAmount,
-        Date: item.__created,
-        Description: item.Description,
-        Status: item.Status,
-        projectName, 
-        businessImpactTypeName, 
-      };
-    });
-  };
-
-
+const modifyBusinessImpactData = data => {
+  if (!data) return [];
+  return data.map(item => {
+    const businessImpact = item.BusinessImpact || item;
+    const project = projects?.find(
+      proj => proj.Id === businessImpact.ProjectUUID
+    );
+    const impactType = businessImpactType?.find(
+      type => type.Id === businessImpact.BusinessImpactType
+    );
+    return {
+      id: businessImpact.Id,
+      Id: businessImpact.Id,
+      ProjectUUID: businessImpact.ProjectUUID,
+      Project: project?.Name || businessImpact.ProjectUUID, 
+      BusinessImpactTypeId: businessImpact.BusinessImpactType,
+      BusinessImpactType: impactType?.Name || businessImpact.BusinessImpactType, 
+      Amount: businessImpact.AnnualizedAmount,
+      Currency: businessImpact.Currency,
+      Date: businessImpact.__created,
+      Description: businessImpact.Description,
+      Status: businessImpact.Status,
+      originalData: businessImpact,
+    };
+  });
+};
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
 
@@ -1021,7 +1008,7 @@ function Project({ permissions, loadingPermissions }) {
 
   const businessImpactColumns = [
     {
-      field: 'ProjectUUID',
+      field: 'Project',
       headerName: 'Project',
       minWidth: 230,
       hideable: false,
@@ -1062,7 +1049,7 @@ function Project({ permissions, loadingPermissions }) {
           >
             <EllipsisNameCell
               showAvatar={false}
-              value={params.row.projectName}
+              value={params.value}
             />
           </Box>
         );
@@ -1073,10 +1060,7 @@ function Project({ permissions, loadingPermissions }) {
       headerName: 'Impact Type',
       minWidth: 250,
       renderCell: params => {
-        const value = businessImpactType?.find(
-          type => type.Id === params.value
-        )?.Name;
-        return <EllipsisNameCell showAvatar={false} value={value || ''} />;
+        return <EllipsisNameCell showAvatar={false} value={params.value || ''} />;
       },
     },
     {

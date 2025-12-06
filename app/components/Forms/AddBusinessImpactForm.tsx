@@ -74,14 +74,19 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
     setTouched,
   } = formikProps;
   
+  const isAddForm = formType === "add_business_impact";
+  const usedProjects = businessImpact.map((b:any )=> b?.ProjectUUID);
+  
   const statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Inactive', label: 'Inactive' },
   ];
 
-   const projectOptions = projects.map(p => ({
-    value: p.Id,     
-    label: p.Name,
+  const projectOptions = projects
+    .filter(p => (isAddForm ? !usedProjects.includes(p.Id) : true))
+    .map(p => ({
+      value: p.Id,     
+      label: p.Name,
   }));
 
   const businessImpactTypeOptions = businessImpactType.map((t: any) => ({
@@ -93,8 +98,8 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
   useEffect(() => {
     if (initialData) {
       const rowData: BusinessImpactFormValues = {
-        Project: initialData.Project || '',
-        BusinessImpactType: initialData.BusinessImpactType || '',
+        Project: initialData.ProjectUUID || '',
+        BusinessImpactType: initialData.BusinessImpactTypeId || '',
         Amount: initialData.Amount || '',
         Description: initialData.Description || '',
         Status: initialData.Status || '',
