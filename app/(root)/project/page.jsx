@@ -344,7 +344,13 @@ const modifyBusinessImpactData = data => {
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          apiRef.current.setCellFocus(highlightedRowId, 'Name');
+          let focusColumn;
+          if (value === 'businessImpact') {
+            focusColumn = 'Project';
+          } else if (value === 'project'|| value ==='portfolio' ) {
+            focusColumn = 'Name';
+          }
+          apiRef.current.setCellFocus(highlightedRowId ,focusColumn)
           apiRef.current.selectRow?.(highlightedRowId, true);
 
           const scroller = document.querySelector(

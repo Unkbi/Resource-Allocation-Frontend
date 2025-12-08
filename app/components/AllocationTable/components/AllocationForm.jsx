@@ -3611,7 +3611,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch( setHighlightedRowId(response?.BusinessImpact?.ProjectUUID));
+            dispatch( setHighlightedRowId(response?.BusinessImpact?.Id));
           })
           .catch(error => {
             console.error('Failed to add Business Impact:', error);
