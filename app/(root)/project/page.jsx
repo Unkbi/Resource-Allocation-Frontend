@@ -1268,7 +1268,7 @@ function Project({ permissions, loadingPermissions }) {
           ? 'This will permanently delete the project.'
           : value === 'portfolio'
             ? `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`
-            : `This will permanently delete the selected business impact.`}
+            : `This will permanently delete business impact for ${businessImpactDelete?.Project ?? 'the selected project'}.`}
       </ConfirmDialog>
     </Box>
   ) : (
