@@ -82,11 +82,18 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
     { value: 'Inactive', label: 'Inactive' },
   ];
 
-  const projectOptions = projects
-    .filter(p => (isAddForm ? !usedProjects.includes(p.Id) : true))
-    .map(p => ({
-      value: p.Id,     
-      label: p.Name,
+const projectOptions = projects
+  .filter(p => {
+    if (isAddForm) {
+      return !usedProjects.includes(p.Id);
+    }
+    const current = initialData?.ProjectUUID;
+    const isUsed = usedProjects.includes(p.Id) && p.Id !== current;
+    return !isUsed;
+  })
+  .map(p => ({
+    value: p.Id,
+    label: p.Name,
   }));
 
   const businessImpactTypeOptions = businessImpactType.map((t: any) => ({
