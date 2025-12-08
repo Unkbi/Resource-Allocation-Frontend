@@ -104,7 +104,7 @@ const sortByTotal = (data, sumKeys, descending = true) => {
 
 // Sort project type groups in Transform -> Grow -> Run order
 const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
-  const order = { 'Transform': 0, 'Grow': 1, 'Run': 2 };
+  const order = { Transform: 0, Grow: 1, Run: 2 };
   return [...data].sort((a, b) => {
     const aGroup = a[groupKey] || '';
     const bGroup = b[groupKey] || '';
@@ -118,17 +118,22 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
-  'engagementScoreOverview',
+  // Sahadev : Removed engagementScore temporarily
+  // 'engagementScoreOverview',
   'top_projects_by_variance',
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
   'actuals_confirmation_status',
-
 ];
 
-const PROJECT_CHART_SEQUENCE = ['projectHealthOverview', 'projectFTE', 'budgetVsPlanVsActual'];
+const PROJECT_CHART_SEQUENCE = [
+  // Sahadev : Removed projectHealthOverview temporarily
+  // 'projectHealthOverview',
+  'projectFTE',
+  'budgetVsPlanVsActual',
+];
 
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
@@ -142,7 +147,10 @@ const TEAM_CHART_SEQUENCE = [
 
 const generateLayouts = chartKeys => {
   // Auto-height widgets that should take less vertical space
-  const autoHeightWidgets = ['engagementScoreOverview', 'projectHealthOverview'];
+  const autoHeightWidgets = [
+    'engagementScoreOverview',
+    'projectHealthOverview',
+  ];
 
   return {
     lg: chartKeys.map((key, idx) => ({
@@ -465,17 +473,17 @@ export default function ExecutiveDashboardPage() {
         const queryStart =
           (chartKey === 'plan_vs_actual_variance' ||
             chartKey === 'actualsConfirmed') &&
-            selectedOption === 'week'
+          selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
             chartKey === 'actualsConfirmed') &&
-            selectedOption === 'week'
+          selectedOption === 'week'
             ? getMonday(selectedDate)
-              .subtract(1, 'week')
-              .add(6, 'day')
-              .format('YYYY-MM-DD')
+                .subtract(1, 'week')
+                .add(6, 'day')
+                .format('YYYY-MM-DD')
             : endDate;
 
         const paramsForKey = {
@@ -1609,7 +1617,7 @@ export default function ExecutiveDashboardPage() {
                       innerRadius: 0,
                       outerRadius: config.outerRadius || 80,
                       cornerRadius: 3,
-                      arcLabel: (item) => `${item.value}%`,
+                      arcLabel: item => `${item.value}%`,
                       arcLabelMinAngle: 20,
                       arcLabelRadius: '70%',
                       highlightScope: { faded: 'global', highlighted: 'item' },
@@ -1646,87 +1654,91 @@ export default function ExecutiveDashboardPage() {
     ),
 
     engagementScoreOverview: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Engagement Score Overview')}
-        minWidth={650}
-        minHeight={280}
-        autoHeight={true}
-      >
-        {() => {
-          const data = engagementScoreOverview?.[0] || {};
+      // Sahadev : Removed engagementScore temporarily
+      // <DashboardWidget
+      //   onClick={() => handleChartClick('Engagement Score Overview')}
+      //   minWidth={650}
+      //   minHeight={280}
+      //   autoHeight={true}
+      // >
+      //   {() => {
+      //     const data = engagementScoreOverview?.[0] || {};
 
-          return (
-            <ScoreCard
-              title="Engagement Overview"
-              tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
-              overallScore={parseFloat(data.overall_engagement || 0)}
-              overallChange={parseFloat(data.overall_engagement_change || 0)}
-              overallDirection={data.overall_engagement_direction}
-              subScores={[
-                {
-                  score: parseFloat(data.planned_score || 0),
-                  label: 'Planned Score',
-                  change: parseFloat(data.planned_score_change || 0),
-                  positive: data.planned_score_direction !== 'down',
-                },
-                {
-                  score: parseFloat(data.actual_score || 0),
-                  label: 'Actual Score',
-                  change: parseFloat(data.actual_score_change || 0),
-                  positive: data.actual_score_direction !== 'down',
-                },
-              ]}
-              hasAccess={true}
-            />
-          );
-        }}
-      </DashboardWidget>
+      //     return (
+      //       <ScoreCard
+      //         title="Engagement Overview"
+      //         tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
+      //         overallScore={parseFloat(data.overall_engagement || 0)}
+      //         overallChange={parseFloat(data.overall_engagement_change || 0)}
+      //         overallDirection={data.overall_engagement_direction}
+      //         subScores={[
+      //           {
+      //             score: parseFloat(data.planned_score || 0),
+      //             label: 'Planned Score',
+      //             change: parseFloat(data.planned_score_change || 0),
+      //             positive: data.planned_score_direction !== 'down',
+      //           },
+      //           {
+      //             score: parseFloat(data.actual_score || 0),
+      //             label: 'Actual Score',
+      //             change: parseFloat(data.actual_score_change || 0),
+      //             positive: data.actual_score_direction !== 'down',
+      //           },
+      //         ]}
+      //         hasAccess={true}
+      //       />
+      //     );
+      //   }}
+      // </DashboardWidget>
+      <></>
     ),
   };
 
   const projectCharts = {
     projectHealthOverview: (
-      <DashboardWidget
-        onClick={() => handleChartClick('Project Health Score Overview')}
-        minWidth={650}
-        minHeight={100}
-        autoHeight={true}
-      >
-        {() => {
-          const data = projectHealthOverview?.[0] || {};
+      // Sahadev : Removed projectHealthOverview temporarily
+      // <DashboardWidget
+      //   onClick={() => handleChartClick('Project Health Score Overview')}
+      //   minWidth={650}
+      //   minHeight={100}
+      //   autoHeight={true}
+      // >
+      //   {() => {
+      //     const data = projectHealthOverview?.[0] || {};
 
-          return (
-            <ScoreCard
-              title="Projects Health Score"
-              tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
-              overallScore={parseFloat(data.overall_health_score || 0)}
-              overallChange={parseFloat(data.overall_health_score_change || 0)}
-              overallDirection={data.overall_health_score_direction}
-              subScores={[
-                {
-                  score: parseFloat(data.adherence_score || 0),
-                  label: 'Adherence Score',
-                  change: parseFloat(data.adherence_score_change || 0),
-                  positive: data.adherence_score_direction !== 'down',
-                },
-                {
-                  score: parseFloat(data.actuals_score || 0),
-                  label: 'Actuals Score',
-                  change: parseFloat(data.actuals_score_change || 0),
-                  positive: data.actuals_score_direction !== 'down',
-                },
-                {
-                  score: parseFloat(data.engagement_score || 0),
-                  label: 'Engagement Score',
-                  change: parseFloat(data.engagement_score_change || 0),
-                  positive: data.engagement_score_direction !== 'down',
-                },
-              ]}
-              hasAccess={true}
-            />
-          );
-        }}
-      </DashboardWidget>
+      //     return (
+      //       <ScoreCard
+      //         title="Projects Health Score"
+      //         tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
+      //         overallScore={parseFloat(data.overall_health_score || 0)}
+      //         overallChange={parseFloat(data.overall_health_score_change || 0)}
+      //         overallDirection={data.overall_health_score_direction}
+      //         subScores={[
+      //           {
+      //             score: parseFloat(data.adherence_score || 0),
+      //             label: 'Adherence Score',
+      //             change: parseFloat(data.adherence_score_change || 0),
+      //             positive: data.adherence_score_direction !== 'down',
+      //           },
+      //           {
+      //             score: parseFloat(data.actuals_score || 0),
+      //             label: 'Actuals Score',
+      //             change: parseFloat(data.actuals_score_change || 0),
+      //             positive: data.actuals_score_direction !== 'down',
+      //           },
+      //           {
+      //             score: parseFloat(data.engagement_score || 0),
+      //             label: 'Engagement Score',
+      //             change: parseFloat(data.engagement_score_change || 0),
+      //             positive: data.engagement_score_direction !== 'down',
+      //           },
+      //         ]}
+      //         hasAccess={true}
+      //       />
+      //     );
+      //   }}
+      // </DashboardWidget>
+      <></>
     ),
 
     projectFTE: (
@@ -2023,13 +2035,17 @@ export default function ExecutiveDashboardPage() {
           ];
 
           // Sort teams by total headcount descending
-          const sortedTeamHeadcount = [...(team_headcount_distribution || [])].sort((a, b) => {
+          const sortedTeamHeadcount = [
+            ...(team_headcount_distribution || []),
+          ].sort((a, b) => {
             const aTotal = employeeTypes.reduce(
-              (sum, type) => sum + Number(a.resource_type_split?.[type.key] || 0),
+              (sum, type) =>
+                sum + Number(a.resource_type_split?.[type.key] || 0),
               0
             );
             const bTotal = employeeTypes.reduce(
-              (sum, type) => sum + Number(b.resource_type_split?.[type.key] || 0),
+              (sum, type) =>
+                sum + Number(b.resource_type_split?.[type.key] || 0),
               0
             );
             return bTotal - aTotal;
@@ -2133,7 +2149,10 @@ export default function ExecutiveDashboardPage() {
             team,
             total: filteredUnapprovedActualsByTeam
               .filter(d => d.team_name === team)
-              .reduce((sum, d) => sum + Number.parseFloat(d.pct_of_actuals || 0), 0),
+              .reduce(
+                (sum, d) => sum + Number.parseFloat(d.pct_of_actuals || 0),
+                0
+              ),
           }));
           teamTotals.sort((a, b) => b.total - a.total);
           const sortedUniqueTeams = teamTotals.map(t => t.team);
@@ -2453,11 +2472,15 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          const periodData = (actualsTrendWeekly || []).map(item => ({
-            period_start: item.period_start,
-            week: getWeekNumber(item.period_start),
-            actuals: item.actuals || []
-          })).sort((a, b) => new Date(a.period_start) - new Date(b.period_start));
+          const periodData = (actualsTrendWeekly || [])
+            .map(item => ({
+              period_start: item.period_start,
+              week: getWeekNumber(item.period_start),
+              actuals: item.actuals || [],
+            }))
+            .sort(
+              (a, b) => new Date(a.period_start) - new Date(b.period_start)
+            );
 
           const weeks = periodData.map(d => d.week);
 
@@ -2465,7 +2488,11 @@ export default function ExecutiveDashboardPage() {
           const categories = [
             { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
             { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
-            { key: 'Unplanned Projects', label: 'Unplanned Projects', color: '#FF884D' },
+            {
+              key: 'Unplanned Projects',
+              label: 'Unplanned Projects',
+              color: '#FF884D',
+            },
             { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
           ];
 
@@ -2797,7 +2824,14 @@ export default function ExecutiveDashboardPage() {
               style={{ padding: '0 16px' }}
             >
               {allowedOverviewCharts.map(key => (
-                <div key={key} className={key === 'engagementScoreOverview' ? 'auto-height-widget' : ''}>
+                <div
+                  key={key}
+                  className={
+                    key === 'engagementScoreOverview'
+                      ? 'auto-height-widget'
+                      : ''
+                  }
+                >
                   {overviewcharts[key]}
                 </div>
               ))}
@@ -2865,7 +2899,12 @@ export default function ExecutiveDashboardPage() {
               style={{ padding: '0 16px' }}
             >
               {allowedProjectCharts.map(key => (
-                <div key={key} className={key === 'projectHealthOverview' ? 'auto-height-widget' : ''}>
+                <div
+                  key={key}
+                  className={
+                    key === 'projectHealthOverview' ? 'auto-height-widget' : ''
+                  }
+                >
                   {projectCharts[key]}
                 </div>
               ))}
