@@ -2639,10 +2639,10 @@ export default function ExecutiveDashboardPage() {
 
   return loadingLoginUserPrivileges ? (
     <LoadingScreen />
+  ) : dashboardLoading && !initialLoad ? (
+    <LoadingScreen />
   ) : (
-    <>
-      {dashboardLoading && !initialLoad && <LoadingScreen />}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Global
           styles={css`
             circle.MuiMarkElement-root {
@@ -2890,6 +2890,5 @@ export default function ExecutiveDashboardPage() {
           </DialogActions>
         </Dialog>
       </Box>
-    </>
   );
 }
