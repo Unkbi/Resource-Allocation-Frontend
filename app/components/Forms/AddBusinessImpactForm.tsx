@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
 import { StyledInput } from '../Input/StyledInput';
 import StyledAutocomplete from '../Select/Autocomplete';
-import { withRBAC } from '../HOC/withRBAC';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { FormikProps } from 'formik';
 import {
   FETCH_BUSINESS_IMPACT,
@@ -21,17 +21,10 @@ interface BusinessImpactFormValues {
   Currency: string;
 }
 
-interface PermissionMap {
-  [key: string]: {
-    c?: boolean; // create
-    u?: boolean; // update
-  };
-}
-
 interface AddBusinessImpactFormProps {
   formikProps: FormikProps<BusinessImpactFormValues>;
   setFormValue?: (val: BusinessImpactFormValues) => void;
-  permissions: PermissionMap;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
@@ -147,7 +140,6 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
           name="Project"
           label="Select Project"
           disabled={readOnly}
-          readOnly={readOnly}
           placeholder="Select Project"
           options={projectOptions}
           value={values.Project || ''}
@@ -164,7 +156,6 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
           name="BusinessImpactType"
           label="Select Business Impact Type"
           disabled={readOnly}
-          readOnly={readOnly}
           placeholder="Select Business Impact Type"
           options={businessImpactTypeOptions}
           value={values.BusinessImpactType || ''}
@@ -227,7 +218,6 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
           name="Status"
           label="Select Status"
           disabled={readOnly}
-          readOnly={readOnly}
           placeholder="Select status"
           options={statusOptions}
           value={values.Status || ''}
@@ -240,4 +230,3 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
 };
 
 export default withRBAC(AddBusinessImpactForm, ['BusinessImpact', 'Portfolio']);
-// export default AddBusinessImpactForm;
