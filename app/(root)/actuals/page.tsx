@@ -662,7 +662,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 >
                   <Typography
                     sx={{
-                      fontFamily: 'Inter',
                       fontWeight: 500,
                       fontStyle: 'Medium',
                       fontSize: '13.6px',

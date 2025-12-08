@@ -110,10 +110,7 @@ function OrganisationAllocation({
             )
           );
         } else if (allAllocations) {
-          filteredResources = removeResourcesWithNoTeams(allAllocations || [])
-            .sort((a, b) =>
-              (a?.resource || "") < (b?.resource || "") ? -1 : 1
-            );
+          filteredResources = removeResourcesWithNoTeams(allAllocations || []);
           dispatch(setLoading(false));
         }
 
@@ -578,6 +575,19 @@ function OrganisationAllocation({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
+      },
+    },
+    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 170,
@@ -676,12 +686,8 @@ function OrganisationAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
               },
-            },
-           sorting: {
-              sortModel: [
-                { field :'__row_group_by_columns_group_organisationName__' ,sort :'asc' }
-              ],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}
