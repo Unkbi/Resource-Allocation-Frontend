@@ -94,7 +94,13 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         })),
         put(setDashboardChart({ 
           chartKey: 'activeProjectsByType', 
-          data: responseData.projects_by_type || [] 
+          data: [
+    { week: 'Week 47', Run: 23, Grow: 14, Transform: 8 },
+    { week: 'Week 48', Run: 24, Grow: 16, Transform: 11 },
+    { week: 'Current Week', Run: 24, Grow: 15, Transform: 10 },
+    { week: 'Week 50', Run: 26, Grow: 16, Transform: 10 },
+    { week: 'Week 51', Run: 26, Grow: 15, Transform: 11 },
+  ]
         })),
         put(setDashboardChart({ 
           chartKey: 'activeResources', 

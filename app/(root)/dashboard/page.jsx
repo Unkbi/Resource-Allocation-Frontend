@@ -1173,31 +1173,55 @@ export default function ExecutiveDashboardPage() {
         onClick={() =>
           handleChartClick('Active Projects by Project Type Group')
         }
-        minWidth={320}
-        minHeight={280}
+        minWidth={400}
+        minHeight={300}
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'pie');
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Define project type categories with consistent colors
+          const projectTypeCategories = [
+            { key: 'Run', label: 'Run', color: '#5B7FFF' },
+            { key: 'Grow', label: 'Grow', color: '#FFD666' },
+            { key: 'Transform', label: 'Transform', color: '#FF9966' },
+          ];
+
+          // Extract week labels from data
+          const weekLabels = (activeProjectsByType || []).map(
+            item => item.week
+          );
+
+          // Create series data for each project type category
+          const seriesData = projectTypeCategories.map(category => ({
+            label: category.label,
+            id: category.key,
+            data: (activeProjectsByType || []).map(item =>
+              Number(item[category.key] || 0)
+            ),
+            color: category.color,
+            stack: 'total',
+          }));
 
           return (
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start',
                 width: '100%',
+                height: '100%',
               }}
             >
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 2,
                   fontSize: dimensions.width < 400 ? '16px' : '18px',
                   fontWeight: 600,
                 }}
               >
                 Active Projects by Project Type Group
               </Typography>
+
               <Box
                 sx={{
                   flex: 1,
@@ -1205,56 +1229,54 @@ export default function ExecutiveDashboardPage() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   width: '100%',
+                  minHeight: 0,
                 }}
               >
-                <PieChart
-                  series={[
+                <BarChart
+                  xAxis={[
                     {
-                      data: (filteredActiveProjectsByType || []).map(
-                        (item, idx) => {
-                          // Map UUID project type to name
-                          const projectType = projectTypes?.find(
-                            pt => pt.Name === item._type
-                          );
-                          const typeName = projectType
-                            ? projectType.Name
-                            : item._type;
-
-                          // Use memoized color map for consistent colors
-                          const assignedColor =
-                            projectTypeColorMap[typeName] ||
-                            colorPalette[idx % colorPalette.length];
-
-                          return {
-                            id: idx,
-                            value: Number(item.count),
-                            label: truncateLabel(
-                              typeName,
-                              dimensions.width < 400 ? 12 : 14
-                            ),
-                            color: assignedColor,
-                          };
-                        }
-                      ),
-                      innerRadius: 70,
-                      arcLabel: item => `${item.data}`,
-                      arcLabelRadius: '70%',
-                      outerRadius: config.outerRadius || 80,
-                      cornerRadius: 3,
-                      highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -10, color: 'gray' },
+                      scaleType: 'band',
+                      data: weekLabels,
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.2,
                     },
                   ]}
+                  series={seriesData}
                   width={config.width}
                   height={config.height}
-                  sx={{
-                    [`& .${pieArcLabelClasses.root}`]: {
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    },
+                  margin={{
+                    top: 10,
+                    bottom: 40,
+                    left: 40,
+                    right: 10,
                   }}
                   slotProps={{
-                    legend: config.legend,
+                    legend: {
+                      direction: 'row',
+                      position: {
+                        vertical: 'bottom',
+                        horizontal: 'middle',
+                      },
+                      padding: -5,
+                      itemMarkWidth: 12,
+                      itemMarkHeight: 12,
+                      markGap: 6,
+                      itemGap: 16,
+                      labelStyle: {
+                        fontSize: dimensions.width < 400 ? 11 : 12,
+                        fontWeight: 500,
+                      },
+                    },
+                  }}
+                  sx={{
+                    '& .MuiChartsAxis-tickLabel': {
+                      fontSize: '12px',
+                      fill: '#666',
+                    },
+                    '& .MuiChartsAxis-label': {
+                      fontSize: '13px',
+                      fontWeight: 500,
+                    },
                   }}
                 />
               </Box>
@@ -1657,7 +1679,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Overview"
-              tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
+              tooltipText="Engagement score based on five key metrics: planning, actuals, confirmation, entry, and communication"
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
@@ -1670,7 +1692,7 @@ export default function ExecutiveDashboardPage() {
                 },
                 {
                   score: parseFloat(data.actual_score || 0),
-                  label: 'Actual Score',
+                  label: 'Actuals Score',
                   change: parseFloat(data.actual_score_change || 0),
                   positive: data.actual_score_direction !== 'down',
                 },
@@ -1697,7 +1719,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
-              tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
+              tooltipText="Projects health based on alignment, actuals, and engagement metrics"
               overallScore={parseFloat(data.overall_health_score || 0)}
               overallChange={parseFloat(data.overall_health_score_change || 0)}
               overallDirection={data.overall_health_score_direction}
@@ -1909,7 +1931,7 @@ export default function ExecutiveDashboardPage() {
     budgetVsPlanVsActual: (
       <DashboardWidget
         onClick={() =>
-          handleChartClick('Budget vs Planned vs Actual by Project')
+          handleChartClick('Budget vs Planned vs Actuals by Projects')
         }
         minWidth={320}
         minHeight={280}
@@ -2849,7 +2871,7 @@ export default function ExecutiveDashboardPage() {
                 paddingBottom: '8px',
               }}
             >
-              Project Tracking
+              Projects Tracking
             </Typography>
             <ResponsiveGridLayout
               className="layout"

@@ -64,6 +64,7 @@ export default function MuiDashboardCard({
           background: "#1e3a8a",
           p: 3,
           display: "flex",
+          borderRadius: '4px',
           justifyContent: "space-between",
           alignItems: "center",
         }}
@@ -132,7 +133,7 @@ export default function MuiDashboardCard({
             )}
             <Typography
               sx={{
-                color: "#ffffff",
+                color: overallChange === 0 ? "#ffffff" : (overallDirection !== "down" ? "#00A63E" : "#ef4444"),
                 fontSize: "14px",
                 fontWeight: 600,
               }}
@@ -164,7 +165,7 @@ export default function MuiDashboardCard({
                 <Box>
                   <Typography
                     sx={{
-                      fontSize: "12px",
+                      fontSize: "14px",
                       color: "#666",
                       mb: 0.5,
                       fontWeight: 500,
@@ -175,7 +176,7 @@ export default function MuiDashboardCard({
                   <Stack direction="row" alignItems="center" gap={1}>
                     <Typography
                       sx={{
-                        fontSize: "16px",
+                        fontSize: "18px",
                         fontWeight: 700,
                         color: colorPallette[index % colorPallette.length],
                       }}
@@ -186,28 +187,28 @@ export default function MuiDashboardCard({
                       {subScore.change === 0 ? (
                         <ArrowCircleRightOutlinedIcon
                           sx={{
-                            fontSize: "14px",
+                            fontSize: "16px",
                             color: "#9ca3af",
                           }}
                         />
                       ) : subScore.positive !== false ? (
                         <ArrowCircleUpIcon
                           sx={{
-                            fontSize: "14px",
+                            fontSize: "16px",
                             color: "#00A63E",
                           }}
                         />
                       ) : (
                         <ArrowCircleDownIcon
                           sx={{
-                            fontSize: "14px",
+                            fontSize: "16px",
                             color: "#ef4444",
                           }}
                         />
                       )}
                       <Typography
                         sx={{
-                          fontSize: "12px",
+                          fontSize: "14px",
                           color: subScore.change === 0 ? "#9ca3af" : (subScore.positive !== false ? "#00A63E" : "#ef4444"),
                           fontWeight: 600,
                         }}
@@ -224,7 +225,7 @@ export default function MuiDashboardCard({
                   <CircularProgress
                     variant="determinate"
                     value={100}
-                    size={50}
+                    size={60}
                     thickness={4}
                     sx={{
                       color: "#e5e7eb",
@@ -235,7 +236,7 @@ export default function MuiDashboardCard({
                   <CircularProgress
                     variant="determinate"
                     value={subScore.score}
-                    size={50}
+                    size={60}
                     thickness={4}
                     sx={{
                       color: "#6366f1",
