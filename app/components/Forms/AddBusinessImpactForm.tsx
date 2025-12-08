@@ -6,9 +6,11 @@ import { StyledInput } from '../Input/StyledInput';
 import StyledAutocomplete from '../Select/Autocomplete';
 import { withRBAC } from '../HOC/withRBAC';
 import { FormikProps } from 'formik';
-import { FETCH_BUSINESS_IMPACT, FETCH_BUSINESS_IMPACT_TYPE } from '@/app/redux/actions/businessImpactActions';
+import {
+  FETCH_BUSINESS_IMPACT,
+  FETCH_BUSINESS_IMPACT_TYPE,
+} from '@/app/redux/actions/businessImpactActions';
 import { Project } from '@/app/types';
-
 
 interface BusinessImpactFormValues {
   Project: string;
@@ -41,26 +43,33 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
   const initialData = useSelector(
     (state: any) => state.globalDialog.formState.initialData
   );
-  const projects: Project[] = useSelector((state: any) => state.projects.projects);
+  const projects: Project[] = useSelector(
+    (state: any) => state.projects.projects
+  );
   const formType = useSelector(
     (state: any) => state.globalDialog.formState.formType
   );
-  const { businessImpact, businessImpactType} = useSelector((state:any )=> state.businessImpact)
+  const { businessImpact, businessImpactType } = useSelector(
+    (state: any) => state.businessImpact
+  );
   const [readOnly, setReadOnly] = useState<boolean>(true);
-  
+
   useEffect(() => {
-    dispatch({
-      type: FETCH_BUSINESS_IMPACT,
-      payload: {},
-    });
-    
+    if (!businessImpact.length) {
+      dispatch({
+        type: FETCH_BUSINESS_IMPACT,
+        payload: {},
+      });
+    }
   }, []);
 
-   useEffect(() => {
-    dispatch({
-      type: FETCH_BUSINESS_IMPACT_TYPE,
-      payload: {},
-    });
+  useEffect(() => {
+    if (!businessImpactType.length) {
+      dispatch({
+        type: FETCH_BUSINESS_IMPACT_TYPE,
+        payload: {},
+      });
+    }
   }, []);
 
   const {
@@ -73,35 +82,36 @@ const AddBusinessImpactForm: React.FC<AddBusinessImpactFormProps> = ({
     resetForm,
     setTouched,
   } = formikProps;
-  
-  const isAddForm = formType === "add_business_impact";
-  const usedProjects = businessImpact.map((b:any )=> b?.ProjectUUID);
-  
+
+  // Sahadev : Add if Project should be Unique in Business Impact.
+  // const isAddForm = formType === "add_business_impact";
+  // const usedProjects = businessImpact.map((b:any )=> b?.ProjectUUID);
+
   const statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Inactive', label: 'Inactive' },
   ];
 
-const projectOptions = projects
-  .filter(p => {
-    if (isAddForm) {
-      return !usedProjects.includes(p.Id);
-    }
-    const current = initialData?.ProjectUUID;
-    const isUsed = usedProjects.includes(p.Id) && p.Id !== current;
-    return !isUsed;
-  })
-  .map(p => ({
-    value: p.Id,
-    label: p.Name,
-  }));
+  const projectOptions = projects
+    // Sahadev : Add if Project should be Unique in Business Impact.
+    // .filter(p => {
+    //   if (isAddForm) {
+    //     return !usedProjects.includes(p.Id);
+    //   }
+    //   const current = initialData?.ProjectUUID;
+    //   const isUsed = usedProjects.includes(p.Id) && p.Id !== current;
+    //   return !isUsed;
+    // })
+    .map(p => ({
+      value: p.Id,
+      label: p.Name,
+    }));
 
   const businessImpactTypeOptions = businessImpactType.map((t: any) => ({
-    value: t.Id,      
+    value: t.Id,
     label: t.Name,
   }));
 
-  
   useEffect(() => {
     if (initialData) {
       const rowData: BusinessImpactFormValues = {
@@ -110,19 +120,20 @@ const projectOptions = projects
         Amount: initialData.Amount || '',
         Description: initialData.Description || '',
         Status: initialData.Status || '',
-        Currency :initialData.Currency || 'USD',
+        Currency: initialData.Currency || 'USD',
       };
       setFormValue(rowData);
       resetForm({ values: rowData });
       setTouched({});
     }
   }, [initialData, projects]);
-  
 
   useEffect(() => {
     setReadOnly(
-      (formType === 'edit_business_impact' && !permissions?.['BusinessImpact']?.u) ||
-        (formType === 'add_business_impact' && !permissions?.['BusinessImpact']?.c)
+      (formType === 'edit_business_impact' &&
+        !permissions?.['BusinessImpact']?.u) ||
+        (formType === 'add_business_impact' &&
+          !permissions?.['BusinessImpact']?.c)
     );
   }, [formType, permissions]);
 
@@ -179,17 +190,17 @@ const projectOptions = projects
             setFieldValue('Amount', trimmed);
             handleBlur(e);
           }}
-           onKeyDown={(e:any )=> {
-              if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-                e.preventDefault();
-              }
-            }}
+          onKeyDown={(e: any) => {
+            if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
           error={touched.Amount && Boolean(errors.Amount)}
           helperText={touched.Amount && errors.Amount}
         />
       </Box>
 
-      <StyledLabel>Description <span style={{ color: 'red' }}> *</span></StyledLabel>
+      <StyledLabel>Description</StyledLabel>
       <Box sx={{ pb: 2 }}>
         <StyledInput
           name="Description"

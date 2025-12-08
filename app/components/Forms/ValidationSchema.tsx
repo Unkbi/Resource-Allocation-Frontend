@@ -1,6 +1,5 @@
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { ScalarSettings } from '@/app/types';
-import { Description } from '@mui/icons-material';
 import * as Yup from 'yup';
 
 interface Project {
@@ -743,7 +742,7 @@ export const addBusinessImpactValidationSchema = Yup.object({
     .typeError('Annualized Amount must be a number')
     .required('Annualized Amount is required')
     .min(0, 'Annualized Amount must be a positive number'),
-  Description :Yup.string().required('Description is required'),
-  Status : Yup.string().required('Status is required'),
+  // Sahadev : Add if Description is mandatory
+  // Description :Yup.string().required('Description is required'),
+  Status: Yup.string().required('Status is required'),
 });
-

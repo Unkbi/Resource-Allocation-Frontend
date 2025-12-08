@@ -128,7 +128,7 @@ const ProjectToolbar = ({
   };
   const handleAddBusinessImpact = () => {
     dispatch(
-      openDialog({  
+      openDialog({
         title: `Add Business Impact`,
         submitButtonText: 'Add',
         cancelButtonText: 'Cancel',
@@ -137,7 +137,7 @@ const ProjectToolbar = ({
       })
     );
   };
-  
+
   return (
     <CommonToolbar>
       <Box
@@ -182,17 +182,13 @@ const ProjectToolbar = ({
                   sx={tabTypographyStyle}
                 />
               )}
-              {
-                // permissions['BusinessImpact']?.r
-                true
-                && (
-                  <Tab
-                    value="businessImpact"
-                    label="Business Impact"
-                    sx={tabTypographyStyle}
-                  />
-                )
-              }
+              {permissions['BusinessImpact']?.r && (
+                <Tab
+                  value="businessImpact"
+                  label="Business Impact"
+                  sx={tabTypographyStyle}
+                />
+              )}
             </Tabs>
           )}
         </Box>
@@ -238,18 +234,17 @@ const ProjectToolbar = ({
                   {`Add ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`}
                 </Button>
               )}
-              {
-                // permissions['BusinessImpact']?.c &&
+              {permissions['BusinessImpact']?.c &&
                 value === 'businessImpact' && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleAddBusinessImpact}
-                  sx={portfolioButtonStyle}
-                >
-                  Add Business Impact
-                </Button>
-              )}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleAddBusinessImpact}
+                    sx={portfolioButtonStyle}
+                  >
+                    Add Business Impact
+                  </Button>
+                )}
             </GridToolbarContainer>
           </Box>
         </Box>
@@ -258,4 +253,8 @@ const ProjectToolbar = ({
   );
 };
 
-export default withRBAC(ProjectToolbar, ['Project', 'Portfolio']);
+export default withRBAC(ProjectToolbar, [
+  'Project',
+  'Portfolio',
+  'BusinessImpact',
+]);

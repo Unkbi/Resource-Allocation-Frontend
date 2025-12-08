@@ -184,7 +184,10 @@ import {
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import AddBusinessImpactForm from '../../Forms/AddBusinessImpactForm';
-import { CREATE_BUSINESS_IMPACT, UPDATE_BUSINESS_IMPACT } from '@/app/redux/actions/businessImpactActions';
+import {
+  CREATE_BUSINESS_IMPACT,
+  UPDATE_BUSINESS_IMPACT,
+} from '@/app/redux/actions/businessImpactActions';
 
 const initialValuesMap = {
   add_project: {
@@ -447,14 +450,13 @@ const initialValuesMap = {
     ProjectManager: [],
     AllocationManager: [],
   },
- add_business_impact: {
+  add_business_impact: {
     Project: '',
     BusinessImpactType: '',
     Amount: '',
     Description: '',
     Status: '',
-    Currency :'USD',
-    
+    Currency: 'USD',
   },
   edit_business_impact: {
     Project: '',
@@ -462,8 +464,8 @@ const initialValuesMap = {
     Amount: '',
     Description: '',
     Status: '',
-    Currency :'USD',
- }
+    Currency: 'USD',
+  },
 };
 
 const AllocationForm = () => {
@@ -3581,14 +3583,15 @@ const AllocationForm = () => {
         break;
       }
       case 'add_business_impact': {
-            Object.keys(cleanedValues).forEach(key => {
+        Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;
           }
-            });
+        });
 
         let postData = {
           ...cleanedValues,
+          Description: cleanedValues.Description || '',
         };
         new Promise((resolve, reject) => {
           dispatch({
@@ -3611,7 +3614,7 @@ const AllocationForm = () => {
               })
             );
             dispatch(closeDialog());
-            dispatch( setHighlightedRowId(response?.BusinessImpact?.Id));
+            dispatch(setHighlightedRowId(response?.BusinessImpact?.Id));
           })
           .catch(error => {
             console.error('Failed to add Business Impact:', error);
@@ -3627,7 +3630,7 @@ const AllocationForm = () => {
           });
         break;
       }
-       case 'edit_business_impact':  {
+      case 'edit_business_impact': {
         Object.keys(cleanedValues).forEach(key => {
           if (cleanedValues[key] === '') {
             cleanedValues[key] = null;

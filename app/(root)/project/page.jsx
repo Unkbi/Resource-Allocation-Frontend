@@ -62,7 +62,10 @@ import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import dayjs from 'dayjs';
 import BusinessImpactTable from '@/app/components/Projects/Table/BusinessImpactTable';
-import { FETCH_BUSINESS_IMPACT, FETCH_BUSINESS_IMPACT_TYPE } from '@/app/redux/actions/businessImpactActions';
+import {
+  FETCH_BUSINESS_IMPACT,
+  FETCH_BUSINESS_IMPACT_TYPE,
+} from '@/app/redux/actions/businessImpactActions';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -104,6 +107,7 @@ const AddAllocationIcon = () => (
 const accessMap = [
   { key: 'Project', value: 'project' },
   { key: 'Portfolio', value: 'portfolio' },
+  { key: 'BusinessImpact', value: 'businessImpact' },
 ];
 
 function Project({ permissions, loadingPermissions }) {
@@ -144,7 +148,7 @@ function Project({ permissions, loadingPermissions }) {
     Id: '',
     Name: '',
   });
-  
+
   useEffect(() => {
     if (loadingPermissions) return;
 
@@ -191,20 +195,22 @@ function Project({ permissions, loadingPermissions }) {
       dispatch({
         type: FETCH_BUSINESS_IMPACT,
         payload: {},
-      }); 
+      });
     }
   }, []);
-  
+
   useEffect(() => {
     setBusinessRows(businessImpact);
   }, [businessImpact]);
 
   useEffect(() => {
-       dispatch({
-          type: FETCH_BUSINESS_IMPACT_TYPE,
-          payload: {},
-        });
-      }, []);
+    if (!businessImpactType.length) {
+      dispatch({
+        type: FETCH_BUSINESS_IMPACT_TYPE,
+        payload: {},
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (projects?.length) {
@@ -300,32 +306,26 @@ function Project({ permissions, loadingPermissions }) {
     return [];
   };
 
-const modifyBusinessImpactData = data => {
-  if (!data) return [];
-  return data.map(item => {
-    const businessImpact = item.BusinessImpact || item;
-    const project = projects?.find(
-      proj => proj.Id === businessImpact.ProjectUUID
-    );
-    const impactType = businessImpactType?.find(
-      type => type.Id === businessImpact.BusinessImpactType
-    );
-    return {
-      id: businessImpact.Id,
-      Id: businessImpact.Id,
-      ProjectUUID: businessImpact.ProjectUUID,
-      Project: project?.Name || businessImpact.ProjectUUID, 
-      BusinessImpactTypeId: businessImpact.BusinessImpactType,
-      BusinessImpactType: impactType?.Name || businessImpact.BusinessImpactType, 
-      Amount: businessImpact.AnnualizedAmount,
-      Currency: businessImpact.Currency,
-      Date: businessImpact.__created,
-      Description: businessImpact.Description,
-      Status: businessImpact.Status,
-      originalData: businessImpact,
-    };
-  });
-};
+  const modifyBusinessImpactData = data => {
+    if (!data) return [];
+    return data.map(item => {
+      const businessImpact = item.BusinessImpact || item;
+      const project = projects?.find(
+        proj => proj.Id === businessImpact.ProjectUUID
+      );
+      const impactType = businessImpactType?.find(
+        type => type.Id === businessImpact.BusinessImpactType
+      );
+      return {
+        ...businessImpact,
+        id: businessImpact.Id,
+        Project: project?.Name || '',
+        BusinessImpactType: impactType?.Name || '',
+        Amount: businessImpact.AnnualizedAmount,
+        BusinessImpactTypeId: businessImpact.BusinessImpactType,
+      };
+    });
+  };
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
 
@@ -347,10 +347,10 @@ const modifyBusinessImpactData = data => {
           let focusColumn;
           if (value === 'businessImpact') {
             focusColumn = 'Project';
-          } else if (value === 'project'|| value ==='portfolio' ) {
+          } else if (value === 'project' || value === 'portfolio') {
             focusColumn = 'Name';
           }
-          apiRef.current.setCellFocus(highlightedRowId ,focusColumn)
+          apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
 
           const scroller = document.querySelector(
@@ -505,7 +505,7 @@ const modifyBusinessImpactData = data => {
           })
         );
         dispatch({ type: 'FETCH_BUSINESS_IMPACT' });
-       } catch (error) {
+      } catch (error) {
         dispatch(
           showToast({
             open: true,
@@ -521,7 +521,7 @@ const modifyBusinessImpactData = data => {
       }
     }
   };
-  
+
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setProjectToDelete(null);
@@ -1028,7 +1028,7 @@ const modifyBusinessImpactData = data => {
             );
           } else {
             handleOpenDialog(
-              `Edit Business Impact`,
+              `Business Impact: ${params.value}`,
               'edit_business_impact',
               params.row,
               {
@@ -1053,10 +1053,7 @@ const modifyBusinessImpactData = data => {
               },
             }}
           >
-            <EllipsisNameCell
-              showAvatar={false}
-              value={params.value}
-            />
+            <EllipsisNameCell showAvatar={false} value={params.value} />
           </Box>
         );
       },
@@ -1065,8 +1062,11 @@ const modifyBusinessImpactData = data => {
       field: 'BusinessImpactType',
       headerName: 'Impact Type',
       minWidth: 250,
+      hideable: false,
       renderCell: params => {
-        return <EllipsisNameCell showAvatar={false} value={params.value || ''} />;
+        return (
+          <EllipsisNameCell showAvatar={false} value={params.value || ''} />
+        );
       },
     },
     {
@@ -1219,7 +1219,7 @@ const modifyBusinessImpactData = data => {
       case 'businessImpact':
         return (
           <BusinessImpactTable
-            loading={businessImpactLoading||loadingPermissions}
+            loading={businessImpactLoading || loadingPermissions}
             columns={businessImpactColumns}
             rows={modifyBusinessImpactData(businessRows)}
             apiRef={apiRef}
@@ -1276,4 +1276,9 @@ const modifyBusinessImpactData = data => {
   );
 }
 
-export default withRBAC(Project, ['Project', 'Portfolio', 'Allocation','BusinessImpact']);
+export default withRBAC(Project, [
+  'Project',
+  'Portfolio',
+  'Allocation',
+  'BusinessImpact',
+]);
