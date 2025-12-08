@@ -485,8 +485,13 @@ const AllocationForm = () => {
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
-  const { projectTypeGroups, projectTypes, location, locationGroups, userResources } =
-    useSelector(state => state.allSettings);
+  const {
+    projectTypeGroups,
+    projectTypes,
+    location,
+    locationGroups,
+    userResources,
+  } = useSelector(state => state.allSettings);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -2479,16 +2484,15 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
-          console.error('Failed to update portfolio:', error);
           const message =
-            error?.response?.data?.exception || 'Failed to update portfolio.';
+            error?.response?.data || 'Failed to update portfolio.';
           dispatch(
             showToast({
               open: true,
               message: message,
               type: 'error',
               position: 'bottom-left',
-              autoHideTimer: 4000,
+              autoHideTimer: 6000,
             })
           );
         }
@@ -3381,15 +3385,16 @@ const AllocationForm = () => {
       }
       case 'add_resource_to_user': {
         try {
-          
           const finalData = cleanedValues.Resources.map(resourceEmail => {
-            const resourceData = userResources?.find(res => res.email === resourceEmail);
-            
+            const resourceData = userResources?.find(
+              res => res.email === resourceEmail
+            );
+
             if (!resourceData) {
               console.warn(`Resource not found for email: ${resourceEmail}`);
               return null;
             }
-            
+
             const nameParts = resourceData.Name?.split(' ') || [];
             const firstName = nameParts[0] || '';
             const lastName = nameParts.slice(1).join(' ') || '';
@@ -3437,7 +3442,7 @@ const AllocationForm = () => {
           const initialEmails = new Set(
             (initialData || []).map(item => item.email?.toLowerCase())
           );
-          
+
           const newlyInvitedResources = finalData.filter(
             item => !initialEmails.has(item.email?.toLowerCase())
           );

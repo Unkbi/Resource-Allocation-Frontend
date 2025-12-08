@@ -119,6 +119,7 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
+      'projectTypeGroup',
     ],
     resource: [
       '__row_group_by_columns_group__',
@@ -149,6 +150,7 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
+      'projectTypeGroup',
     ],
     organisationName: [
       '__row_group_by_columns_group_organisationName__',
@@ -181,6 +183,7 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
+      'projectTypeGroup',
     ],
     project: [
       '__row_group_by_columns_group__',
@@ -211,6 +214,7 @@ const initialState: AllocationGridViewState = {
       'contractorHourlyRateCurrency',
       'resourceType',
       'projectType',
+      'projectTypeGroup',
     ],
     portfolioName: [
       '__row_group_by_columns_group_project__',
@@ -228,6 +232,7 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
+      'projectTypeGroup',
       'totalEffort',
       'email',
       'phoneNumber',
@@ -254,6 +259,7 @@ const initialState: AllocationGridViewState = {
       'projectStatus',
       'projectLocation',
       'projectType',
+      'projectTypeGroup',
       'projectOvertimeAllowed',
       'projectCost',
       'projectCurrency',
@@ -307,6 +313,7 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
+      'projectTypeGroup',
     ],
   },
   currentView: COMPANY_DEFAULT_VIEW,

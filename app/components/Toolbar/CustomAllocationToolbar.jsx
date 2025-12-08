@@ -1376,7 +1376,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
                 {view.includes('Project') || view.includes('Portfolio') ? (
                   <>
                     <TooltipButton
-                      msg="My Project"
+                      msg="My Projects"
                       placement="bottom"
                       onClick={() => handleToggle(true)}
                     >
@@ -1676,7 +1676,8 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
         />
 
         {/* Right Section: Search Bar */}
-        <Box
+        {/* Sahadev : Search bar temporarily removed as per UX decision */}
+        {/* <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -1725,7 +1726,7 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
               }}
             />
           </Box>
-        </Box>
+        </Box> */}
       </Box>
 
       {/* Bottom Toolbar  */}
