@@ -15,6 +15,16 @@ export const fetchActualAllocationsForPeriod = async (
   return response.data;
 };
 
+export const fetchActualStatusForPeriod = async (
+  postData: ActualAllocationsForPeriodPayload
+) => {
+  const response = await axiosInstance.post(
+    `${API_PROJECT_PORTFOLIO}/GetActualStatus`,
+    postData
+  );
+  return response.data;
+};
+
 export const confirmActualsEnteredForPeriod = async (
   postData: ConfirmActualAllocationsForPeriodRequest
 ) => {

@@ -14,6 +14,7 @@ import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
 import { Team } from '@/app/types';
 import { Box } from '@mui/material';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 interface TeamsTableProps {
   columns: GridColDef[];
@@ -22,6 +23,7 @@ interface TeamsTableProps {
   apiRef: React.RefObject<GridApi>;
   value: String;
   onChange: any;
+  permissions: Record<string, CrudPermissions>;
 }
 
 function CustomColumnMenu(props: GridColumnMenuProps) {
@@ -43,6 +45,7 @@ const TeamsTable = ({
   apiRef,
   value,
   onChange = () => {},
+  permissions,
 }: TeamsTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
 
@@ -58,7 +61,7 @@ const TeamsTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={rows}
+        rows={permissions['Team'].r ? rows : []}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
         loading={loading}
@@ -143,4 +146,4 @@ const TeamsTable = ({
   );
 };
 
-export default TeamsTable;
+export default withRBAC(TeamsTable, ['Team']);

@@ -16,6 +16,12 @@ export async function GET(
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
   const bucket = searchParams.get('bucket');
+  const projectTypeFilter = searchParams.get('projectTypeFilter') ? searchParams.get('projectTypeFilter')!.split(',') : null;
+  const projectTypeGroupFilter = searchParams.get('projectTypeGroupFilter') ? searchParams.get('projectTypeGroupFilter')!.split(',') : null;
+  const portfolioFilter = searchParams.get('portfolioFilter') ? searchParams.get('portfolioFilter')!.split(',') : null;
+  const teamFilter = searchParams.get('teamFilter') ? searchParams.get('teamFilter')!.split(',') : null;
+  const teamAllocMgrFilter = searchParams.get('teamAllocMgrFilter') ? searchParams.get('teamAllocMgrFilter')!.split(',') : null;
+  const orgFilter = searchParams.get('orgFilter') ? searchParams.get('orgFilter')!.split(',') : null;
 
   // Validate required params
   if (!startDate || !endDate || !bucket) {
@@ -25,7 +31,17 @@ export async function GET(
   }
 
   try {
-    const rawSQL = allowedQueries[queryKey](startDate, endDate, bucket);
+    const rawSQL = allowedQueries[queryKey](
+      startDate,
+      endDate,
+      bucket,
+      teamFilter,
+      teamAllocMgrFilter,
+      orgFilter,
+      projectTypeFilter,
+      projectTypeGroupFilter,
+      portfolioFilter,
+    );
     const result = await pool.query(rawSQL);
     let filteredRows = result.rows;
   

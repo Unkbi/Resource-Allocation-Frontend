@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect } from 'react';
@@ -11,5 +10,5 @@ export default function NotFound() {
     router.replace('/dashboard');
   }, [router]);
 
-  return null; 
+  return null;
 }

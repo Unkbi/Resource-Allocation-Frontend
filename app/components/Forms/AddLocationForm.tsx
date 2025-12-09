@@ -1,19 +1,18 @@
 'use client';
 
-import { Box, TextField, Autocomplete } from '@mui/material';
-import { useState } from 'react';
+import { Box, TextField } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import StyledLabel from '../Label/StyledLabel';
-import { Location,LocationGroup } from '@/app/types';
+import { Location, LocationGroup } from '@/app/types';
 import { FormikProps } from 'formik';
-import {
-  StyledCommentInput,
-  StyledFormInfoText,
-  StyledInput,
-} from '../Input/StyledInput';
+import { StyledInput } from '../Input/StyledInput';
+import { RootState } from '@/app/redux/store';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import StyledAutocomplete from '../Select/Autocomplete';
 
 interface FormValues {
-  Location: Location | null;
+  Name: Location | null;
   LocationGroup: string;
   Status: string;
   [key: string]: any;
@@ -21,27 +20,64 @@ interface FormValues {
 
 interface AddLocationFormProps {
   formikProps: FormikProps<FormValues>;
+  setFormValue: (value: any) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
-const AddLocationForm = ({ formikProps }: AddLocationFormProps) => {
+const AddLocationForm = ({
+  formikProps,
+  setFormValue,
+  permissions,
+}: AddLocationFormProps) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
-  const { resources } = useSelector((state: any) => state.resources);
-  // const roles: Role[] = useSelector((state: any) => state.rbac.roles);
-  const location_group : any = [];
-  const [locationName, setLocationName] = useState('');
-  const commonAutocompleteStyles = {
-    '& .MuiInputBase-root': { fontSize: '12px' },
-    '& .MuiAutocomplete-tag': { fontSize: '10px', padding: '2px 5px' },
-    '& input': { fontSize: '12px' },
-    '& .MuiAutocomplete-popper': { fontSize: '12px' },
-    '& .MuiAutocomplete-option': { fontSize: '12px', padding: '4px 10px' },
-  };
+  const { locationGroups } = useSelector(
+    (state: RootState) => state.allSettings
+  );
+  const { initialData, formType } = useSelector(
+    (state: RootState) => state.globalDialog.formState
+  );
+  const [readOnly, setReadOnly] = useState(true);
+  const [locationGroupName, setLocationGroupName] = useState<LocationGroup[]>(
+    []
+  );
 
-  const handleAutocompleteChange =
-    (field: string) => (_event: any, newValue: any) => {
-      setFieldValue(field, newValue || '');
-    };
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_location' && !permissions['WorkLocation']?.u) ||
+        (formType === 'add_location' && !permissions['WorkLocation']?.c)
+    );
+  }, []);
+
+  useEffect(() => {
+    setLocationGroupName(locationGroups || []);
+
+    if (initialData) {
+      const matchedLocationGroup = locationGroups.find(
+        LGrp => LGrp.Name === initialData.LocationGroup
+      );
+
+      const rowData = {
+        Name: initialData.Name || '',
+        LocationGroup: matchedLocationGroup?.Id || '',
+        Status: initialData.Status || 'Active',
+      };
+      setFormValue(rowData);
+      formikProps.resetForm({ values: rowData });
+      formikProps.setTouched({});
+    }
+  }, [locationGroups, initialData]);
+
+  const statusOptions = [
+    { value: 'Active', label: 'Active' },
+    { value: 'Inactive', label: 'Inactive' },
+  ];
+
+  const locationGroupNameOptions =
+    locationGroupName?.map((locationGroup: LocationGroup) => ({
+      value: locationGroup.Id,
+      label: locationGroup.Name ?? '',
+    })) || [];
 
   return (
     <Box>
@@ -50,19 +86,25 @@ const AddLocationForm = ({ formikProps }: AddLocationFormProps) => {
           Location Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
-                  as={TextField}
-                  name="Location"
-                  placeholder="Enter Name "
-                  fullWidth
-                  onChange={e => {
-                    handleChange(e);
-                    setLocationName(e.target.value);
-                  }}
-                  onBlur={handleBlur}
-                  value={values.Location || ''}
-                  error={touched.Location && Boolean(errors.Location)}
-                  helperText={touched.Location && errors.Location}
-                />
+          disabled={readOnly}
+          readOnly={readOnly}
+          as={TextField}
+          name="Name"
+          placeholder="Enter Name "
+          fullWidth
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            handleChange(e);
+            setFieldValue('Name', e.target.value);
+          }}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
+          value={values.Name || ''}
+          error={touched.Name && Boolean(errors.Name)}
+          helperText={touched.Name && errors.Name}
+        />
       </Box>
 
       <Box sx={{ pb: 2 }}>
@@ -70,52 +112,29 @@ const AddLocationForm = ({ formikProps }: AddLocationFormProps) => {
           {' '}
           Location Group <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
-        <Autocomplete
-          sx={commonAutocompleteStyles}
-          size="small"
-          options={location_group}
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="LocationGroup"
+          label="Select Location Group"
+          options={locationGroupNameOptions}
           value={values.LocationGroup || ''}
-          onChange={handleAutocompleteChange('LocationGroup')}
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder="Select Location Group"
-              variant="outlined"
-              error={touched.LocationGroup && Boolean(errors.LocationGroup)}
-              helperText={touched.LocationGroup && errors.LocationGroup}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-              }}
-            />
-          )}
+          formikProps={formikProps}
         />
       </Box>
 
       <Box sx={{ pb: 2 }}>
         <StyledLabel>Status</StyledLabel>
-        <Autocomplete
-          disableClearable
-          sx={commonAutocompleteStyles}
-          size="small"
-          options={['Active']}
-          value={values.Status || 'Active'}
-          onChange={handleAutocompleteChange('Status')}
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder="Select Status"
-              variant="outlined"
-              error={touched.Status && Boolean(errors.Status)}
-              helperText={touched.Status && errors.Status}
-              FormHelperTextProps={{
-                sx: { fontSize: '12px', textAlign: 'left', ml: 0 },
-              }}
-            />
-          )}
+        <StyledAutocomplete
+          disabled={readOnly}
+          name="Status"
+          label="Status"
+          options={statusOptions}
+          value={values.Status || ''}
+          formikProps={formikProps}
         />
       </Box>
     </Box>
   );
 };
 
-export default AddLocationForm;
+export default withRBAC(AddLocationForm, ['WorkLocation']);

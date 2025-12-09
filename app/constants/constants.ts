@@ -230,6 +230,7 @@ export const PUBLIC_ROUTES = [
   '/signup-otp',
   '/reset-password',
   '/callback',
+  '/invite',
 ];
 
 export const DEFAULT_LOCALE = 'en-gb';
@@ -248,3 +249,45 @@ export const PORTFOLIO_DISPLAY_NAME = 'Portfolio';
 export const PORTFOLIO_DISPLAY_NAME_PLURAL = 'Portfolios';
 
 export const PORTFOLIO_BLANK = 'Blank';
+
+export const RESOURCE_PAGE_VALID_TABS = [
+  'resource',
+  'teams',
+  'organizations',
+  'rates',
+] as const;
+
+export const PROJECT_PAGE_VALID_TABS = [
+  'project',
+  'portfolio',
+  'businessImpact',
+] as const;
+
+export const PROJECT_TYPE_VALID_TABS = ['project-types', 'project-types-group'];
+
+export const LOCATION_VALID_TABS = ['location', 'location-group'];
+
+export const ALLOCATION_SETTINGS_VALID_TABS = [
+  'color-settings',
+  'alerts-threshold',
+  'allocation-history',
+];
+
+export const ACCESS_MANAGEMENT_VALID_TABS = [
+  'role-assignments',
+  'role-management',
+  'privilege-assignments',
+  'privilege-management',
+];
+
+//creating array  constant for storing project active and inactive status
+
+export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
+
+export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused', 'Completed'];
+
+export const Resource_All_Status = ['Active', 'Inactive', 'Unassigned', 'Not-Planned', 'Pending']
+
+export const AllocationForm_Status_Filter = ['Active', 'Pending'];
+
+export const Resource_Team_Project_Status_Filter = ['Active', 'Not-Planned'];

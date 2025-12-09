@@ -2,7 +2,22 @@ import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from 'lz-string';
-import { LoginUser, UserRbac } from '../types';
+import {
+  LoginUser,
+  LoginUserPrivilege,
+  Privilege,
+  PrivilegeAssignment,
+  Project,
+  Resource,
+  RoleAssignment,
+  Team,
+  UserRbac,
+} from '../types';
+import { AdvancedFilters } from '../types/dashboardTypes';
+import {
+  getProjectsIamProjectManager,
+  getTeamsIamAllocationManager,
+} from './common';
 
 // Save access token to localStorage
 export const saveToken = (token: string): null => {
@@ -97,6 +112,35 @@ export const getLoginUserId = (user: LoginUser | null) => {
   return user.id || null;
 };
 
+export const getLoginUserFirstName = (user: LoginUser | null) => {
+  if (!user) return null;
+  return user?.firstName || '';
+};
+
+export const getLoginUserlastName = (user: LoginUser | null) => {
+  if (!user) return null;
+  return user?.lastName || '';
+};
+
+export const getLoginUserEmail = (user: LoginUser | null) => {
+  if (!user) {
+    return null;
+  }
+  return user?.username || null;
+};
+
+export const getLoginUserDetails = (user: LoginUser | null) => {
+  if (!user) {
+    return null;
+  }
+  return {
+    id: user.id,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    email: user.username || '',
+  };
+};
+
 export const getUserAttributes = (
   user: LoginUser | null,
   name: string | string[]
@@ -154,9 +198,110 @@ export const getUserDisplayName = (userId: string, users: UserRbac[]) => {
   const cleanId = userId.replace('agentlang.auth$User/', '');
   const matchedUser = users.find(u => u.id === cleanId);
 
-  if (!matchedUser) return cleanId; 
+  if (!matchedUser) return cleanId;
 
   return matchedUser.firstName && matchedUser.lastName
     ? `${matchedUser.firstName} ${matchedUser.lastName}`
     : matchedUser.email || cleanId;
 };
+
+export function buildLoginUserPrivileges(
+  user: UserRbac,
+  roleAssignments: RoleAssignment[],
+  privilegeAssignments: PrivilegeAssignment[],
+  privileges: Privilege[]
+): LoginUserPrivilege {
+  const loginUserPrivileges: LoginUserPrivilege = {};
+
+  // Step 1: find all roles assigned to the user
+  const userRoles = roleAssignments
+    .filter(ra => ra.User === `agentlang.auth$User/${user.id}`)
+    .map(ra => ra.Role);
+
+  // Step 2: find all privilegeAssignments for those roles
+  const userPrivilegeAssignments = privilegeAssignments.filter(pa =>
+    userRoles.includes(pa.Role)
+  );
+
+  // Step 3: link to privileges
+  userPrivilegeAssignments.forEach(pa => {
+    const privilege = privileges.find(
+      p => pa.Permission === p.__path__ // match by ID suffix
+    );
+    if (privilege && privilege.resourceFqName) {
+      // remove Resource/ prefix if present
+      const resourceName = privilege.resourceFqName
+        .replace(/^Resource\//, '')
+        .replace(/^agentlang.auth\//, '');
+
+      if (!loginUserPrivileges[resourceName]) {
+        loginUserPrivileges[resourceName] = {
+          c: true,
+          r: true,
+          u: true,
+          d: true,
+        };
+      } else {
+        // merge with existing permissions if already present
+        loginUserPrivileges[resourceName] = {
+          c: true,
+          r: true,
+          u: true,
+          d: true,
+        };
+      }
+    }
+  });
+
+  return loginUserPrivileges;
+}
+
+export function getResourceFromUserEmail(
+  email: string | null,
+  resources: Resource[] | null
+) {
+  if (!email || !resources) return null;
+  return resources.find(res => res.Email === email);
+}
+
+export function buildDefaultDashboardFilter(
+  initialDashboardFilters: AdvancedFilters,
+  loginUserPrivileges: LoginUserPrivilege,
+  user: LoginUser,
+  resources: Resource[],
+  projects: Project[],
+  teams: Team[]
+) {
+  const currentResource = getResourceFromUserEmail(user?.username, resources);
+  const isProjectManager =
+    getProjectsIamProjectManager(currentResource?.Id, projects).length > 0;
+  const isAllocationManager =
+    getTeamsIamAllocationManager(user?.username, resources, teams).length > 0;
+
+  if (loginUserPrivileges) {
+    const dafaultRBACFilters = {
+      ...initialDashboardFilters,
+      ...(!loginUserPrivileges?.Resource?.r && currentResource
+        ? isProjectManager
+          ? { ProjectManager: [currentResource.Id] }
+          : isAllocationManager
+            ? { AllocationManager: [currentResource.Id] }
+            : { Resource: [currentResource.Id] }
+        : {}),
+    };
+
+    // If they are ProjectManagers or AllocationMangers by default set that.
+    const defaultFilters = {
+      ...initialDashboardFilters,
+      ...(currentResource
+        ? isProjectManager
+          ? { ProjectManager: [currentResource.Id] }
+          : isAllocationManager
+            ? { AllocationManager: [currentResource.Id] }
+            : {}
+        : {}),
+    };
+    return [dafaultRBACFilters, defaultFilters];
+  }
+  return [null, null];
+}

@@ -18,6 +18,7 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import Image from 'next/image';
 import { confirmSignUpUser, performForgotPassword, resendOtp } from '@/app/redux/actions/authActions';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const MainBox = styled(Box)(({ theme }) => ({
     "& .loginLeft": {
@@ -182,6 +183,18 @@ export default function SignUpOtpPage(){
     const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
     const router = useRouter();
     const [otpError, setOtpError] = useState<string>('');
+    const [savedEmail, setSavedEmail] = useState<string>('');
+
+    useEffect(() => {
+    const reduxEmail = (signupData as any)?.email;
+    const localEmail = localStorage.getItem('signupEmail');
+    if (reduxEmail) {
+      setSavedEmail(reduxEmail);
+      localStorage.setItem('signupEmail', reduxEmail);
+    } else if (localEmail) {
+      setSavedEmail(localEmail);
+    }
+  }, [signupData]);
 
     const handleVerifyOtp = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -194,8 +207,8 @@ export default function SignUpOtpPage(){
             setOtpError('');
         }
 
-        dispatch(confirmSignUpUser({
-             email: (signupData as any)?.email,       
+        dispatch(confirmSignUpUser({    
+             email: savedEmail,   
              confirmationCode: otp.join(""),
         }));
     };
@@ -222,6 +235,13 @@ export default function SignUpOtpPage(){
    const handleResendOtp = (e: React.MouseEvent<HTMLParagraphElement>) => {
      e.preventDefault();
      dispatch(resendOtp(signupData));
+     dispatch(showToast({
+      open: true,
+      message: `OTP has been resent successfully`,
+      type: 'success',
+      position: 'bottom-left',
+       autoHideTimer: 4000,
+     }));
    };
    
    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -263,6 +283,13 @@ useEffect(() => {
   }
 }, [otpVerified, loading, error]);
 
+useEffect(() => {
+    if (otpVerified && !loading && !error) {
+      localStorage.removeItem('signupEmail'); 
+      router.push('/login');
+    }
+  }, [otpVerified, loading, error, router]);
+
     return (
         <MainBox sx={{ display: 'flex', minHeight: '100vh' }}>
             <Box display={"flex"} width={'100%'}>
@@ -281,7 +308,7 @@ useEffect(() => {
                             Verify with OTP
                         </Typography>
                         <Typography className='subHeadingText'>
-                            We've sent a verification code to {(signupData as any)?.email}
+                            We've sent a verification code to {savedEmail}
                         </Typography>
             <Box component="form" onSubmit={handleVerifyOtp} sx={{ mt: 2 }}>
               <Box

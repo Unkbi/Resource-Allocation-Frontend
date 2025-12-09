@@ -11,15 +11,20 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { filterAllocationsForSelectedProject } from '@/app/utils/allocationUtils';
 import CommonToolbar from '../../Toolbar/CommonToolbar';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface TopProjectsViewProps {
   startDate: string | null;
   endDate: string | null;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
-export default function TopProjectsView({
+function TopProjectsView({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: TopProjectsViewProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const { splitViewCurrentProject } = useSelector(
@@ -31,7 +36,8 @@ export default function TopProjectsView({
   const { setRows, ready } = useAllocationGrid('topProject');
 
   useEffect(() => {
-    if (ready && allAllocations) {
+    if (loadingPermissions) return;
+    if (permissions && permissions['Allocation'].r && ready && allAllocations) {
       setRows(
         filterAllocationsForSelectedProject(
           allAllocations || [],
@@ -39,7 +45,7 @@ export default function TopProjectsView({
         ) || []
       );
     }
-  }, [ready, allAllocations]);
+  }, [ready, allAllocations, loadingPermissions, splitViewCurrentProject]);
 
   const projectColumnConfig = [
     {
@@ -130,6 +136,17 @@ export default function TopProjectsView({
       primaryColumn: true,
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+    },
+    {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
       width: 102, // min-width without eliding.
@@ -209,16 +226,32 @@ export default function TopProjectsView({
   ];
 
   return (
-        <Box
+    <Box
       sx={{
-        height: dataProcessing ? '100vh' : 'var(--height)',
-        width: '100%',
         display: 'flex',
         flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+        overflow: 'hidden',
       }}
     >
-      <CommonToolbar />
-      <Box sx={{ flexGrow: 1 }}>
+      <Box
+        sx={{
+          flexShrink: 0,
+          borderBottom: '1px solid var(--mui-palette-divider)',
+          backgroundColor: 'var(--mui-palette-background-paper)',
+          zIndex: 10,
+        }}
+      >
+        <CommonToolbar />
+      </Box>
+      <Box
+        sx={{
+          flexGrow: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
         <AllocationGrid
           groupBy="project"
           columns={projectColumnConfig}
@@ -242,6 +275,7 @@ export default function TopProjectsView({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
@@ -265,3 +299,5 @@ export default function TopProjectsView({
     </Box>
   );
 }
+
+export default withRBAC(TopProjectsView, ['Allocation']);

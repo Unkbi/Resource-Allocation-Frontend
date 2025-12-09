@@ -10,11 +10,10 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
-  getProjectTypeColorLine,
   getResourceFromUid,
   getTotalWeeks,
   generateDateWeekMath,
@@ -45,10 +44,14 @@ import {
 import { useRouter } from 'next/navigation';
 import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectAllocationProps {
   startDate: string | null;
   endDate: string | null;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -97,9 +100,11 @@ interface DateRange {
   end?: any;
 }
 
-export default function ProjectAllocation({
+function ProjectAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: ProjectAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const router = useRouter();
@@ -109,8 +114,13 @@ export default function ProjectAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { location } = useSelector((state: RootState) => state.allSettings);
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   const dispatch: AppDispatch = useDispatch();
   const { projects } = useSelector((state: RootState) => state.projects);
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [menuProjectName, setMenuProjectName] = useState<string>('');
   const allResources = _resources || [];
@@ -127,7 +137,14 @@ export default function ProjectAllocation({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
-    if (ready) {
+    if (projectTypes.length === 0) {
+      dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -163,7 +180,7 @@ export default function ProjectAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready && allAllocations]);
+  }, [ready && allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -288,6 +305,7 @@ export default function ProjectAllocation({
             ?.FullName,
           ProjectManager: getResourceFromUid(item.ProjectManager, allResources)
             ?.FullName,
+          Type: projectTypes.find(pt => pt.Id === item.Type)?.Name || '',
         };
       });
     }
@@ -307,61 +325,60 @@ export default function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const { rowNode, api, value = '' } = params;
         const isGridTreeNode = 'children' in rowNode; // Required for Typescript
-        const row = api.getRow(rowNode.id);
-        const projectType = projects?.find(
-          project => project.Name === value
-        )?.Type;
+        if (isGridTreeNode) {
+          const row = api.getRow(rowNode?.children[0]);
 
-        const open = Boolean(anchorEl);
+          const open = Boolean(anchorEl);
 
-        const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-          event.stopPropagation();
-          setAnchorEl(event.currentTarget);
-        };
+          const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+            event.stopPropagation();
+            setAnchorEl(event.currentTarget);
+          };
 
-        const handleMenuClose = () => {
-          setAnchorEl(null);
-        };
+          const handleMenuClose = () => {
+            setAnchorEl(null);
+          };
 
-        if (isGridTreeNode && rowNode.children) {
-          const resource_count = rowNode?.children?.length || null;
-          return (
-            <>
-              <EllipsisNameCell
-                value={value as string}
-                resourceCount={resource_count}
-                onAddClick={() => handleAddClick(params)}
-                showAddIcon={true}
-                leftBorderColor={getProjectTypeColorLine(projectType || '')}
-              />
-              <IconButton
-                size="small"
-                disableRipple
-                disableFocusRipple
-                onClick={e => {
-                  e.stopPropagation();
-                  setMenuProjectName(params.value as string);
-                  setAnchorEl(e.currentTarget);
-                }}
-                sx={{
-                  mr: -1.5,
-                  padding: '0px',
-                  backgroundColor: 'transparent',
-                  '&:hover': {
+          if (isGridTreeNode && rowNode.children) {
+            const resource_count = rowNode?.children?.length || null;
+            return (
+              <>
+                <EllipsisNameCell
+                  value={value as string}
+                  resourceCount={resource_count}
+                  onAddClick={() => handleAddClick(params)}
+                  showAddIcon={true}
+                  leftBorderColor={row?.projectTypeColor}
+                />
+                <IconButton
+                  size="small"
+                  disableRipple
+                  disableFocusRipple
+                  onClick={e => {
+                    e.stopPropagation();
+                    setMenuProjectName(params.value as string);
+                    setAnchorEl(e.currentTarget);
+                  }}
+                  sx={{
+                    mr: -1.5,
+                    padding: '0px',
                     backgroundColor: 'transparent',
-                  },
-                }}
-              >
-                <MoreVertIcon sx={{ fontSize: 22 }} />
-              </IconButton>
-            </>
-          );
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                >
+                  <MoreVertIcon sx={{ fontSize: 22 }} />
+                </IconButton>
+              </>
+            );
+          }
         }
       },
     },
     {
       field: 'portfolioName',
-      headerName: PORTFOLIO_DISPLAY_NAME,
+      headerName: scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME,
       width: 148,
       type: 'string',
       headerClassName: 'secondary-header',
@@ -459,8 +476,10 @@ export default function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const WorkLocation = resource?.WorkLocation || '';
-        return <EllipsisNameCell value={WorkLocation} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {
@@ -693,6 +712,23 @@ export default function ProjectAllocation({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild.projectTypeGroup || ''} />
+        ) : null;
+      },
+    },
+    {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
       width: 110, // min-width without eliding.
@@ -833,6 +869,7 @@ export default function ProjectAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
@@ -910,3 +947,5 @@ export default function ProjectAllocation({
     </>
   );
 }
+
+export default withRBAC(ProjectAllocation, ['Allocation']);

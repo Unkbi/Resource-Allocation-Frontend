@@ -374,6 +374,15 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
     case 'Invited':
       textColor = '#2563EB';
       break;
+    case 'Not-Planned':
+      textColor = '#737373';
+      break;
+    case 'Unassigned':
+      textColor = '#E72323';
+      break;
+    case 'Pending':
+      textColor = '#5041AB';
+      break;
     case 'Created':
       textColor = '#EC9E17';
     default:

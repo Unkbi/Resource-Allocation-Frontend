@@ -1,14 +1,30 @@
 import { Box, Tabs, Tab, styled, Button } from '@mui/material';
-import { useState } from 'react';
+import { SyntheticEvent } from 'react';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
-  GridToolbarFilterButton,
-} from '@mui/x-data-grid';
+} from '@mui/x-data-grid-premium';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
-import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
+import {
+  PORTFOLIO_DISPLAY_NAME,
+  PROJECT_PAGE_VALID_TABS,
+} from '@/app/constants/constants';
 import CommonToolbar from './CommonToolbar';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import FilterButtonWithCount from './FilterButtonWithCount';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/redux/store';
+
+interface ProjectToolbarProps {
+  setFilterButtonEl?: (el: HTMLElement | null) => void;
+  value: 'project' | 'portfolio' | 'businessImpact';
+  onChange: (
+    event: SyntheticEvent,
+    newValue: 'project' | 'portfolio' | 'businessImpact'
+  ) => void;
+  permissions: Record<string, CrudPermissions>;
+}
 
 const commonButtonStyles = {
   backgroundColor: 'rgba(242, 245, 250, 0.3)',
@@ -19,7 +35,7 @@ const commonButtonStyles = {
   padding: '5px 12px',
   fontSize: '13px',
   color: 'rgb(33, 33, 33)',
-  fontFamily: theme => theme.typography.fontFamily,
+  fontFamily: (theme: any) => theme.typography.fontFamily,
   fontWeight: '600',
   textTransform: 'none',
   minWidth: '0px',
@@ -84,12 +100,25 @@ const tabTypographyStyle = {
   },
 };
 
-const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
+const ProjectToolbar = ({
+  setFilterButtonEl,
+  value,
+  onChange = () => {},
+  permissions,
+}: ProjectToolbarProps) => {
   const dispatch = useDispatch();
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
+  );
+
+  if (!PROJECT_PAGE_VALID_TABS.includes(value)) {
+    return null; // or a fallback UI
+  }
+
   const handleAddPortfolio = () => {
     dispatch(
       openDialog({
-        title: `Add ${PORTFOLIO_DISPLAY_NAME}`,
+        title: `Add ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
         submitButtonText: 'Add',
         cancelButtonText: 'Cancel',
         formType: 'add_portfolio',
@@ -121,22 +150,39 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
             flex: '1 0 0',
           }}
         >
-          <Tabs
-            value={value}
-            onChange={onChange}
-            textColor="primary"
-            indicatorColor="primary"
-            aria-label="secondary tabs example"
-          >
-            <Tab value="project" label="Projects" sx={tabTypographyStyle} />
-            <Tab value="portfolio" label="Portfolios" sx={tabTypographyStyle} />
-            <Tab
-              value="businessImpact"
-              label="Business Impact"
-              disabled
-              sx={tabTypographyStyle}
-            />
-          </Tabs>
+          {Object.keys(permissions).some(
+            resourceName => permissions[resourceName]?.r
+          ) && (
+            <Tabs
+              value={value}
+              onChange={onChange}
+              textColor="primary"
+              indicatorColor="primary"
+              aria-label="secondary tabs example"
+            >
+              {permissions['Project'].r && (
+                <Tab value="project" label="Projects" sx={tabTypographyStyle} />
+              )}
+              {permissions['Portfolio'].r && (
+                <Tab
+                  value="portfolio"
+                  label={`${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}s`}
+                  sx={tabTypographyStyle}
+                />
+              )}
+              {
+                // Sahadev : Hard Code, once this tab is developed remove Hard Code.
+                false && (
+                  <Tab
+                    value="businessImpact"
+                    label="Business Impact"
+                    disabled
+                    sx={tabTypographyStyle}
+                  />
+                )
+              }
+            </Tabs>
+          )}
         </Box>
 
         <Box className="line" sx={{ marginRight: '16px', height: '64px' }}>
@@ -152,24 +198,7 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
         >
           <Box className="filterColBlock">
             <GridToolbarContainer ref={setFilterButtonEl} sx={{ gap: '12px' }}>
-              <GridToolbarFilterButton
-                slotProps={{
-                  tooltip: { title: 'Filter' },
-                  button: {
-                    variant: 'outlined',
-                    sx: { color: '#555', borderColor: '#ddd' },
-                    startIcon: (
-                      <img
-                        src="/images/icons/newFilterPeople.svg"
-                        alt="filter"
-                        style={{ marginLeft: '8px' }}
-                      />
-                    ),
-                    className: 'columns-button',
-                    sx: commonButtonStyles,
-                  },
-                }}
-              />
+              <FilterButtonWithCount />
               <StyledGridToolbarColumnsButton
                 slotProps={{
                   tooltip: { title: 'Columns' },
@@ -187,14 +216,14 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
                   },
                 }}
               />
-              {value === 'portfolio' && (
+              {permissions['Portfolio']?.c && value === 'portfolio' && (
                 <Button
                   variant="contained"
                   color="primary"
                   onClick={handleAddPortfolio}
                   sx={portfolioButtonStyle}
                 >
-                  Add Portfolio
+                  {`Add ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`}
                 </Button>
               )}
             </GridToolbarContainer>
@@ -205,4 +234,4 @@ const ProjectToolbar = ({ setFilterButtonEl, value, onChange = () => {} }) => {
   );
 };
 
-export default ProjectToolbar;
+export default withRBAC(ProjectToolbar, ['Project', 'Portfolio']);

@@ -53,6 +53,13 @@ import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 import { StatusPill } from '@/app/components/Settings/styled';
+import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
+import { withRBAC } from '@/app/components/HOC/withRBAC';
+import RatesTable from '@/app/components/Resources/RatesTable';
+import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import { parseISO } from 'date-fns';
 
 const demoResources = {
   result: [
@@ -103,55 +110,6 @@ const PersonContainer = styled('div')(() => ({
   justifyContent: 'flex-start',
 }));
 
-// const StatusPill = styled('div')(({ theme, status }) => {
-//   let backgroundColor, textColor;
-//   switch (status) {
-//     case 'Active':
-//       backgroundColor = '#4B9F471A';
-//       textColor = '#4B9F47';
-//       break;
-//     case 'Proposed':
-//       backgroundColor = '#5041AB1A';
-//       textColor = '#5041AB';
-//       break;
-//     case 'Approved':
-//       backgroundColor = '#2772F01A';
-//       textColor = '#2772F0';
-//       break;
-//     case 'Paused':
-//       backgroundColor = '#E6521F1A';
-//       textColor = '#E6521F';
-//       break;
-//     case 'Completed':
-//       backgroundColor = '#F5B5441A';
-//       textColor = '#F5B544';
-//       break;
-//     case 'Inactive':
-//       backgroundColor = '#FCF0ED';
-//       textColor = '#C73732';
-//       break;
-//     default:
-//       backgroundColor = '#e0e0e0';
-//       textColor = '#6c757d';
-//   }
-
-//   return {
-//     display: 'inline-flex',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     borderRadius: '4px',
-//     fontFamily: theme.typography.fontFamily,
-//     fontsize: '12px',
-//     fontStyle: 'normal',
-//     fontweight: 400,
-//     lineheight: '16px',
-//     width: '86px',
-//     height: '28px',
-//     backgroundColor,
-//     color: textColor,
-//   };
-// });
-
 const menuItemStyle = {
   '&:hover': {
     backgroundColor: '#142B51B2',
@@ -165,7 +123,14 @@ const menuItemStyle = {
   lineHeight: '18px',
 };
 
-export default function Resources() {
+const accessMap = [
+  { key: 'Resource', value: 'resource' },
+  { key: 'Team', value: 'teams' },
+  { key: 'Organization', value: 'organizations' },
+  { key: 'EmployeeRate', value: 'rates' },
+];
+
+function Resources({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
   const apiRef = useGridApiRef();
   const { resources, updating, loading } = useSelector(
@@ -182,6 +147,7 @@ export default function Resources() {
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
   );
+  const { location } = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [rows, setRows] = useState(allResourcesDetail || null);
@@ -200,23 +166,41 @@ export default function Resources() {
   const { id: highlightedRowId } = useSelector(state => state.highlightedRow);
   const router = useRouter();
   const searchParams = useSearchParams();
-  // const initialTab = searchParams.get('tab');
-  // const [value, setValue] = useState(initialTab || 'resource');
-  // useEffect(() => {
-  //   const newTab = searchParams.get('tab');
-  //   if (newTab && newTab !== value) {
-  //     setValue(newTab);
-  //   }
-  // }, [searchParams]);
-  const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'];
   const initialTab = searchParams.get('tab');
   const [value, setValue] = useState(
-    VALID_TABS.includes(initialTab) ? initialTab : 'resource'
+    RESOURCE_PAGE_VALID_TABS.includes(initialTab) ? initialTab : 'resource'
   );
 
   useEffect(() => {
+    if (loadingPermissions) return;
+
+    const accessible = accessMap.filter(({ key }) => permissions[key]?.r);
+
+    if (accessible.length === 0) {
+      return;
+    }
+
+    const tab = searchParams.get('tab');
+    const firstAccessible = accessible[0].value;
+    const isAccessible = accessible.some(({ value }) => value === tab);
+
+    if (!tab || !RESOURCE_PAGE_VALID_TABS.includes(tab) || !isAccessible) {
+      router.replace(`/people?tab=${firstAccessible}`);
+      return;
+    }
+
+    if (tab !== value) {
+      setValue(tab);
+    }
+  }, [loadingPermissions]);
+
+  useEffect(() => {
     const newTab = searchParams.get('tab');
-    if (newTab && VALID_TABS.includes(newTab) && newTab !== value) {
+    if (
+      newTab &&
+      RESOURCE_PAGE_VALID_TABS.includes(newTab) &&
+      newTab !== value
+    ) {
       setValue(newTab);
     }
   }, [searchParams]);
@@ -231,7 +215,16 @@ export default function Resources() {
       filterable: true,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog('Edit Resource', 'edit_resource', params.row);
+          permissions['Resource']?.u
+            ? handleOpenDialog('Edit Resource', 'edit_resource', params.row)
+            : handleOpenDialog(
+                `Resource: ${params.value}`,
+                'edit_resource',
+                params.row,
+                {
+                  readOnly: true,
+                }
+              );
         };
 
         return (
@@ -309,17 +302,6 @@ export default function Resources() {
       },
     },
     {
-      field: 'WorkLocation',
-      headerName: 'Work Location',
-      flex: 1,
-      minWidth: 150,
-      renderCell: params => {
-        params.value && (
-          <EllipsisNameCell value={params.value} showAvatar={false} />
-        );
-      },
-    },
-    {
       field: 'PhoneNumber',
       headerName: 'Phone Number',
       flex: 1,
@@ -339,6 +321,17 @@ export default function Resources() {
         params.value && (
           <EllipsisNameCell value={params.value} showAvatar={false} />
         ),
+    },
+    {
+      field: 'WorkLocation',
+      headerName: 'Work Location',
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        params.value && (
+          <EllipsisNameCell value={params.value} showAvatar={false} />
+        );
+      },
     },
     {
       field: 'HRLevel',
@@ -401,7 +394,7 @@ export default function Resources() {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -417,7 +410,7 @@ export default function Resources() {
       minWidth: 120,
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -439,6 +432,7 @@ export default function Resources() {
           status && (
             <Box
               sx={{
+                height: '100%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -446,59 +440,65 @@ export default function Resources() {
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                  sx={{
-                    width: 350,
-                    height: 175,
-                    flexShrink: 0,
-                    paddingTop: '2px',
-                    paddingBottom: '4px',
-                  }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog(
-                        'Edit Resource',
-                        'edit_resource',
-                        params.row
-                      );
-                    }}
-                    sx={menuItemStyle}
+              {(permissions['Resource']?.u || permissions['Resource']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
                   >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
 
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setDeleteTarget({
-                        id: params.row.Id,
-                        name: params.row.FullName,
-                      });
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    sx={{
+                      width: 350,
+                      height: 175,
+                      flexShrink: 0,
+                      paddingTop: '2px',
+                      paddingBottom: '4px',
                     }}
-                    sx={menuItemStyle}
                   >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </Box>
+                    {permissions['Resource']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Resource',
+                            'edit_resource',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['Resource']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setDeleteTarget({
+                            id: params.row.Id,
+                            name: params.row.FullName,
+                          });
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -516,7 +516,16 @@ export default function Resources() {
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog('Edit Team', 'edit_team', params.row);
+          permissions['Team']?.u
+            ? handleOpenDialog('Edit Team', 'edit_team', params.row)
+            : handleOpenDialog(
+                `Team: ${params.value}`,
+                'edit_team',
+                params.row,
+                {
+                  readOnly: true,
+                }
+              );
         };
 
         return (
@@ -592,6 +601,7 @@ export default function Resources() {
           status && (
             <Box
               sx={{
+                height: '100%',
                 paddingLeft: '20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -599,49 +609,64 @@ export default function Resources() {
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog('Edit Team', 'edit_team', params.row);
-                    }}
-                    sx={menuItemStyle}
-                  >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
-
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setDeleteTarget({
-                        id: params.row.Id,
-                        name: params.row.Team,
-                        type: 'Team',
-                      });
-                    }}
-                    sx={menuItemStyle}
-                  >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </Box>
+              {(permissions['Team']?.u || permissions['Team']?.d) && (
+                <Box>
+                  <>
+                    <IconButton
+                      size="small"
+                      onClick={e => handleMenuClick(e, params.row.id)}
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={Boolean(anchorEl) && selectedRow === params.row.id}
+                      onClose={handleMenuClose}
+                      anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                      transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                    >
+                      {permissions['Team']?.u && (
+                        <MenuItem
+                          onClick={() => {
+                            handleMenuClose();
+                            handleOpenDialog(
+                              'Edit Team',
+                              'edit_team',
+                              params.row
+                            );
+                          }}
+                          sx={menuItemStyle}
+                        >
+                          <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                          Edit
+                        </MenuItem>
+                      )}
+                      {permissions['Team']?.d && (
+                        <MenuItem
+                          onClick={() => {
+                            setDeleteDialogOpen(true);
+                            handleMenuClose();
+                            setDeleteTarget({
+                              id: params.row.Id,
+                              name: params.row.Team,
+                              type: 'Team',
+                            });
+                          }}
+                          sx={menuItemStyle}
+                        >
+                          <DeleteIcon
+                            sx={{ fontSize: 18, marginRight: '8px' }}
+                          />
+                          Delete
+                        </MenuItem>
+                      )}
+                    </Menu>
+                  </>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -652,13 +677,22 @@ export default function Resources() {
   const employeeRatesColumns = [
     {
       field: 'WorkLocation',
-      headerName: 'Location',
+      headerName: 'Work Location',
       minWidth: 220,
       headerAlign: 'left',
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog('Edit Rate', 'edit_rates', params.row);
+          permissions['EmployeeRate']?.u
+            ? handleOpenDialog('Edit Rate', 'edit_rates', params.row)
+            : handleOpenDialog(
+                `Rate: ${params.value}`,
+                'edit_rates',
+                params.row,
+                {
+                  readOnly: true,
+                }
+              );
         };
         return (
           <Box
@@ -724,7 +758,7 @@ export default function Resources() {
       headerAlign: 'left',
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -744,7 +778,7 @@ export default function Resources() {
       headerAlign: 'left',
       renderCell: params => {
         if (params && params.value) {
-          const date = new Date(params.value);
+          const date = parseISO(params.value);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -768,6 +802,7 @@ export default function Resources() {
           status && (
             <Box
               sx={{
+                height: '100%',
                 paddingLeft: '20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -775,49 +810,60 @@ export default function Resources() {
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog('Edit Rate', 'edit_rates', params.row);
-                    }}
-                    sx={menuItemStyle}
+              {(permissions['EmployeeRate']?.u ||
+                permissions['EmployeeRate']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
                   >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
 
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setRatesDelete({
-                        id: params.row.Id,
-                        WorkLocation: params.row.WorkLocation,
-                        HRLevel: params.row.HRLevel,
-                      });
-                    }}
-                    sx={menuItemStyle}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                   >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </Box>
+                    {permissions['EmployeeRate']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Rate',
+                            'edit_rates',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['EmployeeRate']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setRatesDelete({
+                            id: params.row.Id,
+                            WorkLocation: params.row.WorkLocation,
+                            HRLevel: params.row.HRLevel,
+                          });
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -835,11 +881,20 @@ export default function Resources() {
       hideable: false,
       renderCell: params => {
         const handleNameClick = () => {
-          handleOpenDialog(
-            'Edit Organization',
-            'edit_organization',
-            params.row
-          );
+          permissions['Organization']?.u
+            ? handleOpenDialog(
+                'Edit Organization',
+                'edit_organization',
+                params.row
+              )
+            : handleOpenDialog(
+                `Organization: ${params.value}`,
+                'edit_organization',
+                params.row,
+                {
+                  readOnly: true,
+                }
+              );
         };
 
         return (
@@ -880,6 +935,7 @@ export default function Resources() {
           status && (
             <Box
               sx={{
+                height: '100%',
                 paddingLeft: '20px',
                 display: 'flex',
                 alignItems: 'center',
@@ -887,53 +943,60 @@ export default function Resources() {
               }}
             >
               <StatusPill status={status}>{status}</StatusPill>
-              <Box>
-                <IconButton
-                  size="small"
-                  onClick={e => handleMenuClick(e, params.row.id)}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl) && selectedRow === params.row.id}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      handleOpenDialog(
-                        'Edit Organization',
-                        'edit_organization',
-                        params.row
-                      );
-                    }}
-                    sx={menuItemStyle}
+              {(permissions['Organization']?.u ||
+                permissions['Organization']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
                   >
-                    <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Edit
-                  </MenuItem>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
 
-                  <MenuItem
-                    onClick={() => {
-                      setDeleteDialogOpen(true);
-                      handleMenuClose();
-                      setDeleteTarget({
-                        id: params.row.Id,
-                        name: params.row.Name,
-                        type: 'organizations',
-                      });
-                    }}
-                    sx={menuItemStyle}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                   >
-                    <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
-                    Delete
-                  </MenuItem>
-                </Menu>
-              </Box>
+                    {permissions['Organization']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Organization',
+                            'edit_organization',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['Organization']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setDeleteTarget({
+                            id: params.row.Id,
+                            name: params.row.Name,
+                            type: 'organizations',
+                          });
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
             </Box>
           )
         );
@@ -983,6 +1046,9 @@ export default function Resources() {
     if (!organisations || organisations.length === 0) {
       dispatch({ type: FETCH_ORGANISATIONS });
     }
+    if (!location || location?.length === 0) {
+      dispatch({ type: FETCH_LOCATION });
+    }
   }, []);
 
   const modifyData = data => {
@@ -993,6 +1059,9 @@ export default function Resources() {
           id: item?.Resource?.Id,
           Team: item?.Team?.Name || '',
           Organization: item?.Organization?.Name || '',
+          WorkLocation:
+            location?.find(loc => loc.Id === item?.Resource?.WorkLocation)
+              ?.Name || '',
         };
       });
     }
@@ -1007,6 +1076,21 @@ export default function Resources() {
         Team: item.Name,
         AllocationManager: item.AllocationManager,
         Status: item.Status,
+      }));
+    }
+    return [];
+  };
+
+  const modifyRatesData = data => {
+    if (data) {
+      const filteredData = data.filter(loc => {
+        return location?.some(setting => setting.Id === loc.WorkLocation);
+      });
+      return filteredData.map(item => ({
+        ...item,
+        id: item.Id,
+        WorkLocation:
+          location?.find(loc => loc.Id === item.WorkLocation)?.Name || '',
       }));
     }
     return [];
@@ -1137,7 +1221,7 @@ export default function Resources() {
               })
             );
           } else {
-            dispatch(deleteTeam({teamId}));
+            dispatch(deleteTeam({ teamId }));
             dispatch(fetchAllTeams());
             dispatch(
               showToast({
@@ -1314,7 +1398,7 @@ export default function Resources() {
     );
   };
 
-  const handleOpenDialog = (title, formType, row) => {
+  const handleOpenDialog = (title, formType, row, dialogOptions = {}) => {
     dispatch(
       openDialog({
         title: title,
@@ -1322,6 +1406,7 @@ export default function Resources() {
         cancelButtonText: 'Cancel',
         formType: formType,
         initialData: row,
+        ...dialogOptions,
       })
     );
   };
@@ -1339,7 +1424,7 @@ export default function Resources() {
   const onChange = (event, newValue) => {
     setValue(newValue);
 
-    const tabParam = newValue === 'resource' ? '' : `?tab=${newValue}`;
+    const tabParam = `?tab=${newValue}`;
     const newUrl = `/people${tabParam}`;
     router.replace(newUrl, { scroll: false });
   };
@@ -1349,7 +1434,12 @@ export default function Resources() {
       case 'resource':
         return (
           <ResourceTable
-            loading={loading || dataProcessing || allResourcesDetailLoading}
+            loading={
+              loading ||
+              dataProcessing ||
+              allResourcesDetailLoading ||
+              loadingPermissions
+            }
             columns={columns}
             rows={modifyData(rows)}
             apiRef={apiRef}
@@ -1360,7 +1450,7 @@ export default function Resources() {
       case 'teams':
         return (
           <TeamsTable
-            loading={loading || dataProcessing}
+            loading={loading || dataProcessing || loadingPermissions}
             columns={teamColumns}
             rows={modifyTeamData(teamRows) || []}
             apiRef={apiRef}
@@ -1383,7 +1473,7 @@ export default function Resources() {
       case 'organizations':
         return (
           <OrganisationsTable
-            loading={allOrganizationsLoading}
+            loading={allOrganizationsLoading || loadingPermissions}
             columns={organizationColumns}
             rows={organisations.map((org, index) => ({
               Id: org.Id,
@@ -1398,15 +1488,10 @@ export default function Resources() {
         );
       case 'rates':
         return (
-          <TeamsTable
-            loading={employeeRatesLoading}
+          <RatesTable
+            loading={employeeRatesLoading || loadingPermissions}
             columns={employeeRatesColumns}
-            rows={
-              employeeRates?.map(emp => ({
-                ...emp,
-                id: emp.Id,
-              })) || []
-            }
+            rows={modifyRatesData(employeeRates) || []}
             apiRef={apiRef}
             value={value}
             onChange={onChange}
@@ -1417,7 +1502,9 @@ export default function Resources() {
     }
   };
 
-  return (
+  return loadingPermissions ? (
+    <LoadingScreen />
+  ) : accessMap.some(tab => permissions[tab.key].r) ? (
     <Box
       sx={{
         backgroundColor: '#fff',
@@ -1441,5 +1528,14 @@ export default function Resources() {
         .
       </ConfirmDialog>
     </Box>
+  ) : (
+    <ErrorPage type={'accessDenied'} redirectPath="/dashboard" />
   );
 }
+
+export default withRBAC(Resources, [
+  'Resource',
+  'Team',
+  'Organization',
+  'EmployeeRate',
+]);

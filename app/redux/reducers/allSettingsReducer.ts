@@ -10,6 +10,10 @@ const initialState: AllSettings = {
   allocationTheme: [],
   projectTypes: [],
   projectTypeGroups: [],
+  location: [],
+  locationGroups: [],
+  users: [],
+  userResources: [],
   scalarSettings: null,
   loading: false,
   error: null,
@@ -27,6 +31,14 @@ const allSettingsSlice = createSlice({
       state.projectTypeGroups = formatAPIResponse(
         'ProjectTypeGroup',
         action.payload.ProjectTypeGroup || []
+      );
+      state.location = formatAPIResponse(
+        'WorkLocation',
+        action.payload.WorkLocations || []
+      );
+      state.locationGroups = formatAPIResponse(
+        'WorkLocationGroup',
+        action.payload.WorkLocationGroup || []
       );
 
       const scalarSettingArr = formatAPIResponse(
@@ -79,6 +91,83 @@ const allSettingsSlice = createSlice({
         };
       }
     },
+    setLocation: (state, action) => {
+      state.location = formatAPIResponse('WorkLocation', action.payload);
+    },
+    clearLocation: state => {
+      state.location = [];
+    },
+    updateLocation: (state, action) => {
+      const updatedLocation = action.payload;
+      if (!state.location) return;
+      const index = state.location.findIndex(
+        location => location.Id === updatedLocation.Id
+      );
+      if (index !== -1) {
+        state.location[index] = {
+          ...state.location[index],
+          ...updatedLocation,
+        };
+      }
+    },
+    setLocationGroup: (state, action) => {
+      state.locationGroups = formatAPIResponse(
+        'WorkLocationGroup',
+        action.payload
+      );
+    },
+    clearLocationGroups: state => {
+      state.locationGroups = [];
+    },
+    updateLocationGroup: (state, action) => {
+      const updatedLocationGroup = action.payload;
+      if (!state.locationGroups) return;
+      const index = state.locationGroups.findIndex(
+        locationGroup => locationGroup.Id === updatedLocationGroup.Id
+      );
+      if (index !== -1) {
+        state.locationGroups[index] = {
+          ...state.locationGroups[index],
+          ...updatedLocationGroup,
+        };
+      }
+    },
+    setUsers: (state, action) => {
+      state.users = formatAPIResponse('User', action.payload);
+    },
+    clearUsers: state => {
+      state.users = [];
+    },
+    updateUsers: (state, action) => {
+      const updatedUser = action.payload;
+      if (!state.users) return;
+      const index = state.users.findIndex(user => user.AppId === updatedUser.AppId);
+      if (index !== -1) {
+        state.users[index] = {
+          ...state.users[index],
+          ...updatedUser,
+        };
+      }
+    },
+    setUserResources: (state, action) => {
+      state.userResources = formatAPIResponse('Resource', action.payload);
+    },
+    clearUserResources: state => {
+      state.userResources = [];
+    },
+    updateUserResources: (state, action) => {
+      const updatedUserResource = action.payload;
+      if (!state.userResources) return;
+      const index = state.userResources.findIndex(
+        resource => resource.Id === updatedUserResource.Id
+      );
+      if (index !== -1) {
+        state.userResources[index] = {
+          ...state.userResources[index],
+          ...updatedUserResource,
+        };
+      }
+    },
     setScalarSettings: (state, action) => {
       const newSettings = formatAPIResponse(
         'ScalarSetting',
@@ -118,7 +207,19 @@ export const {
   updateProjectTypeGroup,
   setScalarSettings,
   clearScalarSettings,
+  setLocation,
+  clearLocation,
+  updateLocation,
+  setLocationGroup,
+  clearLocationGroups,
+  updateLocationGroup,
   setLoading,
   setError,
+  setUsers,
+  clearUsers,
+  updateUsers,
+  setUserResources,
+  clearUserResources,
+  updateUserResources,
 } = allSettingsSlice.actions;
 export default allSettingsSlice.reducer;

@@ -52,7 +52,19 @@ const CustomTextField = styled(TextField, {
       color: '#757575',
       opacity: 1,
     },
+    '&.Mui-disabled': {
+      //@ts-ignore
+      backgroundColor: theme.palette.readonly?.main,
+      '& .MuiInputBase-input': {
+        borderColor: 'rgba(214, 220, 225, 1) !important',
+        //@ts-ignore
+        color: theme.palette.readonly?.contrastText,
+        //@ts-ignore
+        WebkitTextFillColor: theme.palette.readonly?.contrastText,
+      },
+    },
   },
+
   '& .MuiIconButton-root': {
     backgroundColor: 'transparent !important',
     '&:hover': {
@@ -84,6 +96,7 @@ interface CustomDatePickerProps {
     ) => void;
     values: Record<string, any>;
   };
+  readOnly?: boolean;
 }
 
 export default function CustomDatePicker({
@@ -97,6 +110,7 @@ export default function CustomDatePicker({
   title,
   isRequired = false,
   onChange,
+  readOnly = false,
 }: CustomDatePickerProps) {
   const { setFieldValue, values } = formikProps;
   const [open, setOpen] = React.useState(false);
@@ -117,13 +131,16 @@ export default function CustomDatePicker({
   let minDate: Dayjs | undefined = undefined;
   let maxDate: Dayjs | undefined = undefined;
 
-  if (name === 'StartDate') {
-    const end = values.EndDate ? dayjs(values.EndDate) : null;
+  const startField = values.StartDate || values.ValidityStartDate;
+  const endField = values.EndDate || values.ValidityEndDate;
+ 
+  if (name === 'StartDate' || name === 'ValidityStartDate') {
+    const end = endField ? dayjs(endField) : null;
     maxDate = end?.isValid() ? end.startOf('day') : undefined;
   }
 
-  if (name === 'EndDate') {
-    const start = values.StartDate ? dayjs(values.StartDate) : dayjs();
+  if (name === 'EndDate' || name === 'ValidityEndDate') {
+    const start = startField ? dayjs(startField) : dayjs();
     minDate = start.startOf('day');
     maxDate = start.add(1, 'year');
   }
@@ -143,6 +160,7 @@ export default function CustomDatePicker({
           </StyledLabel>
         </Box>
         <DatePicker
+          disabled={readOnly}
           displayWeekNumber
           format="MM/DD/YYYY"
           value={value ? dayjs(value) : null}
@@ -150,6 +168,7 @@ export default function CustomDatePicker({
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
+          minDate={minDate}
           slots={{
             textField: CustomTextField,
             openPickerIcon: () => (
@@ -172,7 +191,7 @@ export default function CustomDatePicker({
               : {},
             textField: {
               onBlur: () => formikProps.setFieldTouched(name, true),
-              placeholder,
+              placeholder: readOnly && !value ? '' : placeholder,
               error,
               onClick: handleInputClick,
               InputProps: {

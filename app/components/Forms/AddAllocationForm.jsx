@@ -25,6 +25,7 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { useDispatch } from 'react-redux';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { getProjectRangeWarnings } from './ValidationSchema';
+import { AllocationForm_Status_Filter, PROJECT_ACTIVE_STATUS } from '@/app/constants/constants';
 
 const AddAllocationForm = ({ formikProps, setFormValue }) => {
   const { values, handleChange, handleBlur, setFieldValue } = formikProps;
@@ -88,18 +89,25 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
   }, [initialData, projects]);
 
   useEffect(() => {
-    const avaiableProjects = projects?.map(project => ({
-      value: project.Id,
-      label: project.Name,
-    }));
+    const avaiableProjects = projects
+      ?.filter(project => PROJECT_ACTIVE_STATUS.includes(project.Status))
+      ?.sort((a, b) => a.Name.localeCompare(b.Name))
+      ?.map(project => ({
+        value: project.Id,
+        label: project.Name,
+      }));
     setProjectOptions(avaiableProjects);
   }, [projects]);
 
   const resourceTypeOptions =
-    resources &&
-    resources?.map(resource => {
-      return { value: resource.Id, label: resource.FullName };
-    });
+    resources
+    ?.filter(resource => AllocationForm_Status_Filter.includes(resource.Status))
+    ?.sort((a, b) => a.FullName.localeCompare(b.FullName))
+    ?.map(resource => ({
+      value: resource.Id,
+      label: resource.FullName,
+    })) || [];
+
 
   const handleCapacityChange = event => {
     const value = event.target.value;
