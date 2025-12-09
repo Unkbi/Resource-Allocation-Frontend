@@ -834,7 +834,7 @@ export default function ExecutiveDashboardPage() {
                     color: 'rgba(0, 0, 0, 0.6)',
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1108,7 +1108,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1180,27 +1180,26 @@ export default function ExecutiveDashboardPage() {
           const config = useResponsiveChart(dimensions, 'bar');
 
           // Define project type categories with consistent colors
-          const projectTypeCategories = [
-            { key: 'Run', label: 'Run', color: '#5B7FFF' },
-            { key: 'Grow', label: 'Grow', color: '#FFD666' },
-            { key: 'Transform', label: 'Transform', color: '#FF9966' },
-          ];
+          const projectTypeColors = {
+            Run: '#5B7FFF',
+            Grow: '#FFD666',
+            Transform: '#FF9966',
+          };
 
-          // Extract week labels from data
-          const weekLabels = (activeProjectsByType || []).map(
-            item => item.week
-          );
+          // Sort data in Transform -> Grow -> Run order (create copy first)
+          const groupOrder = ['Transform', 'Grow', 'Run'];
+          const sortedData = [...(activeProjectsByType || [])].sort((a, b) => {
+            const aIdx = groupOrder.indexOf(a._type);
+            const bIdx = groupOrder.indexOf(b._type);
+            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+          });
 
-          // Create series data for each project type category
-          const seriesData = projectTypeCategories.map(category => ({
-            label: category.label,
-            id: category.key,
-            data: (activeProjectsByType || []).map(item =>
-              Number(item[category.key] || 0)
-            ),
-            color: category.color,
-            stack: 'total',
-          }));
+          // Extract labels and counts
+          const projectTypeLabels = sortedData.map(item => item._type);
+          const projectTypeCounts = sortedData.map(item => Number(item.count || 0));
+
+          // Assign colors based on type
+          const barColors = sortedData.map(item => projectTypeColors[item._type] || '#CCCCCC');
 
           return (
             <Box
@@ -1236,36 +1235,39 @@ export default function ExecutiveDashboardPage() {
                   xAxis={[
                     {
                       scaleType: 'band',
-                      data: weekLabels,
+                      data: projectTypeLabels,
                       categoryGapRatio: 0.5,
                       barGapRatio: 0.2,
                     },
                   ]}
-                  series={seriesData}
+                  yAxis={[
+                    {
+                      label: 'No. of Active Projects',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  series={[
+                    {
+                      data: projectTypeCounts,
+                      id: 'activeProjects',
+                      label: 'Active Projects',
+                    },
+                  ]}
                   width={config.width}
                   height={config.height}
+                  grid={{ horizontal: true }}
                   margin={{
                     top: 10,
                     bottom: 40,
                     left: 40,
                     right: 10,
                   }}
+                  colors={barColors}
                   slotProps={{
                     legend: {
-                      direction: 'row',
-                      position: {
-                        vertical: 'bottom',
-                        horizontal: 'middle',
-                      },
-                      padding: -5,
-                      itemMarkWidth: 12,
-                      itemMarkHeight: 12,
-                      markGap: 6,
-                      itemGap: 16,
-                      labelStyle: {
-                        fontSize: dimensions.width < 400 ? 11 : 12,
-                        fontWeight: 500,
-                      },
+                      hidden: true,
                     },
                   }}
                   sx={{
@@ -1611,7 +1613,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
               <Box

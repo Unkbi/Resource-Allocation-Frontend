@@ -45,15 +45,22 @@ export default function MuiDashboardCard({
           alignItems: "center",
           gap: 1,
           mb: 1,
-          // borderBottom: "1px solid #e0e0e0",
         }}
       >
         <Typography variant="h6" sx={{ fontSize: "18px", fontWeight: 600, color: "#333" }}>
-          {title}
+          {title}{' '}
+          <span
+            style={{
+              fontSize: "14px",
+              color: 'rgba(0, 0, 0, 0.6)',
+            }}
+          >
+            (Previous week)
+          </span>
         </Typography>
         {tooltipText && (
           <Tooltip title={tooltipText}>
-            <InfoIcon sx={{ fontSize: "20px", color: "#999" }} />
+            <InfoIcon sx={{ fontSize: "16px", color: "#999" }} />
           </Tooltip>
         )}
       </Box>
@@ -92,7 +99,7 @@ export default function MuiDashboardCard({
                 lineHeight: 1,
               }}
             >
-              {overallScore}
+              {Number(overallScore).toFixed(1)}
             </Typography>
             <Typography
               sx={{
@@ -138,7 +145,7 @@ export default function MuiDashboardCard({
                 fontWeight: 600,
               }}
             >
-              {overallChange}%
+              {Number(overallChange).toFixed(1)}%
             </Typography>
           </Stack>
         </Stack>
@@ -181,7 +188,7 @@ export default function MuiDashboardCard({
                         color: colorPallette[index % colorPallette.length],
                       }}
                     >
-                      {subScore.score}
+                      {Number(subScore.score).toFixed(1)}
                     </Typography>
                     <Stack direction="row" alignItems="center" gap={0.25}>
                       {subScore.change === 0 ? (
@@ -213,7 +220,7 @@ export default function MuiDashboardCard({
                           fontWeight: 600,
                         }}
                       >
-                        {subScore.change}%
+                        {Number(subScore.change).toFixed(1)}%
                       </Typography>
                     </Stack>
                   </Stack>
@@ -263,7 +270,7 @@ export default function MuiDashboardCard({
                         color: "#1f2937",
                       }}
                     >
-                      {subScore.score}%
+                      {Number(subScore.score).toFixed(1)}%
                     </Typography>
                   </Box>
                 </Box>
