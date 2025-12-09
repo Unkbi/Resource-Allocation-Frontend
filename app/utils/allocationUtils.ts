@@ -20,6 +20,9 @@ import {
   Resource,
   ResourceAllocation,
   Team,
+  ProjectType,
+  Location,
+  ProjectTypeGroup,
 } from '../types';
 import {
   generateAllWeeks,
@@ -29,7 +32,10 @@ import {
   getTeamForResource,
   getWeekNumber,
 } from './common';
-import { DATE_FORMAT } from '../constants/constants';
+import {
+  AllocationForm_Status_Filter,
+  DATE_FORMAT,
+} from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
 import {
@@ -169,9 +175,12 @@ export function formatAllAllocations(
   allocations: Allocation[],
   teams: Team[],
   projects: Project[],
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
   portfolios: Portfolio[],
   allResourcesDetail: AllResourceDetail[],
+  location: Location[],
   startDate: string,
   endDate: string
 ) {
@@ -184,11 +193,25 @@ export function formatAllAllocations(
 
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
+    const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+    const projectTypeGroup = projectTypeGroups.find(
+      ptg => ptg.Id === projectType?.Group
+    );
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
     const resourceDetails = allResourcesDetail?.find(
       r => r?.Resource?.Id === alloc.Resource
     );
     const resource = resourceDetails?.Resource;
+    // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+    if (
+      resource?.Status &&
+      !AllocationForm_Status_Filter.includes(resource?.Status)
+    )
+      continue;
+
+    const locationDetails = location?.find(
+      l => l?.Id === resource?.WorkLocation
+    );
     const team = resourceDetails?.Team;
     const organisation = resourceDetails?.Organization;
 
@@ -214,7 +237,9 @@ export function formatAllAllocations(
           null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
-        projectType: project?.Type || null,
+        projectType: projectType?.Name || null,
+        projectTypeColor: projectType?.Color || null,
+        projectTypeGroup: projectTypeGroup?.Name || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -231,7 +256,7 @@ export function formatAllAllocations(
         resourceStartDate: resource?.StartDate || null,
         resourceEndDate: resource?.EndDate || null,
         resourceLocationCategory: resource?.LocationCategory || null,
-        workLocation: resource?.WorkLocation || null,
+        workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
         manager: resource?.Manager || null,
@@ -259,12 +284,12 @@ export function formatAllAllocations(
       grouped.set(key, base);
     }
 
-    const weekKey = getWeekNumber(parseISO(alloc.Period));
+    const weekKey = getWeekNumber(parseISO(alloc.Period.split('T')[0]));
     const entry = grouped.get(key);
     entry[weekKey] = {
       allocationId: alloc.Id,
       value: alloc.AllocationEntered,
-      period: alloc.Period,
+      period: alloc.Period.split('T')[0],
       actuals: alloc.ActualsEntered || null,
       notes: alloc.Notes || null,
     };
@@ -284,6 +309,7 @@ export function injectBlankRows(
   teams: Team[],
   teamsResources: Record<string, Resource[]>,
   allResourcesDetail: AllResourceDetail[],
+  location: Location[],
   StartDate?: string,
   EndDate?: string
 ) {
@@ -300,10 +326,20 @@ export function injectBlankRows(
   teams.forEach(team => {
     const teamRes = teamsResources?.[team.Id] || [];
     teamRes.forEach(resource => {
+      // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+      if (
+        resource?.Status &&
+        !AllocationForm_Status_Filter.includes(resource?.Status)
+      )
+        return;
+
       const key = `${team.Name}___${resource.Id}`;
       const organisation = allResourcesDetail?.find(
         r => r.Resource?.Id === resource.Id
       )?.Organization;
+      const locationDetails = location?.find(
+        l => l?.Id === resource?.WorkLocation
+      );
       if (!existingKeys.has(key)) {
         extraRows.push({
           id: `team/${team.Name}-resource/${resource.FullName}`,
@@ -315,6 +351,7 @@ export function injectBlankRows(
           projectStatus: '',
           projectLocation: '',
           projectType: '',
+          projectTypeGroup: '',
           projectOvertimeAllowed: null,
           projectCost: null,
           projectCurrency: '',
@@ -334,7 +371,7 @@ export function injectBlankRows(
           resourceStartDate: resource?.StartDate || null,
           resourceEndDate: resource?.EndDate || null,
           resourceLocationCategory: resource?.LocationCategory || null,
-          workLocation: resource?.WorkLocation || null,
+          workLocation: locationDetails?.Name || null,
           department: resource?.Department || null,
           hrLevel: resource?.HRLevel || null,
           manager: resource?.Manager || null,
@@ -373,7 +410,10 @@ export function formatCostAllocations(
   allocations: CostAllocation[],
   teams: Team[],
   projects: Project[],
+  projectTypes: ProjectType[],
+  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
+  location: Location[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
   startDate: string,
   endDate: string
@@ -405,7 +445,20 @@ export function formatCostAllocations(
 
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
+    const projectType = projectTypes.find(pt => pt.Id === project?.Type);
+    const projectTypeGroup = projectTypeGroups.find(
+      ptg => ptg.Id === projectType?.Group
+    );
     const resource = resources.find(r => r.Id === alloc.Resource);
+    // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+    if (
+      resource?.Status &&
+      !AllocationForm_Status_Filter.includes(resource?.Status)
+    )
+      continue;
+    const locationDetails = location?.find(
+      l => l?.Id === resource?.WorkLocation
+    );
     const team = resourceIdToTeam.get(alloc.Resource);
 
     const key = `${alloc.Resource}-${team?.Id}-${alloc.Project}`;
@@ -431,7 +484,9 @@ export function formatCostAllocations(
           null,
         projectStatus: project?.Status || null,
         projectLocation: project?.Location || null,
-        projectType: project?.Type || null,
+        projectType: projectType?.Name || null,
+        projectTypeColor: projectType?.Color || null,
+        projectTypeGroup: projectTypeGroup?.Name || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -443,7 +498,7 @@ export function formatCostAllocations(
         resourceStartDate: resource?.StartDate || null,
         resourceEndDate: resource?.EndDate || null,
         resourceLocationCategory: resource?.LocationCategory || null,
-        workLocation: resource?.WorkLocation || null,
+        workLocation: locationDetails?.Name || null,
         department: resource?.Department || null,
         hrLevel: resource?.HRLevel || null,
         manager: resource?.Manager || null,
@@ -468,12 +523,12 @@ export function formatCostAllocations(
       grouped.set(key, base);
     }
 
-    const weekKey = getWeekNumber(parseISO(alloc.Period));
+    const weekKey = getWeekNumber(parseISO(alloc.Period.split('T')[0]));
     const entry = grouped.get(key);
     entry[weekKey] = {
       allocationId: alloc.Id,
       value: alloc.Cost,
-      period: alloc.Period,
+      period: alloc.Period.split('T')[0],
     };
     entry.totalCost += alloc.Cost;
   }
@@ -509,6 +564,7 @@ export const generateEmptyRow = (
   portfolios: Portfolio[] | null,
   projects: Project[] | null,
   resources: Resource[],
+  location: Location[],
   allocation: Allocation
 ): AllocationGridCell => {
   const weeks = getWeeksInRange(startDate, endDate);
@@ -528,6 +584,7 @@ export const generateEmptyRow = (
   const project = projects?.find(p => p.Id === allocation.Project);
   const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
   const resource = resources.find(r => r.Id === allocation.Resource);
+  const locationDetails = location?.find(l => l?.Id === resource?.WorkLocation);
   const organisation = allResourcesDetail.find(
     r => r?.Resource?.Id === allocation.Resource
   )?.Organization;
@@ -566,6 +623,7 @@ export const generateEmptyRow = (
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,
+    projectTypeGroup: null,
     projectOvertimeAllowed: project?.AllowOvertime ?? null,
     projectCost: project?.Budget ?? null,
     projectCurrency: project?.BudgetCurrency || null,
@@ -577,7 +635,7 @@ export const generateEmptyRow = (
     resourceStartDate: resource?.StartDate || null,
     resourceEndDate: resource?.EndDate || null,
     resourceLocationCategory: resource?.LocationCategory || null,
-    workLocation: resource?.WorkLocation || null,
+    workLocation: locationDetails?.Name || null,
     department: resource?.Department || null,
     hrLevel: resource?.HRLevel || null,
     manager: resource?.Manager || null,
@@ -626,6 +684,7 @@ export const getFormattedAllocationsForUpdate = (
   portfolios: Portfolio[] | null,
   projects: Project[],
   resources: Resource[],
+  location: Location[],
   splitView: boolean,
   bottomTeamAllocationGrid: GridApi,
   teamAllocationGrid: GridApi,
@@ -700,6 +759,7 @@ export const getFormattedAllocationsForUpdate = (
         portfolios || null,
         projects || [],
         resources || [],
+        location || [],
         allocation
       );
       acc = {

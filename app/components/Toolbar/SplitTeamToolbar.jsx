@@ -14,6 +14,7 @@ import {
   Typography,
   Popover,
   Slider,
+  Popper,
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import CustomSelect from '../Select/CustomSelect';
@@ -643,6 +644,36 @@ const SplitTeamToolbar = memo(
             <Box>
               <Autocomplete
                 sx={commonAutocompleteStyles}
+                disablePortal
+                blurOnSelect
+                openOnFocus
+                onClose={(event, reason) => {
+                  if (
+                    reason === 'blur' ||
+                    reason === 'escape' ||
+                    reason === 'toggleInput'
+                  ) {
+                    // automatically closes on outside click or scroll
+                  }
+                }}
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: 'preventOverflow',
+                        options: {
+                          boundary: 'viewport',
+                        },
+                      },
+                    ],
+                  },
+                  paper: {
+                    sx: {
+                      fontSize: '12px',
+                      maxHeight: 250,
+                    },
+                  },
+                }}
                 multiple
                 size="medium"
                 options={TeamOptions}

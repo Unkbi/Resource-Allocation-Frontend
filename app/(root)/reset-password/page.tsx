@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { RootState, AppDispatch } from '@/app/redux/store';
@@ -9,7 +9,6 @@ import {
   Typography,
   TextField,
   Button,
-  Link,
   CircularProgress,
   styled,
   InputAdornment,
@@ -17,37 +16,37 @@ import {
 } from '@mui/material';
 import { performResetPassword } from '@/app/redux/actions/authActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { passwordRequirementBoxStyle, passwordRequirementColumnStyle, passwordRequirementTextStyle } from '@/app/components/InvitePage/SetInvitePassword';
 
 const MainBox = styled(Box)(({ theme }) => ({
   '& .loginLeft': {
     width: '45%',
     backgroundImage: 'linear-gradient(180deg, #FFFDF9 0%, #FFFAEF 100%);',
     textAlign: 'left',
-    padding: '30px 90px',
+    padding: '15px 90px',
     '& img': {
       maxWidth: '100%',
     },
   },
   '& .loginRight': {
-    width: '55%',
+    width: '45%',
     display: 'flex',
     alignItems: 'center',
     backgroundColor: '#fff',
     '& .formBox': {
-      width: '360px',
+      width: '472px',
       margin: '0 auto',
       '& h4': {
         fontFamily: theme.typography.fontFamily,
         color: '#000',
         fontSize: '32px',
         fontWeight: '800',
-        marginBottom: '4px',
+        // marginBottom: '4px',
       },
       '& .subHeadingText': {
-        color: '#757575',
-        fontSize: '15px',
+        // color: '#757575',
+        fontSize: '14px',
         fontWeight: '400',
-        marginBottom: '20px',
         fontFamily: theme.typography.fontFamily,
       },
     },
@@ -142,7 +141,7 @@ const MainBox = styled(Box)(({ theme }) => ({
     },
     '& .textField': {
       width: '100%',
-      marginBottom: '22px',
+      marginBottom: '14px',
       '& .MuiOutlinedInput-input': {
         height: '46px',
         lineHeight: '40px',
@@ -172,6 +171,9 @@ const MainBox = styled(Box)(({ theme }) => ({
   },
 }));
 
+const getIcon = (isValid: any) =>
+    isValid ? '/images/icons/tickMark.svg' : '/images/icons/ErrorIcon.svg';
+  
 export default function ResetPasswordPageWrapper() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -195,10 +197,26 @@ function RestPasswordPage() {
   const username = searchParams.get('username');
   const code = searchParams.get('code');
 
+    const validations = useMemo(
+    () => ({
+      length: newPassword.length >= 8,
+      uppercase: /[A-Z]/.test(newPassword),
+      number: /\d/.test(newPassword),
+      symbol: /[^A-Za-z0-9]/.test(newPassword),
+    }),
+    [newPassword]
+  );
+
+  const allValid = Object.values(validations).every(Boolean);
+  const passwordsMatch =
+    newPassword && confirmPassword && newPassword === confirmPassword;
+
+  const isButtonDisabled = !(allValid && passwordsMatch);
+
+
   const handleResetPassword = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setErrorMessage('Passwords do not match');
       return;
     }
     dispatch(
@@ -255,15 +273,15 @@ function RestPasswordPage() {
         {/* Right Section */}
         <Box className="loginRight">
           <Box className="formBox">
-            <Typography variant="h4">Reset Password</Typography>
-            <Typography className="subHeadingText" whiteSpace={'nowrap'}>
+            <Typography variant="h4" fontSize={'32px'} fontWeight={800} mb={0.2}>Reset Password</Typography>
+            <Typography mb={1.5} className="subHeadingText" whiteSpace={'nowrap'}>
               Your new password must be different from previous one
             </Typography>
             <Box component="form" onSubmit={handleResetPassword}>
               <TextField
                 className="textField"
                 variant="outlined"
-                placeholder="New Password"
+                placeholder="Enter New Password"
                 type={showNewPassword ? 'text' : 'password'}
                 fullWidth
                 value={newPassword}
@@ -285,11 +303,36 @@ function RestPasswordPage() {
                   ),
                 }}
               />
+              {/* Password Requirements */}
+                        <Box mb={1}>
+                          <Box sx={passwordRequirementBoxStyle}>
+                            <Box sx={passwordRequirementColumnStyle}>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.length)} alt="tickMark" /> At
+                                least 8 characters
+                              </Typography>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.uppercase)} alt="tickMark" /> At
+                                least 1 uppercase letter
+                              </Typography>
+                            </Box>
+                            <Box sx={passwordRequirementColumnStyle}>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.number)} alt="tickMark" /> Must
+                                contain min 1 number
+                              </Typography>
+                              <Typography sx={passwordRequirementTextStyle}>
+                                <img src={getIcon(validations.symbol)} alt="tickMark" /> Must
+                                contain min 1 symbol
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
 
               <TextField
                 className="textField"
                 variant="outlined"
-                placeholder="Confirm Password"
+                placeholder="Enter Confirm Password"
                 type={showConfirmPassword ? 'text' : 'password'}
                 fullWidth
                 value={confirmPassword}
@@ -314,6 +357,13 @@ function RestPasswordPage() {
                   ),
                 }}
               />
+              <Box sx={passwordRequirementBoxStyle}>
+                <Box sx={passwordRequirementColumnStyle}>
+                    <Typography sx={passwordRequirementTextStyle}>
+                        <img src={getIcon(passwordsMatch)} alt="tickMark" /> Passwords do not match
+                          </Typography>
+                </Box>
+              </Box>
               {errorMessage && (
                 <Typography variant="body2" color="error" sx={{ mb: 2 }}>
                   {errorMessage}
@@ -324,9 +374,18 @@ function RestPasswordPage() {
                 variant="contained"
                 color="primary"
                 fullWidth
-                disabled={loading}
-                sx={{ mt: 2 }}
-                className="signInButton"
+                disabled={loading || isButtonDisabled }
+                sx={{
+                  mt: 1,
+                 backgroundColor: isButtonDisabled ? '#C5CAE9' : '#1567CA',
+                 height: '48px',
+                 fontWeight: 600,
+                 textTransform: 'none',
+                '&:hover': {
+                backgroundColor: isButtonDisabled ? '#C5CAE9' : '#0042a8',
+               },
+             }}
+                // className="signInButton"  //Commenting this , added new css 
               >
                 {loading ? <CircularProgress size={24} /> : 'Reset Password'}
               </Button>

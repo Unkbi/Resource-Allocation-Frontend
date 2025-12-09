@@ -3,13 +3,13 @@ import { Box, Tabs, Tab, styled, Button } from '@mui/material';
 import {
   GridToolbarColumnsButton,
   GridToolbarContainer,
-  GridToolbarFilterButton,
-} from '@mui/x-data-grid';
+} from '@mui/x-data-grid-premium';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { useDispatch } from 'react-redux';
 import CommonToolbar from './CommonToolbar';
-
-const VALID_TABS = ['resource', 'teams', 'organizations', 'rates'] as const;
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
+import FilterButtonWithCount from './FilterButtonWithCount';
 
 interface ResourceToolbarProps {
   setFilterButtonEl?: (el: HTMLElement | null) => void;
@@ -18,6 +18,7 @@ interface ResourceToolbarProps {
     event: SyntheticEvent,
     newValue: 'resource' | 'teams' | 'rates' | 'organizations'
   ) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const commonButtonStyles = {
@@ -127,10 +128,11 @@ const ResourceToolbar = ({
   setFilterButtonEl,
   value,
   onChange,
+  permissions,
 }: ResourceToolbarProps) => {
   const dispatch = useDispatch();
 
-  if (!VALID_TABS.includes(value)) {
+  if (!RESOURCE_PAGE_VALID_TABS.includes(value)) {
     return null; // or a fallback UI
   }
 
@@ -170,22 +172,38 @@ const ResourceToolbar = ({
             flex: '1 0 0',
           }}
         >
-          <Tabs
-            value={value}
-            onChange={onChange}
-            textColor="primary"
-            indicatorColor="primary"
-            aria-label="toolbar tabs"
-          >
-            <Tab value="resource" label="Resources" sx={tabTypographyStyle} />
-            <Tab value="teams" label="Teams" sx={tabTypographyStyle} />
-            <Tab
-              value="organizations"
-              label="Organizations"
-              sx={tabTypographyStyle}
-            />
-            <Tab value="rates" label="Rates" sx={tabTypographyStyle} />
-          </Tabs>
+          {Object.keys(permissions).some(
+            resourceName => permissions[resourceName]?.r
+          ) && (
+            <Tabs
+              value={value}
+              onChange={onChange}
+              textColor="primary"
+              indicatorColor="primary"
+              aria-label="toolbar tabs"
+            >
+              {permissions['Resource'].r && (
+                <Tab
+                  value="resource"
+                  label="Resources"
+                  sx={tabTypographyStyle}
+                />
+              )}
+              {permissions['Team'].r && (
+                <Tab value="teams" label="Teams" sx={tabTypographyStyle} />
+              )}
+              {permissions['Organization'].r && (
+                <Tab
+                  value="organizations"
+                  label="Organizations"
+                  sx={tabTypographyStyle}
+                />
+              )}
+              {permissions['EmployeeRate'].r && (
+                <Tab value="rates" label="Rates" sx={tabTypographyStyle} />
+              )}
+            </Tabs>
+          )}
         </Box>
         <Box className="line" sx={{ marginRight: '10px', height: '64px' }}>
           <img src="/images/icons/LinePeople.svg" />
@@ -198,28 +216,8 @@ const ResourceToolbar = ({
             gap: 1,
           }}
         >
-          <GridToolbarContainer ref={setFilterButtonEl}>
-            <GridToolbarFilterButton
-              slotProps={{
-                tooltip: { title: 'Filter' },
-                button: {
-                  variant: 'outlined',
-                  startIcon: (
-                    <img
-                      src="/images/icons/newFilterPeople.svg"
-                      alt="filter"
-                      style={{
-                        marginLeft: '10px',
-                        height: '36px',
-                        width: '36px',
-                      }}
-                    />
-                  ),
-                  className: 'columns-button',
-                  sx: commonButtonStyles,
-                },
-              }}
-            />
+          <GridToolbarContainer ref={setFilterButtonEl} sx={{ gap: '12px' }}>
+            <FilterButtonWithCount/>
             <StyledGridToolbarColumnsButton
               slotProps={{
                 tooltip: { title: 'Columns' },
@@ -241,13 +239,14 @@ const ResourceToolbar = ({
                 },
               }}
             />
-            <ActionButton
+            {/* Commenting out download Icon  */}
+            {/* <ActionButton
               src="/images/icons/newExportPeople.svg"
               alt="download"
               style={{ height: '36px', width: '36px' }}
-            />
+            /> */}
             {/* <ActionButton src="/images/icons/upload.svg" alt="upload" /> */}
-            {value === 'rates' && (
+            {permissions['EmployeeRate'].c && value === 'rates' && (
               <Button
                 variant="contained"
                 color="primary"
@@ -264,4 +263,9 @@ const ResourceToolbar = ({
   );
 };
 
-export default ResourceToolbar;
+export default withRBAC(ResourceToolbar, [
+  'Resource',
+  'Team',
+  'Organization',
+  'EmployeeRate',
+]);

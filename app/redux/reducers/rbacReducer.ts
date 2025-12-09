@@ -4,12 +4,20 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState: RBACState = {
   user: null,
+  loginUserPrivileges: null,
   roles: [],
   roleAssignments: [],
   privileges: [],
   privilegeAssignments: [],
   meta: null,
+  dashboardQueryKeys: [],
   loading: true,
+  loadingLoginUserPrivileges: true,
+  rolesLoading: true,
+  roleAssignmentsLoading: true,
+  privilegesLoading: true,
+  privilegeAssignmentsLoading: true,
+  dashboardQueryKeysLoading: true,
   error: false,
 };
 
@@ -17,6 +25,9 @@ const rbacSlice = createSlice({
   name: 'RBAC',
   initialState,
   reducers: {
+    setLoginUserPrivileges: (state, action) => {
+      state.loginUserPrivileges = action.payload;
+    },
     setRoles: (state, action) => {
       state.roles = formatAPIResponse('Role', action.payload);
     },
@@ -100,11 +111,32 @@ const rbacSlice = createSlice({
         };
       }
     },
-    setMeta : (state, action) => {
+    setMeta: (state, action) => {
       state.meta = action.payload;
+    },
+    setDashboardQueryKeys: (state, action) => {
+      state.dashboardQueryKeys = formatAPIResponse('QueryKey', action.payload);
     },
     setLoading: (state, action) => {
       state.loading = action.payload;
+    },
+    setLoadingLoginUserPrivileges: (state, action) => {
+      state.loadingLoginUserPrivileges = action.payload;
+    },
+    setRolesLoading: (state, action) => {
+      state.rolesLoading = action.payload;
+    },
+    setRoleAssignmentsLoading: (state, action) => {
+      state.roleAssignmentsLoading = action.payload;
+    },
+    setPrivilegesLoading: (state, action) => {
+      state.privilegesLoading = action.payload;
+    },
+    setPrivilegeAssignmentsLoading: (state, action) => {
+      state.privilegeAssignmentsLoading = action.payload;
+    },
+    setDashboardQueryKeysLoading: (state, action) => {
+      state.dashboardQueryKeysLoading = action.payload;
     },
     setError: (state, action) => {
       state.error = action.payload;
@@ -116,6 +148,7 @@ const rbacSlice = createSlice({
 });
 
 export const {
+  setLoginUserPrivileges,
   setRoles,
   clearRoles,
   updateRoles,
@@ -129,8 +162,15 @@ export const {
   clearPrivilegeAssignments,
   updatePrivilegeAssignments,
   setLoading,
+  setLoadingLoginUserPrivileges,
+  setRolesLoading,
+  setRoleAssignmentsLoading,
+  setPrivilegesLoading,
+  setPrivilegeAssignmentsLoading,
   setError,
   setUser,
   setMeta,
+  setDashboardQueryKeys,
+  setDashboardQueryKeysLoading,
 } = rbacSlice.actions;
 export default rbacSlice.reducer;

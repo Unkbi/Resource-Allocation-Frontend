@@ -19,10 +19,14 @@ import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import { PORTFOLIO_DISPLAY_NAME } from '@/app/constants/constants';
 
 interface FlatAllocationProps {
   startDate: string;
   endDate: string;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -48,23 +52,26 @@ export interface Project {
   Type: string;
 }
 
-export default function FlatAllocation({
+function FlatAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: FlatAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
   );
-  const { organisations } = useSelector(
-    (state: RootState) => state.organisations
-  );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { allResourcesDetail } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
+  );
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
   );
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
@@ -82,7 +89,8 @@ export default function FlatAllocation({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
-    if (ready) {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('teamAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -97,6 +105,7 @@ export default function FlatAllocation({
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
+              location,
               startDate,
               endDate
             )
@@ -119,7 +128,7 @@ export default function FlatAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready, allAllocations]);
+  }, [ready, allAllocations, loadingPermissions]);
 
   const organisationColumnConfig = [
     {
@@ -163,7 +172,7 @@ export default function FlatAllocation({
     },
     {
       field: 'portfolioName',
-      headerName: 'Portfolio',
+      headerName: `${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`,
       width: 201,
       type: 'string',
       isEditable: 'false',
@@ -278,9 +287,7 @@ export default function FlatAllocation({
       isEditable: 'false',
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const allocation = params.row;
-        const workLocation = allocation?.workLocation;
-        return <EllipsisNameCell value={workLocation || ''} />;
+        return <EllipsisNameCell value={(params.value || '') as string} />;
       },
     },
     {
@@ -543,6 +550,18 @@ export default function FlatAllocation({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
+      },
+    },
+    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 170,
@@ -631,6 +650,7 @@ export default function FlatAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
               },
             },
           }}
@@ -655,3 +675,5 @@ export default function FlatAllocation({
     </>
   );
 }
+
+export default withRBAC(FlatAllocation, ['Allocation']);

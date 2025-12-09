@@ -10,7 +10,7 @@ import { GridCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import {
   calculateTotalEffort,
   getAllocationManagerFromPath,
@@ -23,10 +23,13 @@ import {
   PORTFOLIO_DISPLAY_NAME,
 } from '@/app/constants/constants';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface PortfolioAllocationProps {
   startDate: string | null;
   endDate: string | null;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -36,9 +39,11 @@ interface Resource {
   [key: string]: any;
 }
 
-export default function PortfolioAllocation({
+function PortfolioAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: PortfolioAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const { allAllocations, loading, dataProcessing } = useSelector(
@@ -46,6 +51,10 @@ export default function PortfolioAllocation({
   );
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
+  );
+  const { location } = useSelector((state: RootState) => state.allSettings);
+  const { scalarSettings } = useSelector(
+    (state: RootState) => state.allSettings
   );
   const dispatch: AppDispatch = useDispatch();
   const { setRows, ready } = useAllocationGrid('projectAllocation');
@@ -58,7 +67,8 @@ export default function PortfolioAllocation({
   );
 
   useEffect(() => {
-    if (ready) {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -94,7 +104,7 @@ export default function PortfolioAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready && allAllocations]);
+  }, [ready && allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -126,7 +136,8 @@ export default function PortfolioAllocation({
   const portfolioColumnConfig = [
     {
       field: 'portfolioName',
-      headerName: PORTFOLIO_DISPLAY_NAME + ' Name',
+      headerName:
+        scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME + ' Name',
       width: 148,
       headerClassName: 'prime-header',
       cellClassName: 'prime-cell',
@@ -230,8 +241,10 @@ export default function PortfolioAllocation({
       headerClassName: 'secondary-header',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const WorkLocation = resource?.WorkLocation || '';
-        return <EllipsisNameCell value={WorkLocation} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {
@@ -450,6 +463,22 @@ export default function PortfolioAllocation({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 130,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild.projectTypeGroup ?? ''} />
+        ) : null;
+      },
+    },
+    {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
       width: 110, // min-width without eliding.
@@ -606,6 +635,7 @@ export default function PortfolioAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
                 resource: true,
                 resourceEndDate: false,
                 resourceLocationCategory: false,
@@ -639,3 +669,5 @@ export default function PortfolioAllocation({
     </>
   );
 }
+
+export default withRBAC(PortfolioAllocation, ['Allocation']);

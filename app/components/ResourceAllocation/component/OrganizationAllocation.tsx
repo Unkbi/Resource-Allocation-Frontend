@@ -14,15 +14,18 @@ import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
-import { AllAllocations } from '@/app/types';
+import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface OrganisationAllocationProps {
   startDate: string;
   endDate: string;
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
 }
 interface Resource {
   Id: string;
@@ -48,9 +51,11 @@ export interface Project {
   Type: string;
 }
 
-export default function OrganisationAllocation({
+function OrganisationAllocation({
   startDate,
   endDate,
+  permissions,
+  loadingPermissions,
 }: OrganisationAllocationProps) {
   const [selectedTeam, setSelectedTeam] = useState('');
   const dispatch = useDispatch<AppDispatch>();
@@ -66,6 +71,7 @@ export default function OrganisationAllocation({
   const _resources = useSelector(
     (state: RootState) => state.resources.resources
   );
+  const { location } = useSelector((state: RootState) => state.allSettings);
   const { showActuals } = useSelector(
     (state: RootState) => state.allocationView
   );
@@ -82,7 +88,8 @@ export default function OrganisationAllocation({
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
 
   useEffect(() => {
-    if (ready) {
+    if (loadingPermissions) return;
+    if (permissions['Allocation'].r && ready) {
       let filteredResources;
       const allTempRows = getAllRowsForView('teamAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
@@ -97,6 +104,7 @@ export default function OrganisationAllocation({
               // @ts-ignore
               teamsResources,
               allResourcesDetail,
+              location,
               startDate,
               endDate
             )
@@ -119,7 +127,7 @@ export default function OrganisationAllocation({
         setRows(formattedResources || []);
       }
     }
-  }, [ready, allAllocations]);
+  }, [ready, allAllocations, loadingPermissions]);
 
   const handleAddClick = (params: GridCellParams) => {
     dispatch(
@@ -296,7 +304,10 @@ export default function OrganisationAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.WorkLocation || ''} />;
+        const locationDetails = location?.find(
+          (l: Location) => l.Id === resource?.WorkLocation
+        );
+        return <EllipsisNameCell value={locationDetails?.Name || ''} />;
       },
     },
     {
@@ -564,6 +575,19 @@ export default function OrganisationAllocation({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
+      },
+    },
+    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 170,
@@ -662,6 +686,7 @@ export default function OrganisationAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
               },
             },
           }}
@@ -686,3 +711,5 @@ export default function OrganisationAllocation({
     </>
   );
 }
+
+export default withRBAC(OrganisationAllocation, ['Allocation']);

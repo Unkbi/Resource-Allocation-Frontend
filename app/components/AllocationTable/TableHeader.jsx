@@ -16,6 +16,9 @@ import {
   differenceInWeeks,
   endOfWeek,
   format,
+  getWeek,
+  getMonth,
+  getYear,
   isSameWeek,
   parseISO,
   startOfWeek,
@@ -164,8 +167,20 @@ export const generateColumnGroupingModel = (startDate, endDate, allColumns) => {
       }) + 1;
 
   for (let i = 0; i < totalWeeks; i++) {
-    const weekDate = addWeeks(isoStart, i);
-    const monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
+    const weekDate = addWeeks(adjustedStart, i);
+    const weekNum = getWeek(weekDate, { weekStartsOn: 1 });
+    const weekMonth = getMonth(weekDate); // 0-11, where 11 = December
+    const weekYear = getYear(weekDate);
+
+    // If Week 1 starts in December, it belongs to January of the next year
+    let monthYear;
+    if (weekNum === 1 && weekMonth === 11) {
+      // Week 1 in December belongs to January of next year
+      const nextYearDate = new Date(weekYear + 1, 0, 1); // January 1st of next year
+      monthYear = formatDate(nextYearDate, DISPLAY_DATE_FORMAT);
+    } else {
+      monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
+    }
 
     if (!currentGroup || currentGroup.groupId !== monthYear) {
       currentGroup && groups.push(currentGroup);

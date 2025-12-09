@@ -10,21 +10,38 @@ export interface ProjectTypeGroup {
 
 import { FormikProps } from 'formik';
 import { StyledInput } from '../Input/StyledInput';
+import { RootState } from '@/app/redux/store';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 interface AddProjectTypesGroupForm {
   formikProps: FormikProps<ProjectTypeGroup>;
   setFormValue: (value: ProjectTypeGroup) => void;
+  permissions: Record<string, CrudPermissions>;
 }
 
 const AddProjectTypesGroupForm = ({
   formikProps,
   setFormValue = () => {},
+  permissions,
 }: AddProjectTypesGroupForm) => {
   const { values, handleChange, handleBlur, setFieldValue, touched, errors } =
     formikProps;
   const { initialData } = useSelector(
     (state: any) => state.globalDialog.formState
   );
+  const { formType } = useSelector(
+    (state: RootState) => state.globalDialog.formState
+  );
+  const [readOnly, setReadOnly] = useState(true);
+
+  useEffect(() => {
+    setReadOnly(
+      (formType === 'edit_project_type_group' &&
+        !permissions['ProjectTypeGroup']?.u) ||
+        (formType === 'add_project_type_group' &&
+          !permissions['ProjectTypeGroup']?.c)
+    );
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -44,15 +61,21 @@ const AddProjectTypesGroupForm = ({
           Project Type Group Name <span style={{ color: 'red' }}>*</span>
         </StyledLabel>
         <StyledInput
+          disabled={readOnly}
+          readOnly={readOnly}
           as={TextField}
           name="Name"
           placeholder="Enter Name"
           fullWidth
-          onChange={e => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             handleChange(e);
             setFieldValue('Name', e.target.value);
           }}
-          onBlur={handleBlur}
+          onBlur={
+            handleBlur as React.FocusEventHandler<
+              HTMLInputElement | HTMLTextAreaElement
+            >
+          }
           value={values.Name || ''}
           error={touched.Name && Boolean(errors.Name)}
           helperText={touched.Name && errors.Name}
@@ -62,4 +85,4 @@ const AddProjectTypesGroupForm = ({
   );
 };
 
-export default AddProjectTypesGroupForm;
+export default withRBAC(AddProjectTypesGroupForm, ['ProjectTypeGroup']);

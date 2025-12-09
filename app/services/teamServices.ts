@@ -230,14 +230,19 @@ export const updateOrganization = createAsyncThunk<
   any,
   { postData: any; organizationId: string },
   { rejectValue: string }
->('organization/updateOrganization', async ({ postData, organizationId }, { rejectWithValue }) => {
-  try {
-    const response = await axiosInstance.put(
-      `${API_PROJECT_PORTFOLIO}/Organization/${organizationId}`,
-      postData
-    );
-    return response.data;
-  } catch (error: any) {
-    return rejectWithValue(error?.response?.data || 'Failed to update organization.');
+>(
+  'organization/updateOrganization',
+  async ({ postData, organizationId }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_PROJECT_PORTFOLIO}/Organization/${organizationId}`,
+        postData
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || 'Failed to update organization.'
+      );
+    }
   }
-});
+);

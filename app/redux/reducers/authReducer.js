@@ -8,10 +8,13 @@ import {
   signupUser,
   getUser,
   resendConfirmationCode,
+  callback,
+  setPasswordInvite,
 } from '../../services/authServices.js';
 
 const initialState = {
   user: null,
+  loginUser: null,
   token: null,
   loading: false,
   signupData: null,
@@ -39,10 +42,25 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.loginUser = action.payload;
         state.token = action.payload['id-token'];
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Callback for SSO login
+      .addCase(callback.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(callback.fulfilled, (state, action) => {
+        state.loading = false;
+        state.loginUser = action.payload;
+        state.token = action.payload['id-token'];
+      })
+      .addCase(callback.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -54,7 +72,7 @@ const authSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, state => {
         state.loading = false;
-        state.user = null;
+        state.loginUser = null;
         state.token = null;
       })
       .addCase(logoutUser.rejected, (state, action) => {
@@ -69,13 +87,29 @@ const authSlice = createSlice({
       })
       .addCase(signupUser.fulfilled, state => {
         state.loading = false;
-        state.user = null;
+        state.loginUser = null;
         state.token = null;
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Invite Actions
+      .addCase(setPasswordInvite.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setPasswordInvite.fulfilled, (state, action) => {
+        state.loading = false;
+        state.loginUser = action.payload;
+        state.token = action.payload['id-token'];
+      })
+      .addCase(setPasswordInvite.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       // forgot
       .addCase(forgotPassword.pending, state => {
         state.loading = true;
@@ -110,7 +144,7 @@ const authSlice = createSlice({
       })
       .addCase(confirmSignUp.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
+        state.loginUser = action.payload.user;
         state.token = action.payload.token;
         state.otpVerified = true;
       })

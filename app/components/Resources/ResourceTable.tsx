@@ -14,6 +14,7 @@ import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { JSXElementConstructor, useState } from 'react';
 import { Resource } from '@/app/types';
 import { Box } from '@mui/material';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 interface ResourceTableProps {
   columns: GridColDef[];
@@ -22,6 +23,7 @@ interface ResourceTableProps {
   apiRef: React.RefObject<GridApi>;
   value: String;
   onChange: any;
+  permissions: Record<string, CrudPermissions>;
 }
 
 function CustomColumnMenu(props: GridColumnMenuProps) {
@@ -43,6 +45,7 @@ const ResourceTable = ({
   apiRef,
   value,
   onChange = () => {},
+  permissions,
 }: ResourceTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
@@ -56,7 +59,7 @@ const ResourceTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={rows}
+        rows={permissions['Resource'].r ? rows : []}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
         loading={loading}
@@ -68,7 +71,7 @@ const ResourceTable = ({
             columnVisibilityModel: {
               team: false,
               organization: false,
-              WorkLocation: false,
+              Manager: false,
               AverageWeeklyHours: false,
               ContractorHourlyRate: false,
               PhoneNumber: false,
@@ -146,4 +149,4 @@ const ResourceTable = ({
   );
 };
 
-export default ResourceTable;
+export default withRBAC(ResourceTable, ['Resource']);

@@ -189,13 +189,14 @@ export default function LoginPage() {
     e.preventDefault();
     dispatch(
       performLogin({
-        email: email,
-        password: password,
+        email: email.trim(),
+        password: password.trimEnd(),
       }) as any
     );
   };
 
   useEffect(() => {
+    localStorage.removeItem('signupEmail');
     if (isLoggedIn) {
       // Use redirect path if present, otherwise go to dashboard
       router.replace(redirectPath || '/dashboard');
@@ -211,6 +212,15 @@ export default function LoginPage() {
       window.location.href = googleAuthUrl;
     } else {
       console.error('Google Auth URL is not defined');
+    }
+  };
+
+  const handleSSOSignin = () => {
+    const ssoAuthUrl = process.env.NEXT_PUBLIC_SSO_AUTH_URL;
+    if (ssoAuthUrl) {
+      window.location.href = ssoAuthUrl;
+    } else {
+      console.error('SSO Auth URL is not defined');
     }
   };
 
@@ -258,7 +268,7 @@ export default function LoginPage() {
                 }}
                 fullWidth
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value.trim())}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -296,24 +306,32 @@ export default function LoginPage() {
                 <span>OR</span>
               </Typography>
               <Button
+                disabled={true} // Disable Google Sign-In temporarily
                 variant="outlined"
                 fullWidth
-                className="googleButton"
+                className="signWithSSO"
                 onClick={handleGoogleSignin}
               >
                 <img src={'/images/icons/google.svg'} alt="Google" /> Sign in
                 with Google
               </Button>
-              <Button variant="outlined" fullWidth className="signWithSSO">
+              <Button
+                disabled={true} // Disable SSO Sign-In temporarily
+                variant="outlined"
+                fullWidth
+                className="signWithSSO"
+                onClick={handleSSOSignin}
+              >
                 Sign in with SSO
               </Button>
             </Box>
-            <Typography className="noAccount">
+            {/* Sahadev: Commenting out Sign up link temporarily for corsair. */}
+            {/* <Typography className="noAccount"> 
               Don't have an account?{' '}
               <Link href="/signup" underline="hover" color="primary">
                 Sign up
               </Link>
-            </Typography>
+            </Typography> */}
           </Box>
         </Box>
       </Box>

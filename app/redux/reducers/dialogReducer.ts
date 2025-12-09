@@ -1,9 +1,11 @@
+import { dialogState } from '@/app/types/dialogTypes';
 import { createSlice } from '@reduxjs/toolkit';
 
-const initialState = {
+const initialState: dialogState = {
   isOpen: false,
   title: '',
   submitButtonText: '',
+  readOnly: false,
   secondaryButtonText: '',
   primarySecondButtonText: '',
   cancelButtonText: '',
@@ -26,6 +28,7 @@ const dialogSlice = createSlice({
         cancelButtonText,
         formType,
         initialData,
+        readOnly,
       } = action.payload;
       state.isOpen = true;
       state.title = title || '';
@@ -35,6 +38,7 @@ const dialogSlice = createSlice({
       state.cancelButtonText = cancelButtonText || 'Cancel';
       state.formState.formType = formType || '';
       state.formState.initialData = initialData || {};
+      state.readOnly = readOnly || false;
     },
     closeDialog: state => {
       state.isOpen = false;
