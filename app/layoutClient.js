@@ -122,47 +122,6 @@ export default function LayoutClient({ children }) {
     }
   }, [dispatch, isLoggedIn, isClient]);
 
-  useEffect(() => {
-    if (!isClient || !isLoggedIn || !userId) return;
-    if (
-      !initLoading &&
-      loginUserPrivileges &&
-      Object.keys(loginUserPrivileges).length &&
-      resources?.length
-    ) {
-      dispatch({
-        type: SETUP_ADVANCED_FILTERS,
-        payload: {
-          loginUserPrivileges,
-          userId,
-          resources,
-          projects,
-          teams,
-        },
-      });
-    }
-  }, [
-    dispatch,
-    isLoggedIn,
-    isClient,
-    userId,
-    loginUserPrivileges,
-    resources,
-    initLoading,
-  ]);
-
-  useEffect(() => {
-    if (!isClient || !isLoggedIn || !userId) return;
-    // After initial loading is done, if user has no resources, we can stop
-    // loading advanced filters as there are no resources to filter on
-    // with a slight delay to ensure any sagas have completed
-    setTimeout(() => {
-      if (!initLoading && !resources?.length) {
-        dispatch(setLoadingAdvancedFilters(false));
-      }
-    }, 4000);
-  }, [initLoading, resources]);
-
   if (!isClient) return null;
   if (!isLoggedIn && !isPublicRoute) return null;
 
