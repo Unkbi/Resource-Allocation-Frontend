@@ -589,7 +589,9 @@ const SplitTeamToolbar = memo(
     };
 
     const TeamOptions =
-      teams?.map(team => ({
+      teams
+        ?.filter(t => t.Status === 'Active')
+        ?.map(team => ({
         label: team.Name,
         value: team.Id,
       })) || [];
