@@ -14,6 +14,7 @@ import { allSettingsSaga } from './allSettingsSaga';
 import { locationSaga } from './locationSaga';
 import { userManagementSaga } from './userManagementSaga';
 import { businessImpactSaga } from './businessImpactSaga';
+import { bootstrapSaga } from './initBootstrapSaga';
 
 // listening for all sagas based on actions
 export default function* rootSaga() {
@@ -32,7 +33,8 @@ export default function* rootSaga() {
     allSettingsSaga(),
     locationSaga(),
     userManagementSaga(),
-    businessImpactSaga()
+    businessImpactSaga(),
+    bootstrapSaga(),
     // ...add more watchers here
   ]);
 }

@@ -61,12 +61,14 @@ import {
 import { getUser } from '@/app/services/authServices';
 import {
   buildDefaultDashboardFilter,
-  buildLoginUserPrivileges,
+  formatLoginUserPermissions,
 } from '@/app/utils/authUtils';
 import { AdvancedFilters } from '../../types/dashboardTypes';
 import {
   // AdvancedFilters,
   setAdvancedFilters,
+  setDefaultAdvancedFilters,
+  setLoadingAdvancedFilters,
 } from '../reducers/dashboardReducer';
 import { LoginUserPrivilege, User } from '@/app/types';
 
@@ -327,38 +329,8 @@ function* getUserAndPrivilegesSaga(action: any): Generator<any, void, any> {
       user = yield select(state => state.user.user);
     }
 
-    // Not needed to fetch role Privileges
-    // yield call(fetchRolesSaga);
-    // const roles = yield select(state => state.rbac.roles);
-
-    let roleAssignments = yield select(state => state.rbac.roleAssignments);
-    if (!roleAssignments || roleAssignments.length === 0) {
-      yield call(fetchRoleAssignmentsSaga);
-      roleAssignments = yield select(state => state.rbac.roleAssignments);
-    }
-
-    let privileges = yield select(state => state.rbac.privileges);
-    if (!privileges || privileges.length === 0) {
-      yield call(fetchPrivilegesSaga);
-      privileges = yield select(state => state.rbac.privileges);
-    }
-
-    let privilegeAssignments = yield select(
-      state => state.rbac.privilegeAssignments
-    );
-    if (!privilegeAssignments || privilegeAssignments.length === 0) {
-      yield call(fetchPrivilegeAssignmentsSaga);
-      privilegeAssignments = yield select(
-        state => state.rbac.privilegeAssignments
-      );
-    }
-
-    const loginUserPrivileges = buildLoginUserPrivileges(
-      user,
-      roleAssignments,
-      privilegeAssignments,
-      privileges
-    );
+    // Format and set Login User Privileges
+    const loginUserPrivileges = formatLoginUserPermissions(user.permissions);
     yield put(setLoginUserPrivileges(loginUserPrivileges));
   } catch (error) {
     console.error('Saga error, Failed to fetch User and Privileges : ', error);
@@ -396,6 +368,7 @@ function* getDashboardQueryKeysSaga(): Generator<any, void, any> {
 
 function* setupAdvancedFiltersSage(action: any): Generator<any, void, any> {
   try {
+    yield put(setLoadingAdvancedFilters(true));
     // Building Default Dashboard Filters that will automatically be applied based on privileges.
     const { loginUserPrivileges, userId, resources, projects, teams } =
       action.payload;
@@ -420,13 +393,15 @@ function* setupAdvancedFiltersSage(action: any): Generator<any, void, any> {
         teams
       );
 
-    // yield put(setDefaultAdvancedFilters(defaultRBACDashboardFilters));
+    yield put(setDefaultAdvancedFilters(defaultRBACDashboardFilters));
     yield put(setAdvancedFilters(defaultDashboardFilters));
   } catch (error) {
     console.error(
       'Saga error, Failed to setup Initial Dashboard Filters : ',
       error
     );
+  } finally {
+    yield put(setLoadingAdvancedFilters(false));
   }
 }
 

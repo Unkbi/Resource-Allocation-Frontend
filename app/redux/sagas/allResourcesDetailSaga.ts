@@ -1,10 +1,16 @@
 import { call, put, select, takeLatest } from 'redux-saga/effects';
-import { FETCH_ALL_RESOURCES_DETAIL } from '../actions/allResourcesDetailAction';
+import {
+  FETCH_ALL_RESOURCES_DETAIL,
+  FETCH_RESOURCE_DETAILS,
+} from '../actions/allResourcesDetailAction';
 import {
   setAllResourcesDetail,
   setLoading,
 } from '../reducers/allResourcesDetailReducer';
-import { fetchAllResourcesDetail } from '@/app/services/allResourcesDetailServices';
+import {
+  fetchAllResourcesDetail,
+  fetchResourceDetails,
+} from '@/app/services/allResourcesDetailServices';
 import { formatAPIResponse } from '@/app/utils/authUtils';
 import { AllResourceDetail, Resource, Team } from '@/app/types';
 import { Organisation } from '@/app/types/organisationTypes';
@@ -63,6 +69,22 @@ function* fetchAllResourcesDetailSaga(): Generator<any, void, any> {
   }
 }
 
+function* fetchResourceDetailsSaga(action: any): Generator<any, void, any> {
+  try {
+    yield put(setLoading(true));
+
+    const { queryParams } = action.payload;
+    const responses = yield call(fetchResourceDetails, queryParams);
+    let formatedResponse = formatAPIResponse('ResourceDetail', responses);
+    yield put(setResources(formatedResponse));
+  } catch (error) {
+    console.error('Saga error, Failed to fetch resource details : ', error);
+  } finally {
+    yield put(setLoading(false));
+  }
+}
+
 export function* AllResourcesDetailSaga() {
   yield takeLatest(FETCH_ALL_RESOURCES_DETAIL, fetchAllResourcesDetailSaga);
+  yield takeLatest(FETCH_RESOURCE_DETAILS, fetchResourceDetailsSaga);
 }

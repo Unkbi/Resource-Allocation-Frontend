@@ -60,13 +60,15 @@ export const confirmSignUpUser = data => async dispatch => {
   }
 };
 
-export const getUserData = userId => async dispatch => {
-  try {
-    await dispatch(getUser(userId));
-  } catch (error) {
-    console.error('get user failed:', error);
-  }
-};
+export const getUserData =
+  (userId, withRbac = false) =>
+  async dispatch => {
+    try {
+      await dispatch(getUser(userId, withRbac));
+    } catch (error) {
+      console.error('get user failed:', error);
+    }
+  };
 
 // Invite Set Password Action
 export const performInviteSetPassword = data => async dispatch => {
@@ -108,3 +110,5 @@ export const resendOtp = signupData => async dispatch => {
     throw error;
   }
 };
+
+export const INIT_BOOTSTRAP = 'INIT_BOOTSTRAP';

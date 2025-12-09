@@ -8,3 +8,13 @@ export const fetchAllResourcesDetail = async () => {
   );
   return response.data;
 };
+
+export const fetchResourceDetails = async (queryParams: any) => {
+  const response = await axiosInstance.get(
+    `${API_PROJECT_PORTFOLIO}/Resource`,
+    {
+      params: { ...queryParams },
+    }
+  );
+  return response.data;
+};
