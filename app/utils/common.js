@@ -419,8 +419,9 @@ export const isObjectEqual = (a, b) => {
 export const getTeamsIamAllocationManager = (userEmail, resources, teams) => {
   const userResourcePath =
     Array.isArray(resources) && userEmail
-      ? (resources.find(r => r.Email?.toLowerCase() === userEmail.toLowerCase())
-          ?.__path__ ?? null)
+      ? (resources.find(
+          r => r?.Email?.toLowerCase() === userEmail.toLowerCase()
+        )?.__path__ ?? null)
       : null;
 
   if (userResourcePath) {
