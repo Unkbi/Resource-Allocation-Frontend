@@ -118,8 +118,7 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
-  // Sahadev : Removed engagementScore temporarily
-  // 'engagementScoreOverview',
+  'engagementScoreOverview',
   'top_projects_by_variance',
   'activeProjectsByType',
   'totalHeadcount',
@@ -129,8 +128,7 @@ const OVERVIEW_CHART_SEQUENCE = [
 ];
 
 const PROJECT_CHART_SEQUENCE = [
-  // Sahadev : Removed projectHealthOverview temporarily
-  // 'projectHealthOverview',
+  'projectHealthOverview',
   'projectFTE',
   'budgetVsPlanVsActual',
 ];
@@ -1654,91 +1652,87 @@ export default function ExecutiveDashboardPage() {
     ),
 
     engagementScoreOverview: (
-      // Sahadev : Removed engagementScore temporarily
-      // <DashboardWidget
-      //   onClick={() => handleChartClick('Engagement Score Overview')}
-      //   minWidth={650}
-      //   minHeight={280}
-      //   autoHeight={true}
-      // >
-      //   {() => {
-      //     const data = engagementScoreOverview?.[0] || {};
+      <DashboardWidget
+        onClick={() => handleChartClick('Engagement Score Overview')}
+        minWidth={650}
+        minHeight={280}
+        autoHeight={true}
+      >
+        {() => {
+          const data = engagementScoreOverview?.[0] || {};
 
-      //     return (
-      //       <ScoreCard
-      //         title="Engagement Overview"
-      //         tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
-      //         overallScore={parseFloat(data.overall_engagement || 0)}
-      //         overallChange={parseFloat(data.overall_engagement_change || 0)}
-      //         overallDirection={data.overall_engagement_direction}
-      //         subScores={[
-      //           {
-      //             score: parseFloat(data.planned_score || 0),
-      //             label: 'Planned Score',
-      //             change: parseFloat(data.planned_score_change || 0),
-      //             positive: data.planned_score_direction !== 'down',
-      //           },
-      //           {
-      //             score: parseFloat(data.actual_score || 0),
-      //             label: 'Actual Score',
-      //             change: parseFloat(data.actual_score_change || 0),
-      //             positive: data.actual_score_direction !== 'down',
-      //           },
-      //         ]}
-      //         hasAccess={true}
-      //       />
-      //     );
-      //   }}
-      // </DashboardWidget>
-      <></>
+          return (
+            <ScoreCard
+              title="Engagement Overview"
+              tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
+              overallScore={parseFloat(data.overall_engagement || 0)}
+              overallChange={parseFloat(data.overall_engagement_change || 0)}
+              overallDirection={data.overall_engagement_direction}
+              subScores={[
+                {
+                  score: parseFloat(data.planned_score || 0),
+                  label: 'Planned Score',
+                  change: parseFloat(data.planned_score_change || 0),
+                  positive: data.planned_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.actual_score || 0),
+                  label: 'Actual Score',
+                  change: parseFloat(data.actual_score_change || 0),
+                  positive: data.actual_score_direction !== 'down',
+                },
+              ]}
+              hasAccess={true}
+            />
+          );
+        }}
+      </DashboardWidget>
     ),
   };
 
   const projectCharts = {
     projectHealthOverview: (
-      // Sahadev : Removed projectHealthOverview temporarily
-      // <DashboardWidget
-      //   onClick={() => handleChartClick('Project Health Score Overview')}
-      //   minWidth={650}
-      //   minHeight={100}
-      //   autoHeight={true}
-      // >
-      //   {() => {
-      //     const data = projectHealthOverview?.[0] || {};
+      <DashboardWidget
+        onClick={() => handleChartClick('Project Health Score Overview')}
+        minWidth={650}
+        minHeight={100}
+        autoHeight={true}
+      >
+        {() => {
+          const data = projectHealthOverview?.[0] || {};
 
-      //     return (
-      //       <ScoreCard
-      //         title="Projects Health Score"
-      //         tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
-      //         overallScore={parseFloat(data.overall_health_score || 0)}
-      //         overallChange={parseFloat(data.overall_health_score_change || 0)}
-      //         overallDirection={data.overall_health_score_direction}
-      //         subScores={[
-      //           {
-      //             score: parseFloat(data.adherence_score || 0),
-      //             label: 'Adherence Score',
-      //             change: parseFloat(data.adherence_score_change || 0),
-      //             positive: data.adherence_score_direction !== 'down',
-      //           },
-      //           {
-      //             score: parseFloat(data.actuals_score || 0),
-      //             label: 'Actuals Score',
-      //             change: parseFloat(data.actuals_score_change || 0),
-      //             positive: data.actuals_score_direction !== 'down',
-      //           },
-      //           {
-      //             score: parseFloat(data.engagement_score || 0),
-      //             label: 'Engagement Score',
-      //             change: parseFloat(data.engagement_score_change || 0),
-      //             positive: data.engagement_score_direction !== 'down',
-      //           },
-      //         ]}
-      //         hasAccess={true}
-      //       />
-      //     );
-      //   }}
-      // </DashboardWidget>
-      <></>
+          return (
+            <ScoreCard
+              title="Projects Health Score"
+              tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
+              overallScore={parseFloat(data.overall_health_score || 0)}
+              overallChange={parseFloat(data.overall_health_score_change || 0)}
+              overallDirection={data.overall_health_score_direction}
+              subScores={[
+                {
+                  score: parseFloat(data.adherence_score || 0),
+                  label: 'Adherence Score',
+                  change: parseFloat(data.adherence_score_change || 0),
+                  positive: data.adherence_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.actuals_score || 0),
+                  label: 'Actuals Score',
+                  change: parseFloat(data.actuals_score_change || 0),
+                  positive: data.actuals_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.engagement_score || 0),
+                  label: 'Engagement Score',
+                  change: parseFloat(data.engagement_score_change || 0),
+                  positive: data.engagement_score_direction !== 'down',
+                },
+              ]}
+              hasAccess={true}
+            />
+          );
+        }}
+      </DashboardWidget>
     ),
 
     projectFTE: (
