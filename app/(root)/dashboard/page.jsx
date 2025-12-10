@@ -72,6 +72,7 @@ import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { getAllTeams } from '@/app/services/teamServices';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import { FETCH_DASHBOARD_QUERY_KEYS } from '@/app/redux/actions/rbacActions';
+import { DASHBOARD_ALL_ACCESS } from '@/app/constants/constants';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -664,6 +665,7 @@ export default function ExecutiveDashboardPage() {
 
   const hasAccessToQueryKey = queryKey => {
     if (!dashboardQueryKeys) return false;
+    if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
 
     const queryDetails = dashboardQueryKeys?.find(
