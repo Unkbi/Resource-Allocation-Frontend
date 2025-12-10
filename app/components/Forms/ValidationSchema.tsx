@@ -734,3 +734,15 @@ export const addResourceToUserValidationSchema = Yup.object({
     .required('Resource is required'),
   Role: Yup.string().required('Role is required'),
 });
+
+export const addBusinessImpactValidationSchema = Yup.object({
+  Project: Yup.string().required('Project is required'),
+  BusinessImpactType: Yup.string().required('Business Impact Type is required'),
+  Amount: Yup.number()
+    .typeError('Annualized Amount must be a number')
+    .required('Annualized Amount is required')
+    .min(0, 'Annualized Amount must be a positive number'),
+  // Sahadev : Add if Description is mandatory
+  // Description :Yup.string().required('Description is required'),
+  Status: Yup.string().required('Status is required'),
+});

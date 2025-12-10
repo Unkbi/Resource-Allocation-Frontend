@@ -49,10 +49,7 @@ import {
   fetchDashboardChart,
   fetchInventoryMetrics,
 } from '../../redux/actions/dashboardAction';
-import {
-  startMultipleChartsLoading,
-  setDashboardLoading,
-} from '../../redux/reducers/dashboardReducer';
+import { startMultipleChartsLoading } from '../../redux/reducers/dashboardReducer';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -75,6 +72,7 @@ import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { getAllTeams } from '@/app/services/teamServices';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import { FETCH_DASHBOARD_QUERY_KEYS } from '@/app/redux/actions/rbacActions';
+import { DASHBOARD_ALL_ACCESS } from '@/app/constants/constants';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -118,8 +116,7 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
-  // Sahadev : Removed engagementScore temporarily
-  // 'engagementScoreOverview',
+  'engagementScoreOverview',
   'top_projects_by_variance',
   'activeProjectsByType',
   'totalHeadcount',
@@ -129,8 +126,7 @@ const OVERVIEW_CHART_SEQUENCE = [
 ];
 
 const PROJECT_CHART_SEQUENCE = [
-  // Sahadev : Removed projectHealthOverview temporarily
-  // 'projectHealthOverview',
+  'projectHealthOverview',
   'projectFTE',
   'budgetVsPlanVsActual',
 ];
@@ -191,8 +187,10 @@ export default function ExecutiveDashboardPage() {
     state => state.dashboard.advancedFilters || {}
   );
   const dashboardLoading = useSelector(state => state.dashboard.loading);
+  const { loadingAdvancedFilters } = useSelector(state => state.dashboard);
+  const resourcesLoading = useSelector(state => state.resources.loading);
+  const initLoading = useSelector(state => state.user.initLoading);
   const [initialLoad, setInitialLoad] = useState(true);
-
   const coverageData = useSelector(
     state => state.dashboard.resourceCoverage || []
   );
@@ -666,8 +664,8 @@ export default function ExecutiveDashboardPage() {
   };
 
   const hasAccessToQueryKey = queryKey => {
-    return true;
     if (!dashboardQueryKeys) return false;
+    if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
 
     const queryDetails = dashboardQueryKeys?.find(
@@ -843,7 +841,7 @@ export default function ExecutiveDashboardPage() {
                     color: 'rgba(0, 0, 0, 0.6)',
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1117,7 +1115,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1182,31 +1180,58 @@ export default function ExecutiveDashboardPage() {
         onClick={() =>
           handleChartClick('Active Projects by Project Type Group')
         }
-        minWidth={320}
-        minHeight={280}
+        minWidth={400}
+        minHeight={300}
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'pie');
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Define project type categories with consistent colors
+          const projectTypeColors = {
+            Run: '#5B7FFF',
+            Grow: '#FFD666',
+            Transform: '#FF9966',
+          };
+
+          // Sort data in Transform -> Grow -> Run order (create copy first)
+          const groupOrder = ['Transform', 'Grow', 'Run'];
+          const sortedData = [...(activeProjectsByType || [])].sort((a, b) => {
+            const aIdx = groupOrder.indexOf(a._type);
+            const bIdx = groupOrder.indexOf(b._type);
+            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+          });
+
+          // Extract labels and counts
+          const projectTypeLabels = sortedData.map(item => item._type);
+          const projectTypeCounts = sortedData.map(item =>
+            Number(item.count || 0)
+          );
+
+          // Assign colors based on type
+          const barColors = sortedData.map(
+            item => projectTypeColors[item._type] || '#CCCCCC'
+          );
 
           return (
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start',
                 width: '100%',
+                height: '100%',
               }}
             >
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 2,
                   fontSize: dimensions.width < 400 ? '16px' : '18px',
                   fontWeight: 600,
                 }}
               >
                 Active Projects by Project Type Group
               </Typography>
+
               <Box
                 sx={{
                   flex: 1,
@@ -1214,56 +1239,57 @@ export default function ExecutiveDashboardPage() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   width: '100%',
+                  minHeight: 0,
                 }}
               >
-                <PieChart
+                <BarChart
+                  xAxis={[
+                    {
+                      scaleType: 'band',
+                      data: projectTypeLabels,
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.2,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Active Projects',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
                   series={[
                     {
-                      data: (filteredActiveProjectsByType || []).map(
-                        (item, idx) => {
-                          // Map UUID project type to name
-                          const projectType = projectTypes?.find(
-                            pt => pt.Name === item._type
-                          );
-                          const typeName = projectType
-                            ? projectType.Name
-                            : item._type;
-
-                          // Use memoized color map for consistent colors
-                          const assignedColor =
-                            projectTypeColorMap[typeName] ||
-                            colorPalette[idx % colorPalette.length];
-
-                          return {
-                            id: idx,
-                            value: Number(item.count),
-                            label: truncateLabel(
-                              typeName,
-                              dimensions.width < 400 ? 12 : 14
-                            ),
-                            color: assignedColor,
-                          };
-                        }
-                      ),
-                      innerRadius: 70,
-                      arcLabel: item => `${item.data}`,
-                      arcLabelRadius: '70%',
-                      outerRadius: config.outerRadius || 80,
-                      cornerRadius: 3,
-                      highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -10, color: 'gray' },
+                      data: projectTypeCounts,
+                      id: 'activeProjects',
+                      label: 'Active Projects',
                     },
                   ]}
                   width={config.width}
                   height={config.height}
-                  sx={{
-                    [`& .${pieArcLabelClasses.root}`]: {
-                      fontSize: '12px',
-                      fontWeight: 600,
+                  grid={{ horizontal: true }}
+                  margin={{
+                    top: 10,
+                    bottom: 40,
+                    left: 40,
+                    right: 10,
+                  }}
+                  colors={barColors}
+                  slotProps={{
+                    legend: {
+                      hidden: true,
                     },
                   }}
-                  slotProps={{
-                    legend: config.legend,
+                  sx={{
+                    '& .MuiChartsAxis-tickLabel': {
+                      fontSize: '12px',
+                      fill: '#666',
+                    },
+                    '& .MuiChartsAxis-label': {
+                      fontSize: '13px',
+                      fontWeight: 500,
+                    },
                   }}
                 />
               </Box>
@@ -1598,7 +1624,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
               <Box
@@ -1654,91 +1680,87 @@ export default function ExecutiveDashboardPage() {
     ),
 
     engagementScoreOverview: (
-      // Sahadev : Removed engagementScore temporarily
-      // <DashboardWidget
-      //   onClick={() => handleChartClick('Engagement Score Overview')}
-      //   minWidth={650}
-      //   minHeight={280}
-      //   autoHeight={true}
-      // >
-      //   {() => {
-      //     const data = engagementScoreOverview?.[0] || {};
+      <DashboardWidget
+        onClick={() => handleChartClick('Engagement Score Overview')}
+        minWidth={650}
+        minHeight={280}
+        autoHeight={true}
+      >
+        {() => {
+          const data = engagementScoreOverview?.[0] || {};
 
-      //     return (
-      //       <ScoreCard
-      //         title="Engagement Overview"
-      //         tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
-      //         overallScore={parseFloat(data.overall_engagement || 0)}
-      //         overallChange={parseFloat(data.overall_engagement_change || 0)}
-      //         overallDirection={data.overall_engagement_direction}
-      //         subScores={[
-      //           {
-      //             score: parseFloat(data.planned_score || 0),
-      //             label: 'Planned Score',
-      //             change: parseFloat(data.planned_score_change || 0),
-      //             positive: data.planned_score_direction !== 'down',
-      //           },
-      //           {
-      //             score: parseFloat(data.actual_score || 0),
-      //             label: 'Actual Score',
-      //             change: parseFloat(data.actual_score_change || 0),
-      //             positive: data.actual_score_direction !== 'down',
-      //           },
-      //         ]}
-      //         hasAccess={true}
-      //       />
-      //     );
-      //   }}
-      // </DashboardWidget>
-      <></>
+          return (
+            <ScoreCard
+              title="Engagement Overview"
+              tooltipText="Engagement score based on five key metrics: planning, actuals, confirmation, entry, and communication"
+              overallScore={parseFloat(data.overall_engagement || 0)}
+              overallChange={parseFloat(data.overall_engagement_change || 0)}
+              overallDirection={data.overall_engagement_direction}
+              subScores={[
+                {
+                  score: parseFloat(data.planned_score || 0),
+                  label: 'Planned Score',
+                  change: parseFloat(data.planned_score_change || 0),
+                  positive: data.planned_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.actual_score || 0),
+                  label: 'Actuals Score',
+                  change: parseFloat(data.actual_score_change || 0),
+                  positive: data.actual_score_direction !== 'down',
+                },
+              ]}
+              hasAccess={true}
+            />
+          );
+        }}
+      </DashboardWidget>
     ),
   };
 
   const projectCharts = {
     projectHealthOverview: (
-      // Sahadev : Removed projectHealthOverview temporarily
-      // <DashboardWidget
-      //   onClick={() => handleChartClick('Project Health Score Overview')}
-      //   minWidth={650}
-      //   minHeight={100}
-      //   autoHeight={true}
-      // >
-      //   {() => {
-      //     const data = projectHealthOverview?.[0] || {};
+      <DashboardWidget
+        onClick={() => handleChartClick('Project Health Score Overview')}
+        minWidth={650}
+        minHeight={100}
+        autoHeight={true}
+      >
+        {() => {
+          const data = projectHealthOverview?.[0] || {};
 
-      //     return (
-      //       <ScoreCard
-      //         title="Projects Health Score"
-      //         tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
-      //         overallScore={parseFloat(data.overall_health_score || 0)}
-      //         overallChange={parseFloat(data.overall_health_score_change || 0)}
-      //         overallDirection={data.overall_health_score_direction}
-      //         subScores={[
-      //           {
-      //             score: parseFloat(data.adherence_score || 0),
-      //             label: 'Adherence Score',
-      //             change: parseFloat(data.adherence_score_change || 0),
-      //             positive: data.adherence_score_direction !== 'down',
-      //           },
-      //           {
-      //             score: parseFloat(data.actuals_score || 0),
-      //             label: 'Actuals Score',
-      //             change: parseFloat(data.actuals_score_change || 0),
-      //             positive: data.actuals_score_direction !== 'down',
-      //           },
-      //           {
-      //             score: parseFloat(data.engagement_score || 0),
-      //             label: 'Engagement Score',
-      //             change: parseFloat(data.engagement_score_change || 0),
-      //             positive: data.engagement_score_direction !== 'down',
-      //           },
-      //         ]}
-      //         hasAccess={true}
-      //       />
-      //     );
-      //   }}
-      // </DashboardWidget>
-      <></>
+          return (
+            <ScoreCard
+              title="Projects Health Score"
+              tooltipText="Projects health based on alignment, actuals, and engagement metrics"
+              overallScore={parseFloat(data.overall_health_score || 0)}
+              overallChange={parseFloat(data.overall_health_score_change || 0)}
+              overallDirection={data.overall_health_score_direction}
+              subScores={[
+                {
+                  score: parseFloat(data.adherence_score || 0),
+                  label: 'Adherence Score',
+                  change: parseFloat(data.adherence_score_change || 0),
+                  positive: data.adherence_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.actuals_score || 0),
+                  label: 'Actuals Score',
+                  change: parseFloat(data.actuals_score_change || 0),
+                  positive: data.actuals_score_direction !== 'down',
+                },
+                {
+                  score: parseFloat(data.engagement_score || 0),
+                  label: 'Engagement Score',
+                  change: parseFloat(data.engagement_score_change || 0),
+                  positive: data.engagement_score_direction !== 'down',
+                },
+              ]}
+              hasAccess={true}
+            />
+          );
+        }}
+      </DashboardWidget>
     ),
 
     projectFTE: (
@@ -1922,7 +1944,7 @@ export default function ExecutiveDashboardPage() {
     budgetVsPlanVsActual: (
       <DashboardWidget
         onClick={() =>
-          handleChartClick('Budget vs Planned vs Actual by Project')
+          handleChartClick('Budget vs Planned vs Actuals by Projects')
         }
         minWidth={320}
         minHeight={280}
@@ -2665,271 +2687,270 @@ export default function ExecutiveDashboardPage() {
     return <LoadingScreen />;
   }
 
-  return loadingLoginUserPrivileges ? (
+  return initLoading ||
+    loadingLoginUserPrivileges ||
+    resourcesLoading || // Needed to setup filters
+    loadingAdvancedFilters ||
+    (dashboardLoading && !initialLoad) ? (
     <LoadingScreen />
   ) : (
-    <>
-      {dashboardLoading && !initialLoad && <LoadingScreen />}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Global
-          styles={css`
-            circle.MuiMarkElement-root {
-              r: 3 !important; /* Set the radius to a smaller value */
-            }
-            .react-grid-item {
-              transition: all 200ms ease;
-              transition-property: left, top;
-            }
-            .react-grid-item.cssTransforms {
-              transition-property: transform;
-            }
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Global
+        styles={css`
+          circle.MuiMarkElement-root {
+            r: 3 !important; /* Set the radius to a smaller value */
+          }
+          .react-grid-item {
+            transition: all 200ms ease;
+            transition-property: left, top;
+          }
+          .react-grid-item.cssTransforms {
+            transition-property: transform;
+          }
 
-            /* Fix resize handle for auto-height widgets */
-            .react-grid-item.auto-height-widget {
-              height: auto !important;
-            }
-            .react-grid-item.auto-height-widget .react-resizable-handle {
-              position: absolute;
-              bottom: 0;
-            }
+          /* Fix resize handle for auto-height widgets */
+          .react-grid-item.auto-height-widget {
+            height: auto !important;
+          }
+          .react-grid-item.auto-height-widget .react-resizable-handle {
+            position: absolute;
+            bottom: 0;
+          }
 
-            .MuiChartsLegend-item[data-series$='-planned']
-              .MuiChartsLabelMark-fill {
-              fill: transparent !important;
-              stroke-width: 4 !important;
-              stroke-dasharray: 5 5 !important;
-            }
+          .MuiChartsLegend-item[data-series$='-planned']
+            .MuiChartsLabelMark-fill {
+            fill: transparent !important;
+            stroke-width: 4 !important;
+            stroke-dasharray: 5 5 !important;
+          }
 
-            /* Dynamically generate stroke colors for each group */
-            ${Object.entries(groupColorMap)
-              .map(
-                ([group, color]) => `
+          /* Dynamically generate stroke colors for each group */
+          ${Object.entries(groupColorMap)
+            .map(
+              ([group, color]) => `
               .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='${color}'] { 
                 stroke: ${color} !important; 
               }
             `
-              )
-              .join('\n')}
+            )
+            .join('\n')}
 
-            [class*='MuiLineElement-series-'][class*='-planned'] {
-              stroke-dasharray: 5 5 !important;
-            }
+          [class*='MuiLineElement-series-'][class*='-planned'] {
+            stroke-dasharray: 5 5 !important;
+          }
 
-            [class*='MuiLineElement-series-'][class*='-actual'] {
-              stroke-dasharray: none !important;
-            }
+          [class*='MuiLineElement-series-'][class*='-actual'] {
+            stroke-dasharray: none !important;
+          }
 
-            /* Responsive chart styles */
-            .MuiChartsLegend-root {
-              max-width: 100% !important;
-              overflow: hidden !important;
-              font-size: 10px !important;
-              margin: 0 !important;
-            }
+          /* Responsive chart styles */
+          .MuiChartsLegend-root {
+            max-width: 100% !important;
+            overflow: hidden !important;
+            font-size: 10px !important;
+            margin: 0 !important;
+          }
 
+          .MuiChartsAxis-tickLabel {
+            font-size: 11px !important;
+          }
+
+          .MuiChartsAxisHighlight-root {
+            fill: none !important;
+            opcacity: 0 !important;
+          }
+
+          @media (max-width: 768px) {
             .MuiChartsAxis-tickLabel {
+              font-size: 9px !important;
+            }
+
+            .MuiChartsLegend-mark {
+              width: 16px !important;
+              height: 12px !important;
+            }
+
+            .MuiChartsLegend-label {
               font-size: 11px !important;
             }
-
-            .MuiChartsAxisHighlight-root {
-              fill: none !important;
-              opcacity: 0 !important;
-            }
-
-            @media (max-width: 768px) {
-              .MuiChartsAxis-tickLabel {
-                font-size: 9px !important;
-              }
-
-              .MuiChartsLegend-mark {
-                width: 16px !important;
-                height: 12px !important;
-              }
-
-              .MuiChartsLegend-label {
-                font-size: 11px !important;
-              }
-            }
-          `}
-        />
-        <CommonToolbar>
-          <Tabs
-            value={activeTab}
-            onChange={(e, val) => setActiveTab(val)}
-            sx={{ padding: '16px 16px 0px 8px' }}
-          >
+          }
+        `}
+      />
+      <CommonToolbar>
+        <Tabs
+          value={activeTab}
+          onChange={(e, val) => setActiveTab(val)}
+          sx={{ padding: '16px 16px 0px 8px' }}
+        >
+          <Tab
+            value="overview"
+            label="Overview"
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          />
+          {allowedTeamCharts.length > 0 && (
             <Tab
-              value="overview"
-              label="Overview"
+              value="teams"
+              label="Teams"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-            {allowedTeamCharts.length > 0 && (
-              <Tab
-                value="teams"
-                label="Teams"
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-            )}
-            {allowedProjectCharts.length > 0 && (
-              <Tab
-                value="projects"
-                label="Projects"
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-            )}
-            <DashboardToolbar
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              selectedOption={selectedOption}
-              setSelectedOption={setSelectedOption}
-              anchorEl={anchorEl}
-              setAnchorEl={setAnchorEl}
+          )}
+          {allowedProjectCharts.length > 0 && (
+            <Tab
+              value="projects"
+              label="Projects"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-          </Tabs>
-        </CommonToolbar>
-        <Topbar />
-        {activeTab === 'overview' && (
-          <>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#000000',
-                paddingLeft: '24px',
-                paddingBottom: '8px',
-              }}
-            >
-              Overview
-            </Typography>
+          )}
+          <DashboardToolbar
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            selectedOption={selectedOption}
+            setSelectedOption={setSelectedOption}
+            anchorEl={anchorEl}
+            setAnchorEl={setAnchorEl}
+          />
+        </Tabs>
+      </CommonToolbar>
+      <Topbar />
+      {activeTab === 'overview' && (
+        <>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000000',
+              paddingLeft: '24px',
+              paddingBottom: '8px',
+            }}
+          >
+            Overview
+          </Typography>
 
-            <Overview
-              activeProjects={activeProjects}
-              activeResources={activeResources}
-              actualsConfirmed={filteredActualsConfirmed}
-              totalResourceCost={totalResourceCost}
-              allocationPercentage={filteredAllocationPercentage}
-              hasAccessToQueryKey={hasAccessToQueryKey}
-            />
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={overviewLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-              cols={{ lg: 12, md: 12, sm: 12 }}
-              rowHeight={130}
-              onLayoutChange={handleLayoutChange}
-              isDraggable
-              isResizable
-              compactType="vertical"
-              style={{ padding: '0 16px' }}
-            >
-              {allowedOverviewCharts.map(key => (
-                <div
-                  key={key}
-                  className={
-                    key === 'engagementScoreOverview'
-                      ? 'auto-height-widget'
-                      : ''
-                  }
-                >
-                  {overviewcharts[key]}
-                </div>
-              ))}
-            </ResponsiveGridLayout>
-          </>
-        )}
+          <Overview
+            activeProjects={activeProjects}
+            activeResources={activeResources}
+            actualsConfirmed={filteredActualsConfirmed}
+            totalResourceCost={totalResourceCost}
+            allocationPercentage={filteredAllocationPercentage}
+            hasAccessToQueryKey={hasAccessToQueryKey}
+          />
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={overviewLayouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 12 }}
+            rowHeight={130}
+            onLayoutChange={handleLayoutChange}
+            isDraggable
+            isResizable
+            compactType="vertical"
+            style={{ padding: '0 16px' }}
+          >
+            {allowedOverviewCharts.map(key => (
+              <div
+                key={key}
+                className={
+                  key === 'engagementScoreOverview' ? 'auto-height-widget' : ''
+                }
+              >
+                {overviewcharts[key]}
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        </>
+      )}
 
-        {activeTab === 'teams' && (
-          <>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#000000',
-                paddingLeft: '24px',
-                paddingBottom: '8px',
-              }}
-            >
-              Teams Overview
-            </Typography>
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={teamLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-              cols={{ lg: 12, md: 12, sm: 12 }}
-              rowHeight={130}
-              onLayoutChange={handleLayoutChange}
-              isDraggable
-              isResizable
-              compactType="vertical"
-              style={{ padding: '0 16px' }}
-            >
-              {allowedTeamCharts.map(key => (
-                <div key={key}>{teamCharts[key]}</div>
-              ))}
-            </ResponsiveGridLayout>
-          </>
-        )}
+      {activeTab === 'teams' && (
+        <>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000000',
+              paddingLeft: '24px',
+              paddingBottom: '8px',
+            }}
+          >
+            Teams Overview
+          </Typography>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={teamLayouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 12 }}
+            rowHeight={130}
+            onLayoutChange={handleLayoutChange}
+            isDraggable
+            isResizable
+            compactType="vertical"
+            style={{ padding: '0 16px' }}
+          >
+            {allowedTeamCharts.map(key => (
+              <div key={key}>{teamCharts[key]}</div>
+            ))}
+          </ResponsiveGridLayout>
+        </>
+      )}
 
-        {activeTab === 'projects' && (
-          <>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#000000',
-                paddingLeft: '24px',
-                paddingBottom: '8px',
-              }}
-            >
-              Project Tracking
-            </Typography>
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={projectLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-              cols={{ lg: 12, md: 12, sm: 12 }}
-              rowHeight={130}
-              onLayoutChange={handleLayoutChange}
-              isDraggable
-              isResizable
-              compactType="vertical"
-              style={{ padding: '0 16px' }}
-            >
-              {allowedProjectCharts.map(key => (
-                <div
-                  key={key}
-                  className={
-                    key === 'projectHealthOverview' ? 'auto-height-widget' : ''
-                  }
-                >
-                  {projectCharts[key]}
-                </div>
-              ))}
-            </ResponsiveGridLayout>
-          </>
-        )}
-        <Dialog
-          open={dialogOpen}
-          onClose={handleDialogClose}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle>{selectedChart}</DialogTitle>
-          <DialogContent>
-            <Typography>
-              Drilldown details for "{selectedChart}" will appear here.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogClose} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </>
+      {activeTab === 'projects' && (
+        <>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000000',
+              paddingLeft: '24px',
+              paddingBottom: '8px',
+            }}
+          >
+            Project Tracking
+          </Typography>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={projectLayouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 12 }}
+            rowHeight={130}
+            onLayoutChange={handleLayoutChange}
+            isDraggable
+            isResizable
+            compactType="vertical"
+            style={{ padding: '0 16px' }}
+          >
+            {allowedProjectCharts.map(key => (
+              <div
+                key={key}
+                className={
+                  key === 'projectHealthOverview' ? 'auto-height-widget' : ''
+                }
+              >
+                {projectCharts[key]}
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        </>
+      )}
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{selectedChart}</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Drilldown details for "{selectedChart}" will appear here.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

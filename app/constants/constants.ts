@@ -286,8 +286,30 @@ export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
 
 export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused', 'Completed'];
 
-export const Resource_All_Status = ['Active', 'Inactive', 'Unassigned', 'Not-Planned', 'Pending']
+export const Resource_All_Status = [
+  'Active',
+  'Inactive',
+  'Unassigned',
+  'Not-Planned',
+  'Pending',
+];
 
 export const AllocationForm_Status_Filter = ['Active', 'Pending'];
 
 export const Resource_Team_Project_Status_Filter = ['Active', 'Not-Planned'];
+
+export const DASHBOARD_ALL_ACCESS = [
+  'activeProjects',
+  'allocationPercentage',
+  'actualsConfirmed',
+  'plan_vs_actual_variance',
+  'engagementScoreOverview',
+  'activeProjectsByType',
+  'projects_by_type_distribution',
+  'top_projects_by_variance',
+  'allocation_by_project_type_group',
+  'actuals_confirmation_status',
+  'unapprovedProjectAllocation',
+  'projectHealthOverview',
+  'projectFTE',
+];
