@@ -394,7 +394,12 @@ function* setupAdvancedFiltersSage(action: any): Generator<any, void, any> {
       );
 
     yield put(setDefaultAdvancedFilters(defaultRBACDashboardFilters));
-    yield put(setAdvancedFilters(defaultDashboardFilters));
+    yield put(
+      setAdvancedFilters({
+        ...defaultRBACDashboardFilters,
+        ...defaultDashboardFilters,
+      })
+    );
   } catch (error) {
     console.error(
       'Saga error, Failed to setup Initial Dashboard Filters : ',
