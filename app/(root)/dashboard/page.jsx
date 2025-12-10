@@ -839,7 +839,7 @@ export default function ExecutiveDashboardPage() {
                     color: 'rgba(0, 0, 0, 0.6)',
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1113,7 +1113,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1178,31 +1178,54 @@ export default function ExecutiveDashboardPage() {
         onClick={() =>
           handleChartClick('Active Projects by Project Type Group')
         }
-        minWidth={320}
-        minHeight={280}
+        minWidth={400}
+        minHeight={300}
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'pie');
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Define project type categories with consistent colors
+          const projectTypeColors = {
+            Run: '#5B7FFF',
+            Grow: '#FFD666',
+            Transform: '#FF9966',
+          };
+
+          // Sort data in Transform -> Grow -> Run order (create copy first)
+          const groupOrder = ['Transform', 'Grow', 'Run'];
+          const sortedData = [...(activeProjectsByType || [])].sort((a, b) => {
+            const aIdx = groupOrder.indexOf(a._type);
+            const bIdx = groupOrder.indexOf(b._type);
+            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+          });
+
+          // Extract labels and counts
+          const projectTypeLabels = sortedData.map(item => item._type);
+          const projectTypeCounts = sortedData.map(item => Number(item.count || 0));
+
+          // Assign colors based on type
+          const barColors = sortedData.map(item => projectTypeColors[item._type] || '#CCCCCC');
 
           return (
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start',
                 width: '100%',
+                height: '100%',
               }}
             >
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 2,
                   fontSize: dimensions.width < 400 ? '16px' : '18px',
                   fontWeight: 600,
                 }}
               >
                 Active Projects by Project Type Group
               </Typography>
+
               <Box
                 sx={{
                   flex: 1,
@@ -1210,56 +1233,57 @@ export default function ExecutiveDashboardPage() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   width: '100%',
+                  minHeight: 0,
                 }}
               >
-                <PieChart
+                <BarChart
+                  xAxis={[
+                    {
+                      scaleType: 'band',
+                      data: projectTypeLabels,
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.2,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Active Projects',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
                   series={[
                     {
-                      data: (filteredActiveProjectsByType || []).map(
-                        (item, idx) => {
-                          // Map UUID project type to name
-                          const projectType = projectTypes?.find(
-                            pt => pt.Name === item._type
-                          );
-                          const typeName = projectType
-                            ? projectType.Name
-                            : item._type;
-
-                          // Use memoized color map for consistent colors
-                          const assignedColor =
-                            projectTypeColorMap[typeName] ||
-                            colorPalette[idx % colorPalette.length];
-
-                          return {
-                            id: idx,
-                            value: Number(item.count),
-                            label: truncateLabel(
-                              typeName,
-                              dimensions.width < 400 ? 12 : 14
-                            ),
-                            color: assignedColor,
-                          };
-                        }
-                      ),
-                      innerRadius: 70,
-                      arcLabel: item => `${item.data}`,
-                      arcLabelRadius: '70%',
-                      outerRadius: config.outerRadius || 80,
-                      cornerRadius: 3,
-                      highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -10, color: 'gray' },
+                      data: projectTypeCounts,
+                      id: 'activeProjects',
+                      label: 'Active Projects',
                     },
                   ]}
                   width={config.width}
                   height={config.height}
-                  sx={{
-                    [`& .${pieArcLabelClasses.root}`]: {
-                      fontSize: '12px',
-                      fontWeight: 600,
+                  grid={{ horizontal: true }}
+                  margin={{
+                    top: 10,
+                    bottom: 40,
+                    left: 40,
+                    right: 10,
+                  }}
+                  colors={barColors}
+                  slotProps={{
+                    legend: {
+                      hidden: true,
                     },
                   }}
-                  slotProps={{
-                    legend: config.legend,
+                  sx={{
+                    '& .MuiChartsAxis-tickLabel': {
+                      fontSize: '12px',
+                      fill: '#666',
+                    },
+                    '& .MuiChartsAxis-label': {
+                      fontSize: '13px',
+                      fontWeight: 500,
+                    },
                   }}
                 />
               </Box>
@@ -1594,7 +1618,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
               <Box
@@ -1662,7 +1686,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Overview"
-              tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
+              tooltipText="Engagement score based on five key metrics: planning, actuals, confirmation, entry, and communication"
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
@@ -1675,7 +1699,7 @@ export default function ExecutiveDashboardPage() {
                 },
                 {
                   score: parseFloat(data.actual_score || 0),
-                  label: 'Actual Score',
+                  label: 'Actuals Score',
                   change: parseFloat(data.actual_score_change || 0),
                   positive: data.actual_score_direction !== 'down',
                 },
@@ -1702,7 +1726,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
-              tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
+              tooltipText="Projects health based on alignment, actuals, and engagement metrics"
               overallScore={parseFloat(data.overall_health_score || 0)}
               overallChange={parseFloat(data.overall_health_score_change || 0)}
               overallDirection={data.overall_health_score_direction}
@@ -1914,7 +1938,7 @@ export default function ExecutiveDashboardPage() {
     budgetVsPlanVsActual: (
       <DashboardWidget
         onClick={() =>
-          handleChartClick('Budget vs Planned vs Actual by Project')
+          handleChartClick('Budget vs Planned vs Actuals by Projects')
         }
         minWidth={320}
         minHeight={280}

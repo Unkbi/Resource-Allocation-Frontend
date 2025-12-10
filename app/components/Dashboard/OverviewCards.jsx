@@ -43,11 +43,15 @@ export default function Overview({
     const cost = parseInt(totalResourceCost?.[0]?.total_cost) || 0;
     const currency = totalResourceCost?.[0]?.currency || 'USD';
 
-    const confirmedPct = parseInt(actualsConfirmed?.[0]?.pct_confirmed);
-    const confirmedDisplay = isNaN(confirmedPct) ? '0%' : `${confirmedPct}%`;
-    const confirmedallocationPct = parseInt(
+    const confirmedPct = parseFloat(actualsConfirmed?.[0]?.pct_confirmed);
+    const confirmedDisplay = isNaN(confirmedPct) ? '0%' : `${Math.round(confirmedPct)}%`;
+    
+    const confirmedallocationPct = parseFloat(
       allocationPercentage?.[0]?.pct_allocated
     );
+    const allocationDisplay = isNaN(confirmedallocationPct) 
+      ? '0%' 
+      : `${Math.round(confirmedallocationPct)}%`;
 
     const data = [
       {
@@ -67,9 +71,7 @@ export default function Overview({
       },
       {
         label: 'Allocation %',
-        value: isNaN(confirmedallocationPct)
-          ? '0%'
-          : `${confirmedallocationPct}%`,
+        value: allocationDisplay,
         hasAccess: hasAccessToQueryKey('allocationPercentage'),
       },
       {
