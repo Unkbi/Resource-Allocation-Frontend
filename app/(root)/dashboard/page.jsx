@@ -665,7 +665,6 @@ export default function ExecutiveDashboardPage() {
   };
 
   const hasAccessToQueryKey = queryKey => {
-    return true;
     if (!dashboardQueryKeys) return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
