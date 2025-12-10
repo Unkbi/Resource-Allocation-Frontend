@@ -115,10 +115,12 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
-  'plan_vs_actual_variance',
   // Sahadev : Removed engagementScore temporarily
-  // 'engagementScoreOverview',
+  'projectHealthOverview',
+  'engagementScoreOverview',
+  'plan_vs_actual_variance',
   'top_projects_by_variance',
+  'projectFTE',
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
@@ -126,9 +128,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'actuals_confirmation_status',
 ];
 
-const PROJECT_CHART_SEQUENCE = [
-  'projectHealthOverview',
-  'projectFTE',
+const COST_CHART_SEQUENCE = [
   'budgetVsPlanVsActual',
 ];
 
@@ -687,7 +687,7 @@ export default function ExecutiveDashboardPage() {
   const allowedOverviewCharts = OVERVIEW_CHART_SEQUENCE.filter(queryKey =>
     hasAccessToQueryKey(queryKey)
   );
-  const allowedProjectCharts = PROJECT_CHART_SEQUENCE.filter(queryKey =>
+  const allowedCostsCharts = COST_CHART_SEQUENCE.filter(queryKey =>
     hasAccessToQueryKey(queryKey)
   );
   const allowedTeamCharts = TEAM_CHART_SEQUENCE.filter(queryKey =>
@@ -698,9 +698,9 @@ export default function ExecutiveDashboardPage() {
     () => generateLayouts(allowedOverviewCharts),
     [allowedOverviewCharts.join(',')]
   );
-  const projectLayouts = useMemo(
-    () => generateLayouts(allowedProjectCharts),
-    [allowedProjectCharts.join(',')]
+  const costsLayouts = useMemo(
+    () => generateLayouts(allowedCostsCharts),
+    [allowedCostsCharts.join(',')]
   );
   const teamLayouts = useMemo(
     () => generateLayouts(allowedTeamCharts),
@@ -1718,10 +1718,8 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
-  };
 
-  const projectCharts = {
-    projectHealthOverview: (
+     projectHealthOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
         minWidth={650}
@@ -1942,7 +1940,9 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+  };
 
+  const costsCharts = {
     budgetVsPlanVsActual: (
       <DashboardWidget
         onClick={() =>
@@ -1997,7 +1997,7 @@ export default function ExecutiveDashboardPage() {
                     },
                     {
                       data: sortedBudgetData.map(d =>
-                        Number.parseFloat(d.actuals_to_date)
+                        Number.parseFloat(d.actual_to_date)
                       ),
                       label: 'Actuals',
                       id: 'actual',
@@ -2584,10 +2584,10 @@ export default function ExecutiveDashboardPage() {
                       direction: 'column',
                       position: { vertical: 'middle', horizontal: 'right' },
                       padding: { right: 5 },
-                      itemMarkWidth: 12,
-                      itemMarkHeight: 12,
-                      markGap: 8,
-                      itemGap: 12,
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
+                      markgap: 8,
+                      itemgap: 12,
                     },
                   }}
                   margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
@@ -2796,10 +2796,10 @@ export default function ExecutiveDashboardPage() {
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
           )}
-          {allowedProjectCharts.length > 0 && (
+          {allowedCostsCharts.length > 0 && (
             <Tab
-              value="projects"
-              label="Projects"
+              value="costs"
+              label="Costs"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
           )}
@@ -2853,7 +2853,7 @@ export default function ExecutiveDashboardPage() {
               <div
                 key={key}
                 className={
-                  key === 'engagementScoreOverview' ? 'auto-height-widget' : ''
+                  key === 'engagementScoreOverview' || key === 'projectHealthOverview' ? 'auto-height-widget' : ''
                 }
               >
                 {overviewcharts[key]}
@@ -2896,7 +2896,7 @@ export default function ExecutiveDashboardPage() {
         </>
       )}
 
-      {activeTab === 'projects' && (
+      {activeTab === 'costs' && (
         <>
           <Typography
             variant="h2"
@@ -2908,11 +2908,11 @@ export default function ExecutiveDashboardPage() {
               paddingBottom: '8px',
             }}
           >
-            Project Tracking
+            Costs Tracking
           </Typography>
           <ResponsiveGridLayout
             className="layout"
-            layouts={projectLayouts}
+            layouts={costsLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
@@ -2922,15 +2922,8 @@ export default function ExecutiveDashboardPage() {
             compactType="vertical"
             style={{ padding: '0 16px' }}
           >
-            {allowedProjectCharts.map(key => (
-              <div
-                key={key}
-                className={
-                  key === 'projectHealthOverview' ? 'auto-height-widget' : ''
-                }
-              >
-                {projectCharts[key]}
-              </div>
+            {allowedCostsCharts.map(key => (
+              <div key={key}>{costsCharts[key]}</div>
             ))}
           </ResponsiveGridLayout>
         </>
