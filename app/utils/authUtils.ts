@@ -236,18 +236,18 @@ export function buildLoginUserPrivileges(
 
       if (!loginUserPrivileges[resourceName]) {
         loginUserPrivileges[resourceName] = {
-          c: privilege.c,
-          r: privilege.r,
-          u: privilege.u,
-          d: privilege.d,
+          c: true,
+          r: true,
+          u: true,
+          d: true,
         };
       } else {
         // merge with existing permissions if already present
         loginUserPrivileges[resourceName] = {
-          c: loginUserPrivileges[resourceName].c || privilege.c,
-          r: loginUserPrivileges[resourceName].r || privilege.r,
-          u: loginUserPrivileges[resourceName].u || privilege.u,
-          d: loginUserPrivileges[resourceName].d || privilege.d,
+          c: true,
+          r: true,
+          u: true,
+          d: true,
         };
       }
     }
