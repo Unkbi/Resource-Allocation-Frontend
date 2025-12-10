@@ -2,6 +2,7 @@
 
 import Overview from '../../components/Dashboard/OverviewCards';
 import ScoreCard from '../../components/Dashboard/ScoreCard';
+import ReportBuilderPage from '@/app/components/Dashboard/ReportBuilder/ReportBuilderPage';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { Global, css } from '@emotion/react';
 import {
@@ -1960,7 +1961,7 @@ export default function ExecutiveDashboardPage() {
                     },
                     {
                       data: sortedBudgetData.map(d =>
-                        Number.parseFloat(d.actuals_to_date)
+                        Number.parseFloat(d.actual_to_date)
                       ),
                       label: 'Actuals',
                       id: 'actual',
@@ -2532,8 +2533,8 @@ export default function ExecutiveDashboardPage() {
                       direction: 'column',
                       position: { vertical: 'middle', horizontal: 'right' },
                       padding: { right: 5 },
-                      itemMarkWidth: 12,
-                      itemMarkHeight: 12,
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
                       markGap: 8,
                       itemGap: 12,
                     },
@@ -2749,6 +2750,12 @@ export default function ExecutiveDashboardPage() {
                 sx={{ textTransform: 'none', fontWeight: 600 }}
               />
             )}
+            <Tab
+              value="report-builder"
+              label="Report Builder"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            {activeTab !== 'report-builder' && (
             <DashboardToolbar
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -2757,9 +2764,10 @@ export default function ExecutiveDashboardPage() {
               anchorEl={anchorEl}
               setAnchorEl={setAnchorEl}
             />
+            )}
           </Tabs>
         </CommonToolbar>
-        <Topbar />
+        {activeTab !== 'report-builder' && <Topbar />}
         {activeTab === 'overview' && (
           <>
             <Typography
@@ -2871,6 +2879,19 @@ export default function ExecutiveDashboardPage() {
             </ResponsiveGridLayout>
           </>
         )}
+
+        {activeTab === 'report-builder' && (
+          <Box
+            sx={{
+              height: 'calc(100vh - 200px)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <ReportBuilderPage onReportGenerate={(filters) => {console.log('Report generated with filters:', filters)}} />
+          </Box>
+        )}
+
         <Dialog
           open={dialogOpen}
           onClose={handleDialogClose}
