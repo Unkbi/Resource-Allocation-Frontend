@@ -1203,10 +1203,14 @@ export default function ExecutiveDashboardPage() {
 
           // Extract labels and counts
           const projectTypeLabels = sortedData.map(item => item._type);
-          const projectTypeCounts = sortedData.map(item => Number(item.count || 0));
+          const projectTypeCounts = sortedData.map(item =>
+            Number(item.count || 0)
+          );
 
           // Assign colors based on type
-          const barColors = sortedData.map(item => projectTypeColors[item._type] || '#CCCCCC');
+          const barColors = sortedData.map(
+            item => projectTypeColors[item._type] || '#CCCCCC'
+          );
 
           return (
             <Box

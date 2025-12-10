@@ -105,7 +105,10 @@ export default function AccessTable({
         setFilterCount(activeCount);
       };
       updateFilterCount();
-      const unsubscribe = apiRef.current.subscribeEvent('filterModelChange', updateFilterCount);
+      const unsubscribe = apiRef.current.subscribeEvent(
+        'filterModelChange',
+        updateFilterCount
+      );
       return unsubscribe;
     }
   }, [apiRef]);
@@ -711,49 +714,53 @@ export default function AccessTable({
                     />
                   </IconButton>
                 </Box>
-                <Box
-                  sx={{
-                    height: 36,
-                    width: '1px',
-                    backgroundColor: '#E2E8F0',
-                    mx: 1.5,
-                    display: title === 'Resources' ? 'none' : 'block',
-                  }}
-                />
-              </Box>
-              <Button
-                variant="contained"
-                onClick={e => {
-                  if (anchorEl && menuId === 'add-dropdown') {
-                    setMenuId(null);
-                    setAnchorEl(null);
-                    return;
-                  }
-                  setAnchorEl(e.currentTarget);
-                  setMenuId('add-dropdown');
-                }}
-                sx={{
-                  height: 40,
-                  borderRadius: '6px',
-                  background: '#1C2D5F',
-                  color: '#FFF',
-                  textTransform: 'none',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  px: 1.5,
-                  display: title === 'Resources' ? 'none' : 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  '&:hover': {
-                    background: '#1C2D5F',
-                  },
-                }}
-              >
-                {buttonLabel}
-                {title === 'Users' && (
-                  <KeyboardArrowDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
+                {buttonLabel && (
+                  <Box
+                    sx={{
+                      height: 36,
+                      width: '1px',
+                      backgroundColor: '#E2E8F0',
+                      mx: 1.5,
+                      display: title === 'Resources' ? 'none' : 'block',
+                    }}
+                  />
                 )}
-              </Button>
+              </Box>
+              {buttonLabel && (
+                <Button
+                  variant="contained"
+                  onClick={e => {
+                    if (anchorEl && menuId === 'add-dropdown') {
+                      setMenuId(null);
+                      setAnchorEl(null);
+                      return;
+                    }
+                    setAnchorEl(e.currentTarget);
+                    setMenuId('add-dropdown');
+                  }}
+                  sx={{
+                    height: 40,
+                    borderRadius: '6px',
+                    background: '#1C2D5F',
+                    color: '#FFF',
+                    textTransform: 'none',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    px: 1.5,
+                    display: title === 'Resources' ? 'none' : 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    '&:hover': {
+                      background: '#1C2D5F',
+                    },
+                  }}
+                >
+                  {buttonLabel}
+                  {title === 'Users' && (
+                    <KeyboardArrowDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
+                  )}
+                </Button>
+              )}
               {anchorEl && menuId === 'add-dropdown' && title === 'Users' && (
                 <Box
                   sx={{

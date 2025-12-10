@@ -41,6 +41,7 @@ import {
   FETCH_LOCATION,
 } from '@/app/redux/actions/allSettingsActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 
 const tabMenuNames = ['users', 'resources'];
 const baseURLAccessManagement = '/settings?menu=user-management';
@@ -156,7 +157,15 @@ const TabHeader = ({
   </Box>
 );
 
-export default function UserManagementPage() {
+interface UserManagementPageProps {
+  permissions: Record<string, CrudPermissions>;
+  loadingPermissions: boolean;
+}
+
+function UserManagementPage({
+  permissions,
+  loadingPermissions,
+}: UserManagementPageProps) {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('users');
@@ -204,6 +213,7 @@ export default function UserManagementPage() {
   }, [dialogIsOpen]);
 
   useEffect(() => {
+    if (loadingPermissions || !permissions['User']?.r) return;
     if (UsersData.length === 0) {
       dispatch({
         type: FETCH_USER,
@@ -212,6 +222,7 @@ export default function UserManagementPage() {
   }, []);
 
   useEffect(() => {
+    if (loadingPermissions || !permissions['User']?.r) return;
     if (ResourcesData.length === 0) {
       dispatch({
         type: FETCH_USER_RESOURCE,
@@ -220,6 +231,7 @@ export default function UserManagementPage() {
   }, []);
 
   useEffect(() => {
+    if (loadingPermissions || !permissions['User']?.r) return;
     if (location.length === 0) {
       dispatch({
         type: FETCH_LOCATION,
@@ -228,6 +240,7 @@ export default function UserManagementPage() {
   }, []);
 
   useEffect(() => {
+    if (loadingPermissions || !permissions['User']?.r) return;
     const menuParam = searchParams.get('menu');
     // Only process if this is the active menu
     if (menuParam !== 'user-management') return;
@@ -246,6 +259,7 @@ export default function UserManagementPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (loadingPermissions || !permissions['User']?.r) return;
     const menuParam = searchParams.get('menu');
     // Only process if this is the active menu
     if (menuParam !== 'user-management') return;
@@ -259,6 +273,7 @@ export default function UserManagementPage() {
   }, [tab]);
 
   useEffect(() => {
+    if (loadingPermissions || !permissions['User']?.r) return;
     if (!highlightedRowId || !apiRef?.current) return;
 
     const timeout = setTimeout(() => {
@@ -706,31 +721,35 @@ export default function UserManagementPage() {
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 100,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => {
-        return (
-          <Box sx={{ ...commonCellStyle }}>
-            <IconButton
-              onClick={e => {
-                setAnchorEl(e.currentTarget);
-                setMenuUserId(params.row.Name);
-              }}
-              sx={{
-                color: '#1C2D5F',
-              }}
-            >
-              <MoreHorizontal sx={{ fontSize: 20 }} />
-            </IconButton>
-            {renderUsersMenu(params.row.Name, params.row)}
-          </Box>
-        );
-      },
-    },
+    ...(permissions!['User']?.u || permissions!['User']?.d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 100,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => {
+              return (
+                <Box sx={{ ...commonCellStyle }}>
+                  <IconButton
+                    onClick={e => {
+                      setAnchorEl(e.currentTarget);
+                      setMenuUserId(params.row.Name);
+                    }}
+                    sx={{
+                      color: '#1C2D5F',
+                    }}
+                  >
+                    <MoreHorizontal sx={{ fontSize: 20 }} />
+                  </IconButton>
+                  {renderUsersMenu(params.row.Name, params.row)}
+                </Box>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   const ResourcesColumns = [
@@ -777,33 +796,39 @@ export default function UserManagementPage() {
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 100,
-      flex: 0.5,
-      sortable: false,
-      filterable: false,
-      renderCell: (params: any) => {
-        return (
-          <Box sx={{ ...commonCellStyle }}>
-            <IconButton
-              onClick={e => {
-                setAnchorEl(e.currentTarget);
-                setMenuUserId(params.row.Name);
-              }}
-              disabled={params.row.resourceStatus === 'Inactive'}
-              sx={{
-                color: '#1C2D5F',
-              }}
-            >
-              <MoreHorizontal sx={{ fontSize: 20 }} />
-            </IconButton>
-            {renderResourcesMenu(params.row.Name, params.row)}
-          </Box>
-        );
-      },
-    },
+    ...(permissions!['User']?.c ||
+    permissions!['User']?.u ||
+    permissions!['User']?.d
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 100,
+            flex: 0.5,
+            sortable: false,
+            filterable: false,
+            renderCell: (params: any) => {
+              return (
+                <Box sx={{ ...commonCellStyle }}>
+                  <IconButton
+                    onClick={e => {
+                      setAnchorEl(e.currentTarget);
+                      setMenuUserId(params.row.Name);
+                    }}
+                    disabled={params.row.resourceStatus === 'Inactive'}
+                    sx={{
+                      color: '#1C2D5F',
+                    }}
+                  >
+                    <MoreHorizontal sx={{ fontSize: 20 }} />
+                  </IconButton>
+                  {renderResourcesMenu(params.row.Name, params.row)}
+                </Box>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   const renderUsersMenu = (id: string, row: any) => {
@@ -820,20 +845,22 @@ export default function UserManagementPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <StyledMenuItem
-          onClick={() => {
-            const user = UsersData.find((r: any) => r.Name === id);
-            if (user) {
-              handleEditUser(user);
-            }
-            setMenuUserId(null);
-          }}
-        >
-          <Pencil sx={{ mr: 1, fontSize: 18 }} />
-          Edit
-        </StyledMenuItem>
+        {permissions['User']?.u && (
+          <StyledMenuItem
+            onClick={() => {
+              const user = UsersData.find((r: any) => r.Name === id);
+              if (user) {
+                handleEditUser(user);
+              }
+              setMenuUserId(null);
+            }}
+          >
+            <Pencil sx={{ mr: 1, fontSize: 18 }} />
+            Edit
+          </StyledMenuItem>
+        )}
 
-        {enableResendInvite && (
+        {permissions['User']?.u && enableResendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleResendInvite(row);
@@ -845,7 +872,7 @@ export default function UserManagementPage() {
           </StyledMenuItem>
         )}
 
-        {enableDeactivate && (
+        {permissions['User']?.u && enableDeactivate && (
           <StyledMenuItem
             onClick={() => {
               handleDeactivateUser(row);
@@ -857,7 +884,7 @@ export default function UserManagementPage() {
           </StyledMenuItem>
         )}
 
-        {enableReactivate && (
+        {permissions['User']?.u && enableReactivate && (
           <StyledMenuItem
             onClick={() => {
               handleReactivateUser(row);
@@ -869,15 +896,17 @@ export default function UserManagementPage() {
           </StyledMenuItem>
         )}
 
-        <StyledMenuItem
-          onClick={() => {
-            handleDeleteUser(id);
-            setMenuUserId(null);
-          }}
-        >
-          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-          Delete
-        </StyledMenuItem>
+        {permissions['User']?.d && (
+          <StyledMenuItem
+            onClick={() => {
+              handleDeleteUser(id);
+              setMenuUserId(null);
+            }}
+          >
+            <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+            Delete
+          </StyledMenuItem>
+        )}
       </StyledMenu>
     );
   };
@@ -900,7 +929,7 @@ export default function UserManagementPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        {enableSendInvite && (
+        {permissions['User']?.c && enableSendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleAddUser([row]);
@@ -912,7 +941,7 @@ export default function UserManagementPage() {
           </StyledMenuItem>
         )}
 
-        {enableResendInvite && (
+        {permissions['User']?.u && enableResendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleResendInvite(row);
@@ -924,7 +953,7 @@ export default function UserManagementPage() {
           </StyledMenuItem>
         )}
 
-        {enableDeactivate && (
+        {permissions['User']?.u && enableDeactivate && (
           <StyledMenuItem
             onClick={() => {
               handleDeactivateUser(row);
@@ -936,7 +965,7 @@ export default function UserManagementPage() {
           </StyledMenuItem>
         )}
 
-        {enableReactivate && (
+        {permissions['User']?.u && enableReactivate && (
           <StyledMenuItem
             onClick={() => {
               handleReactivateUser(row);
@@ -985,7 +1014,7 @@ export default function UserManagementPage() {
           setMenuId={setMenuUserId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel="Invite User"
+          buttonLabel={permissions['User']?.c ? 'Invite User' : ''}
           renderMenu={() => null}
           columns={UsersPageColumns}
           apiRef={apiRef}
@@ -1080,3 +1109,5 @@ export default function UserManagementPage() {
     </div>
   );
 }
+
+export default withRBAC(UserManagementPage, ['User']);
