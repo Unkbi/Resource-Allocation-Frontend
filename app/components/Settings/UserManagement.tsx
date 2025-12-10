@@ -30,7 +30,16 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
-import { SEND_INVITATION, FETCH_USER, DEACTIVATE_USER, ACTIVATE_USER, FETCH_USER_RESOURCE, RESEND_INVITATION, DELETE_USER, FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
+import {
+  SEND_INVITATION,
+  FETCH_USER,
+  DEACTIVATE_USER,
+  ACTIVATE_USER,
+  FETCH_USER_RESOURCE,
+  RESEND_INVITATION,
+  DELETE_USER,
+  FETCH_LOCATION,
+} from '@/app/redux/actions/allSettingsActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 
 const tabMenuNames = ['users', 'resources'];
@@ -165,11 +174,19 @@ export default function UserManagementPage() {
     'delete' | 'deactivate' | 'reactivate'
   >('delete');
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
-  const {location} = useSelector((state: any) => state.allSettings);
-  const usersDataFromRedux = useSelector((state: any) => state.allSettings.users);
-  const UsersData = useMemo(() => usersDataFromRedux || [], [usersDataFromRedux]);
-  const ResourcesData = useSelector((state: any) => state.allSettings.userResources) || [];
-  const { isOpen: dialogIsOpen } = useSelector((state: any) => state.globalDialog);
+  const { location } = useSelector((state: any) => state.allSettings);
+  const usersDataFromRedux = useSelector(
+    (state: any) => state.allSettings.users
+  );
+  const UsersData = useMemo(
+    () => usersDataFromRedux || [],
+    [usersDataFromRedux]
+  );
+  const ResourcesData =
+    useSelector((state: any) => state.allSettings.userResources) || [];
+  const { isOpen: dialogIsOpen } = useSelector(
+    (state: any) => state.globalDialog
+  );
 
   const loading = false;
   const { id: highlightedRowId } = useSelector(
@@ -192,7 +209,7 @@ export default function UserManagementPage() {
         type: FETCH_USER,
       });
     }
-  }, [UsersData]);
+  }, []);
 
   useEffect(() => {
     if (ResourcesData.length === 0) {
@@ -200,7 +217,7 @@ export default function UserManagementPage() {
         type: FETCH_USER_RESOURCE,
       });
     }
-  }, [ResourcesData]);
+  }, []);
 
   useEffect(() => {
     if (location.length === 0) {
@@ -208,7 +225,7 @@ export default function UserManagementPage() {
         type: FETCH_LOCATION,
       });
     }
-  }, [location]);
+  }, []);
 
   useEffect(() => {
     const menuParam = searchParams.get('menu');
@@ -357,26 +374,35 @@ export default function UserManagementPage() {
         actionType: 'deactivate' | 'reactivate',
         entityType: 'user' | 'resource'
       ) => {
-        const actionVerb = actionType === 'deactivate' ? 'deactivated' : 'reactivated';
-        const reduxAction = actionType === 'deactivate' ? DEACTIVATE_USER : ACTIVATE_USER;
-        
+        const actionVerb =
+          actionType === 'deactivate' ? 'deactivated' : 'reactivated';
+        const reduxAction =
+          actionType === 'deactivate' ? DEACTIVATE_USER : ACTIVATE_USER;
+
         const results = await Promise.allSettled(
-          items.map((item: any) => 
-            new Promise((resolve, reject) => {
-              dispatch({
-                type: reduxAction,
-                payload: {
-                  userData: { userId: entityType === 'user' ? item.id : item.UserId },
-                  resolve,
-                  reject,
-                },
-              });
-            })
+          items.map(
+            (item: any) =>
+              new Promise((resolve, reject) => {
+                dispatch({
+                  type: reduxAction,
+                  payload: {
+                    userData: {
+                      userId: entityType === 'user' ? item.id : item.UserId,
+                    },
+                    resolve,
+                    reject,
+                  },
+                });
+              })
           )
         );
 
-        const successCount = results.filter((r) => r.status === 'fulfilled').length;
-        const failureCount = results.filter((r) => r.status === 'rejected').length;
+        const successCount = results.filter(
+          r => r.status === 'fulfilled'
+        ).length;
+        const failureCount = results.filter(
+          r => r.status === 'rejected'
+        ).length;
 
         if (failureCount === 0) {
           showToastMessage(
@@ -384,10 +410,7 @@ export default function UserManagementPage() {
             'success'
           );
         } else if (successCount === 0) {
-          showToastMessage(
-            `Failed to ${actionType} ${entityType}(s)`,
-            'error'
-          );
+          showToastMessage(`Failed to ${actionType} ${entityType}(s)`, 'error');
         } else {
           showToastMessage(
             `${successCount} ${entityType}(s) ${actionVerb} successfully, ${failureCount} failed`,
@@ -399,7 +422,7 @@ export default function UserManagementPage() {
       // Handle delete action
       if (actionType === 'delete' && tab === 'users' && deletingUsers) {
         const user = UsersData.find((user: any) => user.Name === deletingUsers);
-        
+
         if (!user) {
           showToastMessage('User not found', 'error');
           return;
@@ -411,7 +434,7 @@ export default function UserManagementPage() {
             payload: { userId: user.id, resolve, reject },
           });
         });
-        
+
         showToastMessage('User deleted successfully', 'success');
       }
       // Handle deactivate action
@@ -419,7 +442,11 @@ export default function UserManagementPage() {
         if (tab === 'users' && deactivatingUser) {
           await handleBatchOperation(deactivatingUser, 'deactivate', 'user');
         } else if (tab === 'resources' && deactivatingResource) {
-          await handleBatchOperation(deactivatingResource, 'deactivate', 'resource');
+          await handleBatchOperation(
+            deactivatingResource,
+            'deactivate',
+            'resource'
+          );
         }
       }
       // Handle reactivate action
@@ -427,19 +454,23 @@ export default function UserManagementPage() {
         if (tab === 'users' && reactivatingUser) {
           await handleBatchOperation(reactivatingUser, 'reactivate', 'user');
         } else if (tab === 'resources' && reactivatingResource) {
-          await handleBatchOperation(reactivatingResource, 'reactivate', 'resource');
+          await handleBatchOperation(
+            reactivatingResource,
+            'reactivate',
+            'resource'
+          );
         }
       }
     } catch (error) {
       console.error(`${actionType} operation failed:`, error);
-      
+
       // Specific error messages based on action type
       const errorMessages: Record<typeof actionType, string> = {
         delete: 'Failed to delete user',
         deactivate: `Failed to deactivate ${tab === 'users' ? 'user(s)' : 'resource(s)'}`,
         reactivate: `Failed to reactivate ${tab === 'users' ? 'user(s)' : 'resource(s)'}`,
       };
-      
+
       dispatch(
         showToast({
           open: true,
@@ -484,12 +515,12 @@ export default function UserManagementPage() {
           email: row.email,
           firstName: firstName,
           lastName: lastName,
-          role: row.role
+          role: row.role,
         };
       });
       const userData = {
-        users: [...finaldata]
-      }
+        users: [...finaldata],
+      };
 
       await new Promise((resolve, reject) => {
         dispatch({
@@ -527,17 +558,19 @@ export default function UserManagementPage() {
   const handleResendInvite = async (rowOrRows: any) => {
     try {
       rowOrRows = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
-      await Promise.all(rowOrRows.map(async (row: any) => {
-        const postData = {
-          email: row.email,
-        };
-        dispatch({
-          type: RESEND_INVITATION,
-          payload:{
-            userData: postData
-          }
-        });
-      }));
+      await Promise.all(
+        rowOrRows.map(async (row: any) => {
+          const postData = {
+            email: row.email,
+          };
+          dispatch({
+            type: RESEND_INVITATION,
+            payload: {
+              userData: postData,
+            },
+          });
+        })
+      );
       dispatch(
         showToast({
           open: true,
@@ -563,9 +596,13 @@ export default function UserManagementPage() {
 
   const handleDeactivateUser = (rowOrRows: any) => {
     if (Array.isArray(rowOrRows)) {
-      tab === 'users' ? setDeactivatingUser(rowOrRows) : setDeactivatingResource(rowOrRows);
+      tab === 'users'
+        ? setDeactivatingUser(rowOrRows)
+        : setDeactivatingResource(rowOrRows);
     } else {
-      tab === 'users' ? setDeactivatingUser([rowOrRows]) : setDeactivatingResource([rowOrRows]);
+      tab === 'users'
+        ? setDeactivatingUser([rowOrRows])
+        : setDeactivatingResource([rowOrRows]);
     }
     setActionType('deactivate');
     setIsDialogOpen(true);
@@ -573,9 +610,13 @@ export default function UserManagementPage() {
 
   const handleReactivateUser = (rowOrRows: any) => {
     if (Array.isArray(rowOrRows)) {
-      tab === 'users' ? setReactivatingUser(rowOrRows) : setReactivatingResource(rowOrRows);
+      tab === 'users'
+        ? setReactivatingUser(rowOrRows)
+        : setReactivatingResource(rowOrRows);
     } else {
-      tab === 'users' ? setReactivatingUser([rowOrRows]) : setReactivatingResource([rowOrRows]);
+      tab === 'users'
+        ? setReactivatingUser([rowOrRows])
+        : setReactivatingResource([rowOrRows]);
     }
     setActionType('reactivate');
     setIsDialogOpen(true);
@@ -675,7 +716,7 @@ export default function UserManagementPage() {
         return (
           <Box sx={{ ...commonCellStyle }}>
             <IconButton
-              onClick={(e) => {
+              onClick={e => {
                 setAnchorEl(e.currentTarget);
                 setMenuUserId(params.row.Name);
               }}
@@ -714,14 +755,15 @@ export default function UserManagementPage() {
       headerName: 'Location',
       flex: 1,
       renderCell: (params: any) => {
-        const locationName = location.find((loc: any) => loc.Id === params.value)?.Name || '';
+        const locationName =
+          location.find((loc: any) => loc.Id === params.value)?.Name || '';
         return <Typography sx={commonCellStyle}>{locationName}</Typography>;
       },
     },
     {
       field: 'resourceStatus',
       headerName: 'Resource Status',
-      align:'center',
+      align: 'center',
       flex: 1,
       renderCell: (params: any) => (
         <Typography sx={commonCellStyle}>{params.value}</Typography>
@@ -746,7 +788,7 @@ export default function UserManagementPage() {
         return (
           <Box sx={{ ...commonCellStyle }}>
             <IconButton
-              onClick={(e) => {
+              onClick={e => {
                 setAnchorEl(e.currentTarget);
                 setMenuUserId(params.row.Name);
               }}
@@ -790,7 +832,6 @@ export default function UserManagementPage() {
           <Pencil sx={{ mr: 1, fontSize: 18 }} />
           Edit
         </StyledMenuItem>
-
 
         {enableResendInvite && (
           <StyledMenuItem
@@ -845,7 +886,8 @@ export default function UserManagementPage() {
     const status = row.userStatus;
     const resStatus = row.resourceStatus;
     // const enableAddUser = status === 'Not Created';
-    const enableSendInvite = status === 'Not Created' && resStatus !== 'Inactive';
+    const enableSendInvite =
+      status === 'Not Created' && resStatus !== 'Inactive';
     const enableResendInvite = status === 'Invited';
     const enableDeactivate = ['Invited', 'Active'].includes(status);
     const enableReactivate = status === 'Inactive';
@@ -858,7 +900,6 @@ export default function UserManagementPage() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-
         {enableSendInvite && (
           <StyledMenuItem
             onClick={() => {
@@ -983,7 +1024,7 @@ export default function UserManagementPage() {
           onBulkReactivateUser={handleBulkReactivateUser}
           selectedRowIds={selectedRowIds}
           onSelectionChange={handleSelectionChange}
-          isRowSelectable={(params) => params.row.resourceStatus !== 'Inactive'}
+          isRowSelectable={params => params.row.resourceStatus !== 'Inactive'}
         />
       )}
 
