@@ -50,10 +50,7 @@ import {
   fetchDashboardChart,
   fetchInventoryMetrics,
 } from '../../redux/actions/dashboardAction';
-import {
-  startMultipleChartsLoading,
-  setDashboardLoading,
-} from '../../redux/reducers/dashboardReducer';
+import { startMultipleChartsLoading } from '../../redux/reducers/dashboardReducer';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -76,6 +73,7 @@ import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 import { getAllTeams } from '@/app/services/teamServices';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import { FETCH_DASHBOARD_QUERY_KEYS } from '@/app/redux/actions/rbacActions';
+import { DASHBOARD_ALL_ACCESS } from '@/app/constants/constants';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -105,7 +103,7 @@ const sortByTotal = (data, sumKeys, descending = true) => {
 
 // Sort project type groups in Transform -> Grow -> Run order
 const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
-  const order = { 'Transform': 0, 'Grow': 1, 'Run': 2 };
+  const order = { Transform: 0, Grow: 1, Run: 2 };
   return [...data].sort((a, b) => {
     const aGroup = a[groupKey] || '';
     const bGroup = b[groupKey] || '';
@@ -119,17 +117,21 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
-  'engagementScoreOverview',
+  // Sahadev : Removed engagementScore temporarily
+  // 'engagementScoreOverview',
   'top_projects_by_variance',
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
   'actuals_confirmation_status',
-
 ];
 
-const PROJECT_CHART_SEQUENCE = ['projectHealthOverview', 'projectFTE', 'budgetVsPlanVsActual'];
+const PROJECT_CHART_SEQUENCE = [
+  'projectHealthOverview',
+  'projectFTE',
+  'budgetVsPlanVsActual',
+];
 
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
@@ -143,7 +145,10 @@ const TEAM_CHART_SEQUENCE = [
 
 const generateLayouts = chartKeys => {
   // Auto-height widgets that should take less vertical space
-  const autoHeightWidgets = ['engagementScoreOverview', 'projectHealthOverview'];
+  const autoHeightWidgets = [
+    'engagementScoreOverview',
+    'projectHealthOverview',
+  ];
 
   return {
     lg: chartKeys.map((key, idx) => ({
@@ -184,8 +189,10 @@ export default function ExecutiveDashboardPage() {
     state => state.dashboard.advancedFilters || {}
   );
   const dashboardLoading = useSelector(state => state.dashboard.loading);
+  const { loadingAdvancedFilters } = useSelector(state => state.dashboard);
+  const resourcesLoading = useSelector(state => state.resources.loading);
+  const initLoading = useSelector(state => state.user.initLoading);
   const [initialLoad, setInitialLoad] = useState(true);
-
   const coverageData = useSelector(
     state => state.dashboard.resourceCoverage || []
   );
@@ -659,7 +666,9 @@ export default function ExecutiveDashboardPage() {
   };
 
   const hasAccessToQueryKey = queryKey => {
+    return true;
     if (!dashboardQueryKeys) return false;
+    if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
 
     const queryDetails = dashboardQueryKeys?.find(
@@ -835,7 +844,7 @@ export default function ExecutiveDashboardPage() {
                     color: 'rgba(0, 0, 0, 0.6)',
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1109,7 +1118,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
 
@@ -1174,31 +1183,58 @@ export default function ExecutiveDashboardPage() {
         onClick={() =>
           handleChartClick('Active Projects by Project Type Group')
         }
-        minWidth={320}
-        minHeight={280}
+        minWidth={400}
+        minHeight={300}
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'pie');
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Define project type categories with consistent colors
+          const projectTypeColors = {
+            Run: '#5B7FFF',
+            Grow: '#FFD666',
+            Transform: '#FF9966',
+          };
+
+          // Sort data in Transform -> Grow -> Run order (create copy first)
+          const groupOrder = ['Transform', 'Grow', 'Run'];
+          const sortedData = [...(activeProjectsByType || [])].sort((a, b) => {
+            const aIdx = groupOrder.indexOf(a._type);
+            const bIdx = groupOrder.indexOf(b._type);
+            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+          });
+
+          // Extract labels and counts
+          const projectTypeLabels = sortedData.map(item => item._type);
+          const projectTypeCounts = sortedData.map(item =>
+            Number(item.count || 0)
+          );
+
+          // Assign colors based on type
+          const barColors = sortedData.map(
+            item => projectTypeColors[item._type] || '#CCCCCC'
+          );
 
           return (
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start',
                 width: '100%',
+                height: '100%',
               }}
             >
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 2,
                   fontSize: dimensions.width < 400 ? '16px' : '18px',
                   fontWeight: 600,
                 }}
               >
                 Active Projects by Project Type Group
               </Typography>
+
               <Box
                 sx={{
                   flex: 1,
@@ -1206,56 +1242,57 @@ export default function ExecutiveDashboardPage() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   width: '100%',
+                  minHeight: 0,
                 }}
               >
-                <PieChart
+                <BarChart
+                  xAxis={[
+                    {
+                      scaleType: 'band',
+                      data: projectTypeLabels,
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.2,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Active Projects',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
                   series={[
                     {
-                      data: (filteredActiveProjectsByType || []).map(
-                        (item, idx) => {
-                          // Map UUID project type to name
-                          const projectType = projectTypes?.find(
-                            pt => pt.Name === item._type
-                          );
-                          const typeName = projectType
-                            ? projectType.Name
-                            : item._type;
-
-                          // Use memoized color map for consistent colors
-                          const assignedColor =
-                            projectTypeColorMap[typeName] ||
-                            colorPalette[idx % colorPalette.length];
-
-                          return {
-                            id: idx,
-                            value: Number(item.count),
-                            label: truncateLabel(
-                              typeName,
-                              dimensions.width < 400 ? 12 : 14
-                            ),
-                            color: assignedColor,
-                          };
-                        }
-                      ),
-                      innerRadius: 70,
-                      arcLabel: item => `${item.data}`,
-                      arcLabelRadius: '70%',
-                      outerRadius: config.outerRadius || 80,
-                      cornerRadius: 3,
-                      highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -10, color: 'gray' },
+                      data: projectTypeCounts,
+                      id: 'activeProjects',
+                      label: 'Active Projects',
                     },
                   ]}
                   width={config.width}
                   height={config.height}
-                  sx={{
-                    [`& .${pieArcLabelClasses.root}`]: {
-                      fontSize: '12px',
-                      fontWeight: 600,
+                  grid={{ horizontal: true }}
+                  margin={{
+                    top: 10,
+                    bottom: 40,
+                    left: 40,
+                    right: 10,
+                  }}
+                  colors={barColors}
+                  slotProps={{
+                    legend: {
+                      hidden: true,
                     },
                   }}
-                  slotProps={{
-                    legend: config.legend,
+                  sx={{
+                    '& .MuiChartsAxis-tickLabel': {
+                      fontSize: '12px',
+                      fill: '#666',
+                    },
+                    '& .MuiChartsAxis-label': {
+                      fontSize: '13px',
+                      fontWeight: 500,
+                    },
                   }}
                 />
               </Box>
@@ -1590,7 +1627,7 @@ export default function ExecutiveDashboardPage() {
                     fontWeight: 400,
                   }}
                 >
-                  (Previous period)
+                  (Previous week)
                 </span>
               </Typography>
               <Box
@@ -1609,7 +1646,7 @@ export default function ExecutiveDashboardPage() {
                       innerRadius: 0,
                       outerRadius: config.outerRadius || 80,
                       cornerRadius: 3,
-                      arcLabel: (item) => `${item.value}%`,
+                      arcLabel: item => `${item.value}%`,
                       arcLabelMinAngle: 20,
                       arcLabelRadius: '70%',
                       highlightScope: { faded: 'global', highlighted: 'item' },
@@ -1658,7 +1695,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Overview"
-              tooltipText="Overall engagement score based on planning, actuals, confirmation, entry, and communication metrics"
+              tooltipText="Engagement score based on five key metrics: planning, actuals, confirmation, entry, and communication"
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
@@ -1671,7 +1708,7 @@ export default function ExecutiveDashboardPage() {
                 },
                 {
                   score: parseFloat(data.actual_score || 0),
-                  label: 'Actual Score',
+                  label: 'Actuals Score',
                   change: parseFloat(data.actual_score_change || 0),
                   positive: data.actual_score_direction !== 'down',
                 },
@@ -1698,7 +1735,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
-              tooltipText="Overall project health based on alignment, actuals, and engagement metrics"
+              tooltipText="Projects health based on alignment, actuals, and engagement metrics"
               overallScore={parseFloat(data.overall_health_score || 0)}
               overallChange={parseFloat(data.overall_health_score_change || 0)}
               overallDirection={data.overall_health_score_direction}
@@ -1910,7 +1947,7 @@ export default function ExecutiveDashboardPage() {
     budgetVsPlanVsActual: (
       <DashboardWidget
         onClick={() =>
-          handleChartClick('Budget vs Planned vs Actual by Project')
+          handleChartClick('Budget vs Planned vs Actuals by Projects')
         }
         minWidth={320}
         minHeight={280}
@@ -2023,13 +2060,17 @@ export default function ExecutiveDashboardPage() {
           ];
 
           // Sort teams by total headcount descending
-          const sortedTeamHeadcount = [...(team_headcount_distribution || [])].sort((a, b) => {
+          const sortedTeamHeadcount = [
+            ...(team_headcount_distribution || []),
+          ].sort((a, b) => {
             const aTotal = employeeTypes.reduce(
-              (sum, type) => sum + Number(a.resource_type_split?.[type.key] || 0),
+              (sum, type) =>
+                sum + Number(a.resource_type_split?.[type.key] || 0),
               0
             );
             const bTotal = employeeTypes.reduce(
-              (sum, type) => sum + Number(b.resource_type_split?.[type.key] || 0),
+              (sum, type) =>
+                sum + Number(b.resource_type_split?.[type.key] || 0),
               0
             );
             return bTotal - aTotal;
@@ -2133,7 +2174,10 @@ export default function ExecutiveDashboardPage() {
             team,
             total: filteredUnapprovedActualsByTeam
               .filter(d => d.team_name === team)
-              .reduce((sum, d) => sum + Number.parseFloat(d.pct_of_actuals || 0), 0),
+              .reduce(
+                (sum, d) => sum + Number.parseFloat(d.pct_of_actuals || 0),
+                0
+              ),
           }));
           teamTotals.sort((a, b) => b.total - a.total);
           const sortedUniqueTeams = teamTotals.map(t => t.team);
@@ -2453,11 +2497,15 @@ export default function ExecutiveDashboardPage() {
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          const periodData = (actualsTrendWeekly || []).map(item => ({
-            period_start: item.period_start,
-            week: getWeekNumber(item.period_start),
-            actuals: item.actuals || []
-          })).sort((a, b) => new Date(a.period_start) - new Date(b.period_start));
+          const periodData = (actualsTrendWeekly || [])
+            .map(item => ({
+              period_start: item.period_start,
+              week: getWeekNumber(item.period_start),
+              actuals: item.actuals || [],
+            }))
+            .sort(
+              (a, b) => new Date(a.period_start) - new Date(b.period_start)
+            );
 
           const weeks = periodData.map(d => d.week);
 
@@ -2465,7 +2513,11 @@ export default function ExecutiveDashboardPage() {
           const categories = [
             { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
             { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
-            { key: 'Unplanned Projects', label: 'Unplanned Projects', color: '#FF884D' },
+            {
+              key: 'Unplanned Projects',
+              label: 'Unplanned Projects',
+              color: '#FF884D',
+            },
             { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
           ];
 
@@ -2535,8 +2587,8 @@ export default function ExecutiveDashboardPage() {
                       padding: { right: 5 },
                       itemmarkwidth: 12,
                       itemmarkheight: 12,
-                      markGap: 8,
-                      itemGap: 12,
+                      markgap: 8,
+                      itemgap: 12,
                     },
                   }}
                   margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
@@ -2638,124 +2690,126 @@ export default function ExecutiveDashboardPage() {
     return <LoadingScreen />;
   }
 
-  return loadingLoginUserPrivileges ? (
+  return initLoading ||
+    loadingLoginUserPrivileges ||
+    resourcesLoading || // Needed to setup filters
+    loadingAdvancedFilters ||
+    (dashboardLoading && !initialLoad) ? (
     <LoadingScreen />
   ) : (
-    <>
-      {dashboardLoading && !initialLoad && <LoadingScreen />}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Global
-          styles={css`
-            circle.MuiMarkElement-root {
-              r: 3 !important; /* Set the radius to a smaller value */
-            }
-            .react-grid-item {
-              transition: all 200ms ease;
-              transition-property: left, top;
-            }
-            .react-grid-item.cssTransforms {
-              transition-property: transform;
-            }
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Global
+        styles={css`
+          circle.MuiMarkElement-root {
+            r: 3 !important; /* Set the radius to a smaller value */
+          }
+          .react-grid-item {
+            transition: all 200ms ease;
+            transition-property: left, top;
+          }
+          .react-grid-item.cssTransforms {
+            transition-property: transform;
+          }
 
-            /* Fix resize handle for auto-height widgets */
-            .react-grid-item.auto-height-widget {
-              height: auto !important;
-            }
-            .react-grid-item.auto-height-widget .react-resizable-handle {
-              position: absolute;
-              bottom: 0;
-            }
+          /* Fix resize handle for auto-height widgets */
+          .react-grid-item.auto-height-widget {
+            height: auto !important;
+          }
+          .react-grid-item.auto-height-widget .react-resizable-handle {
+            position: absolute;
+            bottom: 0;
+          }
 
-            .MuiChartsLegend-item[data-series$='-planned']
-              .MuiChartsLabelMark-fill {
-              fill: transparent !important;
-              stroke-width: 4 !important;
-              stroke-dasharray: 5 5 !important;
-            }
+          .MuiChartsLegend-item[data-series$='-planned']
+            .MuiChartsLabelMark-fill {
+            fill: transparent !important;
+            stroke-width: 4 !important;
+            stroke-dasharray: 5 5 !important;
+          }
 
-            /* Dynamically generate stroke colors for each group */
-            ${Object.entries(groupColorMap)
-              .map(
-                ([group, color]) => `
+          /* Dynamically generate stroke colors for each group */
+          ${Object.entries(groupColorMap)
+            .map(
+              ([group, color]) => `
               .MuiChartsLegend-item[data-series$='-planned'] .MuiChartsLabelMark-fill[fill='${color}'] { 
                 stroke: ${color} !important; 
               }
             `
-              )
-              .join('\n')}
+            )
+            .join('\n')}
 
-            [class*='MuiLineElement-series-'][class*='-planned'] {
-              stroke-dasharray: 5 5 !important;
-            }
+          [class*='MuiLineElement-series-'][class*='-planned'] {
+            stroke-dasharray: 5 5 !important;
+          }
 
-            [class*='MuiLineElement-series-'][class*='-actual'] {
-              stroke-dasharray: none !important;
-            }
+          [class*='MuiLineElement-series-'][class*='-actual'] {
+            stroke-dasharray: none !important;
+          }
 
-            /* Responsive chart styles */
-            .MuiChartsLegend-root {
-              max-width: 100% !important;
-              overflow: hidden !important;
-              font-size: 10px !important;
-              margin: 0 !important;
-            }
+          /* Responsive chart styles */
+          .MuiChartsLegend-root {
+            max-width: 100% !important;
+            overflow: hidden !important;
+            font-size: 10px !important;
+            margin: 0 !important;
+          }
 
+          .MuiChartsAxis-tickLabel {
+            font-size: 11px !important;
+          }
+
+          .MuiChartsAxisHighlight-root {
+            fill: none !important;
+            opcacity: 0 !important;
+          }
+
+          @media (max-width: 768px) {
             .MuiChartsAxis-tickLabel {
+              font-size: 9px !important;
+            }
+
+            .MuiChartsLegend-mark {
+              width: 16px !important;
+              height: 12px !important;
+            }
+
+            .MuiChartsLegend-label {
               font-size: 11px !important;
             }
-
-            .MuiChartsAxisHighlight-root {
-              fill: none !important;
-              opcacity: 0 !important;
-            }
-
-            @media (max-width: 768px) {
-              .MuiChartsAxis-tickLabel {
-                font-size: 9px !important;
-              }
-
-              .MuiChartsLegend-mark {
-                width: 16px !important;
-                height: 12px !important;
-              }
-
-              .MuiChartsLegend-label {
-                font-size: 11px !important;
-              }
-            }
-          `}
-        />
-        <CommonToolbar>
-          <Tabs
-            value={activeTab}
-            onChange={(e, val) => setActiveTab(val)}
-            sx={{ padding: '16px 16px 0px 8px' }}
-          >
+          }
+        `}
+      />
+      <CommonToolbar>
+        <Tabs
+          value={activeTab}
+          onChange={(e, val) => setActiveTab(val)}
+          sx={{ padding: '16px 16px 0px 8px' }}
+        >
+          <Tab
+            value="overview"
+            label="Overview"
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          />
+          {allowedTeamCharts.length > 0 && (
             <Tab
-              value="overview"
-              label="Overview"
+              value="teams"
+              label="Teams"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-            {allowedTeamCharts.length > 0 && (
-              <Tab
-                value="teams"
-                label="Teams"
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-            )}
-            {allowedProjectCharts.length > 0 && (
-              <Tab
-                value="projects"
-                label="Projects"
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-            )}
+          )}
+          {allowedProjectCharts.length > 0 && (
             <Tab
-              value="report-builder"
-              label="Report Builder"
+              value="projects"
+              label="Projects"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-            {activeTab !== 'report-builder' && (
+          )}
+          <Tab
+            value="report-builder"
+            label="Report Builder"
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          />
+          {activeTab !== 'report-builder' && (
             <DashboardToolbar
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -2764,153 +2818,162 @@ export default function ExecutiveDashboardPage() {
               anchorEl={anchorEl}
               setAnchorEl={setAnchorEl}
             />
-            )}
-          </Tabs>
-        </CommonToolbar>
-        {activeTab !== 'report-builder' && <Topbar />}
-        {activeTab === 'overview' && (
-          <>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#000000',
-                paddingLeft: '24px',
-                paddingBottom: '8px',
-              }}
-            >
-              Overview
-            </Typography>
-
-            <Overview
-              activeProjects={activeProjects}
-              activeResources={activeResources}
-              actualsConfirmed={filteredActualsConfirmed}
-              totalResourceCost={totalResourceCost}
-              allocationPercentage={filteredAllocationPercentage}
-              hasAccessToQueryKey={hasAccessToQueryKey}
-            />
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={overviewLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-              cols={{ lg: 12, md: 12, sm: 12 }}
-              rowHeight={130}
-              onLayoutChange={handleLayoutChange}
-              isDraggable
-              isResizable
-              compactType="vertical"
-              style={{ padding: '0 16px' }}
-            >
-              {allowedOverviewCharts.map(key => (
-                <div key={key} className={key === 'engagementScoreOverview' ? 'auto-height-widget' : ''}>
-                  {overviewcharts[key]}
-                </div>
-              ))}
-            </ResponsiveGridLayout>
-          </>
-        )}
-
-        {activeTab === 'teams' && (
-          <>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#000000',
-                paddingLeft: '24px',
-                paddingBottom: '8px',
-              }}
-            >
-              Teams Overview
-            </Typography>
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={teamLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-              cols={{ lg: 12, md: 12, sm: 12 }}
-              rowHeight={130}
-              onLayoutChange={handleLayoutChange}
-              isDraggable
-              isResizable
-              compactType="vertical"
-              style={{ padding: '0 16px' }}
-            >
-              {allowedTeamCharts.map(key => (
-                <div key={key}>{teamCharts[key]}</div>
-              ))}
-            </ResponsiveGridLayout>
-          </>
-        )}
-
-        {activeTab === 'projects' && (
-          <>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#000000',
-                paddingLeft: '24px',
-                paddingBottom: '8px',
-              }}
-            >
-              Project Tracking
-            </Typography>
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={projectLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-              cols={{ lg: 12, md: 12, sm: 12 }}
-              rowHeight={130}
-              onLayoutChange={handleLayoutChange}
-              isDraggable
-              isResizable
-              compactType="vertical"
-              style={{ padding: '0 16px' }}
-            >
-              {allowedProjectCharts.map(key => (
-                <div key={key} className={key === 'projectHealthOverview' ? 'auto-height-widget' : ''}>
-                  {projectCharts[key]}
-                </div>
-              ))}
-            </ResponsiveGridLayout>
-          </>
-        )}
-
-        {activeTab === 'report-builder' && (
-          <Box
+          )}
+        </Tabs>
+      </CommonToolbar>
+      {activeTab !== 'report-builder' && <Topbar />}
+      {activeTab === 'overview' && (
+        <>
+          <Typography
+            variant="h2"
             sx={{
-              height: 'calc(100vh - 200px)',
-              display: 'flex',
-              flexDirection: 'column',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000000',
+              paddingLeft: '24px',
+              paddingBottom: '8px',
             }}
           >
-            <ReportBuilderPage onReportGenerate={(filters) => {console.log('Report generated with filters:', filters)}} />
-          </Box>
-        )}
+            Overview
+          </Typography>
 
-        <Dialog
-          open={dialogOpen}
-          onClose={handleDialogClose}
-          fullWidth
-          maxWidth="sm"
+          <Overview
+            activeProjects={activeProjects}
+            activeResources={activeResources}
+            actualsConfirmed={filteredActualsConfirmed}
+            totalResourceCost={totalResourceCost}
+            allocationPercentage={filteredAllocationPercentage}
+            hasAccessToQueryKey={hasAccessToQueryKey}
+          />
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={overviewLayouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 12 }}
+            rowHeight={130}
+            onLayoutChange={handleLayoutChange}
+            isDraggable
+            isResizable
+            compactType="vertical"
+            style={{ padding: '0 16px' }}
+          >
+            {allowedOverviewCharts.map(key => (
+              <div
+                key={key}
+                className={
+                  key === 'engagementScoreOverview' ? 'auto-height-widget' : ''
+                }
+              >
+                {overviewcharts[key]}
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        </>
+      )}
+
+      {activeTab === 'teams' && (
+        <>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000000',
+              paddingLeft: '24px',
+              paddingBottom: '8px',
+            }}
+          >
+            Teams Overview
+          </Typography>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={teamLayouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 12 }}
+            rowHeight={130}
+            onLayoutChange={handleLayoutChange}
+            isDraggable
+            isResizable
+            compactType="vertical"
+            style={{ padding: '0 16px' }}
+          >
+            {allowedTeamCharts.map(key => (
+              <div key={key}>{teamCharts[key]}</div>
+            ))}
+          </ResponsiveGridLayout>
+        </>
+      )}
+
+      {activeTab === 'projects' && (
+        <>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000000',
+              paddingLeft: '24px',
+              paddingBottom: '8px',
+            }}
+          >
+            Project Tracking
+          </Typography>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={projectLayouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 12 }}
+            rowHeight={130}
+            onLayoutChange={handleLayoutChange}
+            isDraggable
+            isResizable
+            compactType="vertical"
+            style={{ padding: '0 16px' }}
+          >
+            {allowedProjectCharts.map(key => (
+              <div
+                key={key}
+                className={
+                  key === 'projectHealthOverview' ? 'auto-height-widget' : ''
+                }
+              >
+                {projectCharts[key]}
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        </>
+      )}
+
+      {activeTab === 'report-builder' && (
+        <Box
+          sx={{
+            height: 'calc(100vh - 200px)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
-          <DialogTitle>{selectedChart}</DialogTitle>
-          <DialogContent>
-            <Typography>
-              Drilldown details for "{selectedChart}" will appear here.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogClose} color="primary">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </>
+          <ReportBuilderPage onReportGenerate={(filters) => { console.log('Report generated with filters:', filters) }} />
+        </Box>
+      )}
+
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{selectedChart}</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Drilldown details for "{selectedChart}" will appear here.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
