@@ -158,8 +158,8 @@ const TabHeader = ({
 );
 
 interface UserManagementPageProps {
-  permissions: Record<string, CrudPermissions>;
-  loadingPermissions: boolean;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
 function UserManagementPage({
@@ -213,7 +213,7 @@ function UserManagementPage({
   }, [dialogIsOpen]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions['User']?.r) return;
+    if (loadingPermissions || !permissions!['User']?.r) return;
     if (UsersData.length === 0) {
       dispatch({
         type: FETCH_USER,
@@ -222,7 +222,7 @@ function UserManagementPage({
   }, []);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions['User']?.r) return;
+    if (loadingPermissions || !permissions!['User']?.r) return;
     if (ResourcesData.length === 0) {
       dispatch({
         type: FETCH_USER_RESOURCE,
@@ -231,7 +231,7 @@ function UserManagementPage({
   }, []);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions['User']?.r) return;
+    if (loadingPermissions || !permissions!['User']?.r) return;
     if (location.length === 0) {
       dispatch({
         type: FETCH_LOCATION,
@@ -240,7 +240,7 @@ function UserManagementPage({
   }, []);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions['User']?.r) return;
+    if (loadingPermissions || !permissions!['User']?.r) return;
     const menuParam = searchParams.get('menu');
     // Only process if this is the active menu
     if (menuParam !== 'user-management') return;
@@ -259,7 +259,7 @@ function UserManagementPage({
   }, [searchParams]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions['User']?.r) return;
+    if (loadingPermissions || !permissions!['User']?.r) return;
     const menuParam = searchParams.get('menu');
     // Only process if this is the active menu
     if (menuParam !== 'user-management') return;
@@ -273,7 +273,7 @@ function UserManagementPage({
   }, [tab]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions['User']?.r) return;
+    if (loadingPermissions || !permissions!['User']?.r) return;
     if (!highlightedRowId || !apiRef?.current) return;
 
     const timeout = setTimeout(() => {
@@ -845,7 +845,7 @@ function UserManagementPage({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        {permissions['User']?.u && (
+        {permissions!['User']?.u && (
           <StyledMenuItem
             onClick={() => {
               const user = UsersData.find((r: any) => r.Name === id);
@@ -860,7 +860,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions['User']?.u && enableResendInvite && (
+        {permissions!['User']?.u && enableResendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleResendInvite(row);
@@ -872,7 +872,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions['User']?.u && enableDeactivate && (
+        {permissions!['User']?.u && enableDeactivate && (
           <StyledMenuItem
             onClick={() => {
               handleDeactivateUser(row);
@@ -884,7 +884,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions['User']?.u && enableReactivate && (
+        {permissions!['User']?.u && enableReactivate && (
           <StyledMenuItem
             onClick={() => {
               handleReactivateUser(row);
@@ -896,7 +896,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions['User']?.d && (
+        {permissions!['User']?.d && (
           <StyledMenuItem
             onClick={() => {
               handleDeleteUser(id);
@@ -929,7 +929,7 @@ function UserManagementPage({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        {permissions['User']?.c && enableSendInvite && (
+        {permissions!['User']?.c && enableSendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleAddUser([row]);
@@ -941,7 +941,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions['User']?.u && enableResendInvite && (
+        {permissions!['User']?.u && enableResendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleResendInvite(row);
@@ -953,7 +953,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions['User']?.u && enableDeactivate && (
+        {permissions!['User']?.u && enableDeactivate && (
           <StyledMenuItem
             onClick={() => {
               handleDeactivateUser(row);
@@ -965,7 +965,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions['User']?.u && enableReactivate && (
+        {permissions!['User']?.u && enableReactivate && (
           <StyledMenuItem
             onClick={() => {
               handleReactivateUser(row);
@@ -1014,7 +1014,7 @@ function UserManagementPage({
           setMenuId={setMenuUserId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions['User']?.c ? 'Invite User' : ''}
+          buttonLabel={permissions!['User']?.c ? 'Invite User' : ''}
           renderMenu={() => null}
           columns={UsersPageColumns}
           apiRef={apiRef}
