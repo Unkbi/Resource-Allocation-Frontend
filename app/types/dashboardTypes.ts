@@ -22,3 +22,16 @@ export interface AdvancedFilters {
   Portfolio?: string[];
   Organization?: string[];
 }
+
+export interface DashboardChartState {
+  advancedFilters: AdvancedFilters;
+  defualtAdvancedFilters: AdvancedFilters;
+  loadingAdvancedFilters: boolean;
+  loading: boolean;
+  loadingCharts: Record<string, boolean>;
+  [chartKey: string]:
+    | any[]
+    | AdvancedFilters
+    | boolean
+    | Record<string, boolean>;
+}

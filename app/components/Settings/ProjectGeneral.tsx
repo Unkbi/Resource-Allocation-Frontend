@@ -95,6 +95,13 @@ function ProjectGeneral({
           </Typography>
           <StyledInput
             sx={{ width: '200px' }}
+            disabled={
+              !permissions['Portfolio']?.c || !permissions['Portfolio']?.u
+            }
+            readOnly={
+              !permissions['Portfolio']?.c || !permissions['Portfolio']?.u
+            }
+            placeholder="Enter Project Grouping Name"
             value={currentPortfolioNameSettings}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setCurrentPortfolioNameSettings(e.target.value)
@@ -102,6 +109,8 @@ function ProjectGeneral({
           />
           <Button
             disabled={
+              !permissions['Portfolio']?.c ||
+              !permissions['Portfolio']?.u ||
               currentPortfolioNameSettings === scalarSettings?.Portfolio_Name
             }
             variant="contained"
