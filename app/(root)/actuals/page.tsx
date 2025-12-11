@@ -15,6 +15,7 @@ import {
   ActualAllocations,
   ActualAllocationTableRow,
   ActualStatus,
+  Resource,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -30,7 +31,7 @@ import {
   setCalendarDate,
 } from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
-import { parseISO } from 'date-fns';
+import { isBefore, parseISO, startOfWeek } from 'date-fns';
 import { GridValidRowModel, useGridApiRef } from '@mui/x-data-grid-premium';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
@@ -99,6 +100,26 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setIsModified(modified);
   };
 
+
+const userId = getUserIdFromEmail(resources || [], email);
+const currentResource: any = resources.filter((r: Resource) => r.Id === userId);
+const ValidPrevDate = currentResource[0]?.StartDate;
+
+const resourceValidPrevDate = ValidPrevDate ? parseISO(ValidPrevDate) : null;
+  
+const resourceStartMonday = resourceValidPrevDate
+  ? startOfWeek(resourceValidPrevDate, { weekStartsOn: 1 })
+  : null;
+
+const currentViewMonday = startDate
+  ? startOfWeek(parseISO(startDate), { weekStartsOn: 1 })
+  : null;
+
+const disablePrev =
+  currentViewMonday && resourceStartMonday
+    ? currentViewMonday <= resourceStartMonday
+    : false;
+  
   const handleValidationChange = (hasInvalid: boolean) => {
     setHasInvalidRows(hasInvalid);
   };
@@ -707,7 +728,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     } else {
                       handlePrev();
                     }
-                  }}
+                    }}
+                   disabled={disablePrev}
                   sx={{
                     fontSize: '14px',
                     color: '#152e75',
