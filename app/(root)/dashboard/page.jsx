@@ -115,7 +115,6 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
-  // Sahadev : Removed engagementScore temporarily
   'projectHealthOverview',
   'engagementScoreOverview',
   'plan_vs_actual_variance',
@@ -665,7 +664,6 @@ export default function ExecutiveDashboardPage() {
   };
 
   const hasAccessToQueryKey = queryKey => {
-    return true;
     if (!dashboardQueryKeys) return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
