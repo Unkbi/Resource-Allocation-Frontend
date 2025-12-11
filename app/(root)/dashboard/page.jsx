@@ -73,6 +73,12 @@ import { getAllTeams } from '@/app/services/teamServices';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import { FETCH_DASHBOARD_QUERY_KEYS } from '@/app/redux/actions/rbacActions';
 import { DASHBOARD_ALL_ACCESS } from '@/app/constants/constants';
+import { 
+  hasBarChartAllZeroValues, 
+  hasPieChartAllZeroValues, 
+  hasLineChartAllZeroValues,
+  hasStackedChartAllZeroValues 
+} from '@/app/utils/chartDataHelpers';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -521,9 +527,8 @@ export default function ExecutiveDashboardPage() {
   ]);
 
   useEffect(() => {
-    if (coverageData.length > 0) {
-      setFilteredCoverageData(coverageData);
-    }
+    // Always reflect Redux state, including empty arrays
+    setFilteredCoverageData(Array.isArray(coverageData) ? coverageData : []);
   }, [coverageData]);
 
   useEffect(() => {
@@ -535,63 +540,59 @@ export default function ExecutiveDashboardPage() {
       d => d.allocation_status === 'over-allocated'
     );
 
-    if (under.length > 0) {
-      setFilteredUnderAllocated(under);
-    }
-    if (over.length > 0) {
-      setFilteredOverAllocated(over);
-    }
+    setFilteredUnderAllocated(Array.isArray(under) ? under : []);
+    setFilteredOverAllocated(Array.isArray(over) ? over : []);
+    
   }, [resourceUtilization]);
 
   useEffect(() => {
-    if (unapprovedProjectActualsByTeam.length > 0) {
-      setFilteredUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
-      setOriginalUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
-    }
+    const data = Array.isArray(unapprovedProjectActualsByTeam)
+      ? unapprovedProjectActualsByTeam
+      : [];
+    setFilteredUnapprovedActualsByTeam(data);
+    setOriginalUnapprovedActualsByTeam(data);
   }, [unapprovedProjectActualsByTeam]);
 
   useEffect(() => {
-    if (unapprovedProjectAllocation.length > 0) {
-      setFilteredUnapprovedProjectAllocation(unapprovedProjectAllocation);
-    }
+    setFilteredUnapprovedProjectAllocation(
+      Array.isArray(unapprovedProjectAllocation) ? unapprovedProjectAllocation : []
+    );
   }, [unapprovedProjectAllocation]);
 
   useEffect(() => {
-    if (actualsConfirmed.length > 0) {
-      setFilteredActualsConfirmed(actualsConfirmed);
-    }
+    setFilteredActualsConfirmed(
+      Array.isArray(actualsConfirmed) ? actualsConfirmed : []
+    );
   }, [actualsConfirmed]);
 
   useEffect(() => {
-    if (plan_vs_actual_variance.length > 0) {
-      setFilteredActualDeviation(plan_vs_actual_variance);
-    }
+    setFilteredActualDeviation(
+      Array.isArray(plan_vs_actual_variance) ? plan_vs_actual_variance : []
+    );
   }, [plan_vs_actual_variance]);
 
   useEffect(() => {
-    if (allocationPercentage.length > 0) {
-      setFilteredAllocationPercentage(allocationPercentage);
-    }
+    setFilteredAllocationPercentage(
+      Array.isArray(allocationPercentage) ? allocationPercentage : []
+    );
   }, [allocationPercentage]);
 
   useEffect(() => {
-    if (top_projects_by_variance.length > 0) {
-      setFilteredTop5Projects(top_projects_by_variance);
-    }
+    setFilteredTop5Projects(
+      Array.isArray(top_projects_by_variance) ? top_projects_by_variance : []
+    );
   }, [top_projects_by_variance]);
 
   useEffect(() => {
-    if (projectFTEData.length > 0) {
-      // Backend returns already-filtered data
-      setFilteredProjectFTEData(projectFTEData);
-    }
+    // Backend returns already-filtered data; reflect even when empty
+    setFilteredProjectFTEData(Array.isArray(projectFTEData) ? projectFTEData : []);
   }, [projectFTEData]);
 
   useEffect(() => {
-    if (activeProjectsByType.length > 0) {
-      // Backend returns already-filtered data
-      setFilteredActiveProjectsByType(activeProjectsByType);
-    }
+    // Backend returns already-filtered data; reflect even when empty
+    setFilteredActiveProjectsByType(
+      Array.isArray(activeProjectsByType) ? activeProjectsByType : []
+    );
   }, [activeProjectsByType]);
 
   // Calculate the Monday of the selected week
@@ -786,6 +787,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Plan vs Actuals Variance')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredActualDeviation || 
+          filteredActualDeviation.length === 0 ||
+          hasBarChartAllZeroValues(filteredActualDeviation, ['planned_units', 'actual_units'])
+        }
+        noDataMessage="No variance data available for the selected period"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -994,6 +1001,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Top 5 Projects with Variance')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredTop5Projects || 
+          filteredTop5Projects.length === 0 ||
+          hasBarChartAllZeroValues(filteredTop5Projects, ['planned_units', 'actual_units', 'variance_percentage'])
+        }
+        noDataMessage="No project variance data available for the selected period"
       >
         {dimensions => {
           // Define columns for DataGrid
@@ -1182,6 +1195,12 @@ export default function ExecutiveDashboardPage() {
         }
         minWidth={400}
         minHeight={300}
+        showNoData={
+          !filteredActiveProjectsByType || 
+          filteredActiveProjectsByType.length === 0 ||
+          filteredActiveProjectsByType.every(item => Number(item.count || 0) === 0)
+        }
+        noDataMessage="No active projects found for the selected filters"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -1304,6 +1323,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Total Headcount Breakdown')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !totalHeadcount || 
+          totalHeadcount.length === 0 ||
+          hasStackedChartAllZeroValues(totalHeadcount, ['FTE', 'Contractor - FT', 'Contractor - PT', 'Intern'])
+        }
+        noDataMessage="No headcount data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -1402,6 +1427,16 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Allocation by Project Type Group')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !allocation_by_project_type_group || 
+          Object.keys(allocation_by_project_type_group).length === 0 ||
+          Object.values(allocation_by_project_type_group).every(groupData => 
+            !Array.isArray(groupData) || 
+            groupData.length === 0 || 
+            groupData.every(item => Number(item.allocation_percentage || 0) === 0)
+          )
+        }
+        noDataMessage="No allocation data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -1522,6 +1557,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Actuals by Category')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredUnapprovedProjectAllocation || 
+          filteredUnapprovedProjectAllocation.length === 0 ||
+          hasPieChartAllZeroValues(transformDataForPieChart(filteredUnapprovedProjectAllocation))
+        }
+        noDataMessage="No actuals data available for the selected period"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'pie');
@@ -1597,6 +1638,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Actuals Confirmation Status')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !actuals_confirmation_status || 
+          actuals_confirmation_status.length === 0 ||
+          actuals_confirmation_status.every(item => parseFloat(item.percentage || 0) === 0)
+        }
+        noDataMessage="No actuals confirmation data available for the selected period"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'pie');
@@ -1779,6 +1826,14 @@ export default function ExecutiveDashboardPage() {
         }
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredProjectFTEData || 
+          filteredProjectFTEData.length === 0 ||
+          filteredProjectFTEData.every(d => (
+            Number(d.planned_pct || 0) === 0 && Number(d.actual_pct || 0) === 0
+          ))
+        }
+        noDataMessage="No FTE allocation data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'line');
@@ -1959,6 +2014,12 @@ export default function ExecutiveDashboardPage() {
         }
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredbudgetVsPlanVsActual ||
+          filteredbudgetVsPlanVsActual.length === 0 ||
+          hasBarChartAllZeroValues(filteredbudgetVsPlanVsActual, ['budget_total','planned_to_date','actual_to_date'])
+        }
+        noDataMessage="No budget/plan/actual data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2047,6 +2108,20 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Total Headcount by Team')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !team_headcount_distribution ||
+          team_headcount_distribution.length === 0 ||
+          team_headcount_distribution.every(item => {
+            const splits = item.resource_type_split || {};
+            return (
+              Number(splits['FTE'] || 0) === 0 &&
+              Number(splits['Intern'] || 0) === 0 &&
+              Number(splits['Contractor - PT'] || 0) === 0 &&
+              Number(splits['Contractor - FT'] || 0) === 0
+            );
+          })
+        }
+        noDataMessage="No team headcount data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2168,6 +2243,15 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Project Actuals Breakdown by Team')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredUnapprovedActualsByTeam ||
+          filteredUnapprovedActualsByTeam.length === 0 ||
+          hasStackedChartAllZeroValues(
+            filteredUnapprovedActualsByTeam,
+            ['pct_of_actuals']
+          )
+        }
+        noDataMessage="No unapproved project actuals data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2275,9 +2359,15 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Resource Allocation Coverage')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredCoverageData ||
+          filteredCoverageData.length === 0 ||
+          hasBarChartAllZeroValues(filteredCoverageData, ['coverage_pct'])
+        }
+        noDataMessage="No coverage data available"
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'line');
+          const config = useResponsiveChart(dimensions, 'bar');
 
           // Sort by coverage percentage descending
           const sortedCoverageData = sortBarChartData(
@@ -2353,7 +2443,14 @@ export default function ExecutiveDashboardPage() {
     ),
 
     underAllocated: (
-      <DashboardWidget minWidth={320} minHeight={280}>
+      <DashboardWidget minWidth={320} minHeight={280}
+        showNoData={
+          !filteredUnderAllocated ||
+          filteredUnderAllocated.length === 0 ||
+          hasBarChartAllZeroValues(filteredUnderAllocated, ['utilization_pct'])
+        }
+        noDataMessage="No under-allocation data available"
+      >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
@@ -2425,7 +2522,14 @@ export default function ExecutiveDashboardPage() {
     ),
 
     overAllocated: (
-      <DashboardWidget minWidth={320} minHeight={280}>
+      <DashboardWidget minWidth={320} minHeight={280}
+        showNoData={
+          !filteredOverAllocated ||
+          filteredOverAllocated.length === 0 ||
+          hasBarChartAllZeroValues(filteredOverAllocated, ['utilization_pct'])
+        }
+        noDataMessage="No over-allocation data available"
+      >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
@@ -2501,6 +2605,16 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Actuals Trend')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !actualsTrendWeekly ||
+          actualsTrendWeekly.length === 0 ||
+          actualsTrendWeekly.every(item =>
+            (item.actuals || []).every(
+              a => parseFloat(a.percentage || 0) === 0
+            )
+          )
+        }
+        noDataMessage="No weekly actuals trend data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2614,6 +2728,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Engagement Score by Teams')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !teamEngagementScore ||
+          teamEngagementScore.length === 0 ||
+          hasBarChartAllZeroValues(teamEngagementScore,['avg_engagement_score'])
+        }
+        noDataMessage="No engagement score data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
