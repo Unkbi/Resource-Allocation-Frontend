@@ -219,7 +219,7 @@ function Resources({ permissions, loadingPermissions }) {
         const year = date.getFullYear();
         return `The Resource will be available for Allocation from ${month}/${day}/${year}.`;
       case 'Not-Planned':
-        return `The Resource is not planned for any Allocation. Team, ${params.row.Team} is Inactive.`;
+        return `Team, ${params.row.Team} is Inactive.`;
       case 'Unassigned':
         if (!params.row.StartDate && !params.row.Team) {
           return 'The Resource has no Start Date and is not part of any Team.';
