@@ -8,6 +8,7 @@ import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOu
 interface SubScore {
   score: number
   label: string
+  tooltipText?: string
   change: number
   positive?: boolean
 }
@@ -158,7 +159,7 @@ export default function MuiDashboardCard({
             <Grid item xs={12} sm={6} md={subScores.length === 3 ? 4 : 6} key={index} sx={{ mt: 2 }}>
               <Card
                 sx={{
-                  p: 2,
+                  p: 1.5,
                   // minWidth: "250px",
                   height: "100%",
                   backgroundColor: "#f5f5f5",
@@ -178,8 +179,14 @@ export default function MuiDashboardCard({
                       fontWeight: 500,
                     }}
                   >
-                    {subScore.label}
+                    {subScore.label}{' '}
+                    {subScore.tooltipText && (
+                    <Tooltip title={subScore.tooltipText}>
+                      <InfoIcon sx={{ fontSize: "12px", color: "#999" }} />
+                    </Tooltip>
+                  )}
                   </Typography>
+                  
                   <Stack direction="row" alignItems="center" gap={1}>
                     <Typography
                       sx={{

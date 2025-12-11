@@ -471,13 +471,13 @@ export default function ExecutiveDashboardPage() {
       individualCharts.forEach(chartKey => {
         const queryStart =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed') &&
+            chartKey === 'actualsConfirmed') || chartKey === 'unapprovedProjectAllocation' &&
           selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed') &&
+            chartKey === 'actualsConfirmed') || chartKey === 'unapprovedProjectAllocation' &&
           selectedOption === 'week'
             ? getMonday(selectedDate)
                 .subtract(1, 'week')
@@ -1060,12 +1060,11 @@ export default function ExecutiveDashboardPage() {
               headerClassName: 'custom-header',
               renderCell: params => {
                 const variance = Number(params.value || 0);
-                const actualUnits = Number(params.row.actual_units || 0);
                 const varianceColor =
                   variance > 0 ? '#ef5350' : variance < 0 ? '#26a69a' : '#666';
                 const varianceSign = variance > 0 ? '+' : '';
                 const displayVariance =
-                  variance === 0 || actualUnits === 0
+                  variance === 0
                     ? '--'
                     : `${varianceSign}${variance.toFixed(1)}`;
 
@@ -1521,7 +1520,7 @@ export default function ExecutiveDashboardPage() {
 
     unapprovedProjectAllocation: (
       <DashboardWidget
-        onClick={() => handleChartClick('Unplanned Allocation Units')}
+        onClick={() => handleChartClick('Actuals by Category')}
         minWidth={320}
         minHeight={280}
       >
@@ -1544,7 +1543,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Unplanned Allocation Units
+                Actuals by Category{' '}
+                <span
+                  style={{
+                    fontSize: dimensions.width < 400 ? '12px' : '14px',
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    fontWeight: 400,
+                  }}
+                >
+                  (Previous week)
+                </span>
               </Typography>
               <Box
                 sx={{
@@ -1694,7 +1702,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Overview"
-              tooltipText="Engagement score based on five key metrics: planning, actuals, confirmation, entry, and communication"
+              tooltipText="Measures resource engagement (0-100) through planning and tracking behaviors. Higher scores reflect forward-looking allocation, timely Actualss confirmation, consistent weekly entries, and detailed status notes documenting progress."
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
@@ -1732,26 +1740,28 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
-              tooltipText="Projects health based on alignment, actuals, and engagement metrics"
               overallScore={parseFloat(data.overall_health_score || 0)}
               overallChange={parseFloat(data.overall_health_score_change || 0)}
               overallDirection={data.overall_health_score_direction}
               subScores={[
                 {
-                  score: parseFloat(data.adherence_score || 0),
-                  label: 'Adherence Score',
-                  change: parseFloat(data.adherence_score_change || 0),
-                  positive: data.adherence_score_direction !== 'down',
+                  score: parseFloat(data.alignment_score || 0),
+                  label: 'Alignment Score',
+                  tooltipText:"Measures delivery predictability through alignment between planned and Actuals contribution. Higher scores reflect stable, predictable resource utilization across all project members.",
+                  change: parseFloat(data.alignment_score_change || 0),
+                  positive: data.alignment_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actuals_score || 0),
                   label: 'Actuals Score',
+                  tooltipText:"Measures project execution health. Higher scores reflect consistent on- track statuses, regular weekly confirmations, and transparent progress notes documenting accomplishments and challenges.",
                   change: parseFloat(data.actuals_score_change || 0),
                   positive: data.actuals_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.engagement_score || 0),
                   label: 'Engagement Score',
+                  tooltipText:"Measures team communication through status tracking. Higher scores reflect active participation with detailed status notes that provide clear visibility into progress, challenges, and next steps.",
                   change: parseFloat(data.engagement_score_change || 0),
                   positive: data.engagement_score_direction !== 'down',
                 },

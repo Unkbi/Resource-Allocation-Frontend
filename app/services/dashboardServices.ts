@@ -168,7 +168,7 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
     },
     projectFTE: {
       StartDate: filters.StartDate,
-      EndDate: '',
+      EndDate: filters.EndDate,
       TimeBucket: filters.TimeBucket || 'week',
       MetricType: 'project_fte',
       ...baseFilters,
