@@ -841,6 +841,7 @@ export default function ExecutiveDashboardPage() {
                   style={{
                     fontSize: dimensions.width < 400 ? '12px' : '14px',
                     color: 'rgba(0, 0, 0, 0.6)',
+                    fontWeight: 400,
                   }}
                 >
                   (Previous week)

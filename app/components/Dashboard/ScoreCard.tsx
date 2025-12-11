@@ -54,6 +54,7 @@ export default function MuiDashboardCard({
             style={{
               fontSize: "14px",
               color: 'rgba(0, 0, 0, 0.6)',
+              fontWeight: 400,
             }}
           >
             (Previous week)
