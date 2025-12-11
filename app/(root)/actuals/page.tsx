@@ -100,26 +100,27 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setIsModified(modified);
   };
 
+  const userId = getUserIdFromEmail(resources || [], email);
+  const currentResource: any = resources.filter(
+    (r: Resource) => r.Id === userId
+  );
+  const ValidPrevDate = currentResource[0]?.StartDate;
 
-const userId = getUserIdFromEmail(resources || [], email);
-const currentResource: any = resources.filter((r: Resource) => r.Id === userId);
-const ValidPrevDate = currentResource[0]?.StartDate;
+  const resourceValidPrevDate = ValidPrevDate ? parseISO(ValidPrevDate) : null;
 
-const resourceValidPrevDate = ValidPrevDate ? parseISO(ValidPrevDate) : null;
-  
-const resourceStartMonday = resourceValidPrevDate
-  ? startOfWeek(resourceValidPrevDate, { weekStartsOn: 1 })
-  : null;
+  const resourceStartMonday = resourceValidPrevDate
+    ? startOfWeek(resourceValidPrevDate, { weekStartsOn: 1 })
+    : null;
 
-const currentViewMonday = startDate
-  ? startOfWeek(parseISO(startDate), { weekStartsOn: 1 })
-  : null;
+  const currentViewMonday = startDate
+    ? startOfWeek(parseISO(startDate), { weekStartsOn: 1 })
+    : null;
 
-const disablePrev =
-  currentViewMonday && resourceStartMonday
-    ? currentViewMonday <= resourceStartMonday
-    : false;
-  
+  const disablePrev =
+    currentViewMonday && resourceStartMonday
+      ? currentViewMonday <= resourceStartMonday
+      : false;
+
   const handleValidationChange = (hasInvalid: boolean) => {
     setHasInvalidRows(hasInvalid);
   };
@@ -346,9 +347,14 @@ const disablePrev =
             resource: userId,
             status: userId ? ['In-Progress', 'Not Started'] : [''],
             startDate:
-              generateDateWeekMath('WEEK_MINUS', 7, parseISO(startDate ?? '')) || '',
+              generateDateWeekMath(
+                'WEEK_MINUS',
+                7,
+                parseISO(startDate ?? '')
+              ) || '',
             endDate:
-              generateDateWeekMath('WEEK_MINUS', 2, parseISO(endDate ?? '')) || '',
+              generateDateWeekMath('WEEK_MINUS', 2, parseISO(endDate ?? '')) ||
+              '',
           },
         });
       }
@@ -728,8 +734,8 @@ const disablePrev =
                     } else {
                       handlePrev();
                     }
-                    }}
-                   disabled={disablePrev}
+                  }}
+                  disabled={disablePrev}
                   sx={{
                     fontSize: '14px',
                     color: '#152e75',
