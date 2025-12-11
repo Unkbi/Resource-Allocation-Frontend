@@ -116,8 +116,7 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
   'plan_vs_actual_variance',
-  // Sahadev : Removed engagementScore temporarily
-  // 'engagementScoreOverview',
+  'engagementScoreOverview',
   'top_projects_by_variance',
   'activeProjectsByType',
   'totalHeadcount',
@@ -665,7 +664,6 @@ export default function ExecutiveDashboardPage() {
   };
 
   const hasAccessToQueryKey = queryKey => {
-    return true;
     if (!dashboardQueryKeys) return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
