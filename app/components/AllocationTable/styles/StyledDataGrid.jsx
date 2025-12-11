@@ -443,6 +443,63 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           ? '#F1F6FF !important'
           : '#F0F7FF !important'),
     },
+    [`& .${gridClasses.cell}[data-field="__created"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__created"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="__created_by"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__created_by"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified_by"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified_by"].secondGroupsRow`]:
+      {
+        backgroundColor:
+          !loading &&
+          (groupBy === 'project' || groupBy === 'resource'
+            ? '#F1F6FF !important'
+            : '#F0F7FF !important'),
+      },
     [`& .${gridClasses.cell}[data-field="resourceLocationCategory"]`]: {
       backgroundColor:
         !loading &&
