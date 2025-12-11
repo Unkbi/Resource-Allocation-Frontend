@@ -344,8 +344,8 @@ function* fetchTeamsResourcesSaga(action: any): Generator<any, void, any> {
         call(function* () {
           const resourcesResult = {
             result: allResourcesDetail
-              .filter((r: AllResourceDetail) => r.Team?.Id === team?.Id)
-              .map((r: AllResourceDetail) => r.Resource),
+              ?.filter((r: AllResourceDetail) => r.Team?.Id === team?.Id)
+              ?.map((r: AllResourceDetail) => r.Resource),
           };
 
           return { resourcesResult, team };

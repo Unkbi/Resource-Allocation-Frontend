@@ -94,7 +94,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         })),
         put(setDashboardChart({ 
           chartKey: 'activeProjectsByType', 
-          data: responseData.projects_by_type || [] 
+          data: responseData.projects_by_type || []
         })),
         put(setDashboardChart({ 
           chartKey: 'activeResources', 

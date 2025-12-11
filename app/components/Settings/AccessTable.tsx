@@ -9,6 +9,7 @@ import {
   InputAdornment,
   IconButton,
   Chip,
+  Badge,
 } from '@mui/material';
 import { StyledInput } from '../Input/StyledInput';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -93,6 +94,24 @@ export default function AccessTable({
     items: [],
   });
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
+  const [filterCount, setFilterCount] = useState(0);
+
+  // Track filter count
+  React.useEffect(() => {
+    if (apiRef?.current) {
+      const updateFilterCount = () => {
+        const filters = apiRef.current.state.filter.filterModel.items;
+        const activeCount = filters.filter((f: any) => !!f.value).length;
+        setFilterCount(activeCount);
+      };
+      updateFilterCount();
+      const unsubscribe = apiRef.current.subscribeEvent(
+        'filterModelChange',
+        updateFilterCount
+      );
+      return unsubscribe;
+    }
+  }, [apiRef]);
 
   // Sync internal selectionModel with parent's selectedRowIds
   React.useEffect(() => {
@@ -566,49 +585,64 @@ export default function AccessTable({
                     gap: 1,
                   }}
                 >
-                  <IconButton
-                    ref={externalFilterButtonRef}
-                    size="small"
-                    onClick={event => {
-                      setCurrentAnchorEl(event.currentTarget);
-
-                      setTimeout(() => {
-                        const filterButton =
-                          document.querySelector(
-                            'button[data-field="__toolbar__filters__"]'
-                          ) ||
-                          document.querySelector(
-                            '.MuiDataGrid-toolbarContainer button[title="Show filters"]'
-                          ) ||
-                          document
-                            .querySelector(
-                              '.MuiDataGrid-toolbarContainer [data-testid="FilterListIcon"]'
-                            )
-                            ?.closest('button');
-
-                        if (filterButton) {
-                          (filterButton as HTMLElement).click();
-                        } else {
-                          console.error('Filter button not found!');
-                        }
-                      }, 10);
-                    }}
+                  <Badge
+                    badgeContent={filterCount > 0 ? filterCount : 0}
+                    color="primary"
                     sx={{
-                      minWidth: 'unset',
-                      width: '41px',
-                      height: '36px',
-                      padding: '20px 10px 20px 10px',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      gap: '6px',
-                      flexShrink: 0,
-                      borderRadius: '6px',
-                      border: '1px solid #E2E8F0',
-                      boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                      '& .MuiBadge-badge': {
+                        top: '2px',
+                        right: '2px',
+                        backgroundColor: '#1C2D5F',
+                        fontSize: '10px',
+                        height: '16px',
+                        minWidth: '16px',
+                      },
                     }}
                   >
-                    <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
-                  </IconButton>
+                    <IconButton
+                      ref={externalFilterButtonRef}
+                      size="small"
+                      onClick={event => {
+                        setCurrentAnchorEl(event.currentTarget);
+
+                        setTimeout(() => {
+                          const filterButton =
+                            document.querySelector(
+                              'button[data-field="__toolbar__filters__"]'
+                            ) ||
+                            document.querySelector(
+                              '.MuiDataGrid-toolbarContainer button[title="Show filters"]'
+                            ) ||
+                            document
+                              .querySelector(
+                                '.MuiDataGrid-toolbarContainer [data-testid="FilterListIcon"]'
+                              )
+                              ?.closest('button');
+
+                          if (filterButton) {
+                            (filterButton as HTMLElement).click();
+                          } else {
+                            console.error('Filter button not found!');
+                          }
+                        }, 10);
+                      }}
+                      sx={{
+                        minWidth: 'unset',
+                        width: '41px',
+                        height: '36px',
+                        padding: '20px 10px 20px 10px',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '6px',
+                        flexShrink: 0,
+                        borderRadius: '6px',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
+                      }}
+                    >
+                      <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
+                    </IconButton>
+                  </Badge>
                   <IconButton
                     ref={externalColumnButtonRef}
                     size="small"
@@ -680,49 +714,53 @@ export default function AccessTable({
                     />
                   </IconButton>
                 </Box>
-                <Box
-                  sx={{
-                    height: 36,
-                    width: '1px',
-                    backgroundColor: '#E2E8F0',
-                    mx: 1.5,
-                    display: title === 'Resources' ? 'none' : 'block',
-                  }}
-                />
-              </Box>
-              <Button
-                variant="contained"
-                onClick={e => {
-                  if (anchorEl && menuId === 'add-dropdown') {
-                    setMenuId(null);
-                    setAnchorEl(null);
-                    return;
-                  }
-                  setAnchorEl(e.currentTarget);
-                  setMenuId('add-dropdown');
-                }}
-                sx={{
-                  height: 40,
-                  borderRadius: '6px',
-                  background: '#1C2D5F',
-                  color: '#FFF',
-                  textTransform: 'none',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  px: 1.5,
-                  display: title === 'Resources' ? 'none' : 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  '&:hover': {
-                    background: '#1C2D5F',
-                  },
-                }}
-              >
-                {buttonLabel}
-                {title === 'Users' && (
-                  <KeyboardArrowDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
+                {buttonLabel && (
+                  <Box
+                    sx={{
+                      height: 36,
+                      width: '1px',
+                      backgroundColor: '#E2E8F0',
+                      mx: 1.5,
+                      display: title === 'Resources' ? 'none' : 'block',
+                    }}
+                  />
                 )}
-              </Button>
+              </Box>
+              {buttonLabel && (
+                <Button
+                  variant="contained"
+                  onClick={e => {
+                    if (anchorEl && menuId === 'add-dropdown') {
+                      setMenuId(null);
+                      setAnchorEl(null);
+                      return;
+                    }
+                    setAnchorEl(e.currentTarget);
+                    setMenuId('add-dropdown');
+                  }}
+                  sx={{
+                    height: 40,
+                    borderRadius: '6px',
+                    background: '#1C2D5F',
+                    color: '#FFF',
+                    textTransform: 'none',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    px: 1.5,
+                    display: title === 'Resources' ? 'none' : 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    '&:hover': {
+                      background: '#1C2D5F',
+                    },
+                  }}
+                >
+                  {buttonLabel}
+                  {title === 'Users' && (
+                    <KeyboardArrowDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
+                  )}
+                </Button>
+              )}
               {anchorEl && menuId === 'add-dropdown' && title === 'Users' && (
                 <Box
                   sx={{
