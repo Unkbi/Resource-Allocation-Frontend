@@ -73,6 +73,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
     ActualAllocationTableRow[]
   >([]);
+  const [formattingActualAllocations, setFormattingActualAllocations] =
+    useState<boolean>(true);
   const [rows, setRows] = useState<ActualAllocationTableRow[]>([]);
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
@@ -273,6 +275,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (startDate) {
       setHasInvalidRows(false);
       setShow(true);
+      setFormattedActualAllocations([]);
+      setFormattingActualAllocations(true);
       router.replace(
         `/actuals?startDate=${generateDateWeekMath(
           'WEEK_PLUS',
@@ -287,6 +291,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (startDate && endDate) {
       setHasInvalidRows(false);
       setShow(true);
+      setFormattedActualAllocations([]);
+      setFormattingActualAllocations(true);
       router.replace(
         `/actuals?startDate=${generateDateWeekMath(
           'WEEK_MINUS',
@@ -301,6 +307,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (!date) return;
     setHasInvalidRows(false);
     setShow(true);
+    setFormattedActualAllocations([]);
+    setFormattingActualAllocations(true);
     router.replace(`/actuals?startDate=${date}`);
   };
 
@@ -362,7 +370,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   }, [resources, user, email, startDate, endDate, loadingPermissions]);
 
   useEffect(() => {
+    if (loadingPermissions || dataProcessing) return;
     if (actualAllocations) {
+      setFormattingActualAllocations(true);
       const formattedData: ActualAllocationTableRow[] = actualAllocations
         .filter(
           (alloc: ActualAllocations) =>
@@ -381,7 +391,20 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         }));
       setFormattedActualAllocations(formattedData);
     }
-  }, [actualAllocations]);
+  }, [loadingPermissions, dataProcessing, actualAllocations]);
+
+  useEffect(() => {
+    if (loadingPermissions || dataProcessing) return;
+    if (formattedActualAllocations.length) {
+      setFormattingActualAllocations(false);
+    } else {
+      console.log('Timing out');
+      const timeout = setTimeout(() => {
+        setFormattingActualAllocations(false);
+      }, 4000);
+      return () => clearTimeout(timeout);
+    }
+  }, [loadingPermissions, dataProcessing, formattedActualAllocations]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -396,6 +419,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['ActualsStatus'].r) {
+      setFormattingActualAllocations(true);
       // @ts-ignore
       if (!resources?.length) {
         dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
@@ -662,7 +686,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   }}
                 >
                   Current Status :{' '}
-                  {actualsStatusLoading ? (
+                  {actualsStatusLoading ||
+                  dataProcessing ||
+                  formattingActualAllocations ? (
                     <Skeleton
                       variant="text"
                       sx={{
@@ -709,7 +735,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               </Box>
               <ActualTable
                 data={formattedActualAllocations || []}
-                dataProcessing={dataProcessing || actualsStatusLoading || false}
+                dataProcessing={
+                  dataProcessing ||
+                  actualsStatusLoading ||
+                  formattingActualAllocations ||
+                  false
+                }
                 rows={rows}
                 setRows={setRows}
                 rowValidationErrors={rowValidationErrors}
@@ -767,6 +798,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       !permissions['ActualsStatus'].u) ||
                     loadingPermissions ||
                     dataProcessing ||
+                    formattingActualAllocations ||
                     (status !== null &&
                       startDate !== null &&
                       status !== 'In-Progress' &&
