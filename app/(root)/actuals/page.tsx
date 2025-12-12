@@ -21,6 +21,7 @@ import {
   formateToFloat,
   generateDateWeekMath,
   getFridayOfISO,
+  getMondayOfISO,
   getSundayOfISO,
   getUserIdFromEmail,
   getWeekNumber,
@@ -103,8 +104,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const userId = getUserIdFromEmail(resources || [], email);
-  const currentResource: any = resources.filter(
-    (r: Resource) => r.Id === userId
+  const currentResource: Resource[] = resources?.filter(
+    (r: Resource) => r?.Id === userId
   );
   const ValidPrevDate = currentResource[0]?.StartDate;
 
@@ -316,6 +317,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (loadingPermissions) return;
     if (permissions['ActualsStatus'].r) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+      // If no Params, set to Monday of current Week.
       if (!paramsStartDate) {
         if (startDate) {
           router.replace(`/actuals?startDate=${startDate}`);
@@ -325,11 +328,34 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
       // Validate paramsStartDate and paramsEndDate are in "YYYY-MM-DD" format
       if (paramsStartDate && !dateRegex.test(paramsStartDate)) {
+        router.replace(
+          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+        );
         return;
       }
+
+      // If paramsStartDate for any day greater than today, set to Monday of current Week.
+      if (
+        parseISO(paramsStartDate) >
+        parseISO(getMondayOfISO(new Date().toISOString()))
+      ) {
+        router.replace(
+          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+        );
+        return;
+      }
+
+      // If paramsStartDate is not the Monday of the week, set to Monday of that Week.
+      if (
+        parseISO(paramsStartDate) > parseISO(getMondayOfISO(paramsStartDate))
+      ) {
+        router.replace(`/actuals?startDate=${getMondayOfISO(paramsStartDate)}`);
+        return;
+      }
+
       dispatch(
         setCalendarDate({
-          startDate: paramsStartDate,
+          startDate: getMondayOfISO(paramsStartDate),
           endDate: getSundayOfISO(paramsStartDate || startDate),
         })
       );
@@ -398,7 +424,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (formattedActualAllocations.length) {
       setFormattingActualAllocations(false);
     } else {
-      console.log('Timing out');
       const timeout = setTimeout(() => {
         setFormattingActualAllocations(false);
       }, 4000);
