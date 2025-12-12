@@ -73,6 +73,12 @@ import { getAllTeams } from '@/app/services/teamServices';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import { FETCH_DASHBOARD_QUERY_KEYS } from '@/app/redux/actions/rbacActions';
 import { DASHBOARD_ALL_ACCESS } from '@/app/constants/constants';
+import { 
+  hasBarChartAllZeroValues, 
+  hasPieChartAllZeroValues, 
+  hasLineChartAllZeroValues,
+  hasStackedChartAllZeroValues 
+} from '@/app/utils/chartDataHelpers';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekday);
@@ -115,9 +121,11 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
-  'plan_vs_actual_variance',
+  'projectHealthOverview',
   'engagementScoreOverview',
+  'plan_vs_actual_variance',
   'top_projects_by_variance',
+  'projectFTE',
   'activeProjectsByType',
   'totalHeadcount',
   'allocation_by_project_type_group',
@@ -125,9 +133,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'actuals_confirmation_status',
 ];
 
-const PROJECT_CHART_SEQUENCE = [
-  'projectHealthOverview',
-  'projectFTE',
+const COST_CHART_SEQUENCE = [
   'budgetVsPlanVsActual',
 ];
 
@@ -470,13 +476,13 @@ export default function ExecutiveDashboardPage() {
       individualCharts.forEach(chartKey => {
         const queryStart =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed') &&
+            chartKey === 'actualsConfirmed') || chartKey === 'unapprovedProjectAllocation' &&
           selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed') &&
+            chartKey === 'actualsConfirmed') || chartKey === 'unapprovedProjectAllocation' &&
           selectedOption === 'week'
             ? getMonday(selectedDate)
                 .subtract(1, 'week')
@@ -521,9 +527,8 @@ export default function ExecutiveDashboardPage() {
   ]);
 
   useEffect(() => {
-    if (coverageData.length > 0) {
-      setFilteredCoverageData(coverageData);
-    }
+    // Always reflect Redux state, including empty arrays
+    setFilteredCoverageData(Array.isArray(coverageData) ? coverageData : []);
   }, [coverageData]);
 
   useEffect(() => {
@@ -535,63 +540,59 @@ export default function ExecutiveDashboardPage() {
       d => d.allocation_status === 'over-allocated'
     );
 
-    if (under.length > 0) {
-      setFilteredUnderAllocated(under);
-    }
-    if (over.length > 0) {
-      setFilteredOverAllocated(over);
-    }
+    setFilteredUnderAllocated(Array.isArray(under) ? under : []);
+    setFilteredOverAllocated(Array.isArray(over) ? over : []);
+    
   }, [resourceUtilization]);
 
   useEffect(() => {
-    if (unapprovedProjectActualsByTeam.length > 0) {
-      setFilteredUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
-      setOriginalUnapprovedActualsByTeam(unapprovedProjectActualsByTeam);
-    }
+    const data = Array.isArray(unapprovedProjectActualsByTeam)
+      ? unapprovedProjectActualsByTeam
+      : [];
+    setFilteredUnapprovedActualsByTeam(data);
+    setOriginalUnapprovedActualsByTeam(data);
   }, [unapprovedProjectActualsByTeam]);
 
   useEffect(() => {
-    if (unapprovedProjectAllocation.length > 0) {
-      setFilteredUnapprovedProjectAllocation(unapprovedProjectAllocation);
-    }
+    setFilteredUnapprovedProjectAllocation(
+      Array.isArray(unapprovedProjectAllocation) ? unapprovedProjectAllocation : []
+    );
   }, [unapprovedProjectAllocation]);
 
   useEffect(() => {
-    if (actualsConfirmed.length > 0) {
-      setFilteredActualsConfirmed(actualsConfirmed);
-    }
+    setFilteredActualsConfirmed(
+      Array.isArray(actualsConfirmed) ? actualsConfirmed : []
+    );
   }, [actualsConfirmed]);
 
   useEffect(() => {
-    if (plan_vs_actual_variance.length > 0) {
-      setFilteredActualDeviation(plan_vs_actual_variance);
-    }
+    setFilteredActualDeviation(
+      Array.isArray(plan_vs_actual_variance) ? plan_vs_actual_variance : []
+    );
   }, [plan_vs_actual_variance]);
 
   useEffect(() => {
-    if (allocationPercentage.length > 0) {
-      setFilteredAllocationPercentage(allocationPercentage);
-    }
+    setFilteredAllocationPercentage(
+      Array.isArray(allocationPercentage) ? allocationPercentage : []
+    );
   }, [allocationPercentage]);
 
   useEffect(() => {
-    if (top_projects_by_variance.length > 0) {
-      setFilteredTop5Projects(top_projects_by_variance);
-    }
+    setFilteredTop5Projects(
+      Array.isArray(top_projects_by_variance) ? top_projects_by_variance : []
+    );
   }, [top_projects_by_variance]);
 
   useEffect(() => {
-    if (projectFTEData.length > 0) {
-      // Backend returns already-filtered data
-      setFilteredProjectFTEData(projectFTEData);
-    }
+    // Backend returns already-filtered data; reflect even when empty
+    setFilteredProjectFTEData(Array.isArray(projectFTEData) ? projectFTEData : []);
   }, [projectFTEData]);
 
   useEffect(() => {
-    if (activeProjectsByType.length > 0) {
-      // Backend returns already-filtered data
-      setFilteredActiveProjectsByType(activeProjectsByType);
-    }
+    // Backend returns already-filtered data; reflect even when empty
+    setFilteredActiveProjectsByType(
+      Array.isArray(activeProjectsByType) ? activeProjectsByType : []
+    );
   }, [activeProjectsByType]);
 
   // Calculate the Monday of the selected week
@@ -685,7 +686,7 @@ export default function ExecutiveDashboardPage() {
   const allowedOverviewCharts = OVERVIEW_CHART_SEQUENCE.filter(queryKey =>
     hasAccessToQueryKey(queryKey)
   );
-  const allowedProjectCharts = PROJECT_CHART_SEQUENCE.filter(queryKey =>
+  const allowedCostsCharts = COST_CHART_SEQUENCE.filter(queryKey =>
     hasAccessToQueryKey(queryKey)
   );
   const allowedTeamCharts = TEAM_CHART_SEQUENCE.filter(queryKey =>
@@ -696,9 +697,9 @@ export default function ExecutiveDashboardPage() {
     () => generateLayouts(allowedOverviewCharts),
     [allowedOverviewCharts.join(',')]
   );
-  const projectLayouts = useMemo(
-    () => generateLayouts(allowedProjectCharts),
-    [allowedProjectCharts.join(',')]
+  const costsLayouts = useMemo(
+    () => generateLayouts(allowedCostsCharts),
+    [allowedCostsCharts.join(',')]
   );
   const teamLayouts = useMemo(
     () => generateLayouts(allowedTeamCharts),
@@ -786,6 +787,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Plan vs Actuals Variance')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredActualDeviation || 
+          filteredActualDeviation.length === 0 ||
+          hasBarChartAllZeroValues(filteredActualDeviation, ['planned_units', 'actual_units'])
+        }
+        noDataMessage="No variance data available for the selected period"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -839,6 +846,7 @@ export default function ExecutiveDashboardPage() {
                   style={{
                     fontSize: dimensions.width < 400 ? '12px' : '14px',
                     color: 'rgba(0, 0, 0, 0.6)',
+                    fontWeight: 400,
                   }}
                 >
                   (Previous week)
@@ -993,6 +1001,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Top 5 Projects with Variance')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredTop5Projects || 
+          filteredTop5Projects.length === 0 ||
+          hasBarChartAllZeroValues(filteredTop5Projects, ['planned_units', 'actual_units', 'variance_percentage'])
+        }
+        noDataMessage="No project variance data available for the selected period"
       >
         {dimensions => {
           // Define columns for DataGrid
@@ -1058,12 +1072,11 @@ export default function ExecutiveDashboardPage() {
               headerClassName: 'custom-header',
               renderCell: params => {
                 const variance = Number(params.value || 0);
-                const actualUnits = Number(params.row.actual_units || 0);
                 const varianceColor =
                   variance > 0 ? '#ef5350' : variance < 0 ? '#26a69a' : '#666';
                 const varianceSign = variance > 0 ? '+' : '';
                 const displayVariance =
-                  variance === 0 || actualUnits === 0
+                  variance === 0
                     ? '--'
                     : `${varianceSign}${variance.toFixed(1)}`;
 
@@ -1182,6 +1195,12 @@ export default function ExecutiveDashboardPage() {
         }
         minWidth={400}
         minHeight={300}
+        showNoData={
+          !filteredActiveProjectsByType || 
+          filteredActiveProjectsByType.length === 0 ||
+          filteredActiveProjectsByType.every(item => Number(item.count || 0) === 0)
+        }
+        noDataMessage="No active projects found for the selected filters"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -1304,6 +1323,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Total Headcount Breakdown')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !totalHeadcount || 
+          totalHeadcount.length === 0 ||
+          hasStackedChartAllZeroValues(totalHeadcount, ['FTE', 'Contractor - FT', 'Contractor - PT', 'Intern'])
+        }
+        noDataMessage="No headcount data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -1402,6 +1427,16 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Allocation by Project Type Group')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !allocation_by_project_type_group || 
+          Object.keys(allocation_by_project_type_group).length === 0 ||
+          Object.values(allocation_by_project_type_group).every(groupData => 
+            !Array.isArray(groupData) || 
+            groupData.length === 0 || 
+            groupData.every(item => Number(item.allocation_percentage || 0) === 0)
+          )
+        }
+        noDataMessage="No allocation data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -1519,9 +1554,15 @@ export default function ExecutiveDashboardPage() {
 
     unapprovedProjectAllocation: (
       <DashboardWidget
-        onClick={() => handleChartClick('Unplanned Allocation Units')}
+        onClick={() => handleChartClick('Actuals by Category')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredUnapprovedProjectAllocation || 
+          filteredUnapprovedProjectAllocation.length === 0 ||
+          hasPieChartAllZeroValues(transformDataForPieChart(filteredUnapprovedProjectAllocation))
+        }
+        noDataMessage="No actuals data available for the selected period"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'pie');
@@ -1542,7 +1583,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Unplanned Allocation Units
+                Actuals by Category{' '}
+                <span
+                  style={{
+                    fontSize: dimensions.width < 400 ? '12px' : '14px',
+                    color: 'rgba(0, 0, 0, 0.6)',
+                    fontWeight: 400,
+                  }}
+                >
+                  (Previous week)
+                </span>
               </Typography>
               <Box
                 sx={{
@@ -1588,6 +1638,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Actuals Confirmation Status')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !actuals_confirmation_status || 
+          actuals_confirmation_status.length === 0 ||
+          actuals_confirmation_status.every(item => parseFloat(item.percentage || 0) === 0)
+        }
+        noDataMessage="No actuals confirmation data available for the selected period"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'pie');
@@ -1692,7 +1748,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Overview"
-              tooltipText="Engagement score based on five key metrics: planning, actuals, confirmation, entry, and communication"
+              tooltipText="Measures resource engagement (0-100) through planning and tracking behaviors. Higher scores reflect forward-looking allocation, timely Actualss confirmation, consistent weekly entries, and detailed status notes documenting progress."
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
@@ -1716,10 +1772,8 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
-  };
 
-  const projectCharts = {
-    projectHealthOverview: (
+     projectHealthOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
         minWidth={650}
@@ -1732,26 +1786,28 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
-              tooltipText="Projects health based on alignment, actuals, and engagement metrics"
               overallScore={parseFloat(data.overall_health_score || 0)}
               overallChange={parseFloat(data.overall_health_score_change || 0)}
               overallDirection={data.overall_health_score_direction}
               subScores={[
                 {
-                  score: parseFloat(data.adherence_score || 0),
-                  label: 'Adherence Score',
-                  change: parseFloat(data.adherence_score_change || 0),
-                  positive: data.adherence_score_direction !== 'down',
+                  score: parseFloat(data.alignment_score || 0),
+                  label: 'Alignment Score',
+                  tooltipText:"Measures delivery predictability through alignment between planned and Actuals contribution. Higher scores reflect stable, predictable resource utilization across all project members.",
+                  change: parseFloat(data.alignment_score_change || 0),
+                  positive: data.alignment_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actuals_score || 0),
                   label: 'Actuals Score',
+                  tooltipText:"Measures project execution health. Higher scores reflect consistent on- track statuses, regular weekly confirmations, and transparent progress notes documenting accomplishments and challenges.",
                   change: parseFloat(data.actuals_score_change || 0),
                   positive: data.actuals_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.engagement_score || 0),
                   label: 'Engagement Score',
+                  tooltipText:"Measures team communication through status tracking. Higher scores reflect active participation with detailed status notes that provide clear visibility into progress, challenges, and next steps.",
                   change: parseFloat(data.engagement_score_change || 0),
                   positive: data.engagement_score_direction !== 'down',
                 },
@@ -1770,6 +1826,14 @@ export default function ExecutiveDashboardPage() {
         }
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredProjectFTEData || 
+          filteredProjectFTEData.length === 0 ||
+          filteredProjectFTEData.every(d => (
+            Number(d.planned_pct || 0) === 0 && Number(d.actual_pct || 0) === 0
+          ))
+        }
+        noDataMessage="No FTE allocation data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'line');
@@ -1940,7 +2004,9 @@ export default function ExecutiveDashboardPage() {
         }}
       </DashboardWidget>
     ),
+  };
 
+  const costsCharts = {
     budgetVsPlanVsActual: (
       <DashboardWidget
         onClick={() =>
@@ -1948,6 +2014,12 @@ export default function ExecutiveDashboardPage() {
         }
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredbudgetVsPlanVsActual ||
+          filteredbudgetVsPlanVsActual.length === 0 ||
+          hasBarChartAllZeroValues(filteredbudgetVsPlanVsActual, ['budget_total','planned_to_date','actual_to_date'])
+        }
+        noDataMessage="No budget/plan/actual data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -1995,7 +2067,7 @@ export default function ExecutiveDashboardPage() {
                     },
                     {
                       data: sortedBudgetData.map(d =>
-                        Number.parseFloat(d.actuals_to_date)
+                        Number.parseFloat(d.actual_to_date)
                       ),
                       label: 'Actuals',
                       id: 'actual',
@@ -2036,6 +2108,20 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Total Headcount by Team')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !team_headcount_distribution ||
+          team_headcount_distribution.length === 0 ||
+          team_headcount_distribution.every(item => {
+            const splits = item.resource_type_split || {};
+            return (
+              Number(splits['FTE'] || 0) === 0 &&
+              Number(splits['Intern'] || 0) === 0 &&
+              Number(splits['Contractor - PT'] || 0) === 0 &&
+              Number(splits['Contractor - FT'] || 0) === 0
+            );
+          })
+        }
+        noDataMessage="No team headcount data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2157,6 +2243,15 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Project Actuals Breakdown by Team')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredUnapprovedActualsByTeam ||
+          filteredUnapprovedActualsByTeam.length === 0 ||
+          hasStackedChartAllZeroValues(
+            filteredUnapprovedActualsByTeam,
+            ['pct_of_actuals']
+          )
+        }
+        noDataMessage="No unapproved project actuals data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2264,9 +2359,15 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Resource Allocation Coverage')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !filteredCoverageData ||
+          filteredCoverageData.length === 0 ||
+          hasBarChartAllZeroValues(filteredCoverageData, ['coverage_pct'])
+        }
+        noDataMessage="No coverage data available"
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'line');
+          const config = useResponsiveChart(dimensions, 'bar');
 
           // Sort by coverage percentage descending
           const sortedCoverageData = sortBarChartData(
@@ -2342,7 +2443,14 @@ export default function ExecutiveDashboardPage() {
     ),
 
     underAllocated: (
-      <DashboardWidget minWidth={320} minHeight={280}>
+      <DashboardWidget minWidth={320} minHeight={280}
+        showNoData={
+          !filteredUnderAllocated ||
+          filteredUnderAllocated.length === 0 ||
+          hasBarChartAllZeroValues(filteredUnderAllocated, ['utilization_pct'])
+        }
+        noDataMessage="No under-allocation data available"
+      >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
@@ -2414,7 +2522,14 @@ export default function ExecutiveDashboardPage() {
     ),
 
     overAllocated: (
-      <DashboardWidget minWidth={320} minHeight={280}>
+      <DashboardWidget minWidth={320} minHeight={280}
+        showNoData={
+          !filteredOverAllocated ||
+          filteredOverAllocated.length === 0 ||
+          hasBarChartAllZeroValues(filteredOverAllocated, ['utilization_pct'])
+        }
+        noDataMessage="No over-allocation data available"
+      >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
@@ -2490,6 +2605,16 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Actuals Trend')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !actualsTrendWeekly ||
+          actualsTrendWeekly.length === 0 ||
+          actualsTrendWeekly.every(item =>
+            (item.actuals || []).every(
+              a => parseFloat(a.percentage || 0) === 0
+            )
+          )
+        }
+        noDataMessage="No weekly actuals trend data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2582,10 +2707,10 @@ export default function ExecutiveDashboardPage() {
                       direction: 'column',
                       position: { vertical: 'middle', horizontal: 'right' },
                       padding: { right: 5 },
-                      itemMarkWidth: 12,
-                      itemMarkHeight: 12,
-                      markGap: 8,
-                      itemGap: 12,
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
+                      markgap: 8,
+                      itemgap: 12,
                     },
                   }}
                   margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
@@ -2603,6 +2728,12 @@ export default function ExecutiveDashboardPage() {
         onClick={() => handleChartClick('Engagement Score by Teams')}
         minWidth={320}
         minHeight={280}
+        showNoData={
+          !teamEngagementScore ||
+          teamEngagementScore.length === 0 ||
+          hasBarChartAllZeroValues(teamEngagementScore,['avg_engagement_score'])
+        }
+        noDataMessage="No engagement score data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
@@ -2794,10 +2925,10 @@ export default function ExecutiveDashboardPage() {
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
           )}
-          {allowedProjectCharts.length > 0 && (
+          {allowedCostsCharts.length > 0 && (
             <Tab
-              value="projects"
-              label="Projects"
+              value="costs"
+              label="Costs"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
           )}
@@ -2851,7 +2982,7 @@ export default function ExecutiveDashboardPage() {
               <div
                 key={key}
                 className={
-                  key === 'engagementScoreOverview' ? 'auto-height-widget' : ''
+                  key === 'engagementScoreOverview' || key === 'projectHealthOverview' ? 'auto-height-widget' : ''
                 }
               >
                 {overviewcharts[key]}
@@ -2894,7 +3025,7 @@ export default function ExecutiveDashboardPage() {
         </>
       )}
 
-      {activeTab === 'projects' && (
+      {activeTab === 'costs' && (
         <>
           <Typography
             variant="h2"
@@ -2906,11 +3037,11 @@ export default function ExecutiveDashboardPage() {
               paddingBottom: '8px',
             }}
           >
-            Project Tracking
+            Costs Tracking
           </Typography>
           <ResponsiveGridLayout
             className="layout"
-            layouts={projectLayouts}
+            layouts={costsLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
@@ -2920,15 +3051,8 @@ export default function ExecutiveDashboardPage() {
             compactType="vertical"
             style={{ padding: '0 16px' }}
           >
-            {allowedProjectCharts.map(key => (
-              <div
-                key={key}
-                className={
-                  key === 'projectHealthOverview' ? 'auto-height-widget' : ''
-                }
-              >
-                {projectCharts[key]}
-              </div>
+            {allowedCostsCharts.map(key => (
+              <div key={key}>{costsCharts[key]}</div>
             ))}
           </ResponsiveGridLayout>
         </>

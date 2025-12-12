@@ -131,15 +131,47 @@ const FilterChips = () => {
   };
 
   // Get active filters (non-empty values, including arrays with items)
+  // Subtract any defaultAdvancedFilters values so chips only show user-added selections
   const activeFilters = useMemo(() => {
-    return Object.entries(advancedFilters || {})
-      .filter(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value.length > 0;
-        }
-        return value && value !== '';
-      })
+    const entries = Object.entries(advancedFilters || {});
+
+    const withEffectiveValues = entries
       .map(([key, value]) => {
+        const defaultVal = defualtAdvancedFilters?.[key];
+
+        // If value is an array, subtract defaults (array or primitive)
+        if (Array.isArray(value)) {
+          if (Array.isArray(defaultVal)) {
+            const remaining = value.filter(v => !defaultVal.includes(v));
+            return { key, value: remaining };
+          }
+          if (defaultVal !== undefined && !Array.isArray(defaultVal)) {
+            const remaining = value.filter(v => v !== defaultVal);
+            return { key, value: remaining };
+          }
+          return { key, value };
+        }
+
+        // value is primitive
+        if (defaultVal !== undefined) {
+          if (Array.isArray(defaultVal)) {
+            if (defaultVal.includes(value)) return { key, value: null };
+            return { key, value };
+          }
+          if (defaultVal === value) return { key, value: null };
+          return { key, value };
+        }
+
+        return { key, value };
+      })
+      // remove entries that became empty/null after subtracting defaults
+      .filter(({ value }) => {
+        if (Array.isArray(value)) return value.length > 0;
+        return value !== null && value !== undefined && value !== '';
+      });
+
+    return withEffectiveValues
+      .map(({ key, value }) => {
         const displayName = getDisplayName(key, value);
         const isArray = Array.isArray(displayName);
 
@@ -159,6 +191,7 @@ const FilterChips = () => {
       .filter(filter => filter.displayName && filter.displayName.length > 0); // Only show filters with valid display names
   }, [
     advancedFilters,
+    defualtAdvancedFilters,
     projectTypeGroups,
     projectTypes,
     teams,
