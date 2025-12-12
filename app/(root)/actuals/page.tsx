@@ -67,6 +67,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   // @ts-ignore
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
+  const { loading: resourcesLoading } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const { projects } = useSelector((state: RootState) => state.projects);
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
@@ -314,7 +317,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   useEffect(() => {
-    if (loadingPermissions) return;
+    if (loadingPermissions || resourcesLoading) return;
     if (permissions['ActualsStatus'].r) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -332,6 +335,19 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
         );
         return;
+      }
+
+      // If Week from params is not accessable week redirect to current Week.
+      if (resourceStartMonday) {
+        if (
+          paramsStartDate &&
+          parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday
+        ) {
+          router.replace(
+            `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+          );
+          return;
+        }
       }
 
       // If paramsStartDate for any day greater than today, set to Monday of current Week.
@@ -360,7 +376,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         })
       );
     }
-  }, [paramsStartDate, paramsEndDate, loadingPermissions]);
+  }, [paramsStartDate, paramsEndDate, loadingPermissions, resourcesLoading]);
 
   useEffect(() => {
     if (loadingPermissions) return;
