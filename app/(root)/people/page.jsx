@@ -1177,10 +1177,11 @@ function Resources({ permissions, loadingPermissions }) {
           WorkLocation:
             location?.find(loc => loc.Id === item?.Resource?.WorkLocation)
               ?.Name || '',
-          __created_by: users?.find(user => user.Id === item?.__created_by)
-            ?.Name,
+          __created_by: users?.find(
+            user => user.id === item?.Resource?.__created_by
+          )?.Name,
           __last_modified_by: users?.find(
-            user => user.Id === item?.__last_modified_by
+            user => user.id === item?.Resource?.__last_modified_by
           )?.Name,
         };
       });
