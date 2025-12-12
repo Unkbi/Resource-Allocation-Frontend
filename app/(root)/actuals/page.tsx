@@ -32,7 +32,7 @@ import {
   setCalendarDate,
 } from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
-import { isBefore, parseISO, startOfWeek } from 'date-fns';
+import { format, parseISO, startOfWeek } from 'date-fns';
 import { GridValidRowModel, useGridApiRef } from '@mui/x-data-grid-premium';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
@@ -46,6 +46,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -379,7 +380,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   }, [paramsStartDate, paramsEndDate, loadingPermissions, resourcesLoading]);
 
   useEffect(() => {
-    if (loadingPermissions) return;
+    if (loadingPermissions || resourcesLoading) return;
     if (permissions['ActualsStatus'].r) {
       if (resources && user && email) {
         const userId = getUserIdFromEmail(resources || [], email);
@@ -391,25 +392,39 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             endDate: endDate,
           },
         });
+
+        let getActualsStatusStartDate =
+          generateDateWeekMath('WEEK_MINUS', 7, parseISO(startDate ?? '')) ||
+          '';
+        if (
+          resourceStartMonday &&
+          resourceStartMonday > parseISO(getActualsStatusStartDate)
+        ) {
+          getActualsStatusStartDate = format(resourceStartMonday, DATE_FORMAT);
+        }
+
         dispatch({
           type: GET_ACTUAL_STATUS,
           payload: {
             resource: userId,
             status: userId ? ['In-Progress', 'Not Started'] : [''],
-            startDate:
-              generateDateWeekMath(
-                'WEEK_MINUS',
-                7,
-                parseISO(startDate ?? '')
-              ) || '',
+            startDate: getActualsStatusStartDate || '',
             endDate:
-              generateDateWeekMath('WEEK_MINUS', 2, parseISO(endDate ?? '')) ||
+              generateDateWeekMath('WEEK_MINUS', 1, parseISO(endDate ?? '')) ||
               '',
           },
         });
       }
     }
-  }, [resources, user, email, startDate, endDate, loadingPermissions]);
+  }, [
+    resources,
+    user,
+    email,
+    startDate,
+    endDate,
+    loadingPermissions,
+    resourcesLoading,
+  ]);
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
