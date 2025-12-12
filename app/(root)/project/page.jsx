@@ -55,7 +55,10 @@ import {
   UPDATE_ORGANISATION,
 } from '@/app/redux/actions/organizationsAction';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
-import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import {
+  FETCH_PROJECT_TYPES,
+  FETCH_USER,
+} from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
@@ -121,6 +124,7 @@ function Project({ permissions, loadingPermissions }) {
   const { resources, loading: resourceLoading } = useSelector(
     state => state.resources
   );
+  const { users } = useSelector(state => state.allSettings);
   const { projectTypes } = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -248,6 +252,9 @@ function Project({ permissions, loadingPermissions }) {
         payload: {},
       });
     }
+    if (!users.length) {
+      dispatch({ type: FETCH_USER, payload: {} });
+    }
   }, []);
 
   useEffect(() => {
@@ -288,6 +295,12 @@ function Project({ permissions, loadingPermissions }) {
         ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
           ?.FullName,
         Type: projectTypes?.find(pt => pt.Id === project.Type)?.Name || '',
+        __created_by: users?.find(user => {
+          return user.id === item?.__created_by;
+        })?.Name,
+        __last_modified_by: users?.find(
+          user => user.id === item?.__last_modified_by
+        )?.Name,
       };
     });
   };
@@ -742,6 +755,80 @@ function Project({ permissions, loadingPermissions }) {
           return `${month}/${day}/${year}`;
         }
         return '';
+      },
+    },
+    {
+      field: '__created',
+      headerName: 'Created On',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__created_by',
+      headerName: 'Created By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
+      field: '__last_modified',
+      headerName: 'Last Modified On',
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__last_modified_by',
+      headerName: 'Last Modified By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
       },
     },
   ];
