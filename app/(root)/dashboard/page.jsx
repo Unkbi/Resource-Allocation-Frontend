@@ -2,7 +2,7 @@
 
 import Overview from '../../components/Dashboard/OverviewCards';
 import ScoreCard from '../../components/Dashboard/ScoreCard';
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Global, css } from '@emotion/react';
 import {
   Box,
@@ -224,7 +224,10 @@ export default function ExecutiveDashboardPage() {
     projectHealthOverview = [],
     engagementScoreOverview = [],
   } = useSelector(state => state.dashboard);
-  const [layout, setLayout] = useState([]);
+  // Persisted layouts per tab (overview, teams, costs)
+  const [persistedOverviewLayouts, setPersistedOverviewLayouts] = useState(null);
+  const [persistedTeamLayouts, setPersistedTeamLayouts] = useState(null);
+  const [persistedCostsLayouts, setPersistedCostsLayouts] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedChart, setSelectedChart] = useState(null);
   const [bucket, setBucket] = useState('week');
@@ -339,11 +342,17 @@ export default function ExecutiveDashboardPage() {
     });
     return map;
   }, [filteredActiveProjectsByType, projectTypeGroups]);
-  useEffect(() => {
-    const saved = localStorage.getItem('dashboardLayout');
-    const parsed = saved ? JSON.parse(saved) : overviewLayouts?.md;
-    setLayout(parsed);
-  }, []);
+  // Suppress saving during initial hydration to avoid overwriting saved layouts
+  const suppressSaveRef = useRef({ overview: true, teams: true, costs: true });
+  // Storage keys per tab
+  const STORAGE_KEYS = useMemo(
+    () => ({
+      overview: 'dashboard_layout_overview',
+      teams: 'dashboard_layout_teams',
+      costs: 'dashboard_layout_costs',
+    }),
+    []
+  );
 
   useEffect(() => {
     if (dashboardQueryKeys.length === 0) {
@@ -645,10 +654,36 @@ export default function ExecutiveDashboardPage() {
       setSelectedProjectTypeGroup(filter.value);
   };
 
-  const handleLayoutChange = newLayout => {
-    setLayout(newLayout);
-    localStorage.setItem('dashboardLayout', JSON.stringify(newLayout));
-  };
+  // Merge saved layouts with defaults, keeping only allowed chart ids
+  const mergeLayouts = useCallback((defaults, saved, allowedIds) => {
+    if (!saved || typeof saved !== 'object') return defaults;
+    const result = {};
+    for (const bp of Object.keys(defaults)) {
+      const defaultItems = Array.isArray(defaults[bp]) ? defaults[bp] : [];
+      const savedItems = Array.isArray(saved[bp]) ? saved[bp] : [];
+      const filteredSaved = savedItems.filter(it => allowedIds.has(it.i));
+      const byId = new Map(filteredSaved.map(it => [it.i, it]));
+      result[bp] = defaultItems.map(def => byId.get(def.i) || def);
+    }
+    return result;
+  }, []);
+
+
+  // Save layout changes per tab
+  const handleLayoutChange = useCallback((tab, _layout, layouts) => {
+    // Prevent initial mount from overwriting saved layouts
+    if (suppressSaveRef.current[tab]) return;
+
+    try {
+      const key = STORAGE_KEYS[tab];
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(layouts));
+      }
+    } catch {}
+    if (tab === 'overview') setPersistedOverviewLayouts(layouts);
+    if (tab === 'teams') setPersistedTeamLayouts(layouts);
+    if (tab === 'costs') setPersistedCostsLayouts(layouts);
+  }, [STORAGE_KEYS]);
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
@@ -705,6 +740,49 @@ export default function ExecutiveDashboardPage() {
     () => generateLayouts(allowedTeamCharts),
     [allowedTeamCharts.join(',')]
   );
+
+  // Load persisted layouts when allowed charts change (or defaults change)
+  useEffect(() => {
+    try {
+      const allowedOverview = new Set(allowedOverviewCharts);
+      const saved = localStorage.getItem(STORAGE_KEYS.overview);
+      const parsed = saved ? JSON.parse(saved) : null;
+      const merged = mergeLayouts(overviewLayouts, parsed, allowedOverview);
+      setPersistedOverviewLayouts(merged);
+      suppressSaveRef.current.overview = false;
+    } catch (e) {
+      setPersistedOverviewLayouts(overviewLayouts);
+      suppressSaveRef.current.overview = false;
+    }
+  }, [overviewLayouts, allowedOverviewCharts.join(','), STORAGE_KEYS.overview, mergeLayouts]);
+
+  useEffect(() => {
+    try {
+      const allowedTeams = new Set(allowedTeamCharts);
+      const saved = localStorage.getItem(STORAGE_KEYS.teams);
+      const parsed = saved ? JSON.parse(saved) : null;
+      const merged = mergeLayouts(teamLayouts, parsed, allowedTeams);
+      setPersistedTeamLayouts(merged);
+      suppressSaveRef.current.teams = false;
+    } catch (e) {
+      setPersistedTeamLayouts(teamLayouts);
+      suppressSaveRef.current.teams = false;
+    }
+  }, [teamLayouts, allowedTeamCharts.join(','), STORAGE_KEYS.teams, mergeLayouts]);
+
+  useEffect(() => {
+    try {
+      const allowedCosts = new Set(allowedCostsCharts);
+      const saved = localStorage.getItem(STORAGE_KEYS.costs);
+      const parsed = saved ? JSON.parse(saved) : null;
+      const merged = mergeLayouts(costsLayouts, parsed, allowedCosts);
+      setPersistedCostsLayouts(merged);
+      suppressSaveRef.current.costs = false;
+    } catch (e) {
+      setPersistedCostsLayouts(costsLayouts);
+      suppressSaveRef.current.costs = false;
+    }
+  }, [costsLayouts, allowedCostsCharts.join(','), STORAGE_KEYS.costs, mergeLayouts]);
 
   const Teams = filteredCoverageData?.length
     ? [...new Set(filteredCoverageData.map(d => d.team_name))]
@@ -2968,11 +3046,11 @@ export default function ExecutiveDashboardPage() {
           />
           <ResponsiveGridLayout
             className="layout"
-            layouts={overviewLayouts}
+            layouts={persistedOverviewLayouts || overviewLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
-            onLayoutChange={handleLayoutChange}
+            onLayoutChange={(layout, layouts) => handleLayoutChange('overview', layout, layouts)}
             isDraggable
             isResizable
             compactType="vertical"
@@ -3008,11 +3086,11 @@ export default function ExecutiveDashboardPage() {
           </Typography>
           <ResponsiveGridLayout
             className="layout"
-            layouts={teamLayouts}
+            layouts={persistedTeamLayouts || teamLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
-            onLayoutChange={handleLayoutChange}
+            onLayoutChange={(layout, layouts) => handleLayoutChange('teams', layout, layouts)}
             isDraggable
             isResizable
             compactType="vertical"
@@ -3041,11 +3119,11 @@ export default function ExecutiveDashboardPage() {
           </Typography>
           <ResponsiveGridLayout
             className="layout"
-            layouts={costsLayouts}
+            layouts={persistedCostsLayouts || costsLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
-            onLayoutChange={handleLayoutChange}
+            onLayoutChange={(layout, layouts) => handleLayoutChange('costs', layout, layouts)}
             isDraggable
             isResizable
             compactType="vertical"
