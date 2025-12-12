@@ -73,11 +73,11 @@ import { getAllTeams } from '@/app/services/teamServices';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import { FETCH_DASHBOARD_QUERY_KEYS } from '@/app/redux/actions/rbacActions';
 import { DASHBOARD_ALL_ACCESS } from '@/app/constants/constants';
-import { 
-  hasBarChartAllZeroValues, 
-  hasPieChartAllZeroValues, 
+import {
+  hasBarChartAllZeroValues,
+  hasPieChartAllZeroValues,
   hasLineChartAllZeroValues,
-  hasStackedChartAllZeroValues 
+  hasStackedChartAllZeroValues,
 } from '@/app/utils/chartDataHelpers';
 
 dayjs.extend(isoWeek);
@@ -133,9 +133,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'actuals_confirmation_status',
 ];
 
-const COST_CHART_SEQUENCE = [
-  'budgetVsPlanVsActual',
-];
+const COST_CHART_SEQUENCE = ['budgetVsPlanVsActual'];
 
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
@@ -475,15 +473,17 @@ export default function ExecutiveDashboardPage() {
       // Fetch individual charts
       individualCharts.forEach(chartKey => {
         const queryStart =
-          (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed') || chartKey === 'unapprovedProjectAllocation' &&
-          selectedOption === 'week'
+          chartKey === 'plan_vs_actual_variance' ||
+          chartKey === 'actualsConfirmed' ||
+          (chartKey === 'unapprovedProjectAllocation' &&
+            selectedOption === 'week')
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
-          (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed') || chartKey === 'unapprovedProjectAllocation' &&
-          selectedOption === 'week'
+          chartKey === 'plan_vs_actual_variance' ||
+          chartKey === 'actualsConfirmed' ||
+          (chartKey === 'unapprovedProjectAllocation' &&
+            selectedOption === 'week')
             ? getMonday(selectedDate)
                 .subtract(1, 'week')
                 .add(6, 'day')
@@ -542,7 +542,6 @@ export default function ExecutiveDashboardPage() {
 
     setFilteredUnderAllocated(Array.isArray(under) ? under : []);
     setFilteredOverAllocated(Array.isArray(over) ? over : []);
-    
   }, [resourceUtilization]);
 
   useEffect(() => {
@@ -555,7 +554,9 @@ export default function ExecutiveDashboardPage() {
 
   useEffect(() => {
     setFilteredUnapprovedProjectAllocation(
-      Array.isArray(unapprovedProjectAllocation) ? unapprovedProjectAllocation : []
+      Array.isArray(unapprovedProjectAllocation)
+        ? unapprovedProjectAllocation
+        : []
     );
   }, [unapprovedProjectAllocation]);
 
@@ -585,7 +586,9 @@ export default function ExecutiveDashboardPage() {
 
   useEffect(() => {
     // Backend returns already-filtered data; reflect even when empty
-    setFilteredProjectFTEData(Array.isArray(projectFTEData) ? projectFTEData : []);
+    setFilteredProjectFTEData(
+      Array.isArray(projectFTEData) ? projectFTEData : []
+    );
   }, [projectFTEData]);
 
   useEffect(() => {
@@ -666,6 +669,8 @@ export default function ExecutiveDashboardPage() {
 
   const hasAccessToQueryKey = queryKey => {
     if (!dashboardQueryKeys) return false;
+    // Sahadev : Patch Only for Corsair, as no one has access to Total Resource Cost
+    if (queryKey === 'totalResourceCost') return false;
     if (DASHBOARD_ALL_ACCESS.includes(queryKey)) return true;
     if (loadingLoginUserPrivileges) return false;
 
@@ -788,9 +793,12 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredActualDeviation || 
+          !filteredActualDeviation ||
           filteredActualDeviation.length === 0 ||
-          hasBarChartAllZeroValues(filteredActualDeviation, ['planned_units', 'actual_units'])
+          hasBarChartAllZeroValues(filteredActualDeviation, [
+            'planned_units',
+            'actual_units',
+          ])
         }
         noDataMessage="No variance data available for the selected period"
       >
@@ -1002,9 +1010,13 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredTop5Projects || 
+          !filteredTop5Projects ||
           filteredTop5Projects.length === 0 ||
-          hasBarChartAllZeroValues(filteredTop5Projects, ['planned_units', 'actual_units', 'variance_percentage'])
+          hasBarChartAllZeroValues(filteredTop5Projects, [
+            'planned_units',
+            'actual_units',
+            'variance_percentage',
+          ])
         }
         noDataMessage="No project variance data available for the selected period"
       >
@@ -1196,9 +1208,11 @@ export default function ExecutiveDashboardPage() {
         minWidth={400}
         minHeight={300}
         showNoData={
-          !filteredActiveProjectsByType || 
+          !filteredActiveProjectsByType ||
           filteredActiveProjectsByType.length === 0 ||
-          filteredActiveProjectsByType.every(item => Number(item.count || 0) === 0)
+          filteredActiveProjectsByType.every(
+            item => Number(item.count || 0) === 0
+          )
         }
         noDataMessage="No active projects found for the selected filters"
       >
@@ -1324,9 +1338,14 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !totalHeadcount || 
+          !totalHeadcount ||
           totalHeadcount.length === 0 ||
-          hasStackedChartAllZeroValues(totalHeadcount, ['FTE', 'Contractor - FT', 'Contractor - PT', 'Intern'])
+          hasStackedChartAllZeroValues(totalHeadcount, [
+            'FTE',
+            'Contractor - FT',
+            'Contractor - PT',
+            'Intern',
+          ])
         }
         noDataMessage="No headcount data available"
       >
@@ -1428,12 +1447,15 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !allocation_by_project_type_group || 
+          !allocation_by_project_type_group ||
           Object.keys(allocation_by_project_type_group).length === 0 ||
-          Object.values(allocation_by_project_type_group).every(groupData => 
-            !Array.isArray(groupData) || 
-            groupData.length === 0 || 
-            groupData.every(item => Number(item.allocation_percentage || 0) === 0)
+          Object.values(allocation_by_project_type_group).every(
+            groupData =>
+              !Array.isArray(groupData) ||
+              groupData.length === 0 ||
+              groupData.every(
+                item => Number(item.allocation_percentage || 0) === 0
+              )
           )
         }
         noDataMessage="No allocation data available"
@@ -1558,9 +1580,11 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredUnapprovedProjectAllocation || 
+          !filteredUnapprovedProjectAllocation ||
           filteredUnapprovedProjectAllocation.length === 0 ||
-          hasPieChartAllZeroValues(transformDataForPieChart(filteredUnapprovedProjectAllocation))
+          hasPieChartAllZeroValues(
+            transformDataForPieChart(filteredUnapprovedProjectAllocation)
+          )
         }
         noDataMessage="No actuals data available for the selected period"
       >
@@ -1639,9 +1663,11 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !actuals_confirmation_status || 
+          !actuals_confirmation_status ||
           actuals_confirmation_status.length === 0 ||
-          actuals_confirmation_status.every(item => parseFloat(item.percentage || 0) === 0)
+          actuals_confirmation_status.every(
+            item => parseFloat(item.percentage || 0) === 0
+          )
         }
         noDataMessage="No actuals confirmation data available for the selected period"
       >
@@ -1773,7 +1799,7 @@ export default function ExecutiveDashboardPage() {
       </DashboardWidget>
     ),
 
-     projectHealthOverview: (
+    projectHealthOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
         minWidth={650}
@@ -1793,21 +1819,24 @@ export default function ExecutiveDashboardPage() {
                 {
                   score: parseFloat(data.alignment_score || 0),
                   label: 'Alignment Score',
-                  tooltipText:"Measures delivery predictability through alignment between planned and Actuals contribution. Higher scores reflect stable, predictable resource utilization across all project members.",
+                  tooltipText:
+                    'Measures delivery predictability through alignment between planned and Actuals contribution. Higher scores reflect stable, predictable resource utilization across all project members.',
                   change: parseFloat(data.alignment_score_change || 0),
                   positive: data.alignment_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actuals_score || 0),
                   label: 'Actuals Score',
-                  tooltipText:"Measures project execution health. Higher scores reflect consistent on- track statuses, regular weekly confirmations, and transparent progress notes documenting accomplishments and challenges.",
+                  tooltipText:
+                    'Measures project execution health. Higher scores reflect consistent on- track statuses, regular weekly confirmations, and transparent progress notes documenting accomplishments and challenges.',
                   change: parseFloat(data.actuals_score_change || 0),
                   positive: data.actuals_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.engagement_score || 0),
                   label: 'Engagement Score',
-                  tooltipText:"Measures team communication through status tracking. Higher scores reflect active participation with detailed status notes that provide clear visibility into progress, challenges, and next steps.",
+                  tooltipText:
+                    'Measures team communication through status tracking. Higher scores reflect active participation with detailed status notes that provide clear visibility into progress, challenges, and next steps.',
                   change: parseFloat(data.engagement_score_change || 0),
                   positive: data.engagement_score_direction !== 'down',
                 },
@@ -1827,11 +1856,13 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredProjectFTEData || 
+          !filteredProjectFTEData ||
           filteredProjectFTEData.length === 0 ||
-          filteredProjectFTEData.every(d => (
-            Number(d.planned_pct || 0) === 0 && Number(d.actual_pct || 0) === 0
-          ))
+          filteredProjectFTEData.every(
+            d =>
+              Number(d.planned_pct || 0) === 0 &&
+              Number(d.actual_pct || 0) === 0
+          )
         }
         noDataMessage="No FTE allocation data available"
       >
@@ -2017,7 +2048,11 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !filteredbudgetVsPlanVsActual ||
           filteredbudgetVsPlanVsActual.length === 0 ||
-          hasBarChartAllZeroValues(filteredbudgetVsPlanVsActual, ['budget_total','planned_to_date','actual_to_date'])
+          hasBarChartAllZeroValues(filteredbudgetVsPlanVsActual, [
+            'budget_total',
+            'planned_to_date',
+            'actual_to_date',
+          ])
         }
         noDataMessage="No budget/plan/actual data available"
       >
@@ -2246,10 +2281,9 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !filteredUnapprovedActualsByTeam ||
           filteredUnapprovedActualsByTeam.length === 0 ||
-          hasStackedChartAllZeroValues(
-            filteredUnapprovedActualsByTeam,
-            ['pct_of_actuals']
-          )
+          hasStackedChartAllZeroValues(filteredUnapprovedActualsByTeam, [
+            'pct_of_actuals',
+          ])
         }
         noDataMessage="No unapproved project actuals data available"
       >
@@ -2443,7 +2477,9 @@ export default function ExecutiveDashboardPage() {
     ),
 
     underAllocated: (
-      <DashboardWidget minWidth={320} minHeight={280}
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
         showNoData={
           !filteredUnderAllocated ||
           filteredUnderAllocated.length === 0 ||
@@ -2522,7 +2558,9 @@ export default function ExecutiveDashboardPage() {
     ),
 
     overAllocated: (
-      <DashboardWidget minWidth={320} minHeight={280}
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
         showNoData={
           !filteredOverAllocated ||
           filteredOverAllocated.length === 0 ||
@@ -2609,9 +2647,7 @@ export default function ExecutiveDashboardPage() {
           !actualsTrendWeekly ||
           actualsTrendWeekly.length === 0 ||
           actualsTrendWeekly.every(item =>
-            (item.actuals || []).every(
-              a => parseFloat(a.percentage || 0) === 0
-            )
+            (item.actuals || []).every(a => parseFloat(a.percentage || 0) === 0)
           )
         }
         noDataMessage="No weekly actuals trend data available"
@@ -2731,7 +2767,9 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !teamEngagementScore ||
           teamEngagementScore.length === 0 ||
-          hasBarChartAllZeroValues(teamEngagementScore,['avg_engagement_score'])
+          hasBarChartAllZeroValues(teamEngagementScore, [
+            'avg_engagement_score',
+          ])
         }
         noDataMessage="No engagement score data available"
       >
@@ -2982,7 +3020,10 @@ export default function ExecutiveDashboardPage() {
               <div
                 key={key}
                 className={
-                  key === 'engagementScoreOverview' || key === 'projectHealthOverview' ? 'auto-height-widget' : ''
+                  key === 'engagementScoreOverview' ||
+                  key === 'projectHealthOverview'
+                    ? 'auto-height-widget'
+                    : ''
                 }
               >
                 {overviewcharts[key]}
