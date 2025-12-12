@@ -395,7 +395,7 @@ export const getStartAndEndDateForView = (
 
 export const getUserIdFromEmail = (users, email) => {
   if (!Array.isArray(users) || !email) return null;
-  const userObj = users.find(user => user.Email === email);
+  const userObj = users.find(user => user?.Email === email);
   return userObj ? userObj.Id : null;
 };
 
