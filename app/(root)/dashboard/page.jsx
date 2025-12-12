@@ -160,27 +160,27 @@ const generateLayouts = chartKeys => {
       x: (idx % 2) * 6,
       y: Math.floor(idx / 2) * 3,
       w: 6,
-      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
       minW: 5,
-      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
     })),
     md: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
       minW: 6,
-      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
     })),
     sm: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      h: autoHeightWidgets.includes(key) ?  1.8 : 3,
       minW: 12,
-      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ?  1.8 : 3,
     })),
   };
 };
@@ -1738,7 +1738,7 @@ export default function ExecutiveDashboardPage() {
     engagementScoreOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Engagement Score Overview')}
-        minWidth={650}
+        // minWidth={650}
         minHeight={280}
         autoHeight={true}
       >
@@ -1776,7 +1776,7 @@ export default function ExecutiveDashboardPage() {
      projectHealthOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
-        minWidth={650}
+        // minWidth={650}
         minHeight={100}
         autoHeight={true}
       >
