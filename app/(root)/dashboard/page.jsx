@@ -1748,7 +1748,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Overview"
-              tooltipText="Measures resource engagement (0-100) through planning and tracking behaviors. Higher scores reflect forward-looking allocation, timely Actualss confirmation, consistent weekly entries, and detailed status notes documenting progress."
+              tooltipText="Combines two components: Planning and Actuals. Planning measures allocation entries across a rolling time window, weighted toward the present and near future. Actuals measures timely confirmation of completed work, weighted toward the most recent period. Both components contribute to the total score."
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
@@ -1756,12 +1756,14 @@ export default function ExecutiveDashboardPage() {
                 {
                   score: parseFloat(data.planned_score || 0),
                   label: 'Planned Score',
+                  tooltipText:`Evaluates allocation entries across a 5-week rolling window centered on the current week. Each week's allocation percentage is weighted, with the current week and near-future weeks carrying the greatest influence. Higher allocation percentages in the weighted window increase score up to full capacity, with overallocation (typically over 1.0 FTE) indicating overburdening. Complete absence of allocation across the entire window triggers an additional penalty.`,
                   change: parseFloat(data.planned_score_change || 0),
                   positive: data.planned_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actual_score || 0),
                   label: 'Actuals Score',
+                  tooltipText:'Evaluates actuals confirmation status across the 3 most recent completed weeks, weighted toward the most recent week. Confirmed status for the most recent week yields full component points. Any status other than confirmed yields zero base points, with additional penalties applied if older weeks are also unconfirmed. Key action: Confirm actuals for the most recent completed week.',
                   change: parseFloat(data.actual_score_change || 0),
                   positive: data.actual_score_direction !== 'down',
                 },
@@ -1786,6 +1788,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
+              tooltipText={`Weighted combination of three components: Alignment (delivery predictability), Actuals Status (contributor status distribution), and Engagement (reporting participation). Each component contributes a configurable percentage of the total. Alignment examines variance between planned and actual allocation. Actuals Status evaluates the mix of 'On-Track', 'At-Risk', and 'Off-Track' statuses. Engagement measures status submission rates.`}
               overallScore={parseFloat(data.overall_health_score || 0)}
               overallChange={parseFloat(data.overall_health_score_change || 0)}
               overallDirection={data.overall_health_score_direction}
@@ -1793,21 +1796,21 @@ export default function ExecutiveDashboardPage() {
                 {
                   score: parseFloat(data.alignment_score || 0),
                   label: 'Alignment Score',
-                  tooltipText:"Measures delivery predictability through alignment between planned and Actuals contribution. Higher scores reflect stable, predictable resource utilization across all project members.",
+                  tooltipText:"Measures delivery predictability by comparing total planned allocation versus total actual allocation across all contributors. Projects score highest when variance falls within an optimal range around zero. Tolerance for variance depends on project type: Transform projects allow more positive variance (extra effort on challenging work), Run projects favor stability in both directions, Grow projects expect tight control. Scores decay as variance moves outside optimal range. Exception: Negative variance paired with 'On-Track' project status may bypass penalties.",
                   change: parseFloat(data.alignment_score_change || 0),
                   positive: data.alignment_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actuals_score || 0),
-                  label: 'Actuals Score',
-                  tooltipText:"Measures project execution health. Higher scores reflect consistent on- track statuses, regular weekly confirmations, and transparent progress notes documenting accomplishments and challenges.",
+                  label: 'Actuals Status',
+                  tooltipText:"Evaluates contributor status distribution using a weighted formula: 'On-Track' statuses add positive value, 'Off-Track' statuses subtract value, 'At-Risk' is neutral. The ratio of status types determines the raw score, which is then normalized. Contributors who don't submit status are excluded from calculation.",
                   change: parseFloat(data.actuals_score_change || 0),
                   positive: data.actuals_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.engagement_score || 0),
                   label: 'Engagement Score',
-                  tooltipText:"Measures team communication through status tracking. Higher scores reflect active participation with detailed status notes that provide clear visibility into progress, challenges, and next steps.",
+                  tooltipText:"Measures what percentage of project contributors submit any status update. Score scales proportionally with participation rate. Any status submission counts ('On-Track', 'At-Risk', or 'Off-Track')—the specific status value doesn't affect engagement, only that something was submitted.",
                   change: parseFloat(data.engagement_score_change || 0),
                   positive: data.engagement_score_direction !== 'down',
                 },
@@ -2825,7 +2828,7 @@ export default function ExecutiveDashboardPage() {
     (dashboardLoading && !initialLoad) ? (
     <LoadingScreen />
   ) : (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: `calc(100vh - 31px)` }}>
       <Global
         styles={css`
           circle.MuiMarkElement-root {
@@ -2907,42 +2910,58 @@ export default function ExecutiveDashboardPage() {
           }
         `}
       />
-      <CommonToolbar>
-        <Tabs
-          value={activeTab}
-          onChange={(e, val) => setActiveTab(val)}
-          sx={{ padding: '16px 16px 0px 8px' }}
-        >
-          <Tab
-            value="overview"
-            label="Overview"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          />
-          {allowedTeamCharts.length > 0 && (
+      {/* Sticky header containing Tabs and Topbar */}
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 1000, backgroundColor: '#fff' }}>
+        <CommonToolbar>
+          <Tabs
+            value={activeTab}
+            onChange={(e, val) => setActiveTab(val)}
+            sx={{ padding: '16px 16px 0px 8px' }}
+          >
             <Tab
-              value="teams"
-              label="Teams"
+              value="overview"
+              label="Overview"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-          )}
-          {allowedCostsCharts.length > 0 && (
-            <Tab
-              value="costs"
-              label="Costs"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
+            {allowedTeamCharts.length > 0 && (
+              <Tab
+                value="teams"
+                label="Teams"
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              />
+            )}
+            {allowedCostsCharts.length > 0 && (
+              <Tab
+                value="costs"
+                label="Costs"
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              />
+            )}
+            <DashboardToolbar
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              anchorEl={anchorEl}
+              setAnchorEl={setAnchorEl}
             />
-          )}
-          <DashboardToolbar
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            selectedOption={selectedOption}
-            setSelectedOption={setSelectedOption}
-            anchorEl={anchorEl}
-            setAnchorEl={setAnchorEl}
-          />
-        </Tabs>
-      </CommonToolbar>
-      <Topbar />
+          </Tabs>
+        </CommonToolbar>
+        <Topbar />
+      </Box>
+      {/* Scrollable content area (scroll without visible scrollbar) */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE 10+
+          '&::-webkit-scrollbar': { display: 'none' }, // WebKit
+        }}
+      >
       {activeTab === 'overview' && (
         <>
           <Typography
@@ -3057,6 +3076,7 @@ export default function ExecutiveDashboardPage() {
           </ResponsiveGridLayout>
         </>
       )}
+      </Box>
       <Dialog
         open={dialogOpen}
         onClose={handleDialogClose}

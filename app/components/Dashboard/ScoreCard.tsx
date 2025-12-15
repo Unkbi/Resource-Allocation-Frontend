@@ -50,21 +50,23 @@ export default function MuiDashboardCard({
       >
         <Typography variant="h6" sx={{ fontSize: "18px", fontWeight: 600, color: "#333" }}>
           {title}{' '}
-          <span
-            style={{
-              fontSize: "14px",
-              color: 'rgba(0, 0, 0, 0.6)',
-              fontWeight: 400,
-            }}
-          >
-            (Previous week)
-          </span>
+          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+            <span
+              style={{
+                fontSize: "14px",
+                color: 'rgba(0, 0, 0, 0.6)',
+                fontWeight: 400,
+              }}
+            >
+              (Previous week)
+            </span>
+            {tooltipText && (
+              <Tooltip title={tooltipText}>
+                <InfoIcon sx={{ fontSize: "18px", color: "#999" }} />
+              </Tooltip>
+            )}
+          </Box>
         </Typography>
-        {tooltipText && (
-          <Tooltip title={tooltipText}>
-            <InfoIcon sx={{ fontSize: "16px", color: "#999" }} />
-          </Tooltip>
-        )}
       </Box>
 
       {/* Overall Score Section - Navy Blue */}
@@ -160,7 +162,7 @@ export default function MuiDashboardCard({
             <Grid item xs={12} sm={6} md={subScores.length === 3 ? 4 : 6} key={index} sx={{ mt: 2 }}>
               <Card
                 sx={{
-                  p: 1.5,
+                  p: 1,
                   // minWidth: "250px",
                   height: "100%",
                   backgroundColor: "#f5f5f5",
@@ -172,22 +174,31 @@ export default function MuiDashboardCard({
               >
                 {/* Left side - Label, Score, Change */}
                 <Box>
-                  <Typography
+                    <Box
                     sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      mb: 0.5,
+                    }}
+                    >
+                    <Typography
+                      sx={{
                       fontSize: "14px",
                       color: "#666",
-                      mb: 0.5,
                       fontWeight: 500,
-                    }}
-                  >
-                    {subScore.label}{' '}
+                      lineHeight: 1,
+                      }}
+                    >
+                      {subScore.label}
+                    </Typography>
                     {subScore.tooltipText && (
-                    <Tooltip title={subScore.tooltipText}>
-                      <InfoIcon sx={{ fontSize: "12px", color: "#999" }} />
-                    </Tooltip>
-                  )}
-                  </Typography>
-                  
+                      <Tooltip title={subScore.tooltipText}>
+                      <InfoIcon sx={{ fontSize: "16px", color: "#999", display: "flex" }} />
+                      </Tooltip>
+                    )}
+                    </Box>
+
                   <Stack direction="row" alignItems="center" gap={1}>
                     <Typography
                       sx={{
