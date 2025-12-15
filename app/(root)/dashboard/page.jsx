@@ -2786,7 +2786,7 @@ export default function ExecutiveDashboardPage() {
                     legend: {
                       ...config.legend,
                       direction: 'column',
-                      position: { vertical: 'middle', horizontal: 'right' },
+                      position: { vertical: 'bottom', horizontal: 'right' },
                       padding: { right: 5 },
                       itemmarkwidth: 12,
                       itemmarkheight: 12,
@@ -2794,7 +2794,7 @@ export default function ExecutiveDashboardPage() {
                       itemgap: 12,
                     },
                   }}
-                  margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
+                  margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
                 />
               </Box>
