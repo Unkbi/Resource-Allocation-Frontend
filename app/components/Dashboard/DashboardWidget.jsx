@@ -3,7 +3,7 @@
 import { Paper, Box } from "@mui/material"
 import { useRef, useState, useEffect } from "react"
 
-const DashboardWidget = ({ children, onClick, minWidth = 300, minHeight = 300, autoHeight = false }) => {
+const DashboardWidget = ({ children, onClick, minWidth = 300, minHeight = 300, autoHeight = false, showNoData = false, noDataMessage = 'No data available', noDataIcon = null }) => {
   const mouseDownPosition = useRef(null)
   const containerRef = useRef(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
@@ -60,7 +60,20 @@ const DashboardWidget = ({ children, onClick, minWidth = 300, minHeight = 300, a
           // overflow: "hidden",
         }}
       >
-        {typeof children === "function" ? children(dimensions) : children}
+        {showNoData ? (
+          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Fallback message when no data */}
+            <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
+              {noDataIcon ? (
+                // Render custom icon if provided
+                (typeof noDataIcon === 'function' ? noDataIcon({ sx: { fontSize: 56, color: '#9CA3AF', mb: 1 } }) : null)
+              ) : null}
+              <span style={{ fontSize: 14 }}>{noDataMessage}</span>
+            </Box>
+          </Box>
+        ) : (
+          typeof children === "function" ? children(dimensions) : children
+        )}
       </Paper>
     </Box>
   )
