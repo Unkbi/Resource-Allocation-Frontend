@@ -673,6 +673,34 @@ function AllocationGrid({
       dispatch(setRowState(updatedRows));
     }
   };
+  const buildCellData = (params, apiRef, showActuals) => {
+    const baseData = params.row[params.field] || {};
+    if (params.rowNode?.type !== 'group') {
+      return {
+        value: baseData.value ?? params.formattedValue ?? '',
+        actuals: baseData.actuals ?? 0,
+        allocationId: baseData.allocationId ?? null,
+        notes: baseData.notes ?? null,
+        period: baseData.period ?? null,
+      };
+    }
+    const childRows = params.rowNode.children.map(childId =>
+      apiRef.current.getRow(childId)
+    );
+    const aggregatedActuals = childRows
+      .map(row => row?.[params.field]?.actuals || 0)
+      .reduce((sum, x) => sum + x, 0);
+    const period =
+      childRows[0]?.[params.field]?.period ?? baseData.period ?? null;
+    return {
+      value: params.formattedValue ?? '', 
+      actuals: aggregatedActuals,
+      allocationId: null,
+      notes: null,
+      period,
+    };
+  };
+
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
@@ -708,7 +736,7 @@ function AllocationGrid({
             cellClass.split(' ').includes('non-editable-darker');
 
           const value = params.formattedValue ?? '';
-          const cellData = params.row[params.field];
+          const cellData = buildCellData(params, apiRef, showActuals);
           const notes = cellData?.notes || '';
           const actuals = cellData?.actuals || null;
           const period = cellData?.period;
@@ -716,6 +744,20 @@ function AllocationGrid({
             period &&
             !isCurrentWeek(parseISO(period)) &&
             !isCurrentOrPastWeek(parseISO(period));
+          
+          const isNormalRow = params.rowNode?.type !== 'group';
+          let isGroupWithLeafChildren = false;
+
+          if (params.rowNode?.type === 'group') {
+            const firstChildId = params.rowNode?.children?.[0];
+            if (firstChildId) {
+              const firstChildNode = apiRef.current.getRowNode(firstChildId);
+              isGroupWithLeafChildren = firstChildNode?.type !== 'group';
+            }
+          }
+          const shouldShowActuals =
+            showActuals && (isNormalRow || isGroupWithLeafChildren);
+
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -736,7 +778,7 @@ function AllocationGrid({
                 </Tooltip>
               );
             }
-            if (isFutureWeek || !editable) {
+            if (isFutureWeek) {
               return <span>{value}</span>;
             }
             return (
@@ -750,7 +792,7 @@ function AllocationGrid({
                   position: 'relative',
                 }}
               >
-                {showActuals && params.rowNode?.type !== 'group' ? (
+                {shouldShowActuals ? (
                   <AllocationCellWithActuals params={cellData} />
                 ) : (
                   <span>{value}</span>
