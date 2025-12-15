@@ -706,7 +706,19 @@ function AllocationGrid({
           const showTooltip =
             cellClass.split(' ').includes('non-editable-cell') ||
             cellClass.split(' ').includes('non-editable-darker');
+          
+          const priorWeekTooltip =
+            cellClass.split(' ').includes('prior-week');
+          
+          const inactiveResourcePriorWeek = cellClass
+            .split(' ')
+            .includes('non-editable-cell-prior-week');
+          
+          const InactivePriorWeekResourceTooltip = cellClass
+            .split(' ')
+            .includes('non-editable-darker-inactive');
 
+        
           const value = params.formattedValue ?? '';
           const cellData = params.row[params.field];
           const notes = cellData?.notes || '';
@@ -718,6 +730,63 @@ function AllocationGrid({
             !isCurrentOrPastWeek(parseISO(period));
           const cellContent = (() => {
             if (showTooltip) {
+              return (
+                <Tooltip
+                  title="This resource is inactive for this period. Allocation not allowed."
+                  arrow
+                  placement="top"
+                >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '100%',
+                      cursor: 'not-allowed',
+                    }}
+                  >
+                    {'' || <>&nbsp;</>}
+                  </span>
+                </Tooltip>
+              );
+            } else if (
+              priorWeekTooltip &&
+              params.rowNode?.groupingField !== 'teams'
+            ) {
+              return (
+                <Tooltip
+                  title="Editing allocations for prior weeks is not allowed."
+                  arrow
+                  placement="top"
+                >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '100%',
+                      cursor: 'not-allowed',
+                    }}
+                  >
+                    {value || <>&nbsp;</>}
+                  </span>
+                </Tooltip>
+              );
+            } else if (inactiveResourcePriorWeek) {
+              return (
+                <Tooltip
+                  title="This resource is inactive. Editing inactive reosurce for prior weeks is not allowed."
+                  arrow
+                  placement="top"
+                >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '100%',
+                      cursor: 'not-allowed',
+                    }}
+                  >
+                    {value || <>&nbsp;</>}
+                  </span>
+                </Tooltip>
+              );
+            } else if (InactivePriorWeekResourceTooltip) {
               return (
                 <Tooltip
                   title="This resource is inactive for this period. Allocation not allowed."

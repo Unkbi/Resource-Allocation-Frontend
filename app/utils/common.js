@@ -18,6 +18,8 @@ import {
   endOfISOWeek,
   isValid,
   isBefore,
+  endOfDay,
+  isAfter,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -738,6 +740,18 @@ export function isCellEditableUtils(params, type, resources) {
   if (params.row.hasButton) return false;
   if (/\_(\d)+/.test(params.row.id)) return true; // Allow Editing for Split View Empty Rows
 
+  if (/^W\d+/.test(params.field)) {
+    const weekNumber = Number(params.field.replace('W', ''));
+
+    const currentWeek = Number(
+      getWeekNumber(new Date()).replace('W', '')
+    );
+
+    if (isPriorWeek(weekNumber, currentWeek)) {
+      return false; 
+    }
+  }
+
   const cellData = params.row[params.field];
   const cellPeriod = cellData?.period;
   if (!cellPeriod) return false;
@@ -778,3 +792,26 @@ export function isResourceWithinDate(resource, monday) {
   }
   return resourceStart <= monday;
 }
+
+export const isPriorWeek = (weekNumber, currentWeek) => {
+  if (weekNumber < currentWeek && (currentWeek - weekNumber) < 30) {
+    return true;
+  }
+  return false;
+};
+
+export const getWeekNum = field => Number(String(field).replace('W', ''));
+
+export const isInactiveForWeek = (startDate, endDate, period) => {
+  if (!startDate || !period) return true;
+  const weekDate = parseISO(period);
+  const startWeekNumber = getWeek(parseISO(startDate));
+  const startWeekMonday = parseISO(
+    getMondayOfWeek(startWeekNumber, parseISO(startDate))
+  );
+  const end = endDate ? endOfDay(parseISO(endDate)) : null;
+  if (isBefore(weekDate, startWeekMonday)) return true;
+  if (end && isAfter(weekDate, end)) return true;
+  return false;
+};
+

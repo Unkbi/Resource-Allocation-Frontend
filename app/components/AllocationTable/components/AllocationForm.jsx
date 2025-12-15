@@ -54,6 +54,7 @@ import {
   isResourceWithinDate,
   getMondayOfISO,
   getUserFromUid,
+  isPriorWeek,
 } from '@/app/utils/common';
 import {
   setResourceAllocation,
@@ -83,7 +84,7 @@ import {
 import { Edit, Group } from 'lucide-react';
 import NameViewForm from '../../Forms/NameViewForm';
 import { openDialog } from '@/app/redux/actions/dialogAction';
-import { addDays, format, getWeek, parseISO } from 'date-fns';
+import { addDays, format, getISOWeek, getWeek, parseISO } from 'date-fns';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import {
   addResource,
@@ -1475,6 +1476,13 @@ const AllocationForm = () => {
                   res => res.Id === resource
                 );
                 const weekKey = getWeekNumber(new Date(monday)); // Convert Monday to WXX key
+                const weekNumber = Number(weekKey.replace('W', ''))
+                const currentWeek = getISOWeek(new Date());
+                
+                if (isPriorWeek(weekNumber, currentWeek)) {
+                  nonEditableWeeks.push(weekKey);
+                  return;
+                }
                 if (
                   resourceDetails &&
                   !isResourceWithinDate(resourceDetails, new Date(monday))

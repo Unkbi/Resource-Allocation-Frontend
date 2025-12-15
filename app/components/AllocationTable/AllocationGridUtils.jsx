@@ -1,3 +1,4 @@
+'use client'
 import {
   aggregationModel,
   getAllColumnsWithWeek,
@@ -8,6 +9,10 @@ import {
   generateDateWeekMath,
   getMondayOfISO,
   getProjectBudgetCategory,
+  getWeekNum,
+  getWeekNumber,
+  isInactiveForWeek,
+  isPriorWeek,
 } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
 import { useSelector, useDispatch } from 'react-redux';
@@ -37,6 +42,7 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { parseISO } from 'date-fns';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { generateEmptyRow, getFirstChild } from '@/app/utils/allocationUtils';
+import { getWeek } from 'date-fns';
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& .MuiPaper-root': {
@@ -1175,6 +1181,15 @@ export const getCellClassName = (
   isCellEditable,
   groupBy = ''
 ) => {
+
+  const addPriorWeekClass = (baseClass, weekNumber, currentWeek) => {
+    return isPriorWeek(weekNumber, currentWeek)
+      ? `${baseClass} prior-week`.trim()
+      : baseClass;
+  };
+
+  const currentWeek = Number(getWeekNumber(new Date()).replace('W', ''));
+
   if (params?.field === 'totalEffort') {
     if (
       type === 'cost' &&
@@ -1262,15 +1277,63 @@ export const getCellClassName = (
           params.rowNode?.groupingField === 'organisationName'
             ? base
             : `${base}-secondGroup`;
+
+        const weekNumber = getWeekNum(params.field);
+        const isPrior = isPriorWeek(weekNumber, currentWeek);
+
+        const getGroupPeriod = (params, updatedRows) => {
+          if (params.rowNode?.type !== 'group') {
+            return params.row?.[params.field]?.period;
+          }
+
+          const childIds = params.rowNode.children || [];
+
+          for (const childId of childIds) {
+            const childRow = updatedRows.find(r => r.id === childId);
+            const period = childRow?.[params.field]?.period;
+            if (period) return period;
+          }
+
+          return null;
+        };
+
+
+        const period = getGroupPeriod(params, updatedRows);
+
+        const isInactive =
+          params.rowNode?.groupingField === 'resource'
+            ? isInactiveForWeek(
+                projectRows[0]?.resourceStartDate,
+                projectRows[0]?.resourceEndDate,
+                period
+              )
+            : false;
+
+       
         let nonEditableClass = '';
         if (
           params.rowNode?.groupingField === 'resource' && // Only apply to resource group
+          isPrior &&
+          isInactive
+        ) {
+          nonEditableClass = 'non-editable-darker-inactive';
+        } else if (
+          !isPrior &&
+          params.rowNode?.groupingField === 'resource' &&
           projectRows.some(row => !isCellEditable({ ...params, row }))
         ) {
           nonEditableClass = 'non-editable-darker';
         }
 
-        return `${groupClass} ${nonEditableClass}`.trim();
+        let finalClass = `${groupClass} ${nonEditableClass}`.trim();
+        if (
+          params.rowNode?.groupingField === 'resource' &&
+          isPrior &&
+          isInactive
+        ) {
+          return finalClass;
+        }
+        return addPriorWeekClass(finalClass, weekNumber, currentWeek);
       }
     } else if (
       params.rowNode?.type === 'group' &&
@@ -1301,12 +1364,60 @@ export const getCellClassName = (
           const prefix = isTopLevelProject
             ? 'firstGroupsRow'
             : 'secondGroupsRow';
-          if (!projectType) return `${prefix}`;
 
-          return `${prefix} project-type-${projectType?.Name?.toLowerCase().replace(/\s+/g, '_')}`;
+          const weekNumber = getWeekNum(params.field);
+          const isPrior = isPriorWeek(weekNumber, currentWeek);
+
+          let nonEditableClass = '';
+          if (!isPrior && !isCellEditable(params)) {
+            nonEditableClass =
+              type === 'cost'
+                ? 'non-editable-cell-no-tooltip'
+                : 'non-editable-cell';
+          }
+
+          const baseClass = projectType
+            ? `${prefix} project-type-${projectType?.Name?.toLowerCase().replace(
+                /\s+/g,
+                '_'
+              )}`
+            : prefix;
+
+          return addPriorWeekClass(
+            `${baseClass} ${nonEditableClass}`.trim(),
+            weekNumber,
+            currentWeek
+          );
         }
       }
     }
+  }
+  // ====================== Individual Week Cell ======================
+  if (/^W\d+/.test(params.field)) {
+    const weekNumber = getWeekNum(params.field);
+    const isPrior = isPriorWeek(weekNumber, currentWeek);
+    const period = params.row?.[params.field]?.period;
+    const isInActive = isInactiveForWeek(
+      params.row?.resourceStartDate,
+      params.row?.resourceEndDate,
+      period
+    );
+    let baseClass = '';
+    if (isPrior && (isInActive ||params.row.resourceStatus ==='Pending')) {
+
+      return (baseClass = 'non-editable-cell-prior-week');
+    }
+    
+    if (isPrior) {
+      return baseClass = 'prior-week';
+    }
+    if (!isCellEditable(params) && type === 'cost'){
+        return baseClass = 'non-editable-cell-no-tooltip';
+      }
+    if (!isCellEditable(params)) {
+      return baseClass = 'non-editable-cell'
+    }
+      return addPriorWeekClass(baseClass, weekNumber, currentWeek);
   }
   if (params.rowNode?.type === 'group') {
     const isFirstGroup =
@@ -1320,10 +1431,9 @@ export const getCellClassName = (
     return isFirstGroup ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
-    if (type === 'cost') {
-      return 'non-editable-cell-no-tooltip';
-    }
-    return 'non-editable-cell';
+    return type === 'cost'
+      ? 'non-editable-cell-no-tooltip'
+      : 'non-editable-cell';
   }
 
   return '';
