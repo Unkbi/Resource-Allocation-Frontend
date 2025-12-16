@@ -144,6 +144,7 @@ export default function ActualTable({
 
   const [hasOtherWork, setHasOtherWork] = useState(false);
   const [hasPersonalTime, setHasPersonalTime] = useState(false);
+  const [model, setModel] = useState({});
   const [baselineRows, setBaselineRows] =
     useState<ActualAllocationTableRow[]>(data);
   useEffect(() => {
@@ -643,13 +644,19 @@ export default function ActualTable({
             apiRef={apiRef}
             rows={getOrganizedRows()}
             columns={columns}
+            cellSelection
+            cellSelectionModel={model}
+            onCellSelectionModelChange={(m) => {
+              console.log('triggered', m);
+              setModel(m);
+            }}
             loading={dataProcessing}
             disableColumnMenu
             disableColumnSorting
             editMode="cell"
             onCellClick={(params, event) => {
               // prevent MUI from starting edit automatically
-              event.defaultMuiPrevented = true;
+            //   event.defaultMuiPrevented = true;
 
               // Ignore clicks on non-editable cells
               if (!params.isEditable) return;
