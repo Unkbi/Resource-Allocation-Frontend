@@ -90,16 +90,16 @@ export default function ReportBuilderPage({
     reportType: 'resourceProjectPeriodCost',
     period: 'this_week',
     customDateRange: undefined,
-    team: ['all'],
-    organization: ['all'],
-    resourceType: ['all'],
-    resource: ['all'],
-    projectType: ['all'],
-    projectTypeGroup: ['all'],
-    project: ['all'],
-    portfolio: ['all'],
-    projectManager: ['all'],
-    allocationManager: ['all'],
+    team: [],
+    organization: [],
+    resourceType: [],
+    resource: [],
+    projectType: [],
+    projectTypeGroup: [],
+    project: [],
+    portfolio: [],
+    projectManager: [],
+    allocationManager: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
@@ -176,16 +176,16 @@ export default function ReportBuilderPage({
       reportType: 'resourceProjectPeriodCost',
       period: 'last_week',
       customDateRange: undefined,
-      team: ['all'],
-      organization: ['all'],
-      resourceType: ['all'],
-      resource: ['all'],
-      projectType: ['all'],
-      projectTypeGroup: ['all'],
-      project: ['all'],
-      portfolio: ['all'],
-      projectManager: ['all'],
-      allocationManager: ['all'],
+      team: [],
+      organization: [],
+      resourceType: [],
+      resource: [],
+      projectType: [],
+      projectTypeGroup: [],
+      project: [],
+      portfolio: [],
+      projectManager: [],
+      allocationManager: [],
     });
   };
 
@@ -254,16 +254,16 @@ export default function ReportBuilderPage({
       reportType: f.reportType,
       period: f.period,
       customDateRange: f.customStartDate && f.customEndDate ? [dayjs(f.customStartDate), dayjs(f.customEndDate)] : undefined,
-      team: f.team || ['all'],
-      organization: f.organization || ['all'],
-      resourceType: f.resourceType || ['all'],
-      resource: f.resource || ['all'],
-      projectType: f.projectType || ['all'],
-      projectTypeGroup: f.projectTypeGroup || ['all'],
-      project: f.project || ['all'],
-      portfolio: f.portfolio || ['all'],
-      projectManager: f.projectManager || ['all'],
-      allocationManager: f.allocationManager || ['all'],
+      team: f.team || [],
+      organization: f.organization || [],
+      resourceType: f.resourceType || [],
+      resource: f.resource || [],
+      projectType: f.projectType || [],
+      projectTypeGroup: f.projectTypeGroup || [],
+      project: f.project || [],
+      portfolio: f.portfolio || [],
+      projectManager: f.projectManager || [],
+      allocationManager: f.allocationManager || [],
     });
     // Dispatch fetch with restored filters
     dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
@@ -276,27 +276,17 @@ export default function ReportBuilderPage({
     // Check period as string
     if (filters.period !== 'last_week') count++;
     
-    // Check arrays - count as active if not ['all'] or empty
-    if (Array.isArray(filters.project) && filters.project.length > 0 && 
-        !(filters.project.length === 1 && filters.project[0] === 'all')) count++;
-    if (Array.isArray(filters.team) && filters.team.length > 0 && 
-        !(filters.team.length === 1 && filters.team[0] === 'all')) count++;
-    if (Array.isArray(filters.organization) && filters.organization.length > 0 && 
-        !(filters.organization.length === 1 && filters.organization[0] === 'all')) count++;
-    if (Array.isArray(filters.resourceType) && filters.resourceType.length > 0 && 
-        !(filters.resourceType.length === 1 && filters.resourceType[0] === 'all')) count++;
-    if (Array.isArray(filters.resource) && filters.resource.length > 0 && 
-        !(filters.resource.length === 1 && filters.resource[0] === 'all')) count++;
-    if (Array.isArray(filters.projectType) && filters.projectType.length > 0 && 
-        !(filters.projectType.length === 1 && filters.projectType[0] === 'all')) count++;
-    if (Array.isArray(filters.projectTypeGroup) && filters.projectTypeGroup.length > 0 && 
-        !(filters.projectTypeGroup.length === 1 && filters.projectTypeGroup[0] === 'all')) count++;
-    if (Array.isArray(filters.portfolio) && filters.portfolio.length > 0 && 
-        !(filters.portfolio.length === 1 && filters.portfolio[0] === 'all')) count++;
-    if (Array.isArray(filters.projectManager) && filters.projectManager.length > 0 && 
-        !(filters.projectManager.length === 1 && filters.projectManager[0] === 'all')) count++;
-    if (Array.isArray(filters.allocationManager) && filters.allocationManager.length > 0 && 
-        !(filters.allocationManager.length === 1 && filters.allocationManager[0] === 'all')) count++;
+    // Check arrays - count as active if not empty
+    if (Array.isArray(filters.project) && filters.project.length > 0) count++;
+    if (Array.isArray(filters.team) && filters.team.length > 0) count++;
+    if (Array.isArray(filters.organization) && filters.organization.length > 0) count++;
+    if (Array.isArray(filters.resourceType) && filters.resourceType.length > 0) count++;
+    if (Array.isArray(filters.resource) && filters.resource.length > 0) count++;
+    if (Array.isArray(filters.projectType) && filters.projectType.length > 0) count++;
+    if (Array.isArray(filters.projectTypeGroup) && filters.projectTypeGroup.length > 0) count++;
+    if (Array.isArray(filters.portfolio) && filters.portfolio.length > 0) count++;
+    if (Array.isArray(filters.projectManager) && filters.projectManager.length > 0) count++;
+    if (Array.isArray(filters.allocationManager) && filters.allocationManager.length > 0) count++;
     
     return count;
   };

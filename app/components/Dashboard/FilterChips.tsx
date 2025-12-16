@@ -199,9 +199,9 @@ const FilterChips: React.FC<FilterChipsProps> = ({
           if (key === 'period' && value === 'this_week') return false;
           if (key === 'customDateRange') return false; // Don't show as separate chip
           if (Array.isArray(value)) {
-            return value.length > 0 && !(value.length === 1 && value[0] === 'all');
+            return value.length > 0;
           }
-          return value && value !== '' && value !== 'all';
+          return value && value !== '';
         }
       })
       .map(([key, value]) => {
@@ -342,10 +342,8 @@ const FilterChips: React.FC<FilterChipsProps> = ({
           />
         );
       })}
-      {showClearButton ? (
-        <ClearAllButton onClick={handleClearAll}>Clear All</ClearAllButton>
-      ) : (<ClearAllButton onClick={handleClearAll}>Reset Filters</ClearAllButton>
-      )}
+        <ClearAllButton onClick={handleClearAll}>{showClearButton ? 'Clear All' : 'Reset Filters' }</ClearAllButton>
+      
     </Box>
   );
 };

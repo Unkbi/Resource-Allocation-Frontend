@@ -121,9 +121,6 @@ const FilterSection = ({
   placeholder = 'All',
   multiple = true,
 }: FilterSectionProps) => {
-  // Add 'All' option to the beginning of options
-  const optionsWithAll = [{ label: 'All', value: 'all' }, ...options];
-
   return (
     <Box>
       <Typography
@@ -139,9 +136,9 @@ const FilterSection = ({
       <StyledAutocomplete
         name={name}
         label={placeholder}
-        placeholder='All'
-        options={optionsWithAll}
-        value={selected || (multiple ? ['all'] : 'all')}
+        placeholder={placeholder}
+        options={options}
+        value={selected || (multiple ? [] : '')}
         formikProps={formikProps}
         onChange={(value) => onChange(value)}
         disableClearable={false}
@@ -334,7 +331,7 @@ export default function ReportBuilderFilters({
 
     // Handle arrays
     if (Array.isArray(value)) {
-      if (value.length === 0 || (value.length === 1 && value[0] === 'all')) return '';
+      if (value.length === 0) return '';
       
       const displayValues = value.map((val: string) => {
         if (val === 'all') return '';
@@ -447,12 +444,12 @@ export default function ReportBuilderFilters({
 
   const handleChipDelete = (key: string) => {
     if (key === 'reportType') {
-      handleFilterChange('reportType', 'allocation_actuals');
+      handleFilterChange('reportType', 'resourceProjectPeriodCost');
     } else if (key === 'period') {
       handleFilterChange('period', 'this_week');
     } else {
-      // Reset to ['all'] for all array-based filters
-      handleFilterChange(key as keyof ReportFilters, ['all']);
+      // Reset to empty array for all array-based filters
+      handleFilterChange(key as keyof ReportFilters, []);
     }
   };
 
@@ -462,11 +459,9 @@ export default function ReportBuilderFilters({
     Object.entries(filters).forEach(([key, value]) => {
       // Skip default/empty values for report mode
       if (!value || 
-          (typeof value === 'string' && value === 'all') ||
           (typeof value === 'string' && value === 'this_week' && key === 'period') ||
-          (typeof value === 'string' && value === 'allocation_actuals' && key === 'reportType') ||
-          (Array.isArray(value) && value.length === 0) ||
-          (Array.isArray(value) && value.length === 1 && value[0] === 'all')) {
+          (typeof value === 'string' && value === 'resourceProjectPeriodCost' && key === 'reportType') ||
+          (Array.isArray(value) && value.length === 0)) {
         return;
       }
       

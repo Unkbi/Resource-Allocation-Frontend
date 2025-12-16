@@ -325,7 +325,7 @@ export const buildReportPayload = (uiFilters: any): DashboardFilterPayload => {
     }
   }
 
-  const sanitize = (arr?: string[]) => (Array.isArray(arr) ? arr.filter(v => v && v !== 'all') : []);
+  const sanitize = (arr?: string[]) => (Array.isArray(arr) ? arr.filter(v => v) : []);
 
   // Build payload with only enabled filters
   const payload: DashboardFilterPayload = {};

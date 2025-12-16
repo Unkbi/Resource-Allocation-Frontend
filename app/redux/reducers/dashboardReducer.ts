@@ -92,10 +92,36 @@ const dashboardSlice = createSlice({
     },
     setReportData: (state, action) => {
       const { reportType, data } = action.payload as { reportType: ReportType; data: any[] };
+
+      // Format data based on report type
+      let formattedData = data;
+      switch (reportType) {
+        case 'resourceProjectPeriodCost':
+          formattedData = formatAPIResponse('AllocationCostReportDetail', data);
+          break;
+        case 'resourceProjectPeriod':
+          formattedData = formatAPIResponse('AllocationActualsDetail', data);
+          break;
+        case 'resourcePeriod':
+          formattedData = formatAPIResponse('ResourcePeriodActualsDetail', data);
+          break;
+        case 'projectPeriod':
+          formattedData = formatAPIResponse('ProjectPeriodDetail', data);
+          break;
+        case 'resourceOnly':
+          formattedData = formatAPIResponse('ResourceWithDetails', data);
+          break;
+        case 'projectsOnly':
+          formattedData = formatAPIResponse('ProjectWithDetails', data);
+          break;
+        default:
+          formattedData = data;
+      }
+      
       state.report![reportType] = {
         ...(state.report?.[reportType] || { error: null }),
         loading: false,
-        data: reportType === 'resourceProjectPeriodCost' ? formatAPIResponse('AllocationCostReportDetail', data): reportType === 'resourceProjectPeriod' ? formatAPIResponse('AllocationActualsDetail', data) : reportType === 'resourcePeriod' ? formatAPIResponse('ResourcePeriodActualsDetail', data) : reportType === 'projectPeriod' ? formatAPIResponse('ProjectPeriodDetail', data) : reportType === 'resourceOnly' ? formatAPIResponse('ResourceWithDetails', data) : reportType === 'projectsOnly' ? formatAPIResponse('ProjectWithDetails', data) : data,
+        data: formattedData, // Try using formattedData now
       } as ReportEntry;
     },
     setReportError: (state, action) => {
