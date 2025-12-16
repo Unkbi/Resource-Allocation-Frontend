@@ -53,7 +53,7 @@ import {
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
-import { format, isAfter, isBefore, parseISO } from 'date-fns';
+import { addWeeks, format, isAfter, isBefore, parseISO } from 'date-fns';
 import {
   DATE_FORMAT,
   DEFAULT_PROJECT_WEEK_MINUS,
@@ -701,6 +701,16 @@ function AllocationGrid({
     };
   };
 
+  const hasLeafDescendant = (rowNode, apiRef) => {
+    if (!rowNode?.children?.length) return false;
+    return rowNode.children.some(childId => {
+      const childNode = apiRef.current.getRowNode(childId);
+      if (!childNode) return false;
+      if (childNode.type !== 'group') return true;
+      return hasLeafDescendant(childNode, apiRef);
+    });
+  };
+
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
@@ -746,17 +756,38 @@ function AllocationGrid({
             !isCurrentOrPastWeek(parseISO(period));
 
           const isNormalRow = params.rowNode?.type !== 'group';
-          let isGroupWithLeafChildren = false;
 
-          if (params.rowNode?.type === 'group') {
-            const firstChildId = params.rowNode?.children?.[0];
-            if (firstChildId) {
-              const firstChildNode = apiRef.current.getRowNode(firstChildId);
-              isGroupWithLeafChildren = firstChildNode?.type !== 'group';
-            }
-          }
+          const gridStartDate = currentView?.isFixedRange
+            ? currentView.startDate || startDate
+            : generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus) ||
+            startDate;
+          
+          const weekFields = finalColumns
+            .filter(col => col.field.startsWith('W'))
+            .map(col => col.field);
+
+          const columnIndex = weekFields.indexOf(params.field);
+
+          const groupWeekDate = !Number.isNaN(columnIndex)
+            ? addWeeks(parseISO(gridStartDate), columnIndex)
+            : null;
+
+          const isFutureWeekForGroup =
+            !isNormalRow &&
+            groupWeekDate &&
+            !isCurrentWeek(groupWeekDate) &&
+            !isCurrentOrPastWeek(groupWeekDate);
+                  
+            const isGroupWithAnyLeafDescendant =
+            params.rowNode?.type === 'group' &&
+            hasLeafDescendant(params.rowNode, apiRef);
+        
+          const isFuture = !isNormalRow ? isFutureWeekForGroup : isFutureWeek;
+            
           const shouldShowActuals =
-            showActuals && (isNormalRow || isGroupWithLeafChildren);
+            showActuals &&
+            !isFuture &&
+            (isNormalRow || isGroupWithAnyLeafDescendant);
 
           const cellContent = (() => {
             if (showTooltip) {
