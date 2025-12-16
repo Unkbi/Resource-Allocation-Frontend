@@ -693,7 +693,7 @@ function AllocationGrid({
     const period =
       childRows[0]?.[params.field]?.period ?? baseData.period ?? null;
     return {
-      value: params.formattedValue ?? '', 
+      value: params.formattedValue ?? '',
       actuals: aggregatedActuals,
       allocationId: null,
       notes: null,
@@ -744,7 +744,7 @@ function AllocationGrid({
             period &&
             !isCurrentWeek(parseISO(period)) &&
             !isCurrentOrPastWeek(parseISO(period));
-          
+
           const isNormalRow = params.rowNode?.type !== 'group';
           let isGroupWithLeafChildren = false;
 
@@ -1263,7 +1263,17 @@ function AllocationGrid({
       const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
         Object.keys(row).forEach(field => {
-          if (/^W\d+/.test(field) && isCellEditableInRow(rowId, field)) {
+          const isWeekField = /^W\d+/.test(field);
+          const groupAlwaysEditable =
+            groupBy === 'project' || groupBy === 'portfolioName';
+          const groupConditionallyEditable =
+            ['organisationName', 'teams', 'resource'].includes(groupBy) &&
+            isCellEditableInRow(rowId, field);
+
+          if (
+            isWeekField &&
+            (groupAlwaysEditable || groupConditionallyEditable)
+          ) {
             newModelWithValidFields[field] = row[field];
           }
         });
@@ -1271,7 +1281,7 @@ function AllocationGrid({
       };
 
       let filteredModel = {};
-      if (Object.keys(newModel)[0].startsWith('auto-generated')) {
+      if (Object.keys(newModel).find(id => id.startsWith('auto-generated'))) {
         if (
           apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
             'teams' ||
@@ -1281,9 +1291,34 @@ function AllocationGrid({
           setCellSelectionModel({});
           return;
         }
-        if (Object.keys(newModel).length > 1) {
-          filteredModel = cellSelectionModel;
-        } else {
+        // Allow multiple keys in selection: process each key through
+        // getNewModelWithValidFields and merge the valid fields into filteredModel.
+        const newModelKeys = Object.keys(newModel);
+        if (newModelKeys.length > 1) {
+          // Start with existing selection as baseline
+          filteredModel = { ...cellSelectionModel };
+          newModelKeys.forEach(key => {
+            try {
+              // If this is an auto-generated group row, pick the first child as source
+              if (key.startsWith('auto-generated')) {
+                const rowNode = apiRef.current.getRowNode(key);
+                const sourceRowId = rowNode?.children?.[0] || key;
+                const newModelWithValidFields = getNewModelWithValidFields(
+                  sourceRowId,
+                  newModel[key]
+                );
+                if (
+                  newModelWithValidFields &&
+                  Object.keys(newModelWithValidFields).length > 0
+                ) {
+                  filteredModel[key] = newModelWithValidFields;
+                }
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          });
+        } else if (Object.keys(newModel).length === 1) {
           const key = Object.keys(newModel)[0];
           const rowNode = apiRef.current.getRowNode(key);
           const newModelWithValidFields = getNewModelWithValidFields(
@@ -1295,26 +1330,30 @@ function AllocationGrid({
             [key]: newModelWithValidFields,
           };
         }
-      }
-      rowIds.forEach(rowId => {
-        if (!rowId.startsWith('auto-generated')) {
-          const row = apiRef.current.getRow(rowId);
-          if (isRowWithinGroup(row)) {
-            const editableFields = Object.keys(newModel[rowId]).filter(
-              field => {
-                return /^W\d+/.test(field) && isCellEditableInRow(rowId, field);
-              }
-            );
+      } else {
+        rowIds.forEach(rowId => {
+          if (!rowId.startsWith('auto-generated')) {
+            const row = apiRef.current.getRow(rowId);
+            if (isRowWithinGroup(row)) {
+              const editableFields = Object.keys(newModel[rowId]).filter(
+                field => {
+                  return (
+                    /^W\d+/.test(field) && isCellEditableInRow(rowId, field)
+                  );
+                }
+              );
 
-            if (editableFields.length > 0) {
-              filteredModel[rowId] = {};
-              editableFields.forEach(field => {
-                filteredModel[rowId][field] = true;
-              });
+              if (editableFields.length > 0) {
+                filteredModel[rowId] = {};
+                editableFields.forEach(field => {
+                  filteredModel[rowId][field] = true;
+                });
+              }
             }
           }
-        }
-      });
+        });
+      }
+
       setCellSelectionModel(filteredModel);
     },
     [apiRef, type, isCellEditable, setCellSelectionModel, groupBy]
