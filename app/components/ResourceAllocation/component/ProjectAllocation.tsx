@@ -712,6 +712,23 @@ function ProjectAllocation({
       },
     },
     {
+      field: 'projectTypeGroup',
+      headerName: 'Project Type Group',
+      width: 150,
+      type: 'string',
+      headerClassName: 'secondary-header',
+      cellClassName: 'common-NonEditableCells',
+      isEditable: false,
+      sortable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return firstChild ? (
+          <EllipsisNameCell value={firstChild.projectTypeGroup || ''} />
+        ) : null;
+      },
+    },
+    {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
       width: 110, // min-width without eliding.
@@ -852,6 +869,7 @@ function ProjectAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
+                projectTypeGroup: false,
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true

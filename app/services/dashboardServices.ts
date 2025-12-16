@@ -54,6 +54,14 @@ const CHART_API_MAPPING: Record<string, string> = {
   //Group 6: Actuals Trend Analytics
   actualsTrendWeekly: '/Resource/ExecuteActualsTrendWeeklyQuery',
 
+  //Group 7: Team Engagement Analytics
+  teamEngagementScore: '/Resource/ExecuteTeamEngagementScoreQuery',
+
+  //Group 8: Project Health Score Analytics
+  projectHealthOverview: '/Resource/GetProjectHealthOverview',
+
+  engagementScoreOverview: '/Resource/GetEngagementOverview',
+
 };
 
 /**
@@ -160,7 +168,7 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
     },
     projectFTE: {
       StartDate: filters.StartDate,
-      EndDate: '',
+      EndDate: filters.EndDate,
       TimeBucket: filters.TimeBucket || 'week',
       MetricType: 'project_fte',
       ...baseFilters,
@@ -202,6 +210,32 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       SelectColumns: '',
       OrderByClause: '',
       DynamicWhere: '',
+    },
+
+    // Group 7: Team Engagement Analytics
+    teamEngagementScore: {
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+      TimeBucket: filters.TimeBucket || 'week',
+      ...baseFilters,
+      SelectColumns: '',
+      OrderByClause: '',
+      DynamicWhere: '',
+    },
+
+    // Group 8: Project Health Score Analytics
+    projectHealthOverview: {
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+      TimeBucket: filters.TimeBucket || 'week',
+      ...baseFilters,
+    },
+
+    engagementScoreOverview: {
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+      TimeBucket: filters.TimeBucket || 'week',
+      ...baseFilters,
     },
 
   };

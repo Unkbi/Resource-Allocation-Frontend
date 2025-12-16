@@ -443,6 +443,63 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           ? '#F1F6FF !important'
           : '#F0F7FF !important'),
     },
+    [`& .${gridClasses.cell}[data-field="__created"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__created"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="__created_by"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__created_by"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified_by"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="__last_modified_by"].secondGroupsRow`]:
+      {
+        backgroundColor:
+          !loading &&
+          (groupBy === 'project' || groupBy === 'resource'
+            ? '#F1F6FF !important'
+            : '#F0F7FF !important'),
+      },
     [`& .${gridClasses.cell}[data-field="resourceLocationCategory"]`]: {
       backgroundColor:
         !loading &&
@@ -732,6 +789,20 @@ export const StyledDataGrid = styled(DataGridPremium)(({
           ? '#F1F6FF !important'
           : '#F0F7FF !important'),
     },
+    [`& .${gridClasses.cell}[data-field="projectTypeGroup"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF'
+          : '#F7FBFF '),
+    },
+    [`& .${gridClasses.cell}[data-field="projectTypeGroup"].secondGroupsRow`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#F1F6FF !important'
+          : '#F0F7FF !important'),
+    },
     [`& .${gridClasses.cell}[data-field="Name"]`]: {
       backgroundColor:
         !loading &&
@@ -777,6 +848,48 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="SidebarColor"]`]: {
       backgroundColor:
         !loading &&
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Project"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="BusinessImpactType"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Amount"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Date"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Description"]`]: {
+      backgroundColor:
+        !loading &&
+        (groupBy === 'project' || groupBy === 'resource'
+          ? '#FFF3E0'
+          : '#F7FBFF'),
+    },
+    [`& .${gridClasses.cell}[data-field="Action"]`]: {
+      backgroundColor:
         !loading &&
         (groupBy === 'project' || groupBy === 'resource'
           ? '#FFF3E0'

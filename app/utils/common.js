@@ -299,11 +299,14 @@ export const getSundayOfISO = date => {
 
 export const getFridayOfISO = date => {
   if (!date) return null;
-  const isoDate = parseISO(date);
-  return format(
-    endOfISOWeek(subDays(isoDate, 2), { weekStartsOn: 1 }),
-    DATE_FORMAT
-  );
+  // Accept either a Date or an ISO string
+  const isoDate = typeof date === 'string' ? parseISO(date) : date;
+  if (!isValid(isoDate)) return null;
+
+  // ISO week starts on Monday; Friday is Monday + 4 days
+  const monday = startOfISOWeek(isoDate, { weekStartsOn: 1 });
+  const friday = addDays(monday, 4);
+  return format(friday, DATE_FORMAT);
 };
 
 export const generateTMinusOneStartEndDate = isStartDate => {
@@ -392,7 +395,7 @@ export const getStartAndEndDateForView = (
 
 export const getUserIdFromEmail = (users, email) => {
   if (!Array.isArray(users) || !email) return null;
-  const userObj = users.find(user => user.Email === email);
+  const userObj = users.find(user => user?.Email === email);
   return userObj ? userObj.Id : null;
 };
 
@@ -419,8 +422,9 @@ export const isObjectEqual = (a, b) => {
 export const getTeamsIamAllocationManager = (userEmail, resources, teams) => {
   const userResourcePath =
     Array.isArray(resources) && userEmail
-      ? (resources.find(r => r.Email?.toLowerCase() === userEmail.toLowerCase())
-          ?.__path__ ?? null)
+      ? (resources.find(
+          r => r?.Email?.toLowerCase() === userEmail.toLowerCase()
+        )?.__path__ ?? null)
       : null;
 
   if (userResourcePath) {

@@ -15,11 +15,13 @@ import {
   ActualAllocations,
   ActualAllocationTableRow,
   ActualStatus,
+  Resource,
 } from '@/app/types';
 import {
   formateToFloat,
   generateDateWeekMath,
   getFridayOfISO,
+  getMondayOfISO,
   getSundayOfISO,
   getUserIdFromEmail,
   getWeekNumber,
@@ -30,7 +32,7 @@ import {
   setCalendarDate,
 } from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
-import { parseISO } from 'date-fns';
+import { format, parseISO, startOfWeek } from 'date-fns';
 import { GridValidRowModel, useGridApiRef } from '@mui/x-data-grid-premium';
 import { fetchAllProjects } from '@/app/redux/actions/fetchProjectsAction';
 import { showToast } from '@/app/redux/reducers/toastReducer';
@@ -44,6 +46,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
+import { DATE_FORMAT } from '@/app/constants/constants';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -65,6 +68,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   // @ts-ignore
   const { email = '' } = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
+  const { loading: resourcesLoading } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
   const { projects } = useSelector((state: RootState) => state.projects);
   const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
@@ -72,6 +78,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
     ActualAllocationTableRow[]
   >([]);
+  const [formattingActualAllocations, setFormattingActualAllocations] =
+    useState<boolean>(true);
   const [rows, setRows] = useState<ActualAllocationTableRow[]>([]);
   const [rowValidationErrors, setRowValidationErrors] = useState<
     Record<string, { actuals: boolean; comments: boolean }>
@@ -98,6 +106,27 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setShow(false);
     setIsModified(modified);
   };
+
+  const userId = getUserIdFromEmail(resources || [], email);
+  const currentResource: Resource[] = resources?.filter(
+    (r: Resource) => r?.Id === userId
+  );
+  const ValidPrevDate = currentResource[0]?.StartDate;
+
+  const resourceValidPrevDate = ValidPrevDate ? parseISO(ValidPrevDate) : null;
+
+  const resourceStartMonday = resourceValidPrevDate
+    ? startOfWeek(resourceValidPrevDate, { weekStartsOn: 1 })
+    : null;
+
+  const currentViewMonday = startDate
+    ? startOfWeek(parseISO(startDate), { weekStartsOn: 1 })
+    : null;
+
+  const disablePrev =
+    currentViewMonday && resourceStartMonday
+      ? currentViewMonday <= resourceStartMonday
+      : false;
 
   const handleValidationChange = (hasInvalid: boolean) => {
     setHasInvalidRows(hasInvalid);
@@ -251,6 +280,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (startDate) {
       setHasInvalidRows(false);
       setShow(true);
+      setFormattedActualAllocations([]);
+      setFormattingActualAllocations(true);
       router.replace(
         `/actuals?startDate=${generateDateWeekMath(
           'WEEK_PLUS',
@@ -265,6 +296,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (startDate && endDate) {
       setHasInvalidRows(false);
       setShow(true);
+      setFormattedActualAllocations([]);
+      setFormattingActualAllocations(true);
       router.replace(
         `/actuals?startDate=${generateDateWeekMath(
           'WEEK_MINUS',
@@ -279,13 +312,17 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (!date) return;
     setHasInvalidRows(false);
     setShow(true);
+    setFormattedActualAllocations([]);
+    setFormattingActualAllocations(true);
     router.replace(`/actuals?startDate=${date}`);
   };
 
   useEffect(() => {
-    if (loadingPermissions) return;
+    if (loadingPermissions || resourcesLoading) return;
     if (permissions['ActualsStatus'].r) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+      // If no Params, set to Monday of current Week.
       if (!paramsStartDate) {
         if (startDate) {
           router.replace(`/actuals?startDate=${startDate}`);
@@ -295,19 +332,55 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
       // Validate paramsStartDate and paramsEndDate are in "YYYY-MM-DD" format
       if (paramsStartDate && !dateRegex.test(paramsStartDate)) {
+        router.replace(
+          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+        );
         return;
       }
+
+      // If Week from params is not accessable week redirect to current Week.
+      if (resourceStartMonday) {
+        if (
+          paramsStartDate &&
+          parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday
+        ) {
+          router.replace(
+            `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+          );
+          return;
+        }
+      }
+
+      // If paramsStartDate for any day greater than today, set to Monday of current Week.
+      if (
+        parseISO(paramsStartDate) >
+        parseISO(getMondayOfISO(new Date().toISOString()))
+      ) {
+        router.replace(
+          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+        );
+        return;
+      }
+
+      // If paramsStartDate is not the Monday of the week, set to Monday of that Week.
+      if (
+        parseISO(paramsStartDate) > parseISO(getMondayOfISO(paramsStartDate))
+      ) {
+        router.replace(`/actuals?startDate=${getMondayOfISO(paramsStartDate)}`);
+        return;
+      }
+
       dispatch(
         setCalendarDate({
-          startDate: paramsStartDate,
+          startDate: getMondayOfISO(paramsStartDate),
           endDate: getSundayOfISO(paramsStartDate || startDate),
         })
       );
     }
-  }, [paramsStartDate, paramsEndDate, loadingPermissions]);
+  }, [paramsStartDate, paramsEndDate, loadingPermissions, resourcesLoading]);
 
   useEffect(() => {
-    if (loadingPermissions) return;
+    if (loadingPermissions || resourcesLoading) return;
     if (permissions['ActualsStatus'].r) {
       if (resources && user && email) {
         const userId = getUserIdFromEmail(resources || [], email);
@@ -319,23 +392,44 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             endDate: endDate,
           },
         });
+
+        let getActualsStatusStartDate =
+          generateDateWeekMath('WEEK_MINUS', 7, parseISO(startDate ?? '')) ||
+          '';
+        if (
+          resourceStartMonday &&
+          resourceStartMonday > parseISO(getActualsStatusStartDate)
+        ) {
+          getActualsStatusStartDate = format(resourceStartMonday, DATE_FORMAT);
+        }
+
         dispatch({
           type: GET_ACTUAL_STATUS,
           payload: {
             resource: userId,
             status: userId ? ['In-Progress', 'Not Started'] : [''],
-            startDate:
-              generateDateWeekMath('WEEK_MINUS', 7, parseISO(startDate ?? '')) || '',
+            startDate: getActualsStatusStartDate || '',
             endDate:
-              generateDateWeekMath('WEEK_MINUS', 2, parseISO(endDate ?? '')) || '',
+              generateDateWeekMath('WEEK_MINUS', 1, parseISO(endDate ?? '')) ||
+              '',
           },
         });
       }
     }
-  }, [resources, user, email, startDate, endDate, loadingPermissions]);
+  }, [
+    resources,
+    user,
+    email,
+    startDate,
+    endDate,
+    loadingPermissions,
+    resourcesLoading,
+  ]);
 
   useEffect(() => {
+    if (loadingPermissions || dataProcessing) return;
     if (actualAllocations) {
+      setFormattingActualAllocations(true);
       const formattedData: ActualAllocationTableRow[] = actualAllocations
         .filter(
           (alloc: ActualAllocations) =>
@@ -354,7 +448,19 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         }));
       setFormattedActualAllocations(formattedData);
     }
-  }, [actualAllocations]);
+  }, [loadingPermissions, dataProcessing, actualAllocations]);
+
+  useEffect(() => {
+    if (loadingPermissions || dataProcessing) return;
+    if (formattedActualAllocations.length) {
+      setFormattingActualAllocations(false);
+    } else {
+      const timeout = setTimeout(() => {
+        setFormattingActualAllocations(false);
+      }, 4000);
+      return () => clearTimeout(timeout);
+    }
+  }, [loadingPermissions, dataProcessing, formattedActualAllocations]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -369,6 +475,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['ActualsStatus'].r) {
+      setFormattingActualAllocations(true);
       // @ts-ignore
       if (!resources?.length) {
         dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
@@ -635,7 +742,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   }}
                 >
                   Current Status :{' '}
-                  {actualsStatusLoading ? (
+                  {actualsStatusLoading ||
+                  dataProcessing ||
+                  formattingActualAllocations ? (
                     <Skeleton
                       variant="text"
                       sx={{
@@ -662,7 +771,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 >
                   <Typography
                     sx={{
-                      fontFamily: 'Inter',
                       fontWeight: 500,
                       fontStyle: 'Medium',
                       fontSize: '13.6px',
@@ -683,7 +791,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               </Box>
               <ActualTable
                 data={formattedActualAllocations || []}
-                dataProcessing={dataProcessing || actualsStatusLoading || false}
+                dataProcessing={
+                  dataProcessing ||
+                  actualsStatusLoading ||
+                  formattingActualAllocations ||
+                  false
+                }
                 rows={rows}
                 setRows={setRows}
                 rowValidationErrors={rowValidationErrors}
@@ -709,6 +822,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       handlePrev();
                     }
                   }}
+                  disabled={disablePrev}
                   sx={{
                     fontSize: '14px',
                     color: '#152e75',
@@ -740,6 +854,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       !permissions['ActualsStatus'].u) ||
                     loadingPermissions ||
                     dataProcessing ||
+                    formattingActualAllocations ||
                     (status !== null &&
                       startDate !== null &&
                       status !== 'In-Progress' &&

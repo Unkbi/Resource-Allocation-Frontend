@@ -1,12 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { AdvancedFilters } from '@/app/types/dashboardTypes';
-
-interface DashboardChartState {
-  advancedFilters: AdvancedFilters;
-  loading: boolean;
-  loadingCharts: Record<string, boolean>;
-  [chartKey: string]: any[] | AdvancedFilters | boolean | Record<string, boolean>;
-}
+import { DashboardChartState } from '@/app/types/dashboardTypes';
 
 const initialState: DashboardChartState = {
   advancedFilters: {
@@ -20,6 +13,8 @@ const initialState: DashboardChartState = {
     Portfolio: [],
     Organization: [],
   },
+  defualtAdvancedFilters: {},
+  loadingAdvancedFilters: true,
   loading: false,
   loadingCharts: {},
 };
@@ -47,18 +42,8 @@ const dashboardSlice = createSlice({
         ...action.payload,
       };
     },
-    clearAdvancedFilters: (state) => {
-      state.advancedFilters = {
-        ProjectTypeGroup: [],
-        ProjectType: [],
-        Team: [],
-        Resource: [],
-        AllocationManager: [],
-        ProjectManager: [],
-        Project: [],
-        Portfolio: [],
-        Organization: [],
-      };
+    clearAdvancedFilters: state => {
+      state.advancedFilters = state.defualtAdvancedFilters;
     },
     resetDashboardCharts: state => {
       // Reset all chart data but preserve advanced filters
@@ -70,6 +55,9 @@ const dashboardSlice = createSlice({
     },
     setDashboardLoading: (state, action) => {
       state.loading = action.payload;
+    },
+    setLoadingAdvancedFilters: (state, action) => {
+      state.loadingAdvancedFilters = action.payload;
     },
     startChartLoading: (state, action) => {
       // Add chart to loading object and set loading to true
@@ -86,6 +74,16 @@ const dashboardSlice = createSlice({
   },
 });
 
-export const { setDashboardChart, setAdvancedFilters, clearAdvancedFilters, resetDashboardCharts, setDashboardLoading, startChartLoading, startMultipleChartsLoading } = dashboardSlice.actions;
+export const {
+  setDashboardChart,
+  setDefaultAdvancedFilters,
+  setAdvancedFilters,
+  clearAdvancedFilters,
+  resetDashboardCharts,
+  setDashboardLoading,
+  setLoadingAdvancedFilters,
+  startChartLoading,
+  startMultipleChartsLoading,
+} = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

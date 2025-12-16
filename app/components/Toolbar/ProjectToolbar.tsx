@@ -126,6 +126,18 @@ const ProjectToolbar = ({
       })
     );
   };
+  const handleAddBusinessImpact = () => {
+    dispatch(
+      openDialog({
+        title: `Add Business Impact`,
+        submitButtonText: 'Add',
+        cancelButtonText: 'Cancel',
+        formType: 'add_business_impact',
+        initialData: '',
+      })
+    );
+  };
+
   return (
     <CommonToolbar>
       <Box
@@ -170,17 +182,13 @@ const ProjectToolbar = ({
                   sx={tabTypographyStyle}
                 />
               )}
-              {
-                // Sahadev : Hard Code, once this tab is developed remove Hard Code.
-                false && (
-                  <Tab
-                    value="businessImpact"
-                    label="Business Impact"
-                    disabled
-                    sx={tabTypographyStyle}
-                  />
-                )
-              }
+              {permissions['BusinessImpact']?.r && (
+                <Tab
+                  value="businessImpact"
+                  label="Business Impact"
+                  sx={tabTypographyStyle}
+                />
+              )}
             </Tabs>
           )}
         </Box>
@@ -226,6 +234,17 @@ const ProjectToolbar = ({
                   {`Add ${scalarSettings?.Portfolio_Name || PORTFOLIO_DISPLAY_NAME}`}
                 </Button>
               )}
+              {permissions['BusinessImpact']?.c &&
+                value === 'businessImpact' && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleAddBusinessImpact}
+                    sx={portfolioButtonStyle}
+                  >
+                    Add Business Impact
+                  </Button>
+                )}
             </GridToolbarContainer>
           </Box>
         </Box>
@@ -234,4 +253,8 @@ const ProjectToolbar = ({
   );
 };
 
-export default withRBAC(ProjectToolbar, ['Project', 'Portfolio']);
+export default withRBAC(ProjectToolbar, [
+  'Project',
+  'Portfolio',
+  'BusinessImpact',
+]);

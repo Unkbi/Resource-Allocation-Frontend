@@ -37,6 +37,7 @@ import {
   addLocationGroupValidationSchema,
   addUserValidationSchema,
   addResourceToUserValidationSchema,
+  addBusinessImpactValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -126,7 +127,6 @@ import {
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { fetchHistory } from '@/app/services/allocationServices';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
-import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 import AddOrganizationForm from '../../Forms/addOrganizationForm';
@@ -187,6 +187,11 @@ import {
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { compressToEncodedURIComponent } from 'lz-string';
 import { weeksToDays } from 'date-fns';
+import AddBusinessImpactForm from '../../Forms/AddBusinessImpactForm';
+import {
+  CREATE_BUSINESS_IMPACT,
+  UPDATE_BUSINESS_IMPACT,
+} from '@/app/redux/actions/businessImpactActions';
 
 const initialValuesMap = {
   add_project: {
@@ -449,6 +454,22 @@ const initialValuesMap = {
     ProjectManager: [],
     AllocationManager: [],
   },
+  add_business_impact: {
+    Project: '',
+    BusinessImpactType: '',
+    Amount: '',
+    Description: '',
+    Status: '',
+    Currency: 'USD',
+  },
+  edit_business_impact: {
+    Project: '',
+    BusinessImpactType: '',
+    Amount: '',
+    Description: '',
+    Status: '',
+    Currency: 'USD',
+  },
 };
 
 const AllocationForm = () => {
@@ -633,6 +654,10 @@ const AllocationForm = () => {
         return addResourceToUserValidationSchema;
       case 'edit_resource_to_user':
         return addResourceToUserValidationSchema;
+      case 'add_business_impact':
+        return addBusinessImpactValidationSchema;
+      case 'edit_business_impact':
+        return addBusinessImpactValidationSchema;
       default:
         return null;
     }
@@ -3606,6 +3631,101 @@ const AllocationForm = () => {
         );
         break;
       }
+      case 'add_business_impact': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        let postData = {
+          ...cleanedValues,
+          Description: cleanedValues.Description || '',
+        };
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: CREATE_BUSINESS_IMPACT,
+            payload: {
+              postData,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(response => {
+            dispatch(
+              showToast({
+                open: true,
+                message: ` Business Impact added successfully.`,
+                type: 'success',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+            dispatch(closeDialog());
+            dispatch(setHighlightedRowId(response?.BusinessImpact?.Id));
+          })
+          .catch(error => {
+            console.error('Failed to add Business Impact:', error);
+            dispatch(
+              showToast({
+                open: true,
+                message: 'Failed to add Business Impact.',
+                type: 'error',
+                position: 'bottom-left',
+                autoHideTimer: 4000,
+              })
+            );
+          });
+        break;
+      }
+      case 'edit_business_impact': {
+        Object.keys(cleanedValues).forEach(key => {
+          if (cleanedValues[key] === '') {
+            cleanedValues[key] = null;
+          }
+        });
+
+        const updatedFields = { ...cleanedValues };
+        try {
+          const response = await new Promise((resolve, reject) => {
+            dispatch({
+              type: 'UPDATE_BUSINESS_IMPACT',
+              payload: {
+                id: initialData?.Id,
+                updatedFields,
+                resolve,
+                reject,
+              },
+            });
+          });
+          dispatch(
+            showToast({
+              open: true,
+              message: `Business Impact updated successfully.`,
+              type: 'success',
+              position: 'bottom-left',
+              autoHideTimer: 4000,
+            })
+          );
+          dispatch(setHighlightedRowId(response?.ProjectUUID));
+          dispatch(closeDialog());
+        } catch (error) {
+          const message =
+            error?.response?.data || 'Failed to update portfolio.';
+          dispatch(
+            showToast({
+              open: true,
+              message: message,
+              type: 'error',
+              position: 'bottom-left',
+              autoHideTimer: 6000,
+            })
+          );
+        }
+
+        return;
+      }
 
       default:
         return;
@@ -4234,6 +4354,20 @@ const AllocationForm = () => {
       case 'advanced_filters':
         return (
           <AdvancedFiltersForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'add_business_impact':
+        return (
+          <AddBusinessImpactForm
+            formikProps={formikProps}
+            setFormValue={setFormValue}
+          />
+        );
+      case 'edit_business_impact':
+        return (
+          <AddBusinessImpactForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

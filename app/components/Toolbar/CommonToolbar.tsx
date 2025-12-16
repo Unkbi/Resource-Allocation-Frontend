@@ -288,7 +288,8 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
             {children ?? null}
           </Box>
 
-          <Box
+          {/* Sahadev : Search bar temporarily removed as per UX decision */}
+          {/* <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -339,7 +340,7 @@ const CommonToolbar: React.FC<CommonToolbarProps> = memo(
                 inputProps={{ style: { fontSize: '14px' } }}
               />
             </Box>
-          </Box>
+          </Box> */}
         </Box>
       </Box>
     );
