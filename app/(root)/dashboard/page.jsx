@@ -483,7 +483,7 @@ export default function ExecutiveDashboardPage() {
             : startDate;
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed') || chartKey === 'unapprovedProjectAllocation' &&
+            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation') &&
             selectedOption === 'week'
             ?  getMonday(selectedDate)
               .subtract(1, 'week')

@@ -1,15 +1,18 @@
 import axiosInstance from '../utils/apiClient';
 import apiClient from '../utils/apiClient';
+const { isFilterEnabled, isPeriodRequired } = require('../components/Dashboard/ReportBuilder/reportFilterConfig');
 
 export interface DashboardFilterPayload {
   StatusFilter?: string;
   Teams?: string[];
   Orgs?: string[] | null;
+  Organizations?: string[] | null;
   ProjectTypes?: string[] | null;
   Portfolios?: string[] | null;
   ProjectManagers?: string[];
   Resources?: string[];
   AllocationManagers?: string[];
+  ResourceTypes?: string[] | null;
   ProjectTypeGroups?: string[];
   Projects?: string[];
   StartDate?: string;
@@ -62,6 +65,16 @@ const CHART_API_MAPPING: Record<string, string> = {
 
   engagementScoreOverview: '/Resource/GetEngagementOverview',
 
+};
+
+// Report API mappings
+export const REPORT_API_MAPPING: Record<string, string> = {
+  projectsOnly: '/Resource/GetAllProjectsWithDetails',
+  resourceOnly: '/Resource/GetAllResourcesWithDetails',
+  projectPeriod: '/Resource/GetAllProjectsWithPeriodDetails',
+  resourcePeriod: '/Resource/GetAllResourcesWithPeriodActualsStatus',
+  resourceProjectPeriod: '/Resource/GetAllocationActualsReport',
+  resourceProjectPeriodCost: '/Resource/GetAllocationCostReport',
 };
 
 /**
@@ -240,6 +253,133 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
 
   };
   return payloadConfigs[chartKey] || baseFilters;
+};
+
+// Build a report payload from UI-style filters
+export const buildReportPayload = (uiFilters: any): DashboardFilterPayload => {
+  const period: string = uiFilters?.period || 'this_week';
+  const customStart: string | undefined = uiFilters?.customStartDate;
+  const customEnd: string | undefined = uiFilters?.customEndDate;
+  const reportType: string = uiFilters?.reportType;
+
+  // Compute date range only if period is required
+  let StartDate: string | undefined;
+  let EndDate: string | undefined;
+  const today = new Date();
+  const toISO = (d: Date) => d.toISOString().slice(0, 10);
+
+  const getMonday = (d: Date) => {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day; // Monday as first day
+    date.setDate(date.getDate() + diff);
+    return date;
+  };
+
+  const endOfWeek = (monday: Date) => {
+    const e = new Date(monday);
+    e.setDate(e.getDate() + 6);
+    return e;
+  };
+
+  const firstDayOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+  const lastDayOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
+
+  switch (period) {
+    case 'this_week': {
+      const mon = getMonday(today);
+      StartDate = toISO(mon);
+      EndDate = toISO(endOfWeek(mon));
+      break;
+    }
+    case 'last_week': {
+      const mon = getMonday(today);
+      mon.setDate(mon.getDate() - 7);
+      StartDate = toISO(mon);
+      EndDate = toISO(endOfWeek(mon));
+      break;
+    }
+    case 'this_month': {
+      const start = firstDayOfMonth(today);
+      const end = lastDayOfMonth(today);
+      StartDate = toISO(start);
+      EndDate = toISO(end);
+      break;
+    }
+    case 'last_month': {
+      const prev = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const start = firstDayOfMonth(prev);
+      const end = lastDayOfMonth(prev);
+      StartDate = toISO(start);
+      EndDate = toISO(end);
+      break;
+    }
+    case 'custom':
+      StartDate = customStart?.slice(0, 10);
+      EndDate = customEnd?.slice(0, 10);
+      break;
+    default: {
+      const mon = getMonday(today);
+      StartDate = toISO(mon);
+      EndDate = toISO(endOfWeek(mon));
+    }
+  }
+
+  const sanitize = (arr?: string[]) => (Array.isArray(arr) ? arr.filter(v => v && v !== 'all') : []);
+
+  // Build payload with only enabled filters
+  const payload: DashboardFilterPayload = {};
+
+  // Add date fields only if period is required for this report type
+  if (isPeriodRequired(reportType)) {
+    payload.StartDate = StartDate;
+    payload.EndDate = EndDate;
+  }
+
+  // Conditionally add filters based on report type config
+  if (isFilterEnabled(reportType, 'team')) {
+    payload.Teams = sanitize(uiFilters?.team);
+  }
+  if (isFilterEnabled(reportType, 'organization')) {
+    payload.Organizations = sanitize(uiFilters?.organization);
+  }
+  if (isFilterEnabled(reportType, 'projectTypeGroup')) {
+    payload.ProjectTypeGroups = sanitize(uiFilters?.projectTypeGroup);
+  }
+  if (isFilterEnabled(reportType, 'projectType')) {
+    payload.ProjectTypes = sanitize(uiFilters?.projectType);
+  }
+  if (isFilterEnabled(reportType, 'project')) {
+    payload.Projects = sanitize(uiFilters?.project);
+  }
+  if (isFilterEnabled(reportType, 'portfolio')) {
+    payload.Portfolios = sanitize(uiFilters?.portfolio);
+  }
+  if (isFilterEnabled(reportType, 'projectManager')) {
+    payload.ProjectManagers = sanitize(uiFilters?.projectManager);
+  }
+  if (isFilterEnabled(reportType, 'resource')) {
+    payload.Resources = sanitize(uiFilters?.resource);
+  }
+  if (isFilterEnabled(reportType, 'allocationManager')) {
+    payload.AllocationManagers = sanitize(uiFilters?.allocationManager);
+  }
+  if (isFilterEnabled(reportType, 'resourceType')) {
+    payload.ResourceTypes = sanitize(uiFilters?.resourceType);
+  }
+
+  return payload;
+};
+
+/** Fetch report data */
+export const fetchReportData = async (reportType: string, payload: DashboardFilterPayload): Promise<any[]> => {
+  const endpoint = REPORT_API_MAPPING[reportType];
+  if (!endpoint) throw new Error(`Unknown report type: ${reportType}`);
+  
+  const response = await apiClient.post(endpoint, payload);
+  // Backend response shape standardization
+  const data = Array.isArray(response?.data?.result) ? response.data.result : response?.data || [];
+  return data;
 };
 
 /**

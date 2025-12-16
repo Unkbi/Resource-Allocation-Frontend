@@ -49,7 +49,6 @@ const CountBadge = styled('span')({
   fontSize: '11px',
   fontWeight: 600,
   color: '#334665',
-  cursor: 'pointer',
   marginLeft: '4px',
   flexShrink: 0,
 });
@@ -196,7 +195,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
           return value && value !== '';
         } else {
           // For report mode, skip default values
-          if (key === 'reportType' && value === 'allocation_actuals') return false;
+          if (key === 'reportType') return false;
           if (key === 'period' && value === 'this_week') return false;
           if (key === 'customDateRange') return false; // Don't show as separate chip
           if (Array.isArray(value)) {
@@ -314,8 +313,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({
                   }
                   arrow
                   placement="bottom"
+                  disableInteractive
                 >
-                  <CountBadge>+{remainingCount}</CountBadge>
+                  <span>
+                    <CountBadge>+{remainingCount}</CountBadge>
+                  </span>
                 </Tooltip>
               )}
             </Box>
@@ -342,7 +344,8 @@ const FilterChips: React.FC<FilterChipsProps> = ({
       })}
       {showClearButton ? (
         <ClearAllButton onClick={handleClearAll}>Clear All</ClearAllButton>
-      ) : <ClearAllButton onClick={handleClearAll}>Reset Filters</ClearAllButton>}
+      ) : (<ClearAllButton onClick={handleClearAll}>Reset Filters</ClearAllButton>
+      )}
     </Box>
   );
 };

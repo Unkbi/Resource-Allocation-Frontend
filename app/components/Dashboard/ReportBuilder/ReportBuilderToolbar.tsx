@@ -12,13 +12,12 @@ import {
   styled,
 } from '@mui/material';
 import { useState } from 'react';
-import GetAppIcon from '@mui/icons-material/GetApp';
-import IosShareIcon from '@mui/icons-material/IosShare';
-import StyledAutocomplete from '../../Select/Autocomplete';
 import { KeyboardArrowDown } from '@mui/icons-material';
+import { ReportType } from '@/app/types/dashboardTypes';
 
 interface ReportBuilderToolbarProps {
   onGenerateReport: () => void;
+  onReportTypeChange?: (reportType: ReportType) => void;
   onExport?: (format: 'pdf' | 'excel') => void;
   onShare?: () => void;
   isLoading?: boolean;
@@ -63,13 +62,14 @@ const savedReports = [
 
 export default function ReportBuilderToolbar({
   onGenerateReport,
+  onReportTypeChange,
   onExport,
   onShare,
   isLoading = false,
   selectedFiltersCount = 0,
 }: ReportBuilderToolbarProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedReport, setSelectedReport] = useState('resource-allocation-cost');
+  const [selectedReport, setSelectedReport] = useState('resourceProjectPeriodCost');
   const [selectedSavedReport, setSelectedSavedReport] = useState<number>(1);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -110,89 +110,113 @@ export default function ReportBuilderToolbar({
       sx={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         padding: '12px 24px',
         backgroundColor: '#ffffff',
         borderBottom: '1px solid #E5E7EB',
       }}
     >
       {/* Left side - Report Type Filter Dropdown */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Typography
-        sx={{
-          fontSize: '12px',
-          fontWeight: 600,
-          color: '#6B7280',
-        }}
-      >
-        Report Type
-      </Typography>
-      <Select
-        value={selectedReport}
-        onChange={(e) => setSelectedReport(e.target.value)}
-        size="small"
-        displayEmpty
-        sx={{
-          minWidth: 200,
-          height: 36,
-          fontSize: '13px',
-          fontWeight: 500,
-          backgroundColor: '#ffffff',
-          borderRadius: '6px',
-          '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#E5E7EB',
-          },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#D1D5DB',
-          },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#152E75',
-        borderWidth: '1px',
-          },
-        }}
-        MenuProps={{
-          PaperProps: {
-        sx: {
-          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '8px',
-          mt: 0.1,
-          '& .MuiMenuItem-root': {
-            fontSize: '13px',
-            fontWeight: 500,
-            py: 1,
-            px: 2,
-            '&:hover': {
-          backgroundColor: '#F3F4F6',
-            },
-            '&.Mui-selected': {
-          backgroundColor: '#EEF2FF',
-          color: '#152E75',
-          '&:hover': {
-            backgroundColor: '#E0E7FF',
-          },
-            },
-          },
-        },
-          },
-        }}
-      >
-        <Typography sx={{ fontSize: '13px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
-          Allocation & Cost Analysis
-        </Typography>
-        <MenuItem value="resource-allocation-cost">Resource, Project, Period & Cost</MenuItem>
-        <MenuItem value="resource-allocation">Resource, Project, Period</MenuItem>
-        <Typography sx={{ fontSize: '12px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
-          Two Dimension Views
-        </Typography>
-        <MenuItem value="resource-period" sx={{ pl: 4 }}>Resource & Period</MenuItem>
-        <MenuItem value="project-period" sx={{ pl: 4 }}>Project & Period</MenuItem>
-        <Typography sx={{ fontSize: '12px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
-          Single Dimension Views
-        </Typography>
-        <MenuItem value="resource-only" sx={{ pl: 4 }}>Resource</MenuItem>
-        <MenuItem value="project-only" sx={{ pl: 4 }}>Project</MenuItem>
-      </Select>
-    </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        {/* Report Builder text - horizontal */}
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              fontWeight: 700,
+              color: '#0A0A0A',
+            }}
+          >
+            Report Builder 
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '12px',
+              color: '#4A5565',
+            }}
+          >
+            Select a view to organize your data. Each option provides a unique take on project and resource anyalytics.
+          </Typography>
+        </Box>
+        
+        {/* Report Type and Select - horizontal */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography
+            sx={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#1C2D5F',
+            }}
+          >
+            Report Type
+          </Typography>
+          <Select
+            value={selectedReport}
+            onChange={(e) => {setSelectedReport(e.target.value); onReportTypeChange?.(e.target.value as ReportType);}}
+            size="small"
+            displayEmpty
+            sx={{
+              minWidth: 200,
+              height: 36,
+              fontSize: '13px',
+              fontWeight: 500,
+              backgroundColor: '#ffffff',
+              borderRadius: '6px',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#E5E7EB',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#D1D5DB',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#152E75',
+                borderWidth: '1px',
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '8px',
+                  mt: 0.1,
+                  '& .MuiMenuItem-root': {
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    py: 1,
+                    px: 2,
+                    '&:hover': {
+                      backgroundColor: '#F3F4F6',
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: '#EEF2FF',
+                      color: '#152E75',
+                      '&:hover': {
+                        backgroundColor: '#E0E7FF',
+                      },
+                    },
+                  },
+                },
+              },
+            }}
+          >
+            <Typography sx={{ fontSize: '13px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
+              Allocation & Cost Analysis
+            </Typography>
+            <MenuItem value="resourceProjectPeriodCost">Resource, Project, Period & Cost</MenuItem>
+            <MenuItem value="resourceProjectPeriod">Resource, Project, Period</MenuItem>
+            <Typography sx={{ fontSize: '12px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
+              Two Dimension Views
+            </Typography>
+            <MenuItem value="resourcePeriod" sx={{ pl: 4 }}>Resource & Period</MenuItem>
+            <MenuItem value="projectPeriod" sx={{ pl: 4 }}>Project & Period</MenuItem>
+            <Typography sx={{ fontSize: '12px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
+              Single Dimension Views
+            </Typography>
+            <MenuItem value="resourceOnly" sx={{ pl: 4 }}>Resource</MenuItem>
+            <MenuItem value="projectsOnly" sx={{ pl: 4 }}>Project</MenuItem>
+          </Select>
+        </Box>
+      </Box>
       {/* Right side - Actions */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {/* My Reports Dropdown */}

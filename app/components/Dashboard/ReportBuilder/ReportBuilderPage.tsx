@@ -2,10 +2,16 @@
 
 import { Box, Typography, Button } from '@mui/material';
 import { DataGridPremium, GridColDef } from '@mui/x-data-grid-premium';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReportBuilderToolbar from './ReportBuilderToolbar';
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchReport } from '@/app/redux/actions/dashboardAction';
+import { RootState } from '@/app/redux/store';
+import { ReportType, ReportUIFilters } from '@/app/types/dashboardTypes';
+import { getReportColumns } from './reportColumns';
+import dayjs from 'dayjs';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -78,9 +84,10 @@ const mockReportData = [
 export default function ReportBuilderPage({
   onReportGenerate,
 }: ReportBuilderProps) {
+  const dispatch = useDispatch();
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [filters, setFilters] = useState<ReportFilters>({
-    reportType: 'allocation_actuals',
+    reportType: 'resourceProjectPeriodCost',
     period: 'this_week',
     customDateRange: undefined,
     team: ['all'],
@@ -97,22 +104,13 @@ export default function ReportBuilderPage({
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
+  const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
 
   // Helper function to prepare API payload from filters
-  const prepareApiPayload = (filters: ReportFilters) => {
+  const prepareApiPayload = (filters: ReportUIFilters) => {
     const payload: any = {
       reportType: filters.reportType,
     };
-
-    // Handle custom date range
-    if (filters.period === 'custom' && filters.customDateRange) {
-      const [startDate, endDate] = filters.customDateRange;
-      if (startDate && endDate) {
-        // Convert Dayjs objects to ISO string for API
-        payload.customStartDate = startDate.toISOString();
-        payload.customEndDate = endDate.toISOString();
-      }
-    }
 
     // Process each filter - exclude 'all' values for API
     Object.entries(filters).forEach(([key, value]) => {
@@ -134,19 +132,29 @@ export default function ReportBuilderPage({
 
   const handleGenerateReport = async () => {
     setIsLoading(true);
-    setFiltersExpanded(false); // Collapse filters after generating report
+    setFiltersExpanded(false);
 
-    // Prepare API payload
-    const apiPayload = prepareApiPayload(filters);
-    console.log('API Payload:', apiPayload);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      setReportGenerated(true);
-      setReportData(mockReportData);
-      onReportGenerate?.(filters);
-    }, 1500);
+    // Serialize custom date range for UI filters stored in redux
+    const [start, end] = filters.customDateRange || [];
+    const uiFilters: ReportUIFilters = {
+      reportType: filters.reportType as ReportType,
+      period: filters.period as ReportUIFilters['period'],
+      customStartDate: start ? start.toISOString() : '',
+      customEndDate: end ? end.toISOString() : '',
+      team: filters.team,
+      organization: filters.organization,
+      resourceType: filters.resourceType,
+      resource: filters.resource,
+      projectType: filters.projectType,
+      projectTypeGroup: filters.projectTypeGroup,
+      project: filters.project,
+      portfolio: filters.portfolio,
+      projectManager: filters.projectManager,
+      allocationManager: filters.allocationManager,
+    };
+    const apiPayload = prepareApiPayload(uiFilters);
+    dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters:apiPayload }));
+    onReportGenerate?.(filters);
   };
 
   const handleExport = (format: 'pdf' | 'excel') => {
@@ -165,7 +173,7 @@ export default function ReportBuilderPage({
 
   const handleResetFilters = () => {
     setFilters({
-      reportType: 'allocation_actuals',
+      reportType: 'resourceProjectPeriodCost',
       period: 'last_week',
       customDateRange: undefined,
       team: ['all'],
@@ -181,9 +189,89 @@ export default function ReportBuilderPage({
     });
   };
 
+  // Read report data and loading from Redux
+  const reportSlice = useSelector((state: RootState) => state.dashboard.report);
+  const currentReport = reportSlice?.[filters.reportType as ReportType];
+  useEffect(() => {
+    if (currentReport) {
+      setIsLoading(currentReport.loading);
+      if (!currentReport.loading && currentReport.data) {
+        setReportGenerated(true);
+        // setReportData(currentReport.data); //data is not structured as per the columns yet
+        setReportData(mockReportData); // Using mock data for now
+      }
+    }
+  }, [currentReport]);
+
+  // DataGrid columns based on reportType
+  const columns = getReportColumns(filters.reportType as ReportType);
+
+  // Save/Load reports via localStorage
+  const STORAGE_KEY = 'saved_reports';
+  const loadSavedReports = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      setSavedReports(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setSavedReports([]);
+    }
+  };
+  useEffect(() => {
+    loadSavedReports();
+  }, []);
+
+  const handleSaveReport = (name: string) => {
+    const [start, end] = filters.customDateRange || [];
+    const uiFilters: ReportUIFilters = {
+      reportType: filters.reportType as ReportType,
+      period: filters.period as ReportUIFilters['period'],
+      customStartDate: start ? start.toISOString() : undefined,
+      customEndDate: end ? end.toISOString() : undefined,
+      team: filters.team,
+      organization: filters.organization,
+      resourceType: filters.resourceType,
+      resource: filters.resource,
+      projectType: filters.projectType,
+      projectTypeGroup: filters.projectTypeGroup,
+      project: filters.project,
+      portfolio: filters.portfolio,
+      projectManager: filters.projectManager,
+      allocationManager: filters.allocationManager,
+    };
+    const entry = { name, reportType: uiFilters.reportType, uiFilters, createdAt: new Date().toISOString() };
+    const next = [...savedReports.filter(r => r.name !== name), entry];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setSavedReports(next);
+  };
+
+  const handleLoadReport = (name: string) => {
+    const entry = savedReports.find(r => r.name === name);
+    if (!entry) return;
+    const f = entry.uiFilters;
+    // Restore UI filters in component state
+    setFilters({
+      reportType: f.reportType,
+      period: f.period,
+      customDateRange: f.customStartDate && f.customEndDate ? [dayjs(f.customStartDate), dayjs(f.customEndDate)] : undefined,
+      team: f.team || ['all'],
+      organization: f.organization || ['all'],
+      resourceType: f.resourceType || ['all'],
+      resource: f.resource || ['all'],
+      projectType: f.projectType || ['all'],
+      projectTypeGroup: f.projectTypeGroup || ['all'],
+      project: f.project || ['all'],
+      portfolio: f.portfolio || ['all'],
+      projectManager: f.projectManager || ['all'],
+      allocationManager: f.allocationManager || ['all'],
+    });
+    // Dispatch fetch with restored filters
+    dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
+  };
+
   const getSelectedFiltersCount = () => {
     let count = 0;
-    if (filters.reportType !== 'allocation_actuals') count++;
+    if (filters.reportType !== 'resourceProjectPeriodCost') count++;
     
     // Check period as string
     if (filters.period !== 'last_week') count++;
@@ -213,78 +301,6 @@ export default function ReportBuilderPage({
     return count;
   };
 
-  // DataGrid columns configuration
-  const columns: GridColDef[] = [
-    { field: 'resources', headerName: 'RESOURCES', width: 150, sortable: true },
-    { field: 'resourceType', headerName: 'RESOURCE TYPE', width: 130 },
-    { field: 'team', headerName: 'TEAM', width: 120 },
-    { field: 'organization', headerName: 'ORGANIZATION', width: 140 },
-    { field: 'allocationManager', headerName: 'ALLOCATION MANAGER', width: 170 },
-    { field: 'project', headerName: 'PROJECT NAME', width: 160 },
-    { field: 'projectType', headerName: 'PROJECT TYPE', width: 130 },
-    { field: 'projectPortfolio', headerName: 'PROJECT PORTFOLIO', width: 160 },
-    { field: 'projectManager', headerName: 'PROJECT MANAGER', width: 170 },
-    { field: 'weekPeriod', headerName: 'WEEK/PERIOD', width: 120 },
-    {
-      field: 'planned',
-      headerName: 'PLANNED',
-      width: 100,
-      type: 'number',
-      align: 'right',
-      headerAlign: 'right',
-    },
-    {
-      field: 'actual',
-      headerName: 'ACTUAL',
-      width: 100,
-      type: 'number',
-      align: 'right',
-      headerAlign: 'right',
-    },
-    {
-      field: 'hourlyCost',
-      headerName: 'HOURLY COST',
-      width: 120,
-      type: 'number',
-      align: 'right',
-      headerAlign: 'right',
-      valueFormatter: (params) => `$${params}`,
-    },
-    {
-      field: 'allocationCost',
-      headerName: 'ALLOCATION COST',
-      width: 150,
-      type: 'number',
-      align: 'right',
-      headerAlign: 'right',
-      valueFormatter: (params) => `$${params}`,
-    },
-    {
-      field: 'actualCost',
-      headerName: 'ACTUAL COST',
-      width: 130,
-      type: 'number',
-      align: 'right',
-      headerAlign: 'right',
-      valueFormatter: (params) => `$${params}`,
-    },
-    {
-      field: 'plannedRevenue',
-      headerName: 'PLANNED REVENUE',
-      width: 150,
-      type: 'number',
-      align: 'right',
-      headerAlign: 'right',
-      valueFormatter: (params) => `$${params}`,
-    },
-    {
-      field: 'projectAllocation',
-      headerName: 'PROJECT ALLOCATION',
-      width: 160,
-      align: 'center',
-      headerAlign: 'center',
-    },
-  ];
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -294,6 +310,9 @@ export default function ReportBuilderPage({
         onExport={handleExport}
         onShare={handleShare}
         isLoading={isLoading}
+        onReportTypeChange={(reportType: ReportType) =>
+          setFilters((prev) => ({ ...prev, 'reportType':reportType }))
+        }
         selectedFiltersCount={getSelectedFiltersCount()}
       />
 
@@ -382,7 +401,6 @@ export default function ReportBuilderPage({
                   },
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
-                checkboxSelection
                 disableRowSelectionOnClick
                 slots={{
                   toolbar: ReportBuilderDataGridToolbar,
@@ -390,7 +408,7 @@ export default function ReportBuilderPage({
                 sx={{
                   border: 'none',
                   '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#F9FAFB',
+                    backgroundColor: '#cae4feff',
                     borderBottom: '2px solid #E5E7EB',
                     fontSize: '11px',
                     fontWeight: 700,

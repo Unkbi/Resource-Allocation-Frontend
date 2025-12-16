@@ -36,6 +36,8 @@ import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDeta
 import { FETCH_ORGANISATIONS } from '@/app/redux/actions/organizationsAction';
 import { getAllocationManagerFromPath, getResourceFromUid } from '@/app/utils/common';
 import FilterChips from '../FilterChips';
+import { isFilterEnabled, isPeriodRequired } from './reportFilterConfig';
+import { ReportType } from '@/app/types/dashboardTypes';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
   height: '32px',
@@ -83,7 +85,7 @@ const CountBadge = styled('span')({
 });
 
 export interface ReportFilters {
-  reportType: string;
+  reportType: ReportType;
   period: string;
   customDateRange?: DateRange<Dayjs>;
   projectManager: string[];
@@ -128,7 +130,7 @@ const FilterSection = ({
         sx={{
           fontSize: '12px',
           fontWeight: 600,
-          color: '#6B7280',
+          color: '#1C2D5F',
           mb: 1,
         }}
       >
@@ -137,6 +139,7 @@ const FilterSection = ({
       <StyledAutocomplete
         name={name}
         label={placeholder}
+        placeholder='All'
         options={optionsWithAll}
         value={selected || (multiple ? ['all'] : 'all')}
         formikProps={formikProps}
@@ -540,13 +543,14 @@ export default function ReportBuilderFilters({
 
       <AccordionDetails sx={{ px: 3, pb: 3, pt: 1 }}>
 
-        {/* Period Dropdown */}
+        {/* Period Dropdown - Only show if period is required for this report type */}
+        {isPeriodRequired(filters.reportType) && (
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Typography
           sx={{
           fontSize: '12px',
           fontWeight: 600,
-          color: '#6B7280',
+          color: '#1C2D5F',
           }}
         >
           Period
@@ -712,6 +716,7 @@ export default function ReportBuilderFilters({
           </Menu>
         </Box>
         </Box>
+        )}
 
         {/* Filter Grid */}
         <Box
@@ -727,6 +732,7 @@ export default function ReportBuilderFilters({
           mb: 2,
         }}
         >
+        {isFilterEnabled(filters.reportType, 'projectManager') && (
         <FilterSection
           title="Project Manager"
           name="projectManager"
@@ -735,6 +741,8 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('projectManager', value)}
           formikProps={formikProps}
         />
+        )}
+        {isFilterEnabled(filters.reportType, 'allocationManager') && (
         <FilterSection
           title="Allocation Manager"
           name="allocationManager"
@@ -743,7 +751,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('allocationManager', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'project') && (
         <FilterSection
           title="Project"
           name="project"
@@ -752,7 +762,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('project', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'team') && (
         <FilterSection
           title="Team"
           name="team"
@@ -761,7 +773,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('team', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'organization') && (
         <FilterSection
           title="Organization"
           name="organization"
@@ -770,7 +784,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('organization', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'resourceType') && (
         <FilterSection
           title="Resource Type"
           name="resourceType"
@@ -779,7 +795,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('resourceType', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'resource') && (
         <FilterSection
           title="Resource"
           name="resource"
@@ -788,7 +806,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('resource', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'projectType') && (
         <FilterSection
           title="Project Type"
           name="projectType"
@@ -797,7 +817,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('projectType', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'projectTypeGroup') && (
         <FilterSection
           title="Project Type Group"
           name="projectTypeGroup"
@@ -806,7 +828,9 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('projectTypeGroup', value)}
           formikProps={formikProps}
         />
+        )}
 
+        {isFilterEnabled(filters.reportType, 'portfolio') && (
         <FilterSection
           title="Portfolio"
           name="portfolio"
@@ -815,6 +839,7 @@ export default function ReportBuilderFilters({
           onChange={(value) => handleFilterChange('portfolio', value)}
           formikProps={formikProps}
         />
+        )}
         </Box>
 
         {/* Reset Filters Button */}
