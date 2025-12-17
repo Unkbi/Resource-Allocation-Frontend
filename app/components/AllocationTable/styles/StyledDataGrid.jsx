@@ -74,6 +74,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"]`]: {
       backgroundColor: !loading && '#F1F6FF',
     },
+    [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group__"].firstGroupsRow-project`]:
+      {
+        backgroundColor: !loading && '#E9EFF8 !important',
+      },
     [`& .${gridClasses.cell}[data-field="__row_group_by_columns_group_teams__"]`]:
       {
         backgroundColor: !loading && '#F7FBFF',
@@ -135,6 +139,9 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     },
     [`& .${gridClasses.cell}[data-field="resource"]`]: {
       backgroundColor: !loading && '#F7FBFF',
+    },
+    [`& .${gridClasses.cell}[data-field="resource"].firstGroupsRow-project`]: {
+      backgroundColor: !loading && '#E9EFF8 !important',
     },
     [`& .${gridClasses.cell}[data-field="resourceType"]`]: {
       backgroundColor:
@@ -988,6 +995,10 @@ export const StyledDataGrid = styled(DataGridPremium)(({
       {
         backgroundColor: '#e9eff8 !important',
       },
+    '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.firstGroupsRow-project':
+      {
+        backgroundColor: '#E9EFF8 !important',
+      },
     '&& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:hover .MuiDataGrid-cell--pinnedLeft.secondGroupsRow':
       {
         backgroundColor: '#f0f7ff !important',
@@ -1142,6 +1153,11 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     },
     '& .secondGroupsRow': {
       backgroundColor: '#F0F7FF',
+    },
+    '& .firstGroupsRow-project': {
+      backgroundColor: groupBy === 'project' ? 'rgb(233, 239, 248)' : '#F0F7FF',
+      fontWeight: groupBy === 'project' ? 'bold' : '',
+      color: groupBy === 'project' ? '#313F68' : '',
     },
     '& .MuiDataGrid-row--editing': {
       boxShadow: 'none',
