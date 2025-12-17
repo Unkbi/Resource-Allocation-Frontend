@@ -921,6 +921,22 @@ export const StyledDataGrid = styled(DataGridPremium)(({
     '& .common-NonEditableCells': {
       backgroundColor: '#F1F6FF !important',
     },
+    '& .prior-week': {
+      opacity: ' 0.6 !important',
+      cursor: 'not-allowed !important',
+    },
+    '& .non-editable-cell-prior-week': {
+      opacity: ' 0.6 !important',
+      backgroundColor: '#F5F5F5E5',
+      borderBottom: '#F5F5F5E5',
+      cursor: 'not-allowed !important',
+    },
+    '& .non-editable-darker-inactive': {
+      backgroundColor: '#EAEAEAE5',
+      borderBottom: '#EAEAEAE5',
+      cursor: 'not-allowed !important',
+      opacity: ' 0.6 !important',
+    },
     '& .MuiDataGrid-row--editing .MuiDataGrid-cell.common-NonEditableCells': {
       backgroundColor: '#F1F6FF !important',
     },
