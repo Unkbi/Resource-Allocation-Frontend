@@ -1,6 +1,7 @@
 import { ActualAllocationTableRow } from '@/app/types';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { GridValidRowModel } from '@mui/x-data-grid';
+import { GridApi } from '@mui/x-data-grid-premium';
 import React from 'react';
 
 const OnTrackSelectedIcon = () => (
@@ -37,6 +38,7 @@ interface ProjectActualsStatusCellProps {
       Record<string, { actuals: boolean; comments: boolean }>
     >
   >;
+  apiRef: React.RefObject<GridApi>;
 }
 
 const ProjectActualsStatusCellButton = ({
@@ -86,8 +88,12 @@ const ProjectActualsStatusCell = ({
   status,
   handleProcessRowUpdate,
   setRowValidationErrors,
+  apiRef
 }: ProjectActualsStatusCellProps) => {
   const handleSelected = (newStatus: string) => {
+  const needsComment =
+    newStatus === 'At Risk' || newStatus === 'Off Track';
+
     if (status !== newStatus) {
       if (status === 'On Track') {
         setRowValidationErrors(prev => ({
@@ -107,6 +113,28 @@ const ProjectActualsStatusCell = ({
         },
         row
       );
+
+      if (needsComment) {
+        
+      //   apiRef.current?.setCellFocus(row.id, 'comments');
+      //   apiRef.current?.startCellEditMode({
+      //     id: row.id,
+      //     field: 'comments',
+      //   });
+        // }
+         requestAnimationFrame(() => {
+           apiRef.current?.setCellFocus(row.id, 'comments');
+           apiRef.current?.startCellEditMode({
+           id: row.id,
+             field: 'comments',
+           });
+         });
+      }
+      setTimeout(() => {
+        console.log(
+          apiRef.current?.getCellMode(row.id, 'comments')
+        );
+      }, 0);
     } else {
       // If the same status is clicked again, reset to 'No Data'
       setRowValidationErrors(prev => ({

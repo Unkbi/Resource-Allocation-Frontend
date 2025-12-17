@@ -411,6 +411,7 @@ export default function ActualTable({
             status={params.value ?? 'No Data'}
             handleProcessRowUpdate={handleProcessRowUpdate}
             setRowValidationErrors={setRowValidationErrors}
+            apiRef={apiRef} 
           />
         ) : (
           <></>
