@@ -684,14 +684,36 @@ function AllocationGrid({
         period: baseData.period ?? null,
       };
     }
-    const childRows = params.rowNode.children.map(childId =>
-      apiRef.current.getRow(childId)
+    // Recursively collect leaf rows under this group (handles arbitrary nesting)
+    const collectLeafRows = nodeId => {
+      const node = apiRef.current.getRowNode(nodeId);
+      // If node is not found as a group node, try to get it as a row
+      if (!node) {
+        const row = apiRef.current.getRow(nodeId);
+        return row ? [row] : [];
+      }
+      if (node.type === 'group') {
+        const children = node.children || [];
+        let rows = [];
+        children.forEach(childId => {
+          rows = rows.concat(collectLeafRows(childId));
+        });
+        return rows;
+      }
+      // leaf node
+      const leafRow = apiRef.current.getRow(nodeId);
+      return leafRow ? [leafRow] : [];
+    };
+
+    const leafRows = (params.rowNode.children || []).flatMap(childId =>
+      collectLeafRows(childId)
     );
-    const aggregatedActuals = childRows
+
+    const aggregatedActuals = leafRows
       .map(row => row?.[params.field]?.actuals || 0)
       .reduce((sum, x) => sum + x, 0);
     const period =
-      childRows[0]?.[params.field]?.period ?? baseData.period ?? null;
+      leafRows[0]?.[params.field]?.period ?? baseData.period ?? null;
     return {
       value: params.formattedValue ?? '',
       actuals: aggregatedActuals,
@@ -745,18 +767,7 @@ function AllocationGrid({
             !isCurrentWeek(parseISO(period)) &&
             !isCurrentOrPastWeek(parseISO(period));
 
-          const isNormalRow = params.rowNode?.type !== 'group';
-          let isGroupWithLeafChildren = false;
-
-          if (params.rowNode?.type === 'group') {
-            const firstChildId = params.rowNode?.children?.[0];
-            if (firstChildId) {
-              const firstChildNode = apiRef.current.getRowNode(firstChildId);
-              isGroupWithLeafChildren = firstChildNode?.type !== 'group';
-            }
-          }
-          const shouldShowActuals =
-            showActuals && (isNormalRow || isGroupWithLeafChildren);
+          const shouldShowActuals = showActuals;
 
           const cellContent = (() => {
             if (showTooltip) {
