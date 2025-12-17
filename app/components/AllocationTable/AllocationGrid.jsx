@@ -673,6 +673,56 @@ function AllocationGrid({
       dispatch(setRowState(updatedRows));
     }
   };
+  const buildCellData = (params, apiRef, showActuals) => {
+    const baseData = params.row[params.field] || {};
+    if (params.rowNode?.type !== 'group') {
+      return {
+        value: baseData.value ?? params.formattedValue ?? '',
+        actuals: baseData.actuals ?? 0,
+        allocationId: baseData.allocationId ?? null,
+        notes: baseData.notes ?? null,
+        period: baseData.period ?? null,
+      };
+    }
+    // Recursively collect leaf rows under this group (handles arbitrary nesting)
+    const collectLeafRows = nodeId => {
+      const node = apiRef.current.getRowNode(nodeId);
+      // If node is not found as a group node, try to get it as a row
+      if (!node) {
+        const row = apiRef.current.getRow(nodeId);
+        return row ? [row] : [];
+      }
+      if (node.type === 'group') {
+        const children = node.children || [];
+        let rows = [];
+        children.forEach(childId => {
+          rows = rows.concat(collectLeafRows(childId));
+        });
+        return rows;
+      }
+      // leaf node
+      const leafRow = apiRef.current.getRow(nodeId);
+      return leafRow ? [leafRow] : [];
+    };
+
+    const leafRows = (params.rowNode.children || []).flatMap(childId =>
+      collectLeafRows(childId)
+    );
+
+    const aggregatedActuals = leafRows
+      .map(row => row?.[params.field]?.actuals || 0)
+      .reduce((sum, x) => sum + x, 0);
+    const period =
+      leafRows[0]?.[params.field]?.period ?? baseData.period ?? null;
+    return {
+      value: params.formattedValue ?? '',
+      actuals: aggregatedActuals,
+      allocationId: null,
+      notes: null,
+      period,
+    };
+  };
+
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
@@ -708,7 +758,7 @@ function AllocationGrid({
             cellClass.split(' ').includes('non-editable-darker');
 
           const value = params.formattedValue ?? '';
-          const cellData = params.row[params.field];
+          const cellData = buildCellData(params, apiRef, showActuals);
           const notes = cellData?.notes || '';
           const actuals = cellData?.actuals || null;
           const period = cellData?.period;
@@ -716,6 +766,9 @@ function AllocationGrid({
             period &&
             !isCurrentWeek(parseISO(period)) &&
             !isCurrentOrPastWeek(parseISO(period));
+
+          const shouldShowActuals = showActuals;
+
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -736,7 +789,7 @@ function AllocationGrid({
                 </Tooltip>
               );
             }
-            if (isFutureWeek || !editable) {
+            if (isFutureWeek) {
               return <span>{value}</span>;
             }
             return (
@@ -750,7 +803,7 @@ function AllocationGrid({
                   position: 'relative',
                 }}
               >
-                {showActuals && params.rowNode?.type !== 'group' ? (
+                {shouldShowActuals ? (
                   <AllocationCellWithActuals params={cellData} />
                 ) : (
                   <span>{value}</span>
@@ -1221,7 +1274,17 @@ function AllocationGrid({
       const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
         Object.keys(row).forEach(field => {
-          if (/^W\d+/.test(field) && isCellEditableInRow(rowId, field)) {
+          const isWeekField = /^W\d+/.test(field);
+          const groupAlwaysEditable =
+            groupBy === 'project' || groupBy === 'portfolioName';
+          const groupConditionallyEditable =
+            ['organisationName', 'teams', 'resource'].includes(groupBy) &&
+            isCellEditableInRow(rowId, field);
+
+          if (
+            isWeekField &&
+            (groupAlwaysEditable || groupConditionallyEditable)
+          ) {
             newModelWithValidFields[field] = row[field];
           }
         });
@@ -1229,7 +1292,7 @@ function AllocationGrid({
       };
 
       let filteredModel = {};
-      if (Object.keys(newModel)[0].startsWith('auto-generated')) {
+      if (Object.keys(newModel).find(id => id.startsWith('auto-generated'))) {
         if (
           apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
             'teams' ||
@@ -1239,9 +1302,34 @@ function AllocationGrid({
           setCellSelectionModel({});
           return;
         }
-        if (Object.keys(newModel).length > 1) {
-          filteredModel = cellSelectionModel;
-        } else {
+        // Allow multiple keys in selection: process each key through
+        // getNewModelWithValidFields and merge the valid fields into filteredModel.
+        const newModelKeys = Object.keys(newModel);
+        if (newModelKeys.length > 1) {
+          // Start with existing selection as baseline
+          filteredModel = { ...cellSelectionModel };
+          newModelKeys.forEach(key => {
+            try {
+              // If this is an auto-generated group row, pick the first child as source
+              if (key.startsWith('auto-generated')) {
+                const rowNode = apiRef.current.getRowNode(key);
+                const sourceRowId = rowNode?.children?.[0] || key;
+                const newModelWithValidFields = getNewModelWithValidFields(
+                  sourceRowId,
+                  newModel[key]
+                );
+                if (
+                  newModelWithValidFields &&
+                  Object.keys(newModelWithValidFields).length > 0
+                ) {
+                  filteredModel[key] = newModelWithValidFields;
+                }
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          });
+        } else if (Object.keys(newModel).length === 1) {
           const key = Object.keys(newModel)[0];
           const rowNode = apiRef.current.getRowNode(key);
           const newModelWithValidFields = getNewModelWithValidFields(
@@ -1253,26 +1341,30 @@ function AllocationGrid({
             [key]: newModelWithValidFields,
           };
         }
-      }
-      rowIds.forEach(rowId => {
-        if (!rowId.startsWith('auto-generated')) {
-          const row = apiRef.current.getRow(rowId);
-          if (isRowWithinGroup(row)) {
-            const editableFields = Object.keys(newModel[rowId]).filter(
-              field => {
-                return /^W\d+/.test(field) && isCellEditableInRow(rowId, field);
-              }
-            );
+      } else {
+        rowIds.forEach(rowId => {
+          if (!rowId.startsWith('auto-generated')) {
+            const row = apiRef.current.getRow(rowId);
+            if (isRowWithinGroup(row)) {
+              const editableFields = Object.keys(newModel[rowId]).filter(
+                field => {
+                  return (
+                    /^W\d+/.test(field) && isCellEditableInRow(rowId, field)
+                  );
+                }
+              );
 
-            if (editableFields.length > 0) {
-              filteredModel[rowId] = {};
-              editableFields.forEach(field => {
-                filteredModel[rowId][field] = true;
-              });
+              if (editableFields.length > 0) {
+                filteredModel[rowId] = {};
+                editableFields.forEach(field => {
+                  filteredModel[rowId][field] = true;
+                });
+              }
             }
           }
-        }
-      });
+        });
+      }
+
       setCellSelectionModel(filteredModel);
     },
     [apiRef, type, isCellEditable, setCellSelectionModel, groupBy]

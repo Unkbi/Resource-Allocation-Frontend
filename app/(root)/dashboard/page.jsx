@@ -2,7 +2,7 @@
 
 import Overview from '../../components/Dashboard/OverviewCards';
 import ScoreCard from '../../components/Dashboard/ScoreCard';
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Global, css } from '@emotion/react';
 import {
   Box,
@@ -160,27 +160,27 @@ const generateLayouts = chartKeys => {
       x: (idx % 2) * 6,
       y: Math.floor(idx / 2) * 3,
       w: 6,
-      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
       minW: 5,
-      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
     })),
     md: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
       minW: 6,
-      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
     })),
     sm: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      h: autoHeightWidgets.includes(key) ?  1.8 : 3,
       minW: 12,
-      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ?  1.8 : 3,
     })),
   };
 };
@@ -224,7 +224,10 @@ export default function ExecutiveDashboardPage() {
     projectHealthOverview = [],
     engagementScoreOverview = [],
   } = useSelector(state => state.dashboard);
-  const [layout, setLayout] = useState([]);
+  // Persisted layouts per tab (overview, teams, costs)
+  const [persistedOverviewLayouts, setPersistedOverviewLayouts] = useState(null);
+  const [persistedTeamLayouts, setPersistedTeamLayouts] = useState(null);
+  const [persistedCostsLayouts, setPersistedCostsLayouts] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedChart, setSelectedChart] = useState(null);
   const [bucket, setBucket] = useState('week');
@@ -339,11 +342,17 @@ export default function ExecutiveDashboardPage() {
     });
     return map;
   }, [filteredActiveProjectsByType, projectTypeGroups]);
-  useEffect(() => {
-    const saved = localStorage.getItem('dashboardLayout');
-    const parsed = saved ? JSON.parse(saved) : overviewLayouts?.md;
-    setLayout(parsed);
-  }, []);
+  // Suppress saving during initial hydration to avoid overwriting saved layouts
+  const suppressSaveRef = useRef({ overview: true, teams: true, costs: true });
+  // Storage keys per tab
+  const STORAGE_KEYS = useMemo(
+    () => ({
+      overview: 'dashboard_layout_overview',
+      teams: 'dashboard_layout_teams',
+      costs: 'dashboard_layout_costs',
+    }),
+    []
+  );
 
   useEffect(() => {
     if (dashboardQueryKeys.length === 0) {
@@ -645,10 +654,36 @@ export default function ExecutiveDashboardPage() {
       setSelectedProjectTypeGroup(filter.value);
   };
 
-  const handleLayoutChange = newLayout => {
-    setLayout(newLayout);
-    localStorage.setItem('dashboardLayout', JSON.stringify(newLayout));
-  };
+  // Merge saved layouts with defaults, keeping only allowed chart ids
+  const mergeLayouts = useCallback((defaults, saved, allowedIds) => {
+    if (!saved || typeof saved !== 'object') return defaults;
+    const result = {};
+    for (const bp of Object.keys(defaults)) {
+      const defaultItems = Array.isArray(defaults[bp]) ? defaults[bp] : [];
+      const savedItems = Array.isArray(saved[bp]) ? saved[bp] : [];
+      const filteredSaved = savedItems.filter(it => allowedIds.has(it.i));
+      const byId = new Map(filteredSaved.map(it => [it.i, it]));
+      result[bp] = defaultItems.map(def => byId.get(def.i) || def);
+    }
+    return result;
+  }, []);
+
+
+  // Save layout changes per tab
+  const handleLayoutChange = useCallback((tab, _layout, layouts) => {
+    // Prevent initial mount from overwriting saved layouts
+    if (suppressSaveRef.current[tab]) return;
+
+    try {
+      const key = STORAGE_KEYS[tab];
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(layouts));
+      }
+    } catch {}
+    if (tab === 'overview') setPersistedOverviewLayouts(layouts);
+    if (tab === 'teams') setPersistedTeamLayouts(layouts);
+    if (tab === 'costs') setPersistedCostsLayouts(layouts);
+  }, [STORAGE_KEYS]);
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
@@ -707,6 +742,49 @@ export default function ExecutiveDashboardPage() {
     () => generateLayouts(allowedTeamCharts),
     [allowedTeamCharts.join(',')]
   );
+
+  // Load persisted layouts when allowed charts change (or defaults change)
+  useEffect(() => {
+    try {
+      const allowedOverview = new Set(allowedOverviewCharts);
+      const saved = localStorage.getItem(STORAGE_KEYS.overview);
+      const parsed = saved ? JSON.parse(saved) : null;
+      const merged = mergeLayouts(overviewLayouts, parsed, allowedOverview);
+      setPersistedOverviewLayouts(merged);
+      suppressSaveRef.current.overview = false;
+    } catch (e) {
+      setPersistedOverviewLayouts(overviewLayouts);
+      suppressSaveRef.current.overview = false;
+    }
+  }, [overviewLayouts, allowedOverviewCharts.join(','), STORAGE_KEYS.overview, mergeLayouts]);
+
+  useEffect(() => {
+    try {
+      const allowedTeams = new Set(allowedTeamCharts);
+      const saved = localStorage.getItem(STORAGE_KEYS.teams);
+      const parsed = saved ? JSON.parse(saved) : null;
+      const merged = mergeLayouts(teamLayouts, parsed, allowedTeams);
+      setPersistedTeamLayouts(merged);
+      suppressSaveRef.current.teams = false;
+    } catch (e) {
+      setPersistedTeamLayouts(teamLayouts);
+      suppressSaveRef.current.teams = false;
+    }
+  }, [teamLayouts, allowedTeamCharts.join(','), STORAGE_KEYS.teams, mergeLayouts]);
+
+  useEffect(() => {
+    try {
+      const allowedCosts = new Set(allowedCostsCharts);
+      const saved = localStorage.getItem(STORAGE_KEYS.costs);
+      const parsed = saved ? JSON.parse(saved) : null;
+      const merged = mergeLayouts(costsLayouts, parsed, allowedCosts);
+      setPersistedCostsLayouts(merged);
+      suppressSaveRef.current.costs = false;
+    } catch (e) {
+      setPersistedCostsLayouts(costsLayouts);
+      suppressSaveRef.current.costs = false;
+    }
+  }, [costsLayouts, allowedCostsCharts.join(','), STORAGE_KEYS.costs, mergeLayouts]);
 
   const Teams = filteredCoverageData?.length
     ? [...new Set(filteredCoverageData.map(d => d.team_name))]
@@ -1740,7 +1818,7 @@ export default function ExecutiveDashboardPage() {
     engagementScoreOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Engagement Score Overview')}
-        minWidth={650}
+        // minWidth={650}
         minHeight={280}
         autoHeight={true}
       >
@@ -1750,7 +1828,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Overview"
-              tooltipText="Measures resource engagement (0-100) through planning and tracking behaviors. Higher scores reflect forward-looking allocation, timely Actualss confirmation, consistent weekly entries, and detailed status notes documenting progress."
+              tooltipText="Combines two components: Planning and Actuals. Planning measures allocation entries across a rolling time window, weighted toward the present and near future. Actuals measures timely confirmation of completed work, weighted toward the most recent period. Both components contribute to the total score."
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
@@ -1758,12 +1836,14 @@ export default function ExecutiveDashboardPage() {
                 {
                   score: parseFloat(data.planned_score || 0),
                   label: 'Planned Score',
+                  tooltipText:`Evaluates allocation entries across a 5-week rolling window centered on the current week. Each week's allocation percentage is weighted, with the current week and near-future weeks carrying the greatest influence. Higher allocation percentages in the weighted window increase score up to full capacity, with overallocation (typically over 1.0 FTE) indicating overburdening. Complete absence of allocation across the entire window triggers an additional penalty.`,
                   change: parseFloat(data.planned_score_change || 0),
                   positive: data.planned_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actual_score || 0),
                   label: 'Actuals Score',
+                  tooltipText:'Evaluates actuals confirmation status across the 3 most recent completed weeks, weighted toward the most recent week. Confirmed status for the most recent week yields full component points. Any status other than confirmed yields zero base points, with additional penalties applied if older weeks are also unconfirmed. Key action: Confirm actuals for the most recent completed week.',
                   change: parseFloat(data.actual_score_change || 0),
                   positive: data.actual_score_direction !== 'down',
                 },
@@ -1778,7 +1858,7 @@ export default function ExecutiveDashboardPage() {
      projectHealthOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
-        minWidth={650}
+        // minWidth={650}
         minHeight={100}
         autoHeight={true}
       >
@@ -1788,6 +1868,7 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
+              tooltipText={`Weighted combination of three components: Alignment (delivery predictability), Actuals Status (contributor status distribution), and Engagement (reporting participation). Each component contributes a configurable percentage of the total. Alignment examines variance between planned and actual allocation. Actuals Status evaluates the mix of 'On-Track', 'At-Risk', and 'Off-Track' statuses. Engagement measures status submission rates.`}
               overallScore={parseFloat(data.overall_health_score || 0)}
               overallChange={parseFloat(data.overall_health_score_change || 0)}
               overallDirection={data.overall_health_score_direction}
@@ -1795,21 +1876,21 @@ export default function ExecutiveDashboardPage() {
                 {
                   score: parseFloat(data.alignment_score || 0),
                   label: 'Alignment Score',
-                  tooltipText:"Measures delivery predictability through alignment between planned and Actuals contribution. Higher scores reflect stable, predictable resource utilization across all project members.",
+                  tooltipText:"Measures delivery predictability by comparing total planned allocation versus total actual allocation across all contributors. Projects score highest when variance falls within an optimal range around zero. Tolerance for variance depends on project type: Transform projects allow more positive variance (extra effort on challenging work), Run projects favor stability in both directions, Grow projects expect tight control. Scores decay as variance moves outside optimal range. Exception: Negative variance paired with 'On-Track' project status may bypass penalties.",
                   change: parseFloat(data.alignment_score_change || 0),
                   positive: data.alignment_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actuals_score || 0),
-                  label: 'Actuals Score',
-                  tooltipText:"Measures project execution health. Higher scores reflect consistent on- track statuses, regular weekly confirmations, and transparent progress notes documenting accomplishments and challenges.",
+                  label: 'Actuals Status',
+                  tooltipText:"Evaluates contributor status distribution using a weighted formula: 'On-Track' statuses add positive value, 'Off-Track' statuses subtract value, 'At-Risk' is neutral. The ratio of status types determines the raw score, which is then normalized. Contributors who don't submit status are excluded from calculation.",
                   change: parseFloat(data.actuals_score_change || 0),
                   positive: data.actuals_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.engagement_score || 0),
                   label: 'Engagement Score',
-                  tooltipText:"Measures team communication through status tracking. Higher scores reflect active participation with detailed status notes that provide clear visibility into progress, challenges, and next steps.",
+                  tooltipText:"Measures what percentage of project contributors submit any status update. Score scales proportionally with participation rate. Any status submission counts ('On-Track', 'At-Risk', or 'Off-Track')—the specific status value doesn't affect engagement, only that something was submitted.",
                   change: parseFloat(data.engagement_score_change || 0),
                   positive: data.engagement_score_direction !== 'down',
                 },
@@ -2707,7 +2788,7 @@ export default function ExecutiveDashboardPage() {
                     legend: {
                       ...config.legend,
                       direction: 'column',
-                      position: { vertical: 'middle', horizontal: 'right' },
+                      position: { vertical: 'bottom', horizontal: 'right' },
                       padding: { right: 5 },
                       itemmarkwidth: 12,
                       itemmarkheight: 12,
@@ -2715,7 +2796,7 @@ export default function ExecutiveDashboardPage() {
                       itemgap: 12,
                     },
                   }}
-                  margin={{ left: 60, right: 140, top: 20, bottom: 60 }}
+                  margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
                 />
               </Box>
@@ -2827,7 +2908,7 @@ export default function ExecutiveDashboardPage() {
     (dashboardLoading && !initialLoad) ? (
     <LoadingScreen />
   ) : (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: `calc(100vh - 31px)` }}>
       <Global
         styles={css`
           circle.MuiMarkElement-root {
@@ -2909,42 +2990,58 @@ export default function ExecutiveDashboardPage() {
           }
         `}
       />
-      <CommonToolbar>
-        <Tabs
-          value={activeTab}
-          onChange={(e, val) => setActiveTab(val)}
-          sx={{ padding: '16px 16px 0px 8px' }}
-        >
-          <Tab
-            value="overview"
-            label="Overview"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          />
-          {allowedTeamCharts.length > 0 && (
+      {/* Sticky header containing Tabs and Topbar */}
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 1000, backgroundColor: '#fff' }}>
+        <CommonToolbar>
+          <Tabs
+            value={activeTab}
+            onChange={(e, val) => setActiveTab(val)}
+            sx={{ padding: '16px 16px 0px 8px' }}
+          >
             <Tab
-              value="teams"
-              label="Teams"
+              value="overview"
+              label="Overview"
               sx={{ textTransform: 'none', fontWeight: 600 }}
             />
-          )}
-          {allowedCostsCharts.length > 0 && (
-            <Tab
-              value="costs"
-              label="Costs"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
+            {allowedTeamCharts.length > 0 && (
+              <Tab
+                value="teams"
+                label="Teams"
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              />
+            )}
+            {allowedCostsCharts.length > 0 && (
+              <Tab
+                value="costs"
+                label="Costs"
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              />
+            )}
+            <DashboardToolbar
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              selectedOption={selectedOption}
+              setSelectedOption={setSelectedOption}
+              anchorEl={anchorEl}
+              setAnchorEl={setAnchorEl}
             />
-          )}
-          <DashboardToolbar
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            selectedOption={selectedOption}
-            setSelectedOption={setSelectedOption}
-            anchorEl={anchorEl}
-            setAnchorEl={setAnchorEl}
-          />
-        </Tabs>
-      </CommonToolbar>
-      <Topbar />
+          </Tabs>
+        </CommonToolbar>
+        <Topbar />
+      </Box>
+      {/* Scrollable content area (scroll without visible scrollbar) */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE 10+
+          '&::-webkit-scrollbar': { display: 'none' }, // WebKit
+        }}
+      >
       {activeTab === 'overview' && (
         <>
           <Typography
@@ -2970,11 +3067,11 @@ export default function ExecutiveDashboardPage() {
           />
           <ResponsiveGridLayout
             className="layout"
-            layouts={overviewLayouts}
+            layouts={persistedOverviewLayouts || overviewLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
-            onLayoutChange={handleLayoutChange}
+            onLayoutChange={(layout, layouts) => handleLayoutChange('overview', layout, layouts)}
             isDraggable
             isResizable
             compactType="vertical"
@@ -3010,11 +3107,11 @@ export default function ExecutiveDashboardPage() {
           </Typography>
           <ResponsiveGridLayout
             className="layout"
-            layouts={teamLayouts}
+            layouts={persistedTeamLayouts || teamLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
-            onLayoutChange={handleLayoutChange}
+            onLayoutChange={(layout, layouts) => handleLayoutChange('teams', layout, layouts)}
             isDraggable
             isResizable
             compactType="vertical"
@@ -3043,11 +3140,11 @@ export default function ExecutiveDashboardPage() {
           </Typography>
           <ResponsiveGridLayout
             className="layout"
-            layouts={costsLayouts}
+            layouts={persistedCostsLayouts || costsLayouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768 }}
             cols={{ lg: 12, md: 12, sm: 12 }}
             rowHeight={130}
-            onLayoutChange={handleLayoutChange}
+            onLayoutChange={(layout, layouts) => handleLayoutChange('costs', layout, layouts)}
             isDraggable
             isResizable
             compactType="vertical"
@@ -3059,6 +3156,7 @@ export default function ExecutiveDashboardPage() {
           </ResponsiveGridLayout>
         </>
       )}
+      </Box>
       <Dialog
         open={dialogOpen}
         onClose={handleDialogClose}
