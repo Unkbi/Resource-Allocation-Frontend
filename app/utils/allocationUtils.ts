@@ -35,6 +35,7 @@ import {
 import {
   AllocationForm_Status_Filter,
   DATE_FORMAT,
+  PROJECT_ACTIVE_STATUS,
 } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
@@ -203,9 +204,11 @@ export function formatAllAllocations(
     );
     const resource = resourceDetails?.Resource;
     // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
+    // Filter out Allocations that belong to projects without an PROJECT_ACTIVE_STATUS Status.
     if (
-      resource?.Status &&
-      !AllocationForm_Status_Filter.includes(resource?.Status)
+      (resource?.Status &&
+        !AllocationForm_Status_Filter.includes(resource?.Status)) ||
+      (project?.Status && !PROJECT_ACTIVE_STATUS.includes(project.Status))
     )
       continue;
 
