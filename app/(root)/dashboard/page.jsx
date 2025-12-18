@@ -160,27 +160,27 @@ const generateLayouts = chartKeys => {
       x: (idx % 2) * 6,
       y: Math.floor(idx / 2) * 3,
       w: 6,
-      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
       minW: 5,
-      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
     })),
     md: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
       minW: 6,
-      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
     })),
     sm: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ?  1.8 : 3,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
       minW: 12,
-      minH: autoHeightWidgets.includes(key) ?  1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
     })),
   };
 };
@@ -914,7 +914,7 @@ export default function ExecutiveDashboardPage() {
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 0.5,
                   fontSize: dimensions.width < 400 ? '16px' : '18px',
                   fontWeight: 600,
                 }}
@@ -937,7 +937,7 @@ export default function ExecutiveDashboardPage() {
                   display: 'flex',
                   justifyContent: 'center',
                   gap: 3,
-                  mb: 1,
+                  mb: 0.75,
                   fontSize: '14px',
                 }}
               >
@@ -1042,7 +1042,7 @@ export default function ExecutiveDashboardPage() {
                       max: maxVariance * 1.2,
                     },
                   ]}
-                  margin={{ left: 50, right: 50, top: 30, bottom: 40 }}
+                  margin={{ left: 45, right: 45, top: 15, bottom: 30 }}
                 >
                   <BarPlot />
                   <LinePlot />
@@ -1775,8 +1775,8 @@ export default function ExecutiveDashboardPage() {
                     {
                       scaleType: 'band',
                       data: categories,
-                      categoryGapRatio: 0.5,
-                      barGapRatio: 0.2,
+                      categoryGapRatio: 0.2,
+                      barGapRatio: 0,
                     },
                   ]}
                   yAxis={[
@@ -1789,14 +1789,20 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   series={[
                     {
-                      data: values,
-                      id: 'allocationUnits',
-                      label: 'Allocation Units',
-                      valueFormatter: (value, context) => {
-                        const index = context.dataIndex;
-                        const percentage = percentages[index];
-                        return `${value.toFixed(1)} (${percentage.toFixed(1)}%)`;
-                      },
+                      data: [plannedTotal,null],
+                      id: 'planned',
+                      label: 'Planned',
+                      color: '#4169E1',
+                      valueFormatter: (value) => 
+                      value ? `${value.toFixed(1)} (${plannedPercentage.toFixed(1)}%)` : '',
+                    },
+                    {
+                      data: [null,actualsTotal],
+                      id: 'actuals',
+                      label: 'Actuals',
+                      color: '#FFD700',
+                      valueFormatter: (value) => 
+                      value ? `${value.toFixed(1)} (${actualsPercentage.toFixed(1)}%)` : '',
                     },
                   ]}
                   width={config.width}
@@ -1808,11 +1814,8 @@ export default function ExecutiveDashboardPage() {
                     left: 60,
                     right: 10,
                   }}
-                  colors={barColors}
                   slotProps={{
-                    legend: {
-                      hidden: true,
-                    },
+                    legend: config.legend,
                   }}
                   sx={{
                     '& .MuiChartsAxis-tickLabel': {
@@ -1844,7 +1847,7 @@ export default function ExecutiveDashboardPage() {
 
           return (
             <ScoreCard
-              title="Engagement Overview"
+              title="Resource Engagement Overview"
               tooltipText="Combines two components: Planning and Actuals. Planning measures allocation entries across a rolling time window, weighted toward the present and near future. Actuals measures timely confirmation of completed work, weighted toward the most recent period. Both components contribute to the total score."
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
