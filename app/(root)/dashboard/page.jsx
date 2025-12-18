@@ -1719,19 +1719,27 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !actuals_confirmation_status || 
           actuals_confirmation_status.length === 0 ||
-          actuals_confirmation_status.every(item => parseFloat(item.percentage || 0) === 0)
+          actuals_confirmation_status.every(item => 
+            parseFloat(item.actuals_total || 0) === 0 && parseFloat(item.planned_total || 0) === 0
+          )
         }
         noDataMessage="No actuals confirmation data available for the selected period"
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'pie');
-          // Transform data for pie chart with fixed colors
-          const chartData = (actuals_confirmation_status || []).map(item => ({
-            id: item.status,
-            value: parseFloat(item.percentage || 0),
-            label: item.status,
-            color: item.status === 'Actuals' ? '#4169E1' : '#FFD700',
-          }));
+          const config = useResponsiveChart(dimensions, 'bar');
+          
+          // Extract data from API response
+          const data = actuals_confirmation_status?.[0] || {};
+          const actualsTotal = parseFloat(data.actuals_total || 0);
+          const plannedTotal = parseFloat(data.planned_total || 0);
+          const actualsPercentage = parseFloat(data.actuals_percentage || 0);
+          const plannedPercentage = parseFloat(data.planned_percentage || 0);
+
+          // Prepare data for bar chart
+          const categories = [ 'Planned','Actuals'];
+          const values = [plannedTotal, actualsTotal];
+          const percentages = [plannedPercentage, actualsPercentage];
+          const barColors = ['#4169E1', '#FFD700'];
 
           return (
             <Box
@@ -1761,48 +1769,59 @@ export default function ExecutiveDashboardPage() {
                   (Previous week)
                 </span>
               </Typography>
-              <Box
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  width: '100%',
-                }}
-              >
-                <PieChart
+              <Box sx={{ flex: 1, width: '100%', minHeight: 0 }}>
+                <BarChart
+                  xAxis={[
+                    {
+                      scaleType: 'band',
+                      data: categories,
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.2,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'Total Allocation Units',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
                   series={[
                     {
-                      data: chartData,
-                      innerRadius: 0,
-                      outerRadius: config.outerRadius || 80,
-                      cornerRadius: 3,
-                      arcLabel: item => `${item.value}%`,
-                      arcLabelMinAngle: 20,
-                      arcLabelRadius: '70%',
-                      highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -10, color: 'gray' },
+                      data: values,
+                      id: 'allocationUnits',
+                      label: 'Allocation Units',
+                      valueFormatter: (value, context) => {
+                        const index = context.dataIndex;
+                        const percentage = percentages[index];
+                        return `${value.toFixed(1)} (${percentage.toFixed(1)}%)`;
+                      },
                     },
                   ]}
                   width={config.width}
                   height={config.height}
-                  sx={{
-                    [`& .${pieArcLabelClasses.root}`]: {
-                      fill: '#000000',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    },
+                  grid={{ horizontal: true }}
+                  margin={{
+                    top: 10,
+                    bottom: 40,
+                    left: 60,
+                    right: 10,
                   }}
+                  colors={barColors}
                   slotProps={{
                     legend: {
-                      ...config.legend,
-                      direction: 'column',
-                      position: { vertical: 'middle', horizontal: 'right' },
-                      padding: { right: 5 },
-                      itemmarkwidth: 12,
-                      itemmarkheight: 12,
-                      markgap: 8,
-                      itemgap: 12,
+                      hidden: true,
+                    },
+                  }}
+                  sx={{
+                    '& .MuiChartsAxis-tickLabel': {
+                      fontSize: '12px',
+                      fill: '#666',
+                    },
+                    '& .MuiChartsAxis-label': {
+                      fontSize: '13px',
+                      fontWeight: 500,
                     },
                   }}
                 />
@@ -1857,7 +1876,7 @@ export default function ExecutiveDashboardPage() {
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
         // minWidth={650}
-        minHeight={100}
+        minHeight={280}
         autoHeight={true}
       >
         {() => {
