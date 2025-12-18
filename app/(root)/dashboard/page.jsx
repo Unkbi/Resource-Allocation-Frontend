@@ -2919,6 +2919,18 @@ export default function ExecutiveDashboardPage() {
           .react-grid-item.cssTransforms {
             transition-property: transform;
           }
+         .react-grid-item.plan-vs-actual-adjust {
+            margin-top: 15px;
+          }
+          .react-grid-item.allocation-trends-adjust {
+            margin-top: 15px;
+            }
+            .react-grid-item.actuals-by-category-adjust {
+            margin-top: 15px;
+            }
+            .react-grid-item.total-headcount-adjust {
+            margin-top: 15px;
+            }
 
           /* Fix resize handle for auto-height widgets */
           .react-grid-item.auto-height-widget {
@@ -3079,15 +3091,31 @@ export default function ExecutiveDashboardPage() {
               <div
                 key={key}
                 className={
-                  key === 'engagementScoreOverview' || key === 'projectHealthOverview' ? 'auto-height-widget' : ''
-                }
-              >
-                {overviewcharts[key]}
-              </div>
-            ))}
-          </ResponsiveGridLayout>
-        </>
-      )}
+                  [
+                    key === 'engagementScoreOverview' ||
+                    key === 'projectHealthOverview'
+                      ? 'auto-height-widget'
+                      : '',
+                    key === 'plan_vs_actual_variance'
+                      ? 'plan-vs-actual-adjust'
+                      : '',
+                    key === 'projectFTE'
+                      ? 'allocation-trends-adjust'
+                      : '',
+                     key === 'unapprovedProjectAllocation'
+                      ? 'actuals-by-category-adjust'
+                      : '',
+                    key === 'totalHeadcount'
+                      ? 'total-headcount-adjust'
+                      : '',
+                  ].join(' ')}
+                >
+                  {overviewcharts[key]}
+                </div>
+              ))}
+            </ResponsiveGridLayout>
+          </>
+        )}
 
       {activeTab === 'teams' && (
         <>
