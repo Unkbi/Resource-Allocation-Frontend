@@ -194,7 +194,7 @@ const initialValuesMap = {
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
-    AllowOvertime: 'No',
+    AllowOvertime: 'Yes',
     Location: '',
     ProjectManager: '',
     Status: 'Active',
