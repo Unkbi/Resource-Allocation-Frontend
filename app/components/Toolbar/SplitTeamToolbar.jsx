@@ -15,6 +15,7 @@ import {
   Popover,
   Slider,
   Popper,
+  Tooltip,
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import CustomSelect from '../Select/CustomSelect';
@@ -594,7 +595,8 @@ const SplitTeamToolbar = memo(
         ?.map(team => ({
         label: team.Name,
         value: team.Id,
-      })) || [];
+      }))
+       ?.sort((a, b) => a.label.localeCompare(b.label)) || [];
 
     const handleTeamChange = (event, newValue) => {
       if (!newValue) return;
@@ -753,11 +755,32 @@ const SplitTeamToolbar = memo(
                     lineHeight: 'normal',
                   }}
                 >
-                  Select Availability
+                  {'Select Utilization ≤'}
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <img src="/images/icons/splitInfo.svg" alt="info" />
-                </Box>
+                <Tooltip
+                  title="Shows resources whose average utilization for the selected period is ≤ the chosen value."
+                  arrow
+                  placement="top"
+                  componentsProps={{
+                    tooltip: {
+                      sx: {
+                        whiteSpace: 'nowrap',
+                        maxWidth: 'none',
+                        fontSize: '12px',
+                      },
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <img src="/images/icons/splitInfo.svg" alt="info" />
+                  </Box>
+                </Tooltip>
               </Box>
 
               <Box
