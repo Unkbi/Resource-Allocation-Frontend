@@ -675,6 +675,8 @@ function AllocationGrid({
   };
   const buildCellData = (params, apiRef, showActuals) => {
     const baseData = params.row[params.field] || {};
+
+    // Return leaf row data
     if (params.rowNode?.type !== 'group') {
       return {
         value: baseData.value ?? params.formattedValue ?? '',
@@ -684,36 +686,41 @@ function AllocationGrid({
         period: baseData.period ?? null,
       };
     }
-    // Recursively collect leaf rows under this group (handles arbitrary nesting)
-    const collectLeafRows = nodeId => {
+
+    // Build filter visibility lookup
+    const filterModel = apiRef.current.state.filter.filterModel;
+    const { filteredRowsLookup } = apiRef.current.getFilterState(filterModel);
+
+    // Recursively collect ONLY VISIBLE leaf rows
+    const collectVisibleLeafRows = nodeId => {
+      if (filteredRowsLookup?.[nodeId] === false) return [];
+
       const node = apiRef.current.getRowNode(nodeId);
-      // If node is not found as a group node, try to get it as a row
-      if (!node) {
+      if (!node || node.type !== 'group') {
         const row = apiRef.current.getRow(nodeId);
         return row ? [row] : [];
       }
-      if (node.type === 'group') {
-        const children = node.children || [];
-        let rows = [];
-        children.forEach(childId => {
-          rows = rows.concat(collectLeafRows(childId));
-        });
-        return rows;
-      }
-      // leaf node
-      const leafRow = apiRef.current.getRow(nodeId);
-      return leafRow ? [leafRow] : [];
+
+      let rows = [];
+      (node.children || []).forEach(childId => {
+        rows = rows.concat(collectVisibleLeafRows(childId));
+      });
+      return rows;
     };
 
-    const leafRows = (params.rowNode.children || []).flatMap(childId =>
-      collectLeafRows(childId)
+    const visibleLeafRows = (params.rowNode.children || []).flatMap(childId =>
+      collectVisibleLeafRows(childId)
     );
 
-    const aggregatedActuals = leafRows
+    // Aggregate actuals from visible rows only
+    const aggregatedActuals = visibleLeafRows
       .map(row => row?.[params.field]?.actuals || 0)
       .reduce((sum, x) => sum + x, 0);
+
     const period =
-      leafRows[0]?.[params.field]?.period ?? baseData.period ?? null;
+      visibleLeafRows[0]?.[params.field]?.period ?? baseData.period ?? null;
+
+    // Return aggregated group cell data
     return {
       value: params.formattedValue ?? '',
       actuals: aggregatedActuals,

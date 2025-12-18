@@ -1296,27 +1296,27 @@ export const getCellClassName = (
             type => type.Id === project.Type
           );
 
-          const isTopLevelProject =
-            params.rowNode.depth === 0 || groupBy === 'project';
-          const prefix = isTopLevelProject
-            ? 'firstGroupsRow'
-            : 'secondGroupsRow';
-          if (!projectType) return `${prefix}`;
-
-          return `${prefix} project-type-${projectType?.Name?.toLowerCase().replace(/\s+/g, '_')}`;
+          return projectType
+            ? `firstGroupsRow-project project-type-${projectType.Name.toLowerCase().replace(
+                /\s+/g,
+                '_'
+              )}`
+            : 'firstGroupsRow-project';
         }
       }
     }
   }
   if (params.rowNode?.type === 'group') {
+    if (groupBy === 'project' && params.rowNode.groupingField === 'project') {
+      return 'firstGroupsRow-project';
+    }
     const isFirstGroup =
       params.rowNode.depth === 0 &&
       (params.rowNode?.groupingField === 'teams' ||
         params.rowNode?.groupingField === 'organisationName' ||
         params.rowNode?.groupingField === 'portfolioName' ||
         (groupBy === 'resource' &&
-          params.rowNode?.groupingField === 'resource') ||
-        (groupBy === 'project' && params.rowNode?.groupingField === 'project'));
+          params.rowNode?.groupingField === 'resource'))
     return isFirstGroup ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
