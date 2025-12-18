@@ -297,11 +297,7 @@ export function formatAllAllocations(
     entry.totalEffort += alloc.AllocationEntered;
   }
 
-  return sortAllAllocations(
-    Array.from(grouped.values()).filter(allocation =>
-      hasAllocations(allocation)
-    )
-  );
+  return sortAllAllocations(Array.from(grouped.values()));
 }
 
 export function injectBlankRows(
