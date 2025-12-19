@@ -3193,7 +3193,7 @@ export default function ExecutiveDashboardPage() {
       {activeTab === 'report-builder' && (
         <Box
           sx={{
-            height: 'calc(100vh - 200px)',
+            height: 'calc(100vh - 31px)',
             display: 'flex',
             flexDirection: 'column',
           }}

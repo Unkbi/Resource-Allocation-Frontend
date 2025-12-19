@@ -12,6 +12,7 @@ import { RootState } from '@/app/redux/store';
 import { ReportType, ReportUIFilters } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
+import { ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -104,6 +105,11 @@ export default function ReportBuilderPage({
   };
 
   const handleFiltersChange = (newFilters: ReportFilters) => {
+    // Reset report generated state if report type changes
+    if (newFilters.reportType !== filters.reportType) {
+      setReportGenerated(false);
+      setReportData([]);
+    }
     setFilters(newFilters);
   };
 
@@ -141,7 +147,6 @@ export default function ReportBuilderPage({
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
   const hiddenColumns = getHiddenColumns(filters.reportType as ReportType);
-console.log('Hidden Columns:', hiddenColumns);
   // Save/Load reports via localStorage
   const STORAGE_KEY = 'saved_reports';
   const loadSavedReports = () => {
@@ -236,9 +241,11 @@ console.log('Hidden Columns:', hiddenColumns);
         onExport={handleExport}
         onShare={handleShare}
         isLoading={isLoading}
-        onReportTypeChange={(reportType: ReportType) =>
-          setFilters((prev) => ({ ...prev, 'reportType': reportType }))
-        }
+        onReportTypeChange={(reportType: ReportType) => {
+          setReportGenerated(false);
+          setReportData([]);
+          setFilters((prev) => ({ ...prev, 'reportType': reportType }));
+        }}
         selectedFiltersCount={getSelectedFiltersCount()}
       />
 
@@ -259,7 +266,7 @@ console.log('Hidden Columns:', hiddenColumns);
           // overflowY: 'auto',
         }}
       >
-        {!reportGenerated ? (
+        {!reportGenerated || reportData.length === 0 ? (
           <Box
             sx={{
               height: '100%',
@@ -268,7 +275,7 @@ console.log('Hidden Columns:', hiddenColumns);
               alignItems: 'center',
               justifyContent: 'center',
               textAlign: 'center',
-              p: 3,
+              // p: 3,
             }}
           >
             <Typography
@@ -320,8 +327,10 @@ console.log('Hidden Columns:', hiddenColumns);
               }}
             >
               <DataGridPremium
+                key={filters.reportType}
                 rows={reportData}
                 columns={columns}
+                hideFooter
                 initialState={{
                   pagination: {
                     paginationModel: { pageSize: 25, page: 0 },
@@ -333,13 +342,23 @@ console.log('Hidden Columns:', hiddenColumns);
                     }],
                   },
                   columns: {
-                    columnVisibilityModel: {...hiddenColumns},
+                    columnVisibilityModel: hiddenColumns,
                   },
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
                 disableRowSelectionOnClick
                 slots={{
                   toolbar: ReportBuilderDataGridToolbar,
+                }}
+                slotProps={{
+                  columnsPanel: {
+                    className: 'styleColumnMenu',
+                    sx: ColumnManagementStyles,
+                  },
+                  loadingOverlay: {
+                    variant: 'skeleton',
+                    noRowsVariant: 'skeleton',
+                  },
                 }}
                 sx={{
                   border: 'none',

@@ -284,8 +284,8 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
         ...commonHidden,
         project_id: false,
         project_manager_email: false,
-        project_adherence_score: false,
-        project_engagement_score: false,
+        adherence_score: false,
+        engagement_score: false,
         project_actuals_status_score: false,
       };
 

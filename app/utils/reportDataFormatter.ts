@@ -28,12 +28,15 @@ const safeGet = (obj: any, path: string, defaultValue: any = null) => {
         : defaultValue;
 };
 
-// Format date to YYYY-MM-DD or return null
+// Format date to MM/DD/YYYY or return null
 const formatDate = (dateValue: any): string | null => {
     if (!dateValue) return null;
-    if (typeof dateValue === 'string') return dateValue;
     try {
-        return new Date(dateValue).toISOString().split('T')[0];
+        const date = new Date(dateValue);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
     } catch {
         return null;
     }
@@ -100,13 +103,13 @@ const formatResourceOnly = (data: any[]): any[] => {
         role: safeGet(item, 'Resource.Role', ''),
         hr_level: safeGet(item, 'Resource.HRLevel', ''),
         resource_type: safeGet(item, 'ResourceType.Name', ''),
-        contractor_hourly_rate: safeGet(item, 'Resource.ContractorHourlyRate', 0),
+        contractor_hourly_rate: `${safeGet(item, 'Resource.ContractorHourlyRate', 0)} ${safeGet(item, 'Resource.ContractorHourlyRateCurrency', '')}`,
         contractor_hourly_rate_currency: safeGet(item, 'Resource.ContractorHourlyRateCurrency', ''),
         manager_name: safeGet(item, 'Manager.FullName', ''),
         team_name: safeGet(item, 'Team.Name', ''),
         organization: safeGet(item, 'Organization.Name', ''),
-        work_location: safeGet(item, 'Resource.WorkLocation', ''),
-        work_location_group: safeGet(item, 'Resource.WorkLocationGroup', ''),
+        work_location: safeGet(item, 'WorkLocation.Name', ''),
+        work_location_group: safeGet(item, 'WorkLocationGroup.Name', ''),
         location_category: safeGet(item, 'Resource.LocationCategory', ''),
         start_date: formatDate(safeGet(item, 'Resource.StartDate')),
         end_date: formatDate(safeGet(item, 'Resource.EndDate')),
