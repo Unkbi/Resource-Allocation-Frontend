@@ -236,18 +236,18 @@ export function buildLoginUserPrivileges(
 
       if (!loginUserPrivileges[resourceName]) {
         loginUserPrivileges[resourceName] = {
-          c: true,
-          r: true,
-          u: true,
-          d: true,
+          c: privilege.c,
+          r: privilege.r,
+          u: privilege.u,
+          d: privilege.d,
         };
       } else {
         // merge with existing permissions if already present
         loginUserPrivileges[resourceName] = {
-          c: true,
-          r: true,
-          u: true,
-          d: true,
+          c: loginUserPrivileges[resourceName].c || privilege.c,
+          r: loginUserPrivileges[resourceName].r || privilege.r,
+          u: loginUserPrivileges[resourceName].u || privilege.u,
+          d: loginUserPrivileges[resourceName].d || privilege.d,
         };
       }
     }
@@ -256,12 +256,39 @@ export function buildLoginUserPrivileges(
   return loginUserPrivileges;
 }
 
+export function formatLoginUserPermissions(privileges: Privilege[]) {
+  const loginUserPrivileges: LoginUserPrivilege = {};
+  privileges.forEach(privilege => {
+    const resourceName = privilege?.resourceFqName
+      ?.replace(/^Resource\//, '')
+      ?.replace(/^agentlang.auth\//, '');
+    if (!resourceName) return;
+    if (!loginUserPrivileges[resourceName]) {
+      loginUserPrivileges[resourceName] = {
+        c: privilege.c,
+        r: privilege.r,
+        u: privilege.u,
+        d: privilege.d,
+      };
+    } else {
+      // merge with existing permissions if already present
+      loginUserPrivileges[resourceName] = {
+        c: loginUserPrivileges[resourceName].c || privilege.c,
+        r: loginUserPrivileges[resourceName].r || privilege.r,
+        u: loginUserPrivileges[resourceName].u || privilege.u,
+        d: loginUserPrivileges[resourceName].d || privilege.d,
+      };
+    }
+  });
+  return loginUserPrivileges;
+}
+
 export function getResourceFromUserEmail(
   email: string | null,
   resources: Resource[] | null
 ) {
   if (!email || !resources) return null;
-  return resources.find(res => res.Email === email);
+  return resources.find(res => res?.Email === email);
 }
 
 export function buildDefaultDashboardFilter(

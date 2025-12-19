@@ -8,6 +8,7 @@ import ArrowCircleRightOutlinedIcon from '@mui/icons-material/ArrowCircleRightOu
 interface SubScore {
   score: number
   label: string
+  tooltipText?: string
   change: number
   positive?: boolean
 }
@@ -45,17 +46,27 @@ export default function MuiDashboardCard({
           alignItems: "center",
           gap: 1,
           mb: 1,
-          // borderBottom: "1px solid #e0e0e0",
         }}
       >
         <Typography variant="h6" sx={{ fontSize: "18px", fontWeight: 600, color: "#333" }}>
-          {title}
+          {title}{' '}
+          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+            <span
+              style={{
+                fontSize: "14px",
+                color: 'rgba(0, 0, 0, 0.6)',
+                fontWeight: 400,
+              }}
+            >
+              (Previous week)
+            </span>
+            {tooltipText && (
+              <Tooltip title={tooltipText}>
+                <InfoIcon sx={{ fontSize: "18px", color: "#999" }} />
+              </Tooltip>
+            )}
+          </Box>
         </Typography>
-        {tooltipText && (
-          <Tooltip title={tooltipText}>
-            <InfoIcon sx={{ fontSize: "20px", color: "#999" }} />
-          </Tooltip>
-        )}
       </Box>
 
       {/* Overall Score Section - Navy Blue */}
@@ -64,6 +75,7 @@ export default function MuiDashboardCard({
           background: "#1e3a8a",
           p: 3,
           display: "flex",
+          borderRadius: '4px',
           justifyContent: "space-between",
           alignItems: "center",
         }}
@@ -91,7 +103,7 @@ export default function MuiDashboardCard({
                 lineHeight: 1,
               }}
             >
-              {overallScore}
+              {Number(overallScore).toFixed(1)}
             </Typography>
             <Typography
               sx={{
@@ -132,12 +144,12 @@ export default function MuiDashboardCard({
             )}
             <Typography
               sx={{
-                color: "#ffffff",
+                color: overallChange === 0 ? "#ffffff" : (overallDirection !== "down" ? "#00A63E" : "#ef4444"),
                 fontSize: "14px",
                 fontWeight: 600,
               }}
             >
-              {overallChange}%
+              {Number(overallChange).toFixed(1)}%
             </Typography>
           </Stack>
         </Stack>
@@ -150,7 +162,7 @@ export default function MuiDashboardCard({
             <Grid item xs={12} sm={6} md={subScores.length === 3 ? 4 : 6} key={index} sx={{ mt: 2 }}>
               <Card
                 sx={{
-                  p: 2,
+                  p: 1,
                   // minWidth: "250px",
                   height: "100%",
                   backgroundColor: "#f5f5f5",
@@ -162,57 +174,72 @@ export default function MuiDashboardCard({
               >
                 {/* Left side - Label, Score, Change */}
                 <Box>
-                  <Typography
+                    <Box
                     sx={{
-                      fontSize: "12px",
-                      color: "#666",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
                       mb: 0.5,
-                      fontWeight: 500,
                     }}
-                  >
-                    {subScore.label}
-                  </Typography>
+                    >
+                    <Typography
+                      sx={{
+                      fontSize: "14px",
+                      color: "#666",
+                      fontWeight: 500,
+                      lineHeight: 1,
+                      }}
+                    >
+                      {subScore.label}
+                    </Typography>
+                    {subScore.tooltipText && (
+                      <Tooltip title={subScore.tooltipText}>
+                      <InfoIcon sx={{ fontSize: "16px", color: "#999", display: "flex" }} />
+                      </Tooltip>
+                    )}
+                    </Box>
+
                   <Stack direction="row" alignItems="center" gap={1}>
                     <Typography
                       sx={{
-                        fontSize: "16px",
+                        fontSize: "18px",
                         fontWeight: 700,
                         color: colorPallette[index % colorPallette.length],
                       }}
                     >
-                      {subScore.score}
+                      {Number(subScore.score).toFixed(1)}
                     </Typography>
                     <Stack direction="row" alignItems="center" gap={0.25}>
                       {subScore.change === 0 ? (
                         <ArrowCircleRightOutlinedIcon
                           sx={{
-                            fontSize: "14px",
+                            fontSize: "16px",
                             color: "#9ca3af",
                           }}
                         />
                       ) : subScore.positive !== false ? (
                         <ArrowCircleUpIcon
                           sx={{
-                            fontSize: "14px",
+                            fontSize: "16px",
                             color: "#00A63E",
                           }}
                         />
                       ) : (
                         <ArrowCircleDownIcon
                           sx={{
-                            fontSize: "14px",
+                            fontSize: "16px",
                             color: "#ef4444",
                           }}
                         />
                       )}
                       <Typography
                         sx={{
-                          fontSize: "12px",
+                          fontSize: "14px",
                           color: subScore.change === 0 ? "#9ca3af" : (subScore.positive !== false ? "#00A63E" : "#ef4444"),
                           fontWeight: 600,
                         }}
                       >
-                        {subScore.change}%
+                        {Number(subScore.change).toFixed(1)}%
                       </Typography>
                     </Stack>
                   </Stack>
@@ -224,7 +251,7 @@ export default function MuiDashboardCard({
                   <CircularProgress
                     variant="determinate"
                     value={100}
-                    size={50}
+                    size={60}
                     thickness={4}
                     sx={{
                       color: "#e5e7eb",
@@ -235,7 +262,7 @@ export default function MuiDashboardCard({
                   <CircularProgress
                     variant="determinate"
                     value={subScore.score}
-                    size={50}
+                    size={60}
                     thickness={4}
                     sx={{
                       color: "#6366f1",
@@ -262,7 +289,7 @@ export default function MuiDashboardCard({
                         color: "#1f2937",
                       }}
                     >
-                      {subScore.score}%
+                      {Number(subScore.score).toFixed(1)}%
                     </Typography>
                   </Box>
                 </Box>
