@@ -124,7 +124,6 @@ import {
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { fetchHistory } from '@/app/services/allocationServices';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
-import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 import AddOrganizationForm from '../../Forms/addOrganizationForm';
@@ -195,7 +194,7 @@ const initialValuesMap = {
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
-    AllowOvertime: 'No',
+    AllowOvertime: 'Yes',
     Location: '',
     ProjectManager: '',
     Status: 'Active',
