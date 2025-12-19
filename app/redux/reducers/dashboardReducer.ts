@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { DashboardChartState, ReportEntry, ReportType } from '@/app/types/dashboardTypes';
 import { formatAPIResponse } from '@/app/utils/authUtils';
+import { formatReportData } from '@/app/utils/reportDataFormatter';
 
 const initialState: DashboardChartState = {
   advancedFilters: {
@@ -93,35 +94,13 @@ const dashboardSlice = createSlice({
     setReportData: (state, action) => {
       const { reportType, data } = action.payload as { reportType: ReportType; data: any[] };
 
-      // Format data based on report type
-      let formattedData = data;
-      switch (reportType) {
-        case 'resourceProjectPeriodCost':
-          formattedData = formatAPIResponse('AllocationCostReportDetail', data);
-          break;
-        case 'resourceProjectPeriod':
-          formattedData = formatAPIResponse('AllocationActualsDetail', data);
-          break;
-        case 'resourcePeriod':
-          formattedData = formatAPIResponse('ResourcePeriodActualsDetail', data);
-          break;
-        case 'projectPeriod':
-          formattedData = formatAPIResponse('ProjectPeriodDetail', data);
-          break;
-        case 'resourceOnly':
-          formattedData = formatAPIResponse('ResourceWithDetails', data);
-          break;
-        case 'projectsOnly':
-          formattedData = formatAPIResponse('ProjectWithDetails', data);
-          break;
-        default:
-          formattedData = data;
-      }
+      // Use the new formatReportData utility to flatten nested API response
+      const formattedData = formatReportData(reportType, data);
       
       state.report![reportType] = {
         ...(state.report?.[reportType] || { error: null }),
         loading: false,
-        data: formattedData, // Try using formattedData now
+        data: formattedData,
       } as ReportEntry;
     },
     setReportError: (state, action) => {

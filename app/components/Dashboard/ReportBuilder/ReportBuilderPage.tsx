@@ -10,76 +10,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchReport } from '@/app/redux/actions/dashboardAction';
 import { RootState } from '@/app/redux/store';
 import { ReportType, ReportUIFilters } from '@/app/types/dashboardTypes';
-import { getReportColumns } from './reportColumns';
+import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
 }
-
-// Mock data for the DataGrid
-const mockReportData = [
-  {
-    id: 1,
-    resources: 'John Doe',
-    resourceType: 'FTE',
-    team: 'Engineering',
-    organization: 'Tech Division',
-    allocationManager: 'Manager A',
-    project: 'Sales Technology',
-    projectManager: 'Manager X',
-    projectType: 'Internal',
-    projectPortfolio: 'Portfolio A',
-    weekPeriod: 'Week 1',
-    planned: 40,
-    actual: 38,
-    hourlyCost: 75,
-    allocationCost: 3000,
-    actualCost: 2850,
-    plannedRevenue: 3500,
-    projectAllocation: '95%',
-  },
-  {
-    id: 2,
-    resources: 'Jane Smith',
-    resourceType: 'Contractor',
-    team: 'Product',
-    organization: 'Product Division',
-    allocationManager: 'Manager B',
-    project: 'QA Network',
-    projectManager: 'Manager Y',
-    projectType: 'External',
-    projectPortfolio: 'Portfolio B',
-    weekPeriod: 'Week 1',
-    planned: 35,
-    actual: 35,
-    hourlyCost: 85,
-    allocationCost: 2975,
-    actualCost: 2975,
-    plannedRevenue: 3200,
-    projectAllocation: '100%',
-  },
-  {
-    id: 3,
-    resources: 'Mike Johnson',
-    resourceType: 'FTE',
-    team: 'Design',
-    organization: 'Tech Division',
-    allocationManager: 'Manager A',
-    project: 'Sales Technology',
-    projectManager: 'Manager X',
-    projectType: 'Internal',
-    projectPortfolio: 'Portfolio A',
-    weekPeriod: 'Week 2',
-    planned: 40,
-    actual: 40,
-    hourlyCost: 70,
-    allocationCost: 2800,
-    actualCost: 2800,
-    plannedRevenue: 3100,
-    projectAllocation: '100%',
-  },
-];
 
 export default function ReportBuilderPage({
   onReportGenerate,
@@ -153,7 +89,7 @@ export default function ReportBuilderPage({
       allocationManager: filters.allocationManager,
     };
     const apiPayload = prepareApiPayload(uiFilters);
-    dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters:apiPayload }));
+    dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
     onReportGenerate?.(filters);
   };
 
@@ -197,15 +133,15 @@ export default function ReportBuilderPage({
       setIsLoading(currentReport.loading);
       if (!currentReport.loading && currentReport.data) {
         setReportGenerated(true);
-        // setReportData(currentReport.data); //data is not structured as per the columns yet
-        setReportData(mockReportData); // Using mock data for now
+        setReportData(currentReport.data);
       }
     }
   }, [currentReport]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
-
+  const hiddenColumns = getHiddenColumns(filters.reportType as ReportType);
+console.log('Hidden Columns:', hiddenColumns);
   // Save/Load reports via localStorage
   const STORAGE_KEY = 'saved_reports';
   const loadSavedReports = () => {
@@ -272,10 +208,10 @@ export default function ReportBuilderPage({
   const getSelectedFiltersCount = () => {
     let count = 0;
     if (filters.reportType !== 'resourceProjectPeriodCost') count++;
-    
+
     // Check period as string
     if (filters.period !== 'last_week') count++;
-    
+
     // Check arrays - count as active if not empty
     if (Array.isArray(filters.project) && filters.project.length > 0) count++;
     if (Array.isArray(filters.team) && filters.team.length > 0) count++;
@@ -287,7 +223,7 @@ export default function ReportBuilderPage({
     if (Array.isArray(filters.portfolio) && filters.portfolio.length > 0) count++;
     if (Array.isArray(filters.projectManager) && filters.projectManager.length > 0) count++;
     if (Array.isArray(filters.allocationManager) && filters.allocationManager.length > 0) count++;
-    
+
     return count;
   };
 
@@ -301,7 +237,7 @@ export default function ReportBuilderPage({
         onShare={handleShare}
         isLoading={isLoading}
         onReportTypeChange={(reportType: ReportType) =>
-          setFilters((prev) => ({ ...prev, 'reportType':reportType }))
+          setFilters((prev) => ({ ...prev, 'reportType': reportType }))
         }
         selectedFiltersCount={getSelectedFiltersCount()}
       />
@@ -320,7 +256,7 @@ export default function ReportBuilderPage({
         sx={{
           flex: 1,
           backgroundColor: '#F9FAFB',
-          overflowY: 'auto',
+          // overflowY: 'auto',
         }}
       >
         {!reportGenerated ? (
@@ -376,6 +312,7 @@ export default function ReportBuilderPage({
             <Box
               sx={{
                 height: '100%',
+                minHeight: 400,
                 backgroundColor: '#ffffff',
                 borderRadius: '8px',
                 border: '1px solid #E5E7EB',
@@ -388,6 +325,15 @@ export default function ReportBuilderPage({
                 initialState={{
                   pagination: {
                     paginationModel: { pageSize: 25, page: 0 },
+                  },
+                  sorting: {
+                    sortModel: [{
+                      field: columns.find(col => col.field === 'resource_name' || col.field === 'project_name')?.field || columns[0]?.field || 'id',
+                      sort: 'asc'
+                    }],
+                  },
+                  columns: {
+                    columnVisibilityModel: {...hiddenColumns},
                   },
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}

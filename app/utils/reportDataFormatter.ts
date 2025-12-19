@@ -1,0 +1,279 @@
+import { ReportType } from '@/app/types/dashboardTypes';
+import { formatAPIResponse } from './authUtils';
+
+/**
+ * Formats nested API response data into flat structure for DataGrid
+ * Handles all report types with their specific data structures
+ */
+
+const safeGet = (obj: any, path: string, defaultValue: any = null) => {
+    if (!obj) return defaultValue;
+    
+    const keys = path.split('.');
+    if (keys.length === 1) {
+        const value = obj[keys[0]];
+        return value !== undefined && value !== null ? value : defaultValue;
+    }
+    const [entityKey, propertyKey] = keys;
+    let nestedEntity = obj[entityKey];
+
+    if (!nestedEntity) return defaultValue;
+    if (nestedEntity[entityKey] !== undefined && nestedEntity[entityKey] !== null) {
+        nestedEntity = nestedEntity[entityKey];
+    }
+    const propertyValue = nestedEntity[propertyKey];
+    
+    return propertyValue !== undefined && propertyValue !== null 
+        ? propertyValue 
+        : defaultValue;
+};
+
+// Format date to YYYY-MM-DD or return null
+const formatDate = (dateValue: any): string | null => {
+    if (!dateValue) return null;
+    if (typeof dateValue === 'string') return dateValue;
+    try {
+        return new Date(dateValue).toISOString().split('T')[0];
+    } catch {
+        return null;
+    }
+};
+
+const formatProjectsOnly = (data: any[]): any[] => {
+    // First, format the entire response to flatten the double-nested structure
+    const formattedData = formatAPIResponse('ProjectWithDetails', data);
+    console.log(formattedData,"datatat")
+    return formattedData.map((item: any, index: any) => ({
+        id: index,
+        project_id: safeGet(item, 'Project.Id', ''),
+        project_name: safeGet(item, 'Project.Name', ''),
+        description: safeGet(item, 'Project.Description', ''),
+        status: safeGet(item, 'Project.Status', ''),
+        location: safeGet(item, 'Project.Location', ''),
+        start_date: formatDate(safeGet(item, 'Project.StartDate')),
+        end_date: formatDate(safeGet(item, 'Project.EndDate')),
+        budget: `${safeGet(item, 'Project.Budget', 0)} ${safeGet(item, 'Project.BudgetCurrency', '')}`,
+        budget_currency: safeGet(item, 'Project.BudgetCurrency', ''),
+        allow_overtime: safeGet(item, 'Project.AllowOvertime', false),
+
+        // ProjectType
+        project_type: safeGet(item, 'ProjectType.Name', ''),
+        project_type_group: safeGet(item, 'ProjectTypeGroup.Name', ''),
+        project_type_color: safeGet(item, 'ProjectType.Color', ''),
+
+        // Portfolio
+        portfolio_id: safeGet(item, 'Portfolio.Id', ''),
+        portfolio_name: safeGet(item, 'Portfolio.Name', ''),
+        portfolio_description: safeGet(item, 'Portfolio.Description', ''),
+        portfolio_status: safeGet(item, 'Portfolio.Status', ''),
+        portfolio_sidebar_color: safeGet(item, 'Portfolio.SidebarColor', ''),
+
+        // ProjectManager
+        project_manager: safeGet(item, 'ProjectManager.FullName', ''),
+        project_manager_email: safeGet(item, 'ProjectManager.Email', ''),
+
+        // ProjectSponsor
+        project_sponsor: safeGet(item, 'ProjectSponsor.FullName', ''),
+        project_sponsor_email: safeGet(item, 'ProjectSponsor.Email', ''),
+
+        // Audit fields
+        created: formatDate(safeGet(item, 'Project.__created')),
+        created_by: safeGet(item, 'Project.__created_by', ''),
+        last_modified: formatDate(safeGet(item, 'Project.__last_modified')),
+        last_modified_by: safeGet(item, 'Project.__last_modified_by', ''),
+    }));
+};
+
+const formatResourceOnly = (data: any[]): any[] => {
+    const formattedData = formatAPIResponse('ResourceWithDetails', data);
+    
+    return formattedData.map((item: any, index: any) => ({
+        id: index,
+        resource_id: safeGet(item, 'Resource.Id', ''),
+        resource_name: safeGet(item, 'Resource.FullName', ''),
+        first_name: safeGet(item, 'Resource.FirstName', ''),
+        preferred_first_name: safeGet(item, 'Resource.PreferredFirstName', ''),
+        last_name: safeGet(item, 'Resource.LastName', ''),
+         user_id: safeGet(item, 'Resource.UserId', ''),
+        email: safeGet(item, 'Resource.Email', ''),
+        department: safeGet(item, 'Resource.Department', ''),
+        role: safeGet(item, 'Resource.Role', ''),
+        hr_level: safeGet(item, 'Resource.HRLevel', ''),
+        resource_type: safeGet(item, 'ResourceType.Name', ''),
+        contractor_hourly_rate: safeGet(item, 'Resource.ContractorHourlyRate', 0),
+        contractor_hourly_rate_currency: safeGet(item, 'Resource.ContractorHourlyRateCurrency', ''),
+        manager_name: safeGet(item, 'Manager.FullName', ''),
+        team_name: safeGet(item, 'Team.Name', ''),
+        organization: safeGet(item, 'Organization.Name', ''),
+        work_location: safeGet(item, 'Resource.WorkLocation', ''),
+        work_location_group: safeGet(item, 'Resource.WorkLocationGroup', ''),
+        location_category: safeGet(item, 'Resource.LocationCategory', ''),
+        start_date: formatDate(safeGet(item, 'Resource.StartDate')),
+        end_date: formatDate(safeGet(item, 'Resource.EndDate')),
+        status: safeGet(item, 'Resource.Status', ''),
+        created: formatDate(safeGet(item, 'Resource.__created')),
+        created_by: safeGet(item, 'Resource.__created_by', ''),
+        last_modified: formatDate(safeGet(item, 'Resource.__last_modified')),
+        last_modified_by: safeGet(item, 'Resource.__last_modified_by', ''),
+    }));
+};
+
+const formatProjectPeriod = (data: any[]): any[] => {
+    const formattedData = formatAPIResponse('ProjectPeriodDetail', data);
+
+    return formattedData.map((item: any, index: any) => ({
+        id: index,
+        project_id: safeGet(item, 'Project.Id', ''),
+        project_name: safeGet(item, 'Project.Name', ''),
+        project_type_group: safeGet(item, 'ProjectTypeGroup.Name', ''),
+        project_type: safeGet(item, 'ProjectType.Name', ''),
+        portfolio_name: safeGet(item, 'Portfolio.Name', ''),
+        project_manager: safeGet(item, 'ProjectManager.FullName', ''),
+        project_manager_email: safeGet(item, 'ProjectManager.Email', ''),
+        period: safeGet(item, 'Period', ''),
+        planned_allocation: safeGet(item, 'Planned', 0),
+        actual_allocation: safeGet(item, 'Actual', 0),
+        project_actuals_status: safeGet(item, 'ProjectActualsStatus', ''),
+        health_score: safeGet(item, 'HealthScore', 0),
+        adherence_score: safeGet(item, 'AdherenceScore', 0),
+        engagement_score: safeGet(item, 'EngagementScore', 0),
+        project_actuals_status_score: safeGet(item, 'ProjectActualsStatusScore', 0),
+        created: formatDate(safeGet(item, '__created')),
+        created_by: safeGet(item, '__created_by', ''),
+        last_modified: formatDate(safeGet(item, '__last_modified')),
+        last_modified_by: safeGet(item, '__last_modified_by', ''),
+    }));
+};
+
+const formatResourcePeriod = (data: any[]): any[] => {
+    const formattedData = formatAPIResponse('ResourcePeriodActualsDetail', data);
+    
+    return formattedData.map((item: any, index: any) => ({
+        id: index,
+        resource_id: safeGet(item, 'Resource.Id', ''),
+        resource_name: safeGet(item, 'Resource.FullName', ''),
+        resource_type: safeGet(item, 'ResourceType.Name', ''),
+        team_name: safeGet(item, 'Team.Name', ''),
+        organization_name: safeGet(item, 'Organization.Name', ''),
+        allocation_manager: safeGet(item, 'AllocationManager.FullName', ''),
+        period: safeGet(item, 'Period', ''),
+        planned_allocation: safeGet(item, 'PlannedAllocation', 0),
+        actuals_allocation: safeGet(item, 'ActualsAllocation', 0),
+        planning_score: safeGet(item, 'PlanningScore', 0),
+        actuals_score: safeGet(item, 'ActualsScore', 0),
+        confirmation_score: safeGet(item, 'ConfirmationScore', 0),
+        entry_score: safeGet(item, 'EntryScore', 0),
+        communication_score: safeGet(item, 'CommunicationScore', 0),
+        engagement_score: safeGet(item, 'EngagementScore', 0),
+        created: formatDate(safeGet(item, '__created')),
+        created_by: safeGet(item, '__created_by', ''),
+        last_modified: formatDate(safeGet(item, '__last_modified')),
+        last_modified_by: safeGet(item, '__last_modified_by', ''),
+    }));
+};
+
+const formatResourceProjectPeriod = (data: any[]): any[] => {
+    const formattedData = formatAPIResponse('AllocationActualsDetail', data);
+    
+    return formattedData.map((item: any, index: any) => ({
+        id: index,
+        resource_id: safeGet(item, 'Resource.Id', ''),
+        resource_name: safeGet(item, 'Resource.FullName', ''),
+        resource_type: safeGet(item, 'ResourceType.Name', ''),
+        team_name: safeGet(item, 'Team.Name', ''),
+        organization_name: safeGet(item, 'Organization.Name', ''),
+        allocation_manager: safeGet(item, 'AllocationManager.FullName', ''),
+        project_name: safeGet(item, 'Project.Name', ''),
+        project_type_group: safeGet(item, 'ProjectTypeGroup.Name', ''),
+        project_type: safeGet(item, 'ProjectType.Name', ''),
+        portfolio_name: safeGet(item, 'Portfolio.Name', ''),
+        project_manager: safeGet(item, 'ProjectManager.FullName', ''),
+        period: safeGet(item, 'Period', ''),
+        planned: safeGet(item, 'Planned', 0),
+        actual: safeGet(item, 'Actual', 0),
+        project_actuals_status: safeGet(item, 'Status', ''),
+        created: formatDate(safeGet(item, '__created')),
+        created_by: safeGet(item, '__created_by', ''),
+        last_modified: formatDate(safeGet(item, '__last_modified')),
+        last_modified_by: safeGet(item, '__last_modified_by', ''),
+    }));
+};
+
+const formatResourceProjectPeriodCost = (data: any[]): any[] => {
+    const formattedData = formatAPIResponse('AllocationCostReportDetail', data);
+    
+    return formattedData.map((item: any, index: any) => ({
+        id: index,
+        resource_id: safeGet(item, 'Resource.Id', ''),
+        resource_name: safeGet(item, 'Resource.FullName', ''),
+        resource_type: safeGet(item, 'ResourceType.Name', ''),
+        team_name: safeGet(item, 'Team.Name', ''),
+        organization_name: safeGet(item, 'Organization.Name', ''),
+        allocation_manager: safeGet(item, 'AllocationManager.FullName', ''),
+        project_id: safeGet(item, 'Project.Id', ''),
+        project_name: safeGet(item, 'Project.Name', ''),
+        project_type_group: safeGet(item, 'ProjectTypeGroup.Name', ''),
+        project_type: safeGet(item, 'ProjectType.Name', ''),
+        portfolio_name: safeGet(item, 'Portfolio.Name', ''),
+        project_manager: safeGet(item, 'ProjectManager.FullName', ''),
+        hourly_rate: safeGet(item, 'HourlyRate', 0),
+        period: safeGet(item, 'Period', ''),
+        planned: safeGet(item, 'Planned', 0),
+        actual: safeGet(item, 'Actual', 0),
+        allocation_cost: safeGet(item, 'AllocationCost', 0),
+        actual_cost: safeGet(item, 'ActualCost', 0),
+        planned_cost: safeGet(item, 'PlannedCost', 0),
+        project_actuals_status: safeGet(item, 'ProjectActualsStatus', ''),
+        currency: safeGet(item, 'Currency', 'USD'),
+        created: formatDate(safeGet(item, '__created')),
+        created_by: safeGet(item, '__created_by', ''),
+        last_modified: formatDate(safeGet(item, '__last_modified')),
+        last_modified_by: safeGet(item, '__last_modified_by', ''),
+    }));
+};
+
+export const formatReportData = (
+    reportType: ReportType,
+    data: any[]
+): any[] => {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        return [];
+    }
+
+    switch (reportType) {
+        case 'projectsOnly':
+            return formatProjectsOnly(data);
+        case 'resourceOnly':
+            return formatResourceOnly(data);
+        case 'projectPeriod':
+            return formatProjectPeriod(data);
+        case 'resourcePeriod':
+            return formatResourcePeriod(data);
+        case 'resourceProjectPeriod':
+            return formatResourceProjectPeriod(data);
+        case 'resourceProjectPeriodCost':
+            return formatResourceProjectPeriodCost(data);
+        default:
+            console.warn(`Unknown report type: ${reportType}`);
+            return [];
+    }
+};
+
+/**
+ * Alternative: Format data with custom field mapping
+ * Useful when API structure varies or for edge cases
+ */
+export const formatReportDataCustom = (
+    data: any[],
+    fieldMapping: Record<string, string>
+): any[] => {
+    return data.map((item, index) => {
+        const formatted: any = { id: index };
+
+        Object.entries(fieldMapping).forEach(([targetField, sourcePath]) => {
+            formatted[targetField] = safeGet(item, sourcePath, '');
+        });
+
+        return formatted;
+    });
+};
