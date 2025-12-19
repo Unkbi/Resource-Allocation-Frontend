@@ -2,23 +2,17 @@ import {
   ColumnManagementStyles,
   FilterPanelStyles,
   StyledDataGrid,
-} from '../AllocationTable/styles/StyledDataGrid';
-import {
-  GridApi,
-  GridColDef,
-  GridColumnMenu,
-  GridColumnMenuProps,
-  GridToolbarProps,
-} from '@mui/x-data-grid-premium';
-import ResourceToolbar from '../Toolbar/ResourceToolbar';
+} from '../../AllocationTable/styles/StyledDataGrid';
+import { GridApi, GridColDef, GridColumnMenu, GridColumnMenuProps, GridToolbarProps } from '@mui/x-data-grid-premium';
+import ProjectToolbar from '../../Toolbar/ProjectToolbar';
 import { JSXElementConstructor, useState } from 'react';
-import { Resource } from '@/app/types';
 import { Box } from '@mui/material';
-import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import {  CrudPermissions ,withRBAC } from '../../HOC/withRBAC';
+import { BusinessImpact } from '@/app/types/businessImpactTypes';
 
-interface ResourceTableProps {
+interface BusinessImpactTableProps{
   columns: GridColDef[];
-  rows: Resource[];
+  rows: BusinessImpact[],
   loading: boolean;
   apiRef: React.RefObject<GridApi>;
   value: String;
@@ -26,7 +20,7 @@ interface ResourceTableProps {
   permissions: Record<string, CrudPermissions>;
 }
 
-function CustomColumnMenu(props: GridColumnMenuProps) {
+function CustomColumnMenu(props : GridColumnMenuProps) {
   return (
     <GridColumnMenu
       {...props}
@@ -37,8 +31,7 @@ function CustomColumnMenu(props: GridColumnMenuProps) {
     />
   );
 }
-
-const ResourceTable = ({
+const BusinessImpactTable = ({
   columns,
   rows,
   loading,
@@ -46,8 +39,9 @@ const ResourceTable = ({
   value,
   onChange = () => {},
   permissions,
-}: ResourceTableProps) => {
+}: BusinessImpactTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+
   return (
     <Box
       sx={{
@@ -59,32 +53,16 @@ const ResourceTable = ({
       <StyledDataGrid
         apiRef={apiRef}
         columns={columns}
-        rows={permissions['Resource'].r ? rows : []}
-        hideFooter={true}
-        hideFooterSelectedRowCount={true}
+        rows={permissions['BusinessImpact']?.r ? rows : []}
+        hideFooter
         loading={loading}
         initialState={{
           sorting: {
-            sortModel: [{ field: 'FullName', sort: 'asc' }],
-          },
-          columns: {
-            columnVisibilityModel: {
-              team: false,
-              organization: false,
-              Manager: false,
-              AverageWeeklyHours: false,
-              ContractorHourlyRate: false,
-              PhoneNumber: false,
-              __created: false,
-              __created_by: false,
-              __last_modified: false,
-              __last_modified_by: false,
-            },
+            sortModel: [{ field: 'Project', sort: 'asc' }],
           },
         }}
         slots={{
-          toolbar:
-            ResourceToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
+          toolbar: ProjectToolbar as unknown as JSXElementConstructor<GridToolbarProps>,
           columnMenu: CustomColumnMenu,
         }}
         localeText={{
@@ -96,9 +74,6 @@ const ResourceTable = ({
           '& .MuiDataGrid-columnHeader': {
             padding: '0 16px',
             borderRight: 'none',
-          },
-          '& .MuiDataGrid-footer': {
-            display: 'block',
           },
         }}
         slotProps={{
@@ -112,7 +87,7 @@ const ResourceTable = ({
             placement: 'bottom-end',
           },
           toolbar: {
-            //@ts-ignore
+             //@ts-ignore
             setFilterButtonEl,
             value: value,
             onChange: onChange,
@@ -123,7 +98,7 @@ const ResourceTable = ({
           },
           filterPanel: {
             columnsSort: 'asc',
-            //@ts-ignore
+             //@ts-ignore
             className: 'filterPopup',
             filterFormProps: {
               columnInputProps: {
@@ -153,4 +128,4 @@ const ResourceTable = ({
   );
 };
 
-export default withRBAC(ResourceTable, ['Resource']);
+export default withRBAC(BusinessImpactTable, ['BusinessImpact']);

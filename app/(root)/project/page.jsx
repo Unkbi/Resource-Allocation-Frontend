@@ -55,12 +55,20 @@ import {
   UPDATE_ORGANISATION,
 } from '@/app/redux/actions/organizationsAction';
 import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
-import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import {
+  FETCH_PROJECT_TYPES,
+  FETCH_USER,
+} from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import PortfolioTable from '@/app/components/Projects/Table/PortfolioTable';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import dayjs from 'dayjs';
+import BusinessImpactTable from '@/app/components/Projects/Table/BusinessImpactTable';
+import {
+  FETCH_BUSINESS_IMPACT,
+  FETCH_BUSINESS_IMPACT_TYPE,
+} from '@/app/redux/actions/businessImpactActions';
 
 const AvatarCircle = styled('div')(({ bgcolor }) => ({
   display: 'flex',
@@ -102,6 +110,7 @@ const AddAllocationIcon = () => (
 const accessMap = [
   { key: 'Project', value: 'project' },
   { key: 'Portfolio', value: 'portfolio' },
+  { key: 'BusinessImpact', value: 'businessImpact' },
 ];
 
 function Project({ permissions, loadingPermissions }) {
@@ -115,6 +124,7 @@ function Project({ permissions, loadingPermissions }) {
   const { resources, loading: resourceLoading } = useSelector(
     state => state.resources
   );
+  const { users } = useSelector(state => state.allSettings);
   const { projectTypes } = useSelector(state => state.allSettings);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -129,6 +139,16 @@ function Project({ permissions, loadingPermissions }) {
   );
   const [portfolioRows, setPortfolioRows] = useState(portfolios || null);
   const [portfolioDelete, setPortfolioDelete] = useState({
+    Id: '',
+    Name: '',
+  });
+  const {
+    businessImpact,
+    loading: businessImpactLoading,
+    businessImpactType,
+  } = useSelector(state => state.businessImpact);
+  const [businessRows, setBusinessRows] = useState(businessImpact || null);
+  const [businessImpactDelete, setBusinessImpactDelete] = useState({
     Id: '',
     Name: '',
   });
@@ -175,6 +195,28 @@ function Project({ permissions, loadingPermissions }) {
   }, [updating]);
 
   useEffect(() => {
+    if (!businessImpact.length) {
+      dispatch({
+        type: FETCH_BUSINESS_IMPACT,
+        payload: {},
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    setBusinessRows(businessImpact);
+  }, [businessImpact]);
+
+  useEffect(() => {
+    if (!businessImpactType.length) {
+      dispatch({
+        type: FETCH_BUSINESS_IMPACT_TYPE,
+        payload: {},
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     if (projects?.length) {
       if (portfolios?.length) {
         setRows(
@@ -209,6 +251,9 @@ function Project({ permissions, loadingPermissions }) {
         type: FETCH_PROJECT_TYPES,
         payload: {},
       });
+    }
+    if (!users.length) {
+      dispatch({ type: FETCH_USER, payload: {} });
     }
   }, []);
 
@@ -250,6 +295,12 @@ function Project({ permissions, loadingPermissions }) {
         ProjectManager: getResourceFromUid(project.ProjectManager, allResources)
           ?.FullName,
         Type: projectTypes?.find(pt => pt.Id === project.Type)?.Name || '',
+        __created_by: users?.find(user => {
+          return user.id === item?.__created_by;
+        })?.Name,
+        __last_modified_by: users?.find(
+          user => user.id === item?.__last_modified_by
+        )?.Name,
       };
     });
   };
@@ -268,6 +319,26 @@ function Project({ permissions, loadingPermissions }) {
     return [];
   };
 
+  const modifyBusinessImpactData = data => {
+    if (!data) return [];
+    return data.map(item => {
+      const businessImpact = item.BusinessImpact || item;
+      const project = projects?.find(
+        proj => proj.Id === businessImpact.ProjectUUID
+      );
+      const impactType = businessImpactType?.find(
+        type => type.Id === businessImpact.BusinessImpactType
+      );
+      return {
+        ...businessImpact,
+        id: businessImpact.Id,
+        Project: project?.Name || '',
+        BusinessImpactType: impactType?.Name || '',
+        Amount: businessImpact.AnnualizedAmount,
+        BusinessImpactTypeId: businessImpact.BusinessImpactType,
+      };
+    });
+  };
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
 
@@ -286,7 +357,13 @@ function Project({ permissions, loadingPermissions }) {
       requestAnimationFrame(() => {
         try {
           apiRef.current.scrollToIndexes({ rowIndex: offsetRowIndex });
-          apiRef.current.setCellFocus(highlightedRowId, 'Name');
+          let focusColumn;
+          if (value === 'businessImpact') {
+            focusColumn = 'Project';
+          } else if (value === 'project' || value === 'portfolio') {
+            focusColumn = 'Name';
+          }
+          apiRef.current.setCellFocus(highlightedRowId, focusColumn);
           apiRef.current.selectRow?.(highlightedRowId, true);
 
           const scroller = document.querySelector(
@@ -427,7 +504,37 @@ function Project({ permissions, loadingPermissions }) {
         setPortfolioDelete({ Id: '', Name: '' });
       }
     }
+    if (value === 'businessImpact') {
+      try {
+        const { Id } = businessImpactDelete;
+        await dispatch({ type: 'DELETE_BUSINESS_IMPACT', payload: Id });
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Business Impact deleted successfully',
+            type: 'success',
+            position: 'bottom-left',
+            autoHideTimer: 4000,
+          })
+        );
+        dispatch({ type: 'FETCH_BUSINESS_IMPACT' });
+      } catch (error) {
+        dispatch(
+          showToast({
+            open: true,
+            message: 'Failed to delete business impact',
+            type: 'error',
+            position: 'bottom-left',
+            autoHideTimer: 1000,
+          })
+        );
+      } finally {
+        setDeleteDialogOpen(false);
+        setBusinessImpactDelete({});
+      }
+    }
   };
+
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setProjectToDelete(null);
@@ -648,6 +755,80 @@ function Project({ permissions, loadingPermissions }) {
           return `${month}/${day}/${year}`;
         }
         return '';
+      },
+    },
+    {
+      field: '__created',
+      headerName: 'Created On',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__created_by',
+      headerName: 'Created By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
+      field: '__last_modified',
+      headerName: 'Last Modified On',
+      flex: 1,
+      minWidth: 150,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__last_modified_by',
+      headerName: 'Last Modified By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
       },
     },
   ];
@@ -918,6 +1099,166 @@ function Project({ permissions, loadingPermissions }) {
     },
   ];
 
+  const businessImpactColumns = [
+    {
+      field: 'Project',
+      headerName: 'Project',
+      minWidth: 230,
+      hideable: false,
+      renderCell: params => {
+        const handleNameClick = () => {
+          if (permissions['BusinessImpact']?.u) {
+            handleOpenDialog(
+              'Edit Business Impact',
+              'edit_business_impact',
+              params.row
+            );
+          } else {
+            handleOpenDialog(
+              `Business Impact: ${params.value}`,
+              'edit_business_impact',
+              params.row,
+              {
+                readOnly: true,
+              }
+            );
+          }
+        };
+        return (
+          <Box
+            onClick={handleNameClick}
+            sx={{
+              display: 'inline-block',
+              maxWidth: '100%',
+              color: '#152E75',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            <EllipsisNameCell showAvatar={false} value={params.value} />
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'BusinessImpactType',
+      headerName: 'Impact Type',
+      minWidth: 250,
+      hideable: false,
+      renderCell: params => {
+        return (
+          <EllipsisNameCell showAvatar={false} value={params.value || ''} />
+        );
+      },
+    },
+    {
+      field: 'Amount',
+      headerName: 'Amount',
+      minWidth: 120,
+      renderCell: params => {
+        const amount = params.value;
+        return amount ? `$${amount.toLocaleString()}` : '';
+      },
+    },
+    {
+      field: 'Description',
+      headerName: 'Description',
+      flex: 1,
+      minWidth: 280,
+      renderCell: params => {
+        const description = params.value;
+        return description ? (
+          <EllipsisNameCell showAvatar={false} value={description} />
+        ) : (
+          ''
+        );
+      },
+    },
+    {
+      field: 'Status',
+      headerName: 'Status',
+      width: 170,
+      flex: 1,
+      sortable: true,
+      filterable: true,
+      hideable: false,
+      headerAlign: 'left',
+      renderCell: params => {
+        const status = params.value;
+        return (
+          status && (
+            <Box
+              sx={{
+                paddingLeft: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                height: '100%',
+              }}
+            >
+              <StatusPill status={status}>{status}</StatusPill>
+              {(permissions['BusinessImpact']?.u ||
+                permissions['BusinessImpact']?.d) && (
+                <Box>
+                  <IconButton
+                    size="small"
+                    onClick={e => handleMenuClick(e, params.row.id)}
+                  >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl) && selectedRow === params.row.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  >
+                    {permissions['BusinessImpact']?.u && (
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          handleOpenDialog(
+                            'Edit Business Impact',
+                            'edit_business_impact',
+                            params.row
+                          );
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <EditIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Edit
+                      </MenuItem>
+                    )}
+
+                    {permissions['BusinessImpact']?.d && (
+                      <MenuItem
+                        onClick={() => {
+                          setDeleteDialogOpen(true);
+                          handleMenuClose();
+                          setBusinessImpactDelete(params.row);
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18, marginRight: '8px' }} />
+                        Delete
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </Box>
+              )}
+            </Box>
+          )
+        );
+      },
+    },
+  ];
+
   const handleMenuClick = (event, id) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(id);
@@ -964,14 +1305,14 @@ function Project({ permissions, loadingPermissions }) {
 
       case 'businessImpact':
         return (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          ></Box>
+          <BusinessImpactTable
+            loading={businessImpactLoading || loadingPermissions}
+            columns={businessImpactColumns}
+            rows={modifyBusinessImpactData(businessRows)}
+            apiRef={apiRef}
+            value={value}
+            onChange={onChange}
+          />
         );
 
       default:
@@ -994,19 +1335,27 @@ function Project({ permissions, loadingPermissions }) {
         open={deleteDialogOpen}
         onConfirm={() =>
           handleConfirmDelete(
-            value === 'project' ? projectToDelete?.Id : portfolioDelete?.Id
+            value === 'project'
+              ? projectToDelete?.Id
+              : value === 'portfolio'
+                ? portfolioDelete?.Id
+                : businessImpactDelete?.Id
           )
         }
         onCancel={handleCancelDelete}
         title={
           value === 'project'
             ? 'Are you sure you want to delete this project?'
-            : 'Are you sure you want to delete this portfolio?'
+            : value === 'portfolio'
+              ? 'Are you sure you want to delete this portfolio?'
+              : 'Are you sure you want to delete this business impact?'
         }
       >
         {value === 'project'
           ? 'This will permanently delete the project.'
-          : `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`}
+          : value === 'portfolio'
+            ? `This will permanently delete ${portfolioDelete?.Name ?? 'portfolio'}.`
+            : `This will permanently delete business impact for ${businessImpactDelete?.Project ?? 'the selected project'}.`}
       </ConfirmDialog>
     </Box>
   ) : (
@@ -1014,4 +1363,9 @@ function Project({ permissions, loadingPermissions }) {
   );
 }
 
-export default withRBAC(Project, ['Project', 'Portfolio', 'Allocation']);
+export default withRBAC(Project, [
+  'Project',
+  'Portfolio',
+  'Allocation',
+  'BusinessImpact',
+]);

@@ -50,7 +50,7 @@ const AllocationCellWithActuals = ({
         }}
       >
         <Box sx={{ position: 'relative', top: 0, left: 0, zIndex: 1 }}>
-          <Typography sx={{ fontWeight: 600 }}>{formattedValue}</Typography>
+          <Typography>{formattedValue}</Typography>
         </Box>
         <Box
           sx={{
@@ -65,6 +65,7 @@ const AllocationCellWithActuals = ({
           <Typography
             sx={{
               fontStyle: 'italic',
+              fontWeight: 600,
             }}
           >
             {formattedActuals}

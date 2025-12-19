@@ -10,6 +10,7 @@ import {
   Stack,
   Tab,
   Tabs,
+  Tooltip,
 } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -53,7 +54,10 @@ import { useRouter } from 'next/navigation';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { fetchTeamAllocationsForSaga } from '@/app/services/teamServices';
 import { StatusPill } from '@/app/components/Settings/styled';
-import { FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
+import {
+  FETCH_LOCATION,
+  FETCH_USER,
+} from '@/app/redux/actions/allSettingsActions';
 import { withRBAC } from '@/app/components/HOC/withRBAC';
 import RatesTable from '@/app/components/Resources/RatesTable';
 import { RESOURCE_PAGE_VALID_TABS } from '@/app/constants/constants';
@@ -143,6 +147,7 @@ function Resources({ permissions, loadingPermissions }) {
 
   const { allResourcesDetail, loading: allResourcesDetailLoading } =
     useSelector(state => state.allResourcesDetail);
+  const { users } = useSelector(state => state.allSettings);
   const { teams, dataProcessing } = useSelector(state => state.teams);
   const { employeeRates, loading: employeeRatesLoading } = useSelector(
     state => state.employeeRates
@@ -204,6 +209,37 @@ function Resources({ permissions, loadingPermissions }) {
       setValue(newTab);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!users.length) {
+      dispatch({ type: FETCH_USER, payload: {} });
+    }
+  }, []);
+
+  const getTooltipForStatus = (status, params) => {
+    switch (status) {
+      case 'Active':
+        return 'The Resource is available for Allocation.';
+      case 'Inactive':
+        return 'The Resource is unavailable for Allocation.';
+      case 'Pending':
+        const date = parseISO(params.row.StartDate);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `The Resource will be available for Allocation from ${month}/${day}/${year}.`;
+      case 'Not-Planned':
+        return `Team, ${params.row.Team} is Inactive.`;
+      case 'Unassigned':
+        if (!params.row.StartDate && !params.row.Team) {
+          return 'The Resource has no Start Date and is not part of any Team.';
+        } else if (!params.row.StartDate) {
+          return `The Resource has no Start Date`;
+        } else if (!params.row.Team) {
+          return `The Resource is not part of any Team.`;
+        }
+    }
+  };
 
   const columns = [
     {
@@ -420,6 +456,80 @@ function Resources({ permissions, loadingPermissions }) {
       },
     },
     {
+      field: '__created',
+      headerName: 'Created On',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__created_by',
+      headerName: 'Created By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
+      field: '__last_modified',
+      headerName: 'Last Modified On',
+      flex: 1,
+      minWidth: 120,
+      renderCell: params => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__last_modified_by',
+      headerName: 'Last Modified By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: params => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
       field: 'Status',
       headerName: 'Status',
       width: 170,
@@ -439,7 +549,12 @@ function Resources({ permissions, loadingPermissions }) {
                 width: '100%',
               }}
             >
-              <StatusPill status={status}>{status}</StatusPill>
+              <Tooltip
+                title={getTooltipForStatus(status, params)}
+                sx={{ cursor: 'default' }}
+              >
+                <StatusPill status={status}>{status}</StatusPill>
+              </Tooltip>
               {(permissions['Resource']?.u || permissions['Resource']?.d) && (
                 <Box>
                   <IconButton
@@ -1062,6 +1177,12 @@ function Resources({ permissions, loadingPermissions }) {
           WorkLocation:
             location?.find(loc => loc.Id === item?.Resource?.WorkLocation)
               ?.Name || '',
+          __created_by: users?.find(
+            user => user.id === item?.Resource?.__created_by
+          )?.Name,
+          __last_modified_by: users?.find(
+            user => user.id === item?.Resource?.__last_modified_by
+          )?.Name,
         };
       });
     }

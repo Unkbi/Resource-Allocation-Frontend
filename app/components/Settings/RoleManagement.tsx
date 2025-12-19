@@ -177,7 +177,7 @@ function RoleManagementPage({
     if (!meta) {
       dispatch({ type: GET_META });
     }
-  }, [dispatch, meta]);
+  }, [dispatch]);
 
   useEffect(() => {
     const menuParam = searchParams.get('menu');
@@ -231,7 +231,7 @@ function RoleManagementPage({
     if (!user || user.length === 0) {
       dispatch({ type: GET_USER });
     }
-  }, [dispatch, user]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -247,13 +247,7 @@ function RoleManagementPage({
     if (!privilegeAssignments?.length) {
       dispatch({ type: FETCH_PRIVILEGEASSIGNMENTS });
     }
-  }, [
-    loadingPermissions,
-    roles,
-    roleAssignments,
-    privileges,
-    privilegeAssignments,
-  ]);
+  }, [loadingPermissions]);
 
   useEffect(() => {
     if (!highlightedRowId || !apiRef?.current) return;
@@ -479,15 +473,16 @@ function RoleManagementPage({
       ...assignment,
       id: assignment.__path__,
     })) || [];
-  
-  const filteredRoleAssignmentData = roleAssignments?.filter((assignment: RoleAssignment) => {
-    const userId = assignment.User?.includes('/')
-      ? assignment.User.split('/').pop()
-      : assignment.User;
-    const matchedUser = user?.find(u => u.id === userId);
-    return !!matchedUser;
-  }) || [];
-  
+
+  const filteredRoleAssignmentData =
+    roleAssignments?.filter((assignment: RoleAssignment) => {
+      const userId = assignment.User?.includes('/')
+        ? assignment.User.split('/').pop()
+        : assignment.User;
+      const matchedUser = user?.find(u => u.id === userId);
+      return !!matchedUser;
+    }) || [];
+
   const data =
     tab === 'role-management'
       ? modifyRolesData(roles)
