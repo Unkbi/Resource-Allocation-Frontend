@@ -160,27 +160,27 @@ const generateLayouts = chartKeys => {
       x: (idx % 2) * 6,
       y: Math.floor(idx / 2) * 3,
       w: 6,
-      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
       minW: 5,
-      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
     })),
     md: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
       minW: 6,
-      minH: autoHeightWidgets.includes(key) ? (key === 'engagementScoreOverview' ? 1.8 : 1.9 ) : 3,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
     })),
     sm: chartKeys.map((key, idx) => ({
       i: key,
       x: 0,
       y: idx * 3,
       w: 12,
-      h: autoHeightWidgets.includes(key) ?  1.8 : 3,
+      h: autoHeightWidgets.includes(key) ? 1.8 : 3,
       minW: 12,
-      minH: autoHeightWidgets.includes(key) ?  1.8 : 3,
+      minH: autoHeightWidgets.includes(key) ? 1.8 : 3,
     })),
   };
 };
@@ -914,7 +914,7 @@ export default function ExecutiveDashboardPage() {
               <Typography
                 variant="h6"
                 sx={{
-                  mb: 1,
+                  mb: 0.5,
                   fontSize: dimensions.width < 400 ? '16px' : '18px',
                   fontWeight: 600,
                 }}
@@ -937,7 +937,7 @@ export default function ExecutiveDashboardPage() {
                   display: 'flex',
                   justifyContent: 'center',
                   gap: 3,
-                  mb: 1,
+                  mb: 0.75,
                   fontSize: '14px',
                 }}
               >
@@ -1042,7 +1042,7 @@ export default function ExecutiveDashboardPage() {
                       max: maxVariance * 1.2,
                     },
                   ]}
-                  margin={{ left: 50, right: 50, top: 30, bottom: 40 }}
+                  margin={{ left: 45, right: 45, top: 15, bottom: 30 }}
                 >
                   <BarPlot />
                   <LinePlot />
@@ -1719,19 +1719,27 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !actuals_confirmation_status || 
           actuals_confirmation_status.length === 0 ||
-          actuals_confirmation_status.every(item => parseFloat(item.percentage || 0) === 0)
+          actuals_confirmation_status.every(item => 
+            parseFloat(item.actuals_total || 0) === 0 && parseFloat(item.planned_total || 0) === 0
+          )
         }
         noDataMessage="No actuals confirmation data available for the selected period"
       >
         {dimensions => {
-          const config = useResponsiveChart(dimensions, 'pie');
-          // Transform data for pie chart with fixed colors
-          const chartData = (actuals_confirmation_status || []).map(item => ({
-            id: item.status,
-            value: parseFloat(item.percentage || 0),
-            label: item.status,
-            color: item.status === 'Actuals' ? '#4169E1' : '#FFD700',
-          }));
+          const config = useResponsiveChart(dimensions, 'bar');
+          
+          // Extract data from API response
+          const data = actuals_confirmation_status?.[0] || {};
+          const actualsTotal = parseFloat(data.actuals_total || 0);
+          const plannedTotal = parseFloat(data.planned_total || 0);
+          const actualsPercentage = parseFloat(data.actuals_percentage || 0);
+          const plannedPercentage = parseFloat(data.planned_percentage || 0);
+
+          // Prepare data for bar chart
+          const categories = [ 'Planned','Actuals'];
+          const values = [plannedTotal, actualsTotal];
+          const percentages = [plannedPercentage, actualsPercentage];
+          const barColors = ['#4169E1', '#FFD700'];
 
           return (
             <Box
@@ -1761,48 +1769,62 @@ export default function ExecutiveDashboardPage() {
                   (Previous week)
                 </span>
               </Typography>
-              <Box
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  width: '100%',
-                }}
-              >
-                <PieChart
+              <Box sx={{ flex: 1, width: '100%', minHeight: 0 }}>
+                <BarChart
+                  xAxis={[
+                    {
+                      scaleType: 'band',
+                      data: categories,
+                      categoryGapRatio: 0.2,
+                      barGapRatio: 0,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'Total Allocation Units',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
                   series={[
                     {
-                      data: chartData,
-                      innerRadius: 0,
-                      outerRadius: config.outerRadius || 80,
-                      cornerRadius: 3,
-                      arcLabel: item => `${item.value}%`,
-                      arcLabelMinAngle: 20,
-                      arcLabelRadius: '70%',
-                      highlightScope: { faded: 'global', highlighted: 'item' },
-                      faded: { additionalRadius: -10, color: 'gray' },
+                      data: [plannedTotal,null],
+                      id: 'planned',
+                      label: 'Planned',
+                      color: '#4169E1',
+                      valueFormatter: (value) => 
+                      value ? `${value.toFixed(1)} (${plannedPercentage.toFixed(1)}%)` : '',
+                    },
+                    {
+                      data: [null,actualsTotal],
+                      id: 'actuals',
+                      label: 'Actuals',
+                      color: '#FFD700',
+                      valueFormatter: (value) => 
+                      value ? `${value.toFixed(1)} (${actualsPercentage.toFixed(1)}%)` : '',
                     },
                   ]}
                   width={config.width}
                   height={config.height}
-                  sx={{
-                    [`& .${pieArcLabelClasses.root}`]: {
-                      fill: '#000000',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    },
+                  grid={{ horizontal: true }}
+                  margin={{
+                    top: 10,
+                    bottom: 40,
+                    left: 60,
+                    right: 10,
                   }}
                   slotProps={{
-                    legend: {
-                      ...config.legend,
-                      direction: 'column',
-                      position: { vertical: 'middle', horizontal: 'right' },
-                      padding: { right: 5 },
-                      itemmarkwidth: 12,
-                      itemmarkheight: 12,
-                      markgap: 8,
-                      itemgap: 12,
+                    legend: config.legend,
+                  }}
+                  sx={{
+                    '& .MuiChartsAxis-tickLabel': {
+                      fontSize: '12px',
+                      fill: '#666',
+                    },
+                    '& .MuiChartsAxis-label': {
+                      fontSize: '13px',
+                      fontWeight: 500,
                     },
                   }}
                 />
@@ -1825,7 +1847,7 @@ export default function ExecutiveDashboardPage() {
 
           return (
             <ScoreCard
-              title="Engagement Overview"
+              title="Resource Engagement Overview"
               tooltipText="Combines two components: Planning and Actuals. Planning measures allocation entries across a rolling time window, weighted toward the present and near future. Actuals measures timely confirmation of completed work, weighted toward the most recent period. Both components contribute to the total score."
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
@@ -1857,7 +1879,7 @@ export default function ExecutiveDashboardPage() {
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
         // minWidth={650}
-        minHeight={100}
+        minHeight={280}
         autoHeight={true}
       >
         {() => {
