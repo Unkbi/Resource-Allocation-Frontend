@@ -186,7 +186,11 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'period', headerName: 'Period', minWidth: 120 },
   { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number' },
   { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number' },
-  { field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110 },
+  { field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110,
+    renderCell: (params: any) => (
+      <StatusPill status={params.value}>{params.value}</StatusPill>
+    ),
+   },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   { field: 'created_by', headerName: 'Created By', minWidth: 160 },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
@@ -194,7 +198,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
 ];
 
 const resourceProjectPeriodCostColumns: GridColDef[] = [
-  { field: 'resource_name', headerName: 'Resource Name', minWidth: 180, flex: 1 },
+  { field: 'resource_name', headerName: 'Resource Name', minWidth: 220, flex: 1 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'team_name', headerName: 'Team', minWidth: 160 },
   { field: 'organization_name', headerName: 'Organization', minWidth: 160 },
