@@ -1337,6 +1337,11 @@ export const StyledDataGrid = styled(DataGridPremium)(({
         flexBasis: 'auto !important',
       },
     }),
+    '.MuiDataGrid-cell:focus .actualsBox': {
+      marginLeft: '3px',
+      paddingRight: '4px',
+      maxHeight: '23px',
+    },
   };
 });
 
