@@ -1316,7 +1316,7 @@ export const getCellClassName = (
         params.rowNode?.groupingField === 'organisationName' ||
         params.rowNode?.groupingField === 'portfolioName' ||
         (groupBy === 'resource' &&
-          params.rowNode?.groupingField === 'resource'))
+          params.rowNode?.groupingField === 'resource'));
     return isFirstGroup ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {

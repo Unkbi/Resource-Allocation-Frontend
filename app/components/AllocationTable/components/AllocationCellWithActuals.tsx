@@ -54,13 +54,14 @@ const AllocationCellWithActuals = ({
         </Box>
         <Box
           sx={{
-            width: '52px',
+            width: '50px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: getBackgroundColor(rawValue, rawActuals),
             flex: 1,
           }}
+          className="actualsBox"
         >
           <Typography
             sx={{

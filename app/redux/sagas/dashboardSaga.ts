@@ -130,10 +130,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         })),
         put(setDashboardChart({
           chartKey: 'actuals_confirmation_status',
-          data: [
-            { status: 'Actuals', percentage: responseData.actuals_confirmation_status.actuals_percentage },
-            { status: 'Planned', percentage: responseData.actuals_confirmation_status.planned_percentage }
-          ]
+          data: responseData.actuals_confirmation_status ? [responseData.actuals_confirmation_status] : []
         })),
       ]);
     } else {
