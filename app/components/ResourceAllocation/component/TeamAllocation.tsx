@@ -51,6 +51,17 @@ export interface Project {
   Type: string;
 }
 
+export type GridComparatorArgs<T = string> = {
+  v1: T | null;
+  v2: T | null;
+  p1: GridCellParams;
+  p2: GridCellParams;
+};
+
+export type GridComparator<T = string> = (
+  args: GridComparatorArgs<T>
+) => number;
+
 function TeamAllocation({
   startDate,
   endDate,
@@ -166,6 +177,13 @@ function TeamAllocation({
     }
     return null;
   };
+  
+  const resourceTypeComparator: GridComparator = ({ p1, p2, }) => {
+    const r1 = getResource(p1)?.Type ?? '';
+    const r2 = getResource(p2)?.Type ?? '';
+    return r1.localeCompare(r2);
+  };
+
 
   const teamsColumnConfig = [
     {
@@ -201,10 +219,20 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const e1 = getResource(p1)?.Email ?? '';
+        const e2 = getResource(p2)?.Email ?? '';
+        return e1.localeCompare(e2);
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Email || ''} />;
@@ -216,8 +244,18 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const n1 = Number(getResource(p1)?.PhoneNumber ?? 0);
+        const n2 = Number(getResource(p2)?.PhoneNumber ?? 0);
+        return n1 - n2;
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.PhoneNumber || ''} />;
@@ -229,8 +267,18 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+       sortComparator: (
+         _v1: string | null,
+         _v2: string | null,
+         p1: GridCellParams,
+         p2: GridCellParams
+       ) => {
+         const d1 = getResource(p1)?.Department ?? '';
+         const d2 = getResource(p2)?.Department ?? '';
+        return d1.localeCompare(d2);
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Department || ''} />;
@@ -242,8 +290,18 @@ function TeamAllocation({
       width: 100,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const h1 = Number(getResource(p1)?.HRLevel ?? 0);
+        const h2 = Number(getResource(p2)?.HRLevel ?? 0);
+        return h1-h2;
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.HRLevel || ''} />;
@@ -255,8 +313,18 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const r1 = getResource(p1)?.Role ?? '';
+        const r2 = getResource(p2)?.Role ?? '';
+        return r1.localeCompare(r2);
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Role || ''} />;
@@ -268,8 +336,20 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const r1 = getResource(p1);
+        const r2 = getResource(p2);
+        const l1 = location?.find((l: Location) => l.Id === r1?.WorkLocation)?.Name ?? '';
+        const l2 = location?.find((l: Location) => l.Id === r2?.WorkLocation)?.Name ?? '';
+        return l1.localeCompare(l2);
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const locationDetails = location?.find(
@@ -285,8 +365,22 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const d1 = getResource(p1)?.StartDate
+          ? new Date(getResource(p1)!.StartDate).getTime()
+          : 0;
+        const d2 = getResource(p2)?.StartDate
+          ? new Date(getResource(p2)!.StartDate).getTime()
+          : 0;
+        return d1 - d2;
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.StartDate || ''} />;
@@ -298,8 +392,22 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const d1 = getResource(p1)?.EndDate
+          ? new Date(getResource(p1)!.EndDate).getTime()
+          : 0;
+        const d2 = getResource(p2)?.EndDate
+          ? new Date(getResource(p2)!.EndDate).getTime()
+          : 0;
+        return d1 - d2;
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.EndDate || ''} />;
@@ -311,8 +419,18 @@ function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const c1 = getResource(p1)?.LocationCategory ?? '';
+        const c2 = getResource(p2)?.LocationCategory ?? '';
+        return c1.localeCompare(c2);
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.LocationCategory || ''} />;
@@ -324,8 +442,18 @@ function TeamAllocation({
       width: 190,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+        const h1 = Number(getResource(p1)?.AverageWeeklyHours ?? 0);
+        const h2 = Number(getResource(p2)?.AverageWeeklyHours ?? 0);
+        return h1 - h2;
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.AverageWeeklyHours || ''} />;
@@ -337,8 +465,18 @@ function TeamAllocation({
       width: 195,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+       sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+         const r1 = Number(getResource(p1)?.ContractorHourlyRate ?? 0);
+         const r2 = Number(getResource(p2)?.ContractorHourlyRate ?? 0);
+         return r1 - r2;
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return (
@@ -352,8 +490,18 @@ function TeamAllocation({
       width: 260,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: GridCellParams,
+        p2: GridCellParams
+      ) => {
+         const c1 = getResource(p1)?.ContractorHourlyRateCurrency ?? '';
+         const c2 = getResource(p2)?.ContractorHourlyRateCurrency ?? '';
+         return c1.localeCompare(c2)
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return (
@@ -367,10 +515,11 @@ function TeamAllocation({
       field: 'resourceType',
       headerName: 'Resource Type',
       width: 135,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',
+      sortComparator: (_v1 :any, _v2 :any, p1 :any, p2 :any) => resourceTypeComparator({ v1: _v1, v2: _v2, p1, p2 }),
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Type || ''} />;
@@ -382,7 +531,7 @@ function TeamAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
@@ -395,7 +544,7 @@ function TeamAllocation({
       width: 140,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -418,7 +567,7 @@ function TeamAllocation({
       width: 140,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -432,7 +581,7 @@ function TeamAllocation({
       width: 150,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -445,7 +594,7 @@ function TeamAllocation({
       width: 180,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -458,7 +607,7 @@ function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -471,7 +620,7 @@ function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -484,7 +633,7 @@ function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -497,7 +646,7 @@ function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -510,7 +659,7 @@ function TeamAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -523,7 +672,7 @@ function TeamAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -536,7 +685,7 @@ function TeamAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -549,7 +698,7 @@ function TeamAllocation({
       width: 150,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -562,7 +711,7 @@ function TeamAllocation({
       width: 170,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);

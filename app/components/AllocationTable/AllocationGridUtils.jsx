@@ -643,7 +643,8 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: groupBy == 'project' ? true : false,
+        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views for POC
+        sortable : true ,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
