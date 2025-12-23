@@ -280,7 +280,6 @@ const FilterChips: React.FC<FilterChipsProps> = ({
         const remainingCount = filter.count - 2;
 
         const chipLabel =
-          filter.count >= 2 ? (
             <Box
               sx={{
                 display: 'flex',
@@ -299,8 +298,8 @@ const FilterChips: React.FC<FilterChipsProps> = ({
                   minWidth: 0,
                 }}
               >
-                <strong>{filter.label}:</strong>{' '}
-                {filter.displayName.slice(0, 2).join(', ')}
+                {filter.label}:{' '}
+                <strong>{filter.displayName.slice(0, 2).join(', ')}</strong>
               </span>
               {showTooltip && (
                 <Tooltip
@@ -321,17 +320,6 @@ const FilterChips: React.FC<FilterChipsProps> = ({
                 </Tooltip>
               )}
             </Box>
-          ) : (
-            <span
-              style={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {filter.displayText}
-            </span>
-          );
 
         return (
           <StyledChip

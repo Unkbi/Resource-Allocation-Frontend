@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography, Button } from '@mui/material';
-import { DataGridPremium, GridColDef } from '@mui/x-data-grid-premium';
+import { DataGridPremium, GridColDef, GridRowCount } from '@mui/x-data-grid-premium';
 import { useState, useEffect } from 'react';
 import ReportBuilderToolbar from './ReportBuilderToolbar';
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
@@ -12,7 +12,7 @@ import { RootState } from '@/app/redux/store';
 import { ReportType, ReportUIFilters } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
-import { ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
+import { ColumnManagementStyles, StyledDataGrid } from '../../AllocationTable/styles/StyledDataGrid';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -24,7 +24,7 @@ export default function ReportBuilderPage({
   const dispatch = useDispatch();
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [filters, setFilters] = useState<ReportFilters>({
-    reportType: 'resourceProjectPeriodCost',
+    reportType: 'resourceProjectPeriod',
     period: 'this_week',
     customDateRange: undefined,
     team: [],
@@ -42,6 +42,7 @@ export default function ReportBuilderPage({
   const [reportGenerated, setReportGenerated] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
+  const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
 
   // Helper function to prepare API payload from filters
   const prepareApiPayload = (filters: ReportUIFilters) => {
@@ -115,7 +116,7 @@ export default function ReportBuilderPage({
 
   const handleResetFilters = () => {
     setFilters({
-      reportType: 'resourceProjectPeriodCost',
+      reportType: 'resourceProjectPeriod',
       period: 'last_week',
       customDateRange: undefined,
       team: [],
@@ -212,7 +213,7 @@ export default function ReportBuilderPage({
 
   const getSelectedFiltersCount = () => {
     let count = 0;
-    if (filters.reportType !== 'resourceProjectPeriodCost') count++;
+    if (filters.reportType !== 'resourceProjectPeriod') count++;
 
     // Check period as string
     if (filters.period !== 'last_week') count++;
@@ -234,7 +235,7 @@ export default function ReportBuilderPage({
 
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       {/* Toolbar */}
       <ReportBuilderToolbar
         onGenerateReport={handleGenerateReport}
@@ -263,7 +264,6 @@ export default function ReportBuilderPage({
         sx={{
           flex: 1,
           backgroundColor: '#F9FAFB',
-          // overflowY: 'auto',
         }}
       >
         {!reportGenerated || reportData.length === 0 ? (
@@ -315,18 +315,25 @@ export default function ReportBuilderPage({
             </Button>
           </Box>
         ) : (
-          <Box sx={{ height: '100%', p: 3 }}>
+          <Box sx={{ height: '100%', p: isFullscreenGrid ? 0 : 0 }}>
             <Box
               sx={{
-                height: '100%',
+                height: isFullscreenGrid ? '100vh' : '100%',
                 minHeight: 400,
                 backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                border: '1px solid #E5E7EB',
+                borderRadius: isFullscreenGrid ? 0 : '0px',
                 overflow: 'hidden',
+                paddingLeft: 2,
+                paddingRight: 2,
+                position: isFullscreenGrid ? 'fixed' : 'relative',
+                top: isFullscreenGrid ? 0 : 'auto',
+                left: isFullscreenGrid ? 0 : 'auto',
+                right: isFullscreenGrid ? 0 : 'auto',
+                bottom: isFullscreenGrid ? 0 : 'auto',
+                zIndex: isFullscreenGrid ? 1300 : 'auto',
               }}
             >
-              <DataGridPremium
+              <StyledDataGrid
                 key={filters.reportType}
                 rows={reportData}
                 columns={columns}
@@ -351,6 +358,11 @@ export default function ReportBuilderPage({
                   toolbar: ReportBuilderDataGridToolbar,
                 }}
                 slotProps={{
+                  toolbar: {
+                    isFullscreen: isFullscreenGrid,
+                    onToggleFullscreen: () => setIsFullscreenGrid(prev => !prev),
+                    GridRowCount: reportData.length,
+                  } as any,
                   columnsPanel: {
                     className: 'styleColumnMenu',
                     sx: ColumnManagementStyles,
@@ -361,25 +373,14 @@ export default function ReportBuilderPage({
                   },
                 }}
                 sx={{
-                  border: 'none',
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#cae4feff',
-                    borderBottom: '2px solid #E5E7EB',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: '#6B7280',
-                    textTransform: 'uppercase',
+                  '& .MuiDataGrid-virtualScrollerContent': {
+                    backgroundColor: '1px solid #F7FBFF',
                   },
-                  '& .MuiDataGrid-cell': {
-                    fontSize: '13px',
-                    color: '#1F2937',
-                    borderBottom: '1px solid #F3F4F6',
+                  '.&.MuiDataGrid-row:hover': {
+                    backgroundColor: '#F7FBFF',
                   },
-                  '& .MuiDataGrid-row:hover': {
-                    backgroundColor: '#F9FAFB',
-                  },
-                  '& .MuiDataGrid-footerContainer': {
-                    borderTop: '2px solid #E5E7EB',
+                  '.MuiDataGrid-cell': {
+                    border: '0.5px solid #E5E7EB !important',
                   },
                 }}
               />

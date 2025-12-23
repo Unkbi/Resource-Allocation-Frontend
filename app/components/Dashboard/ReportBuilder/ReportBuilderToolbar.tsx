@@ -69,7 +69,7 @@ export default function ReportBuilderToolbar({
   selectedFiltersCount = 0,
 }: ReportBuilderToolbarProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedReport, setSelectedReport] = useState('resourceProjectPeriodCost');
+  const [selectedReport, setSelectedReport] = useState('resourceProjectPeriod');
   const [selectedSavedReport, setSelectedSavedReport] = useState<number>(1);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -199,28 +199,19 @@ export default function ReportBuilderToolbar({
               },
             }}
           >
-            <Typography sx={{ fontSize: '13px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
-              Allocation & Cost Analysis
-            </Typography>
-            <MenuItem value="resourceProjectPeriodCost">Resource, Project, Period & Cost</MenuItem>
-            <MenuItem value="resourceProjectPeriod">Resource, Project, Period</MenuItem>
-            <Typography sx={{ fontSize: '12px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
-              Two Dimension Views
-            </Typography>
+            <MenuItem value="resourceProjectPeriod">Allocation & Actuals Analysis</MenuItem>
+            <MenuItem value="resourceProjectPeriodCost">Allocation & Actuals Cost Analysis</MenuItem>
             <MenuItem value="resourcePeriod" sx={{ pl: 4 }}>Resource & Period</MenuItem>
             <MenuItem value="projectPeriod" sx={{ pl: 4 }}>Project & Period</MenuItem>
-            <Typography sx={{ fontSize: '12px', fontWeight: 700, py: 1, px: 2, backgroundColor: '#EBEBEB !important', color: '#333333 !important' }}>
-              Single Dimension Views
-            </Typography>
-            <MenuItem value="resourceOnly" sx={{ pl: 4 }}>Resource</MenuItem>
-            <MenuItem value="projectsOnly" sx={{ pl: 4 }}>Project</MenuItem>
+            <MenuItem value="resourceOnly" sx={{ pl: 4 }}>Resource Roster</MenuItem>
+            <MenuItem value="projectsOnly" sx={{ pl: 4 }}>Project Roster</MenuItem>
           </Select>
         </Box>
       </Box>
       {/* Right side - Actions */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {/* My Reports Dropdown */}
-        <Button
+        {/* <Button
           variant="outlined"
           onClick={handleMenuOpen}
           startIcon={<img src="/images/icons/monitoring.svg" alt="reports" />}
@@ -259,7 +250,7 @@ export default function ReportBuilderToolbar({
           >
             {selectedReportName}
           </Typography>
-        </Button>
+        </Button> */}
 
         <Menu
           anchorEl={menuAnchor}
