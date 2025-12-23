@@ -298,6 +298,8 @@ export const AllocationForm_Status_Filter = ['Active', 'Pending'];
 
 export const Resource_Team_Project_Status_Filter = ['Active', 'Not-Planned'];
 
+export const Project_Sponsor_Manager_Status_Filter = ['Active', 'Not-Planned','Unassigned'];
+
 export const DASHBOARD_ALL_ACCESS = [
   'activeProjects',
   'allocationPercentage',
