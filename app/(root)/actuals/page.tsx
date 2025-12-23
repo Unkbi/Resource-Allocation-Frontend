@@ -463,14 +463,28 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   }, [loadingPermissions, dataProcessing, formattedActualAllocations]);
 
   useEffect(() => {
-    if (loadingPermissions) return;
+    if (loadingPermissions || dataProcessing) return;
+    if (!status) {
+      dispatch(
+        showToast({
+          open: true,
+          message: `No Status Information found, redirecting to current Week.`,
+          type: 'error',
+          position: 'bottom-left',
+          autoHideTimer: 4000,
+        })
+      );
+      router.replace(
+        `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+      );
+    }
     setDisableView(
       (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
         (status === 'Confirmed' &&
           startDate !== null &&
           !isCurrentWeek(parseISO(startDate)))
     );
-  }, [loadingPermissions, status]);
+  }, [loadingPermissions, dataProcessing, status]);
 
   useEffect(() => {
     if (loadingPermissions) return;

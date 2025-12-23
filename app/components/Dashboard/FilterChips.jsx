@@ -237,7 +237,6 @@ const FilterChips = () => {
         const remainingCount = filter.count - 2;
 
         const chipLabel =
-          filter.count >= 2 ? (
             <Box
               sx={{
                 display: 'flex',
@@ -275,17 +274,6 @@ const FilterChips = () => {
                 </Tooltip>
               )}
             </Box>
-          ) : (
-            <span
-              style={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {filter.displayText}
-            </span>
-          );
 
         return (
           <StyledChip
