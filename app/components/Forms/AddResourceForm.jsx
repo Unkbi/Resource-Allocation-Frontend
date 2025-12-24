@@ -32,7 +32,7 @@ import {
 import dayjs from 'dayjs';
 import { getMondayOfISO, getOnlyFilterSettings } from '@/app/utils/common';
 import { compressToEncodedURIComponent } from 'lz-string';
-import { DATE_FORMAT, Project_Sponsor_Manager_Status_Filter } from '@/app/constants/constants';
+import { DATE_FORMAT } from '@/app/constants/constants';
 import {
   fetchResourceAllocations,
   getMaxAllocationDate,
@@ -94,18 +94,14 @@ const AddResourceForm = ({
   const [locationOptions, setLocationOptions] = useState([]);
   const [readOnly, setReadOnly] = useState(true);
 
-
   const resourceListOptions =
     resources
-       ?.filter(resource =>
-       Project_Sponsor_Manager_Status_Filter.includes(resource.Status)
-      )
+      ?.filter(resource => resource.Status === 'Active')
       .sort((a, b) => a.FullName.localeCompare(b.FullName))
       .map(resource => ({
         value: resource.Id,
         label: resource.FullName,
       })) || [];
-
   const organisationListOptions =
     organisations
       ?.filter(org => org.Status === 'Active')
