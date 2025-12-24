@@ -860,9 +860,9 @@ function UserManagementPage({
     {
       field: 'Name',
       headerName: 'Resource',
-      flex: 1,
+      flex: 1.5,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <EllipsisNameCell value={params.value} showAvatar={false} />
       ),
     },
     {
@@ -870,7 +870,7 @@ function UserManagementPage({
       headerName: 'Email ID',
       flex: 1.5,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <EllipsisNameCell value={params.value} showAvatar={false} />
       ),
     },
     {
@@ -880,7 +880,81 @@ function UserManagementPage({
       renderCell: (params: any) => {
         const locationName =
           location.find((loc: any) => loc.Id === params.value)?.Name || '';
-        return <Typography sx={commonCellStyle}>{locationName}</Typography>;
+        return <EllipsisNameCell value={locationName} showAvatar={false} />;
+      },
+    },
+    {
+      field: '__created',
+      headerName: 'Created On',
+      flex: 1,
+      minWidth: 120,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__created_by',
+      headerName: 'Created By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
+      field: '__last_modified',
+      headerName: 'Last Modified On',
+      flex: 1,
+      minWidth: 120,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__last_modified_by',
+      headerName: 'Last Modified By',
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
       },
     },
     {
@@ -895,7 +969,7 @@ function UserManagementPage({
     {
       field: 'userStatus',
       headerName: 'User Status',
-      flex: 0.7,
+      flex: 1.5,
       renderCell: (params: any) => (
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
@@ -1168,6 +1242,16 @@ function UserManagementPage({
           selectedRowIds={selectedRowIds}
           onSelectionChange={handleSelectionChange}
           isRowSelectable={params => params.row.resourceStatus !== 'Inactive'}
+          initialState={{
+            columns: {
+              columnVisibilityModel: {
+                __created: false,
+                __created_by: false,
+                __last_modified: false,
+                __last_modified_by: false,
+              },
+            },
+          }}
         />
       )}
 
