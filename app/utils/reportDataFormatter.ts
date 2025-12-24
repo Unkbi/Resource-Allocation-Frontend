@@ -18,11 +18,11 @@ const safeGet = (obj: any, path: string, defaultValue: any = null) => {
     let nestedEntity = obj[entityKey];
 
     if (!nestedEntity) return defaultValue;
-    if (nestedEntity[entityKey] !== undefined && nestedEntity[entityKey] !== null) {
-        nestedEntity = nestedEntity[entityKey];
-    }
+    // if (nestedEntity[entityKey] !== undefined && nestedEntity[entityKey] !== null) {
+    //     nestedEntity = nestedEntity[entityKey];
+    // }
     const propertyValue = nestedEntity[propertyKey];
-    
+
     return propertyValue !== undefined && propertyValue !== null 
         ? propertyValue 
         : defaultValue;
@@ -158,7 +158,7 @@ const formatResourcePeriod = (data: any[]): any[] => {
         resource_type: safeGet(item, 'Resource.Type', ''),
         team_name: safeGet(item, 'Team.Name', ''),
         organization_name: safeGet(item, 'Organization.Name', ''),
-        allocation_manager: safeGet(item, 'Manager.FullName', ''),
+        allocation_manager: safeGet(item, 'Team.AllocationManager', ''),
         period: safeGet(item, 'ResourceEngagementScore.Period', ''),
         planned_allocation: safeGet(item, 'PlannedAllocation', 0),
         actuals_allocation: safeGet(item, 'ActualsAllocation', 0),
@@ -185,7 +185,7 @@ const formatResourceProjectPeriod = (data: any[]): any[] => {
         resource_type: safeGet(item, 'Resource.Type', ''),
         team_name: safeGet(item, 'Team.Name', ''),
         organization_name: safeGet(item, 'Organization.Name', ''),
-        allocation_manager: safeGet(item, 'Manager.FullName', ''),
+        allocation_manager: safeGet(item, 'Team.AllocationManager', ''),
         project_name: safeGet(item, 'Project.Name', ''),
         project_type_group: safeGet(item, 'ProjectTypeGroup.Name', ''),
         project_type: safeGet(item, 'ProjectType.Name', ''),
@@ -212,7 +212,7 @@ const formatResourceProjectPeriodCost = (data: any[]): any[] => {
         resource_type: safeGet(item, 'Resource.Type', ''),
         team_name: safeGet(item, 'Team.Name', ''),
         organization_name: safeGet(item, 'Organization.Name', ''),
-        allocation_manager: safeGet(item, 'Manager.FullName', ''),
+        allocation_manager: safeGet(item, 'Team.AllocationManager', ''),
         project_id: safeGet(item, 'Project.Id', ''),
         project_name: safeGet(item, 'Project.Name', ''),
         project_type_group: safeGet(item, 'ProjectTypeGroup.Name', ''),

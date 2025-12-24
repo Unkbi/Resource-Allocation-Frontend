@@ -374,7 +374,7 @@ export default function ReportBuilderPage({
                 }}
                 sx={{
                   '& .MuiDataGrid-virtualScrollerContent': {
-                    backgroundColor: '1px solid #F7FBFF',
+                    backgroundColor: '#F7FBFF',
                   },
                   '.&.MuiDataGrid-row:hover': {
                     backgroundColor: '#F7FBFF',

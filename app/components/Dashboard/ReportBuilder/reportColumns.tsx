@@ -2,6 +2,8 @@ import { GridColDef } from '@mui/x-data-grid';
 import { ReportType } from '@/app/types/dashboardTypes';
 import { Box } from '@mui/material';
 import { StatusPill, ScorePill } from '../../Settings/styled';
+import { useSelector } from 'react-redux';
+import { getAllocationManagerFromPath } from '@/app/utils/common';
 
 const renderScoreCell = (params: any) => {
   const rawValue = Number(params.value ?? 0);
@@ -21,6 +23,27 @@ const renderScoreCell = (params: any) => {
       <ScorePill score={value}>{displayValue}</ScorePill>
     </Box>
   );
+};
+const GetUsers = (): any[] => {
+  const { user } = useSelector((state: any) => state.rbac);
+  if (!Array.isArray(user)) return [];
+  return user;
+};
+
+const GetResources = (): any[] => {
+  const { resources } = useSelector((state: any) => state.resources);
+  if (!Array.isArray(resources)) return [];
+  return resources;
+};
+
+const GetName = (uid: string): string => {
+  const users = GetUsers();
+  const user = users.find((u: any) => u.id === uid);
+  if (!user) return uid;
+  const { firstName, lastName } = user;
+  if (firstName && lastName) return `${firstName} ${lastName}`;
+  if (firstName) return firstName;
+  return uid;
 };
 
 const projectsOnlyColumns: GridColDef[] = [
@@ -84,9 +107,15 @@ const projectsOnlyColumns: GridColDef[] = [
   { field: 'project_sponsor', headerName: 'Project Sponsor', minWidth: 160 },
   { field: 'project_sponsor_email', headerName: 'Project Sponsor Email', minWidth: 200 },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
-  { field: 'created_by', headerName: 'Created By', minWidth: 160 },
+  {
+    field: 'created_by', headerName: 'Created By', minWidth: 160,
+    renderCell: (params) => GetName(params.value)
+  },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
-  { field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180 },
+  {
+    field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180,
+    renderCell: (params) => GetName(params.value),
+  },
 ];
 
 const resourceOnlyColumns: GridColDef[] = [
@@ -119,9 +148,15 @@ const resourceOnlyColumns: GridColDef[] = [
   },
   { field: 'user_id', headerName: 'User ID', minWidth: 120 },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
-  { field: 'created_by', headerName: 'Created By', minWidth: 160 },
+  {
+    field: 'created_by', headerName: 'Created By', minWidth: 160,
+    renderCell: (params) => GetName(params.value),
+  },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
-  { field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180 },
+  {
+    field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180,
+    renderCell: (params) => GetName(params.value),
+  },
 ];
 
 const projectPeriodColumns: GridColDef[] = [
@@ -146,9 +181,15 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'engagement_score', headerName: 'Project Engagement Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'project_actuals_status_score', headerName: 'Project Actuals Status Score', minWidth: 180 },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
-  { field: 'created_by', headerName: 'Created By', minWidth: 160 },
+  {
+    field: 'created_by', headerName: 'Created By', minWidth: 160,
+    renderCell: (params) => GetName(params.value),
+  },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
-  { field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180 },
+  {
+    field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180,
+    renderCell: (params) => GetName(params.value),
+  },
 ];
 
 const resourcePeriodColumns: GridColDef[] = [
@@ -156,7 +197,10 @@ const resourcePeriodColumns: GridColDef[] = [
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'team_name', headerName: 'Team Name', minWidth: 160 },
   { field: 'organization_name', headerName: 'Organization', minWidth: 160 },
-  { field: 'allocation_manager', headerName: 'Allocation Manager', minWidth: 180 },
+  {
+    field: 'allocation_manager', headerName: 'Allocation Manager', minWidth: 180,
+    renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
+  },
   { field: 'period', headerName: 'Period', minWidth: 120 },
   { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170, type: 'number' },
   { field: 'actuals_allocation', headerName: 'Actuals Allocation', minWidth: 170, type: 'number' },
@@ -167,9 +211,15 @@ const resourcePeriodColumns: GridColDef[] = [
   { field: 'communication_score', headerName: 'Communication Score', minWidth: 180, renderCell: renderScoreCell },
   { field: 'engagement_score', headerName: 'Engagement Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
-  { field: 'created_by', headerName: 'Created By', minWidth: 160 },
+  {
+    field: 'created_by', headerName: 'Created By', minWidth: 160,
+    renderCell: (params) => GetName(params.value),
+  },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
-  { field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180 },
+  {
+    field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180,
+    renderCell: (params) => GetName(params.value),
+  },
 ];
 
 const resourceProjectPeriodColumns: GridColDef[] = [
@@ -177,7 +227,10 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'team_name', headerName: 'Team Name', minWidth: 160 },
   { field: 'organization_name', headerName: 'Organization', minWidth: 160 },
-  { field: 'allocation_manager', headerName: 'Allocation Manager', minWidth: 180 },
+  {
+    field: 'allocation_manager', headerName: 'Allocation Manager', minWidth: 180,
+    renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
+  },
   { field: 'project_name', headerName: 'Project Name', minWidth: 200 },
   { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
@@ -186,15 +239,22 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'period', headerName: 'Period', minWidth: 120 },
   { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number' },
   { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number' },
-  { field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110,
+  {
+    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110,
     renderCell: (params: any) => (
       <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
-   },
+  },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
-  { field: 'created_by', headerName: 'Created By', minWidth: 160 },
+  {
+    field: 'created_by', headerName: 'Created By', minWidth: 160,
+    renderCell: (params) => GetName(params.value),
+  },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
-  { field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180 },
+  {
+    field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180,
+    renderCell: (params) => GetName(params.value),
+  },
 ];
 
 const resourceProjectPeriodCostColumns: GridColDef[] = [
@@ -202,7 +262,10 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'team_name', headerName: 'Team', minWidth: 160 },
   { field: 'organization_name', headerName: 'Organization', minWidth: 160 },
-  { field: 'allocation_manager', headerName: 'Allocation Manager', minWidth: 180 },
+  {
+    field: 'allocation_manager', headerName: 'Allocation Manager', minWidth: 180,
+    renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
+  },
   { field: 'project_name', headerName: 'Project Name', minWidth: 200 },
   { field: 'project_type_group', headerName: 'Project Type Group', minWidth: 160 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
@@ -223,9 +286,15 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
     ),
   },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
-  { field: 'created_by', headerName: 'Created By', minWidth: 160 },
+  {
+    field: 'created_by', headerName: 'Created By', minWidth: 160,
+    renderCell: (params) => GetName(params.value),
+  },
   { field: 'last_modified', headerName: 'Last Modified On', minWidth: 140 },
-  { field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180 },
+  {
+    field: 'last_modified_by', headerName: 'Last Modified By', minWidth: 180,
+    renderCell: (params) => GetName(params.value),
+  },
 ];
 
 export const getReportColumns = (reportType: ReportType): GridColDef[] => {
