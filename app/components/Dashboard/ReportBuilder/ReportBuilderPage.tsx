@@ -25,7 +25,7 @@ export default function ReportBuilderPage({
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [filters, setFilters] = useState<ReportFilters>({
     reportType: 'resourceProjectPeriod',
-    period: 'this_week',
+    period: 'last_week',
     customDateRange: undefined,
     team: [],
     organization: [],

@@ -444,9 +444,9 @@ export default function ReportBuilderFilters({
 
   const handleChipDelete = (key: string) => {
     if (key === 'reportType') {
-      handleFilterChange('reportType', 'resourceProjectPeriodCost');
+      handleFilterChange('reportType', 'resourceProjectPeriod');
     } else if (key === 'period') {
-      handleFilterChange('period', 'this_week');
+      handleFilterChange('period', 'last_week');
     } else {
       // Reset to empty array for all array-based filters
       handleFilterChange(key as keyof ReportFilters, []);
@@ -459,8 +459,8 @@ export default function ReportBuilderFilters({
     Object.entries(filters).forEach(([key, value]) => {
       // Skip default/empty values for report mode
       if (!value || 
-          (typeof value === 'string' && value === 'this_week' && key === 'period') ||
-          (typeof value === 'string' && value === 'resourceProjectPeriodCost' && key === 'reportType') ||
+          (typeof value === 'string' && value === 'last_week' && key === 'period') ||
+          (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') ||
           (Array.isArray(value) && value.length === 0)) {
         return;
       }
@@ -550,7 +550,7 @@ export default function ReportBuilderFilters({
         >
           Period
         </Typography>
-        <Box sx={{ minWidth: 250 }}>
+        <Box sx={{ minWidth: 250, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Select
             id="period-select"
             value={filters.period}
@@ -638,6 +638,33 @@ export default function ReportBuilderFilters({
               <span>Custom</span>
             </MenuItem>
           </Select>
+
+          {filters.period === 'custom' && formatDateRange(filters.customDateRange) && (
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.75,
+                borderRadius: '5px',
+                border: '1px solid #E5E7EB',
+                backgroundColor: '#FFFFFF',
+                px: 1.5,
+                py: 1.25,
+                // boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: '#111827',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {formatDateRange(filters.customDateRange)}
+              </Typography>
+            </Box>
+          )}
 
           {/* Custom Date Range Submenu */}
           <Menu

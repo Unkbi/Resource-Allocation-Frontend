@@ -3220,7 +3220,7 @@ export default function ExecutiveDashboardPage() {
             flexDirection: 'column',
           }}
         >
-          <ReportBuilderPage onReportGenerate={(filters) => { console.log('Report generated with filters:', filters) }} />
+          <ReportBuilderPage />
         </Box>
       )}
       <Dialog
