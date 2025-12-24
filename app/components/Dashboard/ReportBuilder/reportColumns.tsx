@@ -170,12 +170,6 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'period', headerName: 'Period', minWidth: 120 },
   { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170, type: 'number' },
   { field: 'actual_allocation', headerName: 'Actual Allocation', minWidth: 170, type: 'number' },
-  {
-    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 180,
-    renderCell: (params: any) => (
-      <StatusPill status={params.value}>{params.value}</StatusPill>
-    ),
-  },
   { field: 'health_score', headerName: 'Project Health Score', minWidth: 130, renderCell: renderScoreCell },
   { field: 'adherence_score', headerName: 'Project Adherence Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'engagement_score', headerName: 'Project Engagement Score', minWidth: 150, renderCell: renderScoreCell },

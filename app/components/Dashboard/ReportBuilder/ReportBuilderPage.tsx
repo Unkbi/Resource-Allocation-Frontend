@@ -77,8 +77,8 @@ export default function ReportBuilderPage({
     const uiFilters: ReportUIFilters = {
       reportType: filters.reportType as ReportType,
       period: filters.period as ReportUIFilters['period'],
-      customStartDate: start ? start.toISOString() : '',
-      customEndDate: end ? end.toISOString() : '',
+      customStartDate: start ? start.format('YYYY-MM-DD') : '',
+      customEndDate: end ? end.format('YYYY-MM-DD') : '',
       team: filters.team,
       organization: filters.organization,
       resourceType: filters.resourceType,
@@ -168,8 +168,8 @@ export default function ReportBuilderPage({
     const uiFilters: ReportUIFilters = {
       reportType: filters.reportType as ReportType,
       period: filters.period as ReportUIFilters['period'],
-      customStartDate: start ? start.toISOString() : undefined,
-      customEndDate: end ? end.toISOString() : undefined,
+      customStartDate: start ? start.format('YYYY-MM-DD') : undefined,
+      customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
       team: filters.team,
       organization: filters.organization,
       resourceType: filters.resourceType,

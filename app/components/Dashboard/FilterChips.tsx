@@ -196,7 +196,7 @@ const FilterChips: React.FC<FilterChipsProps> = ({
         } else {
           // For report mode, skip default values
           if (key === 'reportType') return false;
-          if (key === 'period' && value === 'this_week') return false;
+          if (key === 'period' && value === 'last_week') return false;
           if (key === 'customDateRange') return false; // Don't show as separate chip
           if (Array.isArray(value)) {
             return value.length > 0;
