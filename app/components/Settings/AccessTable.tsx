@@ -52,7 +52,6 @@ interface AccessTableProps {
   selectedRowIds?: Set<string>;
   onSelectionChange?: (hasSelection: boolean, selectedIds: Set<string>) => void;
   isRowSelectable?: (params: any) => boolean;
-  initialState?: any;
 }
 
 export default function AccessTable({
@@ -81,7 +80,6 @@ export default function AccessTable({
   selectedRowIds = new Set(),
   onSelectionChange,
   isRowSelectable,
-  initialState = {},
 }: AccessTableProps) {
   const [search, setSearch] = useState('');
   const [gridView, setGridView] = useState<'grid' | 'list'>('grid');
@@ -95,9 +93,7 @@ export default function AccessTable({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState(
-    initialState.columns?.columnVisibilityModel || {}
-  );
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
   const [filterCount, setFilterCount] = useState(0);
 
   // Track filter count
@@ -856,14 +852,6 @@ export default function AccessTable({
           initialState={{
             sorting: {
               sortModel: [{ field: 'Name', sort: 'asc' }],
-            },
-            columns: {
-              columnVisibilityModel: {
-                __created: false,
-                __created_by: false,
-                __last_modified: false,
-                __last_modified_by: false,
-              },
             },
           }}
           slotProps={{

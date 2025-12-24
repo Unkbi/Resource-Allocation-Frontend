@@ -47,53 +47,44 @@ const formatAllocations = (
   if (Array.isArray(allocationsData) && allocationsData.length === 0) {
     let obj: AllocationGridCell[] = [];
     if (resources?.length === 0) {
-      const weeksList = getMondaysInRange(startDate, endDate);
-      const emptyRow: any = {
-        id: teamId,
-        resourceId: '',
-        project: '',
-        projectId: '',
-        resource: '',
-        totalEffort: null,
-        role: '',
-        teamStatus: teamStatus ?? '',
-        teamAllocationManager: teamAllocationManager ?? '',
-        teams: teamName,
-        teamsId: teamId,
-        resourceType: '',
-      };
-      weeksList.forEach(week => {
-        emptyRow[getWeekNumber(new Date(week))] = null;
-      });
-
-      obj = [emptyRow];
+      obj = [
+        {
+          id: teamId,
+          resourceId: '',
+          project: '',
+          projectId: '',
+          resource: '',
+          totalEffort: null,
+          role: '',
+          teamStatus: teamStatus ?? '',
+          teamAllocationManager: teamAllocationManager ?? '',
+          teams: teamName,
+          teamsId: teamId,
+          resourceType: '',
+          W1: null,
+        },
+      ];
     } else {
       if (Array.isArray(resources) && resources?.length !== 0) {
         const uniqueRecords = removeDuplicateResources(resources);
 
         if (uniqueRecords.length > 0) {
-          const weeksList = getMondaysInRange(startDate, endDate);
-          obj = uniqueRecords.map(resource => {
-            const entry: any = {
-              id: resource.Id + teamId,
-              resourceId: resource.Id,
-              project: '',
-              projectId: '',
-              resource: resource.FullName,
-              totalEffort: null,
-              role: resource.Role,
-              teams: teamName,
-              teamsId: teamId,
-              teamStatus: teamStatus ?? '',
-              teamAllocationManager: teamAllocationManager ?? '',
-              resourceType: resource.Type,
-              hasProject: true,
-            };
-            weeksList.forEach(week => {
-              entry[getWeekNumber(new Date(week))] = null;
-            });
-            return entry;
-          });
+          obj = uniqueRecords.map(resource => ({
+            id: resource.Id + teamId,
+            resourceId: resource.Id,
+            project: '',
+            projectId: '',
+            resource: resource.FullName,
+            totalEffort: null,
+            role: resource.Role,
+            teams: teamName,
+            teamsId: teamId,
+            teamStatus: teamStatus ?? '',
+            teamAllocationManager: teamAllocationManager ?? '',
+            resourceType: resource.Type,
+            hasProject: true,
+            W1: null,
+          }));
         }
       }
     }
