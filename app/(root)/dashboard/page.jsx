@@ -552,7 +552,7 @@ export default function ExecutiveDashboardPage() {
 
     setFilteredUnderAllocated(Array.isArray(under) ? under : []);
     setFilteredOverAllocated(Array.isArray(over) ? over : []);
-    
+
   }, [resourceUtilization]);
 
   useEffect(() => {
@@ -867,7 +867,7 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredActualDeviation || 
+          !filteredActualDeviation ||
           filteredActualDeviation.length === 0 ||
           hasBarChartAllZeroValues(filteredActualDeviation, ['planned_units', 'actual_units'])
         }
@@ -1081,7 +1081,7 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredTop5Projects || 
+          !filteredTop5Projects ||
           filteredTop5Projects.length === 0 ||
           hasBarChartAllZeroValues(filteredTop5Projects, ['planned_units', 'actual_units', 'variance_percentage'])
         }
@@ -1275,7 +1275,7 @@ export default function ExecutiveDashboardPage() {
         minWidth={400}
         minHeight={300}
         showNoData={
-          !filteredActiveProjectsByType || 
+          !filteredActiveProjectsByType ||
           filteredActiveProjectsByType.length === 0 ||
           filteredActiveProjectsByType.every(item => Number(item.count || 0) === 0)
         }
@@ -1403,7 +1403,7 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !totalHeadcount || 
+          !totalHeadcount ||
           totalHeadcount.length === 0 ||
           hasStackedChartAllZeroValues(totalHeadcount, ['FTE', 'Contractor - FT', 'Contractor - PT', 'Intern'])
         }
@@ -1507,11 +1507,11 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !allocation_by_project_type_group || 
+          !allocation_by_project_type_group ||
           Object.keys(allocation_by_project_type_group).length === 0 ||
-          Object.values(allocation_by_project_type_group).every(groupData => 
-            !Array.isArray(groupData) || 
-            groupData.length === 0 || 
+          Object.values(allocation_by_project_type_group).every(groupData =>
+            !Array.isArray(groupData) ||
+            groupData.length === 0 ||
             groupData.every(item => Number(item.allocation_percentage || 0) === 0)
           )
         }
@@ -1637,7 +1637,7 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredUnapprovedProjectAllocation || 
+          !filteredUnapprovedProjectAllocation ||
           filteredUnapprovedProjectAllocation.length === 0 ||
           hasPieChartAllZeroValues(transformDataForPieChart(filteredUnapprovedProjectAllocation))
         }
@@ -1718,9 +1718,9 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !actuals_confirmation_status || 
+          !actuals_confirmation_status ||
           actuals_confirmation_status.length === 0 ||
-          actuals_confirmation_status.every(item => 
+          actuals_confirmation_status.every(item =>
             parseFloat(item.actuals_total || 0) === 0 && parseFloat(item.planned_total || 0) === 0
           )
         }
@@ -1728,7 +1728,7 @@ export default function ExecutiveDashboardPage() {
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
-          
+
           // Extract data from API response
           const data = actuals_confirmation_status?.[0] || {};
           const actualsTotal = parseFloat(data.actuals_total || 0);
@@ -1737,7 +1737,7 @@ export default function ExecutiveDashboardPage() {
           const plannedPercentage = parseFloat(data.planned_percentage || 0);
 
           // Prepare data for bar chart
-          const categories = [ 'Planned','Actuals'];
+          const categories = ['Planned', 'Actuals'];
           const values = [plannedTotal, actualsTotal];
           const percentages = [plannedPercentage, actualsPercentage];
           const barColors = ['#4169E1', '#FFD700'];
@@ -1795,7 +1795,7 @@ export default function ExecutiveDashboardPage() {
                       label: 'Planned',
                       color: '#4169E1',
                       valueFormatter: (value) => 
-                      value ? `${value.toFixed(1)} (${plannedPercentage.toFixed(1)}%)` : '',
+                        value ? `${value.toFixed(1)} (${plannedPercentage.toFixed(1)}%)` : '',
                     },
                     {
                       data: [null,actualsTotal],
@@ -1803,7 +1803,7 @@ export default function ExecutiveDashboardPage() {
                       label: 'Actuals',
                       color: '#FFD700',
                       valueFormatter: (value) => 
-                      value ? `${value.toFixed(1)} (${actualsPercentage.toFixed(1)}%)` : '',
+                        value ? `${value.toFixed(1)} (${actualsPercentage.toFixed(1)}%)` : '',
                     },
                   ]}
                   width={config.width}
@@ -1840,7 +1840,7 @@ export default function ExecutiveDashboardPage() {
       <DashboardWidget
         onClick={() => handleChartClick('Engagement Score Overview')}
         // minWidth={650}
-        minHeight={280}
+        minHeight={300}
         autoHeight={true}
       >
         {() => {
@@ -1857,14 +1857,14 @@ export default function ExecutiveDashboardPage() {
                 {
                   score: parseFloat(data.planned_score || 0),
                   label: 'Planned Score',
-                  tooltipText:`Evaluates allocation entries across a 5-week rolling window centered on the current week. Each week's allocation percentage is weighted, with the current week and near-future weeks carrying the greatest influence. Higher allocation percentages in the weighted window increase score up to full capacity, with overallocation (typically over 1.0 FTE) indicating overburdening. Complete absence of allocation across the entire window triggers an additional penalty.`,
+                  tooltipText: `Evaluates allocation entries across a 5-week rolling window centered on the current week. Each week's allocation percentage is weighted, with the current week and near-future weeks carrying the greatest influence. Higher allocation percentages in the weighted window increase score up to full capacity, with overallocation (typically over 1.0 FTE) indicating overburdening. Complete absence of allocation across the entire window triggers an additional penalty.`,
                   change: parseFloat(data.planned_score_change || 0),
                   positive: data.planned_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actual_score || 0),
                   label: 'Actuals Score',
-                  tooltipText:'Evaluates actuals confirmation status across the 3 most recent completed weeks, weighted toward the most recent week. Confirmed status for the most recent week yields full component points. Any status other than confirmed yields zero base points, with additional penalties applied if older weeks are also unconfirmed. Key action: Confirm actuals for the most recent completed week.',
+                  tooltipText: 'Evaluates actuals confirmation status across the 3 most recent completed weeks, weighted toward the most recent week. Confirmed status for the most recent week yields full component points. Any status other than confirmed yields zero base points, with additional penalties applied if older weeks are also unconfirmed. Key action: Confirm actuals for the most recent completed week.',
                   change: parseFloat(data.actual_score_change || 0),
                   positive: data.actual_score_direction !== 'down',
                 },
@@ -1876,11 +1876,11 @@ export default function ExecutiveDashboardPage() {
       </DashboardWidget>
     ),
 
-     projectHealthOverview: (
+    projectHealthOverview: (
       <DashboardWidget
         onClick={() => handleChartClick('Project Health Score Overview')}
         // minWidth={650}
-        minHeight={280}
+        minHeight={300}
         autoHeight={true}
       >
         {() => {
@@ -1897,21 +1897,43 @@ export default function ExecutiveDashboardPage() {
                 {
                   score: parseFloat(data.alignment_score || 0),
                   label: 'Alignment Score',
-                  tooltipText:"Measures delivery predictability by comparing total planned allocation versus total actual allocation across all contributors. Projects score highest when variance falls within an optimal range around zero. Tolerance for variance depends on project type: Transform projects allow more positive variance (extra effort on challenging work), Run projects favor stability in both directions, Grow projects expect tight control. Scores decay as variance moves outside optimal range. Exception: Negative variance paired with 'On-Track' project status may bypass penalties.",
+                  tooltipText: `Measures delivery predictability by comparing planned versus actual allocation across all contributors.
+                  Each contributor's variance (actual minus planned) is calculated and weighted by their allocation size—larger allocations impact the score more. The project score is the average of all contributor scores.
+                  SCORING BY DELIVERY CATEGORY:
+                  Under-delivery (actual < planned):
+                    • Transform: steep penalty (1.5x decay) — expects tight adherence
+                    • Grow: moderate penalty (1.0x decay) — expects reasonable control
+                    • Run: gradual penalty (0.5x decay) — most forgiving for stable operations
+                  Over-delivery (actual > planned):
+                    • All categories: equal penalty (0.5x decay)
+                  EXCEPTION:
+                  Contributors with under-delivery AND On-Track status receive full credit—their shortfall does not count against the project.`,
                   change: parseFloat(data.alignment_score_change || 0),
                   positive: data.alignment_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.actuals_score || 0),
-                  label: 'Actuals Status',
-                  tooltipText:"Evaluates contributor status distribution using a weighted formula: 'On-Track' statuses add positive value, 'Off-Track' statuses subtract value, 'At-Risk' is neutral. The ratio of status types determines the raw score, which is then normalized. Contributors who don't submit status are excluded from calculation.",
+                  label: 'Actuals Status Score',
+                  tooltipText: `Evaluates the distribution of contributor statuses using a weighted formula that rewards healthy delivery signals and penalizes issues.
+                    HOW IT WORKS:
+                    Each contributor's status is assigned a weight:
+                      • On-Track: +1.0 (full positive contribution)
+                      • At-Risk: 0.0 (neutral, no impact)
+                      • Off-Track: -1.0 (full negative contribution)
+                      • No submission: counts as missing and lowers the overall score
+                    The weights are summed and normalized to produce a percentage. A project with all On-Track statuses scores 100%. Mixed statuses reduce the score proportionally.`,
                   change: parseFloat(data.actuals_score_change || 0),
                   positive: data.actuals_score_direction !== 'down',
                 },
                 {
                   score: parseFloat(data.engagement_score || 0),
                   label: 'Engagement Score',
-                  tooltipText:"Measures what percentage of project contributors submit any status update. Score scales proportionally with participation rate. Any status submission counts ('On-Track', 'At-Risk', or 'Off-Track')—the specific status value doesn't affect engagement, only that something was submitted.",
+                  tooltipText: `Measures what percentage of project contributors submit any status update, regardless of what that status is.
+                    HOW IT WORKS:
+                      • 100% of contributors submit status = 100% engagement score
+                      • 50% of contributors submit status = 50% engagement score
+                      • 0% of contributors submit status = 0% engagement score
+                    The specific status value (On-Track, At-Risk, or Off-Track) does not affect engagement—only whether something was submitted. A contributor who submits Off-Track counts the same as one who submits On-Track for engagement purposes.`,
                   change: parseFloat(data.engagement_score_change || 0),
                   positive: data.engagement_score_direction !== 'down',
                 },
@@ -1931,7 +1953,7 @@ export default function ExecutiveDashboardPage() {
         minWidth={320}
         minHeight={280}
         showNoData={
-          !filteredProjectFTEData || 
+          !filteredProjectFTEData ||
           filteredProjectFTEData.length === 0 ||
           filteredProjectFTEData.every(d => (
             Number(d.planned_pct || 0) === 0 && Number(d.actual_pct || 0) === 0
@@ -2121,7 +2143,7 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !filteredbudgetVsPlanVsActual ||
           filteredbudgetVsPlanVsActual.length === 0 ||
-          hasBarChartAllZeroValues(filteredbudgetVsPlanVsActual, ['budget_total','planned_to_date','actual_to_date'])
+          hasBarChartAllZeroValues(filteredbudgetVsPlanVsActual, ['budget_total', 'planned_to_date', 'actual_to_date'])
         }
         noDataMessage="No budget/plan/actual data available"
       >
@@ -2835,7 +2857,7 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !teamEngagementScore ||
           teamEngagementScore.length === 0 ||
-          hasBarChartAllZeroValues(teamEngagementScore,['avg_engagement_score'])
+          hasBarChartAllZeroValues(teamEngagementScore, ['avg_engagement_score'])
         }
         noDataMessage="No engagement score data available"
       >
@@ -2942,18 +2964,6 @@ export default function ExecutiveDashboardPage() {
           .react-grid-item.cssTransforms {
             transition-property: transform;
           }
-         .react-grid-item.plan-vs-actual-adjust {
-            margin-top: 15px;
-          }
-          .react-grid-item.allocation-trends-adjust {
-            margin-top: 15px;
-            }
-            .react-grid-item.actuals-by-category-adjust {
-            margin-top: 15px;
-            }
-            .react-grid-item.total-headcount-adjust {
-            margin-top: 15px;
-            }
 
           /* Fix resize handle for auto-height widgets */
           .react-grid-item.auto-height-widget {
@@ -3082,63 +3092,63 @@ export default function ExecutiveDashboardPage() {
           '&::-webkit-scrollbar': { display: 'none' }, // WebKit
         }}
       >
-      {activeTab === 'overview' && (
-        <>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: '24px',
-              fontWeight: 700,
-              color: '#000000',
-              paddingLeft: '24px',
-              paddingBottom: '8px',
-            }}
-          >
-            Overview
-          </Typography>
+        {activeTab === 'overview' && (
+          <>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#000000',
+                paddingLeft: '24px',
+                paddingBottom: '8px',
+              }}
+            >
+              Overview
+            </Typography>
 
-          <Overview
-            activeProjects={activeProjects}
-            activeResources={activeResources}
-            actualsConfirmed={filteredActualsConfirmed}
-            totalResourceCost={totalResourceCost}
-            allocationPercentage={filteredAllocationPercentage}
-            hasAccessToQueryKey={hasAccessToQueryKey}
-          />
-          <ResponsiveGridLayout
-            className="layout"
-            layouts={persistedOverviewLayouts || overviewLayouts}
-            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-            cols={{ lg: 12, md: 12, sm: 12 }}
-            rowHeight={130}
-            onLayoutChange={(layout, layouts) => handleLayoutChange('overview', layout, layouts)}
-            isDraggable
-            isResizable
-            compactType="vertical"
-            style={{ padding: '0 16px' }}
-          >
-            {allowedOverviewCharts.map(key => (
-              <div
-                key={key}
-                className={
-                  [
-                    key === 'engagementScoreOverview' ||
-                    key === 'projectHealthOverview'
-                      ? 'auto-height-widget'
-                      : '',
-                    key === 'plan_vs_actual_variance'
-                      ? 'plan-vs-actual-adjust'
-                      : '',
-                    key === 'projectFTE'
-                      ? 'allocation-trends-adjust'
-                      : '',
-                     key === 'unapprovedProjectAllocation'
-                      ? 'actuals-by-category-adjust'
-                      : '',
-                    key === 'totalHeadcount'
-                      ? 'total-headcount-adjust'
-                      : '',
-                  ].join(' ')}
+            <Overview
+              activeProjects={activeProjects}
+              activeResources={activeResources}
+              actualsConfirmed={filteredActualsConfirmed}
+              totalResourceCost={totalResourceCost}
+              allocationPercentage={filteredAllocationPercentage}
+              hasAccessToQueryKey={hasAccessToQueryKey}
+            />
+            <ResponsiveGridLayout
+              className="layout"
+              layouts={persistedOverviewLayouts || overviewLayouts}
+              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+              cols={{ lg: 12, md: 12, sm: 12 }}
+              rowHeight={130}
+              onLayoutChange={(layout, layouts) => handleLayoutChange('overview', layout, layouts)}
+              isDraggable
+              isResizable
+              compactType="vertical"
+              style={{ padding: '0 16px' }}
+            >
+              {allowedOverviewCharts.map(key => (
+                <div
+                  key={key}
+                  className={
+                    [
+                      key === 'engagementScoreOverview' ||
+                        key === 'projectHealthOverview'
+                        ? 'auto-height-widget'
+                        : '',
+                      key === 'plan_vs_actual_variance'
+                        ? 'plan-vs-actual-adjust'
+                        : '',
+                      key === 'projectFTE'
+                        ? 'allocation-trends-adjust'
+                        : '',
+                      key === 'unapprovedProjectAllocation'
+                        ? 'actuals-by-category-adjust'
+                        : '',
+                      key === 'totalHeadcount'
+                        ? 'total-headcount-adjust'
+                        : '',
+                    ].join(' ')}
                 >
                   {overviewcharts[key]}
                 </div>
@@ -3147,38 +3157,38 @@ export default function ExecutiveDashboardPage() {
           </>
         )}
 
-      {activeTab === 'teams' && (
-        <>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: '24px',
-              fontWeight: 700,
-              color: '#000000',
-              paddingLeft: '24px',
-              paddingBottom: '8px',
-            }}
-          >
-            Teams Overview
-          </Typography>
-          <ResponsiveGridLayout
-            className="layout"
-            layouts={persistedTeamLayouts || teamLayouts}
-            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-            cols={{ lg: 12, md: 12, sm: 12 }}
-            rowHeight={130}
-            onLayoutChange={(layout, layouts) => handleLayoutChange('teams', layout, layouts)}
-            isDraggable
-            isResizable
-            compactType="vertical"
-            style={{ padding: '0 16px' }}
-          >
-            {allowedTeamCharts.map(key => (
-              <div key={key}>{teamCharts[key]}</div>
-            ))}
-          </ResponsiveGridLayout>
-        </>
-      )}
+        {activeTab === 'teams' && (
+          <>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#000000',
+                paddingLeft: '24px',
+                paddingBottom: '8px',
+              }}
+            >
+              Teams Overview
+            </Typography>
+            <ResponsiveGridLayout
+              className="layout"
+              layouts={persistedTeamLayouts || teamLayouts}
+              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+              cols={{ lg: 12, md: 12, sm: 12 }}
+              rowHeight={130}
+              onLayoutChange={(layout, layouts) => handleLayoutChange('teams', layout, layouts)}
+              isDraggable
+              isResizable
+              compactType="vertical"
+              style={{ padding: '0 16px' }}
+            >
+              {allowedTeamCharts.map(key => (
+                <div key={key}>{teamCharts[key]}</div>
+              ))}
+            </ResponsiveGridLayout>
+          </>
+        )}
 
       {activeTab === 'costs' && (
         <>
