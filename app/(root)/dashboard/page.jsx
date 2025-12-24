@@ -2512,7 +2512,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Resource Coverage by Teams
+                Percentage Allocation by Teams
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -2523,7 +2523,7 @@ export default function ExecutiveDashboardPage() {
                       data: sortedCoverageData.map(d =>
                         parseFloat(d.coverage_pct)
                       ),
-                      label: 'Coverage',
+                      label: 'Allocation',
                       id: 'coverage',
                       color: '#FF884D',
                     },
@@ -2543,7 +2543,7 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   yAxis={[
                     {
-                      label: 'Coverage %',
+                      label: 'Allocation %',
                       min: 0,
                       max: 100,
                       width: config.yAxis?.width || 50,
