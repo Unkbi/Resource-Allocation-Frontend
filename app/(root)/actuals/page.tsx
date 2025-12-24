@@ -212,7 +212,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         ],
       };
 
-      if ((!isFridayOrAfterFriday || isModified) && !hasInvalidRows) {
+      if (
+        (isCurrentWeek(parseISO(startDate)) || isModified) &&
+        !hasInvalidRows
+      ) {
         new Promise((resolve, reject) => {
           dispatch({
             type: CONFIRM_ACTUAL_ALLOCATIONS,
