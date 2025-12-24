@@ -1,4 +1,4 @@
-import { call, put, takeEvery, all } from 'redux-saga/effects';
+import { call, put, takeEvery } from 'redux-saga/effects';
 import {
   setLoading,
   setUsers,
@@ -32,6 +32,11 @@ function* fetchUserSaga(): Generator<any, void, any> {
     yield put(setLoading(true));
     const users = yield call(fetchUser);
     const userData = users.map((usr: any) => {
+      const createdByUser = users.find((u: any) => u.id === usr.createdBy);
+      const lastModifiedByUser = users.find(
+        (u: any) => u.id === usr.lastModifiedBy
+      );
+
       return {
         User: {
           id: usr.id,
@@ -40,6 +45,15 @@ function* fetchUserSaga(): Generator<any, void, any> {
           resourceLink: 'NA',
           role: usr.role || 'user',
           status: usr.status,
+          lastLoginTime: usr.lastLoginTime,
+          __created: usr.created,
+          __created_by: createdByUser
+            ? `${createdByUser?.firstName} ${createdByUser?.lastName}`
+            : '',
+          __last_modified: usr.lastModified,
+          __last_modified_by: lastModifiedByUser
+            ? `${lastModifiedByUser?.firstName} ${lastModifiedByUser?.lastName}`
+            : '',
         },
       };
     });
@@ -168,7 +182,14 @@ function* fetchUserResourceSaga(): Generator<any, void, any> {
     yield put(setLoading(true));
 
     const responses = yield call(fetchUserResource);
+    const users = yield call(fetchUser);
     const formattedResources = responses.map((res: any) => {
+      const createdByUser = users.find(
+        (u: any) => u.id === res.Resource___created_by
+      );
+      const lastModifiedByUser = users.find(
+        (u: any) => u.id === res.Resource___last_modified_by
+      );
       return {
         Resource: {
           id: res.Resource_Id,
@@ -179,6 +200,14 @@ function* fetchUserResourceSaga(): Generator<any, void, any> {
           resourceStatus: res.Resource_Status,
           userStatus:
             res.User_status === null ? 'Not Created' : res.User_status,
+          __created: res.Resource___created,
+          __created_by: createdByUser
+            ? `${createdByUser?.firstName} ${createdByUser?.lastName}`
+            : '',
+          __last_modified: res.Resource___last_modified,
+          __last_modified_by: lastModifiedByUser
+            ? `${lastModifiedByUser?.firstName} ${lastModifiedByUser?.lastName}`
+            : '',
         },
       };
     });
