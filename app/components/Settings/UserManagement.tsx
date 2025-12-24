@@ -42,6 +42,10 @@ import {
 } from '@/app/redux/actions/allSettingsActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+// @ts-ignore
+import { parseISO } from 'date-fns';
+import CustomAvatar from '../Avatar/CustomAvatar';
+import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 
 const tabMenuNames = ['users', 'resources'];
 const baseURLAccessManagement = '/settings?menu=user-management';
@@ -681,7 +685,7 @@ function UserManagementPage({
     {
       field: 'Name',
       headerName: 'User',
-      flex: 1,
+      flex: 1.75,
       renderCell: (params: any) => (
         <Typography
           onClick={() => handleEditUser(params.row)}
@@ -693,7 +697,7 @@ function UserManagementPage({
             },
           }}
         >
-          {params.value}
+          <EllipsisNameCell value={params.value} showAvatar={false} />
         </Typography>
       ),
     },
@@ -702,7 +706,8 @@ function UserManagementPage({
       headerName: 'Email ID',
       flex: 2,
       renderCell: (params: any) => (
-        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        // <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
+        <EllipsisNameCell value={params.value} showAvatar={false} />
       ),
     },
     // {
@@ -714,19 +719,118 @@ function UserManagementPage({
     //   ),
     // },
     {
+      field: '__created',
+      headerName: 'Created On',
+      flex: 1,
+      minWidth: 120,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__created_by',
+      headerName: 'Created By',
+      flex: 1,
+      minWidth: 160,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
+      field: '__last_modified',
+      headerName: 'Last Modified On',
+      flex: 1,
+      minWidth: 145,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          return `${month}/${day}/${year}`;
+        }
+        return '';
+      },
+    },
+    {
+      field: '__last_modified_by',
+      headerName: 'Last Modified By',
+      flex: 1,
+      minWidth: 160,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
+                <CustomAvatar value={params.value} showFullName={false} />
+              </Box>
+              <Box>
+                <EllipsisNameCell value={params.value} showAvatar={false} />
+              </Box>
+            </Box>
+          );
+        }
+      },
+    },
+    {
+      field: 'lastLoginTime',
+      headerName: 'Last Login Time',
+      flex: 1,
+      minWidth: 160,
+      renderCell: (params: any) => {
+        if (params && params.value) {
+          const date = parseISO(params.value);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
+          const hours = date.getHours();
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          let hour12 = hours % 12;
+          if (hour12 === 0) hour12 = 12;
+          const hourStr = String(hour12).padStart(2, '0');
+          return `${month}/${day}/${year} ${hourStr}:${minutes} ${ampm}`;
+        }
+        return '';
+      },
+    },
+    {
       field: 'status',
       headerName: 'Status',
-      flex: 1,
+      flex: 1.5,
       renderCell: (params: any) => (
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
+
     ...(permissions!['User']?.u || permissions!['User']?.d
       ? [
           {
             field: 'actions',
             headerName: 'Actions',
             width: 100,
+            flex: 0.5,
             sortable: false,
             filterable: false,
             renderCell: (params: any) => {
@@ -1027,6 +1131,16 @@ function UserManagementPage({
           onBulkDeactivateUser={handleBulkDeactivateUser}
           onBulkReactivateUser={handleBulkReactivateUser}
           isRowSelectable={() => true}
+          initialState={{
+            columns: {
+              columnVisibilityModel: {
+                __created: false,
+                __created_by: false,
+                __last_modified: false,
+                __last_modified_by: false,
+              },
+            },
+          }}
         />
       )}
       {tab === 'resources' && (

@@ -32,6 +32,11 @@ function* fetchUserSaga(): Generator<any, void, any> {
     yield put(setLoading(true));
     const users = yield call(fetchUser);
     const userData = users.map((usr: any) => {
+      const createdByUser = users.find((u: any) => u.id === usr.createdBy);
+      const lastModifiedByUser = users.find(
+        (u: any) => u.id === usr.lastModifiedBy
+      );
+
       return {
         User: {
           id: usr.id,
@@ -40,6 +45,15 @@ function* fetchUserSaga(): Generator<any, void, any> {
           resourceLink: 'NA',
           role: usr.role || 'user',
           status: usr.status,
+          lastLoginTime: usr.lastLoginTime,
+          __created: usr.created,
+          __created_by: createdByUser
+            ? `${createdByUser?.firstName} ${createdByUser?.lastName}`
+            : '',
+          __last_modified: usr.lastModified,
+          __last_modified_by: lastModifiedByUser
+            ? `${lastModifiedByUser?.firstName} ${lastModifiedByUser?.lastName}`
+            : '',
         },
       };
     });
