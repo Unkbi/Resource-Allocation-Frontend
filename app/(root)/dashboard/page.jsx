@@ -40,6 +40,7 @@ import {
 } from '@mui/x-charts';
 import DashboardWidget from '../../components/Dashboard/DashboardWidget';
 import DashboardToolbar from '../../components/Toolbar/DashboardToolbar';
+import CustomChartTooltip from '../../components/Dashboard/CustomChartTooltip';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -61,6 +62,7 @@ import Topbar from '@/app/components/Dashboard/TabTopbar';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import weekday from 'dayjs/plugin/weekday';
 import utc from 'dayjs/plugin/utc';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   useResponsiveChart,
   truncateLabel,
@@ -187,6 +189,8 @@ const generateLayouts = chartKeys => {
 
 export default function ExecutiveDashboardPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
   const advancedFilters = useSelector(
@@ -784,6 +788,32 @@ export default function ExecutiveDashboardPage() {
     }
   }, [costsLayouts, allowedCostsCharts.join(','), STORAGE_KEYS.costs, mergeLayouts]);
 
+  // Keep active tab in sync with URL `?tab=` and validate accessibility
+  useEffect(() => {
+    try {
+      const accessibleTabs = ['overview'];
+      if (allowedTeamCharts.length > 0) accessibleTabs.push('teams');
+      if (allowedCostsCharts.length > 0) accessibleTabs.push('costs');
+
+      const tabParam = searchParams?.get('tab');
+      const isValid = tabParam && accessibleTabs.includes(tabParam);
+
+      if (!isValid) {
+        const first = accessibleTabs[0] || 'overview';
+        if (activeTab !== first) setActiveTab(first);
+        const params = new URLSearchParams(searchParams?.toString() || '');
+        params.set('tab', first);
+        router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+        return;
+      }
+
+      if (tabParam !== activeTab) {
+        setActiveTab(tabParam);
+      }
+    } catch {}
+    // Re-run when URL params or tab availability changes
+  }, [searchParams, allowedTeamCharts.length, allowedCostsCharts.length]);
+
   const Teams = filteredCoverageData?.length
     ? [...new Set(filteredCoverageData.map(d => d.team_name))]
     : [];
@@ -1361,8 +1391,27 @@ export default function ExecutiveDashboardPage() {
                       data: projectTypeCounts,
                       id: 'activeProjects',
                       label: 'Active Projects',
+                      valueFormatter: (value) => `${value} projects`,
                     },
                   ]}
+                  onItemClick={(_, params) => {
+                    console.log(params,"params")
+                    // const { dataIndex } = params || {};
+                    // if (dataIndex !== undefined && sortedData[dataIndex]) {
+                    //   const projectType = sortedData[dataIndex]._type;
+                    //   const url = `/dashboard?projectType=${encodeURIComponent(projectType)}`;
+                    //   window.open(url, '_blank', 'noopener,noreferrer');
+                    // }
+                  }}
+                  onAxisClick={(e,val)=>{
+                    console.log(val,"val")
+                    const { dataIndex } = val || {};
+                    if (dataIndex !== undefined && sortedData[dataIndex]) {
+                      const projectType = sortedData[dataIndex]._type;
+                      const url = `/dashboard?projectType=${encodeURIComponent(projectType)}`;
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
                   width={config.width}
                   height={config.height}
                   grid={{ horizontal: true }}
@@ -1373,9 +1422,26 @@ export default function ExecutiveDashboardPage() {
                     right: 10,
                   }}
                   colors={barColors}
+                  slots={{
+                    tooltip: CustomChartTooltip,
+                  }}
                   slotProps={{
                     legend: {
                       hidden: true,
+                    },
+                    tooltip: {
+                      trigger: 'item',
+                      disablePortal: true,
+                      linkGenerator: (tooltipData) => {
+                        // Get the project type from the data
+                        const dataIndex = tooltipData?.identifier?.dataIndex;
+                        if (dataIndex !== undefined && sortedData[dataIndex]) {
+                          const projectType = sortedData[dataIndex]._type;
+                          // Return a link to report page with filters
+                          return `/dashboard?projectType=${encodeURIComponent(projectType)}`;
+                        }
+                        return null;
+                      },
                     },
                   }}
                   sx={{
@@ -2526,8 +2592,21 @@ export default function ExecutiveDashboardPage() {
                       label: 'Coverage',
                       id: 'coverage',
                       color: '#FF884D',
+                      valueFormatter: (value) => `${value?.toFixed(1)}%`,
                     },
                   ]}
+                  onItemClick={(_, params) => {
+                    console.log('Item clicked:', params);
+                  }}
+                  onAxisClick={(_, params) => {
+                    console.log('Axis item clicked:', params);
+                    const { dataIndex } = params || {};
+                    if (dataIndex !== undefined && sortedCoverageData[dataIndex]) {
+                      const teamName = sortedCoverageData[dataIndex].team_name;
+                      const url = `/dashboard?tab=overview&team=${encodeURIComponent(teamName)}`;
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
                   xAxis={[
                     {
                       data: sortedCoverageData.map(d =>
@@ -2551,11 +2630,28 @@ export default function ExecutiveDashboardPage() {
                       labelStyle: config.yAxis?.labelStyle,
                     },
                   ]}
+                  slots={{
+                    tooltip: CustomChartTooltip,
+                  }}
                   slotProps={{
                     legend: config.legend,
                     bar: {
                       borderradius: 2,
                       barwidth: 0.4,
+                    },
+                    tooltip: {
+                      trigger: 'item',
+                      disablePortal: true,
+                      linkGenerator: (tooltipData) => {
+                        // Get the team name from the data
+                        const dataIndex = tooltipData?.identifier?.dataIndex;
+                        if (dataIndex !== undefined && sortedCoverageData[dataIndex]) {
+                          const teamName = sortedCoverageData[dataIndex].team_name;
+                          // Return a link to report page with team filter
+                          return `/dashboard?team=${encodeURIComponent(teamName)}`;
+                        }
+                        return null;
+                      },
                     },
                   }}
                   grid={{ horizontal: true }}
@@ -3037,7 +3133,12 @@ export default function ExecutiveDashboardPage() {
         <CommonToolbar>
           <Tabs
             value={activeTab}
-            onChange={(e, val) => setActiveTab(val)}
+            onChange={(e, val) => {
+              setActiveTab(val);
+              const params = new URLSearchParams(searchParams?.toString() || '');
+              params.set('tab', val);
+              router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+            }}
             sx={{ padding: '16px 16px 0px 8px' }}
           >
             <Tab
