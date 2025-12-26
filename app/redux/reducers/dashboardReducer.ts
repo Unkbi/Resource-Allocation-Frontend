@@ -1,5 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { DashboardChartState } from '@/app/types/dashboardTypes';
+import { DashboardChartState, ReportEntry, ReportType } from '@/app/types/dashboardTypes';
+import { formatAPIResponse } from '@/app/utils/authUtils';
+import { formatReportData } from '@/app/utils/reportDataFormatter';
 
 const initialState: DashboardChartState = {
   advancedFilters: {
@@ -17,6 +19,14 @@ const initialState: DashboardChartState = {
   loadingAdvancedFilters: true,
   loading: false,
   loadingCharts: {},
+  report: {
+    projectsOnly: { loading: false, data: [], error: null },
+    resourceOnly: { loading: false, data: [], error: null },
+    projectPeriod: { loading: false, data: [], error: null },
+    resourcePeriod: { loading: false, data: [], error: null },
+    resourceProjectPeriod: { loading: false, data: [], error: null },
+    resourceProjectPeriodCost: { loading: false, data: [], error: null },
+  },
 };
 
 const dashboardSlice = createSlice({
@@ -71,6 +81,48 @@ const dashboardSlice = createSlice({
       });
       state.loading = true;
     },
+
+    // Reports reducers
+    startReportLoading: (state, action) => {
+      const reportType: ReportType = action.payload.reportType;
+      state.report![reportType] = {
+        ...(state.report?.[reportType] || { data: [], error: null }),
+        loading: true,
+        error: null,
+      } as ReportEntry;
+    },
+    setReportData: (state, action) => {
+      const { reportType, data } = action.payload as { reportType: ReportType; data: any[] };
+
+      // Use the new formatReportData utility to flatten nested API response
+      const formattedData = formatReportData(reportType, data);
+      
+      state.report![reportType] = {
+        ...(state.report?.[reportType] || { error: null }),
+        loading: false,
+        data: formattedData,
+      } as ReportEntry;
+    },
+    setReportError: (state, action) => {
+      const { reportType, error } = action.payload as { reportType: ReportType; error: string };
+      state.report![reportType] = {
+        ...(state.report?.[reportType] || { data: [] }),
+        loading: false,
+        error,
+      } as ReportEntry;
+    },
+    setReportRequestPayload: (state, action) => {
+      const { reportType, uiFilters, requestPayload } = action.payload as {
+        reportType: ReportType;
+        uiFilters: any;
+        requestPayload: any;
+      };
+      state.report![reportType] = {
+        ...(state.report?.[reportType] || { data: [], error: null, loading: false }),
+        uiFilters,
+        requestPayload,
+      } as ReportEntry;
+    },
   },
 });
 
@@ -84,6 +136,10 @@ export const {
   setLoadingAdvancedFilters,
   startChartLoading,
   startMultipleChartsLoading,
+  startReportLoading,
+  setReportData,
+  setReportError,
+  setReportRequestPayload,
 } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;
