@@ -12,6 +12,7 @@ import { Box } from '@mui/material';
 import { AllAllocations, Resource } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getCombinedAllocation } from '@/app/utils/allocationUtils';
+import { isWeekKey } from '@/app/utils/common';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
@@ -106,7 +107,7 @@ function BottomTeamsView({
 
       rows.forEach(row => {
         Object.keys(row).forEach(key => {
-          if (/^W\d+/.test(key) && typeof row[key] === 'object') {
+          if (isWeekKey(key) && typeof row[key] === 'object') {
             const value = parseFloat(row[key]?.value ?? 0);
             totalAllocation += value;
             if (!seenWeeks.has(key)) {
@@ -156,7 +157,7 @@ function BottomTeamsView({
   const hasZeroAllocation = (row: AllAllocations) => {
     if (row._avgPeriodAllocation === 0) return true;
     return Object.keys(row).every(key => {
-      if (/^W\d+/.test(key)) {
+      if (isWeekKey(key)) {
         const value = row[key];
         if (value && typeof value === 'object' && 'value' in value) {
           return value.value === 0 || value.value === undefined;
@@ -220,47 +221,47 @@ function BottomTeamsView({
 
   return (
     <>
-        <AllocationGrid
-          loading={dataProcessing}
-          groupBy="teams"
-          mode="split"
-          startDate={startDate}
-          endDate={endDate}
-          columns={teamsColumnConfig}
-          selectedTeam={selectedTeam}
-          setSelectedTeam={setSelectedTeam}
-          columnsFilterable={false}
-          toolbarComponent={(props: any) => (
-            <SplitTeamToolbar
-              {...props}
-              selectedTeam={selectedTeam}
-              setSelectedTeam={setSelectedTeam}
-              setAllocationThreshold={setAllocationThreshold}
-              allocationThreshold={allocationThreshold}
-            />
-          )}
-          initialState={{
-            columns: {
-              columnVisibilityModel: {
-                __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
-                __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
-                project: true,
-                teams: false, // This column has to always be false, as we are using grouping.
-                resource: false, // This column has to always be false, as we are using grouping.
-              },
+      <AllocationGrid
+        loading={dataProcessing}
+        groupBy="teams"
+        mode="split"
+        startDate={startDate}
+        endDate={endDate}
+        columns={teamsColumnConfig}
+        selectedTeam={selectedTeam}
+        setSelectedTeam={setSelectedTeam}
+        columnsFilterable={false}
+        toolbarComponent={(props: any) => (
+          <SplitTeamToolbar
+            {...props}
+            selectedTeam={selectedTeam}
+            setSelectedTeam={setSelectedTeam}
+            setAllocationThreshold={setAllocationThreshold}
+            allocationThreshold={allocationThreshold}
+          />
+        )}
+        initialState={{
+          columns: {
+            columnVisibilityModel: {
+              __row_group_by_columns_group_teams__: true, // This is the grouping column for teams
+              __row_group_by_columns_group_resource__: true, // This is the gtouping column for resource
+              project: true,
+              teams: false, // This column has to always be false, as we are using grouping.
+              resource: false, // This column has to always be false, as we are using grouping.
             },
-            pinnedColumns: {
-              left: [
-                '__row_group_by_columns_group_teams__',
-                '__row_group_by_columns_group_resource__',
-                'project',
-              ],
-            },
-          }}
-          NoRowsOverlay={NoRowsOverlay}
-          viewId="bottomTeam"
-          rowGroupingColumnMode="multiple"
-        />
+          },
+          pinnedColumns: {
+            left: [
+              '__row_group_by_columns_group_teams__',
+              '__row_group_by_columns_group_resource__',
+              'project',
+            ],
+          },
+        }}
+        NoRowsOverlay={NoRowsOverlay}
+        viewId="bottomTeam"
+        rowGroupingColumnMode="multiple"
+      />
     </>
   );
 }

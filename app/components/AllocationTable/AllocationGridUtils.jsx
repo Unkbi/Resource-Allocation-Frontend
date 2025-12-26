@@ -7,6 +7,7 @@ import {
   calculateTotalEffort,
   generateDateWeekMath,
   getMondayOfISO,
+  isWeekKey,
   getProjectBudgetCategory,
 } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
@@ -1196,7 +1197,7 @@ export const getCellClassName = (
 
   if (params && params.field && typeof params.field === 'string') {
     if (
-      /^W\d+/.test(params.field) &&
+      isWeekKey(params.field) &&
       type !== 'cost' &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
@@ -1215,7 +1216,6 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
-
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
@@ -1275,7 +1275,7 @@ export const getCellClassName = (
     } else if (
       params.rowNode?.type === 'group' &&
       params.rowNode?.groupingField === 'project' &&
-      /^W\d+/.test(params.field)
+      isWeekKey(params.field)
     ) {
       const project = allProjects.find(
         row => row.Name === params.rowNode.groupingKey
@@ -1316,7 +1316,7 @@ export const getCellClassName = (
         params.rowNode?.groupingField === 'organisationName' ||
         params.rowNode?.groupingField === 'portfolioName' ||
         (groupBy === 'resource' &&
-          params.rowNode?.groupingField === 'resource'))
+          params.rowNode?.groupingField === 'resource'));
     return isFirstGroup ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {
