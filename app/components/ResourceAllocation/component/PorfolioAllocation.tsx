@@ -309,7 +309,7 @@ function PortfolioAllocation({
     },
     {
       field: 'role',
-      headerName: 'Resource Role',
+      headerName: 'Tilte',
       width: 170,
       isEditable: 'false',
       sortable: false,
