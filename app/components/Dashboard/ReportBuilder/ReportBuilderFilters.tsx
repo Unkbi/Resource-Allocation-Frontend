@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { ArrowDropDown } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
@@ -641,6 +642,10 @@ export default function ReportBuilderFilters({
 
           {filters.period === 'custom' && formatDateRange(filters.customDateRange) && (
             <Box
+              onClick={(e) => {
+                setTempDateRange(filters.customDateRange || [null, null]);
+                setCustomDateSubmenuAnchor(e.currentTarget);
+              }}
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -650,9 +655,15 @@ export default function ReportBuilderFilters({
                 backgroundColor: '#FFFFFF',
                 px: 1.5,
                 py: 1.25,
-                // boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: '#F9FAFB',
+                  borderColor: '#D1D5DB',
+                },
               }}
             >
+              <CalendarMonthIcon sx={{ fontSize: 18, mr: 1, color: '#5D6979' }} /> {' '}
               <Typography
                 sx={{
                   fontSize: '12px',

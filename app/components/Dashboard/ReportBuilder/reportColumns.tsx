@@ -54,7 +54,7 @@ const projectsOnlyColumns: GridColDef[] = [
   {
     field: 'status', headerName: 'Status', minWidth: 100,
     renderCell: (params: any) => (
-      <StatusPill status={params.value}>{params.value}</StatusPill>
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
   { field: 'location', headerName: 'Location', minWidth: 140 },
@@ -99,7 +99,7 @@ const projectsOnlyColumns: GridColDef[] = [
   {
     field: 'portfolio_status', headerName: 'Portfolio Status', minWidth: 160,
     renderCell: (params: any) => (
-      <StatusPill status={params.value}>{params.value}</StatusPill>
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
@@ -143,7 +143,7 @@ const resourceOnlyColumns: GridColDef[] = [
   {
     field: 'status', headerName: 'Status', minWidth: 100,
     renderCell: (params: any) => (
-      <StatusPill status={params.value}>{params.value}</StatusPill>
+     params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
   { field: 'user_id', headerName: 'User ID', minWidth: 120 },
@@ -236,7 +236,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110,
     renderCell: (params: any) => (
-      <StatusPill status={params.value}>{params.value}</StatusPill>
+     params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
@@ -270,13 +270,12 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number' },
   { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number' },
   { field: 'currency', headerName: 'Currency', minWidth: 100 },
-  { field: 'allocation_cost', headerName: 'Allocation Cost', minWidth: 150, type: 'number' },
   { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number' },
   { field: 'planned_cost', headerName: 'Planned Cost', minWidth: 130, type: 'number' },
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110,
     renderCell: (params: any) => (
-      <StatusPill status={params.value}>{params.value}</StatusPill>
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
@@ -324,6 +323,7 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
       return {
         ...commonHidden,
         id: false,
+        project_id: false,
         description: false,
         location: false,
         allow_overtime: false,

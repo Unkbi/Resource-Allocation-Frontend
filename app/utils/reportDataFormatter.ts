@@ -160,7 +160,7 @@ const formatResourcePeriod = (data: any[]): any[] => {
         allocation_manager: safeGet(item, 'Team.AllocationManager', ''),
         period: safeGet(item, 'ResourceEngagementScore.Period', ''),
         planned_allocation: safeGet(item, 'Allocation.AllocationEntered', 0),
-        actual_allocation: safeGet(item, 'Allocation.ActualsEntered', 0),
+        actuals_allocation: safeGet(item, 'Allocation.ActualsEntered', 0),
         planning_score: safeGet(item, 'ResourceEngagementScore.PlanningScore', 0),
         actuals_score: safeGet(item, 'ResourceEngagementScore.ActualsScore', 0),
         confirmation_score: safeGet(item, 'ResourceEngagementScore.ConfirmationScore', 0),
