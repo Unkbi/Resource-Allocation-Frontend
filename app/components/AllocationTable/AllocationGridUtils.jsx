@@ -474,6 +474,7 @@ export const getInitialState = (
   sorting: {
     sortModel: [
       { field: GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, sort: 'asc' },
+      { field: '__row_group_by_columns_group_organisationName__', sort: 'asc' },
     ],
   },
   pinnedColumns: {
@@ -643,7 +644,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views for POC
+        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views 
         sortable : true ,
         primaryColumn: true,
         renderCell: params => {
@@ -789,7 +790,8 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: groupBy == 'project' ? true : false,
+        // sortable: groupBy == 'project' ? true : false,
+        sortable :true ,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
@@ -909,7 +911,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         cellClassName: () =>
           groupBy === 'project' ? 'common-NonEditableCells' : '',
@@ -937,7 +939,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const isParent = params.rowNode?.children?.length;
@@ -1023,7 +1025,7 @@ export const getFinalColumns = (
         headerName: 'Resource',
         width: 200,
         headerClassName: 'secondary-header',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         cellClassName: () =>
           groupBy === 'project' ? 'common-NonEditableCells' : 'secondary-cell',
