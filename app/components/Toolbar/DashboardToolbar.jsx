@@ -232,10 +232,10 @@ const DashboardToolbar = ({
                 <StyledMenuItem onClick={() => handleMenuClose('week')}>
                   Weekly
                 </StyledMenuItem>
-                <StyledMenuItem onClick={() => handleMenuClose('month')}>
+                <StyledMenuItem onClick={() => handleMenuClose('month')} disabled>
                   Monthly
                 </StyledMenuItem>
-                <StyledMenuItem onClick={() => handleMenuClose('quarter')}>
+                <StyledMenuItem onClick={() => handleMenuClose('quarter')} disabled>
                   Quarterly
                 </StyledMenuItem>
               </StyledSelect>
