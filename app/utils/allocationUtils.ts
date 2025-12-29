@@ -967,3 +967,19 @@ export const getFirstChild = (params: GridCellParams) => {
   }
   return null;
 };
+
+export const initSortAllocations = (
+  data: AllAllocations[],
+  primaryColumn = 'teams',
+  secondaryColumn = 'resource'
+) => {
+  return data.sort((a, b) =>
+    a?.[primaryColumn] === b?.[primaryColumn]
+      ? (a?.[secondaryColumn] || '') < (b?.[secondaryColumn] || '')
+        ? -1
+        : 1
+      : (a?.[primaryColumn] || '') < (b?.[primaryColumn] || '')
+        ? -1
+        : 1
+  );
+};
