@@ -47,12 +47,11 @@ const GetName = (uid: string): string => {
 };
 
 const projectsOnlyColumns: GridColDef[] = [
-  { field: 'id', headerName: 'ID', minWidth: 90 },
   { field: 'project_name', headerName: 'Project Name', minWidth: 180, flex: 1 },
   { field: 'project_id', headerName: 'Project ID', minWidth: 120 },
   { field: 'description', headerName: 'Description', minWidth: 200 },
   {
-    field: 'status', headerName: 'Status', minWidth: 100,
+    field: 'status', headerName: 'Status', minWidth: 150,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -141,7 +140,7 @@ const resourceOnlyColumns: GridColDef[] = [
   { field: 'start_date', headerName: 'Start Date', minWidth: 120 },
   { field: 'end_date', headerName: 'End Date', minWidth: 120 },
   {
-    field: 'status', headerName: 'Status', minWidth: 100,
+    field: 'status', headerName: 'Status', minWidth: 150,
     renderCell: (params: any) => (
      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -168,8 +167,8 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'project_manager_email', headerName: 'Project Manager Email', minWidth: 200 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170, type: 'number' },
-  { field: 'actual_allocation', headerName: 'Actual Allocation', minWidth: 170, type: 'number' },
+  { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170,type: 'number', headerAlign: 'left' },
+  { field: 'actual_allocation', headerName: 'Actual Allocation', minWidth: 170, type: 'number', headerAlign: 'left' },
   { field: 'health_score', headerName: 'Project Health Score', minWidth: 130, renderCell: renderScoreCell },
   { field: 'adherence_score', headerName: 'Project Adherence Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'engagement_score', headerName: 'Project Engagement Score', minWidth: 150, renderCell: renderScoreCell },
@@ -196,8 +195,8 @@ const resourcePeriodColumns: GridColDef[] = [
     renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
   },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170, type: 'number' },
-  { field: 'actuals_allocation', headerName: 'Actuals Allocation', minWidth: 170, type: 'number' },
+  { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170, type: 'number', headerAlign: 'left' },
+  { field: 'actuals_allocation', headerName: 'Actuals Allocation', minWidth: 170, type: 'number', headerAlign: 'left' },
   { field: 'planning_score', headerName: 'Planning Score', minWidth: 140, renderCell: renderScoreCell },
   { field: 'actuals_score', headerName: 'Actuals Score', minWidth: 140, renderCell: renderScoreCell },
   { field: 'confirmation_score', headerName: 'Confirmation Score', minWidth: 160, renderCell: renderScoreCell },
@@ -231,10 +230,10 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio Name', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number' },
-  { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number' },
+  { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number', headerAlign: 'left' },
+  { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number', headerAlign: 'left' },
   {
-    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110,
+    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
     renderCell: (params: any) => (
      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -266,14 +265,14 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio Name', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number' },
-  { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number' },
-  { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number' },
+  { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number', headerAlign: 'left' },
+  { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number', headerAlign: 'left' },
+  { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number', headerAlign: 'left' },
   { field: 'currency', headerName: 'Currency', minWidth: 100 },
-  { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number' },
-  { field: 'planned_cost', headerName: 'Planned Cost', minWidth: 130, type: 'number' },
+  { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number', headerAlign: 'left' },
+  { field: 'planned_cost', headerName: 'Planned Cost', minWidth: 130, type: 'number', headerAlign: 'left' },
   {
-    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 110,
+    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
@@ -322,7 +321,6 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
     case 'projectsOnly':
       return {
         ...commonHidden,
-        id: false,
         project_id: false,
         description: false,
         location: false,

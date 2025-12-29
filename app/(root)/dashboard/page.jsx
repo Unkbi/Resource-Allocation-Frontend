@@ -3061,11 +3061,11 @@ export default function ExecutiveDashboardPage() {
               />
             )}         
           <Tab
-            value="report-builder"
-            label="Report Builder"
+            value="reports"
+            label="Reports"
             sx={{ textTransform: 'none', fontWeight: 600 }}
           />
-          {activeTab !== 'report-builder' && (
+          {activeTab !== 'reports' && (
             <DashboardToolbar
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -3077,7 +3077,7 @@ export default function ExecutiveDashboardPage() {
           )}
         </Tabs>
       </CommonToolbar>
-      {activeTab !== 'report-builder' && <Topbar />}
+      {activeTab !== 'reports' && <Topbar />}
       </Box>
       {/* Scrollable content area (scroll without visible scrollbar) */}
       <Box
@@ -3222,7 +3222,7 @@ export default function ExecutiveDashboardPage() {
           </ResponsiveGridLayout>
         </>
       )}
-      {activeTab === 'report-builder' && (
+      {activeTab === 'reports' && (
         <Box
           sx={{
             height: 'calc(100vh - 31px)',

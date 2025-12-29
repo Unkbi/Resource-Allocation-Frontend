@@ -13,6 +13,7 @@ import { ReportType, ReportUIFilters } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
 import { ColumnManagementStyles, StyledDataGrid } from '../../AllocationTable/styles/StyledDataGrid';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -40,6 +41,7 @@ export default function ReportBuilderPage({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
+  const [showData, setShowData] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
@@ -70,6 +72,7 @@ export default function ReportBuilderPage({
 
   const handleGenerateReport = async () => {
     setIsLoading(true);
+    setShowData(false);
     setFiltersExpanded(false);
 
     // Serialize custom date range for UI filters stored in redux
@@ -91,7 +94,15 @@ export default function ReportBuilderPage({
       allocationManager: filters.allocationManager,
     };
     const apiPayload = prepareApiPayload(uiFilters);
-    dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
+    try {
+      dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
+      setShowData(true);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      dispatch(showToast({ message: 'Failed to generate report. Please try again.', severity: 'error' }));
+      setIsLoading(false);
+      setShowData(false);
+    }
     onReportGenerate?.(filters);
   };
 
@@ -109,6 +120,7 @@ export default function ReportBuilderPage({
     // Reset report generated state if report type changes
     if (newFilters.reportType !== filters.reportType) {
       setReportGenerated(false);
+      setShowData(false);
       setReportData([]);
     }
     setFilters(newFilters);
@@ -116,7 +128,7 @@ export default function ReportBuilderPage({
 
   const handleResetFilters = () => {
     setFilters({
-      reportType: 'resourceProjectPeriod',
+      reportType: filters.reportType,
       period: 'last_week',
       customDateRange: undefined,
       team: [],
@@ -138,12 +150,14 @@ export default function ReportBuilderPage({
   useEffect(() => {
     if (currentReport) {
       setIsLoading(currentReport.loading);
-      if (!currentReport.loading && currentReport.data) {
+      if (!currentReport.loading) {
+        if(currentReport.data.length > 0) {
         setReportGenerated(true);
+        }
         setReportData(currentReport.data);
       }
     }
-  }, [currentReport]);
+  }, [currentReport, ]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
@@ -213,7 +227,6 @@ export default function ReportBuilderPage({
 
   const getSelectedFiltersCount = () => {
     let count = 0;
-    if (filters.reportType !== 'resourceProjectPeriod') count++;
 
     // Check period as string
     if (filters.period !== 'last_week') count++;
@@ -244,8 +257,23 @@ export default function ReportBuilderPage({
         isLoading={isLoading}
         onReportTypeChange={(reportType: ReportType) => {
           setReportGenerated(false);
+          setShowData(false);
           setReportData([]);
-          setFilters((prev) => ({ ...prev, 'reportType': reportType }));
+          setFilters({
+            reportType: reportType,
+            period: 'last_week',
+            customDateRange: undefined,
+            team: [],
+            organization: [],
+            resourceType: [],
+            resource: [],
+            projectType: [],
+            projectTypeGroup: [],
+            project: [],
+            portfolio: [],
+            projectManager: [],
+            allocationManager: [],
+          });
         }}
         selectedFiltersCount={getSelectedFiltersCount()}
       />
@@ -266,7 +294,7 @@ export default function ReportBuilderPage({
           backgroundColor: '#F9FAFB',
         }}
       >
-        {!reportGenerated || reportData.length === 0 ? (
+        {!reportGenerated && !showData ? (
           <Box
             sx={{
               height: '100%',
@@ -323,8 +351,6 @@ export default function ReportBuilderPage({
                 backgroundColor: '#ffffff',
                 borderRadius: isFullscreenGrid ? 0 : '0px',
                 overflow: 'hidden',
-                paddingLeft: 2,
-                paddingRight: 2,
                 position: isFullscreenGrid ? 'fixed' : 'relative',
                 top: isFullscreenGrid ? 0 : 'auto',
                 left: isFullscreenGrid ? 0 : 'auto',
@@ -338,6 +364,7 @@ export default function ReportBuilderPage({
                 rows={reportData}
                 columns={columns}
                 hideFooter
+                loading={isLoading}
                 initialState={{
                   pagination: {
                     paginationModel: { pageSize: 25, page: 0 },
@@ -354,6 +381,9 @@ export default function ReportBuilderPage({
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
                 disableRowSelectionOnClick
+                localeText={{
+                  noRowsLabel: "No data found"
+                }}
                 slots={{
                   toolbar: ReportBuilderDataGridToolbar,
                 }}
