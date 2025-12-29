@@ -9,6 +9,8 @@ import {
   ListItemIcon,
   ListItemText,
   IconButton,
+  Popover,
+  TextField,
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -16,7 +18,7 @@ import {
   GridRowsProp,
   GridValidRowModel,
 } from '@mui/x-data-grid-premium';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import CommentCell from './CommentCell';
 import { useMemo, useEffect } from 'react';
 import { actualsTableStyles } from './actualsTableStyles';
@@ -133,6 +135,21 @@ export default function ActualTable({
     null
   );
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  // Popover-based inline editor state (for comments column without renderEditCell)
+  const [openEditorAnchor, setOpenEditorAnchor] = useState<HTMLElement | null>(null);
+  const [editingCellParams, setEditingCellParams] = useState<any | null>(null);
+  const [editorValue, setEditorValue] = useState('');
+  const editorInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+
+  // Focus the editor input when the popover/editor mounts
+  useEffect(() => {
+    if (editingCellParams) {
+      // give the popover a tick to mount
+      setTimeout(() => {
+        editorInputRef.current?.focus();
+      }, 0);
+    }
+  }, [editingCellParams]);
 
   const totalPlanned = useMemo(() => {
     return roundToOneDecimal(calculateTotal([...rows], 'planned'));
@@ -255,6 +272,61 @@ export default function ActualTable({
     }
     if (event.key === 'Enter') {
       return;
+    }
+  };
+
+  // --- Popover editor handlers for comments (mounts a native TextField) ---
+  const handleCellClickForEditor = (params: any, event: React.MouseEvent) => {
+    // Only open for comments column, editable rows and when view isn't disabled
+    if (params.field !== 'comments' || disableView) return;
+
+    // Prevent DataGrid default edit mode start when using our popover
+    event.stopPropagation();
+
+    const anchor = event.currentTarget as HTMLElement;
+    setOpenEditorAnchor(anchor);
+    setEditingCellParams(params);
+    setEditorValue(params.value ?? '');
+  };
+
+  const saveEditorValue = () => {
+    if (!editingCellParams) return;
+    const { id } = editingCellParams;
+    setRows(prev =>
+      prev.map(r => (r.id === id ? { ...r, comments: editorValue } : r))
+    );
+
+    // update validation for comments
+    setRowValidationErrors(prev => ({
+      ...prev,
+      [editingCellParams.id]: {
+        ...(prev[editingCellParams.id] || { actuals: false }),
+        comments: !(editorValue && editorValue.trim()),
+      },
+    }));
+
+    setOpenEditorAnchor(null);
+    setEditingCellParams(null);
+  };
+
+  const closeEditor = () => {
+    setOpenEditorAnchor(null);
+    setEditingCellParams(null);
+  };
+
+  const handleEditorKeyDown = (
+    event: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.stopPropagation();
+      event.preventDefault();
+      saveEditorValue();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      closeEditor();
     }
   };
 
@@ -434,13 +506,18 @@ export default function ActualTable({
                 ? 'comment-error-cell'
                 : ''
             }`,
-      renderEditCell: params => (
-        <CommentCell
-          {...params}
-          showInitialError={rowValidationErrors[params.id as string]?.comments}
-        />
-      ),
-      renderCell: params =>
+      // renderEditCell: params => {
+      //   console.log(params ,"param on edit cell")
+      //   return(
+      //   <CommentCell
+      //     {...params}
+      //     showInitialError={rowValidationErrors[params.id as string]?.comments}
+      //   />
+      // )},
+      // renderCell: params => renderAllocationCell(params, allocationTheme),
+      renderCell: params => {
+        //  console.log(params ,"param on render cell")
+        return(
         params.id === 'total' ? (
           <Box sx={{ height: '100%', width: '100%' }} />
         ) : (
@@ -451,8 +528,10 @@ export default function ActualTable({
             showInitialError={
               rowValidationErrors[params.id as string]?.comments
             }
-          />
-        ),
+          /> )
+        )},
+        //   <></>
+        // )
     },
   ];
 
@@ -648,7 +727,7 @@ export default function ActualTable({
             cellSelection
             cellSelectionModel={model}
             onCellSelectionModelChange={(m) => {
-              console.log('triggered', m);
+              // console.log('triggered', m);
               setModel(m);
             }}
             loading={dataProcessing}
@@ -656,10 +735,13 @@ export default function ActualTable({
             disableColumnSorting
             editMode="cell"
             onCellClick={(params, event) => {
-              // prevent MUI from starting edit automatically
-            //   event.defaultMuiPrevented = true;
+              // If comments column: open our Popover editor instead of DataGrid's editor
+              if (params.field === 'comments' && params.isEditable && !disableView) {
+                handleCellClickForEditor(params, event as React.MouseEvent);
+                return;
+              }
 
-              // Ignore clicks on non-editable cells
+              // Otherwise, keep existing behavior: prevent auto-edit for non-editable cells
               if (!params.isEditable) return;
 
               const mode = apiRef.current.getCellMode(params.id, params.field);
@@ -667,7 +749,7 @@ export default function ActualTable({
               // Already editing? skip
               if (mode === 'edit') return;
 
-              // Trigger edit immediately
+              // Trigger edit immediately for non-comments cells
               apiRef.current.startCellEditMode({
                 id: params.id,
                 field: params.field,
@@ -727,6 +809,37 @@ export default function ActualTable({
             }}
           />
         </Box>
+
+        {/* Popover-based editor for comments column (mounted outside grid cells) */}
+        <Popover
+          open={Boolean(openEditorAnchor)}
+          anchorEl={openEditorAnchor}
+          onClose={closeEditor}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          PaperProps={{ sx: { p: 1, width: 360 } }}
+        >
+          <TextField
+            value={editorValue}
+            onChange={(e) => setEditorValue(e.target.value)}
+            multiline
+            minRows={1}
+            maxRows={4}
+            fullWidth
+            autoFocus
+            placeholder="Enter Comments / Project updates"
+            InputProps={{
+              inputProps: {
+                onKeyDown: handleEditorKeyDown,
+                onKeyDownCapture: handleEditorKeyDown,
+              },
+            }}
+            onBlur={() => {
+              // Save on blur
+              saveEditorValue();
+            }}
+          />
+        </Popover>
       </Box>
 
       <Box

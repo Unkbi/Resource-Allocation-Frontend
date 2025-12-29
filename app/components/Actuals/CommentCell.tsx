@@ -66,7 +66,7 @@ export default function CommentCell(props: CommentCellProps) {
     readonly = false,
     disableView = false,
   } = props;
-
+  // console.log(" CommentCell rendered ", { value, readonly, disableView })
   const [inputValue, setInputValue] = useState(value || '');
   const [showError, setShowError] = useState(showInitialError);
 
@@ -76,6 +76,7 @@ export default function CommentCell(props: CommentCellProps) {
   }, [value, showInitialError]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("change in CommentCell:", event.target.value);
     const newVal = event.target.value;
     setInputValue(newVal);
     setShowError(newVal.trim() === '');
@@ -83,6 +84,8 @@ export default function CommentCell(props: CommentCellProps) {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    console.log('Key down in CommentCell:', event.key);
+    // debugger
     if (event.key === 'Enter' && !event.shiftKey) {
       // Prevent DataGrid from exiting edit mode
       event.stopPropagation();
@@ -115,8 +118,12 @@ export default function CommentCell(props: CommentCellProps) {
         inputProps: {
           onMouseDown: (e: React.MouseEvent) => {
             e.stopPropagation(); //this is to enter edit mode onclick
-            },
-        },
+          },
+          // onKeyDown: (e: React.KeyboardEvent) => {
+          //   console.log('Input key down:', e.key);
+          //   handleKeyDown(e);
+          // },
+        }
       }}
       // keep your existing styling; tweak if needed
       sx={{
@@ -177,4 +184,5 @@ export default function CommentCell(props: CommentCellProps) {
 
   // Otherwise return the TextField as-is (no tooltip)
   return textField;
+  // return  <></>
 }
