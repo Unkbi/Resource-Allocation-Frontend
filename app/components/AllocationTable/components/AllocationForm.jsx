@@ -3934,14 +3934,7 @@ const AllocationForm = () => {
               };
               const getDateString = ts => {
                 if (!ts) return '';
-                const date = new Date(ts);
-                return date
-                  .toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric',
-                  })
-                  .replace(/ /g, ' ');
+                return format(parseISO(ts), DATE_FORMAT);
               };
               const getRelativeTime = ts => {
                 if (!ts) return '';
@@ -3958,12 +3951,14 @@ const AllocationForm = () => {
               // Calculate week number from Period
               let weekNumber = '';
               if (Period) {
-                const d = new Date(Period);
+                const d = parseISO(Period);
                 if (!isNaN(d)) {
-                  const temp = new Date(d.getTime());
+                  const temp = parseISO(new Date(d.getTime()).toISOString());
                   temp.setHours(0, 0, 0, 0);
                   temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                  const yearStart = new Date(temp.getFullYear(), 0, 1);
+                  const yearStart = parseISO(
+                    new Date(temp.getFullYear(), 0, 1).toISOString()
+                  );
                   weekNumber = Math.ceil(
                     ((temp - yearStart) / 86400000 + 1) / 7
                   );
