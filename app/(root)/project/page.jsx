@@ -44,6 +44,7 @@ import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import { DELETE_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
 import {
   PORTFOLIO_DISPLAY_NAME,
+  PROJECT_INACTIVE_STATUS,
   PROJECT_PAGE_VALID_TABS,
 } from '@/app/constants/constants';
 import { parseISO, format } from 'date-fns';
@@ -112,6 +113,8 @@ const accessMap = [
   { key: 'Portfolio', value: 'portfolio' },
   { key: 'BusinessImpact', value: 'businessImpact' },
 ];
+
+const isProjectInactive = status => PROJECT_INACTIVE_STATUS.includes(status);
 
 function Project({ permissions, loadingPermissions }) {
   const dispatch = useDispatch();
@@ -879,6 +882,7 @@ function Project({ permissions, loadingPermissions }) {
               <MenuItem
                 onClick={() => handleOpenSplitView(params)}
                 sx={menuItemStyle}
+                disabled={isProjectInactive(params.row.Status)}
               >
                 <AddAllocationIcon sx={{ fontSize: 18, marginRight: '8px' }} />
                 <Typography

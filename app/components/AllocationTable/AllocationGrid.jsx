@@ -17,6 +17,7 @@ import {
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
   getWeekNumber,
+  isWeekKey,
   isMyProjectsValid,
   isMyTeamsValid,
   getTeamForResource,
@@ -76,6 +77,7 @@ import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
+import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 function AllocationGrid({
   groupBy,
@@ -255,7 +257,22 @@ function AllocationGrid({
 
     allWeeks.forEach(weekKey => {
       const period = getMondayOfWeek(weekKey, new Date());
-      const value = row[weekKey];
+
+      // Prefer canonical weekKey (e.g. 'W1-2026'). If it's missing, try the
+      // legacy form without year (e.g. 'W1') found in some API responses.
+      let value = row[weekKey];
+
+      if (value === undefined && typeof weekKey === 'string') {
+        const m = weekKey.match(/^W(\d+)-\d{4}$/);
+        if (m) {
+          const legacyKey = `W${m[1]}`;
+          if (row[legacyKey] !== undefined) {
+            value = row[legacyKey];
+          }
+        }
+      }
+
+      // Normalize into consistent object shape
       if (value && typeof value === 'object' && 'value' in value) {
         normalized[weekKey] = {
           allocationId: value.allocationId || null,
@@ -289,6 +306,9 @@ function AllocationGrid({
   useEffect(() => {
     if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
+    }
+    if (resources.length === 0) {
+      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL });
     }
   }, []);
 
@@ -746,11 +766,10 @@ function AllocationGrid({
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
   ).map(column => {
-    if (column.field.startsWith('W')) {
+    if (isWeekKey(column.field)) {
       return {
         ...column,
         renderCell: params => {
-          const editable = isCellEditable(params);
           const cellClass = getCellClassName(
             params,
             getAllRowsForView(viewId),
@@ -924,7 +943,7 @@ function AllocationGrid({
       setCellSelectionModel({});
       // Find the changed week
       const changedWeeks = Object.keys(newRow).filter(
-        key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
+        key => isWeekKey(key) && newRow[key] !== oldRow[key]?.value
       );
 
       if (!changedWeeks || changedWeeks.length === 0) {
@@ -1213,7 +1232,12 @@ function AllocationGrid({
   };
 
   const isCellEditable = useCallback(
-    params => isCellEditableUtils(params, type, resources),
+    params => {
+      if (resources?.length) {
+        return isCellEditableUtils(params, type, resources);
+      }
+      return false;
+    },
     [type, resources]
   );
   const handleCellSelectionModelChange = useCallback(
@@ -1281,7 +1305,7 @@ function AllocationGrid({
       const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
         Object.keys(row).forEach(field => {
-          const isWeekField = /^W\d+/.test(field);
+          const isWeekField = isWeekKey(field);
           const groupAlwaysEditable =
             groupBy === 'project' || groupBy === 'portfolioName';
           const groupConditionallyEditable =
@@ -1355,9 +1379,7 @@ function AllocationGrid({
             if (isRowWithinGroup(row)) {
               const editableFields = Object.keys(newModel[rowId]).filter(
                 field => {
-                  return (
-                    /^W\d+/.test(field) && isCellEditableInRow(rowId, field)
-                  );
+                  return isWeekKey(field) && isCellEditableInRow(rowId, field);
                 }
               );
 
