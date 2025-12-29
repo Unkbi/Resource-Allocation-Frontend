@@ -291,26 +291,29 @@ export default function ReportBuilderPage({
       <Box
         sx={{
           flex: 1,
-          backgroundColor: '#F9FAFB',
+          backgroundColor: "#F9FAFB",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         {!reportGenerated && !showData ? (
           <Box
             sx={{
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
               // p: 3,
             }}
           >
             <Typography
               sx={{
-                fontSize: '15px',
+                fontSize: "15px",
                 fontWeight: 500,
-                color: '#6B7280',
+                color: "#6B7280",
                 mb: 3,
               }}
             >
@@ -322,41 +325,50 @@ export default function ReportBuilderPage({
               disabled={isLoading}
               sx={{
                 height: 40,
-                backgroundColor: '#152E75',
-                color: '#fff',
-                textTransform: 'none',
+                backgroundColor: "#152E75",
+                color: "#fff",
+                textTransform: "none",
                 fontSize: 14,
                 fontWeight: 600,
                 px: 4,
-                borderRadius: '6px',
-                boxShadow: 'none',
-                '&:hover': {
-                  backgroundColor: '#1C3A8C',
-                  boxShadow: 'none',
+                borderRadius: "6px",
+                boxShadow: "none",
+                "&:hover": {
+                  backgroundColor: "#1C3A8C",
+                  boxShadow: "none",
                 },
-                '&:disabled': {
-                  backgroundColor: '#D1D5DB',
+                "&:disabled": {
+                  backgroundColor: "#D1D5DB",
                 },
               }}
             >
-              {isLoading ? 'Generating...' : 'Generate Report'}
+              {isLoading ? "Generating..." : "Generate Report"}
             </Button>
           </Box>
         ) : (
-          <Box sx={{ height: '100%', p: isFullscreenGrid ? 0 : 0 }}>
+          <Box
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              p: isFullscreenGrid ? 0 : 0,
+            }}
+          >
             <Box
               sx={{
-                height: isFullscreenGrid ? '100vh' : '100%',
+                flex: 1,
+                height: isFullscreenGrid ? "100vh" : "100%",
                 minHeight: 400,
-                backgroundColor: '#ffffff',
-                borderRadius: isFullscreenGrid ? 0 : '0px',
-                overflow: 'hidden',
-                position: isFullscreenGrid ? 'fixed' : 'relative',
-                top: isFullscreenGrid ? 0 : 'auto',
-                left: isFullscreenGrid ? 0 : 'auto',
-                right: isFullscreenGrid ? 0 : 'auto',
-                bottom: isFullscreenGrid ? 0 : 'auto',
-                zIndex: isFullscreenGrid ? 1300 : 'auto',
+                backgroundColor: "#ffffff",
+                borderRadius: isFullscreenGrid ? 0 : "0px",
+                overflow: "hidden",
+                position: isFullscreenGrid ? "fixed" : "relative",
+                top: isFullscreenGrid ? 0 : "auto",
+                left: isFullscreenGrid ? 0 : "auto",
+                right: isFullscreenGrid ? 0 : "auto",
+                bottom: isFullscreenGrid ? 0 : "auto",
+                zIndex: isFullscreenGrid ? 1300 : "auto",
               }}
             >
               <StyledDataGrid
@@ -370,10 +382,15 @@ export default function ReportBuilderPage({
                     paginationModel: { pageSize: 25, page: 0 },
                   },
                   sorting: {
-                    sortModel: [{
-                      field: columns.find(col => col.field === 'resource_name' || col.field === 'project_name')?.field || columns[0]?.field || 'id',
-                      sort: 'asc'
-                    }],
+                    sortModel: [
+                      {
+                        field:
+                          columns.find((col) => col.field === "resource_name" || col.field === "project_name")?.field ||
+                          columns[0]?.field ||
+                          "id",
+                        sort: "asc",
+                      },
+                    ],
                   },
                   columns: {
                     columnVisibilityModel: hiddenColumns,
@@ -382,7 +399,7 @@ export default function ReportBuilderPage({
                 pageSizeOptions={[10, 25, 50, 100]}
                 disableRowSelectionOnClick
                 localeText={{
-                  noRowsLabel: "No data found"
+                  noRowsLabel: "No data found",
                 }}
                 slots={{
                   toolbar: ReportBuilderDataGridToolbar,
@@ -390,34 +407,41 @@ export default function ReportBuilderPage({
                 slotProps={{
                   toolbar: {
                     isFullscreen: isFullscreenGrid,
-                    onToggleFullscreen: () => setIsFullscreenGrid(prev => !prev),
+                    onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
                     GridRowCount: reportData.length,
                   } as any,
                   columnsPanel: {
-                    className: 'styleColumnMenu',
+                    className: "styleColumnMenu",
                     sx: ColumnManagementStyles,
                   },
                   loadingOverlay: {
-                    variant: 'skeleton',
-                    noRowsVariant: 'skeleton',
+                    variant: "skeleton",
+                    noRowsVariant: "skeleton",
                   },
                 }}
                 sx={{
-                  '& .MuiDataGrid-virtualScrollerContent': {
-                    backgroundColor: '#F7FBFF',
+                  height: "100%",
+                  "& .MuiDataGrid-virtualScrollerContent": {
+                    backgroundColor: "#F7FBFF",
                   },
-                  '.&.MuiDataGrid-row:hover': {
-                    backgroundColor: '#F7FBFF',
+                  ".&.MuiDataGrid-row:hover": {
+                    backgroundColor: "#F7FBFF",
                   },
-                  '.MuiDataGrid-cell': {
-                    border: '0.5px solid #E5E7EB !important',
+                  ".MuiDataGrid-cell": {
+                    border: "0.5px solid #E5E7EB !important",
                   },
+                  "& .MuiDataGrid-columnHeaders": {
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 3,
+                      backgroundColor: "#F1F6FF",
+                    },
                 }}
               />
-            </Box>
-          </Box>
-        )}
+          </Box>       
       </Box>
+       )}
+    </Box>
     </Box>
   );
 }

@@ -80,6 +80,7 @@ export default function ReportBuilderDataGridToolbar({
         justifyContent: 'space-between',
         alignItems: 'center',
         display: 'flex',
+        px: 3
       }}
     >
         <Box
