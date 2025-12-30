@@ -6,7 +6,7 @@ import { Box } from '@mui/material';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { getCellClassName } from '../../AllocationTable/AllocationGridUtils';
 import { AppDispatch, RootState } from '@/app/redux/store';
-import { GridCellParams } from '@mui/x-data-grid';
+import { GridCellParams, GridSortCellParams } from '@mui/x-data-grid';
 import EllipsisNameCell from './EllipsisNameCell';
 import CustomToolbar from '../../Toolbar/CustomAllocationToolbar';
 import NoRowsOverlay from './NoRowsOverlay';
@@ -384,8 +384,25 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any,
+      ) => {
+        const raw1 = getFirstChild(p1)?.portfolioName;
+        const raw2 = getFirstChild(p2)?.portfolioName;
+        const s1 =
+          raw1 && raw1 !== 'zzzzz' ? raw1.toLowerCase().trim() : '';
+        const s2 =
+          raw2 && raw2 !== 'zzzzz' ? raw2.toLowerCase().trim() : '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -407,8 +424,22 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any) => {
+      const s1 =
+          getFirstChild(p1)?.projectSponsor?.toLowerCase().trim() || '';
+      const s2 =
+          getFirstChild(p2)?.projectSponsor?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -421,7 +452,7 @@ function ProjectAllocation({
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -437,7 +468,7 @@ function ProjectAllocation({
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -453,7 +484,7 @@ function ProjectAllocation({
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -469,7 +500,7 @@ function ProjectAllocation({
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -487,7 +518,7 @@ function ProjectAllocation({
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -503,7 +534,7 @@ function ProjectAllocation({
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -519,7 +550,7 @@ function ProjectAllocation({
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -535,7 +566,7 @@ function ProjectAllocation({
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -548,10 +579,10 @@ function ProjectAllocation({
     },
     {
       field: 'role',
-      headerName: 'Resource Role',
+      headerName: 'Title',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -567,7 +598,7 @@ function ProjectAllocation({
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -583,7 +614,7 @@ function ProjectAllocation({
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -599,7 +630,7 @@ function ProjectAllocation({
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -615,7 +646,7 @@ function ProjectAllocation({
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -631,7 +662,7 @@ function ProjectAllocation({
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -651,8 +682,22 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any) => {
+      const s1 =
+          getFirstChild(p1)?.projectManager?.toLowerCase().trim() || '';
+      const s2 =
+          getFirstChild(p2)?.projectManager?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -668,8 +713,22 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any) => {
+      const s1 =
+          getFirstChild(p1)?.projectStatus?.toLowerCase().trim() || '';
+      const s2 =
+          getFirstChild(p2)?.projectStatus?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -684,9 +743,23 @@ function ProjectAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
-      sortable: false,
+      sortable: true,
       isEditable: false,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any) => {
+      const s1 =
+          getFirstChild(p1)?.projectLocation?.toLowerCase().trim() || '';
+      const s2 =
+          getFirstChild(p2)?.projectLocation?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -702,8 +775,22 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any) => {
+      const s1 =
+          getFirstChild(p1)?.projectType?.toLowerCase().trim() || '';
+      const s2 =
+          getFirstChild(p2)?.projectType?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -719,8 +806,22 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any) => {
+      const s1 =
+          getFirstChild(p1)?.projectTypeGroup?.toLowerCase().trim() || '';
+      const s2 =
+          getFirstChild(p2)?.projectTypeGroup?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -735,9 +836,22 @@ function ProjectAllocation({
       type: 'boolean',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
-      sortable: false,
+      sortable: true,
       isEditable: false,
       primaryColumn: true,
+      sortComparator: (
+        _v1: boolean | null,
+        _v2: boolean | null,
+        p1: any,
+        p2: any
+      ) => {
+        const v1 = getFirstChild(p1)?.projectOvertimeAllowed;
+        const v2 = getFirstChild(p2)?.projectOvertimeAllowed;
+        if (v1 == null && v2 == null) return 0;
+        if (v1 == null) return 1;
+        if (v2 == null) return -1;
+        return Number(v1) - Number(v2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -754,9 +868,24 @@ function ProjectAllocation({
       type: 'string ',
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
-      sortable: false,
+      sortable: true,
       isEditable: false,
       primaryColumn: true,
+      sortComparator: (
+        _v1: number | null,
+        _v2: number | null,
+        p1: any,
+        p2: any
+      ) => {
+        const n1 = Number(getFirstChild(p1)?.projectCost);
+        const n2 = Number(getFirstChild(p2)?.projectCost);
+        const isEmpty1 = Number.isNaN(n1);
+        const isEmpty2 = Number.isNaN(n2);
+        if (isEmpty1 && isEmpty2) return 0;
+        if (isEmpty1) return 1;
+        if (isEmpty2) return -1;
+        return n1 - n2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         const cost = firstChild?.projectCost;
@@ -773,8 +902,20 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any) => {
+        const s1 = getFirstChild(p1)?.projectCurrency?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectCurrency?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      } ,
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -790,8 +931,23 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const d1 = getFirstChild(p1)?.projectStartDate;
+        const d2 = getFirstChild(p2)?.projectStartDate;
+        const t1 = d1 ? new Date(d1).getTime() : NaN;
+        const t2 = d2 ? new Date(d2).getTime() : NaN;
+        if (Number.isNaN(t1) && Number.isNaN(t2)) return 0;
+        if (Number.isNaN(t1)) return 1;
+        if (Number.isNaN(t2)) return -1;
+        return t1 - t2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -807,8 +963,23 @@ function ProjectAllocation({
       headerClassName: 'secondary-header',
       cellClassName: 'common-NonEditableCells',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const d1 = getFirstChild(p1)?.projectEndDate;
+        const d2 = getFirstChild(p2)?.projectEndDate;
+        const t1 = d1 ? new Date(d1).getTime() : NaN;
+        const t2 = d2 ? new Date(d2).getTime() : NaN;
+        if (Number.isNaN(t1) && Number.isNaN(t2)) return 0;
+        if (Number.isNaN(t1)) return 1;
+        if (Number.isNaN(t2)) return -1;
+        return t1 - t2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -821,7 +992,7 @@ function ProjectAllocation({
       headerName: 'Total Effort',
       width: 106,
       type: 'number',
-      sortable: false,
+      sortable: true,
       cellClassName: getCellClassName,
       headerClassName: 'secondary-header',
       // cellClassName: 'secondary-cell',

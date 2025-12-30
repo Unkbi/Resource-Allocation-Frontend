@@ -350,7 +350,7 @@ function Resources({ permissions, loadingPermissions }) {
     },
     {
       field: 'Role',
-      headerName: 'Role',
+      headerName: 'Title',
       flex: 1,
       minWidth: 150,
       renderCell: params =>

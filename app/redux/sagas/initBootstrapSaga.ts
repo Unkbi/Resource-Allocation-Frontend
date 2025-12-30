@@ -82,30 +82,31 @@ function* initBootstrapSaga(action: any): any {
       ),
     ]);
 
+    // Sahadev - Commenting this out for now as its causing bug https://cioptimize.atlassian.net/browse/CIOPT-1063
     // If there are no resources, attempt to fetch resource details then wait
-    if (!resources || resources.length === 0) {
-      // Trigger a fetch for resource details scoped to this user
-      yield put({
-        type: FETCH_RESOURCE_DETAILS,
-        payload: { queryParams: { UserId: userId } },
-      });
+    // if (!resources || resources.length === 0) {
+    //   // Trigger a fetch for resource details scoped to this user
+    //   yield put({
+    //     type: FETCH_RESOURCE_DETAILS,
+    //     payload: { queryParams: { UserId: userId } },
+    //   });
 
-      // Wait for resources to appear in the store
-      const fetchedResources = yield call(
-        waitForState,
-        (s: any) => s.resources?.resources,
-        (v: any) => Array.isArray(v) && v.length > 0,
-        { interval: 200, timeout: 3000 }
-      );
+    //   // Wait for resources to appear in the store
+    //   const fetchedResources = yield call(
+    //     waitForState,
+    //     (s: any) => s.resources?.resources,
+    //     (v: any) => Array.isArray(v) && v.length > 0,
+    //     { interval: 200, timeout: 3000 }
+    //   );
 
-      // If still no resources after waiting, bail out of advanced filter setup
-      if (!fetchedResources || fetchedResources.length === 0) {
-        yield put(setLoadingAdvancedFilters(false));
-        return;
-      }
+    //   // If still no resources after waiting, bail out of advanced filter setup
+    //   if (!fetchedResources || fetchedResources.length === 0) {
+    //     yield put(setLoadingAdvancedFilters(false));
+    //     return;
+    //   }
 
-      resources = fetchedResources;
-    }
+    //   resources = fetchedResources;
+    // }
 
     // Dispatch SETUP_ADVANCED_FILTERS when we have the necessary data
     if (loginUserPrivileges) {

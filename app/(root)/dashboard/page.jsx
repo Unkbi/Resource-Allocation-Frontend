@@ -2,7 +2,8 @@
 
 import Overview from '../../components/Dashboard/OverviewCards';
 import ScoreCard from '../../components/Dashboard/ScoreCard';
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import ReportBuilderPage from '@/app/components/Dashboard/ReportBuilder/ReportBuilderPage';
+import { useEffect, useState, useRef, useMemo,useCallback } from 'react';
 import { Global, css } from '@emotion/react';
 import {
   Box,
@@ -495,12 +496,12 @@ export default function ExecutiveDashboardPage() {
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
             chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation') &&
-          selectedOption === 'week'
-            ? getMonday(selectedDate)
-                .subtract(1, 'week')
-                .add(6, 'day')
-                .format('YYYY-MM-DD')
-            : endDate;
+            selectedOption === 'week'
+            ?  getMonday(selectedDate)
+              .subtract(1, 'week')
+              .add(6, 'day')
+              .format('YYYY-MM-DD')
+              : endDate;
 
         const paramsForKey = {
           chartKey: chartKey,
@@ -3105,7 +3106,13 @@ export default function ExecutiveDashboardPage() {
                 label="Costs"
                 sx={{ textTransform: 'none', fontWeight: 600 }}
               />
-            )}
+            )}         
+          <Tab
+            value="reports"
+            label="Reports"
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          />
+          {activeTab !== 'reports' && (
             <DashboardToolbar
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -3114,9 +3121,10 @@ export default function ExecutiveDashboardPage() {
               anchorEl={anchorEl}
               setAnchorEl={setAnchorEl}
             />
-          </Tabs>
-        </CommonToolbar>
-        <Topbar />
+          )}
+        </Tabs>
+      </CommonToolbar>
+      {activeTab !== 'reports' && <Topbar />}
       </Box>
       {/* Scrollable content area (scroll without visible scrollbar) */}
       <Box
@@ -3229,39 +3237,49 @@ export default function ExecutiveDashboardPage() {
           </>
         )}
 
-        {activeTab === 'costs' && (
-          <>
-            <Typography
-              variant="h2"
-              sx={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#000000',
-                paddingLeft: '24px',
-                paddingBottom: '8px',
-              }}
-            >
-              Costs Tracking
-            </Typography>
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={persistedCostsLayouts || costsLayouts}
-              breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-              cols={{ lg: 12, md: 12, sm: 12 }}
-              rowHeight={130}
-              onLayoutChange={(layout, layouts) => handleLayoutChange('costs', layout, layouts)}
-              isDraggable
-              isResizable
-              compactType="vertical"
-              style={{ padding: '0 16px' }}
-            >
-              {allowedCostsCharts.map(key => (
-                <div key={key}>{costsCharts[key]}</div>
-              ))}
-            </ResponsiveGridLayout>
-          </>
-        )}
-      </Box>
+      {activeTab === 'costs' && (
+        <>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000000',
+              paddingLeft: '24px',
+              paddingBottom: '8px',
+            }}
+          >
+            Costs Tracking
+          </Typography>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={persistedCostsLayouts || costsLayouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 12 }}
+            rowHeight={130}
+            onLayoutChange={(layout, layouts) => handleLayoutChange('costs', layout, layouts)}
+            isDraggable
+            isResizable
+            compactType="vertical"
+            style={{ padding: '0 16px' }}
+          >
+            {allowedCostsCharts.map(key => (
+              <div key={key}>{costsCharts[key]}</div>
+            ))}
+          </ResponsiveGridLayout>
+        </>
+      )}
+      {activeTab === 'reports' && (
+        <Box
+          sx={{
+            height: 'calc(100vh - 95px)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <ReportBuilderPage />
+        </Box>
+      )}
       <Dialog
         open={dialogOpen}
         onClose={handleDialogClose}
@@ -3280,6 +3298,7 @@ export default function ExecutiveDashboardPage() {
           </Button>
         </DialogActions>
       </Dialog>
+    </Box>
     </Box>
   );
 }
