@@ -1122,8 +1122,8 @@ function AllocationGrid({
         )
       );
 
-      await Promise.all([...allocationPromises, ...deletePromises]).then(
-        async response => {
+      await Promise.all([...allocationPromises, ...deletePromises])
+        .then(async response => {
           if (response && response[0].length > 0) {
             response = response[0];
             response = formatAPIResponse('Allocation', response);
@@ -1163,29 +1163,40 @@ function AllocationGrid({
             );
             allUpdatedRows = Object.values(formateUpdate);
           }
-        }
-      );
 
-      dispatch(
-        showToastAction(
-          true,
-          `Successfully updated allocation for ${newRow.resource}...`,
-          'success'
-        )
-      );
+          dispatch(
+            showToastAction(
+              true,
+              `Successfully updated allocation for ${newRow.resource}...`,
+              'success'
+            )
+          );
 
-      if (allUpdatedRows?.length > 0) {
-        if (viewId === 'topProject') {
-          bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'bottomTeam') {
-          topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'teamAllocation') {
-          projectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'projectAllocation') {
-          teamAllocationGrid.updateRows([allUpdatedRows[0]]);
-        }
-        return allUpdatedRows[0];
-      }
+          if (allUpdatedRows?.length > 0) {
+            if (viewId === 'topProject') {
+              bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
+            } else if (viewId === 'bottomTeam') {
+              topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
+            } else if (viewId === 'teamAllocation') {
+              projectAllocationGrid.updateRows([allUpdatedRows[0]]);
+            } else if (viewId === 'projectAllocation') {
+              teamAllocationGrid.updateRows([allUpdatedRows[0]]);
+            }
+            return allUpdatedRows[0];
+          }
+        })
+        .catch(error => {
+          console.error('Error updating allocations:', error);
+          dispatch(
+            showToastAction(
+              true,
+              error?.response?.data
+                ? error?.response?.data
+                : `Error updating allocation for ${newRow.resource}.`,
+              'error'
+            )
+          );
+        });
     } catch (e) {
       console.error('Error creating allocations:', e);
     }
