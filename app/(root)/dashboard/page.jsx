@@ -791,6 +791,11 @@ export default function ExecutiveDashboardPage() {
   // Keep active tab in sync with URL `?tab=` and validate accessibility
   useEffect(() => {
     try {
+      // Don't validate tabs until permissions and query keys are loaded
+      if (loadingLoginUserPrivileges || dashboardQueryKeys.length === 0) {
+        return;
+      }
+
       const accessibleTabs = ['overview'];
       if (allowedTeamCharts.length > 0) accessibleTabs.push('teams');
       if (allowedCostsCharts.length > 0) accessibleTabs.push('costs');
@@ -812,7 +817,7 @@ export default function ExecutiveDashboardPage() {
       }
     } catch {}
     // Re-run when URL params or tab availability changes
-  }, [searchParams, allowedTeamCharts.length, allowedCostsCharts.length]);
+  }, [searchParams, allowedTeamCharts.length, allowedCostsCharts.length, loadingLoginUserPrivileges, dashboardQueryKeys.length]);
 
   const Teams = filteredCoverageData?.length
     ? [...new Set(filteredCoverageData.map(d => d.team_name))]
