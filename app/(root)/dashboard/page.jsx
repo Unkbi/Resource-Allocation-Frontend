@@ -796,7 +796,7 @@ export default function ExecutiveDashboardPage() {
         return;
       }
 
-      const accessibleTabs = ['overview'];
+      const accessibleTabs = ['overview','reports'];
       if (allowedTeamCharts.length > 0) accessibleTabs.push('teams');
       if (allowedCostsCharts.length > 0) accessibleTabs.push('costs');
 
