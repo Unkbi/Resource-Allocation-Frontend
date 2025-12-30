@@ -815,9 +815,9 @@ export default function ActualTable({
           open={Boolean(openEditorAnchor)}
           anchorEl={openEditorAnchor}
           onClose={closeEditor}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
           transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-          PaperProps={{ sx: { p: 1, width: 360 } }}
+          PaperProps={{ sx: { p: 1, width: 247 } }}
         >
           <TextField
             value={editorValue}
