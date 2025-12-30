@@ -230,6 +230,7 @@ const formatResourceProjectPeriodCost = (data: any[]): any[] => {
         portfolio_name: safeGet(item, 'Portfolio.Name', ''),
         project_manager: safeGet(item, 'ProjectManager.FullName', ''),
         hourly_rate: safeGet(item, 'AllocationCost.HourlyRate', 0),
+        contractor_hourly_rate_currency: safeGet(item, 'Resource.ContractorHourlyRateCurrency', 'USD'),
         period: safeGet(item, 'Allocation.Period', ''),
         planned: safeGet(item, 'Allocation.AllocationEntered', 0),
         actual: safeGet(item, 'Allocation.ActualsEntered', 0),

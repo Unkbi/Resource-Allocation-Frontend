@@ -36,6 +36,29 @@ const GetResources = (): any[] => {
   return resources;
 };
 
+const formatCurrency = (amount:any, currency = 'USD', locale = 'en-US') => {
+  try {
+    // Handle null, undefined, or non-numeric values
+    const numAmount = Number(amount);
+    if (isNaN(numAmount)) {
+      return '';
+    }
+    
+    // Fallback to USD if currency is invalid or undefined
+    const validCurrency = currency && typeof currency === 'string' && currency.length === 3 ? currency : 'USD';
+    
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: validCurrency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(numAmount);
+  } catch (err) {
+    console.error('Currency formatting error:', err);
+    return '-';
+  }
+}
+
 const GetName = (uid: string): string => {
   const users = GetUsers();
   const user = users.find((u: any) => u.id === uid);
@@ -59,7 +82,7 @@ const projectsOnlyColumns: GridColDef[] = [
   { field: 'location', headerName: 'Location', minWidth: 140 },
   { field: 'start_date', headerName: 'Start Date', minWidth: 120 },
   { field: 'end_date', headerName: 'End Date', minWidth: 120 },
-  { field: 'budget', headerName: 'Budget', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'budget', headerName: 'Budget', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => formatCurrency(params.value, params.row?.budget_currency) },
   { field: 'budget_currency', headerName: 'Budget Currency', minWidth: 150 },
   { field: 'allow_overtime', headerName: 'Allow Overtime', minWidth: 140 },
   { field: 'project_type', headerName: 'Project Type', minWidth: 140 },
@@ -129,7 +152,7 @@ const resourceOnlyColumns: GridColDef[] = [
   { field: 'role', headerName: 'Title', minWidth: 140 },
   { field: 'hr_level', headerName: 'HR Level', minWidth: 100 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
-  { field: 'contractor_hourly_rate', headerName: 'Contractor Hourly Rate', minWidth: 180, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'contractor_hourly_rate', headerName: 'Contractor Hourly Rate', minWidth: 180, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => formatCurrency(params.value, params.row?.contractor_hourly_rate_currency) },
   { field: 'contractor_hourly_rate_currency', headerName: 'Contractor Hourly Rate Currency', minWidth: 220 },
   { field: 'manager_name', headerName: 'Manager Name', minWidth: 160 },
   { field: 'team_name', headerName: 'Team Name', minWidth: 140 },
@@ -268,10 +291,10 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'period', headerName: 'Period', minWidth: 120 },
   { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
   { field: 'currency', headerName: 'Currency', minWidth: 100 },
-  { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'planned_cost', headerName: 'Planned Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
+  { field: 'planned_cost', headerName: 'Planned Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
     renderCell: (params: any) => (
