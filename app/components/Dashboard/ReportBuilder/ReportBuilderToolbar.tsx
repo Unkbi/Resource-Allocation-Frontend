@@ -122,20 +122,11 @@ export default function ReportBuilderToolbar({
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
           <Typography
             sx={{
-              fontSize: '14px',
-              fontWeight: 700,
-              color: '#0A0A0A',
-            }}
-          >
-            Report Builder 
-          </Typography>
-          <Typography
-            sx={{
               fontSize: '12px',
               color: '#4A5565',
             }}
           >
-            Select a view to organize your data. Each option provides a unique take on project and resource anyalytics.
+            Choose a report type, period and to analyze your data based on your requirements.
           </Typography>
         </Box>
         
