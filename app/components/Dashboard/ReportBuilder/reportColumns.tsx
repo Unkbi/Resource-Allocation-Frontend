@@ -126,7 +126,7 @@ const resourceOnlyColumns: GridColDef[] = [
   { field: 'email', headerName: 'Email', minWidth: 200 },
   { field: 'phone_number', headerName: 'Phone Number', minWidth: 160 },
   { field: 'department', headerName: 'Department', minWidth: 140 },
-  { field: 'role', headerName: 'Role', minWidth: 140 },
+  { field: 'role', headerName: 'Title', minWidth: 140 },
   { field: 'hr_level', headerName: 'HR Level', minWidth: 100 },
   { field: 'resource_type', headerName: 'Resource Type', minWidth: 140 },
   { field: 'contractor_hourly_rate', headerName: 'Contractor Hourly Rate', minWidth: 180 },
