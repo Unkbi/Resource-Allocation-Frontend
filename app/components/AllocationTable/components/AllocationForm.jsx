@@ -1820,22 +1820,25 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Failed to create allocation for ${
-                Array.isArray(values.Resource)
-                  ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.find(
-                        r => r.Id === resourceId
-                      );
-                      if (!resource) return acc;
-                      return (
-                        acc +
-                        resources?.find(resource => resource.Id === resourceId)
-                          ?.FullName +
-                        ', '
-                      );
-                    }, '').slice(0, -2)
-                  : resources?.find(r => r.Id === values.Resource)?.FullName
-              }`,
+              e?.response?.data
+                ? e?.response?.data
+                : `Failed to create allocation for ${
+                    Array.isArray(values.Resource)
+                      ? values.Resource.reduce((acc, resourceId) => {
+                          const resource = resources?.find(
+                            r => r.Id === resourceId
+                          );
+                          if (!resource) return acc;
+                          return (
+                            acc +
+                            resources?.find(
+                              resource => resource.Id === resourceId
+                            )?.FullName +
+                            ', '
+                          );
+                        }, '').slice(0, -2)
+                      : resources?.find(r => r.Id === values.Resource)?.FullName
+                  }`,
               'error',
               4000
             )
