@@ -323,7 +323,7 @@ function PortfolioAllocation({
     },
     {
       field: 'role',
-      headerName: 'Tilte',
+      headerName: 'Title',
       width: 170,
       isEditable: 'false',
       sortable: true,

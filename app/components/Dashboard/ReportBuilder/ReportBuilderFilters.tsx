@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { ArrowDropDown } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
@@ -218,6 +219,11 @@ export default function ReportBuilderFilters({
     }
   }, [dispatch, projectTypeGroups.length, teams?.length, projects?.length, resources?.length, portfolios?.length, organisations?.length, projectTypes.length]);
 
+  // Helper function to sort options alphabetically by label
+  const sortOptions = (options: Array<{ label: string; value: string }>) => {
+    return [...options].sort((a, b) => a.label.localeCompare(b.label));
+  };
+
   const reportTypes = [
     { label: 'Resource, Project, Period & Cost', value: 'resource_project_period_cost', group: 'Allocation & Cost Analysis' },
     { label: 'Allocation & Actuals', value: 'allocation_actuals', group: 'Allocation & Cost Analysis' },
@@ -228,47 +234,54 @@ export default function ReportBuilderFilters({
   ];
 
   // Prepare options from Redux data
-  const projectTypeGroupOptions =
+  const projectTypeGroupOptions = sortOptions(
     projectTypeGroups?.map((projectTypeGroup: any) => ({
       value: projectTypeGroup.Id,
       label: projectTypeGroup.Name ?? '',
-    })) || [];
+    })) || []
+  );
 
-  const projectTypeOptions =
+  const projectTypeOptions = sortOptions(
     projectTypes?.map((projectType: any) => ({
       value: projectType.Id,
       label: projectType.Name ?? '',
-    })) || [];
+    })) || []
+  );
 
-  const teamOptions =
+  const teamOptions = sortOptions(
     teams?.map((team: any) => ({
       value: team.Id,
       label: team.Name ?? '',
-    })) || [];
+    })) || []
+  );
 
-  const resourceOptions =
+  const resourceOptions = sortOptions(
     resources?.map((resource: any) => ({
       value: resource.Id,
       label: resource.FullName ?? '',
-    })) || [];
+    })) || []
+  );
 
-  const portfolioOptions =
+  const portfolioOptions = sortOptions(
     portfolios?.map((portfolio: any) => ({
       value: portfolio.Id,
       label: portfolio.Name ?? '',
-    })) || [];
+    })) || []
+  );
 
-  const organizationOptions =
+  const organizationOptions = sortOptions(
     organisations?.map((organisation: any) => ({
       value: organisation.Id,
       label: organisation.Name ?? '',
-    })) || [];
+    })) || []
+  );
 
-  const projectOptions =
+  const projectOptions = sortOptions(
     projects?.map((project: any) => ({
       value: project.Id,
       label: project.Name ?? '',
-    })) || [];
+    })) || []
+  );
 
   // Get unique allocation managers from teams
   const allocationManagers = teams?.map((team: any) => {
@@ -279,12 +292,14 @@ export default function ReportBuilderFilters({
     };
   }) || [];
 
-  const allocationManagerOptions = Array.from(
-    new Map(
-      allocationManagers
-        .filter(option => option.value !== '')
-        .map(option => [option.value, option])
-    ).values()
+  const allocationManagerOptions = sortOptions(
+    Array.from(
+      new Map(
+        allocationManagers
+          .filter(option => option.value !== '')
+          .map(option => [option.value, option])
+      ).values()
+    )
   );
 
   // Get unique project managers from projects
@@ -296,19 +311,20 @@ export default function ReportBuilderFilters({
     };
   }) || [];
 
-  const projectManagerOptions = Array.from(
-    new Map(
-      projectManagers
-        .filter(option => option.value !== '')
-        .map(option => [option.value, option])
-    ).values()
+  const projectManagerOptions = sortOptions(
+    Array.from(
+      new Map(
+        projectManagers
+          .filter(option => option.value !== '')
+          .map(option => [option.value, option])
+      ).values()
+    )
   );
 
-  // Resource type options (FTE, Contractor, etc.)
-  const resourceTypeOptions = [
-    { value: 'fte', label: 'FTE' },
-    { value: 'contractor', label: 'Contractor' },
-  ];
+  const resourceTypeOptions = sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type: string) => ({
+    value: type,
+    label: type.charAt(0).toUpperCase() + type.slice(1),
+  })));
 
   // Report filter labels for FilterChips component
   const reportFilterLabels: Record<string, string> = {
@@ -411,35 +427,6 @@ export default function ReportBuilderFilters({
     const start = dateRange[0];
     const end = dateRange[1];
     return `${start.format('MMM DD, YYYY')} - ${end.format('MMM DD, YYYY')}`;
-  };
-
-  const getQuickSelectDates = (option: string): DateRange<Dayjs> => {
-    const today = dayjs();
-
-    switch (option) {
-      case 'this_week':
-        return [today.startOf('week'), today.endOf('week')];
-      case 'last_week':
-        const lastWeekStart = today.subtract(1, 'week').startOf('week');
-        return [lastWeekStart, lastWeekStart.endOf('week')];
-      case 'this_month':
-        return [today.startOf('month'), today.endOf('month')];
-      case 'last_month':
-        const lastMonthStart = today.subtract(1, 'month').startOf('month');
-        return [lastMonthStart, lastMonthStart.endOf('month')];
-      case 'this_quarter':
-        return [today.startOf('quarter'), today.endOf('quarter')];
-      case 'last_quarter':
-        const lastQuarterStart = today.subtract(1, 'quarter').startOf('quarter');
-        return [lastQuarterStart, lastQuarterStart.endOf('quarter')];
-      case 'this_year':
-        return [today.startOf('year'), today.endOf('year')];
-      case 'last_year':
-        const lastYearStart = today.subtract(1, 'year').startOf('year');
-        return [lastYearStart, lastYearStart.endOf('year')];
-      default:
-        return [null, null];
-    }
   };
 
   const handleChipDelete = (key: string) => {
@@ -641,6 +628,10 @@ export default function ReportBuilderFilters({
 
           {filters.period === 'custom' && formatDateRange(filters.customDateRange) && (
             <Box
+              onClick={(e) => {
+                setTempDateRange(filters.customDateRange || [null, null]);
+                setCustomDateSubmenuAnchor(e.currentTarget);
+              }}
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -650,9 +641,15 @@ export default function ReportBuilderFilters({
                 backgroundColor: '#FFFFFF',
                 px: 1.5,
                 py: 1.25,
-                // boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: '#F9FAFB',
+                  borderColor: '#D1D5DB',
+                },
               }}
             >
+              <CalendarMonthIcon sx={{ fontSize: 18, mr: 1, color: '#5D6979' }} /> {' '}
               <Typography
                 sx={{
                   fontSize: '12px',

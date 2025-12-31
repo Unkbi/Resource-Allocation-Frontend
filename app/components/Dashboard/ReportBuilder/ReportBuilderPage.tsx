@@ -13,6 +13,7 @@ import { ReportType, ReportUIFilters } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
 import { ColumnManagementStyles, StyledDataGrid } from '../../AllocationTable/styles/StyledDataGrid';
+import { showToast } from '@/app/redux/reducers/toastReducer';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
@@ -40,6 +41,7 @@ export default function ReportBuilderPage({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
+  const [showData, setShowData] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
@@ -70,6 +72,7 @@ export default function ReportBuilderPage({
 
   const handleGenerateReport = async () => {
     setIsLoading(true);
+    setShowData(false);
     setFiltersExpanded(false);
 
     // Serialize custom date range for UI filters stored in redux
@@ -91,7 +94,15 @@ export default function ReportBuilderPage({
       allocationManager: filters.allocationManager,
     };
     const apiPayload = prepareApiPayload(uiFilters);
-    dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
+    try {
+      dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
+      setShowData(true);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      dispatch(showToast({ message: 'Failed to generate report. Please try again.', severity: 'error' }));
+      setIsLoading(false);
+      setShowData(false);
+    }
     onReportGenerate?.(filters);
   };
 
@@ -109,6 +120,7 @@ export default function ReportBuilderPage({
     // Reset report generated state if report type changes
     if (newFilters.reportType !== filters.reportType) {
       setReportGenerated(false);
+      setShowData(false);
       setReportData([]);
     }
     setFilters(newFilters);
@@ -116,7 +128,7 @@ export default function ReportBuilderPage({
 
   const handleResetFilters = () => {
     setFilters({
-      reportType: 'resourceProjectPeriod',
+      reportType: filters.reportType,
       period: 'last_week',
       customDateRange: undefined,
       team: [],
@@ -138,12 +150,14 @@ export default function ReportBuilderPage({
   useEffect(() => {
     if (currentReport) {
       setIsLoading(currentReport.loading);
-      if (!currentReport.loading && currentReport.data) {
+      if (!currentReport.loading) {
+        if(currentReport.data.length > 0) {
         setReportGenerated(true);
+        }
         setReportData(currentReport.data);
       }
     }
-  }, [currentReport]);
+  }, [currentReport, ]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
@@ -213,7 +227,6 @@ export default function ReportBuilderPage({
 
   const getSelectedFiltersCount = () => {
     let count = 0;
-    if (filters.reportType !== 'resourceProjectPeriod') count++;
 
     // Check period as string
     if (filters.period !== 'last_week') count++;
@@ -244,8 +257,23 @@ export default function ReportBuilderPage({
         isLoading={isLoading}
         onReportTypeChange={(reportType: ReportType) => {
           setReportGenerated(false);
+          setShowData(false);
           setReportData([]);
-          setFilters((prev) => ({ ...prev, 'reportType': reportType }));
+          setFilters({
+            reportType: reportType,
+            period: 'last_week',
+            customDateRange: undefined,
+            team: [],
+            organization: [],
+            resourceType: [],
+            resource: [],
+            projectType: [],
+            projectTypeGroup: [],
+            project: [],
+            portfolio: [],
+            projectManager: [],
+            allocationManager: [],
+          });
         }}
         selectedFiltersCount={getSelectedFiltersCount()}
       />
@@ -263,26 +291,29 @@ export default function ReportBuilderPage({
       <Box
         sx={{
           flex: 1,
-          backgroundColor: '#F9FAFB',
+          backgroundColor: "#F9FAFB",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        {!reportGenerated || reportData.length === 0 ? (
+        {!reportGenerated && !showData ? (
           <Box
             sx={{
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
               // p: 3,
             }}
           >
             <Typography
               sx={{
-                fontSize: '15px',
+                fontSize: "15px",
                 fontWeight: 500,
-                color: '#6B7280',
+                color: "#6B7280",
                 mb: 3,
               }}
             >
@@ -294,43 +325,50 @@ export default function ReportBuilderPage({
               disabled={isLoading}
               sx={{
                 height: 40,
-                backgroundColor: '#152E75',
-                color: '#fff',
-                textTransform: 'none',
+                backgroundColor: "#152E75",
+                color: "#fff",
+                textTransform: "none",
                 fontSize: 14,
                 fontWeight: 600,
                 px: 4,
-                borderRadius: '6px',
-                boxShadow: 'none',
-                '&:hover': {
-                  backgroundColor: '#1C3A8C',
-                  boxShadow: 'none',
+                borderRadius: "6px",
+                boxShadow: "none",
+                "&:hover": {
+                  backgroundColor: "#1C3A8C",
+                  boxShadow: "none",
                 },
-                '&:disabled': {
-                  backgroundColor: '#D1D5DB',
+                "&:disabled": {
+                  backgroundColor: "#D1D5DB",
                 },
               }}
             >
-              {isLoading ? 'Generating...' : 'Generate Report'}
+              {isLoading ? "Generating..." : "Generate Report"}
             </Button>
           </Box>
         ) : (
-          <Box sx={{ height: '100%', p: isFullscreenGrid ? 0 : 0 }}>
+          <Box
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              p: isFullscreenGrid ? 0 : 0,
+            }}
+          >
             <Box
               sx={{
-                height: isFullscreenGrid ? '100vh' : '100%',
+                flex: 1,
+                height: isFullscreenGrid ? "100vh" : "100%",
                 minHeight: 400,
-                backgroundColor: '#ffffff',
-                borderRadius: isFullscreenGrid ? 0 : '0px',
-                overflow: 'hidden',
-                paddingLeft: 2,
-                paddingRight: 2,
-                position: isFullscreenGrid ? 'fixed' : 'relative',
-                top: isFullscreenGrid ? 0 : 'auto',
-                left: isFullscreenGrid ? 0 : 'auto',
-                right: isFullscreenGrid ? 0 : 'auto',
-                bottom: isFullscreenGrid ? 0 : 'auto',
-                zIndex: isFullscreenGrid ? 1300 : 'auto',
+                backgroundColor: "#ffffff",
+                borderRadius: isFullscreenGrid ? 0 : "0px",
+                overflow: "hidden",
+                position: isFullscreenGrid ? "fixed" : "relative",
+                top: isFullscreenGrid ? 0 : "auto",
+                left: isFullscreenGrid ? 0 : "auto",
+                right: isFullscreenGrid ? 0 : "auto",
+                bottom: isFullscreenGrid ? 0 : "auto",
+                zIndex: isFullscreenGrid ? 1300 : "auto",
               }}
             >
               <StyledDataGrid
@@ -338,15 +376,21 @@ export default function ReportBuilderPage({
                 rows={reportData}
                 columns={columns}
                 hideFooter
+                loading={isLoading}
                 initialState={{
                   pagination: {
                     paginationModel: { pageSize: 25, page: 0 },
                   },
                   sorting: {
-                    sortModel: [{
-                      field: columns.find(col => col.field === 'resource_name' || col.field === 'project_name')?.field || columns[0]?.field || 'id',
-                      sort: 'asc'
-                    }],
+                    sortModel: [
+                      {
+                        field:
+                          columns.find((col) => col.field === "resource_name" || col.field === "project_name")?.field ||
+                          columns[0]?.field ||
+                          "id",
+                        sort: "asc",
+                      },
+                    ],
                   },
                   columns: {
                     columnVisibilityModel: hiddenColumns,
@@ -354,40 +398,53 @@ export default function ReportBuilderPage({
                 }}
                 pageSizeOptions={[10, 25, 50, 100]}
                 disableRowSelectionOnClick
+                localeText={{
+                  noRowsLabel: "No data found",
+                }}
                 slots={{
                   toolbar: ReportBuilderDataGridToolbar,
                 }}
                 slotProps={{
                   toolbar: {
                     isFullscreen: isFullscreenGrid,
-                    onToggleFullscreen: () => setIsFullscreenGrid(prev => !prev),
+                    onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
                     GridRowCount: reportData.length,
                   } as any,
                   columnsPanel: {
-                    className: 'styleColumnMenu',
+                    className: "styleColumnMenu",
                     sx: ColumnManagementStyles,
                   },
                   loadingOverlay: {
-                    variant: 'skeleton',
-                    noRowsVariant: 'skeleton',
+                    variant: "skeleton",
+                    noRowsVariant: "skeleton",
                   },
                 }}
                 sx={{
-                  '& .MuiDataGrid-virtualScrollerContent': {
-                    backgroundColor: '#F7FBFF',
+                  height: "100%",
+                  "& .MuiDataGrid-virtualScrollerContent": {
+                    backgroundColor: "#F7FBFF",
                   },
-                  '.&.MuiDataGrid-row:hover': {
-                    backgroundColor: '#F7FBFF',
+                  "& .MuiDataGrid-row:hover": {
+                    backgroundColor: "#F7FBFF",
                   },
-                  '.MuiDataGrid-cell': {
-                    border: '0.5px solid #E5E7EB !important',
+                  "& .MuiDataGrid-cell": {
+                    border: "0.5px solid #E5E7EB !important",
                   },
+                  "& .MuiDataGrid-columnHeaders": {
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 3,
+                      backgroundColor: "#F1F6FF",
+                    },
+                  "& .MuiDataGrid-cell--textRight":{
+                    textAlign: "right !important",
+                  }
                 }}
               />
-            </Box>
-          </Box>
-        )}
+          </Box>       
       </Box>
+       )}
+    </Box>
     </Box>
   );
 }

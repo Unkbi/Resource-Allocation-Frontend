@@ -29,14 +29,25 @@ const safeGet = (obj: any, path: string, defaultValue: any = null) => {
 };
 
 // Format date to MM/DD/YYYY or return null
+// Handles date strings without timezone conversion to avoid shifting dates
 const formatDate = (dateValue: any): string | null => {
     if (!dateValue) return null;
     try {
-        const date = new Date(dateValue);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${month}/${day}/${year}`;
+        const dateStr = String(dateValue);
+        
+        // Handle ISO datetime format (e.g., "1970-01-01T12:00:00.000Z")
+        if (dateStr.includes('T')) {
+            const datePart = dateStr.split('T')[0];
+            const [year, month, day] = datePart.split('-');
+            return `${month}/${day}/${year}`;
+        }
+        // Handle simple date format (e.g., "2024-12-26")
+        if (dateStr.includes('-')) {
+            const [year, month, day] = dateStr.split('-');
+            return `${month}/${day}/${year}`;
+        }
+        
+        return null;
     } catch {
         return null;
     }
@@ -45,7 +56,6 @@ const formatDate = (dateValue: any): string | null => {
 const formatProjectsOnly = (data: any[]): any[] => {
     // First, format the entire response to flatten the double-nested structure
     const formattedData = formatAPIResponse('ProjectWithDetails', data);
-    console.log(formattedData,"datatat")
     return formattedData.map((item: any, index: any) => ({
         id: index,
         project_id: safeGet(item, 'Project.Id', ''),
@@ -55,7 +65,7 @@ const formatProjectsOnly = (data: any[]): any[] => {
         location: safeGet(item, 'Project.Location', ''),
         start_date: formatDate(safeGet(item, 'Project.StartDate')),
         end_date: formatDate(safeGet(item, 'Project.EndDate')),
-        budget: `${safeGet(item, 'Project.Budget', 0)} ${safeGet(item, 'Project.BudgetCurrency', '')}`,
+        budget: safeGet(item, 'Project.Budget', 0),
         budget_currency: safeGet(item, 'Project.BudgetCurrency', ''),
         allow_overtime: safeGet(item, 'Project.AllowOvertime', false),
 
@@ -103,10 +113,11 @@ const formatResourceOnly = (data: any[]): any[] => {
         role: safeGet(item, 'Resource.Role', ''),
         hr_level: safeGet(item, 'Resource.HRLevel', ''),
         resource_type: safeGet(item, 'Resource.Type', ''),
-        contractor_hourly_rate: `${safeGet(item, 'Resource.ContractorHourlyRate', 0)} ${safeGet(item, 'Resource.ContractorHourlyRateCurrency', '')}`,
+        contractor_hourly_rate: safeGet(item, 'Resource.ContractorHourlyRate', 0),
         contractor_hourly_rate_currency: safeGet(item, 'Resource.ContractorHourlyRateCurrency', ''),
         manager_name: safeGet(item, 'Manager.FullName', ''),
         team_name: safeGet(item, 'Team.Name', ''),
+        allocation_manager: safeGet(item, 'Team.AllocationManager', ''),
         organization: safeGet(item, 'Organization.Name', ''),
         work_location: safeGet(item, 'WorkLocation.Name', ''),
         work_location_group: safeGet(item, 'WorkLocationGroup.Name', ''),
@@ -160,7 +171,7 @@ const formatResourcePeriod = (data: any[]): any[] => {
         allocation_manager: safeGet(item, 'Team.AllocationManager', ''),
         period: safeGet(item, 'ResourceEngagementScore.Period', ''),
         planned_allocation: safeGet(item, 'Allocation.AllocationEntered', 0),
-        actual_allocation: safeGet(item, 'Allocation.ActualsEntered', 0),
+        actuals_allocation: safeGet(item, 'Allocation.ActualsEntered', 0),
         planning_score: safeGet(item, 'ResourceEngagementScore.PlanningScore', 0),
         actuals_score: safeGet(item, 'ResourceEngagementScore.ActualsScore', 0),
         confirmation_score: safeGet(item, 'ResourceEngagementScore.ConfirmationScore', 0),
@@ -219,6 +230,7 @@ const formatResourceProjectPeriodCost = (data: any[]): any[] => {
         portfolio_name: safeGet(item, 'Portfolio.Name', ''),
         project_manager: safeGet(item, 'ProjectManager.FullName', ''),
         hourly_rate: safeGet(item, 'AllocationCost.HourlyRate', 0),
+        contractor_hourly_rate_currency: safeGet(item, 'Resource.ContractorHourlyRateCurrency', 'USD'),
         period: safeGet(item, 'Allocation.Period', ''),
         planned: safeGet(item, 'Allocation.AllocationEntered', 0),
         actual: safeGet(item, 'Allocation.ActualsEntered', 0),
