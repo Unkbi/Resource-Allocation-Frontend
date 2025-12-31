@@ -46,6 +46,9 @@ export default function ReportBuilderPage({
   const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
 
+  const reportSlice = useSelector((state: RootState) => state.dashboard.report);
+  const currentReport = reportSlice?.[filters.reportType as ReportType];
+
   // Helper function to prepare API payload from filters
   const prepareApiPayload = (filters: ReportUIFilters) => {
     const payload: any = {
@@ -97,6 +100,8 @@ export default function ReportBuilderPage({
     try {
       dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
       setShowData(true);
+      // Save the last generated report to sessionStorage
+      sessionStorage.setItem('last_generated_report', JSON.stringify({ uiFilters }));
     } catch (error) {
       console.error('Error generating report:', error);
       dispatch(showToast({ message: 'Failed to generate report. Please try again.', severity: 'error' }));
@@ -144,9 +149,46 @@ export default function ReportBuilderPage({
     });
   };
 
+  useEffect(() => {
+    // Load last report type and filters from sessionStorage on mount
+    const savedLastReport = sessionStorage.getItem('last_generated_report');
+    
+    if (savedLastReport) {
+      try {
+      const parsed = JSON.parse(savedLastReport);
+      const f = parsed.uiFilters;
+      
+      // Restore filters
+      setFilters({
+        reportType: f.reportType,
+        period: f.period || 'last_week',
+        customDateRange: f.customStartDate && f.customEndDate 
+        ? [dayjs(f.customStartDate), dayjs(f.customEndDate)] 
+        : undefined,
+        team: f.team || [],
+        organization: f.organization || [],
+        resourceType: f.resourceType || [],
+        resource: f.resource || [],
+        projectType: f.projectType || [],
+        projectTypeGroup: f.projectTypeGroup || [],
+        project: f.project || [],
+        portfolio: f.portfolio || [],
+        projectManager: f.projectManager || [],
+        allocationManager: f.allocationManager || [],
+      });
+      
+      // Fetch the report data
+      dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
+      setShowData(true);
+      setFiltersExpanded(false);
+      } catch (error) {
+      console.error('Error loading last report:', error);
+      }
+    }
+  }, []);
+
   // Read report data and loading from Redux
-  const reportSlice = useSelector((state: RootState) => state.dashboard.report);
-  const currentReport = reportSlice?.[filters.reportType as ReportType];
+  
   useEffect(() => {
     if (currentReport) {
       setIsLoading(currentReport.loading);
@@ -251,6 +293,7 @@ export default function ReportBuilderPage({
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       {/* Toolbar */}
       <ReportBuilderToolbar
+        reportType={filters.reportType as ReportType}
         onGenerateReport={handleGenerateReport}
         onExport={handleExport}
         onShare={handleShare}
@@ -274,6 +317,7 @@ export default function ReportBuilderPage({
             projectManager: [],
             allocationManager: [],
           });
+          setFiltersExpanded(true);
         }}
         selectedFiltersCount={getSelectedFiltersCount()}
       />
