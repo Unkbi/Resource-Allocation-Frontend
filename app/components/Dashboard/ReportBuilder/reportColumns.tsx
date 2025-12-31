@@ -350,6 +350,7 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
         location: false,
         allow_overtime: false,
         project_type_color: false,
+        budget_currency: false,
         portfolio_status: false,
         project_manager_email: false,
         project_sponsor_email: false,
@@ -397,6 +398,7 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
     case 'resourceProjectPeriodCost':
       return {
         ...commonHidden,
+        currency: false,
       };
 
     default:
