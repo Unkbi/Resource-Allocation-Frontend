@@ -234,54 +234,75 @@ export default function ReportBuilderFilters({
   ];
 
   // Prepare options from Redux data
-  const projectTypeGroupOptions = sortOptions(
-    projectTypeGroups?.map((projectTypeGroup: any) => ({
-      value: projectTypeGroup.Id,
-      label: projectTypeGroup.Name ?? '',
-    })) || []
-  );
+  const projectTypeGroupOptions = [
+    ...sortOptions(
+      projectTypeGroups?.map((projectTypeGroup: any) => ({
+        value: projectTypeGroup.Id,
+        label: projectTypeGroup.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const projectTypeOptions = sortOptions(
-    projectTypes?.map((projectType: any) => ({
-      value: projectType.Id,
-      label: projectType.Name ?? '',
-    })) || []
-  );
+  const projectTypeOptions = [
+    ...sortOptions(
+      projectTypes?.map((projectType: any) => ({
+        value: projectType.Id,
+        label: projectType.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const teamOptions = sortOptions(
-    teams?.map((team: any) => ({
-      value: team.Id,
-      label: team.Name ?? '',
-    })) || []
-  );
+  const teamOptions = [
+    ...sortOptions(
+      teams?.map((team: any) => ({
+        value: team.Id,
+        label: team.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const resourceOptions = sortOptions(
-    resources?.map((resource: any) => ({
-      value: resource.Id,
-      label: resource.FullName ?? '',
-    })) || []
-  );
+  const resourceOptions = [
+    ...sortOptions(
+      resources?.map((resource: any) => ({
+        value: resource.Id,
+        label: resource.FullName ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const portfolioOptions = sortOptions(
-    portfolios?.map((portfolio: any) => ({
-      value: portfolio.Id,
-      label: portfolio.Name ?? '',
-    })) || []
-  );
+  const portfolioOptions = [
+    ...sortOptions(
+      portfolios?.map((portfolio: any) => ({
+        value: portfolio.Id,
+        label: portfolio.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const organizationOptions = sortOptions(
-    organisations?.map((organisation: any) => ({
-      value: organisation.Id,
-      label: organisation.Name ?? '',
-    })) || []
-  );
+  const organizationOptions = [
+    ...sortOptions(
+      organisations?.map((organisation: any) => ({
+        value: organisation.Id,
+        label: organisation.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const projectOptions = sortOptions(
-    projects?.map((project: any) => ({
-      value: project.Id,
-      label: project.Name ?? '',
-    })) || []
-  );
+  const projectOptions = [
+    ...sortOptions(
+      projects?.map((project: any) => ({
+        value: project.Id,
+        label: project.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
   // Get unique allocation managers from teams
   const allocationManagers = teams?.map((team: any) => {
@@ -292,15 +313,18 @@ export default function ReportBuilderFilters({
     };
   }) || [];
 
-  const allocationManagerOptions = sortOptions(
-    Array.from(
-      new Map(
-        allocationManagers
-          .filter(option => option.value !== '')
-          .map(option => [option.value, option])
-      ).values()
-    )
-  );
+  const allocationManagerOptions = [
+    ...sortOptions(
+      Array.from(
+        new Map(
+          allocationManagers
+            .filter(option => option.value !== '')
+            .map(option => [option.value, option])
+        ).values()
+      )
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
   // Get unique project managers from projects
   const projectManagers = projects?.map((project: any) => {
@@ -311,20 +335,26 @@ export default function ReportBuilderFilters({
     };
   }) || [];
 
-  const projectManagerOptions = sortOptions(
-    Array.from(
-      new Map(
-        projectManagers
-          .filter(option => option.value !== '')
-          .map(option => [option.value, option])
-      ).values()
-    )
-  );
+  const projectManagerOptions = [
+    ...sortOptions(
+      Array.from(
+        new Map(
+          projectManagers
+            .filter(option => option.value !== '')
+            .map(option => [option.value, option])
+        ).values()
+      )
+    ),
+    { value: '_BLANK_', label: '(Blanks)' },
+  ];
 
-  const resourceTypeOptions = sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type: string) => ({
-    value: type,
-    label: type.charAt(0).toUpperCase() + type.slice(1),
-  })));
+  const resourceTypeOptions = [
+    ...sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type: string) => ({
+      value: type,
+      label: type.charAt(0).toUpperCase() + type.slice(1),
+    }))),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
   // Report filter labels for FilterChips component
   const reportFilterLabels: Record<string, string> = {
@@ -351,6 +381,7 @@ export default function ReportBuilderFilters({
       
       const displayValues = value.map((val: string) => {
         if (val === 'all') return '';
+        if (val === '_BLANK_') return 'Blanks';
         
         // Map IDs to labels using option arrays
         switch (key) {
