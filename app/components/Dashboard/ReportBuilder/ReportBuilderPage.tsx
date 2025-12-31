@@ -424,10 +424,10 @@ export default function ReportBuilderPage({
                   "& .MuiDataGrid-virtualScrollerContent": {
                     backgroundColor: "#F7FBFF",
                   },
-                  ".&.MuiDataGrid-row:hover": {
+                  "& .MuiDataGrid-row:hover": {
                     backgroundColor: "#F7FBFF",
                   },
-                  ".MuiDataGrid-cell": {
+                  "& .MuiDataGrid-cell": {
                     border: "0.5px solid #E5E7EB !important",
                   },
                   "& .MuiDataGrid-columnHeaders": {
@@ -436,6 +436,9 @@ export default function ReportBuilderPage({
                       zIndex: 3,
                       backgroundColor: "#F1F6FF",
                     },
+                  "& .MuiDataGrid-cell--textRight":{
+                    textAlign: "right !important",
+                  }
                 }}
               />
           </Box>       
