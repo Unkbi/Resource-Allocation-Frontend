@@ -45,7 +45,6 @@ const formatDate = (dateValue: any): string | null => {
 const formatProjectsOnly = (data: any[]): any[] => {
     // First, format the entire response to flatten the double-nested structure
     const formattedData = formatAPIResponse('ProjectWithDetails', data);
-    console.log(formattedData,"datatat")
     return formattedData.map((item: any, index: any) => ({
         id: index,
         project_id: safeGet(item, 'Project.Id', ''),
