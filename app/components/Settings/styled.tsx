@@ -385,6 +385,19 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
       break;
     case 'Created':
       textColor = '#EC9E17';
+      break;
+    case 'Planning':
+      textColor = '#4A5565';
+      break;
+    case 'On-Track':
+      textColor = '#229E60';
+      break;
+    case 'At-Risk':
+      textColor = '#F54900';
+      break;
+    case 'Delayed':
+      textColor = '#C73732';
+      break;
     default:
       textColor = '#6c757d';
   }
@@ -414,6 +427,36 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
     flexShrink: 0
   },
 }
+});
+
+const ScorePill = styled('div')<{ score?: number }>(({ score }) => {
+  const value = typeof score === 'number' && !Number.isNaN(score) ? score : 0;
+
+  let backgroundColor = '#FFE5E5';
+  let textColor = '#C73732';
+
+  if (value > 80) {
+    backgroundColor = '#E6FAF0';
+    textColor = '#137A3A';
+  } else if (value > 60) {
+    backgroundColor = '#FFF7D6';
+    textColor = '#8A6A00';
+  }
+
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '4px',
+    padding: '4px 10px',
+    minWidth: '40px',
+    fontSize: '12px',
+    fontWeight: 600,
+    lineHeight: '16px',
+    textAlign: 'center',
+    backgroundColor,
+    color: textColor,
+  };
 });
 
 const commonTabSx = {
@@ -472,5 +515,6 @@ export {
   DeleteButton,
   StyledTableHeader,
   StatusPill,
+  ScorePill,
   commonTabSx
 };

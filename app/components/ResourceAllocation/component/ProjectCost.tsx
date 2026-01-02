@@ -387,7 +387,7 @@ const ProjectCost = ({
     },
     {
       field: 'Role',
-      headerName: 'Resource Role',
+      headerName: 'Title',
       width: 170,
       isEditable: 'false',
       sortable: false,

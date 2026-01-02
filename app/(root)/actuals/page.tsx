@@ -46,7 +46,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
-import { DATE_FORMAT } from '@/app/constants/constants';
+import {
+  DATE_FORMAT,
+  MISSING_PROJECT_ACTUALS_STATUS,
+  TOTAL_ACTUALS_LESS_THAN_ONE,
+} from '@/app/constants/constants';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -90,6 +94,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [dialogSource, setDialogSource] = useState<'prev' | 'next' | null>(
     null
   );
+  const [showAlertDialog, setShowAlertDialog] = useState<string[] | null>(null);
   const [show, setShow] = useState(true);
   const [isModified, setIsModified] = useState(false);
   const [confirmSignal, setConfirmSignal] = useState(0);
@@ -134,6 +139,37 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   const handleSetShow = (val: boolean) => {
     setShow(val);
+  };
+
+  const validateDataBeforeConfirm = () => {
+    if (isFridayOrAfterFriday) {
+      const allRows = apiRef.current
+        .getAllRowIds()
+        .map(id => apiRef.current.getRow(id));
+      const totalActuals =
+        allRows.find(row => row.id === 'total')?.actuals ||
+        allRows.reduce((sum, row) => sum + (row?.actuals || 0), 0);
+
+      const rowsWithMissingStatus = allRows
+        .filter(row => row.id !== 'total' && row.project)
+        .filter(
+          row =>
+            !row.projectActualsStatus || row.projectActualsStatus === 'No Data'
+        );
+
+      if (rowsWithMissingStatus.length > 0) {
+        setShowAlertDialog(prev => [
+          ...(prev || []),
+          MISSING_PROJECT_ACTUALS_STATUS,
+        ]);
+      }
+      if (totalActuals < 1.0) {
+        setShowAlertDialog(prev => [
+          ...(prev || []),
+          TOTAL_ACTUALS_LESS_THAN_ONE,
+        ]);
+      }
+    }
   };
 
   const handleConfirmed = () => {
@@ -880,7 +916,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       !isCurrentWeek(parseISO(startDate)) &&
                       (!isModified || show || hasInvalidRows))
                   }
-                  onClick={handleConfirmed}
+                  onClick={validateDataBeforeConfirm}
                 >
                   <Typography
                     sx={{
@@ -930,6 +966,40 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         ) : (
           <></>
         )}
+        <ConfirmDialog
+          open={showAlertDialog}
+          onCancel={() => setShowAlertDialog(null)}
+          onConfirm={() => {
+            setShowAlertDialog(null);
+            handleConfirmed();
+          }}
+          title="Alert"
+        >
+          {showAlertDialog?.includes(TOTAL_ACTUALS_LESS_THAN_ONE) && (
+            <>
+              <span>
+                {
+                  'Total actuals for this week are < 1.0 FTWE (Full time weekly equivalent). Please confirm all work has been accounted for before submitting.'
+                }
+              </span>
+              <br />
+            </>
+          )}
+          {showAlertDialog?.includes(MISSING_PROJECT_ACTUALS_STATUS) && (
+            <>
+              <span>
+                {
+                  'One or more projects are missing a status selection. Company policy requires a status (✓, !, or ✗) selection for each row before confirming.'
+                }
+              </span>
+              <br />
+            </>
+          )}
+          <br />
+          <span style={{ fontWeight: 'bold' }}>
+            {'Do you still want to proceed with confirming your actuals?'}
+          </span>
+        </ConfirmDialog>
         <ConfirmDialog
           open={deleteDialogOpen}
           onConfirm={handleConfirm}

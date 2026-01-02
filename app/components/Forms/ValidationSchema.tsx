@@ -133,7 +133,7 @@ export const addResourceValidationSchema = (
         }
       ),
 
-    Role: Yup.string().required('Role is required'),
+    Role: Yup.string().required('Title is required'),
     Type: Yup.string().required('Resource type is required'),
     Manager: Yup.string(),
     // Team: Yup.string().required('Team is required'),
@@ -201,7 +201,7 @@ export const editResourceValidationSchema = (
           return !isDuplicate;
         }
       ),
-    Role: Yup.string().required('Role is required'),
+    Role: Yup.string().required('Title is required'),
     Type: Yup.string().required('Resource type is required'),
     Manager: Yup.string(),
     // Team: Yup.string().required('Team is required'),
