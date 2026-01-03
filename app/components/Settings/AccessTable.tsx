@@ -9,7 +9,6 @@ import {
   InputAdornment,
   IconButton,
   Chip,
-  Badge,
 } from '@mui/material';
 import { StyledInput } from '../Input/StyledInput';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -52,7 +51,6 @@ interface AccessTableProps {
   selectedRowIds?: Set<string>;
   onSelectionChange?: (hasSelection: boolean, selectedIds: Set<string>) => void;
   isRowSelectable?: (params: any) => boolean;
-  initialState?: any;
 }
 
 export default function AccessTable({
@@ -81,7 +79,6 @@ export default function AccessTable({
   selectedRowIds = new Set(),
   onSelectionChange,
   isRowSelectable,
-  initialState = {},
 }: AccessTableProps) {
   const [search, setSearch] = useState('');
   const [gridView, setGridView] = useState<'grid' | 'list'>('grid');
@@ -95,36 +92,7 @@ export default function AccessTable({
   const [filterModel, setFilterModel] = useState({
     items: [],
   });
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState(
-    initialState.columns?.columnVisibilityModel || {}
-  );
-  const [filterCount, setFilterCount] = useState(0);
-
-  // Track filter count
-  React.useEffect(() => {
-    if (apiRef?.current) {
-      const updateFilterCount = () => {
-        const filters = apiRef.current.state.filter.filterModel.items;
-        const activeCount = filters.filter((f: any) => !!f.value).length;
-        setFilterCount(activeCount);
-      };
-      updateFilterCount();
-      const unsubscribe = apiRef.current.subscribeEvent(
-        'filterModelChange',
-        updateFilterCount
-      );
-      return unsubscribe;
-    }
-  }, [apiRef]);
-
-  // Sync internal selectionModel with parent's selectedRowIds
-  React.useEffect(() => {
-    if (selectedRowIds.size === 0) {
-      setSelectionModel([]);
-      setSelectedRows([]);
-      setShowToolbar(false);
-    }
-  }, [selectedRowIds]);
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
 
   // Refs for external filter and column buttons to use as anchor elements
   const externalFilterButtonRef = useRef<HTMLButtonElement>(null);
@@ -223,9 +191,7 @@ export default function AccessTable({
   const availableActions = getAvailableActions();
 
   // Check if any action is available
-  const hasAnyAction = Object.values(availableActions).some(
-    action => action === true
-  );
+  const hasAnyAction = Object.values(availableActions).some(action => action === true);
 
   const handleFilterModelChange = (newModel: any) => {
     setFilterModel(newModel);
@@ -589,64 +555,49 @@ export default function AccessTable({
                     gap: 1,
                   }}
                 >
-                  <Badge
-                    badgeContent={filterCount > 0 ? filterCount : 0}
-                    color="primary"
+                  <IconButton
+                    ref={externalFilterButtonRef}
+                    size="small"
+                    onClick={event => {
+                      setCurrentAnchorEl(event.currentTarget);
+
+                      setTimeout(() => {
+                        const filterButton =
+                          document.querySelector(
+                            'button[data-field="__toolbar__filters__"]'
+                          ) ||
+                          document.querySelector(
+                            '.MuiDataGrid-toolbarContainer button[title="Show filters"]'
+                          ) ||
+                          document
+                            .querySelector(
+                              '.MuiDataGrid-toolbarContainer [data-testid="FilterListIcon"]'
+                            )
+                            ?.closest('button');
+
+                        if (filterButton) {
+                          (filterButton as HTMLElement).click();
+                        } else {
+                          console.error('Filter button not found!');
+                        }
+                      }, 10);
+                    }}
                     sx={{
-                      '& .MuiBadge-badge': {
-                        top: '2px',
-                        right: '2px',
-                        backgroundColor: '#1C2D5F',
-                        fontSize: '10px',
-                        height: '16px',
-                        minWidth: '16px',
-                      },
+                      minWidth: 'unset',
+                      width: '41px',
+                      height: '36px',
+                      padding: '20px 10px 20px 10px',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '6px',
+                      flexShrink: 0,
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
                     }}
                   >
-                    <IconButton
-                      ref={externalFilterButtonRef}
-                      size="small"
-                      onClick={event => {
-                        setCurrentAnchorEl(event.currentTarget);
-
-                        setTimeout(() => {
-                          const filterButton =
-                            document.querySelector(
-                              'button[data-field="__toolbar__filters__"]'
-                            ) ||
-                            document.querySelector(
-                              '.MuiDataGrid-toolbarContainer button[title="Show filters"]'
-                            ) ||
-                            document
-                              .querySelector(
-                                '.MuiDataGrid-toolbarContainer [data-testid="FilterListIcon"]'
-                              )
-                              ?.closest('button');
-
-                          if (filterButton) {
-                            (filterButton as HTMLElement).click();
-                          } else {
-                            console.error('Filter button not found!');
-                          }
-                        }, 10);
-                      }}
-                      sx={{
-                        minWidth: 'unset',
-                        width: '41px',
-                        height: '36px',
-                        padding: '20px 10px 20px 10px',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '6px',
-                        flexShrink: 0,
-                        borderRadius: '6px',
-                        border: '1px solid #E2E8F0',
-                        boxShadow: '0px 1px 1px 0px rgba(0, 0, 0, 0.25)',
-                      }}
-                    >
-                      <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
-                    </IconButton>
-                  </Badge>
+                    <img src="/images/icons/NewFilterIcon.svg" alt="filter" />
+                  </IconButton>
                   <IconButton
                     ref={externalColumnButtonRef}
                     size="small"
@@ -718,53 +669,49 @@ export default function AccessTable({
                     />
                   </IconButton>
                 </Box>
-                {buttonLabel && (
-                  <Box
-                    sx={{
-                      height: 36,
-                      width: '1px',
-                      backgroundColor: '#E2E8F0',
-                      mx: 1.5,
-                      display: title === 'Resources' ? 'none' : 'block',
-                    }}
-                  />
-                )}
-              </Box>
-              {buttonLabel && (
-                <Button
-                  variant="contained"
-                  onClick={e => {
-                    if (anchorEl && menuId === 'add-dropdown') {
-                      setMenuId(null);
-                      setAnchorEl(null);
-                      return;
-                    }
-                    setAnchorEl(e.currentTarget);
-                    setMenuId('add-dropdown');
-                  }}
+                <Box
                   sx={{
-                    height: 40,
-                    borderRadius: '6px',
-                    background: '#1C2D5F',
-                    color: '#FFF',
-                    textTransform: 'none',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    px: 1.5,
-                    display: title === 'Resources' ? 'none' : 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    '&:hover': {
-                      background: '#1C2D5F',
-                    },
+                    height: 36,
+                    width: '1px',
+                    backgroundColor: '#E2E8F0',
+                    mx: 1.5,
+                    display: title === 'Resources' ? 'none' : 'block',
                   }}
-                >
-                  {buttonLabel}
-                  {title === 'Users' && (
-                    <KeyboardArrowDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
-                  )}
-                </Button>
-              )}
+                />
+              </Box>
+              <Button
+                variant="contained"
+                onClick={e => {
+                  if (anchorEl && menuId === 'add-dropdown') {
+                    setMenuId(null);
+                    setAnchorEl(null);
+                    return;
+                  }
+                  setAnchorEl(e.currentTarget);
+                  setMenuId('add-dropdown');
+                }}
+                sx={{
+                  height: 40,
+                  borderRadius: '6px',
+                  background: '#1C2D5F',
+                  color: '#FFF',
+                  textTransform: 'none',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  px: 1.5,
+                  display: title === 'Resources' ? 'none' : 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  '&:hover': {
+                    background: '#1C2D5F',
+                  },
+                }}
+              >
+                {buttonLabel}
+                {title === 'Users' && (
+                  <KeyboardArrowDownIcon sx={{ fontSize: 20, ml: 0.5 }} />
+                )}
+              </Button>
               {anchorEl && menuId === 'add-dropdown' && title === 'Users' && (
                 <Box
                   sx={{
@@ -794,7 +741,7 @@ export default function AccessTable({
                       textTransform: 'none',
                       '&:hover': {
                         background: '#142B51B2',
-                        color: '#FFFFFF',
+                        color: '#FFFFFF'
                       },
                     }}
                     onClick={() => {
@@ -817,7 +764,7 @@ export default function AccessTable({
                       textTransform: 'none',
                       '&:hover': {
                         background: '#142B51B2',
-                        color: '#FFFFFF',
+                        color: '#FFFFFF'
                       },
                     }}
                     onClick={() => {
@@ -833,7 +780,8 @@ export default function AccessTable({
             </Box>
           </Box>
         )
-      ) : null}
+      ) : null
+      }
 
       <Box sx={{ width: '100%', height: 'calc(100vh - 355px)' }}>
         <DataGridPremium
@@ -854,18 +802,10 @@ export default function AccessTable({
           columnVisibilityModel={columnVisibilityModel}
           onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
           initialState={{
-            sorting: {
-              sortModel: [{ field: 'Name', sort: 'asc' }],
-            },
-            columns: {
-              columnVisibilityModel: {
-                __created: false,
-                __created_by: false,
-                __last_modified: false,
-                __last_modified_by: false,
-              },
-            },
-          }}
+          sorting: {
+            sortModel: [{ field: 'Name', sort: 'asc' }],
+          },
+        }}
           slotProps={{
             loadingOverlay: {
               variant: 'skeleton',
@@ -906,13 +846,7 @@ export default function AccessTable({
             },
           }}
           slots={{
-            toolbar: checkboxSelection
-              ? toolbarType === 'filter'
-                ? AccessToolbar
-                : CustomToolbar
-              : toolbarType === 'filter'
-                ? AccessToolbar
-                : undefined,
+            toolbar: checkboxSelection ? (toolbarType === 'filter' ? AccessToolbar : CustomToolbar) : (toolbarType === 'filter' ? AccessToolbar : undefined),
           }}
           localeText={{
             toolbarFilters: '',

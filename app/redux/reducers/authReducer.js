@@ -22,7 +22,6 @@ const initialState = {
   forgotPasswordMessage: null,
   resetPasswordMessage: null,
   otpVerified: false,
-  initLoading: false,
 };
 
 const authSlice = createSlice({
@@ -33,9 +32,6 @@ const authSlice = createSlice({
       state.signupData = action.payload;
     },
     logout: () => initialState,
-    setInitLoading: (state, action) => {
-      state.initLoading = action.payload;
-    },
   },
   extraReducers: builder => {
     builder
@@ -185,5 +181,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { updateSignup, setInitLoading } = authSlice.actions;
+export const { updateSignup } = authSlice.actions;
 export default authSlice.reducer;

@@ -88,6 +88,7 @@ const initialState: AllocationGridViewState = {
   error: null,
   expandRowId: [],
   cellSelectionData: {},
+  scrollPosition: null,
   columns: {
     team: [
       '__row_group_by_columns_group_teams__',
@@ -119,7 +120,6 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
-      'projectTypeGroup',
     ],
     resource: [
       '__row_group_by_columns_group__',
@@ -150,7 +150,6 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
-      'projectTypeGroup',
     ],
     organisationName: [
       '__row_group_by_columns_group_organisationName__',
@@ -183,7 +182,6 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
-      'projectTypeGroup',
     ],
     project: [
       '__row_group_by_columns_group__',
@@ -214,7 +212,6 @@ const initialState: AllocationGridViewState = {
       'contractorHourlyRateCurrency',
       'resourceType',
       'projectType',
-      'projectTypeGroup',
     ],
     portfolioName: [
       '__row_group_by_columns_group_project__',
@@ -232,7 +229,6 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
-      'projectTypeGroup',
       'totalEffort',
       'email',
       'phoneNumber',
@@ -259,7 +255,6 @@ const initialState: AllocationGridViewState = {
       'projectStatus',
       'projectLocation',
       'projectType',
-      'projectTypeGroup',
       'projectOvertimeAllowed',
       'projectCost',
       'projectCurrency',
@@ -313,7 +308,6 @@ const initialState: AllocationGridViewState = {
       'projectStartDate',
       'projectStatus',
       'projectType',
-      'projectTypeGroup',
     ],
   },
   currentView: COMPANY_DEFAULT_VIEW,
@@ -356,6 +350,9 @@ const viewSlice = createSlice({
     },
     setCellSelectionData: (state, action) => {
       state.cellSelectionData = action.payload;
+    },
+    setScrollPosition: (state, action) => {
+      state.scrollPosition = action.payload;
     },
     setInitialCurrentView: state => {
       if (state.savedViews && state.savedViews.length > 1) {
@@ -564,6 +561,7 @@ export const {
   setShowActuals,
   setExpandRowId,
   setCellSelectionData,
+  setScrollPosition,
   setInitialCurrentView,
   setCurrentView,
   updateCurrentView,

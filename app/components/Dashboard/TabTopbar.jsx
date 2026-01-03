@@ -78,16 +78,6 @@ const Topbar = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
-          <Typography
-            sx={{
-              fontSize: '16px',
-              fontWeight: 400,
-              color: '#111827',
-              paddingLeft: '8px',
-            }}
-          >
-            Filters
-          </Typography>
           <Badge
             badgeContent=''
             color="error"

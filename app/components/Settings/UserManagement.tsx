@@ -30,22 +30,8 @@ import { useGridApiRef } from '@mui/x-data-grid-premium';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { StatusPill, commonTabSx } from './styled';
-import {
-  SEND_INVITATION,
-  FETCH_USER,
-  DEACTIVATE_USER,
-  ACTIVATE_USER,
-  FETCH_USER_RESOURCE,
-  RESEND_INVITATION,
-  DELETE_USER,
-  FETCH_LOCATION,
-} from '@/app/redux/actions/allSettingsActions';
+import { SEND_INVITATION, FETCH_USER, DEACTIVATE_USER, ACTIVATE_USER, FETCH_USER_RESOURCE, RESEND_INVITATION, DELETE_USER, FETCH_LOCATION } from '@/app/redux/actions/allSettingsActions';
 import { showToast } from '@/app/redux/reducers/toastReducer';
-import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
-// @ts-ignore
-import { parseISO } from 'date-fns';
-import CustomAvatar from '../Avatar/CustomAvatar';
-import EllipsisNameCell from '../ResourceAllocation/component/EllipsisNameCell';
 
 const tabMenuNames = ['users', 'resources'];
 const baseURLAccessManagement = '/settings?menu=user-management';
@@ -161,15 +147,7 @@ const TabHeader = ({
   </Box>
 );
 
-interface UserManagementPageProps {
-  permissions?: Record<string, CrudPermissions>;
-  loadingPermissions?: boolean;
-}
-
-function UserManagementPage({
-  permissions,
-  loadingPermissions,
-}: UserManagementPageProps) {
+export default function UserManagementPage() {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, setTab] = useState('users');
@@ -187,19 +165,10 @@ function UserManagementPage({
     'delete' | 'deactivate' | 'reactivate'
   >('delete');
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
-  const { location } = useSelector((state: any) => state.allSettings);
-  const usersDataFromRedux = useSelector(
-    (state: any) => state.allSettings.users
-  );
-  const UsersData = useMemo(
-    () => usersDataFromRedux || [],
-    [usersDataFromRedux]
-  );
-  const ResourcesData =
-    useSelector((state: any) => state.allSettings.userResources) || [];
-  const { isOpen: dialogIsOpen } = useSelector(
-    (state: any) => state.globalDialog
-  );
+  const {location} = useSelector((state: any) => state.allSettings);
+  const usersDataFromRedux = useSelector((state: any) => state.allSettings.users);
+  const UsersData = useMemo(() => usersDataFromRedux || [], [usersDataFromRedux]);
+  const ResourcesData = useSelector((state: any) => state.allSettings.userResources) || [];
 
   const loading = false;
   const { id: highlightedRowId } = useSelector(
@@ -209,42 +178,31 @@ function UserManagementPage({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Clear checkbox selection when dialog closes
   useEffect(() => {
-    if (!dialogIsOpen) {
-      setSelectedRowIds(new Set());
-    }
-  }, [dialogIsOpen]);
-
-  useEffect(() => {
-    if (loadingPermissions || !permissions!['User']?.r) return;
     if (UsersData.length === 0) {
       dispatch({
         type: FETCH_USER,
       });
     }
-  }, []);
+  }, [UsersData]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions!['User']?.r) return;
     if (ResourcesData.length === 0) {
       dispatch({
         type: FETCH_USER_RESOURCE,
       });
     }
-  }, []);
+  }, [ResourcesData]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions!['User']?.r) return;
     if (location.length === 0) {
       dispatch({
         type: FETCH_LOCATION,
       });
     }
-  }, []);
+  }, [location]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions!['User']?.r) return;
     const menuParam = searchParams.get('menu');
     // Only process if this is the active menu
     if (menuParam !== 'user-management') return;
@@ -263,7 +221,6 @@ function UserManagementPage({
   }, [searchParams]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions!['User']?.r) return;
     const menuParam = searchParams.get('menu');
     // Only process if this is the active menu
     if (menuParam !== 'user-management') return;
@@ -277,7 +234,6 @@ function UserManagementPage({
   }, [tab]);
 
   useEffect(() => {
-    if (loadingPermissions || !permissions!['User']?.r) return;
     if (!highlightedRowId || !apiRef?.current) return;
 
     const timeout = setTimeout(() => {
@@ -393,35 +349,26 @@ function UserManagementPage({
         actionType: 'deactivate' | 'reactivate',
         entityType: 'user' | 'resource'
       ) => {
-        const actionVerb =
-          actionType === 'deactivate' ? 'deactivated' : 'reactivated';
-        const reduxAction =
-          actionType === 'deactivate' ? DEACTIVATE_USER : ACTIVATE_USER;
-
+        const actionVerb = actionType === 'deactivate' ? 'deactivated' : 'reactivated';
+        const reduxAction = actionType === 'deactivate' ? DEACTIVATE_USER : ACTIVATE_USER;
+        
         const results = await Promise.allSettled(
-          items.map(
-            (item: any) =>
-              new Promise((resolve, reject) => {
-                dispatch({
-                  type: reduxAction,
-                  payload: {
-                    userData: {
-                      userId: entityType === 'user' ? item.id : item.UserId,
-                    },
-                    resolve,
-                    reject,
-                  },
-                });
-              })
+          items.map((item: any) => 
+            new Promise((resolve, reject) => {
+              dispatch({
+                type: reduxAction,
+                payload: {
+                  userData: { userId: entityType === 'user' ? item.id : item.UserId },
+                  resolve,
+                  reject,
+                },
+              });
+            })
           )
         );
 
-        const successCount = results.filter(
-          r => r.status === 'fulfilled'
-        ).length;
-        const failureCount = results.filter(
-          r => r.status === 'rejected'
-        ).length;
+        const successCount = results.filter((r) => r.status === 'fulfilled').length;
+        const failureCount = results.filter((r) => r.status === 'rejected').length;
 
         if (failureCount === 0) {
           showToastMessage(
@@ -429,7 +376,10 @@ function UserManagementPage({
             'success'
           );
         } else if (successCount === 0) {
-          showToastMessage(`Failed to ${actionType} ${entityType}(s)`, 'error');
+          showToastMessage(
+            `Failed to ${actionType} ${entityType}(s)`,
+            'error'
+          );
         } else {
           showToastMessage(
             `${successCount} ${entityType}(s) ${actionVerb} successfully, ${failureCount} failed`,
@@ -441,7 +391,7 @@ function UserManagementPage({
       // Handle delete action
       if (actionType === 'delete' && tab === 'users' && deletingUsers) {
         const user = UsersData.find((user: any) => user.Name === deletingUsers);
-
+        
         if (!user) {
           showToastMessage('User not found', 'error');
           return;
@@ -453,7 +403,7 @@ function UserManagementPage({
             payload: { userId: user.id, resolve, reject },
           });
         });
-
+        
         showToastMessage('User deleted successfully', 'success');
       }
       // Handle deactivate action
@@ -461,11 +411,7 @@ function UserManagementPage({
         if (tab === 'users' && deactivatingUser) {
           await handleBatchOperation(deactivatingUser, 'deactivate', 'user');
         } else if (tab === 'resources' && deactivatingResource) {
-          await handleBatchOperation(
-            deactivatingResource,
-            'deactivate',
-            'resource'
-          );
+          await handleBatchOperation(deactivatingResource, 'deactivate', 'resource');
         }
       }
       // Handle reactivate action
@@ -473,23 +419,19 @@ function UserManagementPage({
         if (tab === 'users' && reactivatingUser) {
           await handleBatchOperation(reactivatingUser, 'reactivate', 'user');
         } else if (tab === 'resources' && reactivatingResource) {
-          await handleBatchOperation(
-            reactivatingResource,
-            'reactivate',
-            'resource'
-          );
+          await handleBatchOperation(reactivatingResource, 'reactivate', 'resource');
         }
       }
     } catch (error) {
       console.error(`${actionType} operation failed:`, error);
-
+      
       // Specific error messages based on action type
       const errorMessages: Record<typeof actionType, string> = {
         delete: 'Failed to delete user',
         deactivate: `Failed to deactivate ${tab === 'users' ? 'user(s)' : 'resource(s)'}`,
         reactivate: `Failed to reactivate ${tab === 'users' ? 'user(s)' : 'resource(s)'}`,
       };
-
+      
       dispatch(
         showToast({
           open: true,
@@ -534,12 +476,12 @@ function UserManagementPage({
           email: row.email,
           firstName: firstName,
           lastName: lastName,
-          role: row.role,
+          role: row.role
         };
       });
       const userData = {
-        users: [...finaldata],
-      };
+        users: [...finaldata]
+      }
 
       await new Promise((resolve, reject) => {
         dispatch({
@@ -577,19 +519,17 @@ function UserManagementPage({
   const handleResendInvite = async (rowOrRows: any) => {
     try {
       rowOrRows = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
-      await Promise.all(
-        rowOrRows.map(async (row: any) => {
-          const postData = {
-            email: row.email,
-          };
-          dispatch({
-            type: RESEND_INVITATION,
-            payload: {
-              userData: postData,
-            },
-          });
-        })
-      );
+      await Promise.all(rowOrRows.map(async (row: any) => {
+        const postData = {
+          email: row.email,
+        };
+        dispatch({
+          type: RESEND_INVITATION,
+          payload:{
+            userData: postData
+          }
+        });
+      }));
       dispatch(
         showToast({
           open: true,
@@ -615,13 +555,9 @@ function UserManagementPage({
 
   const handleDeactivateUser = (rowOrRows: any) => {
     if (Array.isArray(rowOrRows)) {
-      tab === 'users'
-        ? setDeactivatingUser(rowOrRows)
-        : setDeactivatingResource(rowOrRows);
+      tab === 'users' ? setDeactivatingUser(rowOrRows) : setDeactivatingResource(rowOrRows);
     } else {
-      tab === 'users'
-        ? setDeactivatingUser([rowOrRows])
-        : setDeactivatingResource([rowOrRows]);
+      tab === 'users' ? setDeactivatingUser([rowOrRows]) : setDeactivatingResource([rowOrRows]);
     }
     setActionType('deactivate');
     setIsDialogOpen(true);
@@ -629,13 +565,9 @@ function UserManagementPage({
 
   const handleReactivateUser = (rowOrRows: any) => {
     if (Array.isArray(rowOrRows)) {
-      tab === 'users'
-        ? setReactivatingUser(rowOrRows)
-        : setReactivatingResource(rowOrRows);
+      tab === 'users' ? setReactivatingUser(rowOrRows) : setReactivatingResource(rowOrRows);
     } else {
-      tab === 'users'
-        ? setReactivatingUser([rowOrRows])
-        : setReactivatingResource([rowOrRows]);
+      tab === 'users' ? setReactivatingUser([rowOrRows]) : setReactivatingResource([rowOrRows]);
     }
     setActionType('reactivate');
     setIsDialogOpen(true);
@@ -685,7 +617,7 @@ function UserManagementPage({
     {
       field: 'Name',
       headerName: 'User',
-      flex: 1.75,
+      flex: 1,
       renderCell: (params: any) => (
         <Typography
           onClick={() => handleEditUser(params.row)}
@@ -697,7 +629,7 @@ function UserManagementPage({
             },
           }}
         >
-          <EllipsisNameCell value={params.value} showAvatar={false} />
+          {params.value}
         </Typography>
       ),
     },
@@ -706,8 +638,7 @@ function UserManagementPage({
       headerName: 'Email ID',
       flex: 2,
       renderCell: (params: any) => (
-        // <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
-        <EllipsisNameCell value={params.value} showAvatar={false} />
+        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
       ),
     },
     // {
@@ -719,150 +650,53 @@ function UserManagementPage({
     //   ),
     // },
     {
-      field: '__created',
-      headerName: 'Created On',
-      flex: 1,
-      minWidth: 120,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          return `${month}/${day}/${year}`;
-        }
-        return '';
-      },
-    },
-    {
-      field: '__created_by',
-      headerName: 'Created By',
-      flex: 1,
-      minWidth: 160,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
-                <CustomAvatar value={params.value} showFullName={false} />
-              </Box>
-              <Box>
-                <EllipsisNameCell value={params.value} showAvatar={false} />
-              </Box>
-            </Box>
-          );
-        }
-      },
-    },
-    {
-      field: '__last_modified',
-      headerName: 'Last Modified On',
-      flex: 1,
-      minWidth: 145,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          return `${month}/${day}/${year}`;
-        }
-        return '';
-      },
-    },
-    {
-      field: '__last_modified_by',
-      headerName: 'Last Modified By',
-      flex: 1,
-      minWidth: 160,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
-                <CustomAvatar value={params.value} showFullName={false} />
-              </Box>
-              <Box>
-                <EllipsisNameCell value={params.value} showAvatar={false} />
-              </Box>
-            </Box>
-          );
-        }
-      },
-    },
-    {
-      field: 'lastLoginTime',
-      headerName: 'Last Login Time',
-      flex: 1,
-      minWidth: 160,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          const hours = date.getHours();
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const ampm = hours >= 12 ? 'PM' : 'AM';
-          let hour12 = hours % 12;
-          if (hour12 === 0) hour12 = 12;
-          const hourStr = String(hour12).padStart(2, '0');
-          return `${month}/${day}/${year} ${hourStr}:${minutes} ${ampm}`;
-        }
-        return '';
-      },
-    },
-    {
       field: 'status',
       headerName: 'Status',
-      flex: 1.5,
+      flex: 1,
       renderCell: (params: any) => (
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params: any) => {
+        const rowId = String(
+          params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
+        );
+        const isThisRowSelected = selectedRowIds.has(rowId);
 
-    ...(permissions!['User']?.u || permissions!['User']?.d
-      ? [
-          {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 100,
-            flex: 0.5,
-            sortable: false,
-            filterable: false,
-            renderCell: (params: any) => {
-              return (
-                <Box sx={{ ...commonCellStyle }}>
-                  <IconButton
-                    onClick={e => {
-                      setAnchorEl(e.currentTarget);
-                      setMenuUserId(params.row.Name);
-                    }}
-                    sx={{
-                      color: '#1C2D5F',
-                    }}
-                  >
-                    <MoreHorizontal sx={{ fontSize: 20 }} />
-                  </IconButton>
-                  {renderUsersMenu(params.row.Name, params.row)}
-                </Box>
-              );
-            },
-          },
-        ]
-      : []),
+        return (
+          <Box sx={{ ...commonCellStyle }}>
+            <IconButton
+              onClick={(e) => {
+                setAnchorEl(e.currentTarget);
+                setMenuUserId(params.row.Name);
+              }}
+              disabled={isThisRowSelected}
+              sx={{
+                color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
+              }}
+            >
+              <MoreHorizontal sx={{ fontSize: 20 }} />
+            </IconButton>
+            {renderUsersMenu(params.row.Name, params.row)}
+          </Box>
+        );
+      },
+    },
   ];
 
   const ResourcesColumns = [
     {
       field: 'Name',
       headerName: 'Resource',
-      flex: 1.5,
+      flex: 1,
       renderCell: (params: any) => (
-        <EllipsisNameCell value={params.value} showAvatar={false} />
+        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
       ),
     },
     {
@@ -870,7 +704,7 @@ function UserManagementPage({
       headerName: 'Email ID',
       flex: 1.5,
       renderCell: (params: any) => (
-        <EllipsisNameCell value={params.value} showAvatar={false} />
+        <Typography sx={{ ...commonCellStyle }}>{params.value}</Typography>
       ),
     },
     {
@@ -878,89 +712,14 @@ function UserManagementPage({
       headerName: 'Location',
       flex: 1,
       renderCell: (params: any) => {
-        const locationName =
-          location.find((loc: any) => loc.Id === params.value)?.Name || '';
-        return <EllipsisNameCell value={locationName} showAvatar={false} />;
-      },
-    },
-    {
-      field: '__created',
-      headerName: 'Created On',
-      flex: 1,
-      minWidth: 120,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          return `${month}/${day}/${year}`;
-        }
-        return '';
-      },
-    },
-    {
-      field: '__created_by',
-      headerName: 'Created By',
-      flex: 1,
-      minWidth: 200,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
-                <CustomAvatar value={params.value} showFullName={false} />
-              </Box>
-              <Box>
-                <EllipsisNameCell value={params.value} showAvatar={false} />
-              </Box>
-            </Box>
-          );
-        }
-      },
-    },
-    {
-      field: '__last_modified',
-      headerName: 'Last Modified On',
-      flex: 1,
-      minWidth: 120,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          const date = parseISO(params.value);
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          if (month === 'NaN' || day === 'NaN' || year === 'NaN') return '';
-          return `${month}/${day}/${year}`;
-        }
-        return '';
-      },
-    },
-    {
-      field: '__last_modified_by',
-      headerName: 'Last Modified By',
-      flex: 1,
-      minWidth: 200,
-      renderCell: (params: any) => {
-        if (params && params.value) {
-          return (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Box sx={{ mr: 0.1, flexShrink: 0 }}>
-                <CustomAvatar value={params.value} showFullName={false} />
-              </Box>
-              <Box>
-                <EllipsisNameCell value={params.value} showAvatar={false} />
-              </Box>
-            </Box>
-          );
-        }
+        const locationName = location.find((loc: any) => loc.Id === params.value)?.Name || '';
+        return <Typography sx={commonCellStyle}>{locationName}</Typography>;
       },
     },
     {
       field: 'resourceStatus',
       headerName: 'Resource Status',
-      align: 'center',
+      align:'center',
       flex: 1,
       renderCell: (params: any) => (
         <Typography sx={commonCellStyle}>{params.value}</Typography>
@@ -969,44 +728,43 @@ function UserManagementPage({
     {
       field: 'userStatus',
       headerName: 'User Status',
-      flex: 1.5,
+      flex: 0.7,
       renderCell: (params: any) => (
         <StatusPill status={params.value}>{params.value}</StatusPill>
       ),
     },
-    ...(permissions!['User']?.c ||
-    permissions!['User']?.u ||
-    permissions!['User']?.d
-      ? [
-          {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 100,
-            flex: 0.5,
-            sortable: false,
-            filterable: false,
-            renderCell: (params: any) => {
-              return (
-                <Box sx={{ ...commonCellStyle }}>
-                  <IconButton
-                    onClick={e => {
-                      setAnchorEl(e.currentTarget);
-                      setMenuUserId(params.row.Name);
-                    }}
-                    disabled={params.row.resourceStatus === 'Inactive'}
-                    sx={{
-                      color: '#1C2D5F',
-                    }}
-                  >
-                    <MoreHorizontal sx={{ fontSize: 20 }} />
-                  </IconButton>
-                  {renderResourcesMenu(params.row.Name, params.row)}
-                </Box>
-              );
-            },
-          },
-        ]
-      : []),
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      flex: 0.5,
+      sortable: false,
+      filterable: false,
+      renderCell: (params: any) => {
+        const rowId = String(
+          params.row.id ?? params.row.Name ?? JSON.stringify(params.row)
+        );
+        const isThisRowSelected = selectedRowIds.has(rowId);
+
+        return (
+          <Box sx={{ ...commonCellStyle }}>
+            <IconButton
+              onClick={(e) => {
+                setAnchorEl(e.currentTarget);
+                setMenuUserId(params.row.Name);
+              }}
+              disabled={isThisRowSelected || params.row.resourceStatus !== 'Active'}
+              sx={{
+                color: isThisRowSelected ? '#D1D5DB' : '#1C2D5F',
+              }}
+            >
+              <MoreHorizontal sx={{ fontSize: 20 }} />
+            </IconButton>
+            {renderResourcesMenu(params.row.Name, params.row)}
+          </Box>
+        );
+      },
+    },
   ];
 
   const renderUsersMenu = (id: string, row: any) => {
@@ -1023,22 +781,21 @@ function UserManagementPage({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        {permissions!['User']?.u && (
-          <StyledMenuItem
-            onClick={() => {
-              const user = UsersData.find((r: any) => r.Name === id);
-              if (user) {
-                handleEditUser(user);
-              }
-              setMenuUserId(null);
-            }}
-          >
-            <Pencil sx={{ mr: 1, fontSize: 18 }} />
-            Edit
-          </StyledMenuItem>
-        )}
+        <StyledMenuItem
+          onClick={() => {
+            const user = UsersData.find((r: any) => r.Name === id);
+            if (user) {
+              handleEditUser(user);
+            }
+            setMenuUserId(null);
+          }}
+        >
+          <Pencil sx={{ mr: 1, fontSize: 18 }} />
+          Edit
+        </StyledMenuItem>
 
-        {permissions!['User']?.u && enableResendInvite && (
+
+        {enableResendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleResendInvite(row);
@@ -1050,7 +807,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions!['User']?.u && enableDeactivate && (
+        {enableDeactivate && (
           <StyledMenuItem
             onClick={() => {
               handleDeactivateUser(row);
@@ -1062,7 +819,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions!['User']?.u && enableReactivate && (
+        {enableReactivate && (
           <StyledMenuItem
             onClick={() => {
               handleReactivateUser(row);
@@ -1074,17 +831,15 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions!['User']?.d && (
-          <StyledMenuItem
-            onClick={() => {
-              handleDeleteUser(id);
-              setMenuUserId(null);
-            }}
-          >
-            <Trash2 sx={{ mr: 1, fontSize: 18 }} />
-            Delete
-          </StyledMenuItem>
-        )}
+        <StyledMenuItem
+          onClick={() => {
+            handleDeleteUser(id);
+            setMenuUserId(null);
+          }}
+        >
+          <Trash2 sx={{ mr: 1, fontSize: 18 }} />
+          Delete
+        </StyledMenuItem>
       </StyledMenu>
     );
   };
@@ -1093,8 +848,7 @@ function UserManagementPage({
     const status = row.userStatus;
     const resStatus = row.resourceStatus;
     // const enableAddUser = status === 'Not Created';
-    const enableSendInvite =
-      status === 'Not Created' && resStatus !== 'Inactive';
+    const enableSendInvite = status === 'Not Created' && resStatus === 'Active';
     const enableResendInvite = status === 'Invited';
     const enableDeactivate = ['Invited', 'Active'].includes(status);
     const enableReactivate = status === 'Inactive';
@@ -1107,7 +861,8 @@ function UserManagementPage({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        {permissions!['User']?.c && enableSendInvite && (
+
+        {enableSendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleAddUser([row]);
@@ -1119,7 +874,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions!['User']?.u && enableResendInvite && (
+        {enableResendInvite && (
           <StyledMenuItem
             onClick={() => {
               handleResendInvite(row);
@@ -1131,7 +886,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions!['User']?.u && enableDeactivate && (
+        {enableDeactivate && (
           <StyledMenuItem
             onClick={() => {
               handleDeactivateUser(row);
@@ -1143,7 +898,7 @@ function UserManagementPage({
           </StyledMenuItem>
         )}
 
-        {permissions!['User']?.u && enableReactivate && (
+        {enableReactivate && (
           <StyledMenuItem
             onClick={() => {
               handleReactivateUser(row);
@@ -1192,7 +947,7 @@ function UserManagementPage({
           setMenuId={setMenuUserId}
           anchorEl={anchorEl}
           setAnchorEl={setAnchorEl}
-          buttonLabel={permissions!['User']?.c ? 'Invite User' : ''}
+          buttonLabel="Invite User"
           renderMenu={() => null}
           columns={UsersPageColumns}
           apiRef={apiRef}
@@ -1205,16 +960,6 @@ function UserManagementPage({
           onBulkDeactivateUser={handleBulkDeactivateUser}
           onBulkReactivateUser={handleBulkReactivateUser}
           isRowSelectable={() => true}
-          initialState={{
-            columns: {
-              columnVisibilityModel: {
-                __created: false,
-                __created_by: false,
-                __last_modified: false,
-                __last_modified_by: false,
-              },
-            },
-          }}
         />
       )}
       {tab === 'resources' && (
@@ -1241,17 +986,7 @@ function UserManagementPage({
           onBulkReactivateUser={handleBulkReactivateUser}
           selectedRowIds={selectedRowIds}
           onSelectionChange={handleSelectionChange}
-          isRowSelectable={params => params.row.resourceStatus !== 'Inactive'}
-          initialState={{
-            columns: {
-              columnVisibilityModel: {
-                __created: false,
-                __created_by: false,
-                __last_modified: false,
-                __last_modified_by: false,
-              },
-            },
-          }}
+          isRowSelectable={(params) => params.row.resourceStatus === 'Active'}
         />
       )}
 
@@ -1307,5 +1042,3 @@ function UserManagementPage({
     </div>
   );
 }
-
-export default withRBAC(UserManagementPage, ['User']);

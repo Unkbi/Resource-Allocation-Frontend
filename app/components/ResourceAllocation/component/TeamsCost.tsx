@@ -15,12 +15,9 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { normalizeRow } from '@/app/utils/allocationUtils';
+import { normalizeRow, sortAllAllocations } from '@/app/utils/allocationUtils';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
-import {
-  FETCH_PROJECT_TYPE_GROUPS,
-  FETCH_PROJECT_TYPES,
-} from '@/app/redux/actions/allSettingsActions';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -46,9 +43,7 @@ const TeamsCost = ({
   const dispatch = useDispatch<AppDispatch>();
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { projectTypes, projectTypeGroups } = useSelector(
-    (state: RootState) => state.allSettings
-  );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   // @ts-ignore
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
@@ -72,15 +67,12 @@ const TeamsCost = ({
   }, []);
 
   useEffect(() => {
-    if (projectTypeGroups.length === 0) {
-      dispatch({ type: FETCH_PROJECT_TYPE_GROUPS });
-    }
-  }, []);
-
-  useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['AllocationCost'].r && ready && teamsCost) {
-      const filteredResources = removeResourcesWithNoTeams(teamsCost || []);
+      const filteredResources = sortAllAllocations(removeResourcesWithNoTeams(teamsCost || []))
+       .sort((a, b) =>
+         (a?.resource || "") < (b?.resource || "") ? -1 : 1
+       )
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
         totalEffort: calculateTotalEffort(normalizeRow(allocation)),
@@ -90,7 +82,7 @@ const TeamsCost = ({
           _resources || []
         )?.FullName,
       }));
-      setRows(formattedResources);
+      setRows((formattedResources));
     }
   }, [ready, teamsCost, loadingPermissions]);
 
@@ -106,7 +98,6 @@ const TeamsCost = ({
           allResourcesDetail: allResourcesDetail,
           location: location,
           projectTypes: projectTypes,
-          projectTypeGroups: projectTypeGroups,
           startDate: startDate,
           endDate: endDate,
         },
@@ -239,7 +230,7 @@ const TeamsCost = ({
     },
     {
       field: 'role',
-      headerName: 'Title',
+      headerName: 'Role',
       width: 180,
       type: 'string',
       isEditable: 'false',
@@ -531,19 +522,6 @@ const TeamsCost = ({
       },
     },
     {
-      field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
-      width: 150,
-      type: 'string',
-      isEditable: false,
-      sortable: false,
-      primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
-      },
-    },
-    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 170,
@@ -568,7 +546,26 @@ const TeamsCost = ({
   ];
 
   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
-    return allocations.filter(allocation => allocation.teams);
+    return allocations.filter(allocation => allocation.teams &&
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.EndDate
+          ? new Date(
+              (_resources as Resource[])?.find(
+                res => res.Id === allocation.resourceId
+              )?.EndDate
+            ) >= new Date(startDate)
+          : true) &&
+        ((_resources as Resource[])?.find(
+          res => res.Id === allocation.resourceId
+        )?.StartDate
+          ? new Date(
+              (_resources as Resource[])?.find(
+                res => res.Id === allocation.resourceId
+              )?.StartDate
+            ) <= new Date(endDate)
+          : true)
+    );
   };
   return (
     <>
@@ -618,8 +615,12 @@ const TeamsCost = ({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
-                projectTypeGroup: false,
               },
+            },
+             sorting: {
+              sortModel: [
+                { field :'__row_group_by_columns_group_teams__' ,sort :'asc' }
+              ],
             },
           }}
           NoRowsOverlay={NoRowsOverlay}

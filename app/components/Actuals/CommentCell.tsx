@@ -107,7 +107,6 @@ export default function CommentCell(props: CommentCellProps) {
       autoFocus={!readonly}
       multiline
       minRows={1}
-      maxRows={!readonly ? 3 : undefined} 
       error={showError}
       placeholder={disableView ? '' : 'Enter Comments / Project updates'}
       InputProps={{

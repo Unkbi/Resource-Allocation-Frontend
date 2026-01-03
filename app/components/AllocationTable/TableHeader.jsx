@@ -1,7 +1,6 @@
 import clsx from 'clsx';
 import {
   getWeekNumber,
-  isWeekKey,
   formatDate,
   getStartOfPreviousWeek,
 } from '@/app/utils/common';
@@ -17,9 +16,6 @@ import {
   differenceInWeeks,
   endOfWeek,
   format,
-  getWeek,
-  getMonth,
-  getYear,
   isSameWeek,
   parseISO,
   startOfWeek,
@@ -36,10 +32,7 @@ export const getStartDate = () => getStartOfPreviousWeek(new Date());
 
 const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
   field: getWeekNumber(weekDate),
-  // Keep the visible header short (legacy format like "W1") while the
-  // internal `field` remains canonical (e.g. "W1-2026"). This prevents the
-  // UI label from showing the ISO-year while preserving canonical keys.
-  headerName: String(getWeekNumber(weekDate)).split('-')[0],
+  headerName: getWeekNumber(weekDate),
   width: WEEK_CONFIG.COLUMN_WIDTH,
   type: 'number',
   editable: true,
@@ -171,20 +164,8 @@ export const generateColumnGroupingModel = (startDate, endDate, allColumns) => {
       }) + 1;
 
   for (let i = 0; i < totalWeeks; i++) {
-    const weekDate = addWeeks(adjustedStart, i);
-    const weekNum = getWeek(weekDate, { weekStartsOn: 1 });
-    const weekMonth = getMonth(weekDate); // 0-11, where 11 = December
-    const weekYear = getYear(weekDate);
-
-    // If Week 1 starts in December, it belongs to January of the next year
-    let monthYear;
-    if (weekNum === 1 && weekMonth === 11) {
-      // Week 1 in December belongs to January of next year
-      const nextYearDate = new Date(weekYear + 1, 0, 1); // January 1st of next year
-      monthYear = formatDate(nextYearDate, DISPLAY_DATE_FORMAT);
-    } else {
-      monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
-    }
+    const weekDate = addWeeks(isoStart, i);
+    const monthYear = formatDate(weekDate, DISPLAY_DATE_FORMAT);
 
     if (!currentGroup || currentGroup.groupId !== monthYear) {
       currentGroup && groups.push(currentGroup);
@@ -217,6 +198,6 @@ export const getAllColumnsWithWeek = (
 
 export const aggregationModel = (startDate, endDate, isFormatWithK) => {
   return generateWeeklyColumns(startDate, endDate, undefined, isFormatWithK)
-    .filter(column => isWeekKey(column.field))
+    .filter(column => /^W\d+/.test(column.field))
     .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
 };

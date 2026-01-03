@@ -268,7 +268,7 @@ function FlatAllocation({
     },
     {
       field: 'role',
-      headerName: 'Title',
+      headerName: 'Role',
       width: 180,
       type: 'string',
       isEditable: 'false',
@@ -550,18 +550,6 @@ function FlatAllocation({
       },
     },
     {
-      field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
-      width: 150,
-      type: 'string',
-      isEditable: false,
-      primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectTypeGroup || ''} />;
-      },
-    },
-    {
       field: 'teamAllocationManager',
       headerName: 'Allocation Manager',
       width: 170,
@@ -650,7 +638,6 @@ function FlatAllocation({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
-                projectTypeGroup: false,
               },
             },
           }}

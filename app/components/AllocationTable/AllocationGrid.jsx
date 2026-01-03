@@ -17,7 +17,6 @@ import {
   getUpdatedFiltersOnMyProjectsAllProjects,
   getUpdatedFiltersOnMyTeamsAllTeams,
   getWeekNumber,
-  isWeekKey,
   isMyProjectsValid,
   isMyTeamsValid,
   getTeamForResource,
@@ -52,6 +51,7 @@ import ToolbarMod from '../Toolbar/ToolbarMod';
 import {
   setExpandRowId,
   updateCurrentView,
+  setScrollPosition,
 } from '@/app/redux/reducers/allocationViewReducer';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import { format, isAfter, isBefore, parseISO } from 'date-fns';
@@ -77,7 +77,6 @@ import AllocationCellWithActuals from './components/AllocationCellWithActuals';
 import { formatAPIResponse, getLoginUserDetails } from '@/app/utils/authUtils';
 import { withRBAC } from '../HOC/withRBAC';
 import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
-import { FETCH_ALL_RESOURCES_DETAIL } from '@/app/redux/actions/allResourcesDetailAction';
 
 function AllocationGrid({
   groupBy,
@@ -98,6 +97,7 @@ function AllocationGrid({
   rowGroupingColumnMode = 'single',
   permissions = null,
   loadingPermissions = true,
+  defaultGroupingExpansionDepth = 0,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -114,6 +114,7 @@ function AllocationGrid({
   const {
     expandRowId,
     cellSelectionData,
+    scrollPosition,
     view,
     savedViews,
     currentView,
@@ -257,22 +258,7 @@ function AllocationGrid({
 
     allWeeks.forEach(weekKey => {
       const period = getMondayOfWeek(weekKey, new Date());
-
-      // Prefer canonical weekKey (e.g. 'W1-2026'). If it's missing, try the
-      // legacy form without year (e.g. 'W1') found in some API responses.
-      let value = row[weekKey];
-
-      if (value === undefined && typeof weekKey === 'string') {
-        const m = weekKey.match(/^W(\d+)-\d{4}$/);
-        if (m) {
-          const legacyKey = `W${m[1]}`;
-          if (row[legacyKey] !== undefined) {
-            value = row[legacyKey];
-          }
-        }
-      }
-
-      // Normalize into consistent object shape
+      const value = row[weekKey];
       if (value && typeof value === 'object' && 'value' in value) {
         normalized[weekKey] = {
           allocationId: value.allocationId || null,
@@ -307,9 +293,6 @@ function AllocationGrid({
     if (projectTypes.length === 0) {
       dispatch({ type: FETCH_PROJECT_TYPES });
     }
-    if (resources.length === 0) {
-      dispatch({ type: FETCH_ALL_RESOURCES_DETAIL });
-    }
   }, []);
 
   // Set the apiRef in the context when it's available
@@ -342,34 +325,33 @@ function AllocationGrid({
   }, [apiRef.current, groupBy, teams]);
 
   useEffect(() => {
-    try {
-      if (
-        (groupBy === 'teams' ||
-          groupBy === 'organisationName' ||
-          groupBy === 'portfolioName') &&
-        expandRowId?.length
-      ) {
+    if (
+      !expandRowId?.length ||
+      !(
+        groupBy === 'teams' ||
+        groupBy === 'organisationName' ||
+        groupBy === 'resource' ||
+        groupBy === 'portfolioName' ||
+        groupBy === 'project'
+      )
+    ) {
+      return;
+    }
+    // Expand rows after grid renders new data
+    const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
+      try {
         expandRowId.forEach(rowId => {
           const row = apiRef.current.getRow(rowId);
           if (row) {
-            setTimeout(() => {
-              apiRef.current.setRowChildrenExpansion(rowId, true);
-            }, 50);
-          } else {
-            // Row not ready yet, retry after small delay
-            setTimeout(() => {
-              const delayedRow = apiRef.current.getRow(rowId);
-              if (delayedRow) {
-                apiRef.current.setRowChildrenExpansion(rowId, true);
-              }
-            }, 50);
+            apiRef.current.setRowChildrenExpansion(rowId, true);
           }
         });
+      } catch (err) {
+        console.warn('Error expanding rows:', err);
       }
-    } catch (error) {
-      console.warn('Error in setting row expansion', error);
-    }
-  }, [expandRowId, groupBy, apiRef]);
+    });
+    return () => unsubscribe();
+  }, [expandRowId, groupBy]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -419,6 +401,23 @@ function AllocationGrid({
     setExpandRowId(null);
     return () => clearTimeout(timeoutId);
   }, [apiRef, cellSelectionData]);
+
+  useEffect(() => {
+    if (apiRef && !loadingPermissions && scrollPosition && !loading) {
+      // Expand rows after grid renders new data
+      const unsubscribe = apiRef.current.subscribeEvent('rowsSet', () => {
+        try {
+          setTimeout(() => {
+            apiRef.current.scroll(scrollPosition);
+            dispatch(setScrollPosition(null));
+          }, 0);
+        } catch (err) {
+          console.warn('Error scrolling to position:', err);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [apiRef.current, scrollPosition, loading, loadingPermissions]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -693,63 +692,6 @@ function AllocationGrid({
       dispatch(setRowState(updatedRows));
     }
   };
-  const buildCellData = (params, apiRef, showActuals) => {
-    const baseData = params.row[params.field] || {};
-
-    // Return leaf row data
-    if (params.rowNode?.type !== 'group') {
-      return {
-        value: baseData.value ?? params.formattedValue ?? '',
-        actuals: baseData.actuals ?? 0,
-        allocationId: baseData.allocationId ?? null,
-        notes: baseData.notes ?? null,
-        period: baseData.period ?? null,
-      };
-    }
-
-    // Build filter visibility lookup
-    const filterModel = apiRef.current.state.filter.filterModel;
-    const { filteredRowsLookup } = apiRef.current.getFilterState(filterModel);
-
-    // Recursively collect ONLY VISIBLE leaf rows
-    const collectVisibleLeafRows = nodeId => {
-      if (filteredRowsLookup?.[nodeId] === false) return [];
-
-      const node = apiRef.current.getRowNode(nodeId);
-      if (!node || node.type !== 'group') {
-        const row = apiRef.current.getRow(nodeId);
-        return row ? [row] : [];
-      }
-
-      let rows = [];
-      (node.children || []).forEach(childId => {
-        rows = rows.concat(collectVisibleLeafRows(childId));
-      });
-      return rows;
-    };
-
-    const visibleLeafRows = (params.rowNode.children || []).flatMap(childId =>
-      collectVisibleLeafRows(childId)
-    );
-
-    // Aggregate actuals from visible rows only
-    const aggregatedActuals = visibleLeafRows
-      .map(row => row?.[params.field]?.actuals || 0)
-      .reduce((sum, x) => sum + x, 0);
-
-    const period =
-      visibleLeafRows[0]?.[params.field]?.period ?? baseData.period ?? null;
-
-    // Return aggregated group cell data
-    return {
-      value: params.formattedValue ?? '',
-      actuals: aggregatedActuals,
-      allocationId: null,
-      notes: null,
-      period,
-    };
-  };
-
   const finalColumns = getFinalColumns(
     columns,
     groupBy,
@@ -766,10 +708,11 @@ function AllocationGrid({
       : generateDateWeekMath('WEEK_PLUS', currentView?.WeekPlus) || endDate,
     type === 'cost'
   ).map(column => {
-    if (isWeekKey(column.field)) {
+    if (column.field.startsWith('W')) {
       return {
         ...column,
         renderCell: params => {
+          const editable = isCellEditable(params);
           const cellClass = getCellClassName(
             params,
             getAllRowsForView(viewId),
@@ -784,7 +727,7 @@ function AllocationGrid({
             cellClass.split(' ').includes('non-editable-darker');
 
           const value = params.formattedValue ?? '';
-          const cellData = buildCellData(params, apiRef, showActuals);
+          const cellData = params.row[params.field];
           const notes = cellData?.notes || '';
           const actuals = cellData?.actuals || null;
           const period = cellData?.period;
@@ -792,9 +735,6 @@ function AllocationGrid({
             period &&
             !isCurrentWeek(parseISO(period)) &&
             !isCurrentOrPastWeek(parseISO(period));
-
-          const shouldShowActuals = showActuals;
-
           const cellContent = (() => {
             if (showTooltip) {
               return (
@@ -815,7 +755,7 @@ function AllocationGrid({
                 </Tooltip>
               );
             }
-            if (isFutureWeek) {
+            if (isFutureWeek || !editable) {
               return <span>{value}</span>;
             }
             return (
@@ -829,7 +769,7 @@ function AllocationGrid({
                   position: 'relative',
                 }}
               >
-                {shouldShowActuals ? (
+                {showActuals && params.rowNode?.type !== 'group' ? (
                   <AllocationCellWithActuals params={cellData} />
                 ) : (
                   <span>{value}</span>
@@ -943,7 +883,7 @@ function AllocationGrid({
       setCellSelectionModel({});
       // Find the changed week
       const changedWeeks = Object.keys(newRow).filter(
-        key => isWeekKey(key) && newRow[key] !== oldRow[key]?.value
+        key => /^W\d+/.test(key) && newRow[key] !== oldRow[key]?.value
       );
 
       if (!changedWeeks || changedWeeks.length === 0) {
@@ -1122,64 +1062,49 @@ function AllocationGrid({
         )
       );
 
-      try {
-        const responses = await Promise.all([
-          ...allocationPromises,
-          ...deletePromises,
-        ]);
+      await Promise.all([...allocationPromises, ...deletePromises]).then(
+        async response => {
+          if (response && response[0].length > 0) {
+            response = response[0];
+            response = formatAPIResponse('Allocation', response);
+            let allocationsUpdated = [];
+            // handle for bulk Delete different responce
+            if (deleteList.length > 0) {
+              allocationsUpdated = deleteList;
+            } else {
+              allocationsUpdated = response.reduce((arr, res) => {
+                // Check if result exists and is an array before spreading
+                if (res && Array.isArray(res)) {
+                  return [...arr, ...res];
+                }
+                // If it's not an array but has a value you want to include
+                else if (res !== undefined) {
+                  return [...arr, res];
+                }
+                // Otherwise just return the accumulator unchanged
+                return arr;
+              }, []);
+            }
 
-        if (responses && responses[0] && responses[0].length > 0) {
-          let response = responses[0];
-          response = formatAPIResponse('Allocation', response);
-          let allocationsUpdated = [];
-          // handle for bulk Delete different response
-          if (deleteList.length > 0) {
-            allocationsUpdated = deleteList;
-          } else {
-            allocationsUpdated = response.reduce((arr, res) => {
-              // Check if result exists and is an array before spreading
-              if (res && Array.isArray(res)) {
-                return [...arr, ...res];
-              }
-              // If it's not an array but has a value you want to include
-              else if (res !== undefined) {
-                return [...arr, res];
-              }
-              // Otherwise just return the accumulator unchanged
-              return arr;
-            }, []);
+            const formateUpdate = getFormattedAllocationsForUpdate(
+              allocationsUpdated,
+              teams,
+              teamsResources,
+              allResourcesDetail,
+              portfolios,
+              projects,
+              resources,
+              location,
+              splitView,
+              bottomTeamAllocationGrid,
+              teamAllocationGrid,
+              startDate,
+              endDate
+            );
+            allUpdatedRows = Object.values(formateUpdate);
           }
-
-          const formateUpdate = getFormattedAllocationsForUpdate(
-            allocationsUpdated,
-            teams,
-            teamsResources,
-            allResourcesDetail,
-            portfolios,
-            projects,
-            resources,
-            location,
-            splitView,
-            bottomTeamAllocationGrid,
-            teamAllocationGrid,
-            startDate,
-            endDate
-          );
-          allUpdatedRows = Object.values(formateUpdate);
         }
-      } catch (error) {
-        console.error('Error updating allocations:', error);
-        dispatch(
-          showToastAction(
-            true,
-            error?.response?.data
-              ? error?.response?.data
-              : `Error updating allocation for ${newRow.resource}.`,
-            'error'
-          )
-        );
-        return oldRow;
-      }
+      );
 
       dispatch(
         showToastAction(
@@ -1247,12 +1172,7 @@ function AllocationGrid({
   };
 
   const isCellEditable = useCallback(
-    params => {
-      if (resources?.length) {
-        return isCellEditableUtils(params, type, resources);
-      }
-      return false;
-    },
+    params => isCellEditableUtils(params, type, resources),
     [type, resources]
   );
   const handleCellSelectionModelChange = useCallback(
@@ -1320,17 +1240,7 @@ function AllocationGrid({
       const getNewModelWithValidFields = (rowId, row) => {
         const newModelWithValidFields = {};
         Object.keys(row).forEach(field => {
-          const isWeekField = isWeekKey(field);
-          const groupAlwaysEditable =
-            groupBy === 'project' || groupBy === 'portfolioName';
-          const groupConditionallyEditable =
-            ['organisationName', 'teams', 'resource'].includes(groupBy) &&
-            isCellEditableInRow(rowId, field);
-
-          if (
-            isWeekField &&
-            (groupAlwaysEditable || groupConditionallyEditable)
-          ) {
+          if (/^W\d+/.test(field) && isCellEditableInRow(rowId, field)) {
             newModelWithValidFields[field] = row[field];
           }
         });
@@ -1338,7 +1248,7 @@ function AllocationGrid({
       };
 
       let filteredModel = {};
-      if (Object.keys(newModel).find(id => id.startsWith('auto-generated'))) {
+      if (Object.keys(newModel)[0].startsWith('auto-generated')) {
         if (
           apiRef.current.getRowNode(Object.keys(newModel)[0])?.groupingField ===
             'teams' ||
@@ -1348,34 +1258,9 @@ function AllocationGrid({
           setCellSelectionModel({});
           return;
         }
-        // Allow multiple keys in selection: process each key through
-        // getNewModelWithValidFields and merge the valid fields into filteredModel.
-        const newModelKeys = Object.keys(newModel);
-        if (newModelKeys.length > 1) {
-          // Start with existing selection as baseline
-          filteredModel = { ...cellSelectionModel };
-          newModelKeys.forEach(key => {
-            try {
-              // If this is an auto-generated group row, pick the first child as source
-              if (key.startsWith('auto-generated')) {
-                const rowNode = apiRef.current.getRowNode(key);
-                const sourceRowId = rowNode?.children?.[0] || key;
-                const newModelWithValidFields = getNewModelWithValidFields(
-                  sourceRowId,
-                  newModel[key]
-                );
-                if (
-                  newModelWithValidFields &&
-                  Object.keys(newModelWithValidFields).length > 0
-                ) {
-                  filteredModel[key] = newModelWithValidFields;
-                }
-              }
-            } catch (err) {
-              console.error(err);
-            }
-          });
-        } else if (Object.keys(newModel).length === 1) {
+        if (Object.keys(newModel).length > 1) {
+          filteredModel = cellSelectionModel;
+        } else {
           const key = Object.keys(newModel)[0];
           const rowNode = apiRef.current.getRowNode(key);
           const newModelWithValidFields = getNewModelWithValidFields(
@@ -1387,28 +1272,26 @@ function AllocationGrid({
             [key]: newModelWithValidFields,
           };
         }
-      } else {
-        rowIds.forEach(rowId => {
-          if (!rowId.startsWith('auto-generated')) {
-            const row = apiRef.current.getRow(rowId);
-            if (isRowWithinGroup(row)) {
-              const editableFields = Object.keys(newModel[rowId]).filter(
-                field => {
-                  return isWeekKey(field) && isCellEditableInRow(rowId, field);
-                }
-              );
-
-              if (editableFields.length > 0) {
-                filteredModel[rowId] = {};
-                editableFields.forEach(field => {
-                  filteredModel[rowId][field] = true;
-                });
+      }
+      rowIds.forEach(rowId => {
+        if (!rowId.startsWith('auto-generated')) {
+          const row = apiRef.current.getRow(rowId);
+          if (isRowWithinGroup(row)) {
+            const editableFields = Object.keys(newModel[rowId]).filter(
+              field => {
+                return /^W\d+/.test(field) && isCellEditableInRow(rowId, field);
               }
+            );
+
+            if (editableFields.length > 0) {
+              filteredModel[rowId] = {};
+              editableFields.forEach(field => {
+                filteredModel[rowId][field] = true;
+              });
             }
           }
-        });
-      }
-
+        }
+      });
       setCellSelectionModel(filteredModel);
     },
     [apiRef, type, isCellEditable, setCellSelectionModel, groupBy]
@@ -1575,7 +1458,7 @@ function AllocationGrid({
         endDate,
         finalColumns
       )}
-      defaultGroupingExpansionDepth={1}
+      defaultGroupingExpansionDepth={defaultGroupingExpansionDepth}
       disableAutosize
       getCellClassName={params => {
         if (

@@ -55,9 +55,7 @@ const AddUserForm = ({
 
   useEffect(() => {
     if (initialData) {
-      const nameparts = initialData?.Name?.split(' ') || [];
-      const firstName = nameparts[0] || '';
-      const lastName = nameparts.slice(1).join(' ') || '';
+      const [firstName, lastName] = initialData?.Name?.split(' ') || [];
       const obj = {
         FirstName: firstName || '',
         LastName: lastName || '',
@@ -227,7 +225,7 @@ const AddUserForm = ({
               fontWeight: 400,
               lineHeight: 1.4
             }}>
-              The interface allows a single role assignment to users selected.<br />
+              The interface restricts a user to a single role at any given time.<br />
               Modification & Permissions are managed in <span style={{ color: '#007bff', cursor: 'pointer' }} onClick={handleNavigate}>Access Management</span>.
             </Box>
           </Box>

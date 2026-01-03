@@ -18,10 +18,6 @@ import {
   endOfISOWeek,
   isValid,
   isBefore,
-  // ISO-week helpers
-  setISOWeek,
-  getISOWeek,
-  getISOWeekYear,
 } from 'date-fns';
 import {
   DATE_FORMAT,
@@ -35,7 +31,7 @@ import {
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
   return Object.keys(row)
-    .filter(key => /^W\d+(?:-\d{4})?$/.test(key)) // Filter weekly columns (legacy 'W1' and canonical 'W1-2026')
+    .filter(key => /^W\d+/.test(key)) // Filter weekly columns
     .reduce((sum, weekKey) => {
       const weekValue = row[weekKey];
       const numericValue =
@@ -72,14 +68,7 @@ export const formatDate = (date, dateFormat) => {
  * @returns {String} - The calculated week number in the format "W{number}".
  */
 export const getWeekNumber = date => {
-  // Canonical ISO-week key: include ISO week and ISO week-year to avoid
-  // collisions across year boundaries (e.g. W1 can belong to previous or next
-  // ISO week-year depending on the date). Example: "W1-2026".
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  if (!isValid(d)) return null;
-  const week = getISOWeek(d);
-  const year = getISOWeekYear(d);
-  return `W${week}-${year}`;
+  return `W${getWeek(date, { weekStartsOn: 1 })}`;
 };
 
 export const getMondaysInRange = (start, end) => {
@@ -102,20 +91,10 @@ export const getMondaysInRange = (start, end) => {
  * @returns {string} - The Monday date of the given week in YYYY-MM-DD format.
  */
 export const getMondayOfWeek = (weekNumber, date) => {
-  // Accept both legacy 'W1' and canonical 'W1-2026'. If canonical form includes
-  // a year, parse directly; otherwise fall back to deriving year from `date`.
-  if (isWeekKey(weekNumber) && String(weekNumber).includes('-')) {
-    const monday = parseWeekKeyToMonday(weekNumber);
-    return monday ? format(monday, DATE_FORMAT) : null;
-  }
-
-  // legacy behavior: weekNumber like 'W1' - infer year from `date` argument
   const year = getYear(date);
-  const weekN =
-    typeof weekNumber !== 'number'
-      ? Number(weekNumber.toString().slice(1))
-      : weekNumber;
   const firstDayOfYear = new Date(year, 0, 1);
+  const weekN =
+    typeof weekNumber !== 'number' ? Number(weekNumber.slice(1)) : weekNumber;
   const dateInWeek = setWeek(firstDayOfYear, weekN);
   return format(startOfISOWeek(dateInWeek, { weekStartsOn: 1 }), DATE_FORMAT);
 };
@@ -320,37 +299,11 @@ export const getSundayOfISO = date => {
 
 export const getFridayOfISO = date => {
   if (!date) return null;
-  // Accept either a Date or an ISO string
-  const isoDate = typeof date === 'string' ? parseISO(date) : date;
-  if (!isValid(isoDate)) return null;
-
-  // ISO week starts on Monday; Friday is Monday + 4 days
-  const monday = startOfISOWeek(isoDate, { weekStartsOn: 1 });
-  const friday = addDays(monday, 4);
-  return format(friday, DATE_FORMAT);
-};
-
-// Helper: match keys like 'W1' or 'W1-2026'
-export const isWeekKey = key => {
-  return typeof key === 'string' && /^W\d+(?:-\d{4})?$/.test(key);
-};
-
-// Parse a week key (W{n} or W{n}-{YYYY}) to the Monday Date object of that ISO week-year.
-// If the key lacks a year (legacy 'W1'), the provided `fallbackYear` (or current year)
-// will be used to resolve the week-year.
-export const parseWeekKeyToMonday = (
-  weekKey,
-  fallbackYear = new Date().getFullYear()
-) => {
-  if (!isWeekKey(weekKey)) return null;
-  const m = weekKey.match(/^W(\d+)(?:-(\d{4}))?$/);
-  if (!m) return null;
-  const week = Number(m[1]);
-  const year = m[2] ? Number(m[2]) : fallbackYear;
-  // Anchor on Jan 4th of the ISO-week-year and set ISO week
-  const anchor = new Date(year, 0, 4);
-  const withWeek = setISOWeek(anchor, week);
-  return startOfISOWeek(withWeek, { weekStartsOn: 1 });
+  const isoDate = parseISO(date);
+  return format(
+    endOfISOWeek(subDays(isoDate, 2), { weekStartsOn: 1 }),
+    DATE_FORMAT
+  );
 };
 
 export const generateTMinusOneStartEndDate = isStartDate => {
@@ -439,7 +392,7 @@ export const getStartAndEndDateForView = (
 
 export const getUserIdFromEmail = (users, email) => {
   if (!Array.isArray(users) || !email) return null;
-  const userObj = users.find(user => user?.Email === email);
+  const userObj = users.find(user => user.Email === email);
   return userObj ? userObj.Id : null;
 };
 
@@ -466,9 +419,8 @@ export const isObjectEqual = (a, b) => {
 export const getTeamsIamAllocationManager = (userEmail, resources, teams) => {
   const userResourcePath =
     Array.isArray(resources) && userEmail
-      ? (resources.find(
-          r => r?.Email?.toLowerCase() === userEmail.toLowerCase()
-        )?.__path__ ?? null)
+      ? (resources.find(r => r.Email?.toLowerCase() === userEmail.toLowerCase())
+          ?.__path__ ?? null)
       : null;
 
   if (userResourcePath) {

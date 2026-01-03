@@ -22,7 +22,6 @@ import {
   Team,
   ProjectType,
   Location,
-  ProjectTypeGroup,
 } from '../types';
 import {
   generateAllWeeks,
@@ -31,13 +30,8 @@ import {
   getResourceFromUid,
   getTeamForResource,
   getWeekNumber,
-  isWeekKey,
 } from './common';
-import {
-  AllocationForm_Status_Filter,
-  DATE_FORMAT,
-  PROJECT_ACTIVE_STATUS,
-} from '../constants/constants';
+import { DATE_FORMAT } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
 import {
@@ -141,7 +135,7 @@ function getWeeksInRange(start: string, end: string) {
 
   while (isBefore(current, endDate) || format(current, 'yyyy-MM-dd') === end) {
     weeks.push({
-      key: getWeekNumber(current),
+      key: `W${format(current, 'I')}`,
       period: format(current, 'yyyy-MM-dd'),
     });
     current = addWeeks(current, 1);
@@ -178,7 +172,6 @@ export function formatAllAllocations(
   teams: Team[],
   projects: Project[],
   projectTypes: ProjectType[],
-  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
   portfolios: Portfolio[],
   allResourcesDetail: AllResourceDetail[],
@@ -196,23 +189,11 @@ export function formatAllAllocations(
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
     const projectType = projectTypes.find(pt => pt.Id === project?.Type);
-    const projectTypeGroup = projectTypeGroups.find(
-      ptg => ptg.Id === projectType?.Group
-    );
     const portfolio = portfolios?.find(p => p.Id === project?.PortfolioId);
     const resourceDetails = allResourcesDetail?.find(
       r => r?.Resource?.Id === alloc.Resource
     );
     const resource = resourceDetails?.Resource;
-    // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
-    // Filter out Allocations that belong to projects without an PROJECT_ACTIVE_STATUS Status.
-    if (
-      (resource?.Status &&
-        !AllocationForm_Status_Filter.includes(resource?.Status)) ||
-      (project?.Status && !PROJECT_ACTIVE_STATUS.includes(project.Status))
-    )
-      continue;
-
     const locationDetails = location?.find(
       l => l?.Id === resource?.WorkLocation
     );
@@ -243,7 +224,6 @@ export function formatAllAllocations(
         projectLocation: project?.Location || null,
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
-        projectTypeGroup: projectTypeGroup?.Name || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -301,7 +281,11 @@ export function formatAllAllocations(
     entry.totalEffort += alloc.AllocationEntered;
   }
 
-  return sortAllAllocations(Array.from(grouped.values()));
+  return sortAllAllocations(
+    Array.from(grouped.values()).filter(allocation =>
+      hasAllocations(allocation)
+    )
+  );
 }
 
 export function injectBlankRows(
@@ -326,13 +310,6 @@ export function injectBlankRows(
   teams.forEach(team => {
     const teamRes = teamsResources?.[team.Id] || [];
     teamRes.forEach(resource => {
-      // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
-      if (
-        resource?.Status &&
-        !AllocationForm_Status_Filter.includes(resource?.Status)
-      )
-        return;
-
       const key = `${team.Name}___${resource.Id}`;
       const organisation = allResourcesDetail?.find(
         r => r.Resource?.Id === resource.Id
@@ -351,7 +328,6 @@ export function injectBlankRows(
           projectStatus: '',
           projectLocation: '',
           projectType: '',
-          projectTypeGroup: '',
           projectOvertimeAllowed: null,
           projectCost: null,
           projectCurrency: '',
@@ -411,7 +387,6 @@ export function formatCostAllocations(
   teams: Team[],
   projects: Project[],
   projectTypes: ProjectType[],
-  projectTypeGroups: ProjectTypeGroup[],
   resources: Resource[],
   location: Location[],
   teamResources: Record<string, Resource[]>, // UPDATED TYPE
@@ -446,16 +421,7 @@ export function formatCostAllocations(
   for (const alloc of allocations) {
     const project = projects.find(p => p.Id === alloc.Project);
     const projectType = projectTypes.find(pt => pt.Id === project?.Type);
-    const projectTypeGroup = projectTypeGroups.find(
-      ptg => ptg.Id === projectType?.Group
-    );
     const resource = resources.find(r => r.Id === alloc.Resource);
-    // Filter out Allocations that belong to resource without an AllocationForm_Status_Filter Status.
-    if (
-      resource?.Status &&
-      !AllocationForm_Status_Filter.includes(resource?.Status)
-    )
-      continue;
     const locationDetails = location?.find(
       l => l?.Id === resource?.WorkLocation
     );
@@ -486,7 +452,6 @@ export function formatCostAllocations(
         projectLocation: project?.Location || null,
         projectType: projectType?.Name || null,
         projectTypeColor: projectType?.Color || null,
-        projectTypeGroup: projectTypeGroup?.Name || null,
         projectOvertimeAllowed: project?.AllowOvertime ?? null,
         projectCost: project?.Budget ?? null,
         projectCurrency: project?.BudgetCurrency || null,
@@ -543,7 +508,7 @@ export const hasAllocations = (allocation: AllAllocations) => {
   }
   for (const key in allocation) {
     if (
-      isWeekKey(key) &&
+      /^W\d+/.test(key) &&
       allocation[key] &&
       (allocation[key] as AllocationGridCellData).value &&
       // @ts-ignore
@@ -623,7 +588,6 @@ export const generateEmptyRow = (
     projectStatus: project?.Status || null,
     projectLocation: project?.Location || null,
     projectType: project?.Type || null,
-    projectTypeGroup: null,
     projectOvertimeAllowed: project?.AllowOvertime ?? null,
     projectCost: project?.Budget ?? null,
     projectCurrency: project?.BudgetCurrency || null,
@@ -839,7 +803,7 @@ export const generateEmptyAllocation = (
 
   // Extract Wxx weeks and set them to empty values with preserved "period"
   Object.entries(template).forEach(([key, value]) => {
-    if (isWeekKey(key)) {
+    if (/^W\d+$/.test(key)) {
       empty[key] = {
         allocationId: null,
         value: null,
@@ -966,20 +930,4 @@ export const getFirstChild = (params: GridCellParams) => {
     return firstChildRow;
   }
   return null;
-};
-
-export const initSortAllocations = (
-  data: AllAllocations[],
-  primaryColumn = 'teams',
-  secondaryColumn = 'resource'
-) => {
-  return data.sort((a, b) =>
-    a?.[primaryColumn] === b?.[primaryColumn]
-      ? (a?.[secondaryColumn] || '') < (b?.[secondaryColumn] || '')
-        ? -1
-        : 1
-      : (a?.[primaryColumn] || '') < (b?.[primaryColumn] || '')
-        ? -1
-        : 1
-  );
 };

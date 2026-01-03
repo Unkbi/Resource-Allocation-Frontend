@@ -1,9 +1,9 @@
 import { call, put, takeEvery, select, all } from 'redux-saga/effects';
 import { ChartParams } from '../../types/dashboardTypes';
-import { fetchDashboardChart, fetchInventoryMetrics, fetchReport } from '../actions/dashboardAction';
-import { setDashboardChart, startChartLoading, startMultipleChartsLoading, startReportLoading, setReportRequestPayload, setReportData, setReportError } from '../reducers/dashboardReducer';
+import { fetchDashboardChart, fetchInventoryMetrics } from '../actions/dashboardAction';
+import { setDashboardChart, startChartLoading, startMultipleChartsLoading } from '../reducers/dashboardReducer';
 import { RootState } from '../store';
-import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup, buildReportPayload, fetchReportData } from '../../services/dashboardServices';
+import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup } from '../../services/dashboardServices';
 
 
 function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<any, void, any> {
@@ -55,7 +55,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
     'team_headcount_distribution',
     'allocation_by_project_type_group',
     'plan_vs_actual_variance',
-    'actuals_confirmation_status',
   ]));
   
   const selectAdvancedFilters = (state: RootState) => state.dashboard.advancedFilters;
@@ -94,7 +93,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         })),
         put(setDashboardChart({ 
           chartKey: 'activeProjectsByType', 
-          data: responseData.projects_by_type || []
+          data: responseData.projects_by_type || [] 
         })),
         put(setDashboardChart({ 
           chartKey: 'activeResources', 
@@ -128,10 +127,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
           chartKey: 'projects_by_type_distribution',
           data: responseData.projects_by_type || []
         })),
-        put(setDashboardChart({
-          chartKey: 'actuals_confirmation_status',
-          data: responseData.actuals_confirmation_status ? [responseData.actuals_confirmation_status] : []
-        })),
       ]);
     } else {
       yield all([
@@ -145,7 +140,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
         put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
-        put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
       ]);
     }
   } catch (err) {
@@ -161,28 +155,11 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       put(setDashboardChart({ chartKey: 'plan_vs_actual_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'top_projects_by_variance', data: [] })),
       put(setDashboardChart({ chartKey: 'projects_by_type_distribution', data: [] })),
-      put(setDashboardChart({ chartKey: 'actuals_confirmation_status', data: [] })),
     ]);
-  }
-}
-
-function* fetchReportSaga(action: { payload: { reportType: string; uiFilters: any } }): Generator<any, void, any> {
-  const { reportType, uiFilters } = action.payload;
-  try {
-    yield put(startReportLoading({ reportType }));
-    const requestPayload = buildReportPayload(uiFilters);
-    yield put(setReportRequestPayload({ reportType, uiFilters, requestPayload }));
-
-    const data: any[] = yield call(fetchReportData, reportType, requestPayload);
-    yield put(setReportData({ reportType, data }));
-  } catch (err: any) {
-    console.error('Report fetch failed', err);
-    yield put(setReportError({ reportType, error: err?.message || 'Report fetch failed' }));
   }
 }
 
 export function* dashboardSaga() {
   yield takeEvery(fetchDashboardChart, fetchDashboardChartSaga);
   yield takeEvery(fetchInventoryMetrics, fetchInventoryMetricsSaga);
-  yield takeEvery(fetchReport, fetchReportSaga);
 }

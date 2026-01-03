@@ -50,23 +50,21 @@ const AllocationCellWithActuals = ({
         }}
       >
         <Box sx={{ position: 'relative', top: 0, left: 0, zIndex: 1 }}>
-          <Typography>{formattedValue}</Typography>
+          <Typography sx={{ fontWeight: 600 }}>{formattedValue}</Typography>
         </Box>
         <Box
           sx={{
-            width: '50px',
+            width: '52px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: getBackgroundColor(rawValue, rawActuals),
             flex: 1,
           }}
-          className="actualsBox"
         >
           <Typography
             sx={{
               fontStyle: 'italic',
-              fontWeight: 600,
             }}
           >
             {formattedActuals}

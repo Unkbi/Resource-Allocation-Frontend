@@ -28,7 +28,7 @@ const ProjectTable = ({
   apiRef,
   value,
   onChange = () => {},
-  permissions,
+  permissions ,
 }) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
   return (
@@ -56,10 +56,6 @@ const ProjectTable = ({
               Location: false,
               Budget: false,
               BudgetCurrency: false,
-              __created: false,
-              __created_by: false,
-              __last_modified: false,
-              __last_modified_by: false,
             },
           },
         }}
@@ -128,4 +124,4 @@ const ProjectTable = ({
   );
 };
 
-export default withRBAC(ProjectTable, ['Project']);
+export default withRBAC(ProjectTable,['Project']);

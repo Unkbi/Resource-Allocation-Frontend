@@ -11,6 +11,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  InputLabel,
 } from '@mui/material';
 import {
   MoreVert as MoreHorizontal,
@@ -19,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
+import AccessTable from './AccessTable';
 import {
   DELETE_LOCATION,
   DELETE_LOCATION_GROUPS,
@@ -33,7 +35,6 @@ import { showToast } from '@/app/redux/reducers/toastReducer';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
 import { LOCATION_VALID_TABS } from '@/app/constants/constants';
 import { FETCH_EMPLOYEE_RATES } from '@/app/redux/actions/employeeRatesActions';
-import SettingsTable from './SettingsTable';
 
 const baseURLAccessManagement = '/settings?menu=location-setting';
 const StyledMenu = styled(Menu)(({ theme }) => ({
@@ -110,6 +111,7 @@ function LocationSettingPage({
   const [deletingLocationGroup, setDeletingLocationGroup] = useState<
     string | null
   >(null);
+  const roles = [];
   const { location, locationGroups, loading } = useSelector(
     (state: any) => state.allSettings
   );
@@ -235,10 +237,10 @@ function LocationSettingPage({
   useEffect(() => {
     if (!employeeRates?.length)
       dispatch({
-        type: FETCH_EMPLOYEE_RATES,
-        payload: {},
-      });
-  }, [dispatch]);
+          type: FETCH_EMPLOYEE_RATES,
+          payload: {},
+        });
+}, [dispatch]);
 
   const handleAddNewLocationGroup = () => {
     dispatch(
@@ -656,25 +658,43 @@ function LocationSettingPage({
       <TabHeader tab={tab} setTab={setTab} />
 
       {tab === 'location' && (
-        <SettingsTable
+        <AccessTable
           title="Locations"
           data={permissions!['WorkLocation'].r ? locationData : []}
           onAdd={handleAddNewLocation}
+          onEdit={handleEditLocation}
+          onDelete={handleDeleteLocation}
+          menuId={menuRoleId}
+          setMenuId={setMenuRoleId}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
           buttonLabel={permissions!['WorkLocation'].c ? 'Add Location' : ''}
+          renderMenu={renderLocationMenu}
           columns={LocationPageColumns}
+          apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
       {tab === 'location-group' && (
-        <SettingsTable
+        <AccessTable
           title="Location Group"
           data={permissions!['WorkLocationGroup'].r ? locationGroupData : []}
           onAdd={handleAddNewLocationGroup}
+          onEdit={handleEditLocationGroup}
+          onDelete={handleDeleteLocationGroup}
+          menuId={menuRoleId}
+          setMenuId={setMenuRoleId}
+          anchorEl={anchorEl}
+          setAnchorEl={setAnchorEl}
           buttonLabel={
             permissions!['WorkLocationGroup'].c ? 'Add Location Group' : ''
           }
+          renderMenu={locationGroupMenu}
           columns={LocationGroupColumns}
+          apiRef={apiRef}
           loading={loading || loadingPermissions}
+          toolbarType="filter"
         />
       )}
 

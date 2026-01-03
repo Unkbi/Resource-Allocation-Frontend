@@ -37,7 +37,6 @@ import {
   addLocationGroupValidationSchema,
   addUserValidationSchema,
   addResourceToUserValidationSchema,
-  addBusinessImpactValidationSchema,
 } from '../../Forms/ValidationSchema';
 import { addProject, updateProject } from '@/app/services/projectServices';
 import {
@@ -124,6 +123,7 @@ import {
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { fetchHistory } from '@/app/services/allocationServices';
 import { addResourceToTeam } from '@/app/redux/actions/fetchTeamsAction';
+import { isCellEditableUtils } from '@/app/utils/common';
 import { Description } from '@mui/icons-material';
 import AddPortfolioForm from '../../Forms/AddPortfolioForm';
 import AddOrganizationForm from '../../Forms/addOrganizationForm';
@@ -182,11 +182,6 @@ import {
   SEND_INVITATION,
 } from '@/app/redux/actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '@/app/redux/actions/portfolioActions';
-import AddBusinessImpactForm from '../../Forms/AddBusinessImpactForm';
-import {
-  CREATE_BUSINESS_IMPACT,
-  UPDATE_BUSINESS_IMPACT,
-} from '@/app/redux/actions/businessImpactActions';
 
 const initialValuesMap = {
   add_project: {
@@ -194,7 +189,7 @@ const initialValuesMap = {
     EndDate: '',
     Name: '',
     ProjectSponsor: '',
-    AllowOvertime: 'Yes',
+    AllowOvertime: 'No',
     Location: '',
     ProjectManager: '',
     Status: 'Active',
@@ -449,22 +444,6 @@ const initialValuesMap = {
     ProjectManager: [],
     AllocationManager: [],
   },
-  add_business_impact: {
-    Project: '',
-    BusinessImpactType: '',
-    Amount: '',
-    Description: '',
-    Status: '',
-    Currency: 'USD',
-  },
-  edit_business_impact: {
-    Project: '',
-    BusinessImpactType: '',
-    Amount: '',
-    Description: '',
-    Status: '',
-    Currency: 'USD',
-  },
 };
 
 const AllocationForm = () => {
@@ -506,13 +485,8 @@ const AllocationForm = () => {
   const { scalarSettings } = useSelector(state => state.allSettings);
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
-  const {
-    projectTypeGroups,
-    projectTypes,
-    location,
-    locationGroups,
-    userResources,
-  } = useSelector(state => state.allSettings);
+  const { projectTypeGroups, projectTypes, location, locationGroups } =
+    useSelector(state => state.allSettings);
 
   const _startDate = currentView?.isDynamicRange
     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
@@ -649,10 +623,6 @@ const AllocationForm = () => {
         return addResourceToUserValidationSchema;
       case 'edit_resource_to_user':
         return addResourceToUserValidationSchema;
-      case 'add_business_impact':
-        return addBusinessImpactValidationSchema;
-      case 'edit_business_impact':
-        return addBusinessImpactValidationSchema;
       default:
         return null;
     }
@@ -1820,25 +1790,22 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              e?.response?.data
-                ? e?.response?.data
-                : `Failed to create allocation for ${
-                    Array.isArray(values.Resource)
-                      ? values.Resource.reduce((acc, resourceId) => {
-                          const resource = resources?.find(
-                            r => r.Id === resourceId
-                          );
-                          if (!resource) return acc;
-                          return (
-                            acc +
-                            resources?.find(
-                              resource => resource.Id === resourceId
-                            )?.FullName +
-                            ', '
-                          );
-                        }, '').slice(0, -2)
-                      : resources?.find(r => r.Id === values.Resource)?.FullName
-                  }`,
+              `Failed to create allocation for ${
+                Array.isArray(values.Resource)
+                  ? values.Resource.reduce((acc, resourceId) => {
+                      const resource = resources?.find(
+                        r => r.Id === resourceId
+                      );
+                      if (!resource) return acc;
+                      return (
+                        acc +
+                        resources?.find(resource => resource.Id === resourceId)
+                          ?.FullName +
+                        ', '
+                      );
+                    }, '').slice(0, -2)
+                  : resources?.find(r => r.Id === values.Resource)?.FullName
+              }`,
               'error',
               4000
             )
@@ -2512,15 +2479,16 @@ const AllocationForm = () => {
           dispatch(setHighlightedRowId(response?.Id));
           dispatch(closeDialog());
         } catch (error) {
+          console.error('Failed to update portfolio:', error);
           const message =
-            error?.response?.data || 'Failed to update portfolio.';
+            error?.response?.data?.exception || 'Failed to update portfolio.';
           dispatch(
             showToast({
               open: true,
               message: message,
               type: 'error',
               position: 'bottom-left',
-              autoHideTimer: 6000,
+              autoHideTimer: 4000,
             })
           );
         }
@@ -3413,32 +3381,21 @@ const AllocationForm = () => {
       }
       case 'add_resource_to_user': {
         try {
-          const finalData = cleanedValues.Resources.map(resourceEmail => {
-            const resourceData = userResources?.find(
-              res => res.email === resourceEmail
-            );
-
-            if (!resourceData) {
-              console.warn(`Resource not found for email: ${resourceEmail}`);
-              return null;
-            }
-
-            const nameParts = resourceData.Name?.split(' ') || [];
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.slice(1).join(' ') || '';
+          const finalData = cleanedValues.Resources.map(resource => {
+            const data = initialData.find(res => {
+              if (resource === res.email) {
+                return res.Name;
+              }
+            });
+            const [firstName, lastName] = data.Name.split(' ') || [];
 
             return {
-              email: resourceEmail || null,
+              email: resource || null,
               firstName: firstName || null,
               lastName: lastName || null,
               role: cleanedValues.Role || '*',
-              resourceId: resourceData.id, // Store ID for highlighting
             };
-          }).filter(Boolean); // Remove any null entries
-
-          if (finalData.length === 0) {
-            throw new Error('No valid resources found to invite');
-          }
+          });
 
           const postData = {
             users: [...finalData],
@@ -3464,29 +3421,12 @@ const AllocationForm = () => {
             })
           );
           dispatch(closeDialog());
-
-          // Compare initialData emails with finalData emails
-          // Only highlight resources that were NOT in the initial checkbox selection
-          const initialEmails = new Set(
-            (initialData || []).map(item => item.email?.toLowerCase())
-          );
-
-          const newlyInvitedResources = finalData.filter(
-            item => !initialEmails.has(item.email?.toLowerCase())
-          );
-
-          // If there are newly invited resources (dropdown selections that differ from checkbox), highlight the first one
-          if (newlyInvitedResources.length > 0) {
-            const highlightId = newlyInvitedResources[0].resourceId;
-            if (highlightId) {
-              dispatch(setHighlightedRowId(highlightId));
-            }
-          } else if (initialData?.[0]?.id) {
-            // Otherwise, highlight the first resource from initialData
-            dispatch(setHighlightedRowId(initialData[0].id));
-          }
-
           setFormValue({});
+          const highlightId = response?.[0].User?.id || response?.User?.id;
+
+          if (highlightId) {
+            dispatch(setHighlightedRowId(highlightId));
+          }
         } catch (error) {
           console.error('Failed to add user:', error);
           const message =
@@ -3583,101 +3523,6 @@ const AllocationForm = () => {
           })
         );
         break;
-      }
-      case 'add_business_impact': {
-        Object.keys(cleanedValues).forEach(key => {
-          if (cleanedValues[key] === '') {
-            cleanedValues[key] = null;
-          }
-        });
-
-        let postData = {
-          ...cleanedValues,
-          Description: cleanedValues.Description || '',
-        };
-        new Promise((resolve, reject) => {
-          dispatch({
-            type: CREATE_BUSINESS_IMPACT,
-            payload: {
-              postData,
-              resolve,
-              reject,
-            },
-          });
-        })
-          .then(response => {
-            dispatch(
-              showToast({
-                open: true,
-                message: ` Business Impact added successfully.`,
-                type: 'success',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-            dispatch(closeDialog());
-            dispatch(setHighlightedRowId(response?.BusinessImpact?.Id));
-          })
-          .catch(error => {
-            console.error('Failed to add Business Impact:', error);
-            dispatch(
-              showToast({
-                open: true,
-                message: 'Failed to add Business Impact.',
-                type: 'error',
-                position: 'bottom-left',
-                autoHideTimer: 4000,
-              })
-            );
-          });
-        break;
-      }
-      case 'edit_business_impact': {
-        Object.keys(cleanedValues).forEach(key => {
-          if (cleanedValues[key] === '') {
-            cleanedValues[key] = null;
-          }
-        });
-
-        const updatedFields = { ...cleanedValues };
-        try {
-          const response = await new Promise((resolve, reject) => {
-            dispatch({
-              type: 'UPDATE_BUSINESS_IMPACT',
-              payload: {
-                id: initialData?.Id,
-                updatedFields,
-                resolve,
-                reject,
-              },
-            });
-          });
-          dispatch(
-            showToast({
-              open: true,
-              message: `Business Impact updated successfully.`,
-              type: 'success',
-              position: 'bottom-left',
-              autoHideTimer: 4000,
-            })
-          );
-          dispatch(setHighlightedRowId(response?.ProjectUUID));
-          dispatch(closeDialog());
-        } catch (error) {
-          const message =
-            error?.response?.data || 'Failed to update portfolio.';
-          dispatch(
-            showToast({
-              open: true,
-              message: message,
-              type: 'error',
-              position: 'bottom-left',
-              autoHideTimer: 6000,
-            })
-          );
-        }
-
-        return;
       }
 
       default:
@@ -3937,7 +3782,14 @@ const AllocationForm = () => {
               };
               const getDateString = ts => {
                 if (!ts) return '';
-                return format(parseISO(ts), DATE_FORMAT);
+                const date = new Date(ts);
+                return date
+                  .toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: '2-digit',
+                    year: 'numeric',
+                  })
+                  .replace(/ /g, ' ');
               };
               const getRelativeTime = ts => {
                 if (!ts) return '';
@@ -3954,14 +3806,12 @@ const AllocationForm = () => {
               // Calculate week number from Period
               let weekNumber = '';
               if (Period) {
-                const d = parseISO(Period);
+                const d = new Date(Period);
                 if (!isNaN(d)) {
-                  const temp = parseISO(new Date(d.getTime()).toISOString());
+                  const temp = new Date(d.getTime());
                   temp.setHours(0, 0, 0, 0);
                   temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                  const yearStart = parseISO(
-                    new Date(temp.getFullYear(), 0, 1).toISOString()
-                  );
+                  const yearStart = new Date(temp.getFullYear(), 0, 1);
                   weekNumber = Math.ceil(
                     ((temp - yearStart) / 86400000 + 1) / 7
                   );
@@ -4302,20 +4152,6 @@ const AllocationForm = () => {
       case 'advanced_filters':
         return (
           <AdvancedFiltersForm
-            formikProps={formikProps}
-            setFormValue={setFormValue}
-          />
-        );
-      case 'add_business_impact':
-        return (
-          <AddBusinessImpactForm
-            formikProps={formikProps}
-            setFormValue={setFormValue}
-          />
-        );
-      case 'edit_business_impact':
-        return (
-          <AddBusinessImpactForm
             formikProps={formikProps}
             setFormValue={setFormValue}
           />

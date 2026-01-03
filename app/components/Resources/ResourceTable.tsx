@@ -75,10 +75,6 @@ const ResourceTable = ({
               AverageWeeklyHours: false,
               ContractorHourlyRate: false,
               PhoneNumber: false,
-              __created: false,
-              __created_by: false,
-              __last_modified: false,
-              __last_modified_by: false,
             },
           },
         }}

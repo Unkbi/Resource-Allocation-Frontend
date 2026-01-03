@@ -136,17 +136,6 @@ function TopProjectsView({
       primaryColumn: true,
     },
     {
-      field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
-      width: 150,
-      type: 'string',
-      headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
-      isEditable: false,
-      sortable: false,
-      primaryColumn: true,
-    },
-    {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
       width: 102, // min-width without eliding.
@@ -275,7 +264,6 @@ function TopProjectsView({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
-                projectTypeGroup: false,
                 totalEffort: true,
                 resource: true, // Always be true
                 __row_group_by_columns_group__: true, // Always be true
@@ -294,6 +282,7 @@ function TopProjectsView({
           NoRowsOverlay={NoRowsOverlay}
           toolbarComponent={''}
           viewId="topProject"
+          defaultGroupingExpansionDepth={1}
         />
       </Box>
     </Box>

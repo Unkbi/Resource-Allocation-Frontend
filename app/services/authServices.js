@@ -64,20 +64,16 @@ export const callback = createAsyncThunk(
 );
 
 // Get User
-export const getUser = createAsyncThunk(
-  'auth/getUser',
-  async (userId, withRbac) => {
-    try {
-      const response = await axiosInstance.post('/agentlang.auth/getUser', {
-        userId,
-        withRbac,
-      });
-      return response.data;
-    } catch (error) {
-      return 'User not found';
-    }
+export const getUser = createAsyncThunk('auth/getUser', async userId => {
+  try {
+    const response = await axiosInstance.post('/agentlang.auth/getUser', {
+      userId,
+    });
+    return response.data;
+  } catch (error) {
+    return 'User not found';
   }
-);
+});
 
 export const signupUser = createAsyncThunk(
   'auth/signupUser',

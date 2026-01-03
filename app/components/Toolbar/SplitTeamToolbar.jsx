@@ -15,7 +15,6 @@ import {
   Popover,
   Slider,
   Popper,
-  Tooltip,
 } from '@mui/material';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import CustomSelect from '../Select/CustomSelect';
@@ -25,6 +24,7 @@ import {
   performChangeView,
 } from '@/app/redux/actions/allocationViewAction';
 import {
+  gridExpandedSortedRowIdsSelector,
   GridToolbarColumnsButton,
   GridToolbarContainer,
   GridToolbarFilterButton,
@@ -61,6 +61,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { openDialog } from '@/app/redux/reducers/dialogReducer';
 import {
+  setExpandRowId,
+  setScrollPosition,
   setCurrentView,
   updateCurrentView,
 } from '@/app/redux/reducers/allocationViewReducer';
@@ -73,6 +75,7 @@ import CopyLinkInput from '../Input/InputWithButton';
 import ShareLinkDialog from '../Dialog/ShareLinkDialog';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { useDataGrid } from '@/app/context/dataGridContext';
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   minWidth: 140,
@@ -350,6 +353,7 @@ const SplitTeamToolbar = memo(
     const { user } = useSelector(state => state.user);
     const { resources } = useSelector(state => state.resources);
     const { teams } = useSelector(state => state.teams);
+    const { getApiRef } = useDataGrid();
 
     const { startDate: _startDate, endDate: _endDate } = calendarDate || {};
 
@@ -400,7 +404,42 @@ const SplitTeamToolbar = memo(
       true
     );
 
+    const getExpandedParentIds = ref => {
+      if (!ref) return [];
+
+      const prefix = 'auto-generated-row-teams/';
+      let expanded = gridExpandedSortedRowIdsSelector({ current: ref });
+      const regex = /^auto-generated-row-teams\/.+-resource\//;
+      const filtered = expanded.filter(
+        id => !id.startsWith(prefix) || regex.test(id)
+      );
+      const expandedNodes = filtered.map(id => ref.getRowNode(id));
+
+      const parentNodes = expandedNodes
+        .map(node => (node?.parent ? ref.getRowNode(node.parent) : null))
+        .filter(Boolean);
+
+      const uniqueParentIds = [...new Set(parentNodes.map(p => p.id))];
+
+      return uniqueParentIds;
+    };
+
+    const preserveExpansionAndScroll = () => {
+      // Handle scroll and expansion state preservation
+      const currentRef = getApiRef('bottomTeam');
+      if (currentRef) {
+        const scrollPosition = currentRef.getScrollPosition();
+        dispatch(setScrollPosition(scrollPosition));
+
+        const expandedParentIds = getExpandedParentIds(currentRef);
+        dispatch(setExpandRowId(expandedParentIds));
+      }
+    };
+
     const changeCalendarDate = (type, StartDate = '', EndDate = '') => {
+      // Preserve expansion and scroll position
+      preserveExpansionAndScroll();
+
       const isNext = type === 'next';
       if (type === 'isFixedRange') {
         const currentDate = new Date();
@@ -590,13 +629,10 @@ const SplitTeamToolbar = memo(
     };
 
     const TeamOptions =
-      teams
-        ?.filter(t => t.Status === 'Active')
-        ?.map(team => ({
+      teams?.map(team => ({
         label: team.Name,
         value: team.Id,
-      }))
-       ?.sort((a, b) => a.label.localeCompare(b.label)) || [];
+      })) || [];
 
     const handleTeamChange = (event, newValue) => {
       if (!newValue) return;
@@ -755,32 +791,11 @@ const SplitTeamToolbar = memo(
                     lineHeight: 'normal',
                   }}
                 >
-                  {'Select Utilization ≤'}
+                  Select Availability
                 </Typography>
-                <Tooltip
-                  title="Shows resources whose average utilization for the selected period is ≤ the chosen value."
-                  arrow
-                  placement="top"
-                  componentsProps={{
-                    tooltip: {
-                      sx: {
-                        whiteSpace: 'nowrap',
-                        maxWidth: 'none',
-                        fontSize: '12px',
-                      },
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <img src="/images/icons/splitInfo.svg" alt="info" />
-                  </Box>
-                </Tooltip>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <img src="/images/icons/splitInfo.svg" alt="info" />
+                </Box>
               </Box>
 
               <Box

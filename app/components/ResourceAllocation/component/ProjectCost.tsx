@@ -21,10 +21,7 @@ import { getProjectTypeColorLine } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { normalizeRow } from '@/app/utils/allocationUtils';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
-import {
-  FETCH_PROJECT_TYPE_GROUPS,
-  FETCH_PROJECT_TYPES,
-} from '@/app/redux/actions/allSettingsActions';
+import { FETCH_PROJECT_TYPES } from '@/app/redux/actions/allSettingsActions';
 
 interface ProjectCostAllocationProps {
   startDate: string | null;
@@ -55,9 +52,7 @@ const ProjectCost = ({
   const { location } = useSelector((state: RootState) => state.allSettings);
   const { teams } = useSelector((state: RootState) => state.teams);
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { projectTypes, projectTypeGroups } = useSelector(
-    (state: RootState) => state.allSettings
-  );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
   // @ts-ignore
   const { resources }: { resources: Resource[] } = useSelector(
     (state: RootState) => state.resources
@@ -74,15 +69,12 @@ const ProjectCost = ({
   }, []);
 
   useEffect(() => {
-    if (projectTypeGroups.length === 0) {
-      dispatch({ type: FETCH_PROJECT_TYPE_GROUPS });
-    }
-  }, []);
-
-  useEffect(() => {
     if (loadingPermissions) return;
     if (permissions['AllocationCost'].r && ready && projectCosts) {
-      const filteredResources = removeResourcesWithNoProjects(projectCosts);
+      const filteredResources = removeResourcesWithNoProjects(projectCosts)
+         .sort((a, b) =>
+         (a?.resource || "") < (b?.resource || "") ? -1 : 1
+       );
 
       const formattedResources = filteredResources?.map(allocation => ({
         ...allocation,
@@ -109,7 +101,6 @@ const ProjectCost = ({
           allResourcesDetail: allResourcesDetail,
           location: location,
           projectTypes: projectTypes,
-          projectTypeGroups: projectTypeGroups,
           startDate: startDate,
           endDate: endDate,
         },
@@ -387,7 +378,7 @@ const ProjectCost = ({
     },
     {
       field: 'Role',
-      headerName: 'Title',
+      headerName: 'Resource Role',
       width: 170,
       isEditable: 'false',
       sortable: false,
@@ -551,23 +542,6 @@ const ProjectCost = ({
       },
     },
     {
-      field: 'projectTypeGroup',
-      headerName: 'Project Type Group',
-      width: 150,
-      type: 'string',
-      headerClassName: 'secondary-header',
-      cellClassName: 'common-NonEditableCells',
-      isEditable: false,
-      sortable: false,
-      primaryColumn: true,
-      renderCell: (params: GridCellParams) => {
-        const firstChild = getFirstChild(params);
-        return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectTypeGroup || ''} />
-        ) : null;
-      },
-    },
-    {
       field: 'projectOvertimeAllowed',
       headerName: 'Overtime?',
       width: 102, // min-width without eliding.
@@ -690,7 +664,6 @@ const ProjectCost = ({
                 projectStartDate: false,
                 projectStatus: false,
                 projectType: false,
-                projectTypeGroup: false,
                 __row_group_by_columns_group__: true, // Always be true
                 Email: false,
                 PhoneNumber: false,

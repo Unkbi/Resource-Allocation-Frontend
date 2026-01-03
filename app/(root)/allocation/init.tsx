@@ -21,7 +21,6 @@ import { useRouter } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import {
   FETCH_LOCATION,
-  FETCH_PROJECT_TYPE_GROUPS,
   FETCH_PROJECT_TYPES,
 } from '@/app/redux/actions/allSettingsActions';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
@@ -75,9 +74,7 @@ function AllocationInit({
     (state: RootState) => state.settings.allocationTheme
   );
 
-  const { projectTypes, projectTypeGroups } = useSelector(
-    (state: RootState) => state.allSettings
-  );
+  const { projectTypes } = useSelector((state: RootState) => state.allSettings);
 
   const { allAllocations, calendarDate } = useSelector(
     (state: RootState) => state.allAllocations
@@ -150,12 +147,6 @@ function AllocationInit({
   }, []);
 
   useEffect(() => {
-    if (projectTypeGroups.length === 0) {
-      dispatch({ type: FETCH_PROJECT_TYPE_GROUPS });
-    }
-  }, []);
-
-  useEffect(() => {
     if (loadingPermissions) return;
     if (permissions && permissions['Allocation'].r) {
       if (
@@ -176,7 +167,6 @@ function AllocationInit({
             allResourcesDetail: allResourcesDetail,
             location: location,
             projectTypes: projectTypes,
-            projectTypeGroups: projectTypeGroups,
             startDate: currentViewStartDate,
             endDate: currentViewEndDate,
           },
@@ -212,7 +202,6 @@ function AllocationInit({
             allResourcesDetail: allResourcesDetail,
             location: location,
             projectTypes: projectTypes,
-            projectTypeGroups: projectTypeGroups,
             startDate: currentView?.isDynamicRange
               ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
               : currentView?.isFixedRange
