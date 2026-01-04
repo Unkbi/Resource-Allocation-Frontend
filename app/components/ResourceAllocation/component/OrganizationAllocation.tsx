@@ -16,11 +16,20 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { initSortAllocations, injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
+import {
+  initSortAllocations,
+  injectBlankRows,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
-import { compareDateEmptyLast, compareNumberEmptyLast, compareStringEmptyLast, GridComparator } from './TeamAllocation';
+import {
+  compareDateEmptyLast,
+  compareNumberEmptyLast,
+  compareStringEmptyLast,
+  GridComparator,
+} from './TeamAllocation';
 
 interface OrganisationAllocationProps {
   startDate: string;
@@ -102,19 +111,20 @@ function OrganisationAllocation({
         );
         setRowsForView('teamAllocationtemp', []);
       } else {
-        if (!loading && getAllProjectViewRows().length > 0) {
+        const projectViewRows = getAllProjectViewRows();
+        if (!loading && projectViewRows.length > 0) {
           filteredResources = initSortAllocations(
             removeResourcesWithNoTeams(
-            injectBlankRows(
-              getAllProjectViewRows() as AllAllocations[],
-              teams || [],
-              // @ts-ignore
-              teamsResources,
-              allResourcesDetail,
-              location,
-              startDate,
-              endDate
-            )
+              injectBlankRows(
+                projectViewRows as AllAllocations[],
+                teams || [],
+                // @ts-ignore
+                teamsResources,
+                allResourcesDetail,
+                location,
+                startDate,
+                endDate
+              )
             ),
             'organisationName'
           );
@@ -138,6 +148,8 @@ function OrganisationAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Project Related Views, Currently ProjectsView and ProtfolioView.
+      setRowsForView('projectAllocationtemp', []);
     }
   }, [ready, allAllocations, loadingPermissions]);
 
@@ -197,7 +209,7 @@ function OrganisationAllocation({
     return null;
   };
 
-  const resourceTypeComparator: GridComparator = ({ p1, p2, }) => {
+  const resourceTypeComparator: GridComparator = ({ p1, p2 }) => {
     const r1 = getResource(p1)?.Type ?? '';
     const r2 = getResource(p2)?.Type ?? '';
     return r1.localeCompare(r2);
@@ -281,23 +293,23 @@ function OrganisationAllocation({
       sortable: true,
       primaryColumn: true,
       getSortComparator: (sortDirection: 'asc' | 'desc') => {
-       return (
-        _v1: string | null,
-        _v2: string | null,
-        p1: GridCellParams,
-        p2: GridCellParams
-       ) => {
-         const raw1 = getResource(p1)?.PhoneNumber;
-         const raw2 = getResource(p2)?.PhoneNumber;
-         const n1 =
-           raw1 === null || raw1 === undefined || raw1.trim() === ''
-             ? null
-             : Number(raw1);
-         const n2 =
-           raw2 === null || raw2 === undefined || raw2.trim() === ''
-             ? null
-             : Number(raw2);
-         return compareNumberEmptyLast(n1, n2, sortDirection);
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const raw1 = getResource(p1)?.PhoneNumber;
+          const raw2 = getResource(p2)?.PhoneNumber;
+          const n1 =
+            raw1 === null || raw1 === undefined || raw1.trim() === ''
+              ? null
+              : Number(raw1);
+          const n2 =
+            raw2 === null || raw2 === undefined || raw2.trim() === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(n1, n2, sortDirection);
         };
       },
       renderCell: (params: GridCellParams) => {
@@ -371,13 +383,13 @@ function OrganisationAllocation({
       isEditable: 'false',
       sortable: true,
       primaryColumn: true,
-       getSortComparator: (sortDirection: 'asc' | 'desc') => {
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
         return (
           _v1: string | null,
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.Role ?? '';
           const r2 = getResource(p2)?.Role ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -402,7 +414,7 @@ function OrganisationAllocation({
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.WorkLocation ?? '';
           const r2 = getResource(p2)?.WorkLocation ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -426,10 +438,10 @@ function OrganisationAllocation({
       primaryColumn: true,
       getSortComparator: (sortDirection: 'asc' | 'desc') => {
         return (
-      _v1: string | null,
-      _v2: string | null,
-       p1: GridCellParams,
-       p2: GridCellParams
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
         ) => {
           const d1 = getResource(p1)?.StartDate ?? null;
           const d2 = getResource(p2)?.StartDate ?? null;
@@ -480,7 +492,7 @@ function OrganisationAllocation({
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.LocationCategory ?? '';
           const r2 = getResource(p2)?.LocationCategory ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -499,7 +511,7 @@ function OrganisationAllocation({
       isEditable: 'false',
       sortable: true,
       primaryColumn: true,
-       getSortComparator: (sortDirection: 'asc' | 'desc') => {
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
         return (
           _v1: string | null,
           _v2: string | null,
@@ -510,11 +522,11 @@ function OrganisationAllocation({
           const raw2 = getResource(p2)?.AverageWeeklyHours;
           const h1 =
             raw1 === null || raw1 === undefined || raw1 === ''
-          ? null
-          : Number(raw1);
+              ? null
+              : Number(raw1);
           const h2 =
             raw2 === null || raw2 === undefined || raw2 === ''
-          ? null
+              ? null
               : Number(raw2);
           return compareNumberEmptyLast(h1, h2, sortDirection);
         };
@@ -532,24 +544,24 @@ function OrganisationAllocation({
       isEditable: 'false',
       sortable: true,
       primaryColumn: true,
-       getSortComparator: (sortDirection: 'asc' | 'desc') => {
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
         return (
           _v1: string | null,
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
         ) => {
-      const raw1 = getResource(p1)?.ContractorHourlyRate;
-      const raw2 = getResource(p2)?.ContractorHourlyRate;
-      const r1 =
-        raw1 === null || raw1 === undefined || raw1 === ''
-          ? null
-          : Number(raw1);
-      const r2 =
-        raw2 === null || raw2 === undefined || raw2 === ''
-          ? null
-          : Number(raw2);
-      return compareNumberEmptyLast(r1, r2, sortDirection);
+          const raw1 = getResource(p1)?.ContractorHourlyRate;
+          const raw2 = getResource(p2)?.ContractorHourlyRate;
+          const r1 =
+            raw1 === null || raw1 === undefined || raw1 === ''
+              ? null
+              : Number(raw1);
+          const r2 =
+            raw2 === null || raw2 === undefined || raw2 === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(r1, r2, sortDirection);
         };
       },
       renderCell: (params: GridCellParams) => {
@@ -573,7 +585,7 @@ function OrganisationAllocation({
           _v2: string | null,
           p1: GridCellParams,
           p2: GridCellParams
-        )  => {
+        ) => {
           const r1 = getResource(p1)?.ContractorHourlyRateCurrency ?? '';
           const r2 = getResource(p2)?.ContractorHourlyRateCurrency ?? '';
           return compareStringEmptyLast(r1, r2, sortDirection);
@@ -596,7 +608,8 @@ function OrganisationAllocation({
       primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',
-      sortComparator: (_v1 :any, _v2 :any, p1 :any, p2 :any) => resourceTypeComparator({ v1: _v1, v2: _v2, p1, p2 }),
+      sortComparator: (_v1: any, _v2: any, p1: any, p2: any) =>
+        resourceTypeComparator({ v1: _v1, v2: _v2, p1, p2 }),
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Type || ''} />;

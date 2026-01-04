@@ -100,6 +100,8 @@ import {
   DATE_FORMAT,
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_ACTIVE_STATUS,
+  projectViewsGrouping,
+  teamsViewsGrouping,
 } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
@@ -1702,8 +1704,10 @@ const AllocationForm = () => {
                   resources,
                   location,
                   splitView,
-                  bottomTeamAllocationGrid,
-                  teamAllocationGrid,
+                  bottomTeamAllocationGrid, // Update these rows when in spitView
+                  teamAllocationGrid, // Update these rows when in teams, organisation, or resources views
+                  projectAllocationGrid, // Update these rows when in portfolio or projects views
+                  currentView?.GroupBy, // Sahadev, Note : When New Views are added revisit this.
                   currentView?.isDynamicRange
                     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
                     : currentView?.isFixedRange
@@ -1799,10 +1803,24 @@ const AllocationForm = () => {
                   updateRowsForView('bottomTeam', allUpdatedRows);
                   updateRowsForView('projectAllocation', allUpdatedRows);
                   updateRowsForView('teamAllocation', allUpdatedRows);
-                } else {
-                  updateRowsForView('projectAllocation', allUpdatedRows);
+                } else if (teamsViewsGrouping.includes(currentView?.GroupBy)) {
                   updateRowsForView('teamAllocation', allUpdatedRows);
+                } else if (
+                  projectViewsGrouping.includes(currentView?.GroupBy)
+                ) {
+                  updateRowsForView('projectAllocation', allUpdatedRows);
+                } else {
+                  dispatch(
+                    showToastAction(
+                      true,
+                      'Unable to update allocation grid for the current view. View grouping not recognized.',
+                      'error',
+                      4000
+                    )
+                  );
+                  return;
                 }
+
                 dispatch(
                   showToastAction(
                     true,

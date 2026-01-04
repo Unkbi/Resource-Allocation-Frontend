@@ -97,10 +97,11 @@ function FlatAllocation({
         setRows(allTempRows || []);
         setRowsForView('teamAllocationtemp', []);
       } else {
-        if (!loading && getAllProjectViewRows().length > 0) {
+        const projectViewRows = getAllProjectViewRows();
+        if (!loading && projectViewRows.length > 0) {
           filteredResources = removeResourcesWithNoTeams(
             injectBlankRows(
-              getAllProjectViewRows() as AllAllocations[],
+              projectViewRows as AllAllocations[],
               teams || [],
               // @ts-ignore
               teamsResources,
@@ -127,6 +128,8 @@ function FlatAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Project Related Views, Currently ProjectsView and ProtfolioView.
+      setRowsForView('projectAllocationtemp', []);
     }
   }, [ready, allAllocations, loadingPermissions]);
 
