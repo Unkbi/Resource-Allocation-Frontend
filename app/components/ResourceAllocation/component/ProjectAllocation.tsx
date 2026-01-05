@@ -151,9 +151,10 @@ function ProjectAllocation({
         setRows(allTempRows || []);
         setRowsForView('projectAllocationtemp', []);
       } else {
-        if (!loading && getAllTeamViewRows().length > 0) {
+        const teamsViewRows = getAllTeamViewRows();
+        if (!loading && teamsViewRows.length > 0) {
           filteredResources = removeResourcesWithNoProjects(
-            (getAllTeamViewRows() as AllAllocations[]) || []
+            (teamsViewRows as AllAllocations[]) || []
           );
           setRows(
             removeResourcesWithNoProjects(
@@ -179,6 +180,8 @@ function ProjectAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Teams Related Views, Currently Team, Organisation, Resource and Flat Views.
+      setRowsForView('teamAllocationtemp', []);
     }
   }, [ready && allAllocations, loadingPermissions]);
 
@@ -390,14 +393,12 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any,
+        p2: any
       ) => {
         const raw1 = getFirstChild(p1)?.portfolioName;
         const raw2 = getFirstChild(p2)?.portfolioName;
-        const s1 =
-          raw1 && raw1 !== 'zzzzz' ? raw1.toLowerCase().trim() : '';
-        const s2 =
-          raw2 && raw2 !== 'zzzzz' ? raw2.toLowerCase().trim() : '';
+        const s1 = raw1 && raw1 !== 'zzzzz' ? raw1.toLowerCase().trim() : '';
+        const s2 = raw2 && raw2 !== 'zzzzz' ? raw2.toLowerCase().trim() : '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
         if (!s2) return -1;
@@ -430,10 +431,11 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectSponsor?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectSponsor?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -688,10 +690,11 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectManager?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectManager?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -719,11 +722,10 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
-          getFirstChild(p1)?.projectStatus?.toLowerCase().trim() || '';
-      const s2 =
-          getFirstChild(p2)?.projectStatus?.toLowerCase().trim() || '';
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectStatus?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectStatus?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
         if (!s2) return -1;
@@ -750,10 +752,11 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectLocation?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectLocation?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -781,11 +784,10 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
-          getFirstChild(p1)?.projectType?.toLowerCase().trim() || '';
-      const s2 =
-          getFirstChild(p2)?.projectType?.toLowerCase().trim() || '';
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectType?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectType?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
         if (!s2) return -1;
@@ -812,10 +814,11 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectTypeGroup?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectTypeGroup?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -908,14 +911,17 @@ function ProjectAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-        const s1 = getFirstChild(p1)?.projectCurrency?.toLowerCase().trim() || '';
-        const s2 = getFirstChild(p2)?.projectCurrency?.toLowerCase().trim() || '';
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectCurrency?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectCurrency?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
         if (!s2) return -1;
         return s1.localeCompare(s2);
-      } ,
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
