@@ -120,6 +120,7 @@ interface CustomDateRangePickerProps {
   title?: string;
   isProjectForm?: boolean;
   showCalendarIconOnlyHere?: boolean;
+  singleClick?: boolean;
 }
 
 export default function CustomDateRangePicker({
@@ -139,6 +140,7 @@ export default function CustomDateRangePicker({
   title,
   isProjectForm = false,
   showCalendarIconOnlyHere = false,
+  singleClick = false
 }: CustomDateRangePickerProps) {
   const { setFieldValue } = formikProps;
 
@@ -153,27 +155,69 @@ export default function CustomDateRangePicker({
 
   const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
     const [start, end] = newValue;
-    if (isButton) {
-      if (start && end) {
-        const formattedStart = dayjs(start).format('YYYY-MM-DD');
-        const formattedEnd = dayjs(end).format('YYYY-MM-DD');
-        handleDateField(formattedStart, formattedEnd);
+    if (singleClick) {
+      const [clicked] = newValue;
+      if (!clicked) return;
+      const clickedDate = dayjs(clicked);
+      const monday = clickedDate.startOf('week');
+      const sunday = clickedDate.endOf('week');
+      const prevStartRaw = value?.StartDate || value?.startDate;
+      const prevEndRaw = value?.EndDate || value?.endDate
+      let newStart: Dayjs;
+      let newEnd: Dayjs;
+      if (!prevStartRaw || !prevEndRaw) {
+        newStart = clickedDate;
+        newEnd = sunday;
+      } else {
+        const prevStart = dayjs(prevStartRaw);
+        const prevEnd = dayjs(prevEndRaw);
+        if (clickedDate.isBefore(prevStart, 'day')) {
+          newStart = monday;
+          newEnd = prevEnd;
+        }
+        else if (clickedDate.isAfter(prevEnd, 'day')) {
+          newStart = clickedDate;
+          newEnd = sunday;
+        }
+        else {
+          newStart = clickedDate;
+          newEnd = clickedDate;
+        }
       }
+      const formattedStart = newStart.format('YYYY-MM-DD');
+      const formattedEnd = newEnd.format('YYYY-MM-DD');
+      
+      if (value?.startDate && value?.endDate) {
+        setFieldValue('startDate', formattedStart);
+        setFieldValue('endDate', formattedEnd);
+      } else {
+        setFieldValue('StartDate', formattedStart);
+        setFieldValue('EndDate', formattedEnd);
+      }
+      handleDateField(formattedStart, formattedEnd);
     } else {
-      if (start && !end) {
-        const formattedDate = dayjs(start).format('YYYY-MM-DD');
-        setFieldValue('StartDate', formattedDate);
-        setFieldValue('EndDate', formattedDate);
-      } else if (start && end) {
-        const formattedStart = dayjs(start).format('YYYY-MM-DD');
-        const formattedEnd = dayjs(end).format('YYYY-MM-DD');
-        if (value?.startDate && value?.endDate) {
-          setFieldValue('startDate', formattedStart);
-          setFieldValue('endDate', formattedEnd);
+      if (isButton) {
+        if (start && end) {
+          const formattedStart = dayjs(start).format('YYYY-MM-DD');
+          const formattedEnd = dayjs(end).format('YYYY-MM-DD');
           handleDateField(formattedStart, formattedEnd);
-        } else {
-          setFieldValue('StartDate', formattedStart);
-          setFieldValue('EndDate', formattedEnd);
+        }
+      } else {
+        if (start && !end) {
+          const formattedDate = dayjs(start).format('YYYY-MM-DD');
+          setFieldValue('StartDate', formattedDate);
+          setFieldValue('EndDate', formattedDate);
+        } else if (start && end) {
+          const formattedStart = dayjs(start).format('YYYY-MM-DD');
+          const formattedEnd = dayjs(end).format('YYYY-MM-DD');
+          if (value?.startDate && value?.endDate) {
+            setFieldValue('startDate', formattedStart);
+            setFieldValue('endDate', formattedEnd);
+            handleDateField(formattedStart, formattedEnd);
+          } else {
+            setFieldValue('StartDate', formattedStart);
+            setFieldValue('EndDate', formattedEnd);
+          }
         }
       }
     }

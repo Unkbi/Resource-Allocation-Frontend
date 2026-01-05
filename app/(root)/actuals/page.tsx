@@ -45,6 +45,7 @@ import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
+import ActualsErrorPage from '@/app/components/ErrorPage/ActualsErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import { DATE_FORMAT } from '@/app/constants/constants';
 
@@ -66,7 +67,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
   // @ts-ignore
-  const { email = '' } = getLoginUserDetails(user) || {};
+  const { email = '' ,firstName = '',
+      lastName = '',} = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
   const { loading: resourcesLoading } = useSelector(
     (state: RootState) => state.allResourcesDetail
@@ -98,6 +100,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const params = useSearchParams();
   const paramsStartDate = params.get('startDate');
   const paramsEndDate = params.get('endDate');
+  const [showNoActualsAvailable, setShowNoActualsAvailable] = useState(false);
+  const [showNoActualsTracked, setShowNoActualsTracked] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [loadingName, setLoadingName] = useState(true);
+
 
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
@@ -111,6 +118,22 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const currentResource: Resource[] = resources?.filter(
     (r: Resource) => r?.Id === userId
   );
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        if (firstName || lastName) {
+          setDisplayName(`${firstName ?? ''} ${lastName ?? ''}`.trim());
+        } else {
+          setDisplayName('User');
+        }
+        setLoadingName(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }, [user]);
+  
+  const userTitle = currentResource[0]?.Role || '--';
+  const userTeam = currentResource[0]?.Department || '--';
+
   const ValidPrevDate = currentResource[0]?.StartDate;
 
   const resourceValidPrevDate = ValidPrevDate ? parseISO(ValidPrevDate) : null;
@@ -322,6 +345,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   useEffect(() => {
     if (loadingPermissions || resourcesLoading) return;
+    setShowNoActualsAvailable(false);
+    setShowNoActualsTracked(false);
     if (permissions['ActualsStatus'].r) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -335,9 +360,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
       // Validate paramsStartDate and paramsEndDate are in "YYYY-MM-DD" format
       if (paramsStartDate && !dateRegex.test(paramsStartDate)) {
-        router.replace(
-          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
-        );
+        // invalid format -> show no actuals available
+        setShowNoActualsAvailable(true);
         return;
       }
 
@@ -347,9 +371,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           paramsStartDate &&
           parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday
         ) {
-          router.replace(
-            `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
-          );
+          setShowNoActualsAvailable(true)
           return;
         }
       }
@@ -359,9 +381,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         parseISO(paramsStartDate) >
         parseISO(getMondayOfISO(new Date().toISOString()))
       ) {
-        router.replace(
-          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
-        );
+        setShowNoActualsAvailable(true);
         return;
       }
 
@@ -468,18 +488,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
     if (!status) {
-      dispatch(
-        showToast({
-          open: true,
-          message: `No Status Information found, redirecting to current Week.`,
-          type: 'error',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-      router.replace(
-        `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
-      );
+      setShowNoActualsTracked(true);
+      return;
     }
     setDisableView(
       (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
@@ -619,27 +629,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     return { ...newRow, actuals: actualsChanged ? newActual : newRow.actuals };
   };
 
-  const handleCopyToActuals = () => {
-    apiRef.current
-      .getAllRowIds()
-      .map(id => apiRef.current.getRow(id))
-      .filter(row => row.id !== 'total' && row.project)
-      .forEach(row =>
-        handleProcessRowUpdate(
-          {
-            ...row,
-            actuals: row.planned,
-            projectActualsStatus:
-              !row.projectActualsStatus ||
-              row.projectActualsStatus === 'No Data'
-                ? 'On Track'
-                : row.projectActualsStatus,
-          },
-          row
-        )
-      );
-  };
-
   const validEndDate: string = endDate ?? '';
   const isFridayOrAfterFriday = validEndDate
     ? new Date() >= parseISO(getFridayOfISO(validEndDate))
@@ -657,6 +646,26 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     };
   }, [isModified]);
 
+  // Show specific Actuals error pages when flagged
+  // compute current week monday for redirect buttons
+  const currentWeekMonday = getMondayOfISO(new Date().toISOString());
+
+  if (showNoActualsAvailable)
+    return (
+      <ActualsErrorPage
+        type="noActualsAvailable"
+        redirectPath={`/actuals?startDate=${currentWeekMonday}`}
+      />
+    );
+
+  if (showNoActualsTracked)
+    return (
+      <ActualsErrorPage
+        type="noActualsTracked"
+        redirectPath={`/actuals?startDate=${currentWeekMonday}`}
+      />
+    );
+
   return loadingPermissions ? (
     <LoadingScreen />
   ) : permissions['ActualsStatus'].r ? (
@@ -670,24 +679,63 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           boxSizing: 'border-box',
         }}
       >
-        <Typography
-          variant="body1"
-          mb={2}
-          sx={{ textAlign: 'left', fontSize: '14px' }}
-        >
-          Confirm your actual effort against the pre-filled planned allocation
-          values.
-        </Typography>
-
         {permissions['ActualsStatus'].r ? (
           <Box
             className="tableWithArrow"
             display="flex"
             alignItems="center"
             justifyContent="center"
-          >
-            <Box mx={2} maxWidth={780} minHeight={350}>
-              {actualsStatus?.length ? (
+            marginTop={5}
+            >
+              <Box mx={2} maxWidth={780} minHeight={350}>
+                <Box>
+                  <Box mb={0.2} sx={{
+                    fontFamily: 'Open Sans',
+                    fontWeight: 600,
+                    fontStyle: 'SemiBold',
+                    fontSize: '18px',
+                  }}>
+              {loadingName ? (
+                <Skeleton width={100} height={20} />
+                    ) : (
+                      `${displayName}`
+                    )}
+                  </Box>
+                  <Box display="flex" gap={4} mb={2}>
+                    <Typography sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}>
+                      Title:{' '}
+                      {resourcesLoading ? (
+                        <Skeleton
+                          component="span"
+                          width={120}
+                          sx={{ display: 'inline-block' }}
+                        />
+                      ) : (
+                          <Typography component="span" sx={{ fontWeight: 600 }}>
+                            {userTitle}
+                          </Typography>
+                      )}
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}>
+                      Team:{' '}
+                      {resourcesLoading ? (
+                           <Skeleton
+                          component="span"
+                          width={100}
+                          sx={{ display: 'inline-block' }}
+                        />
+                      ) : (
+                          <Typography component="span" sx={{ fontWeight: 600 }}>
+                            {userTeam}
+                        </Typography>
+                      )}
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                {/* Commenting out the older header and Important message displaying week number  */}
+
+              {/* {actualsStatus?.length ? (
                 <Box
                   sx={{
                     display: 'flex',
@@ -743,69 +791,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 </Box>
               ) : (
                 <></>
-              )}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  width: '100%',
-                }}
-              >
-                <Typography
-                  style={{
-                    fontWeight: 700,
-                    fontSize: '14px',
-                  }}
-                >
-                  Current Status :{' '}
-                  {actualsStatusLoading ||
-                  dataProcessing ||
-                  formattingActualAllocations ? (
-                    <Skeleton
-                      variant="text"
-                      sx={{
-                        display: 'inline-block',
-                        width: '80px',
-                        height: '21px',
-                        marginLeft: '4px',
-                        verticalAlign: 'middle',
-                      }}
-                    />
-                  ) : (
-                    <span
-                      style={{
-                        color: status === 'Confirmed' ? '#198F35' : '#FF7912',
-                      }}
-                    >
-                      {status ?? 'Not Started'}
-                    </span>
-                  )}
-                </Typography>
-                <Link
-                  onClick={() => !disableView && handleCopyToActuals()}
-                  sx={{ cursor: disableView ? 'not-allowed' : 'pointer' }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: 500,
-                      fontStyle: 'Medium',
-                      fontSize: '13.6px',
-                      lineHeight: '24px',
-                      letterSpacing: '0%',
-                      textAlign: 'center',
-                      verticalAlign: 'middle',
-                      textDecoration: 'underline',
-                      textDecorationStyle: 'solid',
-                      textDecorationOffset: '0%',
-                      textDecorationThickness: '0%',
-                      color: disableView ? 'rgba(37, 99, 235, 0.5)' : '#2563EB',
-                    }}
-                  >
-                    Copy Plan to Actuals
-                  </Typography>
-                </Link>
-              </Box>
+                )} */}
               <ActualTable
                 data={formattedActualAllocations || []}
                 dataProcessing={
@@ -827,6 +813,13 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 onModificationChange={handleModificationChange}
                 confirmSignal={confirmSignal}
                 handleProcessRowUpdate={handleProcessRowUpdate}
+                formattingActualAllocations={formattingActualAllocations}
+                handlePrev ={handlePrev}
+                handleNext ={handleNext}
+                isModified={isModified}
+                setDialogSource ={setDialogSource}
+                setDeleteDialogOpen ={setDeleteDialogOpen}
+                
               />
               <Box display="flex" justifyContent="space-between" mt={1}>
                 <Button
@@ -936,7 +929,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           onCancel={handleCancel}
           title="Alert"
         >
-          {'Are you sure you want to leave? Your actuals will not be saved.'}
+          {'Are you sure you wan\t to leave? Your actuals will not be saved.'}
         </ConfirmDialog>
       </Box>
     </Box>
