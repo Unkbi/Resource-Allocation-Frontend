@@ -99,6 +99,10 @@ export interface ReportFilters {
   projectTypeGroup: string[];
   project: string[];
   portfolio: string[];
+  resourceStatuses: string[];
+  resourceLocations: string[];
+  resourceWorkLocationGroup: string[];
+  projectStatuses: string[];
 }
 
 interface FilterSectionProps {
@@ -171,7 +175,7 @@ export default function ReportBuilderFilters({
   const [tempDateRange, setTempDateRange] = useState<DateRange<Dayjs>>(filters.customDateRange || [null, null]);
   
   // Redux selectors
-  const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
+  const { projectTypeGroups, projectTypes, location, locationGroups } = useSelector((state: RootState) => state.allSettings);
   const { portfolios } = useSelector((state: RootState) => state.portfolios);
   const { teams } = useSelector((state: RootState) => state.teams);
   const { resources } = useSelector((state: RootState) => state.resources);
@@ -356,6 +360,50 @@ export default function ReportBuilderFilters({
     { value: '_BLANK_', label: '(Blanks)' }
   ];
 
+  // Resource Status Options
+  const resourceStatusOptions = [
+    ...sortOptions(
+      [...new Set(resources?.map((res: any) => res.Status).filter(Boolean))].map((status: string) => ({
+        value: status,
+        label: status,
+      }))
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // Resource Locations Options
+  const resourceLocationOptions = [
+    ...sortOptions(
+      location?.map((loc: any) => ({
+        value: loc.Id,
+        label: loc.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // Resource Work Location Group Options
+  const resourceWorkLocationGroupOptions = [
+    ...sortOptions(
+      locationGroups?.map((locGroup: any) => ({
+        value: locGroup.Id,
+        label: locGroup.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // Project Status Options
+  const projectStatusOptions = [
+    ...sortOptions(
+      [...new Set(projects?.map((proj: any) => proj.Status).filter(Boolean))].map((status: string) => ({
+        value: status,
+        label: status,
+      }))
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
   // Report filter labels for FilterChips component
   const reportFilterLabels: Record<string, string> = {
     period: 'Period',
@@ -369,6 +417,10 @@ export default function ReportBuilderFilters({
     projectTypeGroup: 'Project Type Group',
     project: 'Project',
     portfolio: 'Portfolio',
+    resourceStatuses: 'Resource Status',
+    resourceLocations: 'Resource Location',
+    resourceWorkLocationGroup: 'Resource Location Group',
+    projectStatuses: 'Project Status',
   };
 
   // Get display value for report filters
@@ -381,7 +433,7 @@ export default function ReportBuilderFilters({
       
       const displayValues = value.map((val: string) => {
         if (val === 'all') return '';
-        if (val === '_BLANK_') return 'Blanks';
+        if (val === '_BLANK_') return '(Blanks)';
         
         // Map IDs to labels using option arrays
         switch (key) {
@@ -405,6 +457,14 @@ export default function ReportBuilderFilters({
             return projectOptions.find(opt => opt.value === val)?.label || val;
           case 'portfolio':
             return portfolioOptions.find(opt => opt.value === val)?.label || val;
+          case 'resourceStatuses':
+            return resourceStatusOptions.find(opt => opt.value === val)?.label || val;
+          case 'resourceLocations':
+            return resourceLocationOptions.find(opt => opt.value === val)?.label || val;
+          case 'resourceWorkLocationGroup':
+            return resourceWorkLocationGroupOptions.find(opt => opt.value === val)?.label || val;
+          case 'projectStatuses':
+            return projectStatusOptions.find(opt => opt.value === val)?.label || val;
           default:
             return val;
         }
@@ -890,7 +950,51 @@ export default function ReportBuilderFilters({
           formikProps={formikProps}
         />
         )}
+        {isFilterEnabled(filters.reportType, 'resourceStatuses') && (
+        <FilterSection
+          title="Resource Status"
+          name="resourceStatuses"
+          options={resourceStatusOptions}
+          selected={filters.resourceStatuses}
+          onChange={(value) => handleFilterChange('resourceStatuses', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {isFilterEnabled(filters.reportType, 'resourceLocations') && (
+        <FilterSection
+          title="Resource Location"
+          name="resourceLocations"
+          options={resourceLocationOptions}
+          selected={filters.resourceLocations}
+          onChange={(value) => handleFilterChange('resourceLocations', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {isFilterEnabled(filters.reportType, 'resourceWorkLocationGroup') && (
+        <FilterSection
+          title="Resource Location Group"
+          name="resourceWorkLocationGroup"
+          options={resourceWorkLocationGroupOptions}
+          selected={filters.resourceWorkLocationGroup}
+          onChange={(value) => handleFilterChange('resourceWorkLocationGroup', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {isFilterEnabled(filters.reportType, 'projectStatuses') && (
+        <FilterSection
+          title="Project Status"
+          name="projectStatuses"
+          options={projectStatusOptions}
+          selected={filters.projectStatuses}
+          onChange={(value) => handleFilterChange('projectStatuses', value)}
+          formikProps={formikProps}
+        />
+        )}
         </Box>
+
 
         {/* Reset Filters Button */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
