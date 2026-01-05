@@ -15,6 +15,10 @@ export interface DashboardFilterPayload {
   ResourceTypes?: string[] | null;
   ProjectTypeGroups?: string[];
   Projects?: string[];
+  ResourceStatuses?: string[];
+  ResourceLocations?: string[];
+  ResourceWorkLocationGroup?: string[];
+  ProjectStatuses?: string[];
   StartDate?: string;
   EndDate?: string;
   Bucket?: string;
@@ -426,6 +430,19 @@ export const buildReportPayload = (uiFilters: any): DashboardFilterPayload => {
     payload.ResourceTypes = sanitize(uiFilters?.resourceType);
   }
 
+  // Always add new filters (not conditionally enabled yet)
+  if (isFilterEnabled(reportType, 'resourceStatuses')) {
+    payload.ResourceStatuses = sanitize(uiFilters?.resourceStatuses);
+  }
+  if (isFilterEnabled(reportType, 'resourceLocations')) {
+    payload.ResourceLocations = sanitize(uiFilters?.resourceLocations);
+  }
+  if (isFilterEnabled(reportType, 'resourceWorkLocationGroup')) {
+    payload.ResourceWorkLocationGroup = sanitize(uiFilters?.resourceWorkLocationGroup);
+  }
+  if (isFilterEnabled(reportType, 'projectStatuses')) {
+    payload.ProjectStatuses = sanitize(uiFilters?.projectStatuses);
+  }
   return payload;
 };
 

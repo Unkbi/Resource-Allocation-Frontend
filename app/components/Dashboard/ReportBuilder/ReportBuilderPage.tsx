@@ -38,6 +38,10 @@ export default function ReportBuilderPage({
     portfolio: [],
     projectManager: [],
     allocationManager: [],
+    resourceStatuses: [],
+    resourceLocations: [],
+    resourceWorkLocationGroup: [],
+    projectStatuses: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
@@ -95,6 +99,10 @@ export default function ReportBuilderPage({
       portfolio: filters.portfolio,
       projectManager: filters.projectManager,
       allocationManager: filters.allocationManager,
+      resourceStatuses: filters.resourceStatuses,
+      resourceLocations: filters.resourceLocations,
+      resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
+      projectStatuses: filters.projectStatuses,
     };
     const apiPayload = prepareApiPayload(uiFilters);
     try {
@@ -146,6 +154,10 @@ export default function ReportBuilderPage({
       portfolio: [],
       projectManager: [],
       allocationManager: [],
+      resourceStatuses: [],
+      resourceLocations: [],
+      resourceWorkLocationGroup: [],
+      projectStatuses: [],
     });
   };
 
@@ -175,6 +187,10 @@ export default function ReportBuilderPage({
         portfolio: f.portfolio || [],
         projectManager: f.projectManager || [],
         allocationManager: f.allocationManager || [],
+        resourceStatuses: f.resourceStatuses || [],
+        resourceLocations: f.resourceLocations || [],
+        resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
+        projectStatuses: f.projectStatuses || [],
       });
       
       // Fetch the report data
@@ -236,6 +252,10 @@ export default function ReportBuilderPage({
       portfolio: filters.portfolio,
       projectManager: filters.projectManager,
       allocationManager: filters.allocationManager,
+      resourceStatuses: filters.resourceStatuses,
+      resourceLocations: filters.resourceLocations,
+      resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
+      projectStatuses: filters.projectStatuses,
     };
     const entry = { name, reportType: uiFilters.reportType, uiFilters, createdAt: new Date().toISOString() };
     const next = [...savedReports.filter(r => r.name !== name), entry];
@@ -262,6 +282,10 @@ export default function ReportBuilderPage({
       portfolio: f.portfolio || [],
       projectManager: f.projectManager || [],
       allocationManager: f.allocationManager || [],
+      resourceStatuses: f.resourceStatuses || [],
+      resourceLocations: f.resourceLocations || [],
+      resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
+      projectStatuses: f.projectStatuses || [],
     });
     // Dispatch fetch with restored filters
     dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
@@ -284,6 +308,10 @@ export default function ReportBuilderPage({
     if (Array.isArray(filters.portfolio) && filters.portfolio.length > 0) count++;
     if (Array.isArray(filters.projectManager) && filters.projectManager.length > 0) count++;
     if (Array.isArray(filters.allocationManager) && filters.allocationManager.length > 0) count++;
+    if (Array.isArray(filters.resourceStatuses) && filters.resourceStatuses.length > 0) count++;
+    if (Array.isArray(filters.resourceLocations) && filters.resourceLocations.length > 0) count++;
+    if (Array.isArray(filters.resourceWorkLocationGroup) && filters.resourceWorkLocationGroup.length > 0) count++;
+    if (Array.isArray(filters.projectStatuses) && filters.projectStatuses.length > 0) count++;
 
     return count;
   };
@@ -316,6 +344,10 @@ export default function ReportBuilderPage({
             portfolio: [],
             projectManager: [],
             allocationManager: [],
+            resourceStatuses: [],
+            resourceLocations: [],
+            resourceWorkLocationGroup: [],
+            projectStatuses: [],
           });
           setFiltersExpanded(true);
         }}
