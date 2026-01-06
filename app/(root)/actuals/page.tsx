@@ -2,11 +2,12 @@
 
 import { Box, Typography, Button, Skeleton, Link } from '@mui/material';
 import ActualTable from '@/app/components/Actuals/ActualTable';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
   CONFIRM_ACTUAL_ALLOCATIONS,
   GET_ACTUAL_ALLOCATIONS,
+  GET_ACTUAL_ALLOCATIONS_STATUSES,
   GET_ACTUAL_STATUS,
 } from '@/app/redux/actions/actualAllocationsActions';
 import { AppDispatch, RootState } from '@/app/redux/store';
@@ -52,6 +53,7 @@ import {
   MISSING_PROJECT_ACTUALS_STATUS,
   TOTAL_ACTUALS_LESS_THAN_ONE,
 } from '@/app/constants/constants';
+import ActualsCard from '@/app/components/Actuals/ActualsCard';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -62,17 +64,22 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const dispatch: AppDispatch = useDispatch();
   const {
     actualAllocations,
+    actualAllocationsStatuses,
     actualsStatus,
     status,
     calendarDate,
     dataProcessing,
+    actualAllocationsStatusesLoading,
     actualsStatusLoading,
   } = useSelector((state: RootState) => state.actualAllocations);
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
   // @ts-ignore
-  const { email = '' ,firstName = '',
-      lastName = '',} = getLoginUserDetails(user) || {};
+  const {
+    email = '',
+    firstName = '',
+    lastName = '',
+  } = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
   const { loading: resourcesLoading } = useSelector(
     (state: RootState) => state.allResourcesDetail
@@ -110,7 +117,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [displayName, setDisplayName] = useState('');
   const [loadingName, setLoadingName] = useState(true);
 
-
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
 
@@ -124,18 +130,18 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     (r: Resource) => r?.Id === userId
   );
 
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        if (firstName || lastName) {
-          setDisplayName(`${firstName ?? ''} ${lastName ?? ''}`.trim());
-        } else {
-          setDisplayName('User');
-        }
-        setLoadingName(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }, [user]);
-  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (firstName || lastName) {
+        setDisplayName(`${firstName ?? ''} ${lastName ?? ''}`.trim());
+      } else {
+        setDisplayName('User');
+      }
+      setLoadingName(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [user]);
+
   const userTitle = currentResource[0]?.Role || '--';
   const userTeam = currentResource[0]?.Department || '--';
 
@@ -204,8 +210,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         .map(id => apiRef.current.getRow(id))
         .filter(row => row.id !== 'total' && row.project);
 
+      if (!startDate || !actualAllocations || !actualAllocations[startDate])
+        return;
       // Set deleted rows, actualAllocations to 0.
-      const modifiedData = actualAllocations?.map(
+      const modifiedData = actualAllocations[startDate]?.map(
         (allocations: ActualAllocations) => {
           const row = allData.find(
             tabData => tabData.project === allocations.ProjectName
@@ -252,12 +260,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       const payload = {
         resource: userId,
         period:
-          actualAllocations?.length &&
-          actualAllocations.every(
+          actualAllocations[startDate]?.length &&
+          actualAllocations[startDate]?.every(
             actualAllocation =>
-              actualAllocation.Period === actualAllocations[0].Period
+              actualAllocation.Period === actualAllocations[startDate][0].Period
           ) // If Every Row has the same period.
-            ? actualAllocations[0].Period
+            ? actualAllocations[startDate][0].Period
             : startDate,
         status: isFridayOrAfterFriday ? 'Confirmed' : 'In-Progress',
         actuals: [
@@ -379,6 +387,15 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     router.replace(`/actuals?startDate=${date}`);
   };
 
+  const loading = useMemo(
+    () =>
+      dataProcessing ||
+      actualsStatusLoading ||
+      formattingActualAllocations ||
+      false,
+    [dataProcessing, actualsStatusLoading, formattingActualAllocations]
+  );
+
   useEffect(() => {
     if (loadingPermissions || resourcesLoading) return;
     setShowNoActualsAvailable(false);
@@ -407,7 +424,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           paramsStartDate &&
           parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday
         ) {
-          setShowNoActualsAvailable(true)
+          setShowNoActualsAvailable(true);
           return;
         }
       }
@@ -447,8 +464,16 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           type: GET_ACTUAL_ALLOCATIONS,
           payload: {
             resource: userId,
-            startDate: startDate,
-            endDate: endDate,
+            startDate: generateDateWeekMath(
+              'WEEK_MINUS',
+              1,
+              parseISO(startDate ?? '')
+            ),
+            endDate: generateDateWeekMath(
+              'WEEK_PLUS',
+              1,
+              parseISO(endDate ?? '')
+            ),
           },
         });
 
@@ -473,6 +498,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               '',
           },
         });
+
+        dispatch({
+          type: GET_ACTUAL_ALLOCATIONS_STATUSES,
+          payload: {
+            resource: userId,
+            startDate: generateDateWeekMath(
+              'WEEK_MINUS',
+              1,
+              parseISO(startDate ?? '')
+            ),
+            endDate: generateDateWeekMath(
+              'WEEK_PLUS',
+              1,
+              parseISO(endDate ?? '')
+            ),
+          },
+        });
       }
     }
   }, [
@@ -487,9 +529,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
-    if (actualAllocations) {
+    if (actualAllocations && startDate && actualAllocations[startDate]) {
       setFormattingActualAllocations(true);
-      const formattedData: ActualAllocationTableRow[] = actualAllocations
+      const formattedData: ActualAllocationTableRow[] = actualAllocations[
+        startDate
+      ]
         .filter(
           (alloc: ActualAllocations) =>
             (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
@@ -722,54 +766,61 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             alignItems="center"
             justifyContent="center"
             marginTop={5}
-            >
-              <Box mx={2} maxWidth={780} minHeight={350}>
-                <Box>
-                  <Box mb={0.2} sx={{
+          >
+            <Box mx={2} maxWidth={780} minHeight={350}>
+              <Box>
+                <Box
+                  mb={0.2}
+                  sx={{
                     fontFamily: 'Open Sans',
                     fontWeight: 600,
                     fontStyle: 'SemiBold',
                     fontSize: '18px',
-                  }}>
-              {loadingName ? (
-                <Skeleton width={100} height={20} />
-                    ) : (
-                      `${displayName}`
-                    )}
-                  </Box>
-                  <Box display="flex" gap={4} mb={2}>
-                    <Typography sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}>
-                      Title:{' '}
-                      {resourcesLoading ? (
-                        <Skeleton
-                          component="span"
-                          width={120}
-                          sx={{ display: 'inline-block' }}
-                        />
-                      ) : (
-                          <Typography component="span" sx={{ fontWeight: 600 }}>
-                            {userTitle}
-                          </Typography>
-                      )}
-                    </Typography>
-                    <Typography sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}>
-                      Team:{' '}
-                      {resourcesLoading ? (
-                           <Skeleton
-                          component="span"
-                          width={100}
-                          sx={{ display: 'inline-block' }}
-                        />
-                      ) : (
-                          <Typography component="span" sx={{ fontWeight: 600 }}>
-                            {userTeam}
-                        </Typography>
-                      )}
-                    </Typography>
-                  </Box>
+                  }}
+                >
+                  {loadingName ? (
+                    <Skeleton width={100} height={20} />
+                  ) : (
+                    `${displayName}`
+                  )}
                 </Box>
-                
-                {/* Commenting out the older header and Important message displaying week number  */}
+                <Box display="flex" gap={4} mb={2}>
+                  <Typography
+                    sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}
+                  >
+                    Title:{' '}
+                    {resourcesLoading ? (
+                      <Skeleton
+                        component="span"
+                        width={120}
+                        sx={{ display: 'inline-block' }}
+                      />
+                    ) : (
+                      <Typography component="span" sx={{ fontWeight: 600 }}>
+                        {userTitle}
+                      </Typography>
+                    )}
+                  </Typography>
+                  <Typography
+                    sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}
+                  >
+                    Team:{' '}
+                    {resourcesLoading ? (
+                      <Skeleton
+                        component="span"
+                        width={100}
+                        sx={{ display: 'inline-block' }}
+                      />
+                    ) : (
+                      <Typography component="span" sx={{ fontWeight: 600 }}>
+                        {userTeam}
+                      </Typography>
+                    )}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Commenting out the older header and Important message displaying week number  */}
 
               {/* {actualsStatus?.length ? (
                 <Box
@@ -828,14 +879,86 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               ) : (
                 <></>
                 )} */}
+              {actualAllocations && startDate && actualAllocationsStatuses && (
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  gap={2}
+                  width={'100%'}
+                >
+                  <ActualsCard
+                    actualAllocationData={
+                      actualAllocations[
+                        generateDateWeekMath(
+                          'WEEK_MINUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    actualAllocationStatus={
+                      actualAllocationsStatuses[
+                        generateDateWeekMath(
+                          'WEEK_MINUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    loading={loading}
+                    actualAllocationsStatusesLoading={
+                      actualAllocationsStatusesLoading
+                    }
+                    backgroundColor="rgba(202, 213, 226, 0.2)"
+                    textColor="rgba(16, 24, 40, 1)"
+                    periodPillBackgroundColor="rgba(30, 58, 139, 1)"
+                    contrastTextColor="rgba(251, 251, 251, 1)"
+                  />
+                  <ActualsCard
+                    actualAllocationData={actualAllocations[startDate]}
+                    actualAllocationStatus={
+                      actualAllocationsStatuses[startDate]
+                    }
+                    loading={loading}
+                    actualAllocationsStatusesLoading={
+                      actualAllocationsStatusesLoading
+                    }
+                    borderStyle={{ border: 'none' }}
+                  />
+                  <ActualsCard
+                    actualAllocationData={
+                      actualAllocations[
+                        generateDateWeekMath(
+                          'WEEK_PLUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    actualAllocationStatus={
+                      actualAllocationsStatuses[
+                        generateDateWeekMath(
+                          'WEEK_PLUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    loading={loading}
+                    actualAllocationsStatusesLoading={
+                      actualAllocationsStatusesLoading
+                    }
+                    backgroundColor="rgba(251, 251, 251, 1)"
+                    textColor="background: rgba(16, 24, 40, 1)"
+                    periodPillBackgroundColor="rgba(30, 58, 139, 1)"
+                    contrastTextColor="rgba(251, 251, 251, 1)"
+                  />
+                </Box>
+              )}
               <ActualTable
                 data={formattedActualAllocations || []}
-                dataProcessing={
-                  dataProcessing ||
-                  actualsStatusLoading ||
-                  formattingActualAllocations ||
-                  false
-                }
+                dataProcessing={loading}
                 rows={rows}
                 setRows={setRows}
                 rowValidationErrors={rowValidationErrors}
@@ -850,12 +973,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 confirmSignal={confirmSignal}
                 handleProcessRowUpdate={handleProcessRowUpdate}
                 formattingActualAllocations={formattingActualAllocations}
-                handlePrev ={handlePrev}
-                handleNext ={handleNext}
+                handlePrev={handlePrev}
+                handleNext={handleNext}
                 isModified={isModified}
-                setDialogSource ={setDialogSource}
-                setDeleteDialogOpen ={setDeleteDialogOpen}
-                
+                setDialogSource={setDialogSource}
+                setDeleteDialogOpen={setDeleteDialogOpen}
               />
               <Box display="flex" justifyContent="space-between" mt={1}>
                 <Button

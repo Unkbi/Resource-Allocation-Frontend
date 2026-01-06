@@ -32,7 +32,12 @@ import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { ActualAllocationTableRow } from '@/app/types';
-import { calculateWeekRanges, generateDateWeekMath, generateFirstAndLastMonthYear, getStartAndEndDateForView, getTotalWeeks, isCurrentWeek, getMondayOfISO, getSundayOfISO } from '@/app/utils/common';
+import {
+  generateFirstAndLastMonthYear,
+  isCurrentWeek,
+  getMondayOfISO,
+  getSundayOfISO,
+} from '@/app/utils/common';
 //@ts-ignore
 import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -40,10 +45,6 @@ import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsO
 import ProjectActualsStatusCell from './ProjectActualsStatusCell';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
-import { TOTAL_FUTURE_WEEKS_ARROW, DEFAULT_PROJECT_WEEK_PLUS, DEFAULT_PROJECT_WEEK_MINUS } from '@/app/constants/constants';
-import { updateCurrentView } from '@/app/redux/reducers/allocationViewReducer';
-import { showToastAction } from '@/app/redux/actions/toastAction';
-import { updateProjectStartAndEndDate } from '@/app/redux/reducers/projectsReducer';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 
 export function formatWeekRangeFromStrings(
@@ -97,7 +98,7 @@ interface ActualTableProps {
     >
   >;
   startDate: string | null | any;
-  endDate: string | null|any;
+  endDate: string | null | any;
   apiRef: React.RefObject<GridApi>;
   disableView?: boolean;
   onValidationChange?: (hasInvalidRows: boolean) => void;
@@ -108,12 +109,12 @@ interface ActualTableProps {
     newRow: GridValidRowModel,
     oldRow: GridValidRowModel
   ) => GridValidRowModel;
-  formattingActualAllocations: any
-  handlePrev: () => void
-  handleNext: () => void
-  isModified: boolean
-  setDialogSource: (source: 'prev' | 'next') => void
-  setDeleteDialogOpen: (open: boolean) => void
+  formattingActualAllocations: any;
+  handlePrev: () => void;
+  handleNext: () => void;
+  isModified: boolean;
+  setDialogSource: (source: 'prev' | 'next') => void;
+  setDeleteDialogOpen: (open: boolean) => void;
 }
 
 export default function ActualTable({
@@ -135,7 +136,7 @@ export default function ActualTable({
   formattingActualAllocations,
   handlePrev,
   handleNext,
-  isModified, 
+  isModified,
   setDialogSource,
   setDeleteDialogOpen,
 }: ActualTableProps) {
@@ -149,7 +150,9 @@ export default function ActualTable({
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
-  const { status,actualsStatusLoading } = useSelector((state: RootState) => state.actualAllocations);
+  const { status, actualsStatusLoading } = useSelector(
+    (state: RootState) => state.actualAllocations
+  );
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -638,7 +641,7 @@ export default function ActualTable({
     },
   ];
 
-   const handleCopyToActuals = () => {
+  const handleCopyToActuals = () => {
     apiRef.current
       .getAllRowIds()
       .map(id => apiRef.current.getRow(id))
@@ -660,27 +663,27 @@ export default function ActualTable({
   };
 
   const handleDateFieldInternal = (payload: any) => {
-  if (!payload) return;
-  const clickedDate = payload?.startDate ??payload;
-  if (!clickedDate) return;
+    if (!payload) return;
+    const clickedDate = payload?.startDate ?? payload;
+    if (!clickedDate) return;
 
-  const monday = getMondayOfISO(clickedDate);
-  const sunday = getSundayOfISO(clickedDate);
-  dispatch(
-    updateStartAndEndDate({
-      startDate: monday,
-      endDate: sunday,
-    })
-  );
-  setIsRangePickerOpen(false);
-  router.replace(`/actuals?startDate=${monday}`, { scroll: false });
-};
+    const monday = getMondayOfISO(clickedDate);
+    const sunday = getSundayOfISO(clickedDate);
+    dispatch(
+      updateStartAndEndDate({
+        startDate: monday,
+        endDate: sunday,
+      })
+    );
+    setIsRangePickerOpen(false);
+    router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+  };
 
   const first = generateFirstAndLastMonthYear(
-      parseISO(startDate),
-      'MMM yy',
-      true
-    );
+    parseISO(startDate),
+    'MMM yy',
+    true
+  );
   const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM yy', true);
 
   return (
@@ -690,7 +693,9 @@ export default function ActualTable({
           display="flex"
           justifyContent="space-between"
           alignItems="center"
-          bgcolor="#F0F7FF"
+          // bgcolor="#1976d2"
+          bgcolor={'rgba(30, 58, 139, 1)'}
+          // bgcolor="#F0F7FF"
           color="white"
           height={60}
           px={2}
@@ -710,64 +715,68 @@ export default function ActualTable({
             {formatWeekRangeFromStrings(startDate, endDate)}
           </Typography> */}
           <Typography
-                  style={{
-                    fontWeight: 400,
-                    fontSize: '14px',
-                    fontFamily: 'Open Sans',
-                    color: '#000000',
-                  }}
-                >
-                   Status :{' '}
-                  {actualsStatusLoading ||
-                  dataProcessing ||
-                  formattingActualAllocations ? (
-                    <Skeleton
-                      variant="text"
-                      sx={{
-                        display: 'inline-block',
-                        width: '80px',
-                        height: '21px',
-                        marginLeft: '4px',
-                        verticalAlign: 'middle',
-                      }}
-                    />
-                  ) : (
-                    <span
-                      style={{
-                        color: status === 'Confirmed' ? '#3CC55F' : '#FF7912',
-                        fontWeight: 600,
-                        fontSize: '14px',
-                        fontFamily: 'Open Sans',
-                      }}
-                    >
-                      {status ?? 'Not Started'}
-                    </span>
-            )}
-          </Typography>
-               <Box
+            style={{
+              fontWeight: 400,
+              fontSize: '14px',
+              fontFamily: 'Open Sans',
+              color: '#000000',
+            }}
+          >
+            Status :{' '}
+            {actualsStatusLoading ||
+            dataProcessing ||
+            formattingActualAllocations ? (
+              <Skeleton
+                variant="text"
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  height: '64px',
-                  pt: '6px',
-                  px: 1,
+                  display: 'inline-block',
+                  width: '80px',
+                  height: '21px',
+                  marginLeft: '4px',
+                  verticalAlign: 'middle',
+                }}
+              />
+            ) : (
+              <span
+                style={{
+                  color: status === 'Confirmed' ? '#3CC55F' : '#FF7912',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  fontFamily: 'Open Sans',
                 }}
               >
-                <IconButton
-                  sx={{ marginBottom: '8px' }}
-                    onClick={() => {
-                    if (isModified) {
-                      setDialogSource('prev');
-                      setDeleteDialogOpen(true);
-                    } else {
-                      handlePrev();
-                    }
-                  }}
-                >
-                  <ChevronLeftIcon />
-                </IconButton>
-            <Box className="rangePicker" sx={{ display: 'flex' }}>
-              <CustomDateRangePicker       
+                {status ?? 'Not Started'}
+              </span>
+            )}
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              height: '64px',
+              pt: '6px',
+              px: 1,
+            }}
+          >
+            <IconButton
+              sx={{ marginBottom: '8px' }}
+              onClick={() => {
+                if (isModified) {
+                  setDialogSource('prev');
+                  setDeleteDialogOpen(true);
+                } else {
+                  handlePrev();
+                }
+              }}
+            >
+              <ChevronLeftIcon />
+            </IconButton>
+            <Box
+              className="rangePicker"
+              sx={{ display: 'flex' }}
+              onClick={() => setIsRangePickerOpen(true)}
+            >
+              <CustomDateRangePicker
                 // open={isRangePickerOpen}
                 placeholder={`${first} - ${last}`}
                 isButton={true}
@@ -778,7 +787,7 @@ export default function ActualTable({
                 showLabel={false}
                 format="MMM YY"
                 handleDateField={handleDateFieldInternal}
-                singleClick ={true}
+                singleClick={true}
               />
             </Box>
             <IconButton
@@ -789,35 +798,37 @@ export default function ActualTable({
                   setDeleteDialogOpen(true);
                 } else {
                   handleNext();
-                    }
-                  }}
-                >
-                  <ChevronRightIcon />
-                </IconButton>
-              </Box>
+                }
+              }}
+            >
+              <ChevronRightIcon />
+            </IconButton>
+          </Box>
           <Link
             onClick={() => !disableView && handleCopyToActuals()}
             sx={{ cursor: disableView ? 'not-allowed' : 'pointer' }}
           >
-                  <Typography
-                    sx={{
-                      fontWeight: 600,
-                      fontStyle: 'Medium',
-                      fontSize: '14px',
-                      lineHeight: '24px',
-                      letterSpacing: '0%',
-                      textAlign: 'center',
-                      verticalAlign: 'middle',
-                      textDecoration: 'underline',
-                      textDecorationStyle: 'solid',
-                      textDecorationOffset: '0%',
-                      textDecorationThickness: '0%',
-                      color: disableView ? 'rgba(37, 99, 235, 0.5)' : '#2563EB',
-                    }}
-                  >
-                    Copy Plan to Actuals
-                  </Typography>
-                </Link>
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontStyle: 'Medium',
+                fontSize: '14px',
+                lineHeight: '24px',
+                letterSpacing: '0%',
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                textDecoration: 'underline',
+                textDecorationStyle: 'solid',
+                textDecorationOffset: '0%',
+                textDecorationThickness: '0%',
+                color: disableView
+                  ? 'rgba(37, 99, 235, 1)'
+                  : 'rgba(70, 169, 250, 1)',
+              }}
+            >
+              Copy Plan to Actuals
+            </Typography>
+          </Link>
         </Box>
 
         <Box sx={{ height: 350 }}>
