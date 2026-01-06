@@ -125,6 +125,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setIsModified(modified);
   };
 
+  const actualsErrorType =
+    showNoActualsAvailable
+      ? 'noActualsAvailable'
+      : showNoActualsTracked ? 'noActualsTracked'
+      : null;
+
   const userId = getUserIdFromEmail(resources || [], email);
   const currentResource: Resource[] = resources?.filter(
     (r: Resource) => r?.Id === userId
@@ -728,23 +734,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   // Show specific Actuals error pages when flagged
   // compute current week monday for redirect buttons
-  const currentWeekMonday = getMondayOfISO(new Date().toISOString());
-
-  if (showNoActualsAvailable)
-    return (
-      <ActualsErrorPage
-        type="noActualsAvailable"
-        redirectPath={`/actuals?startDate=${currentWeekMonday}`}
-      />
-    );
-
-  if (showNoActualsTracked)
-    return (
-      <ActualsErrorPage
-        type="noActualsTracked"
-        redirectPath={`/actuals?startDate=${currentWeekMonday}`}
-      />
-    );
 
   return loadingPermissions ? (
     <LoadingScreen />
@@ -978,104 +967,107 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 isModified={isModified}
                 setDialogSource={setDialogSource}
                 setDeleteDialogOpen={setDeleteDialogOpen}
-              />
-              <Box display="flex" justifyContent="space-between" mt={1}>
-                <Button
-                  startIcon={<ChevronLeftIcon />}
-                  onClick={() => {
-                    if (isModified) {
-                      setDialogSource('prev');
-                      setDeleteDialogOpen(true);
-                    } else {
-                      handlePrev();
-                    }
-                  }}
-                  disabled={disablePrev}
-                  sx={{
-                    fontSize: '14px',
-                    color: '#152e75',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                    },
-                    '& .MuiButton-startIcon': {
-                      marginRight: '0px',
-                    },
-                  }}
-                  variant="text"
-                >
-                  Prev Week
-                </Button>
+                actualsErrorType={actualsErrorType}
+                />
+                { !actualsErrorType && (
+                  <Box display="flex" justifyContent="space-between" mt={1}>
+                    <Button
+                      startIcon={<ChevronLeftIcon />}
+                      onClick={() => {
+                        if (isModified) {
+                          setDialogSource('prev');
+                          setDeleteDialogOpen(true);
+                        } else {
+                          handlePrev();
+                        }
+                      }}
+                      disabled={disablePrev}
+                      sx={{
+                        fontSize: '14px',
+                        color: '#152e75',
+                        textTransform: 'none',
+                        '&:hover': {
+                          backgroundColor: 'transparent',
+                        },
+                        '& .MuiButton-startIcon': {
+                          marginRight: '0px',
+                        },
+                      }}
+                      variant="text"
+                    >
+                      Prev Week
+                    </Button>
 
-                <Button
-                  variant="contained"
-                  sx={{
-                    // @ts-ignore
-                    bgcolor: theme => theme.palette.sideBarColor.main,
-                    px: 2,
-                    width: '192px',
-                    height: '36px',
-                    borderRadius: '5px',
-                  }}
-                  disabled={
-                    (!permissions['ActualsStatus'].c &&
-                      !permissions['ActualsStatus'].u) ||
-                    loadingPermissions ||
-                    dataProcessing ||
-                    formattingActualAllocations ||
-                    (status !== null &&
-                      startDate !== null &&
-                      status !== 'In-Progress' &&
-                      status !== 'Not Started' &&
-                      // Enable button if it's the current week even if status is 'Confirmed'
-                      !isCurrentWeek(parseISO(startDate)) &&
-                      (!isModified || show || hasInvalidRows))
-                  }
-                  onClick={validateDataBeforeConfirm}
-                >
-                  <Typography
-                    sx={{
-                      color: '#FFF',
-                      textAlign: 'center',
-                      fontFamily: 'Open Sans',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      textTransform: 'none',
-                    }}
-                  >
-                    {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
-                  </Typography>
-                </Button>
+                    <Button
+                      variant="contained"
+                      sx={{
+                        // @ts-ignore
+                        bgcolor: theme => theme.palette.sideBarColor.main,
+                        px: 2,
+                        width: '192px',
+                        height: '36px',
+                        borderRadius: '5px',
+                      }}
+                      disabled={
+                        (!permissions['ActualsStatus'].c &&
+                          !permissions['ActualsStatus'].u) ||
+                        loadingPermissions ||
+                        dataProcessing ||
+                        formattingActualAllocations ||
+                        (status !== null &&
+                          startDate !== null &&
+                          status !== 'In-Progress' &&
+                          status !== 'Not Started' &&
+                          // Enable button if it's the current week even if status is 'Confirmed'
+                          !isCurrentWeek(parseISO(startDate)) &&
+                          (!isModified || show || hasInvalidRows))
+                      }
+                      onClick={validateDataBeforeConfirm}
+                    >
+                      <Typography
+                        sx={{
+                          color: '#FFF',
+                          textAlign: 'center',
+                          fontFamily: 'Open Sans',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          textTransform: 'none',
+                        }}
+                      >
+                        {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
+                      </Typography>
+                    </Button>
 
-                <Button
-                  endIcon={<ChevronRightIcon />}
-                  onClick={() => {
-                    if (isModified) {
-                      setDialogSource('next');
-                      setDeleteDialogOpen(true);
-                    } else {
-                      handleNext();
-                    }
-                  }}
-                  disabled={
-                    startDate ? isCurrentWeek(parseISO(startDate)) : false
-                  }
-                  sx={{
-                    color: '#152e75',
-                    fontSize: '14px',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                    },
-                    '& .MuiButton-endIcon': {
-                      marginLeft: '0px',
-                    },
-                  }}
-                  variant="text"
-                >
-                  Next Week
-                </Button>
-              </Box>
+                    <Button
+                      endIcon={<ChevronRightIcon />}
+                      onClick={() => {
+                        if (isModified) {
+                          setDialogSource('next');
+                          setDeleteDialogOpen(true);
+                        } else {
+                          handleNext();
+                        }
+                      }}
+                      disabled={
+                        startDate ? isCurrentWeek(parseISO(startDate)) : false
+                      }
+                      sx={{
+                        color: '#152e75',
+                        fontSize: '14px',
+                        textTransform: 'none',
+                        '&:hover': {
+                          backgroundColor: 'transparent',
+                        },
+                        '& .MuiButton-endIcon': {
+                          marginLeft: '0px',
+                        },
+                      }}
+                      variant="text"
+                    >
+                      Next Week
+                    </Button>
+                  </Box>
+                )}
             </Box>
           </Box>
         ) : (

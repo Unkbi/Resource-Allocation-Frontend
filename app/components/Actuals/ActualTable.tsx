@@ -46,6 +46,7 @@ import ProjectActualsStatusCell from './ProjectActualsStatusCell';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
+import ActualsErrorPage from '../ErrorPage/ActualsErrorPage';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -115,6 +116,7 @@ interface ActualTableProps {
   isModified: boolean;
   setDialogSource: (source: 'prev' | 'next') => void;
   setDeleteDialogOpen: (open: boolean) => void;
+  actualsErrorType?: any
 }
 
 export default function ActualTable({
@@ -139,6 +141,7 @@ export default function ActualTable({
   isModified,
   setDialogSource,
   setDeleteDialogOpen,
+  actualsErrorType
 }: ActualTableProps) {
   const router = useRouter();
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
@@ -686,6 +689,8 @@ export default function ActualTable({
   );
   const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM yy', true);
 
+  const currentWeekMonday = getMondayOfISO(new Date().toISOString());
+
   return (
     <>
       <Box borderRadius={1} overflow="hidden" width={730}>
@@ -831,7 +836,12 @@ export default function ActualTable({
           </Link>
         </Box>
 
-        <Box sx={{ height: 350 }}>
+        <Box sx={{ height: 350 }}> 
+          {actualsErrorType ? (
+            <ActualsErrorPage
+              type={actualsErrorType}
+              redirectPath={`/actuals?startDate=${currentWeekMonday}`}
+            />) : (
           <DataGridPremium
             rowHeight={60}
             apiRef={apiRef}
@@ -911,7 +921,7 @@ export default function ActualTable({
                 },
               ],
             }}
-          />
+          />)}
         </Box>
       </Box>
 
@@ -924,20 +934,22 @@ export default function ActualTable({
           border: '1px solid #E5E7EB',
         }}
       >
-        <Button
-          variant="text"
-          size="small"
-          disabled={disableView}
-          sx={{
-            color: '#2563EB',
-            textTransform: 'none',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-          onClick={handleClick}
-        >
-          + Add Unplanned Actuals
-        </Button>
+        { !actualsErrorType && (
+          <Button
+            variant="text"
+            size="small"
+            disabled={disableView}
+            sx={{
+              color: '#2563EB',
+              textTransform: 'none',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+            onClick={handleClick}
+          >
+            + Add Unplanned Actuals
+          </Button>
+        )}
         <Menu
           anchorEl={mainMenuAnchor}
           open={Boolean(mainMenuAnchor) && !showProjectMenu}

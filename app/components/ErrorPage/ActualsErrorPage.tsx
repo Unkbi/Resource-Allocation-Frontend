@@ -24,12 +24,12 @@ const defaultConfigs: Record<
 > = {
   noActualsAvailable: {
     image: '/images/icons/actualsNotfound.svg',
-    text: 'No Actuals Available',
+    text: 'No Data Available',
     button: 'Go Back to Current Week',
   },
   noActualsTracked: {
     image: '/images/icons/actualsNotfound.svg',
-    text: 'No Actuals Tracked',
+    text: 'No Data Tracked',
     button: 'Go Back to Current Week',
   },
 };
@@ -41,11 +41,12 @@ const containerStyles: SxProps = {
   justifyContent: 'center',
   height: '100%',
   width: '100%',
+  backgroundColor :'#F6F6F6'
 };
 
 const imageStyles: SxProps = {
-  width: 96,
-  height: 96,
+  width: 34,
+  height: 34,
   mb: 2,
 };
 
@@ -59,7 +60,7 @@ const textBoxStyles: SxProps = {
 };
 
 const subtitleStyles: SxProps = {
-  width: 247,
+  width: 216,
   height: 36,
   fontFamily: 'Open Sans',
   fontWeight: 700,
@@ -99,7 +100,7 @@ export default function ActualsErrorPage({
   message,
   buttonLabel,
   redirectPath = '',
-  feedbackFunc = () => {},
+  feedbackFunc = () => { },
 }: ErrorPageProps) {
   const router = useRouter();
   const config = defaultConfigs[type];
@@ -115,7 +116,7 @@ export default function ActualsErrorPage({
       if (type === 'noActualsAvailable') {
           return (
               <Typography sx={messageStyles}>
-                  There are no actuals to display for this time period. This could be
+                  There are no data to display for this time period. This could be
                   because this period is <br/>before actuals tracking got enabled, or the
                   selected dates fall outside your start and end <br/> date range.{' '}
                   <Box component="span" sx={{ fontWeight: 700 }}>
@@ -131,7 +132,8 @@ export default function ActualsErrorPage({
       }
   return (
     <Typography sx={messageStyles}>
-      No actuals have been tracked for the selected week.
+          There is no data available for the selected period.<br/> {' '}
+          You are being redirected to your last view.
     </Typography>
       );
   };
