@@ -16,7 +16,11 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { getFirstChild, initSortAllocations, normalizeRow } from '@/app/utils/allocationUtils';
+import {
+  getFirstChild,
+  initSortAllocations,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import {
   PORTFOLIO_BLANK,
@@ -72,22 +76,32 @@ function PortfolioAllocation({
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
-        setRows(initSortAllocations(allTempRows as AllAllocations[] , 'portfolioName') || []);
+        setRows(
+          initSortAllocations(
+            allTempRows as AllAllocations[],
+            'portfolioName'
+          ) || []
+        );
         setRowsForView('projectAllocationtemp', []);
       } else {
-        if (!loading && getAllTeamViewRows().length > 0) {
-          filteredResources = initSortAllocations(removeResourcesWithNoProjects(
-            (getAllTeamViewRows() as AllAllocations[]) || []
-          ) ,   'portfolioName');
+        const teamsViewRows = getAllTeamViewRows();
+        if (!loading && teamsViewRows.length > 0) {
+          filteredResources = initSortAllocations(
+            removeResourcesWithNoProjects(
+              (teamsViewRows as AllAllocations[]) || []
+            ),
+            'portfolioName'
+          );
           setRows(
             removeResourcesWithNoProjects(
               getAllTeamViewRows() as AllAllocations[]
             )
           );
         } else if (allAllocations) {
-          filteredResources = initSortAllocations(removeResourcesWithNoProjects(
-            allAllocations || []
-          ), 'portfolioName');
+          filteredResources = initSortAllocations(
+            removeResourcesWithNoProjects(allAllocations || []),
+            'portfolioName'
+          );
           dispatch(setLoading(false));
         }
 
@@ -103,6 +117,8 @@ function PortfolioAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Teams Related Views, Currently Team, Organisation, Resource and Flat Views.
+      setRowsForView('teamAllocationtemp', []);
     }
   }, [ready && allAllocations, loadingPermissions]);
 
@@ -182,10 +198,11 @@ function PortfolioAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectSponsor?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectSponsor?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -323,7 +340,7 @@ function PortfolioAllocation({
     },
     {
       field: 'role',
-      headerName: 'Tilte',
+      headerName: 'Title',
       width: 170,
       isEditable: 'false',
       sortable: true,
@@ -425,10 +442,11 @@ function PortfolioAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectManager?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectManager?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -455,11 +473,10 @@ function PortfolioAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
-          getFirstChild(p1)?.projectStatus?.toLowerCase().trim() || '';
-      const s2 =
-          getFirstChild(p2)?.projectStatus?.toLowerCase().trim() || '';
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectStatus?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectStatus?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
         if (!s2) return -1;
@@ -485,10 +502,11 @@ function PortfolioAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectLocation?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectLocation?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -515,11 +533,10 @@ function PortfolioAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
-          getFirstChild(p1)?.projectType?.toLowerCase().trim() || '';
-      const s2 =
-          getFirstChild(p2)?.projectType?.toLowerCase().trim() || '';
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectType?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectType?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
         if (!s2) return -1;
@@ -545,10 +562,11 @@ function PortfolioAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-      const s1 =
+        p2: any
+      ) => {
+        const s1 =
           getFirstChild(p1)?.projectTypeGroup?.toLowerCase().trim() || '';
-      const s2 =
+        const s2 =
           getFirstChild(p2)?.projectTypeGroup?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
@@ -644,14 +662,17 @@ function PortfolioAllocation({
         _v1: string | null,
         _v2: string | null,
         p1: any,
-        p2: any) => {
-        const s1 = getFirstChild(p1)?.projectCurrency?.toLowerCase().trim() || '';
-        const s2 = getFirstChild(p2)?.projectCurrency?.toLowerCase().trim() || '';
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectCurrency?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectCurrency?.toLowerCase().trim() || '';
         if (!s1 && !s2) return 0;
         if (!s1) return 1;
         if (!s2) return -1;
         return s1.localeCompare(s2);
-      } ,
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (

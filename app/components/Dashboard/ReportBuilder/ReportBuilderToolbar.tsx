@@ -11,11 +11,12 @@ import {
   Typography,
   styled,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { ReportType } from '@/app/types/dashboardTypes';
 
 interface ReportBuilderToolbarProps {
+  reportType?: string;
   onGenerateReport: () => void;
   onReportTypeChange?: (reportType: ReportType) => void;
   onExport?: (format: 'pdf' | 'excel') => void;
@@ -61,6 +62,7 @@ const savedReports = [
 ];
 
 export default function ReportBuilderToolbar({
+  reportType = 'resourceProjectPeriod',
   onGenerateReport,
   onReportTypeChange,
   onExport,
@@ -69,8 +71,15 @@ export default function ReportBuilderToolbar({
   selectedFiltersCount = 0,
 }: ReportBuilderToolbarProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedReport, setSelectedReport] = useState('resourceProjectPeriod');
+  const [selectedReport, setSelectedReport] = useState(reportType);
   const [selectedSavedReport, setSelectedSavedReport] = useState<number>(1);
+
+  // Sync selectedReport with reportType prop when it changes
+  useEffect(() => {
+    if (reportType) {
+      setSelectedReport(reportType);
+    }
+  }, [reportType]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget);

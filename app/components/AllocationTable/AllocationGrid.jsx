@@ -1122,49 +1122,66 @@ function AllocationGrid({
         )
       );
 
-      await Promise.all([...allocationPromises, ...deletePromises]).then(
-        async response => {
-          if (response && response[0].length > 0) {
-            response = response[0];
-            response = formatAPIResponse('Allocation', response);
-            let allocationsUpdated = [];
-            // handle for bulk Delete different responce
-            if (deleteList.length > 0) {
-              allocationsUpdated = deleteList;
-            } else {
-              allocationsUpdated = response.reduce((arr, res) => {
-                // Check if result exists and is an array before spreading
-                if (res && Array.isArray(res)) {
-                  return [...arr, ...res];
-                }
-                // If it's not an array but has a value you want to include
-                else if (res !== undefined) {
-                  return [...arr, res];
-                }
-                // Otherwise just return the accumulator unchanged
-                return arr;
-              }, []);
-            }
+      try {
+        const responses = await Promise.all([
+          ...allocationPromises,
+          ...deletePromises,
+        ]);
 
-            const formateUpdate = getFormattedAllocationsForUpdate(
-              allocationsUpdated,
-              teams,
-              teamsResources,
-              allResourcesDetail,
-              portfolios,
-              projects,
-              resources,
-              location,
-              splitView,
-              bottomTeamAllocationGrid,
-              teamAllocationGrid,
-              startDate,
-              endDate
-            );
-            allUpdatedRows = Object.values(formateUpdate);
+        if (responses && responses[0] && responses[0].length > 0) {
+          let response = responses[0];
+          response = formatAPIResponse('Allocation', response);
+          let allocationsUpdated = [];
+          // handle for bulk Delete different response
+          if (deleteList.length > 0) {
+            allocationsUpdated = deleteList;
+          } else {
+            allocationsUpdated = response.reduce((arr, res) => {
+              // Check if result exists and is an array before spreading
+              if (res && Array.isArray(res)) {
+                return [...arr, ...res];
+              }
+              // If it's not an array but has a value you want to include
+              else if (res !== undefined) {
+                return [...arr, res];
+              }
+              // Otherwise just return the accumulator unchanged
+              return arr;
+            }, []);
           }
+
+          const formateUpdate = getFormattedAllocationsForUpdate(
+            allocationsUpdated,
+            teams,
+            teamsResources,
+            allResourcesDetail,
+            portfolios,
+            projects,
+            resources,
+            location,
+            splitView,
+            bottomTeamAllocationGrid,
+            teamAllocationGrid,
+            projectAllocationGrid,
+            currentView?.GroupBy,
+            startDate,
+            endDate
+          );
+          allUpdatedRows = Object.values(formateUpdate);
         }
-      );
+      } catch (error) {
+        console.error('Error updating allocations:', error);
+        dispatch(
+          showToastAction(
+            true,
+            error?.response?.data
+              ? error?.response?.data
+              : `Error updating allocation for ${newRow.resource}.`,
+            'error'
+          )
+        );
+        return oldRow;
+      }
 
       dispatch(
         showToastAction(
@@ -1179,10 +1196,6 @@ function AllocationGrid({
           bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
         } else if (viewId === 'bottomTeam') {
           topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'teamAllocation') {
-          projectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'projectAllocation') {
-          teamAllocationGrid.updateRows([allUpdatedRows[0]]);
         }
         return allUpdatedRows[0];
       }
