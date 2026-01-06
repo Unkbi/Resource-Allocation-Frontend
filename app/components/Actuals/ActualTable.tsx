@@ -39,13 +39,14 @@ import {
   getSundayOfISO,
 } from '@/app/utils/common';
 //@ts-ignore
-import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
+import { parseISO, format, isSameWeek, startOfWeek, isBefore } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
 import ProjectActualsStatusCell from './ProjectActualsStatusCell';
 import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
+import { current, future, past } from '@/app/constants/constants';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -172,7 +173,17 @@ export default function ActualTable({
   const [hasPersonalTime, setHasPersonalTime] = useState(false);
   const [baselineRows, setBaselineRows] =
     useState<ActualAllocationTableRow[]>(data);
-  const [isRangePickerOpen, setIsRangePickerOpen] = useState(false);
+
+  function getWeekStatus(periodIso?: string): 'past' | 'current' | 'future' {
+    if (dataProcessing) return current;
+    if (!periodIso) return future;
+    const period = parseISO(periodIso);
+    const now = new Date();
+    if (isSameWeek(period, now, { weekStartsOn: 1 })) return current;
+    const periodStart = startOfWeek(period, { weekStartsOn: 1 });
+    const nowStart = startOfWeek(now, { weekStartsOn: 1 });
+    return isBefore(periodStart, nowStart) ? past : future;
+  }
 
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
@@ -675,51 +686,49 @@ export default function ActualTable({
         endDate: sunday,
       })
     );
-    setIsRangePickerOpen(false);
+
     router.replace(`/actuals?startDate=${monday}`, { scroll: false });
   };
 
   const first = generateFirstAndLastMonthYear(
     parseISO(startDate),
-    'MMM yy',
+    'MMM dd',
     true
   );
-  const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM yy', true);
+  const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM dd', true);
 
   return (
     <>
-      <Box borderRadius={1} overflow="hidden" width={730}>
+      <Box overflow="hidden" width={730}>
         <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
-          // bgcolor="#1976d2"
-          bgcolor={'rgba(30, 58, 139, 1)'}
-          // bgcolor="#F0F7FF"
+          bgcolor={
+            getWeekStatus(startDate) === past
+              ? 'rgba(202, 213, 226, 0.2)'
+              : getWeekStatus(startDate) === current
+                ? 'rgba(30, 58, 139, 1)'
+                : 'rgba(251, 251, 251, 1)' // future
+          }
+          borderLeft="1px solid rgba(202, 213, 226, 1)"
+          borderRight="1px solid rgba(202, 213, 226, 1)"
+          borderBottom="1px solid rgba(202, 213, 226, 1)"
           color="white"
           height={60}
           px={2}
           py={1}
         >
-          {/* Commenting out the code to find Quateres for year */}
-
-          {/* <Typography fontWeight={600} fontSize=" 0.875rem">
-            {`Q${getQuarter(parseISO(startDate || ''))} ${getYear(startDate || '')}`}
-          </Typography> */}
-          {/* <Typography fontWeight={600} fontSize="0.875rem">
-            {`Week ${getWeek(parseISO(startDate || ''), {
-              weekStartsOn: 1,
-            })}`}
-          </Typography> */}
-          {/* <Typography fontWeight={600} fontSize="0.875rem">
-            {formatWeekRangeFromStrings(startDate, endDate)}
-          </Typography> */}
           <Typography
             style={{
               fontWeight: 400,
               fontSize: '14px',
               fontFamily: 'Open Sans',
-              color: '#000000',
+              color: dataProcessing
+                ? '#FFFFFF'
+                : getWeekStatus(startDate) === current
+                  ? '#FFFFFF'
+                  : '#000000',
             }}
           >
             Status :{' '}
@@ -759,7 +768,14 @@ export default function ActualTable({
             }}
           >
             <IconButton
-              sx={{ marginBottom: '8px' }}
+              sx={{
+                marginBottom: '8px',
+                color: dataProcessing
+                  ? '#FFFFFF'
+                  : getWeekStatus(startDate) === current
+                    ? '#FFFFFF'
+                    : '#000000',
+              }}
               onClick={() => {
                 if (isModified) {
                   setDialogSource('prev');
@@ -771,27 +787,28 @@ export default function ActualTable({
             >
               <ChevronLeftIcon />
             </IconButton>
-            <Box
-              className="rangePicker"
-              sx={{ display: 'flex' }}
-              onClick={() => setIsRangePickerOpen(true)}
-            >
+            <Box className="rangePicker" sx={{ display: 'flex' }}>
               <CustomDateRangePicker
-                // open={isRangePickerOpen}
                 placeholder={`${first} - ${last}`}
                 isButton={true}
                 value={{ StartDate: startDate, EndDate: endDate }}
                 showCalendarIconOnlyHere
-                // onOpen={() => setIsRangePickerOpen(true)}
-                // onClose={() => setIsRangePickerOpen(false)}
                 showLabel={false}
-                format="MMM YY"
+                format="MMM DD"
                 handleDateField={handleDateFieldInternal}
                 singleClick={true}
               />
             </Box>
             <IconButton
-              sx={{ marginLeft: '15px', marginBottom: '8px' }}
+              sx={{
+                marginLeft: '15px',
+                marginBottom: '8px',
+                color: dataProcessing
+                  ? '#FFFFFF'
+                  : getWeekStatus(startDate) === current
+                    ? '#FFFFFF'
+                    : '#000000',
+              }}
               onClick={() => {
                 if (isModified) {
                   setDialogSource('next');

@@ -41,6 +41,7 @@ const ActualsPeriodPill = styled(Box)(({ theme }) => ({
 const WeekNumnerHeaderTypography = styled(Typography)(({ theme }) => ({
   fontWeight: 700,
   fontSize: 20,
+  color: 'rgba(0, 0, 0, 1)',
   marginTop: theme.spacing(1),
 }));
 
@@ -60,21 +61,25 @@ const AllocationsDataBox = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
 }));
 
+const WeekCardBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  height: '110px',
+  borderRadius: '8px 8px 0px 0px',
+  alignItems: 'center',
+  border: '1px solid rgba(202, 213, 226, 1)',
+  backgroundColor: 'rgba(202, 213, 226, 0.2)',
+}));
+
 const ActualsCard = ({
   actualAllocationData,
   actualAllocationStatus,
   loading,
   actualAllocationsStatusesLoading,
-  //   backgroundColor = '#1976d2',
   backgroundColor = 'rgba(30, 58, 139, 1)',
   periodPillBackgroundColor = 'rgba(255, 255, 255, 1)',
-  textColor = 'rgba(255, 255, 255, 1)',
-  contrastTextColor = 'rgba(0, 0, 0, 1)',
-  borderStyle = {
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    borderColor: 'rgba(227, 227, 227, 1)',
-  },
+  borderStyle = {},
 }: ActualsCardProps) => {
   const totalPlannedAllocation = useMemo(
     () =>
@@ -93,6 +98,19 @@ const ActualsCard = ({
       ),
     [actualAllocationData]
   );
+
+  const isPastWeek = useMemo(() => {
+    if (loading || actualAllocationsStatusesLoading) {
+      return false;
+    }
+    if (!actualAllocationData?.[0]?.Period) {
+      return false;
+    }
+    return (
+      getMondayOfISO(new Date().toISOString()) >
+      getMondayOfISO(actualAllocationData?.[0]?.Period)
+    );
+  }, [actualAllocationData, loading, actualAllocationsStatusesLoading]);
 
   const isCurrentWeek = useMemo(() => {
     if (loading || actualAllocationsStatusesLoading) {
@@ -127,7 +145,11 @@ const ActualsCard = ({
 
     return (
       <Typography
-        sx={{ color: contrastTextColor, fontWeight: 700, fontSize: 10 }}
+        sx={{
+          fontWeight: 700,
+          fontSize: 10,
+          color: isCurrentWeek ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)',
+        }}
       >
         {isCurrentWeek ? 'Current' : isFutureWeek ? 'Future' : 'Past'}
       </Typography>
@@ -135,12 +157,37 @@ const ActualsCard = ({
   };
 
   return (
-    <ActualsCardBox sx={{ backgroundColor: backgroundColor, ...borderStyle }}>
-      <ActualsPeriodPill sx={{ backgroundColor: periodPillBackgroundColor }}>
+    <WeekCardBox
+      sx={{
+        backgroundColor: loading
+          ? backgroundColor
+          : isCurrentWeek
+            ? 'rgba(30, 58, 139, 1)'
+            : isFutureWeek
+              ? 'rgba(251, 251, 251, 1)'
+              : 'rgba(202, 213, 226, 0.2)',
+        ...borderStyle,
+      }}
+    >
+      <ActualsPeriodPill
+        sx={{
+          ...(loading
+            ? { backgroundColor: periodPillBackgroundColor }
+            : !isCurrentWeek
+              ? { backgroundColor: 'rgba(30, 58, 139, 1)' }
+              : {}),
+        }}
+      >
         {getPeriodPillText()}
       </ActualsPeriodPill>
-      <ActualsCardBox sx={{ marginTop: -2 }}>
-        <WeekNumnerHeaderTypography sx={{ color: textColor }}>
+      <ActualsCardBox sx={{ marginTop: -2, border: 'none' }}>
+        <WeekNumnerHeaderTypography
+          sx={{
+            color: isCurrentWeek
+              ? 'rgba(255, 255, 255, 1)'
+              : 'rgba(0, 0, 0, 1)',
+          }}
+        >
           {loading ? (
             <Skeleton width={80} />
           ) : (
@@ -158,7 +205,7 @@ const ActualsCard = ({
           )}
         </WeekNumnerHeaderTypography>
         <AllocationInfoBox>
-          <Typography sx={{ color: textColor, fontSize: 16, paddingTop: 0.5 }}>
+          <Typography sx={{ fontSize: 16, paddingTop: 0.5 }}>
             Allocation:{' '}
           </Typography>
           <AllocationsDataBox>
@@ -178,10 +225,12 @@ const ActualsCard = ({
             ) : (
               <Typography
                 sx={{
-                  color: textColor,
                   marginTop: 0,
                   fontSize: 20,
                   fontWeight: 700,
+                  color: isCurrentWeek
+                    ? 'rgba(255, 255, 255, 1)'
+                    : 'rgba(0, 0, 0, 1)',
                 }}
               >
                 <span style={{ color: 'rgba(150, 154, 162, 1)' }}>
@@ -190,13 +239,20 @@ const ActualsCard = ({
                 {`${totalActualAllocation ? totalActualAllocation.toFixed(1) : '--'}`}
               </Typography>
             )}
-            <Typography sx={{ color: textColor, fontSize: 10 }}>
+            <Typography
+              sx={{
+                fontSize: 10,
+                color: isCurrentWeek
+                  ? 'rgba(255, 255, 255, 1)'
+                  : 'rgba(0, 0, 0, 1)',
+              }}
+            >
               Planned / Actual
             </Typography>
           </AllocationsDataBox>
         </AllocationInfoBox>
       </ActualsCardBox>
-    </ActualsCardBox>
+    </WeekCardBox>
   );
 };
 

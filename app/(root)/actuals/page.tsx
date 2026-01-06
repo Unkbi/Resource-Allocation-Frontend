@@ -911,9 +911,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       actualAllocationsStatusesLoading
                     }
                     backgroundColor="rgba(202, 213, 226, 0.2)"
-                    textColor="rgba(16, 24, 40, 1)"
                     periodPillBackgroundColor="rgba(30, 58, 139, 1)"
-                    contrastTextColor="rgba(251, 251, 251, 1)"
                   />
                   <ActualsCard
                     actualAllocationData={actualAllocations[startDate]}
@@ -924,7 +922,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     actualAllocationsStatusesLoading={
                       actualAllocationsStatusesLoading
                     }
-                    borderStyle={{ border: 'none' }}
+                    borderStyle={{ borderWidth: '2px', borderBottom: 'none' }}
                   />
                   <ActualsCard
                     actualAllocationData={
@@ -950,9 +948,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       actualAllocationsStatusesLoading
                     }
                     backgroundColor="rgba(251, 251, 251, 1)"
-                    textColor="background: rgba(16, 24, 40, 1)"
                     periodPillBackgroundColor="rgba(30, 58, 139, 1)"
-                    contrastTextColor="rgba(251, 251, 251, 1)"
                   />
                 </Box>
               )}
