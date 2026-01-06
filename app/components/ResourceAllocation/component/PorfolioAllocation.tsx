@@ -16,7 +16,11 @@ import {
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
+import {
+  getFirstChild,
+  initSortAllocations,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import {
   PORTFOLIO_BLANK,
@@ -72,12 +76,21 @@ function PortfolioAllocation({
       let filteredResources;
       const allTempRows = getAllRowsForView('projectAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
-        setRows(allTempRows || []);
+        setRows(
+          initSortAllocations(
+            allTempRows as AllAllocations[],
+            'portfolioName'
+          ) || []
+        );
         setRowsForView('projectAllocationtemp', []);
       } else {
-        if (!loading && getAllTeamViewRows().length > 0) {
-          filteredResources = removeResourcesWithNoProjects(
-            (getAllTeamViewRows() as AllAllocations[]) || []
+        const teamsViewRows = getAllTeamViewRows();
+        if (!loading && teamsViewRows.length > 0) {
+          filteredResources = initSortAllocations(
+            removeResourcesWithNoProjects(
+              (teamsViewRows as AllAllocations[]) || []
+            ),
+            'portfolioName'
           );
           setRows(
             removeResourcesWithNoProjects(
@@ -85,8 +98,9 @@ function PortfolioAllocation({
             )
           );
         } else if (allAllocations) {
-          filteredResources = removeResourcesWithNoProjects(
-            allAllocations || []
+          filteredResources = initSortAllocations(
+            removeResourcesWithNoProjects(allAllocations || []),
+            'portfolioName'
           );
           dispatch(setLoading(false));
         }
@@ -103,6 +117,8 @@ function PortfolioAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Teams Related Views, Currently Team, Organisation, Resource and Flat Views.
+      setRowsForView('teamAllocationtemp', []);
     }
   }, [ready && allAllocations, loadingPermissions]);
 
@@ -176,8 +192,23 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectSponsor?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectSponsor?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -190,7 +221,7 @@ function PortfolioAllocation({
       headerName: 'Email',
       width: 190,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -205,7 +236,7 @@ function PortfolioAllocation({
       headerName: 'Phone Number',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -220,7 +251,7 @@ function PortfolioAllocation({
       headerName: 'Organization',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -235,7 +266,7 @@ function PortfolioAllocation({
       headerName: 'Resource Work Location',
       width: 200,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -252,7 +283,7 @@ function PortfolioAllocation({
       headerName: 'Resource Location Category',
       width: 230,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -267,7 +298,7 @@ function PortfolioAllocation({
       headerName: 'Resource Type',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -282,7 +313,7 @@ function PortfolioAllocation({
       headerName: 'Resource Status',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -297,7 +328,7 @@ function PortfolioAllocation({
       headerName: 'HRLevel',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -309,10 +340,10 @@ function PortfolioAllocation({
     },
     {
       field: 'role',
-      headerName: 'Resource Role',
+      headerName: 'Title',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -327,7 +358,7 @@ function PortfolioAllocation({
       headerName: 'Resource Start Date',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -342,7 +373,7 @@ function PortfolioAllocation({
       headerName: 'Resource End Date',
       width: 170,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -357,7 +388,7 @@ function PortfolioAllocation({
       headerName: 'Average Weekly Hours',
       width: 190,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -372,7 +403,7 @@ function PortfolioAllocation({
       headerName: 'Contractor Hourly Rate',
       width: 200,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -387,7 +418,7 @@ function PortfolioAllocation({
       headerName: 'Contractor Hourly Rate Currency',
       width: 260,
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       type: 'string',
       primaryColumn: true,
       headerClassName: 'secondary-header',
@@ -405,8 +436,23 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectManager?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectManager?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -421,8 +467,21 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectStatus?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectStatus?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -437,8 +496,23 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectLocation?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectLocation?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -453,8 +527,21 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 = getFirstChild(p1)?.projectType?.toLowerCase().trim() || '';
+        const s2 = getFirstChild(p2)?.projectType?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -469,8 +556,23 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectTypeGroup?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectTypeGroup?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -485,8 +587,21 @@ function PortfolioAllocation({
       type: 'boolean',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: boolean | null,
+        _v2: boolean | null,
+        p1: any,
+        p2: any
+      ) => {
+        const v1 = getFirstChild(p1)?.projectOvertimeAllowed;
+        const v2 = getFirstChild(p2)?.projectOvertimeAllowed;
+        if (v1 == null && v2 == null) return 0;
+        if (v1 == null) return 1;
+        if (v2 == null) return -1;
+        return Number(v1) - Number(v2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -509,8 +624,23 @@ function PortfolioAllocation({
       type: 'string ',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: number | null,
+        _v2: number | null,
+        p1: any,
+        p2: any
+      ) => {
+        const n1 = Number(getFirstChild(p1)?.projectCost);
+        const n2 = Number(getFirstChild(p2)?.projectCost);
+        const isEmpty1 = Number.isNaN(n1);
+        const isEmpty2 = Number.isNaN(n2);
+        if (isEmpty1 && isEmpty2) return 0;
+        if (isEmpty1) return 1;
+        if (isEmpty2) return -1;
+        return n1 - n2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         const cost = firstChild?.projectCost;
@@ -526,8 +656,23 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const s1 =
+          getFirstChild(p1)?.projectCurrency?.toLowerCase().trim() || '';
+        const s2 =
+          getFirstChild(p2)?.projectCurrency?.toLowerCase().trim() || '';
+        if (!s1 && !s2) return 0;
+        if (!s1) return 1;
+        if (!s2) return -1;
+        return s1.localeCompare(s2);
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -542,8 +687,23 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const d1 = getFirstChild(p1)?.projectStartDate;
+        const d2 = getFirstChild(p2)?.projectStartDate;
+        const t1 = d1 ? new Date(d1).getTime() : NaN;
+        const t2 = d2 ? new Date(d2).getTime() : NaN;
+        if (Number.isNaN(t1) && Number.isNaN(t2)) return 0;
+        if (Number.isNaN(t1)) return 1;
+        if (Number.isNaN(t2)) return -1;
+        return t1 - t2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -558,8 +718,23 @@ function PortfolioAllocation({
       type: 'string',
       headerClassName: 'secondary-header',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      sortComparator: (
+        _v1: string | null,
+        _v2: string | null,
+        p1: any,
+        p2: any
+      ) => {
+        const d1 = getFirstChild(p1)?.projectEndDate;
+        const d2 = getFirstChild(p2)?.projectEndDate;
+        const t1 = d1 ? new Date(d1).getTime() : NaN;
+        const t2 = d2 ? new Date(d2).getTime() : NaN;
+        if (Number.isNaN(t1) && Number.isNaN(t2)) return 0;
+        if (Number.isNaN(t1)) return 1;
+        if (Number.isNaN(t2)) return -1;
+        return t1 - t2;
+      },
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
@@ -572,7 +747,7 @@ function PortfolioAllocation({
       headerName: 'Total Effort',
       width: 106,
       type: 'number',
-      sortable: false,
+      sortable: true,
       cellClassName: getCellClassName,
       headerClassName: 'secondary-header',
       // cellClassName: 'secondary-cell',

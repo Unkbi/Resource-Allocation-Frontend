@@ -37,6 +37,7 @@ import {
   AllocationForm_Status_Filter,
   DATE_FORMAT,
   PROJECT_ACTIVE_STATUS,
+  teamsViewsGrouping,
 } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
@@ -688,6 +689,8 @@ export const getFormattedAllocationsForUpdate = (
   splitView: boolean,
   bottomTeamAllocationGrid: GridApi,
   teamAllocationGrid: GridApi,
+  projectAllocationGrid: GridApi,
+  groupBy: string,
   startDate: string,
   endDate: string
 ) => {
@@ -701,7 +704,9 @@ export const getFormattedAllocationsForUpdate = (
     const id = `${allocation?.Resource}-${team?.Id}-${allocation?.Project}`;
     const currentRow = splitView
       ? bottomTeamAllocationGrid.getRow(id)
-      : teamAllocationGrid.getRow(id);
+      : teamsViewsGrouping.includes(groupBy)
+        ? teamAllocationGrid.getRow(id)
+        : projectAllocationGrid.getRow(id);
 
     if (acc[id]) {
       if (allocation?.AllocationEntered > 0) {
@@ -966,4 +971,20 @@ export const getFirstChild = (params: GridCellParams) => {
     return firstChildRow;
   }
   return null;
+};
+
+export const initSortAllocations = (
+  data: AllAllocations[],
+  primaryColumn = 'teams',
+  secondaryColumn = 'resource'
+) => {
+  return data.sort((a, b) =>
+    a?.[primaryColumn] === b?.[primaryColumn]
+      ? (a?.[secondaryColumn] || '') < (b?.[secondaryColumn] || '')
+        ? -1
+        : 1
+      : (a?.[primaryColumn] || '') < (b?.[primaryColumn] || '')
+        ? -1
+        : 1
+  );
 };

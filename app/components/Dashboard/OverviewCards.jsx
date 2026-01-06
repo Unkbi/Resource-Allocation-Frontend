@@ -98,8 +98,8 @@ export default function Overview({
         gridTemplateColumns: {
           xs: 'repeat(1, minmax(0, 1fr))',
           sm: 'repeat(2, minmax(0, 1fr))',
-          md: 'repeat(3, minmax(0, 1fr))',
-          lg: 'repeat(5, minmax(0, 1fr))',
+          md: 'repeat(auto-fit, minmax(160px, 1fr))',
+          lg: 'repeat(auto-fit, minmax(200px, 1fr))',
         },
         alignItems: 'stretch',
       }}
@@ -144,7 +144,7 @@ export default function Overview({
               {item.label === 'Actuals Confirmed' ? (
                 <>
                   {item.label}{' '}
-                  <span style={{ fontSize: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', lineHeight: 0 }}>
                     (Previous week)
                   </span>
                 </>

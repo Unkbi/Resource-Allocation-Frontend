@@ -519,13 +519,13 @@ const AddResourceForm = ({
         </Box>
         <Box sx={{ flex: 1 }}>
           <StyledLabel>
-            Role <span style={{ color: 'red' }}>*</span>
+            Title <span style={{ color: 'red' }}>*</span>
           </StyledLabel>
           <StyledInput
             disabled={readOnly}
             readOnly={readOnly}
             name="Role"
-            placeholder="Enter Role"
+            placeholder="Enter Title"
             value={values.Role || ''}
             onChange={handleChange}
             onBlur={e => {

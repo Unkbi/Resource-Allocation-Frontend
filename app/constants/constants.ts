@@ -298,7 +298,11 @@ export const AllocationForm_Status_Filter = ['Active', 'Pending'];
 
 export const Resource_Team_Project_Status_Filter = ['Active', 'Not-Planned'];
 
-export const Project_Sponsor_Manager_Status_Filter = ['Active', 'Not-Planned','Unassigned'];
+export const Project_Sponsor_Manager_Status_Filter = [
+  'Active',
+  'Not-Planned',
+  'Unassigned',
+];
 
 export const DASHBOARD_ALL_ACCESS = [
   'activeProjects',
@@ -315,3 +319,14 @@ export const DASHBOARD_ALL_ACCESS = [
   'projectHealthOverview',
   'projectFTE',
 ];
+
+export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';
+export const MISSING_PROJECT_ACTUALS_STATUS = 'MISSING_PROJECT_ACTUALS_STATUS';
+
+export const teamsViewsGrouping = [
+  'Teams',
+  'Organisations',
+  'Resources',
+  'Flat',
+];
+export const projectViewsGrouping = ['Portfolio', 'Project'];
