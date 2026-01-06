@@ -5,6 +5,7 @@ import ShowChartIcon from '@mui/icons-material/ShowChart';
 import GroupIcon from '@mui/icons-material/Group';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PercentIcon from '@mui/icons-material/Percent';
+import { navigateToReport } from '../../utils/reportNavigation';
 
 // Stable icon mapping by label so filtering doesn't shift icons by index
 const iconByLabel = {
@@ -37,8 +38,39 @@ export default function Overview({
   totalResourceCost,
   allocationPercentage,
   hasAccessToQueryKey,
+  advancedFilters,
+  onClick,
 }) {
   const [overview, setOverview] = useState([]);
+
+  // Map card labels to report types
+  const reportTypeMap = {
+    'Active Projects': 'projectsOnly',
+    'Active Resources': 'resourceOnly',
+    'Total Resource Cost': 'resourceProjectPeriodCost',
+    'Allocation %': 'resourceProjectPeriod',
+    'Actuals Confirmed': 'resourceProjectPeriod',
+  };
+
+  const handleCardClick = (label) => {
+    if (onClick) {
+      onClick(label);
+    }
+    let additionalFilters = {};
+    if (label === 'Active Resources') {
+      additionalFilters = { resourceStatuses: 'Active' };
+    }
+    else if (label === 'Active Projects') {
+      additionalFilters = { projectStatuses: 'Active' };
+    }
+
+    if (advancedFilters) {
+      const reportType = reportTypeMap[label];
+      if (reportType) {
+        navigateToReport(advancedFilters, { reportType, period: label === 'Actuals Confirmed' ? 'last_week' : 'this_week', ...additionalFilters } );
+      }
+    }
+  };
 
   useEffect(() => {
     const cost = parseInt(totalResourceCost?.[0]?.total_cost) || 0;
@@ -110,6 +142,7 @@ export default function Overview({
           <Paper
             key={item.label || idx}
             elevation={3}
+            onClick={() => handleCardClick(item.label)}
             sx={{
               borderRadius: 3,
               px: 2,
@@ -119,6 +152,7 @@ export default function Overview({
               flexDirection: 'column',
               alignItems: 'flex-start',
               justifyContent: 'center',
+              cursor: 'pointer',
               // minWidth: 220,
             }}
           >

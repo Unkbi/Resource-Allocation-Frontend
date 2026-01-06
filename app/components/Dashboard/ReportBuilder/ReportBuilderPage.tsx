@@ -24,8 +24,8 @@ interface ReportBuilderProps {
 /**
  * Parse query params and convert them to filter values
  */
-const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters> => {
-  const filters: Partial<ReportFilters> = {};
+const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string } => {
+  const filters: Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string } = {};
   
   // Helper to parse JSON array or return empty array
   const parseArrayParam = (param: string | null): string[] => {
@@ -101,6 +101,33 @@ const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters>
     filters.resourceType = parseArrayParam(resourceType);
   }
 
+ const resourceStatuses = searchParams.get('resourceStatuses') || searchParams.get('ResourceStatuses');
+  if (resourceStatuses) {
+    filters.resourceStatuses = parseArrayParam(resourceStatuses);
+  }
+
+  const resourceLocations = searchParams.get('resourceLocations') || searchParams.get('ResourceLocations');
+  if (resourceLocations) {
+    filters.resourceLocations = parseArrayParam(resourceLocations);
+  }
+  const resourceWorkLocationGroup = searchParams.get('resourceWorkLocationGroup') || searchParams.get('ResourceWorkLocationGroup');
+  if (resourceWorkLocationGroup) {
+    filters.resourceWorkLocationGroup = parseArrayParam(resourceWorkLocationGroup);
+  }
+
+  const projectStatuses = searchParams.get('projectStatuses') || searchParams.get('ProjectStatuses');
+  if (projectStatuses) {
+    filters.projectStatuses = parseArrayParam(projectStatuses);
+  }
+
+  // Parse custom date range
+  const customStartDate = searchParams.get('customStartDate');
+  const customEndDate = searchParams.get('customEndDate');
+  if (customStartDate && customEndDate) {
+    filters.customStartDate = customStartDate;
+    filters.customEndDate = customEndDate;
+  }
+
   return filters;
 };
 
@@ -136,7 +163,7 @@ export default function ReportBuilderPage({
   const [reportData, setReportData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
-  const [pendingQueryFilters, setPendingQueryFilters] = useState<Partial<ReportFilters> | null>(null);
+  const [pendingQueryFilters, setPendingQueryFilters] = useState<(Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string }) | null>(null);
   const [hasAppliedQueryParams, setHasAppliedQueryParams] = useState(false);
   const [isInitializing, setIsInitializing] = useState(hasQueryParams);
 
@@ -270,7 +297,6 @@ export default function ReportBuilderPage({
     // Priority 1: Check for query params from dashboard navigation
     if (searchParams && searchParams.toString()) {
       const queryFilters = parseQueryParams(searchParams);
-      
       if (Object.keys(queryFilters).length > 0) {
         setIsInitializing(true);
         // Store query params to apply later when data is loaded
@@ -296,7 +322,9 @@ export default function ReportBuilderPage({
     const mergedFilters: ReportFilters = {
       reportType: pendingQueryFilters.reportType || 'resourceProjectPeriod',
       period: pendingQueryFilters.period || 'last_week',
-      customDateRange: undefined,
+      customDateRange: pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
+        ? [dayjs(pendingQueryFilters.customStartDate), dayjs(pendingQueryFilters.customEndDate)]
+        : undefined,
       team: pendingQueryFilters.team || [],
       organization: pendingQueryFilters.organization || [],
       resourceType: pendingQueryFilters.resourceType || [],
@@ -312,7 +340,6 @@ export default function ReportBuilderPage({
       resourceWorkLocationGroup: pendingQueryFilters.resourceWorkLocationGroup || [],
       projectStatuses: pendingQueryFilters.projectStatuses || [],
     };
-    
     setFilters(mergedFilters);
     
     // Prepare API filters

@@ -353,7 +353,7 @@ export default function ReportBuilderFilters({
   ];
 
   const resourceTypeOptions = [
-    ...sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type: string) => ({
+    ...sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type) => ({
       value: type,
       label: type.charAt(0).toUpperCase() + type.slice(1),
     }))),

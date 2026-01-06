@@ -195,6 +195,7 @@ export default function ExecutiveDashboardPage() {
   const searchParams = useSearchParams();
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
+  const projects = useSelector(state => state.projects?.projects || []);
   const advancedFilters = useSelector(
     state => state.dashboard.advancedFilters || {}
   );
@@ -691,43 +692,53 @@ export default function ExecutiveDashboardPage() {
     if (tab === 'costs') setPersistedCostsLayouts(layouts);
   }, [STORAGE_KEYS]);
 
+  const currentWeekMonday = getMonday(selectedDate);
+  const currentWeekSunday = currentWeekMonday.add(6, 'day');
+  const lastWeekMonday = currentWeekMonday.subtract(1, 'week');
+  const lastWeekSunday = lastWeekMonday.add(6, 'day');
+
+  const threeWeeksBeforeMonday = currentWeekMonday.subtract(3, 'week');
+  const twoWeeksAfterSunday = currentWeekMonday.add(2, 'week').add(6, 'day');
+
   /**
    * Helper function to navigate to report page with filters
    * Maps chart identifiers to appropriate report types and configurations
    */
-  const navigateToReportWithFilters = useCallback((chartKey, clickedValue = null) => {
-    console.log('Navigating to report for chart:', chartKey, 'with clicked value:', clickedValue);
+  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null) => {
     // Map chart keys to report types
     const chartToReportMap = {
       // Overview charts
-      'plan_vs_actual_variance': { reportType: 'resourceProjectPeriod', period: 'last_week' },
-      // 'top_projects_by_variance': { reportType: 'allocation_actuals', period: 'last_week' },
-      'projectFTE': { reportType: 'resourceProjectPeriod', period: 'this_week' },
-      'activeProjectsByType': { reportType: 'projectPeriod', period: 'this_week' },
-      'totalHeadcount': { reportType: 'resourceOnly', period: 'this_week' },
-      'allocation_by_project_type_group': { reportType: 'resourceProjectPeriod', period: 'this_week' },
+      'plan_vs_actual_variance': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD'), },
+      'top_projects_by_variance': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'projectFTE': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: threeWeeksBeforeMonday.format('YYYY-MM-DD'),
+       customEndDate: twoWeeksAfterSunday.format('YYYY-MM-DD') },
+      'activeProjectsByType': { reportType: 'projectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'totalHeadcount': { reportType: 'resourceOnly' },
+      'allocation_by_project_type_group': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD'), },
       //actuals by category
-      'unapprovedProjectAllocation': { reportType: 'resourceProjectPeriod', period: 'last_week' },
-      'actuals_confirmation_status': { reportType: 'resourceProjectPeriod', period: 'last_week' },
+      'unapprovedProjectAllocation': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'actuals_confirmation_status': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'engagementScoreOverview': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'projectHealthOverview': { reportType: 'projectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       
       // Team charts
-      'team_headcount_distribution': { reportType: 'resourceOnly', period: 'this_week' },
-      'teamEngagementScore': { reportType: 'resourcePeriod', period: 'this_week' },
-      'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'last_week' },
-      'resourceCoverage': { reportType: 'resourcePeriod', period: 'this_week' },
-      'actualsTrendWeekly': { reportType: 'resourceProjectPeriod', period: 'last_week', },
-      'underAllocated': { reportType: 'resourcePeriod', period: 'this_week', utilization: 'under-allocated' },
-      'overAllocated': { reportType: 'resourcePeriod', period: 'this_week', utilization: 'over-allocated' },
+      'team_headcount_distribution': { reportType: 'resourceOnly'},
+      'teamEngagementScore': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'actualsTrendWeekly': { reportType: 'resourceProjectPeriod' },
+      'underAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'overAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       
       // Cost charts
-      'budgetVsPlanVsActual': { reportType: 'resourceProjectPeriodCost', period: 'this_week' },
+      'budgetVsPlanVsActual': { reportType: 'resourceProjectPeriodCost', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
     };
 
-    const config = chartToReportMap[chartKey] || { reportType: 'resourceProjectPeriod', period: 'last_week' };
+    const config = chartToReportMap[chartKey] || { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') };
     
-    // Add clicked value if provided
-    if (clickedValue) {
-      config.clickedValue = clickedValue;
+    // Add additional filters if provided
+    if (additionalFilters) {
+      config.additionalFilters = additionalFilters;
     }
 
     // Navigate with advanced filters and chart config
@@ -1123,19 +1134,7 @@ export default function ExecutiveDashboardPage() {
                     },
                   ]}
                   margin={{ left: 45, right: 45, top: 15, bottom: 30 }}
-                  onAxisClick={(event, axisData) => {
-                    const { dataIndex } = axisData || {};
-                    if (dataIndex !== undefined && sortedVarianceData[dataIndex]) {
-                      const projectTypeGroup = sortedVarianceData[dataIndex].project_type_group;
-                      const groupId = projectTypeGroups.find(g => g.Name === projectTypeGroup)?.Id;
-                      if (groupId) {
-                        navigateToReportWithFilters('plan_vs_actual_variance', {
-                          key: 'projectTypeGroup',
-                          value: groupId
-                        });
-                      }
-                    }
-                  }}
+                  onAxisClick={() => navigateToReportWithFilters('plan_vs_actual_variance')}
                 >
                   <BarPlot />
                   <LinePlot />
@@ -1281,6 +1280,14 @@ export default function ExecutiveDashboardPage() {
                 flexDirection: 'column',
                 width: '100%',
                 height: '100%',
+              }}
+              onClick={() => {
+                const projectIds = filteredTop5Projects.map(p =>
+                  projects.find(proj => proj.Name === p.project_name)?.Id
+              );
+                navigateToReportWithFilters('top_projects_by_variance', {
+                  project: projectIds
+                });
               }}
             >
               <Typography
@@ -1457,21 +1464,15 @@ export default function ExecutiveDashboardPage() {
                       valueFormatter: (value) => `${value} projects`,
                     },
                   ]}
-                  onItemClick={(_, params) => {
-                    console.log(params,"params")
-                  }}
                   onAxisClick={(e,val)=>{
-                    console.log(val,"val")
                     const { dataIndex } = val || {};
                     if (dataIndex !== undefined && sortedData[dataIndex]) {
                       const projectType = sortedData[dataIndex]._type;
-                      console.log(projectType,"projectType",sortedData)
                       const projectTypeId = projectTypeGroups.find(pt => pt.Name === projectType)?.Id;
-                      console.log(projectTypeId,"projectTypeId")
                       if (projectTypeId) {
                         navigateToReportWithFilters('activeProjectsByType', {
-                          key: 'projectTypeGroup',
-                          value: projectTypeId
+                          projectTypeGroup: projectTypeId,
+                          projectStatuses: 'Active'
                         });
                       }
                     }
@@ -1496,21 +1497,6 @@ export default function ExecutiveDashboardPage() {
                     tooltip: {
                       trigger: 'item',
                       disablePortal: true,
-                      // linkGenerator: (tooltipData) => {
-                      //   console.log(tooltipData,"tooltipData")
-                      //   // Get the project type from the data
-                      //   const dataIndex = tooltipData?.identifier?.dataIndex;
-                      //   if (dataIndex !== undefined && sortedData[dataIndex]) {
-                      //     const projectType = sortedData[dataIndex]._type;
-                      //     const projectTypeId = projectTypeGroups.find(pt => pt.Name === projectType)?.Id;
-                      // if (projectTypeId) {
-                      //   navigateToReportWithFilters('activeProjectsByType', {
-                      //     key: 'projectType',
-                      //     value: projectTypeId
-                      //   });
-                      // }
-                      //   }
-                      // },
                     },
                   }}
                   sx={{
@@ -1633,10 +1619,11 @@ export default function ExecutiveDashboardPage() {
                       const groupName = sortedHeadcount[dataIndex].shore_flag;
                       const groupId = locationGroups?.find(g => g.Name === groupName)?.Id;
                       // Navigate to report for the selected shore flag
-                      navigateToReportWithFilters('totalHeadcount',{
-                          key: 'locationGroup',
-                          value: groupId
+                      if (groupId) {
+                        navigateToReportWithFilters('totalHeadcount', {
+                          resourceWorkLocationGroup: groupId
                         });
+                      }
                     }
                   }}
                 />
@@ -1776,8 +1763,7 @@ export default function ExecutiveDashboardPage() {
                       const groupId = projectTypeGroups?.find(g => g.Name === groupName)?.Id;
                       if (groupId) {
                         navigateToReportWithFilters('allocation_by_project_type_group', {
-                          key: 'projectTypeGroup',
-                          value: groupId
+                          projectTypeGroup: groupId
                         });
                       }
                     }
@@ -1865,8 +1851,7 @@ export default function ExecutiveDashboardPage() {
                     if (dataIndex !== undefined && filteredUnapprovedProjectAllocation[dataIndex]) {
                       const category = filteredUnapprovedProjectAllocation[dataIndex].category;
                       navigateToReportWithFilters('unapprovedProjectAllocation', {
-                        key: 'actualsCategory',
-                        value: category
+                        actualsCategory: category
                       });
                     }
                   }}
@@ -2039,6 +2024,7 @@ export default function ExecutiveDashboardPage() {
                 },
               ]}
               hasAccess={true}
+              onClick={() => navigateToReportWithFilters('engagementScoreOverview')}
             />
           );
         }}
@@ -2107,6 +2093,7 @@ export default function ExecutiveDashboardPage() {
                 },
               ]}
               hasAccess={true}
+              onClick={() => navigateToReportWithFilters('projectHealthOverview')}
             />
           );
         }}
@@ -2532,8 +2519,8 @@ export default function ExecutiveDashboardPage() {
                       const teamId = sortedTeamHeadcount[dataIndex].team_id;
                       if (teamId) {
                         navigateToReportWithFilters('team_headcount_distribution', {
-                          key: 'team',
-                          value: teamId
+                          resourceStatuses: 'Active',
+                          team: teamId
                         });
                       }
                     }
@@ -2655,14 +2642,13 @@ export default function ExecutiveDashboardPage() {
                   }}
                   grid={{ horizontal: true }}
                   onAxisClick={(event, axisData) =>{
-                    console.log('Axis item clicked:', axisData);
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && sortedUniqueTeams[dataIndex]) {
                       const teamId = filteredUnapprovedActualsByTeam.find(d => d.team_name === sortedUniqueTeams[dataIndex])?.team_id;
                       if (teamId) {
                         navigateToReportWithFilters('unapprovedProjectActualsByTeam', {
-                          key: 'team',
-                          value: teamId
+                         team: teamId,
+                          actualsCategory: axisValue,
                         });
                       }
                     }
@@ -2726,14 +2712,12 @@ export default function ExecutiveDashboardPage() {
                     },
                   ]}
                   onAxisClick={(_, params) => {
-                    console.log('Axis item clicked:', params);
                     const { dataIndex } = params || {};
                     if (dataIndex !== undefined && sortedCoverageData[dataIndex]) {
                       const teamId = sortedCoverageData[dataIndex].team_id;
                       if (teamId) {
                         navigateToReportWithFilters('resourceCoverage', {
-                          key: 'team',
-                          value: teamId
+                          team: teamId
                         });
                       }
                     }
@@ -2861,8 +2845,8 @@ export default function ExecutiveDashboardPage() {
                       const teamId = sortedUnderAllocated[dataIndex].team_id;
                       if (teamId) {
                         navigateToReportWithFilters('underAllocated', {
-                          key: 'team',
-                          value: teamId
+                          team: teamId,
+                          utilization: 'Under-allocated'
                         });
                       }
                     }
@@ -2952,8 +2936,8 @@ export default function ExecutiveDashboardPage() {
                       const teamId = sortedOverAllocated[dataIndex].team_id;
                       if (teamId) {
                         navigateToReportWithFilters('overAllocated', {
-                          key: 'team',
-                          value: teamId
+                          team: teamId,
+                          utilization: 'Over-allocated'
                         });
                       }
                     }
@@ -3080,6 +3064,18 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData)=>{
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && periodData[dataIndex]) {
+                      const periodStart = periodData[dataIndex].period_start;
+                      endDate = dayjs(periodStart).add(6, 'day').format('YYYY-MM-DD');
+                      navigateToReportWithFilters('actualsTrendWeekly', {
+                        period: 'custom',
+                        customStartDate: periodStart,
+                        customEndDate: endDate
+                      });
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -3181,8 +3177,7 @@ export default function ExecutiveDashboardPage() {
                       const teamId = sortedEngagementData[dataIndex].team_id;
                       if (teamId) {
                         navigateToReportWithFilters('teamEngagementScore', {
-                          key: 'team',
-                          value: teamId
+                          team: teamId
                         });
                       }
                     }
@@ -3375,6 +3370,7 @@ export default function ExecutiveDashboardPage() {
               totalResourceCost={totalResourceCost}
               allocationPercentage={filteredAllocationPercentage}
               hasAccessToQueryKey={hasAccessToQueryKey}
+              advancedFilters={advancedFilters}
             />
             <ResponsiveGridLayout
               className="layout"

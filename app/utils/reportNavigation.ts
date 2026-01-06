@@ -5,11 +5,9 @@
 export interface ChartReportConfig {
   reportType: string;
   period?: string;
-  utilization?: string;
-  clickedValue?: {
-    key: string; // The filter key (e.g., 'team', 'projectType', 'resource')
-    value: string | string[]; // The value clicked
-  };
+  customStartDate?: string;
+  customEndDate?: string;
+  additionalFilters?: Record<string, string | string[]>;
 }
 
 /**
@@ -47,16 +45,25 @@ export const buildReportUrl = (
     params.set('period', config.period);
   }
 
-  // Add clicked value from chart
-  if (config.clickedValue) {
-    const { key, value } = config.clickedValue;
-    if (Array.isArray(value)) {
-      if (value.length > 0) {
-        params.set(key, JSON.stringify(value));
+  // Add custom date range
+  if (config.customStartDate) {
+    params.set('customStartDate', config.customStartDate);
+  }
+  if (config.customEndDate) {
+    params.set('customEndDate', config.customEndDate);
+  }
+
+  // Add additional filters from chart clicks
+  if (config.additionalFilters) {
+    Object.entries(config.additionalFilters).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          params.set(key, JSON.stringify(value));
+        }
+      } else if (value) {
+        params.set(key, JSON.stringify([value]));
       }
-    } else if (value) {
-      params.set(key, JSON.stringify([value]));
-    }
+    });
   }
 
   return `/report?${params.toString()}`;
