@@ -2002,7 +2002,7 @@ export default function ExecutiveDashboardPage() {
 
           return (
             <ScoreCard
-              title="Resource Engagement Overview"
+              title="Engagement Score"
               tooltipText="Combines two components: Planning and Actuals. Planning measures allocation entries across a rolling time window, weighted toward the present and near future. Actuals measures timely confirmation of completed work, weighted toward the most recent period. Both components contribute to the total score."
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
