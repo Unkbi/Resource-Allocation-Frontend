@@ -322,3 +322,11 @@ export const DASHBOARD_ALL_ACCESS = [
 
 export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';
 export const MISSING_PROJECT_ACTUALS_STATUS = 'MISSING_PROJECT_ACTUALS_STATUS';
+
+export const teamsViewsGrouping = [
+  'Teams',
+  'Organisations',
+  'Resources',
+  'Flat',
+];
+export const projectViewsGrouping = ['Portfolio', 'Project'];

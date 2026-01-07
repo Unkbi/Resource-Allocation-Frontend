@@ -1162,6 +1162,8 @@ function AllocationGrid({
             splitView,
             bottomTeamAllocationGrid,
             teamAllocationGrid,
+            projectAllocationGrid,
+            currentView?.GroupBy,
             startDate,
             endDate
           );
@@ -1194,10 +1196,6 @@ function AllocationGrid({
           bottomTeamAllocationGrid.updateRows([allUpdatedRows[0]]);
         } else if (viewId === 'bottomTeam') {
           topProjectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'teamAllocation') {
-          projectAllocationGrid.updateRows([allUpdatedRows[0]]);
-        } else if (viewId === 'projectAllocation') {
-          teamAllocationGrid.updateRows([allUpdatedRows[0]]);
         }
         return allUpdatedRows[0];
       }

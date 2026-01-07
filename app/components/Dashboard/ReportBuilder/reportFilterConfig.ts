@@ -12,7 +12,11 @@ export type FilterKey =
   | 'project'
   | 'portfolio'
   | 'projectManager'
-  | 'allocationManager';
+  | 'allocationManager'
+  | 'resourceStatuses'
+  | 'resourceLocations'
+  | 'resourceWorkLocationGroup'
+  | 'projectStatuses';
 
 export interface ReportFilterConfig {
   enabledFilters: FilterKey[];
@@ -34,6 +38,10 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'portfolio',
       'projectManager',
       'allocationManager',
+      'resourceStatuses',
+      'resourceLocations',
+      'resourceWorkLocationGroup',
+      'projectStatuses',
     ],
     requiresPeriod: true,
   },
@@ -52,6 +60,10 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'portfolio',
       'projectManager',
       'allocationManager',
+      'resourceStatuses',
+      'resourceLocations',
+      'resourceWorkLocationGroup',
+      'projectStatuses',
     ],
     requiresPeriod: true,
   },
@@ -65,6 +77,9 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'team',
       'organization',
       'allocationManager',
+      'resourceStatuses',
+      'resourceLocations',
+      'resourceWorkLocationGroup',
     ],
     requiresPeriod: true,
   },
@@ -78,6 +93,7 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'project',
       'portfolio',
       'projectManager',
+      'projectStatuses',
     ],
     requiresPeriod: true,
   },
@@ -90,6 +106,9 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'team',
       'organization',
       'allocationManager',
+      'resourceStatuses',
+      'resourceLocations',
+      'resourceWorkLocationGroup',
     ],
     requiresPeriod: false,
   },
@@ -102,6 +121,7 @@ export const REPORT_FILTER_CONFIG: Record<ReportType, ReportFilterConfig> = {
       'project',
       'portfolio',
       'projectManager',
+      'projectStatuses',
     ],
     requiresPeriod: false,
   },

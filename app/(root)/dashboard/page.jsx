@@ -62,6 +62,7 @@ import Topbar from '@/app/components/Dashboard/TabTopbar';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import weekday from 'dayjs/plugin/weekday';
 import utc from 'dayjs/plugin/utc';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   useResponsiveChart,
   truncateLabel,
@@ -188,6 +189,8 @@ const generateLayouts = chartKeys => {
 
 export default function ExecutiveDashboardPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
   const advancedFilters = useSelector(
@@ -784,6 +787,37 @@ export default function ExecutiveDashboardPage() {
       suppressSaveRef.current.costs = false;
     }
   }, [costsLayouts, allowedCostsCharts.join(','), STORAGE_KEYS.costs, mergeLayouts]);
+
+  // Keep active tab in sync with URL `?tab=` and validate accessibility
+  useEffect(() => {
+    try {
+      // Don't validate tabs until permissions and query keys are loaded
+      if (loadingLoginUserPrivileges || dashboardQueryKeys.length === 0) {
+        return;
+      }
+
+      const accessibleTabs = ['overview','reports'];
+      if (allowedTeamCharts.length > 0) accessibleTabs.push('teams');
+      if (allowedCostsCharts.length > 0) accessibleTabs.push('costs');
+
+      const tabParam = searchParams?.get('tab');
+      const isValid = tabParam && accessibleTabs.includes(tabParam);
+
+      if (!isValid) {
+        const first = accessibleTabs[0] || 'overview';
+        if (activeTab !== first) setActiveTab(first);
+        const params = new URLSearchParams(searchParams?.toString() || '');
+        params.set('tab', first);
+        router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+        return;
+      }
+
+      if (tabParam !== activeTab) {
+        setActiveTab(tabParam);
+      }
+    } catch {}
+    // Re-run when URL params or tab availability changes
+  }, [searchParams, allowedTeamCharts.length, allowedCostsCharts.length, loadingLoginUserPrivileges, dashboardQueryKeys.length]);
 
   const Teams = filteredCoverageData?.length
     ? [...new Set(filteredCoverageData.map(d => d.team_name))]
@@ -2857,17 +2891,20 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !teamEngagementScore ||
           teamEngagementScore.length === 0 ||
-          hasBarChartAllZeroValues(teamEngagementScore, ['avg_engagement_score'])
+          hasStackedChartAllZeroValues(teamEngagementScore, [
+            'avg_actuals_score',
+            'avg_planning_score',
+          ])
         }
         noDataMessage="No engagement score data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          // Sort by engagement score descending
-          const sortedEngagementData = sortBarChartData(
+          // Sort by combined (actuals + planning) engagement contribution descending
+          const sortedEngagementData = sortByTotal(
             teamEngagementScore || [],
-            'avg_engagement_score'
+            ['avg_actuals_score', 'avg_planning_score']
           );
 
           return (
@@ -2891,12 +2928,22 @@ export default function ExecutiveDashboardPage() {
                   series={[
                     {
                       data: sortedEngagementData.map(d =>
-                        Number.parseFloat(d.avg_engagement_score || 0)
+                        Number.parseFloat(d.avg_planning_score || 0) / 2
                       ),
-                      label: 'Engagement Score',
-                      id: 'engagementScore',
+                      label: 'Planned Score',
+                      id: 'engagementPlannedScore',
                       color: '#7C93F5',
+                      stack: 'total',
                     },
+                    {
+                      data: sortedEngagementData.map(d =>
+                        Number.parseFloat(d.avg_actuals_score || 0) / 2
+                      ),
+                      label: 'Actuals Score',
+                      id: 'engagementActualsScore',
+                      color: '#00C9A7',
+                      stack: 'total',
+                    }, 
                   ]}
                   xAxis={[
                     {
@@ -2916,7 +2963,7 @@ export default function ExecutiveDashboardPage() {
                       min: 0,
                       max: 100,
                       width: config.yAxis?.width || 50,
-                      valueFormatter: value => `${value}`,
+                      valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
                     },
                   ]}
@@ -3038,7 +3085,12 @@ export default function ExecutiveDashboardPage() {
         <CommonToolbar>
           <Tabs
             value={activeTab}
-            onChange={(e, val) => setActiveTab(val)}
+            onChange={(e, val) => {
+              setActiveTab(val);
+              const params = new URLSearchParams(searchParams?.toString() || '');
+              params.set('tab', val);
+              router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+            }}
             sx={{ padding: '16px 16px 0px 8px' }}
           >
             <Tab

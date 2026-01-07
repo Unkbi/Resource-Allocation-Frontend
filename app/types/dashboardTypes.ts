@@ -63,6 +63,10 @@ export interface ReportUIFilters {
   portfolio?: string[];
   projectManager?: string[];
   allocationManager?: string[];
+  resourceStatuses?: string[];
+  resourceLocations?: string[];
+  resourceWorkLocationGroup?: string[];
+  projectStatuses?: string[];
 }
 
 export interface ReportEntry {

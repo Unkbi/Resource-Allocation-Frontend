@@ -38,6 +38,10 @@ export default function ReportBuilderPage({
     portfolio: [],
     projectManager: [],
     allocationManager: [],
+    resourceStatuses: [],
+    resourceLocations: [],
+    resourceWorkLocationGroup: [],
+    projectStatuses: [],
   });
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
@@ -45,6 +49,9 @@ export default function ReportBuilderPage({
   const [reportData, setReportData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
+
+  const reportSlice = useSelector((state: RootState) => state.dashboard.report);
+  const currentReport = reportSlice?.[filters.reportType as ReportType];
 
   // Helper function to prepare API payload from filters
   const prepareApiPayload = (filters: ReportUIFilters) => {
@@ -92,11 +99,17 @@ export default function ReportBuilderPage({
       portfolio: filters.portfolio,
       projectManager: filters.projectManager,
       allocationManager: filters.allocationManager,
+      resourceStatuses: filters.resourceStatuses,
+      resourceLocations: filters.resourceLocations,
+      resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
+      projectStatuses: filters.projectStatuses,
     };
     const apiPayload = prepareApiPayload(uiFilters);
     try {
       dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
       setShowData(true);
+      // Save the last generated report to sessionStorage
+      sessionStorage.setItem('last_generated_report', JSON.stringify({ uiFilters }));
     } catch (error) {
       console.error('Error generating report:', error);
       dispatch(showToast({ message: 'Failed to generate report. Please try again.', severity: 'error' }));
@@ -141,12 +154,57 @@ export default function ReportBuilderPage({
       portfolio: [],
       projectManager: [],
       allocationManager: [],
+      resourceStatuses: [],
+      resourceLocations: [],
+      resourceWorkLocationGroup: [],
+      projectStatuses: [],
     });
   };
 
+  useEffect(() => {
+    // Load last report type and filters from sessionStorage on mount
+    const savedLastReport = sessionStorage.getItem('last_generated_report');
+    
+    if (savedLastReport) {
+      try {
+      const parsed = JSON.parse(savedLastReport);
+      const f = parsed.uiFilters;
+      
+      // Restore filters
+      setFilters({
+        reportType: f.reportType,
+        period: f.period || 'last_week',
+        customDateRange: f.customStartDate && f.customEndDate 
+        ? [dayjs(f.customStartDate), dayjs(f.customEndDate)] 
+        : undefined,
+        team: f.team || [],
+        organization: f.organization || [],
+        resourceType: f.resourceType || [],
+        resource: f.resource || [],
+        projectType: f.projectType || [],
+        projectTypeGroup: f.projectTypeGroup || [],
+        project: f.project || [],
+        portfolio: f.portfolio || [],
+        projectManager: f.projectManager || [],
+        allocationManager: f.allocationManager || [],
+        resourceStatuses: f.resourceStatuses || [],
+        resourceLocations: f.resourceLocations || [],
+        resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
+        projectStatuses: f.projectStatuses || [],
+      });
+      
+      // Fetch the report data
+      dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
+      setShowData(true);
+      setFiltersExpanded(false);
+      } catch (error) {
+      console.error('Error loading last report:', error);
+      }
+    }
+  }, []);
+
   // Read report data and loading from Redux
-  const reportSlice = useSelector((state: RootState) => state.dashboard.report);
-  const currentReport = reportSlice?.[filters.reportType as ReportType];
+  
   useEffect(() => {
     if (currentReport) {
       setIsLoading(currentReport.loading);
@@ -194,6 +252,10 @@ export default function ReportBuilderPage({
       portfolio: filters.portfolio,
       projectManager: filters.projectManager,
       allocationManager: filters.allocationManager,
+      resourceStatuses: filters.resourceStatuses,
+      resourceLocations: filters.resourceLocations,
+      resourceWorkLocationGroup: filters.resourceWorkLocationGroup,
+      projectStatuses: filters.projectStatuses,
     };
     const entry = { name, reportType: uiFilters.reportType, uiFilters, createdAt: new Date().toISOString() };
     const next = [...savedReports.filter(r => r.name !== name), entry];
@@ -220,6 +282,10 @@ export default function ReportBuilderPage({
       portfolio: f.portfolio || [],
       projectManager: f.projectManager || [],
       allocationManager: f.allocationManager || [],
+      resourceStatuses: f.resourceStatuses || [],
+      resourceLocations: f.resourceLocations || [],
+      resourceWorkLocationGroup: f.resourceWorkLocationGroup || [],
+      projectStatuses: f.projectStatuses || [],
     });
     // Dispatch fetch with restored filters
     dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
@@ -242,6 +308,10 @@ export default function ReportBuilderPage({
     if (Array.isArray(filters.portfolio) && filters.portfolio.length > 0) count++;
     if (Array.isArray(filters.projectManager) && filters.projectManager.length > 0) count++;
     if (Array.isArray(filters.allocationManager) && filters.allocationManager.length > 0) count++;
+    if (Array.isArray(filters.resourceStatuses) && filters.resourceStatuses.length > 0) count++;
+    if (Array.isArray(filters.resourceLocations) && filters.resourceLocations.length > 0) count++;
+    if (Array.isArray(filters.resourceWorkLocationGroup) && filters.resourceWorkLocationGroup.length > 0) count++;
+    if (Array.isArray(filters.projectStatuses) && filters.projectStatuses.length > 0) count++;
 
     return count;
   };
@@ -251,6 +321,7 @@ export default function ReportBuilderPage({
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       {/* Toolbar */}
       <ReportBuilderToolbar
+        reportType={filters.reportType as ReportType}
         onGenerateReport={handleGenerateReport}
         onExport={handleExport}
         onShare={handleShare}
@@ -273,7 +344,12 @@ export default function ReportBuilderPage({
             portfolio: [],
             projectManager: [],
             allocationManager: [],
+            resourceStatuses: [],
+            resourceLocations: [],
+            resourceWorkLocationGroup: [],
+            projectStatuses: [],
           });
+          setFiltersExpanded(true);
         }}
         selectedFiltersCount={getSelectedFiltersCount()}
       />

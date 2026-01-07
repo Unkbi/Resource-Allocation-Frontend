@@ -99,6 +99,10 @@ export interface ReportFilters {
   projectTypeGroup: string[];
   project: string[];
   portfolio: string[];
+  resourceStatuses: string[];
+  resourceLocations: string[];
+  resourceWorkLocationGroup: string[];
+  projectStatuses: string[];
 }
 
 interface FilterSectionProps {
@@ -171,7 +175,7 @@ export default function ReportBuilderFilters({
   const [tempDateRange, setTempDateRange] = useState<DateRange<Dayjs>>(filters.customDateRange || [null, null]);
   
   // Redux selectors
-  const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
+  const { projectTypeGroups, projectTypes, location, locationGroups } = useSelector((state: RootState) => state.allSettings);
   const { portfolios } = useSelector((state: RootState) => state.portfolios);
   const { teams } = useSelector((state: RootState) => state.teams);
   const { resources } = useSelector((state: RootState) => state.resources);
@@ -234,54 +238,75 @@ export default function ReportBuilderFilters({
   ];
 
   // Prepare options from Redux data
-  const projectTypeGroupOptions = sortOptions(
-    projectTypeGroups?.map((projectTypeGroup: any) => ({
-      value: projectTypeGroup.Id,
-      label: projectTypeGroup.Name ?? '',
-    })) || []
-  );
+  const projectTypeGroupOptions = [
+    ...sortOptions(
+      projectTypeGroups?.map((projectTypeGroup: any) => ({
+        value: projectTypeGroup.Id,
+        label: projectTypeGroup.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const projectTypeOptions = sortOptions(
-    projectTypes?.map((projectType: any) => ({
-      value: projectType.Id,
-      label: projectType.Name ?? '',
-    })) || []
-  );
+  const projectTypeOptions = [
+    ...sortOptions(
+      projectTypes?.map((projectType: any) => ({
+        value: projectType.Id,
+        label: projectType.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const teamOptions = sortOptions(
-    teams?.map((team: any) => ({
-      value: team.Id,
-      label: team.Name ?? '',
-    })) || []
-  );
+  const teamOptions = [
+    ...sortOptions(
+      teams?.map((team: any) => ({
+        value: team.Id,
+        label: team.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const resourceOptions = sortOptions(
-    resources?.map((resource: any) => ({
-      value: resource.Id,
-      label: resource.FullName ?? '',
-    })) || []
-  );
+  const resourceOptions = [
+    ...sortOptions(
+      resources?.map((resource: any) => ({
+        value: resource.Id,
+        label: resource.FullName ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const portfolioOptions = sortOptions(
-    portfolios?.map((portfolio: any) => ({
-      value: portfolio.Id,
-      label: portfolio.Name ?? '',
-    })) || []
-  );
+  const portfolioOptions = [
+    ...sortOptions(
+      portfolios?.map((portfolio: any) => ({
+        value: portfolio.Id,
+        label: portfolio.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const organizationOptions = sortOptions(
-    organisations?.map((organisation: any) => ({
-      value: organisation.Id,
-      label: organisation.Name ?? '',
-    })) || []
-  );
+  const organizationOptions = [
+    ...sortOptions(
+      organisations?.map((organisation: any) => ({
+        value: organisation.Id,
+        label: organisation.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
-  const projectOptions = sortOptions(
-    projects?.map((project: any) => ({
-      value: project.Id,
-      label: project.Name ?? '',
-    })) || []
-  );
+  const projectOptions = [
+    ...sortOptions(
+      projects?.map((project: any) => ({
+        value: project.Id,
+        label: project.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
   // Get unique allocation managers from teams
   const allocationManagers = teams?.map((team: any) => {
@@ -292,15 +317,18 @@ export default function ReportBuilderFilters({
     };
   }) || [];
 
-  const allocationManagerOptions = sortOptions(
-    Array.from(
-      new Map(
-        allocationManagers
-          .filter(option => option.value !== '')
-          .map(option => [option.value, option])
-      ).values()
-    )
-  );
+  const allocationManagerOptions = [
+    ...sortOptions(
+      Array.from(
+        new Map(
+          allocationManagers
+            .filter(option => option.value !== '')
+            .map(option => [option.value, option])
+        ).values()
+      )
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
   // Get unique project managers from projects
   const projectManagers = projects?.map((project: any) => {
@@ -311,20 +339,70 @@ export default function ReportBuilderFilters({
     };
   }) || [];
 
-  const projectManagerOptions = sortOptions(
-    Array.from(
-      new Map(
-        projectManagers
-          .filter(option => option.value !== '')
-          .map(option => [option.value, option])
-      ).values()
-    )
-  );
+  const projectManagerOptions = [
+    ...sortOptions(
+      Array.from(
+        new Map(
+          projectManagers
+            .filter(option => option.value !== '')
+            .map(option => [option.value, option])
+        ).values()
+      )
+    ),
+    { value: '_BLANK_', label: '(Blanks)' },
+  ];
 
-  const resourceTypeOptions = sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type: string) => ({
-    value: type,
-    label: type.charAt(0).toUpperCase() + type.slice(1),
-  })));
+  const resourceTypeOptions = [
+    ...sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type: string) => ({
+      value: type,
+      label: type.charAt(0).toUpperCase() + type.slice(1),
+    }))),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // Resource Status Options
+  const resourceStatusOptions = [
+    ...sortOptions(
+      [...new Set(resources?.map((res: any) => res.Status).filter(Boolean))].map((status: string) => ({
+        value: status,
+        label: status,
+      }))
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // Resource Locations Options
+  const resourceLocationOptions = [
+    ...sortOptions(
+      location?.map((loc: any) => ({
+        value: loc.Id,
+        label: loc.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // Resource Work Location Group Options
+  const resourceWorkLocationGroupOptions = [
+    ...sortOptions(
+      locationGroups?.map((locGroup: any) => ({
+        value: locGroup.Id,
+        label: locGroup.Name ?? '',
+      })) || []
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
+
+  // Project Status Options
+  const projectStatusOptions = [
+    ...sortOptions(
+      [...new Set(projects?.map((proj: any) => proj.Status).filter(Boolean))].map((status: string) => ({
+        value: status,
+        label: status,
+      }))
+    ),
+    { value: '_BLANK_', label: '(Blanks)' }
+  ];
 
   // Report filter labels for FilterChips component
   const reportFilterLabels: Record<string, string> = {
@@ -339,6 +417,10 @@ export default function ReportBuilderFilters({
     projectTypeGroup: 'Project Type Group',
     project: 'Project',
     portfolio: 'Portfolio',
+    resourceStatuses: 'Resource Status',
+    resourceLocations: 'Resource Location',
+    resourceWorkLocationGroup: 'Resource Location Group',
+    projectStatuses: 'Project Status',
   };
 
   // Get display value for report filters
@@ -351,6 +433,7 @@ export default function ReportBuilderFilters({
       
       const displayValues = value.map((val: string) => {
         if (val === 'all') return '';
+        if (val === '_BLANK_') return '(Blanks)';
         
         // Map IDs to labels using option arrays
         switch (key) {
@@ -374,6 +457,14 @@ export default function ReportBuilderFilters({
             return projectOptions.find(opt => opt.value === val)?.label || val;
           case 'portfolio':
             return portfolioOptions.find(opt => opt.value === val)?.label || val;
+          case 'resourceStatuses':
+            return resourceStatusOptions.find(opt => opt.value === val)?.label || val;
+          case 'resourceLocations':
+            return resourceLocationOptions.find(opt => opt.value === val)?.label || val;
+          case 'resourceWorkLocationGroup':
+            return resourceWorkLocationGroupOptions.find(opt => opt.value === val)?.label || val;
+          case 'projectStatuses':
+            return projectStatusOptions.find(opt => opt.value === val)?.label || val;
           default:
             return val;
         }
@@ -859,7 +950,51 @@ export default function ReportBuilderFilters({
           formikProps={formikProps}
         />
         )}
+        {isFilterEnabled(filters.reportType, 'resourceStatuses') && (
+        <FilterSection
+          title="Resource Status"
+          name="resourceStatuses"
+          options={resourceStatusOptions}
+          selected={filters.resourceStatuses}
+          onChange={(value) => handleFilterChange('resourceStatuses', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {isFilterEnabled(filters.reportType, 'resourceLocations') && (
+        <FilterSection
+          title="Resource Location"
+          name="resourceLocations"
+          options={resourceLocationOptions}
+          selected={filters.resourceLocations}
+          onChange={(value) => handleFilterChange('resourceLocations', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {isFilterEnabled(filters.reportType, 'resourceWorkLocationGroup') && (
+        <FilterSection
+          title="Resource Location Group"
+          name="resourceWorkLocationGroup"
+          options={resourceWorkLocationGroupOptions}
+          selected={filters.resourceWorkLocationGroup}
+          onChange={(value) => handleFilterChange('resourceWorkLocationGroup', value)}
+          formikProps={formikProps}
+        />
+        )}
+
+        {isFilterEnabled(filters.reportType, 'projectStatuses') && (
+        <FilterSection
+          title="Project Status"
+          name="projectStatuses"
+          options={projectStatusOptions}
+          selected={filters.projectStatuses}
+          onChange={(value) => handleFilterChange('projectStatuses', value)}
+          formikProps={formikProps}
+        />
+        )}
         </Box>
+
 
         {/* Reset Filters Button */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
