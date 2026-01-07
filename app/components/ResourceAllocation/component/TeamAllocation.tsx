@@ -354,7 +354,13 @@ function TeamAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.Department || ''} />;
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Id
+        );
+        const organizationName = resourceDetails?.Organization?.Name || '';
+      
+        return <EllipsisNameCell value={organizationName || ''} />;
       },
     },
     {
