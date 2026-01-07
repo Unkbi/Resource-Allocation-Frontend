@@ -41,6 +41,7 @@ import {
 } from '@mui/x-charts';
 import DashboardWidget from '../../components/Dashboard/DashboardWidget';
 import DashboardToolbar from '../../components/Toolbar/DashboardToolbar';
+import CustomChartTooltip from '../../components/Dashboard/CustomChartTooltip';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -51,6 +52,7 @@ import {
   fetchInventoryMetrics,
 } from '../../redux/actions/dashboardAction';
 import { startMultipleChartsLoading } from '../../redux/reducers/dashboardReducer';
+import { navigateToReport } from '@/app/utils/reportNavigation';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -193,6 +195,7 @@ export default function ExecutiveDashboardPage() {
   const searchParams = useSearchParams();
   const lastRequestKeyRef = useRef({});
   const teams = useSelector(state => state.teams?.teams || []);
+  const projects = useSelector(state => state.projects?.projects || []);
   const advancedFilters = useSelector(
     state => state.dashboard.advancedFilters || {}
   );
@@ -274,7 +277,7 @@ export default function ExecutiveDashboardPage() {
   const [filteredAllocationPercentage, setFilteredAllocationPercentage] =
     useState([]);
   const [filteredTop5Projects, setFilteredTop5Projects] = useState([]);
-  const { projectTypes, projectTypeGroups } = useSelector(
+  const { projectTypes, projectTypeGroups,locationGroups } = useSelector(
     state => state.allSettings
   );
   const {
@@ -689,6 +692,59 @@ export default function ExecutiveDashboardPage() {
     if (tab === 'costs') setPersistedCostsLayouts(layouts);
   }, [STORAGE_KEYS]);
 
+  const currentWeekMonday = getMonday(selectedDate);
+  const currentWeekSunday = currentWeekMonday.add(6, 'day');
+  const lastWeekMonday = currentWeekMonday.subtract(1, 'week');
+  const lastWeekSunday = lastWeekMonday.add(6, 'day');
+
+  const threeWeeksBeforeMonday = currentWeekMonday.subtract(3, 'week');
+  const twoWeeksAfterSunday = currentWeekMonday.add(2, 'week').add(6, 'day');
+
+  /**
+   * Helper function to navigate to report page with filters
+   * Maps chart identifiers to appropriate report types and configurations
+   */
+  const navigateToReportWithFilters = useCallback((chartKey, additionalFilters = null) => {
+    // Map chart keys to report types
+    const chartToReportMap = {
+      // Overview charts
+      'plan_vs_actual_variance': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD'), },
+      'top_projects_by_variance': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'projectFTE': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: threeWeeksBeforeMonday.format('YYYY-MM-DD'),
+       customEndDate: twoWeeksAfterSunday.format('YYYY-MM-DD') },
+      'activeProjectsByType': { reportType: 'projectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'totalHeadcount': { reportType: 'resourceOnly' },
+      'allocation_by_project_type_group': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD'), },
+      //actuals by category
+      'unapprovedProjectAllocation': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'actuals_confirmation_status': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'engagementScoreOverview': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'projectHealthOverview': { reportType: 'projectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      
+      // Team charts
+      'team_headcount_distribution': { reportType: 'resourceOnly'},
+      'teamEngagementScore': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'actualsTrendWeekly': { reportType: 'resourceProjectPeriod' },
+      'underAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'overAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      
+      // Cost charts
+      'budgetVsPlanVsActual': { reportType: 'resourceProjectPeriodCost', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+    };
+
+    const config = chartToReportMap[chartKey] || { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') };
+    
+    // Add additional filters if provided
+    if (additionalFilters) {
+      config.additionalFilters = additionalFilters;
+    }
+
+    // Navigate with advanced filters and chart config
+    navigateToReport(advancedFilters, config, true);
+  }, [advancedFilters]);
+
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
     setDialogOpen(true);
@@ -1078,6 +1134,7 @@ export default function ExecutiveDashboardPage() {
                     },
                   ]}
                   margin={{ left: 45, right: 45, top: 15, bottom: 30 }}
+                  onAxisClick={() => navigateToReportWithFilters('plan_vs_actual_variance')}
                 >
                   <BarPlot />
                   <LinePlot />
@@ -1223,6 +1280,14 @@ export default function ExecutiveDashboardPage() {
                 flexDirection: 'column',
                 width: '100%',
                 height: '100%',
+              }}
+              onClick={() => {
+                const projectIds = filteredTop5Projects.map(p =>
+                  projects.find(proj => proj.Name === p.project_name)?.Id
+              );
+                navigateToReportWithFilters('top_projects_by_variance', {
+                  project: projectIds
+                });
               }}
             >
               <Typography
@@ -1396,8 +1461,22 @@ export default function ExecutiveDashboardPage() {
                       data: projectTypeCounts,
                       id: 'activeProjects',
                       label: 'Active Projects',
+                      valueFormatter: (value) => `${value} projects`,
                     },
                   ]}
+                  onAxisClick={(e,val)=>{
+                    const { dataIndex } = val || {};
+                    if (dataIndex !== undefined && sortedData[dataIndex]) {
+                      const projectType = sortedData[dataIndex]._type;
+                      const projectTypeId = projectTypeGroups.find(pt => pt.Name === projectType)?.Id;
+                      if (projectTypeId) {
+                        navigateToReportWithFilters('activeProjectsByType', {
+                          projectTypeGroup: projectTypeId,
+                          projectStatuses: 'Active'
+                        });
+                      }
+                    }
+                  }}
                   width={config.width}
                   height={config.height}
                   grid={{ horizontal: true }}
@@ -1408,9 +1487,16 @@ export default function ExecutiveDashboardPage() {
                     right: 10,
                   }}
                   colors={barColors}
+                  slots={{
+                    tooltip: CustomChartTooltip,
+                  }}
                   slotProps={{
                     legend: {
                       hidden: true,
+                    },
+                    tooltip: {
+                      trigger: 'item',
+                      disablePortal: true,
                     },
                   }}
                   sx={{
@@ -1527,6 +1613,19 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && sortedHeadcount[dataIndex]) {
+                      const groupName = sortedHeadcount[dataIndex].shore_flag;
+                      const groupId = locationGroups?.find(g => g.Name === groupName)?.Id;
+                      // Navigate to report for the selected shore flag
+                      if (groupId) {
+                        navigateToReportWithFilters('totalHeadcount', {
+                          resourceWorkLocationGroup: groupId
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -1657,6 +1756,18 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 60, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && projectTypeGroups[dataIndex]) {
+                      const groupName = projectTypeGroups[dataIndex];
+                      const groupId = projectTypeGroups?.find(g => g.Name === groupName)?.Id;
+                      if (groupId) {
+                        navigateToReportWithFilters('allocation_by_project_type_group', {
+                          projectTypeGroup: groupId
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -1735,6 +1846,15 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   width={config.width}
                   height={config.height}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && filteredUnapprovedProjectAllocation[dataIndex]) {
+                      const category = filteredUnapprovedProjectAllocation[dataIndex].category;
+                      navigateToReportWithFilters('unapprovedProjectAllocation', {
+                        actualsCategory: category
+                      });
+                    }
+                  }}
                   slotProps={{
                     legend: config.legend,
                   }}
@@ -1862,6 +1982,7 @@ export default function ExecutiveDashboardPage() {
                       fontWeight: 500,
                     },
                   }}
+                  onAxisClick={() => navigateToReportWithFilters('actuals_confirmation_status')}
                 />
               </Box>
             </Box>
@@ -1872,7 +1993,6 @@ export default function ExecutiveDashboardPage() {
 
     engagementScoreOverview: (
       <DashboardWidget
-        onClick={() => handleChartClick('Engagement Score Overview')}
         // minWidth={650}
         minHeight={300}
         autoHeight={true}
@@ -1904,6 +2024,7 @@ export default function ExecutiveDashboardPage() {
                 },
               ]}
               hasAccess={true}
+              onClick={() => navigateToReportWithFilters('engagementScoreOverview')}
             />
           );
         }}
@@ -1912,7 +2033,6 @@ export default function ExecutiveDashboardPage() {
 
     projectHealthOverview: (
       <DashboardWidget
-        onClick={() => handleChartClick('Project Health Score Overview')}
         // minWidth={650}
         minHeight={300}
         autoHeight={true}
@@ -1973,6 +2093,7 @@ export default function ExecutiveDashboardPage() {
                 },
               ]}
               hasAccess={true}
+              onClick={() => navigateToReportWithFilters('projectHealthOverview')}
             />
           );
         }}
@@ -2157,6 +2278,7 @@ export default function ExecutiveDashboardPage() {
                     },
                   }}
                   grid={{ vertical: true, horizontal: true }}
+                  onAxisClick={()=> navigateToReportWithFilters('projectFTE')}
                 />
               </Box>
             </Box>
@@ -2253,6 +2375,7 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  onAxisClick={() => navigateToReportWithFilters('budgetVsPlanVsActual')}
                 />
               </Box>
             </Box>
@@ -2390,6 +2513,18 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && sortedTeamHeadcount[dataIndex]) {
+                      const teamId = sortedTeamHeadcount[dataIndex].team_id;
+                      if (teamId) {
+                        navigateToReportWithFilters('team_headcount_distribution', {
+                          resourceStatuses: 'Active',
+                          team: teamId
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -2506,6 +2641,18 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) =>{
+                    const { dataIndex, axisValue } = axisData || {};
+                    if (dataIndex !== undefined && sortedUniqueTeams[dataIndex]) {
+                      const teamId = filteredUnapprovedActualsByTeam.find(d => d.team_name === sortedUniqueTeams[dataIndex])?.team_id;
+                      if (teamId) {
+                        navigateToReportWithFilters('unapprovedProjectActualsByTeam', {
+                         team: teamId,
+                          actualsCategory: axisValue,
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -2561,8 +2708,20 @@ export default function ExecutiveDashboardPage() {
                       label: 'Allocation',
                       id: 'coverage',
                       color: '#FF884D',
+                      valueFormatter: (value) => `${value?.toFixed(1)}%`,
                     },
                   ]}
+                  onAxisClick={(_, params) => {
+                    const { dataIndex } = params || {};
+                    if (dataIndex !== undefined && sortedCoverageData[dataIndex]) {
+                      const teamId = sortedCoverageData[dataIndex].team_id;
+                      if (teamId) {
+                        navigateToReportWithFilters('resourceCoverage', {
+                          team: teamId
+                        });
+                      }
+                    }
+                  }}
                   xAxis={[
                     {
                       data: sortedCoverageData.map(d =>
@@ -2586,11 +2745,18 @@ export default function ExecutiveDashboardPage() {
                       labelStyle: config.yAxis?.labelStyle,
                     },
                   ]}
+                  slots={{
+                    tooltip: CustomChartTooltip,
+                  }}
                   slotProps={{
                     legend: config.legend,
                     bar: {
                       borderradius: 2,
                       barwidth: 0.4,
+                    },
+                    tooltip: {
+                      trigger: 'item',
+                      disablePortal: true,
                     },
                   }}
                   grid={{ horizontal: true }}
@@ -2673,6 +2839,18 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && sortedUnderAllocated[dataIndex]) {
+                      const teamId = sortedUnderAllocated[dataIndex].team_id;
+                      if (teamId) {
+                        navigateToReportWithFilters('underAllocated', {
+                          team: teamId,
+                          utilization: 'Under-allocated'
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -2752,6 +2930,18 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && sortedOverAllocated[dataIndex]) {
+                      const teamId = sortedOverAllocated[dataIndex].team_id;
+                      if (teamId) {
+                        navigateToReportWithFilters('overAllocated', {
+                          team: teamId,
+                          utilization: 'Over-allocated'
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -2762,7 +2952,6 @@ export default function ExecutiveDashboardPage() {
 
     actualsTrendWeekly: (
       <DashboardWidget
-        onClick={() => handleChartClick('Actuals Trend')}
         minWidth={320}
         minHeight={280}
         showNoData={
@@ -2875,6 +3064,18 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData)=>{
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && periodData[dataIndex]) {
+                      const periodStart = periodData[dataIndex].period_start;
+                      endDate = dayjs(periodStart).add(6, 'day').format('YYYY-MM-DD');
+                      navigateToReportWithFilters('actualsTrendWeekly', {
+                        period: 'custom',
+                        customStartDate: periodStart,
+                        customEndDate: endDate
+                      });
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -2885,7 +3086,6 @@ export default function ExecutiveDashboardPage() {
 
     teamEngagementScore: (
       <DashboardWidget
-        onClick={() => handleChartClick('Engagement Score by Teams')}
         minWidth={320}
         minHeight={280}
         showNoData={
@@ -2971,6 +3171,17 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && sortedEngagementData[dataIndex]) {
+                      const teamId = sortedEngagementData[dataIndex].team_id;
+                      if (teamId) {
+                        navigateToReportWithFilters('teamEngagementScore', {
+                          team: teamId
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -3111,13 +3322,7 @@ export default function ExecutiveDashboardPage() {
                 label="Costs"
                 sx={{ textTransform: 'none', fontWeight: 600 }}
               />
-            )}         
-          <Tab
-            value="reports"
-            label="Reports"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          />
-          {activeTab !== 'reports' && (
+            )}
             <DashboardToolbar
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -3126,7 +3331,6 @@ export default function ExecutiveDashboardPage() {
               anchorEl={anchorEl}
               setAnchorEl={setAnchorEl}
             />
-          )}
         </Tabs>
       </CommonToolbar>
       {activeTab !== 'reports' && <Topbar />}
@@ -3166,6 +3370,7 @@ export default function ExecutiveDashboardPage() {
               totalResourceCost={totalResourceCost}
               allocationPercentage={filteredAllocationPercentage}
               hasAccessToQueryKey={hasAccessToQueryKey}
+              advancedFilters={advancedFilters}
             />
             <ResponsiveGridLayout
               className="layout"
@@ -3273,17 +3478,6 @@ export default function ExecutiveDashboardPage() {
             ))}
           </ResponsiveGridLayout>
         </>
-      )}
-      {activeTab === 'reports' && (
-        <Box
-          sx={{
-            height: 'calc(100vh - 95px)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <ReportBuilderPage />
-        </Box>
       )}
       <Dialog
         open={dialogOpen}

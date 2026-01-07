@@ -102,13 +102,11 @@ export default function ReportBuilderToolbar({
 
   const handleReportEdit = (reportId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    console.log('Edit report:', reportId);
     // TODO: Open edit dialog
   };
 
   const handleReportDelete = (reportId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    console.log('Delete report:', reportId);
     // TODO: Show confirmation dialog
   };
 

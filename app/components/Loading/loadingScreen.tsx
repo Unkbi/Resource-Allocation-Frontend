@@ -5,7 +5,7 @@ const LoadingScreen: React.FC = () => {
   return (
     <Box
       sx={{
-        height: 'calc(100vh - 31px)',
+        height: 'calc(100vh - 32px)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',

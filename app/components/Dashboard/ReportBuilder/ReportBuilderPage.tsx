@@ -14,15 +14,129 @@ import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
 import { ColumnManagementStyles, StyledDataGrid } from '../../AllocationTable/styles/StyledDataGrid';
 import { showToast } from '@/app/redux/reducers/toastReducer';
+import { useSearchParams } from 'next/navigation';
+import LoadingScreen from '@/app/components/Loading/loadingScreen';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
 }
 
+/**
+ * Parse query params and convert them to filter values
+ */
+const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string } => {
+  const filters: Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string } = {};
+  
+  // Helper to parse JSON array or return empty array
+  const parseArrayParam = (param: string | null): string[] => {
+    if (!param) return [];
+    try {
+      const parsed = JSON.parse(param);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  // Parse reportType
+  const reportType = searchParams.get('reportType');
+  if (reportType) {
+    filters.reportType = reportType as ReportType;
+  }
+
+  // Parse period
+  const period = searchParams.get('period');
+  if (period) {
+    filters.period = period;
+  }
+
+  // Parse array filters from advanced filters
+  const projectTypeGroup = searchParams.get('projectTypeGroup') || searchParams.get('ProjectTypeGroup');
+  if (projectTypeGroup) {
+    filters.projectTypeGroup = parseArrayParam(projectTypeGroup);
+  }
+
+  const projectType = searchParams.get('projectType') || searchParams.get('ProjectType');
+  if (projectType) {
+    filters.projectType = parseArrayParam(projectType);
+  }
+
+  const team = searchParams.get('team') || searchParams.get('Team');
+  if (team) {
+    filters.team = parseArrayParam(team);
+  }
+
+  const resource = searchParams.get('resource') || searchParams.get('Resource');
+  if (resource) {
+    filters.resource = parseArrayParam(resource);
+  }
+
+  const organization = searchParams.get('organization') || searchParams.get('Organization');
+  if (organization) {
+    filters.organization = parseArrayParam(organization);
+  }
+
+  const portfolio = searchParams.get('portfolio') || searchParams.get('Portfolio');
+  if (portfolio) {
+    filters.portfolio = parseArrayParam(portfolio);
+  }
+
+  const project = searchParams.get('project') || searchParams.get('Project');
+  if (project) {
+    filters.project = parseArrayParam(project);
+  }
+
+  const projectManager = searchParams.get('projectManager') || searchParams.get('ProjectManager');
+  if (projectManager) {
+    filters.projectManager = parseArrayParam(projectManager);
+  }
+
+  const allocationManager = searchParams.get('allocationManager') || searchParams.get('AllocationManager');
+  if (allocationManager) {
+    filters.allocationManager = parseArrayParam(allocationManager);
+  }
+
+  const resourceType = searchParams.get('resourceType') || searchParams.get('ResourceType');
+  if (resourceType) {
+    filters.resourceType = parseArrayParam(resourceType);
+  }
+
+ const resourceStatuses = searchParams.get('resourceStatuses') || searchParams.get('ResourceStatuses');
+  if (resourceStatuses) {
+    filters.resourceStatuses = parseArrayParam(resourceStatuses);
+  }
+
+  const resourceLocations = searchParams.get('resourceLocations') || searchParams.get('ResourceLocations');
+  if (resourceLocations) {
+    filters.resourceLocations = parseArrayParam(resourceLocations);
+  }
+  const resourceWorkLocationGroup = searchParams.get('resourceWorkLocationGroup') || searchParams.get('ResourceWorkLocationGroup');
+  if (resourceWorkLocationGroup) {
+    filters.resourceWorkLocationGroup = parseArrayParam(resourceWorkLocationGroup);
+  }
+
+  const projectStatuses = searchParams.get('projectStatuses') || searchParams.get('ProjectStatuses');
+  if (projectStatuses) {
+    filters.projectStatuses = parseArrayParam(projectStatuses);
+  }
+
+  // Parse custom date range
+  const customStartDate = searchParams.get('customStartDate');
+  const customEndDate = searchParams.get('customEndDate');
+  if (customStartDate && customEndDate) {
+    filters.customStartDate = customStartDate;
+    filters.customEndDate = customEndDate;
+  }
+
+  return filters;
+};
+
 export default function ReportBuilderPage({
   onReportGenerate,
 }: ReportBuilderProps) {
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const hasQueryParams = Boolean(searchParams && searchParams.toString());
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [filters, setFilters] = useState<ReportFilters>({
     reportType: 'resourceProjectPeriod',
@@ -49,9 +163,23 @@ export default function ReportBuilderPage({
   const [reportData, setReportData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<{ name: string; reportType: ReportType; uiFilters: ReportUIFilters; createdAt: string }[]>([]);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
+  const [pendingQueryFilters, setPendingQueryFilters] = useState<(Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string }) | null>(null);
+  const [hasAppliedQueryParams, setHasAppliedQueryParams] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(hasQueryParams);
 
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
+  
+  // Get Redux data to check if it's loaded
+  const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
+  const { portfolios } = useSelector((state: RootState) => state.portfolios);
+  const { teams } = useSelector((state: RootState) => state.teams);
+  const { resources } = useSelector((state: RootState) => state.resources);
+  const { organisations } = useSelector((state: RootState) => state.organisations);
+  const { projects } = useSelector((state: RootState) => state.projects);
+  
+  // Check if all necessary data is loaded
+  const isDataLoaded = (teams?.length ?? 0) > 0 && (resources?.length ?? 0) > 0 && (projects?.length ?? 0) > 0 && (projectTypes?.length ?? 0) > 0 && (projectTypeGroups?.length ?? 0) > 0 && (organisations?.length ?? 0) > 0 && (portfolios?.length ?? 0) > 0;
 
   // Helper function to prepare API payload from filters
   const prepareApiPayload = (filters: ReportUIFilters) => {
@@ -161,8 +289,98 @@ export default function ReportBuilderPage({
     });
   };
 
+  // Effect 1: Parse and store query params on mount
   useEffect(() => {
-    // Load last report type and filters from sessionStorage on mount
+    // Only run once on mount
+    if (hasAppliedQueryParams) return;
+    
+    // Priority 1: Check for query params from dashboard navigation
+    if (searchParams && searchParams.toString()) {
+      const queryFilters = parseQueryParams(searchParams);
+      if (Object.keys(queryFilters).length > 0) {
+        setIsInitializing(true);
+        // Store query params to apply later when data is loaded
+        setPendingQueryFilters(queryFilters);
+         // Mark that we're initializing with query params
+        return; // Skip loading from sessionStorage
+      }
+      // Query params exist but nothing to apply
+      setIsInitializing(false);
+      return;
+    }
+
+    // No query params present
+    setIsInitializing(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]); // Only run when searchParams change
+  
+  // Effect 2: Apply pending query params once data is loaded
+  useEffect(() => {
+    if (!pendingQueryFilters || hasAppliedQueryParams || !isDataLoaded) return;
+    
+    // Data is loaded, now apply the query params
+    const mergedFilters: ReportFilters = {
+      reportType: pendingQueryFilters.reportType || 'resourceProjectPeriod',
+      period: pendingQueryFilters.period || 'last_week',
+      customDateRange: pendingQueryFilters.customStartDate && pendingQueryFilters.customEndDate
+        ? [dayjs(pendingQueryFilters.customStartDate), dayjs(pendingQueryFilters.customEndDate)]
+        : undefined,
+      team: pendingQueryFilters.team || [],
+      organization: pendingQueryFilters.organization || [],
+      resourceType: pendingQueryFilters.resourceType || [],
+      resource: pendingQueryFilters.resource || [],
+      projectType: pendingQueryFilters.projectType || [],
+      projectTypeGroup: pendingQueryFilters.projectTypeGroup || [],
+      project: pendingQueryFilters.project || [],
+      portfolio: pendingQueryFilters.portfolio || [],
+      projectManager: pendingQueryFilters.projectManager || [],
+      allocationManager: pendingQueryFilters.allocationManager || [],
+      resourceStatuses: pendingQueryFilters.resourceStatuses || [],
+      resourceLocations: pendingQueryFilters.resourceLocations || [],
+      resourceWorkLocationGroup: pendingQueryFilters.resourceWorkLocationGroup || [],
+      projectStatuses: pendingQueryFilters.projectStatuses || [],
+    };
+    setFilters(mergedFilters);
+    
+    // Prepare API filters
+    const [start, end] = mergedFilters.customDateRange || [];
+    const uiFilters: ReportUIFilters = {
+      reportType: mergedFilters.reportType as ReportType,
+      period: mergedFilters.period as ReportUIFilters['period'],
+      customStartDate: start ? start.format('YYYY-MM-DD') : '',
+      customEndDate: end ? end.format('YYYY-MM-DD') : '',
+      team: mergedFilters.team,
+      organization: mergedFilters.organization,
+      resourceType: mergedFilters.resourceType,
+      resource: mergedFilters.resource,
+      projectType: mergedFilters.projectType,
+      projectTypeGroup: mergedFilters.projectTypeGroup,
+      project: mergedFilters.project,
+      portfolio: mergedFilters.portfolio,
+      projectManager: mergedFilters.projectManager,
+      allocationManager: mergedFilters.allocationManager,
+      resourceStatuses: mergedFilters.resourceStatuses,
+      resourceLocations: mergedFilters.resourceLocations,
+      resourceWorkLocationGroup: mergedFilters.resourceWorkLocationGroup,
+      projectStatuses: mergedFilters.projectStatuses,
+    };
+    
+    const apiPayload = prepareApiPayload(uiFilters);
+    
+    // Fetch the report data
+    dispatch(fetchReport({ reportType: uiFilters.reportType, uiFilters: apiPayload }));
+    setShowData(true);
+    setFiltersExpanded(false);
+    setHasAppliedQueryParams(true);
+    setPendingQueryFilters(null);
+    // Keep isInitializing true until report loads
+  }, [pendingQueryFilters, hasAppliedQueryParams, isDataLoaded, dispatch]);
+  
+  // Effect 3: Load from sessionStorage if no query params
+  useEffect(() => {
+    // Only load from sessionStorage if there are no query params and we haven't already applied them
+    if (pendingQueryFilters || hasAppliedQueryParams) return;
+    
     const savedLastReport = sessionStorage.getItem('last_generated_report');
     
     if (savedLastReport) {
@@ -197,11 +415,12 @@ export default function ReportBuilderPage({
       dispatch(fetchReport({ reportType: f.reportType, uiFilters: f }));
       setShowData(true);
       setFiltersExpanded(false);
+      setHasAppliedQueryParams(true);
       } catch (error) {
       console.error('Error loading last report:', error);
       }
     }
-  }, []);
+  }, [dispatch, pendingQueryFilters, hasAppliedQueryParams]);
 
   // Read report data and loading from Redux
   
@@ -213,9 +432,13 @@ export default function ReportBuilderPage({
         setReportGenerated(true);
         }
         setReportData(currentReport.data);
+        // Report has finished loading, clear initializing flag
+        if (isInitializing) {
+          setIsInitializing(false);
+        }
       }
     }
-  }, [currentReport, ]);
+  }, [currentReport, isInitializing]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
@@ -227,6 +450,9 @@ export default function ReportBuilderPage({
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
       setSavedReports(Array.isArray(parsed) ? parsed : []);
+      if (searchParams && searchParams.toString()) {
+        setIsInitializing(true); // Mark that we're initializing with query params
+      }
     } catch {
       setSavedReports([]);
     }
@@ -316,9 +542,22 @@ export default function ReportBuilderPage({
     return count;
   };
 
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+      {/* Show loading overlay when initializing from query params */}
+      {isInitializing && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: '#F9FAFB',
+            zIndex: 1000,
+          }}
+        >
+          <LoadingScreen />
+        </Box>
+      )}
+
       {/* Toolbar */}
       <ReportBuilderToolbar
         reportType={filters.reportType as ReportType}
