@@ -503,20 +503,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
-    if (!status) {
-      dispatch(
-        showToast({
-          open: true,
-          message: `No Status Information found, redirecting to current Week.`,
-          type: 'error',
-          position: 'bottom-left',
-          autoHideTimer: 4000,
-        })
-      );
-      router.replace(
-        `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
-      );
-    }
     setDisableView(
       (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
         (status === 'Confirmed' &&
