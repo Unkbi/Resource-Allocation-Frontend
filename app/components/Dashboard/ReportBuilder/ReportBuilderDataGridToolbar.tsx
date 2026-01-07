@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Tooltip, IconButton,Button, Box, Menu } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Tooltip, styled, IconButton,Button, Box, Menu } from '@mui/material';
 import {
   GridToolbarContainer,
   useGridApiContext,
