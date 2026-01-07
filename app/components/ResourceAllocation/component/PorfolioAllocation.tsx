@@ -13,6 +13,7 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { AllAllocations, Location } from '@/app/types';
 import {
   calculateTotalEffort,
+  DateFormat,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
@@ -365,7 +366,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const StartDate = resource?.StartDate || '';
-        return <EllipsisNameCell value={StartDate} />;
+        return <EllipsisNameCell value={DateFormat(StartDate)} />;
       },
     },
     {
@@ -380,7 +381,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const EndDate = resource?.EndDate || '';
-        return <EllipsisNameCell value={EndDate} />;
+        return <EllipsisNameCell value={DateFormat(EndDate)} />;
       },
     },
     {
@@ -707,7 +708,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate ?? ''} />
+          <EllipsisNameCell value={DateFormat(firstChild.projectStartDate) ?? ''} />
         ) : null;
       },
     },
@@ -738,7 +739,7 @@ function PortfolioAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate ?? ''} />
+          <EllipsisNameCell value={DateFormat(firstChild.projectEndDate) ?? ''} />
         ) : null;
       },
     },

@@ -31,6 +31,7 @@ import {
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
 } from '../constants/constants';
+import dayjs from 'dayjs';
 
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
@@ -826,3 +827,6 @@ export function isResourceWithinDate(resource, monday) {
   }
   return resourceStart <= monday;
 }
+
+export const DateFormat = (date) =>
+  date ? dayjs(date, 'YYYY-MM-DD').format('MM/DD/YYYY') : '';

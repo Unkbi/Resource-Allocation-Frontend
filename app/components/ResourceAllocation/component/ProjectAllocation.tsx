@@ -18,6 +18,7 @@ import {
   getTotalWeeks,
   generateDateWeekMath,
   calculateWeekRanges,
+  DateFormat,
 } from '@/app/utils/common';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
 import { getFirstChild, normalizeRow } from '@/app/utils/allocationUtils';
@@ -608,7 +609,7 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const StartDate = resource?.StartDate || '';
-        return <EllipsisNameCell value={StartDate} />;
+        return <EllipsisNameCell value={DateFormat(StartDate)} />;
       },
     },
     {
@@ -624,7 +625,7 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const EndDate = resource?.EndDate || '';
-        return <EllipsisNameCell value={EndDate} />;
+        return <EllipsisNameCell value={DateFormat(EndDate)} />;
       },
     },
     {
@@ -957,7 +958,7 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectStartDate || ''} />
+          <EllipsisNameCell value={DateFormat(firstChild.projectStartDate) || ''} />
         ) : null;
       },
     },
@@ -989,7 +990,7 @@ function ProjectAllocation({
       renderCell: (params: GridCellParams) => {
         const firstChild = getFirstChild(params);
         return firstChild ? (
-          <EllipsisNameCell value={firstChild.projectEndDate || ''} />
+          <EllipsisNameCell value={DateFormat(firstChild.projectEndDate) || ''} />
         ) : null;
       },
     },

@@ -7,6 +7,7 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
   calculateTotalEffort,
+  DateFormat,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
@@ -24,6 +25,7 @@ import {
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import dayjs from 'dayjs';
 
 interface TeamAllocationProps {
   startDate: string;
@@ -465,7 +467,7 @@ function TeamAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.StartDate || ''} />;
+        return <EllipsisNameCell value={DateFormat(resource?.StartDate) || ''} />;
       },
     },
     {
@@ -490,7 +492,7 @@ function TeamAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.EndDate || ''} />;
+        return <EllipsisNameCell value={DateFormat(resource?.EndDate) || ''} />;
       },
     },
     {
@@ -729,7 +731,7 @@ function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectStartDate || ''} />;
+        return <EllipsisNameCell value={DateFormat(allocation?.projectStartDate) || ''} />;
       },
     },
     {
@@ -742,7 +744,7 @@ function TeamAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectEndDate || ''} />;
+        return <EllipsisNameCell value={DateFormat(allocation?.projectEndDate) || ''} />;
       },
     },
     {
