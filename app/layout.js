@@ -1,4 +1,4 @@
-// app/layout.js - Test
+// app/layout.js
 import './styles/globals.css';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import StoreProvider from './StoreProvider';
