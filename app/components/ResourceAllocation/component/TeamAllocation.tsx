@@ -657,9 +657,9 @@ function TeamAllocation({
           <EllipsisNameCell
             value={
               allocation?.projectOvertimeAllowed === true
-                ? 'True'
+                ? 'Yes'
                 : allocation?.projectOvertimeAllowed === false
-                  ? 'False'
+                  ? 'No'
                   : ''
             }
           />
