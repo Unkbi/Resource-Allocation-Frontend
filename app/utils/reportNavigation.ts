@@ -46,11 +46,17 @@ export const buildReportUrl = (
   }
 
   // Add custom date range
-  if (config.customStartDate) {
-    params.set('customStartDate', config.customStartDate);
+  if (config.customStartDate || config.additionalFilters?.customStartDate) {
+    const startDate = config.customStartDate || config.additionalFilters?.customStartDate;
+    if (startDate && typeof startDate === 'string') {
+      params.set('customStartDate', startDate);
+    }
   }
-  if (config.customEndDate) {
-    params.set('customEndDate', config.customEndDate);
+  if (config.customEndDate || config.additionalFilters?.customEndDate) {
+    const endDate = config.customEndDate || config.additionalFilters?.customEndDate;
+    if (endDate && typeof endDate === 'string') {
+      params.set('customEndDate', endDate);
+    }
   }
 
   // Add additional filters from chart clicks
