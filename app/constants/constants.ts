@@ -219,6 +219,7 @@ export const TOTAL_FUTURE_WEEKS = 20; //Configurable weeks count (Previous + Cur
 export const TOTAL_FUTURE_WEEKS_ARROW = 4;
 export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DISPLAY_DATE_FORMAT = 'MMM yyyy';
+export const USA_DATE_FORMAT = 'MM/dd/yyyy';
 
 export const API_PROJECT_PORTFOLIO = '/Resource';
 export const API_AGENTLANG_KERNEL_RBAC = '/agentlang.auth';

@@ -30,6 +30,7 @@ import {
   PROJECT_TOTAL_COST_CATEGORIES,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
+  USA_DATE_FORMAT,
 } from '../constants/constants';
 import dayjs from 'dayjs';
 
@@ -828,5 +829,5 @@ export function isResourceWithinDate(resource, monday) {
   return resourceStart <= monday;
 }
 
-export const DateFormat = (date) =>
-  date ? dayjs(date, 'YYYY-MM-DD').format('MM/DD/YYYY') : '';
+export const formatDateMMDDYYYY = date =>
+  date ? format(parseISO(date), USA_DATE_FORMAT) : '';

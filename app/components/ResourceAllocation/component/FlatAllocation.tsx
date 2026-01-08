@@ -7,7 +7,7 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
   calculateTotalEffort,
-  DateFormat,
+  formatDateMMDDYYYY,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
@@ -304,7 +304,11 @@ function FlatAllocation({
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
         const resourceStartDate = allocation?.resourceStartDate;
-        return <EllipsisNameCell value={DateFormat(resourceStartDate) || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(resourceStartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -317,7 +321,9 @@ function FlatAllocation({
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
         const resourceEndDate = allocation?.resourceEndDate;
-        return <EllipsisNameCell value={DateFormat(resourceEndDate) || ''} />;
+        return (
+          <EllipsisNameCell value={formatDateMMDDYYYY(resourceEndDate) || ''} />
+        );
       },
     },
     {
@@ -490,7 +496,11 @@ function FlatAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={DateFormat(allocation?.projectStartDate) || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectStartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -502,7 +512,11 @@ function FlatAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={DateFormat(allocation?.projectEndDate) || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectEndDate) || ''}
+          />
+        );
       },
     },
     {
