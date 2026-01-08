@@ -4,9 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Typography, Box, SxProps } from '@mui/material';
 
-type ErrorType =
-  | 'noActualsAvailable'
-  | 'noActualsTracked'
+type ErrorType = 'noActualsAvailable' | 'noActualsTracked';
 
 interface ErrorPageProps {
   type?: ErrorType;
@@ -41,7 +39,7 @@ const containerStyles: SxProps = {
   justifyContent: 'center',
   height: '100%',
   width: '100%',
-  backgroundColor :'#F6F6F6'
+  backgroundColor: '#F6F6F6',
 };
 
 const imageStyles: SxProps = {
@@ -56,7 +54,7 @@ const textBoxStyles: SxProps = {
   alignItems: 'center',
   gap: 1,
   width: 683,
-  heigh :104
+  heigh: 104,
 };
 
 const subtitleStyles: SxProps = {
@@ -72,7 +70,7 @@ const subtitleStyles: SxProps = {
 
 const messageStyles: SxProps = {
   fontFamily: 'Open Sans',
-  fontWeight: 400, 
+  fontWeight: 400,
   fontSize: 16,
   lineHeight: '20px',
   textAlign: 'center',
@@ -100,7 +98,7 @@ export default function ActualsErrorPage({
   message,
   buttonLabel,
   redirectPath = '',
-  feedbackFunc = () => { },
+  feedbackFunc = () => {},
 }: ErrorPageProps) {
   const router = useRouter();
   const config = defaultConfigs[type];
@@ -113,31 +111,32 @@ export default function ActualsErrorPage({
   };
 
   const renderMessage = () => {
-      if (type === 'noActualsAvailable') {
-          return (
-              <Typography sx={messageStyles}>
-                  There are no data to display for this time period. This could be
-                  because this period is <br/>before actuals tracking got enabled, or the
-                  selected dates fall outside your start and end <br/> date range.{' '}
-                  <Box component="span" sx={{ fontWeight: 700 }}>
-                      Click
-                  </Box>{' '}
-                  on the back arrow of the browser to go back to the previous page or<br/>{' '}
-                  <Box component="span" sx={{ fontWeight: 700 }}>
-                      click
-                  </Box>{' '}
-                  on the button below to go back to the current week.
-              </Typography>
-          );
-      }
-  return (
-    <Typography sx={messageStyles}>
-          There is no data available for the selected period.<br/> {' '}
-          You are being redirected to your last view.
-    </Typography>
+    if (type === 'noActualsTracked') {
+      return (
+        <Typography sx={messageStyles}>
+          There are no data to display for this time period. This could be
+          because this period is <br />
+          before actuals tracking got enabled, or the selected dates fall
+          outside your start and end <br /> date range.{' '}
+          <Box component="span" sx={{ fontWeight: 700 }}>
+            Click
+          </Box>{' '}
+          on the back arrow of the browser to go back to the previous page or
+          <br />{' '}
+          <Box component="span" sx={{ fontWeight: 700 }}>
+            click
+          </Box>{' '}
+          on the button below to go back to the current week.
+        </Typography>
       );
+    }
+    return (
+      <Typography sx={messageStyles}>
+        There is no data available for the selected period.
+        <br /> You are being redirected to your last view.
+      </Typography>
+    );
   };
-
 
   return (
     <Box sx={containerStyles}>
@@ -149,9 +148,7 @@ export default function ActualsErrorPage({
       />
 
       <Box sx={textBoxStyles}>
-        <Typography sx={subtitleStyles}>
-          {text || config.text}
-        </Typography>
+        <Typography sx={subtitleStyles}>{text || config.text}</Typography>
 
         {renderMessage()}
       </Box>

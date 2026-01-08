@@ -6,8 +6,10 @@ import { getWeek, parseISO } from 'date-fns';
 import { useMemo } from 'react';
 
 interface ActualsCardProps {
+  period: string;
   actualAllocationData: ActualAllocations[] | null;
   actualAllocationStatus: string | null;
+  showStatus?: boolean;
   loading?: boolean;
   actualAllocationsStatusesLoading?: boolean;
   backgroundColor?: string;
@@ -15,6 +17,8 @@ interface ActualsCardProps {
   textColor?: string;
   contrastTextColor?: string;
   borderStyle?: Record<string, string>;
+  resourceStartMonday: Date | null;
+  resourceEndMonday: Date | null;
 }
 
 const ActualsCardBox = styled(Box)(({ theme }) => ({
@@ -73,13 +77,17 @@ const WeekCardBox = styled(Box)(({ theme }) => ({
 }));
 
 const ActualsCard = ({
+  period,
   actualAllocationData,
   actualAllocationStatus,
+  showStatus = true,
   loading,
   actualAllocationsStatusesLoading,
   backgroundColor = 'rgba(30, 58, 139, 1)',
   periodPillBackgroundColor = 'rgba(255, 255, 255, 1)',
   borderStyle = {},
+  resourceStartMonday,
+  resourceEndMonday,
 }: ActualsCardProps) => {
   const totalPlannedAllocation = useMemo(
     () =>
@@ -103,41 +111,89 @@ const ActualsCard = ({
     if (loading || actualAllocationsStatusesLoading) {
       return false;
     }
-    if (!actualAllocationData?.[0]?.Period) {
+    if (!period) {
       return false;
     }
-    return (
-      getMondayOfISO(new Date().toISOString()) >
-      getMondayOfISO(actualAllocationData?.[0]?.Period)
-    );
-  }, [actualAllocationData, loading, actualAllocationsStatusesLoading]);
+    return getMondayOfISO(new Date().toISOString()) > getMondayOfISO(period);
+  }, [period, loading, actualAllocationsStatusesLoading]);
 
   const isCurrentWeek = useMemo(() => {
     if (loading || actualAllocationsStatusesLoading) {
       return false;
     }
-    if (!actualAllocationData?.[0]?.Period) {
+    if (!period) {
       return false;
     }
-    return (
-      getMondayOfISO(new Date().toISOString()) ===
-      getMondayOfISO(actualAllocationData?.[0]?.Period)
-    );
-  }, [actualAllocationData, loading, actualAllocationsStatusesLoading]);
+    return getMondayOfISO(new Date().toISOString()) === getMondayOfISO(period);
+  }, [period, loading, actualAllocationsStatusesLoading]);
 
   const isFutureWeek = useMemo(() => {
     if (loading || actualAllocationsStatusesLoading) {
       return false;
     }
-    if (!actualAllocationData?.[0]?.Period) {
+    if (!period) {
       return true;
     }
-    return (
-      getMondayOfISO(new Date().toISOString()) <
-      getMondayOfISO(actualAllocationData?.[0]?.Period)
-    );
-  }, [actualAllocationData, loading, actualAllocationsStatusesLoading]);
+    return getMondayOfISO(new Date().toISOString()) < getMondayOfISO(period);
+  }, [period, loading, actualAllocationsStatusesLoading]);
 
+  const isWithinResourceRange = useMemo(() => {
+    if (!resourceStartMonday || !resourceEndMonday || !period) {
+      return true;
+    }
+    const periodMonday = parseISO(period);
+    return (
+      periodMonday >= resourceStartMonday && periodMonday <= resourceEndMonday
+    );
+  }, [resourceStartMonday, resourceEndMonday, period]);
+
+  const getStatusIcon = () => {
+    if (loading || actualAllocationsStatusesLoading) {
+      return <Skeleton width={16} height={16} sx={{ marginTop: 1 }} />;
+    }
+    switch (actualAllocationStatus) {
+      case 'Confirmed':
+        return (
+          <img
+            src="/images/icons/confirmed.svg"
+            alt="Confirmed"
+            width={16}
+            height={16}
+            style={{ marginTop: 8 }}
+          />
+        );
+      case 'In-Progress':
+        return (
+          <img
+            src="/images/icons/inprogress.svg"
+            alt="In Progress"
+            width={16}
+            height={16}
+            style={{ marginTop: 8 }}
+          />
+        );
+      case 'Not Started':
+        return (
+          <img
+            src="/images/icons/notstarted-new.svg"
+            alt="Not Started"
+            width={24}
+            height={24}
+            style={{ marginTop: 8 }}
+          />
+        );
+      default:
+        return (
+          <img
+            src="/images/icons/notstarted-new.svg"
+            alt="Not Started"
+            width={24}
+            height={24}
+            style={{ marginTop: 8 }}
+          />
+        );
+    }
+  };
   const getPeriodPillText = () => {
     if (loading || actualAllocationsStatusesLoading) {
       return <Skeleton width={40} height={20} />;
@@ -159,6 +215,7 @@ const ActualsCard = ({
   return (
     <WeekCardBox
       sx={{
+        opacity: loading || isWithinResourceRange ? 1 : 0.5,
         backgroundColor: loading
           ? backgroundColor
           : isCurrentWeek
@@ -169,17 +226,29 @@ const ActualsCard = ({
         ...borderStyle,
       }}
     >
-      <ActualsPeriodPill
-        sx={{
-          ...(loading
-            ? { backgroundColor: periodPillBackgroundColor }
-            : !isCurrentWeek
-              ? { backgroundColor: 'rgba(30, 58, 139, 1)' }
-              : {}),
-        }}
-      >
-        {getPeriodPillText()}
-      </ActualsPeriodPill>
+      {loading || (showStatus && actualAllocationStatus) || isPastWeek ? (
+        <ActualsPeriodPill
+          sx={{
+            backgroundColor: 'transparent',
+            top: '2px',
+            left: 'calc(100% - 132px)',
+          }}
+        >
+          {getStatusIcon()}
+        </ActualsPeriodPill>
+      ) : (
+        <ActualsPeriodPill
+          sx={{
+            ...(loading
+              ? { backgroundColor: periodPillBackgroundColor }
+              : !isCurrentWeek
+                ? { backgroundColor: 'rgba(30, 58, 139, 1)' }
+                : {}),
+          }}
+        >
+          {getPeriodPillText()}
+        </ActualsPeriodPill>
+      )}
       <ActualsCardBox sx={{ marginTop: -2, border: 'none' }}>
         <WeekNumnerHeaderTypography
           sx={{
@@ -193,11 +262,11 @@ const ActualsCard = ({
           ) : (
             `Week ${
               !isNaN(
-                getWeek(parseISO(actualAllocationData?.[0]?.Period || ''), {
+                getWeek(parseISO(period || ''), {
                   weekStartsOn: 1,
                 })
               )
-                ? getWeek(parseISO(actualAllocationData?.[0]?.Period || ''), {
+                ? getWeek(parseISO(period || ''), {
                     weekStartsOn: 1,
                   })
                 : '--'
@@ -205,7 +274,15 @@ const ActualsCard = ({
           )}
         </WeekNumnerHeaderTypography>
         <AllocationInfoBox>
-          <Typography sx={{ fontSize: 16, paddingTop: 0.5 }}>
+          <Typography
+            sx={{
+              color: isCurrentWeek
+                ? 'rgba(255, 255, 255, 1)'
+                : 'rgba(0, 0, 0, 1)',
+              fontSize: 16,
+              paddingTop: 0.5,
+            }}
+          >
             Allocation:{' '}
           </Typography>
           <AllocationsDataBox>
@@ -234,9 +311,13 @@ const ActualsCard = ({
                 }}
               >
                 <span style={{ color: 'rgba(150, 154, 162, 1)' }}>
-                  {`${totalPlannedAllocation ? totalPlannedAllocation.toFixed(1) : '--'} /`}
+                  {isWithinResourceRange
+                    ? `${totalPlannedAllocation ? totalPlannedAllocation.toFixed(1) : '--'} /`
+                    : 'N/A /'}
                 </span>{' '}
-                {`${totalActualAllocation ? totalActualAllocation.toFixed(1) : '--'}`}
+                {isWithinResourceRange
+                  ? `${totalActualAllocation ? totalActualAllocation.toFixed(1) : '--'}`
+                  : 'N/A'}
               </Typography>
             )}
             <Typography

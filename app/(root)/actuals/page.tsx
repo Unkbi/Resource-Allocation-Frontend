@@ -15,7 +15,6 @@ import { useSelector } from 'react-redux';
 import {
   ActualAllocations,
   ActualAllocationTableRow,
-  ActualStatus,
   Resource,
 } from '@/app/types';
 import {
@@ -25,8 +24,8 @@ import {
   getMondayOfISO,
   getSundayOfISO,
   getUserIdFromEmail,
-  getWeekNumber,
   isCurrentWeek,
+  isFutureWeek,
 } from '@/app/utils/common';
 import {
   setActualAllocationsStatus,
@@ -46,7 +45,6 @@ import { CrudPermissions, withRBAC } from '@/app/components/HOC/withRBAC';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
 import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
-import ActualsErrorPage from '@/app/components/ErrorPage/ActualsErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import {
   DATE_FORMAT,
@@ -125,14 +123,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setIsModified(modified);
   };
 
-  const actualsErrorType =
-    showNoActualsAvailable
-      ? 'noActualsAvailable'
-      : showNoActualsTracked ? 'noActualsTracked'
+  const actualsErrorType = showNoActualsAvailable
+    ? 'noActualsAvailable'
+    : showNoActualsTracked
+      ? 'noActualsTracked'
       : null;
 
   const userId = getUserIdFromEmail(resources || [], email);
-  const currentResource: Resource[] = resources?.filter(
+  const currentResource: Resource | undefined = resources?.find(
     (r: Resource) => r?.Id === userId
   );
 
@@ -148,15 +146,35 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     return () => clearTimeout(timer);
   }, [user]);
 
-  const userTitle = currentResource[0]?.Role || '--';
-  const userTeam = currentResource[0]?.Department || '--';
+  const userTitle = currentResource
+    ? ((currentResource as Resource)?.Role ?? '--')
+    : '--';
+  const userTeam = currentResource
+    ? ((currentResource as Resource)?.Department ?? '--')
+    : '--';
 
-  const ValidPrevDate = currentResource[0]?.StartDate;
+  const ValidResourceStartDate = currentResource
+    ? (currentResource as Resource)?.StartDate
+    : null;
 
-  const resourceValidPrevDate = ValidPrevDate ? parseISO(ValidPrevDate) : null;
+  const ValidResourceEndDate = currentResource
+    ? (currentResource as Resource)?.EndDate
+    : null;
 
-  const resourceStartMonday = resourceValidPrevDate
-    ? startOfWeek(resourceValidPrevDate, { weekStartsOn: 1 })
+  const resourceValidStartDate = ValidResourceStartDate
+    ? parseISO(ValidResourceStartDate)
+    : null;
+
+  const resourceValidEndDate = ValidResourceEndDate
+    ? parseISO(ValidResourceEndDate)
+    : null;
+
+  const resourceStartMonday = resourceValidStartDate
+    ? startOfWeek(resourceValidStartDate, { weekStartsOn: 1 })
+    : null;
+
+  const resourceEndMonday = resourceValidEndDate
+    ? startOfWeek(resourceValidEndDate, { weekStartsOn: 1 })
     : null;
 
   const currentViewMonday = startDate
@@ -168,6 +186,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ? currentViewMonday <= resourceStartMonday
       : false;
 
+  const disableNext =
+    currentViewMonday && resourceEndMonday
+      ? currentViewMonday >= resourceEndMonday
+      : false;
+
   const handleValidationChange = (hasInvalid: boolean) => {
     setHasInvalidRows(hasInvalid);
   };
@@ -176,7 +199,126 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setShow(val);
   };
 
+  const updatePlannedAllocationsIfNeeded = () => {
+    const allRows = apiRef.current
+      .getAllRowIds()
+      .map(id => apiRef.current.getRow(id));
+    const modifiedPlannedAllocations = actualAllocations?.[startDate || '']
+      ?.map((allocation: ActualAllocations) => {
+        const row = allRows.find(
+          r => r.id === allocation.Id
+        ) as ActualAllocationTableRow;
+        if (
+          row &&
+          (allocation.AllocationEntered !== row.planned ||
+            allocation.Notes !== row.comments)
+        ) {
+          return {
+            ...allocation,
+            AllocationEntered: row.planned ?? 0,
+            Notes: row.comments,
+          };
+        }
+      })
+      .filter(allocation => allocation !== undefined);
+
+    const allocList = modifiedPlannedAllocations?.map(allocation => ({
+      AllocationEntered: allocation.AllocationEntered,
+      Id: allocation.Id,
+      Period: allocation.Period,
+      Project: allocation.Project,
+      ProjectName: allocation.ProjectName,
+      Resource: allocation.Resource,
+      Notes: allocation.Notes,
+    }));
+    if (allocList && allocList.length > 0 && allocList[0].Resource) {
+      if (
+        allocList.some(
+          alloc =>
+            alloc.Notes === null ||
+            alloc.Notes === undefined ||
+            alloc.Notes === ''
+        )
+      ) {
+        dispatch(
+          showToastAction(
+            true,
+            `Please enter a comment(s) to Update Allocation(s).`,
+            'error'
+          )
+        );
+        return;
+      }
+      try {
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'UPDATE_BULK_ALLOCATIONS',
+            payload: {
+              Resource: allocList[0].Resource,
+              allocList: allocList,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(res => {
+            dispatch(
+              showToastAction(
+                true,
+                `Successfully updated allocations.`,
+                'success'
+              )
+            );
+
+            dispatch({
+              type: GET_ACTUAL_ALLOCATIONS,
+              payload: {
+                resource: userId,
+                startDate: generateDateWeekMath(
+                  'WEEK_MINUS',
+                  1,
+                  parseISO(startDate ?? '')
+                ),
+                endDate: generateDateWeekMath(
+                  'WEEK_PLUS',
+                  1,
+                  parseISO(endDate ?? '')
+                ),
+              },
+            });
+          })
+          .catch((error: any) => {
+            console.error('Error updating planned allocations:', error);
+            dispatch(
+              showToastAction(
+                true,
+                error?.response?.data
+                  ? error?.response?.data
+                  : `Error updating planned allocation.`,
+                'error'
+              )
+            );
+          });
+      } catch (error: any) {
+        console.error('Error updating planned allocations:', error);
+        dispatch(
+          showToastAction(
+            true,
+            error?.response?.data
+              ? error?.response?.data
+              : `Error updating planned allocation.`,
+            'error'
+          )
+        );
+      }
+    }
+  };
+
   const validateDataBeforeConfirm = () => {
+    if (isFutureWeek(parseISO(startDate))) {
+      updatePlannedAllocationsIfNeeded();
+      return;
+    }
     if (isFridayOrAfterFriday) {
       const allRows = apiRef.current
         .getAllRowIds()
@@ -419,29 +561,29 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
       // Validate paramsStartDate and paramsEndDate are in "YYYY-MM-DD" format
       if (paramsStartDate && !dateRegex.test(paramsStartDate)) {
-        // invalid format -> show no actuals available
-        setShowNoActualsAvailable(true);
+        // Redirect to current Week.
+        router.replace(
+          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+        );
         return;
       }
 
-      // If Week from params is not accessable week redirect to current Week.
-      if (resourceStartMonday) {
+      // If Week from params is not accessable week for Resource, show No Actuals Available Page.
+      if (resourceStartMonday && resourceEndMonday) {
         if (
-          paramsStartDate &&
-          parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday
+          (paramsStartDate &&
+            parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday) ||
+          parseISO(getMondayOfISO(paramsStartDate)) > resourceEndMonday
         ) {
-          setShowNoActualsAvailable(true);
+          setShowNoActualsTracked(true);
+          dispatch(
+            setCalendarDate({
+              startDate: getMondayOfISO(paramsStartDate),
+              endDate: getSundayOfISO(paramsStartDate || startDate),
+            })
+          );
           return;
         }
-      }
-
-      // If paramsStartDate for any day greater than today, set to Monday of current Week.
-      if (
-        parseISO(paramsStartDate) >
-        parseISO(getMondayOfISO(new Date().toISOString()))
-      ) {
-        setShowNoActualsAvailable(true);
-        return;
       }
 
       // If paramsStartDate is not the Monday of the week, set to Monday of that Week.
@@ -573,12 +715,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
-    if (!status) {
-      setShowNoActualsTracked(true);
-      return;
-    }
     setDisableView(
       (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
+        isFutureWeek(parseISO(startDate)) ||
         (status === 'Confirmed' &&
           startDate !== null &&
           !isCurrentWeek(parseISO(startDate)))
@@ -877,6 +1016,13 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   width={'100%'}
                 >
                   <ActualsCard
+                    period={
+                      generateDateWeekMath(
+                        'WEEK_MINUS',
+                        1,
+                        parseISO(startDate ?? '')
+                      ) || ''
+                    }
                     actualAllocationData={
                       actualAllocations[
                         generateDateWeekMath(
@@ -901,19 +1047,32 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     }
                     backgroundColor="rgba(202, 213, 226, 0.2)"
                     periodPillBackgroundColor="rgba(30, 58, 139, 1)"
+                    resourceStartMonday={resourceStartMonday}
+                    resourceEndMonday={resourceEndMonday}
                   />
                   <ActualsCard
+                    period={startDate}
                     actualAllocationData={actualAllocations[startDate]}
                     actualAllocationStatus={
                       actualAllocationsStatuses[startDate]
                     }
+                    showStatus={false}
                     loading={loading}
                     actualAllocationsStatusesLoading={
                       actualAllocationsStatusesLoading
                     }
                     borderStyle={{ borderWidth: '2px', borderBottom: 'none' }}
+                    resourceStartMonday={resourceStartMonday}
+                    resourceEndMonday={resourceEndMonday}
                   />
                   <ActualsCard
+                    period={
+                      generateDateWeekMath(
+                        'WEEK_PLUS',
+                        1,
+                        parseISO(startDate ?? '')
+                      ) || ''
+                    }
                     actualAllocationData={
                       actualAllocations[
                         generateDateWeekMath(
@@ -938,17 +1097,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     }
                     backgroundColor="rgba(251, 251, 251, 1)"
                     periodPillBackgroundColor="rgba(30, 58, 139, 1)"
+                    resourceStartMonday={resourceStartMonday}
+                    resourceEndMonday={resourceEndMonday}
                   />
                 </Box>
               )}
               <ActualTable
                 data={formattedActualAllocations || []}
+                currentResource={currentResource}
                 dataProcessing={loading}
                 rows={rows}
                 setRows={setRows}
                 rowValidationErrors={rowValidationErrors}
                 setRowValidationErrors={setRowValidationErrors}
                 disableView={disableView}
+                enablePlannedColumn={isFutureWeek(parseISO(startDate || ''))}
                 startDate={startDate}
                 endDate={endDate}
                 apiRef={apiRef}
@@ -964,106 +1127,106 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 setDialogSource={setDialogSource}
                 setDeleteDialogOpen={setDeleteDialogOpen}
                 actualsErrorType={actualsErrorType}
-                />
-                { !actualsErrorType && (
-                  <Box display="flex" justifyContent="space-between" mt={1}>
-                    <Button
-                      startIcon={<ChevronLeftIcon />}
-                      onClick={() => {
-                        if (isModified) {
-                          setDialogSource('prev');
-                          setDeleteDialogOpen(true);
-                        } else {
-                          handlePrev();
-                        }
-                      }}
-                      disabled={disablePrev}
-                      sx={{
-                        fontSize: '14px',
-                        color: '#152e75',
-                        textTransform: 'none',
-                        '&:hover': {
-                          backgroundColor: 'transparent',
-                        },
-                        '& .MuiButton-startIcon': {
-                          marginRight: '0px',
-                        },
-                      }}
-                      variant="text"
-                    >
-                      Prev Week
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      sx={{
-                        // @ts-ignore
-                        bgcolor: theme => theme.palette.sideBarColor.main,
-                        px: 2,
-                        width: '192px',
-                        height: '36px',
-                        borderRadius: '5px',
-                      }}
-                      disabled={
-                        (!permissions['ActualsStatus'].c &&
-                          !permissions['ActualsStatus'].u) ||
-                        loadingPermissions ||
-                        dataProcessing ||
-                        formattingActualAllocations ||
-                        (status !== null &&
-                          startDate !== null &&
-                          status !== 'In-Progress' &&
-                          status !== 'Not Started' &&
-                          // Enable button if it's the current week even if status is 'Confirmed'
-                          !isCurrentWeek(parseISO(startDate)) &&
-                          (!isModified || show || hasInvalidRows))
+                disablePrev={disablePrev}
+                disableNext={disableNext}
+              />
+              {!actualsErrorType && (
+                <Box display="flex" justifyContent="space-between" mt={1}>
+                  <Button
+                    startIcon={<ChevronLeftIcon />}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handlePrev();
                       }
-                      onClick={validateDataBeforeConfirm}
-                    >
-                      <Typography
-                        sx={{
-                          color: '#FFF',
-                          textAlign: 'center',
-                          fontFamily: 'Open Sans',
-                          fontSize: 14,
-                          fontWeight: 600,
-                          textTransform: 'none',
-                        }}
-                      >
-                        {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
-                      </Typography>
-                    </Button>
+                    }}
+                    disabled={disablePrev}
+                    sx={{
+                      fontSize: '14px',
+                      color: '#152e75',
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: 'transparent',
+                      },
+                      '& .MuiButton-startIcon': {
+                        marginRight: '0px',
+                      },
+                    }}
+                    variant="text"
+                  >
+                    Prev Week
+                  </Button>
 
-                    <Button
-                      endIcon={<ChevronRightIcon />}
-                      onClick={() => {
-                        if (isModified) {
-                          setDialogSource('next');
-                          setDeleteDialogOpen(true);
-                        } else {
-                          handleNext();
-                        }
-                      }}
-                      disabled={
-                        startDate ? isCurrentWeek(parseISO(startDate)) : false
-                      }
+                  <Button
+                    variant="contained"
+                    sx={{
+                      // @ts-ignore
+                      bgcolor: theme => theme.palette.sideBarColor.main,
+                      px: 2,
+                      width: '192px',
+                      height: '36px',
+                      borderRadius: '5px',
+                    }}
+                    disabled={
+                      (!permissions['ActualsStatus'].c &&
+                        !permissions['ActualsStatus'].u) ||
+                      loadingPermissions ||
+                      dataProcessing ||
+                      formattingActualAllocations ||
+                      (status !== null &&
+                        startDate !== null &&
+                        status !== 'In-Progress' &&
+                        status !== 'Not Started' &&
+                        // Enable button if it's the current week even if status is 'Confirmed'
+                        !isCurrentWeek(parseISO(startDate)) &&
+                        (!isModified || show || hasInvalidRows))
+                    }
+                    onClick={validateDataBeforeConfirm}
+                  >
+                    <Typography
                       sx={{
-                        color: '#152e75',
-                        fontSize: '14px',
+                        color: '#FFF',
+                        textAlign: 'center',
+                        fontFamily: 'Open Sans',
+                        fontSize: 14,
+                        fontWeight: 600,
                         textTransform: 'none',
-                        '&:hover': {
-                          backgroundColor: 'transparent',
-                        },
-                        '& .MuiButton-endIcon': {
-                          marginLeft: '0px',
-                        },
                       }}
-                      variant="text"
                     >
-                      Next Week
-                    </Button>
-                  </Box>
-                )}
+                      {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
+                    </Typography>
+                  </Button>
+
+                  <Button
+                    endIcon={<ChevronRightIcon />}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('next');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handleNext();
+                      }
+                    }}
+                    disabled={disableNext}
+                    sx={{
+                      color: '#152e75',
+                      fontSize: '14px',
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: 'transparent',
+                      },
+                      '& .MuiButton-endIcon': {
+                        marginLeft: '0px',
+                      },
+                    }}
+                    variant="text"
+                  >
+                    Next Week
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Box>
         ) : (

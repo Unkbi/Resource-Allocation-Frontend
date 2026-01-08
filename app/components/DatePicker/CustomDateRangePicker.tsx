@@ -124,6 +124,8 @@ interface CustomDateRangePickerProps {
   isProjectForm?: boolean;
   showCalendarIconOnlyHere?: boolean;
   singleClick?: boolean;
+  minDate?: string | null;
+  maxDate?: string | null;
 }
 
 export default function CustomDateRangePicker({
@@ -144,6 +146,8 @@ export default function CustomDateRangePicker({
   isProjectForm = false,
   showCalendarIconOnlyHere = false,
   singleClick = false,
+  minDate = null,
+  maxDate = null,
 }: CustomDateRangePickerProps) {
   const { setFieldValue } = formikProps;
 
@@ -264,6 +268,8 @@ export default function CustomDateRangePicker({
           }}
         >
           <DateRangePicker
+            minDate={minDate ? dayjs(minDate) : undefined}
+            maxDate={maxDate ? dayjs(maxDate) : undefined}
             closeOnSelect={!singleClick}
             calendars={1}
             displayWeekNumber

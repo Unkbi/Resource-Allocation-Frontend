@@ -31,7 +31,7 @@ import ProjectMenu from './ProjectMenu';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { ActualAllocationTableRow } from '@/app/types';
+import { ActualAllocationTableRow, Resource } from '@/app/types';
 import {
   generateFirstAndLastMonthYear,
   isCurrentWeek,
@@ -90,6 +90,7 @@ const roundToOneDecimal = (num: number) => {
 
 interface ActualTableProps {
   data: ActualAllocationTableRow[];
+  currentResource: Resource | undefined;
   dataProcessing: boolean;
   rows: ActualAllocationTableRow[];
   setRows: React.Dispatch<React.SetStateAction<ActualAllocationTableRow[]>>;
@@ -103,6 +104,7 @@ interface ActualTableProps {
   endDate: string | null | any;
   apiRef: React.RefObject<GridApi>;
   disableView?: boolean;
+  enablePlannedColumn?: boolean;
   onValidationChange?: (hasInvalidRows: boolean) => void;
   setShow?: (val: boolean) => void;
   onModificationChange?: (isModified: boolean) => void;
@@ -117,11 +119,14 @@ interface ActualTableProps {
   isModified: boolean;
   setDialogSource: (source: 'prev' | 'next') => void;
   setDeleteDialogOpen: (open: boolean) => void;
-  actualsErrorType?: any
+  actualsErrorType?: any;
+  disablePrev?: boolean;
+  disableNext?: boolean;
 }
 
 export default function ActualTable({
   data,
+  currentResource,
   dataProcessing,
   rows,
   setRows,
@@ -131,6 +136,7 @@ export default function ActualTable({
   endDate,
   apiRef,
   disableView = false,
+  enablePlannedColumn = false,
   setShow,
   onValidationChange,
   onModificationChange,
@@ -142,7 +148,9 @@ export default function ActualTable({
   isModified,
   setDialogSource,
   setDeleteDialogOpen,
-  actualsErrorType
+  actualsErrorType,
+  disablePrev = false,
+  disableNext = false,
 }: ActualTableProps) {
   const router = useRouter();
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
@@ -154,7 +162,7 @@ export default function ActualTable({
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
-  const { status, actualsStatusLoading } = useSelector(
+  const { actualAllocationsStatuses, actualsStatusLoading } = useSelector(
     (state: RootState) => state.actualAllocations
   );
   const [showProjectMenu, setShowProjectMenu] = useState(false);
@@ -361,7 +369,8 @@ export default function ActualTable({
           params.row.id === 'total' ||
           params.row.type === 'divider' ||
           !isUnplannedRow(params.row) ||
-          (status === 'confirmed' && !isCurrentWeek(startDate))
+          (actualAllocationsStatuses?.[startDate] == 'confirmed' &&
+            !isCurrentWeek(startDate))
         ) {
           return params.value;
         }
@@ -409,10 +418,13 @@ export default function ActualTable({
       headerName: 'Planned',
       type: 'number',
       width: 70,
+      editable: enablePlannedColumn,
       align: 'center',
       headerAlign: 'center',
       headerClassName: 'header-planned',
-      cellClassName: 'col-cell-planned',
+      cellClassName: enablePlannedColumn
+        ? 'col-cell-actuals'
+        : 'col-cell-actuals disabled-cell',
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -461,14 +473,14 @@ export default function ActualTable({
     {
       field: 'comments',
       headerName: 'Comments / Project updates',
-      editable: !disableView,
+      editable: enablePlannedColumn || !disableView,
       flex: 2,
       minWidth: 230,
       headerClassName: 'header-comments',
       cellClassName: params =>
         params.id === 'total'
           ? 'disabled-cell-dark'
-          : `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
+          : `col-cell-comments ${!enablePlannedColumn && disableView ? 'disabled-cell' : ''} ${
               rowValidationErrors[params.id as string]?.comments &&
               (!params.row.comments || !params.row.comments.trim())
                 ? 'comment-error-cell'
@@ -487,7 +499,7 @@ export default function ActualTable({
           <CommentCell
             {...params}
             readonly={true}
-            disableView={disableView}
+            disableView={!enablePlannedColumn && disableView}
             showInitialError={
               rowValidationErrors[params.id as string]?.comments
             }
@@ -753,13 +765,16 @@ export default function ActualTable({
             ) : (
               <span
                 style={{
-                  color: status === 'Confirmed' ? '#3CC55F' : '#FF7912',
+                  color:
+                    actualAllocationsStatuses?.[startDate] === 'Confirmed'
+                      ? '#3CC55F'
+                      : '#FF7912',
                   fontWeight: 600,
                   fontSize: '14px',
                   fontFamily: 'Open Sans',
                 }}
               >
-                {status ?? 'Not Started'}
+                {actualAllocationsStatuses?.[startDate] ?? 'Not Started'}
               </span>
             )}
           </Typography>
@@ -773,6 +788,7 @@ export default function ActualTable({
             }}
           >
             <IconButton
+              disabled={disablePrev}
               sx={{
                 marginBottom: '8px',
                 color: dataProcessing
@@ -802,9 +818,12 @@ export default function ActualTable({
                 format="MMM DD"
                 handleDateField={handleDateFieldInternal}
                 singleClick={true}
+                minDate={currentResource?.StartDate || null}
+                maxDate={currentResource?.EndDate || null}
               />
             </Box>
             <IconButton
+              disabled={disableNext}
               sx={{
                 marginLeft: '15px',
                 marginBottom: '8px',
@@ -853,92 +872,97 @@ export default function ActualTable({
           </Link>
         </Box>
 
-        <Box sx={{ height: 350 }}> 
+        <Box sx={{ height: 350 }}>
           {actualsErrorType ? (
             <ActualsErrorPage
               type={actualsErrorType}
               redirectPath={`/actuals?startDate=${currentWeekMonday}`}
-            />) : (
-          <DataGridPremium
-            rowHeight={60}
-            apiRef={apiRef}
-            rows={getOrganizedRows()}
-            columns={columns}
-            loading={dataProcessing}
-            disableColumnMenu
-            disableColumnSorting
-            editMode="cell"
-            onCellClick={(params, event) => {
-              // prevent MUI from starting edit automatically
-              event.defaultMuiPrevented = true;
+            />
+          ) : (
+            <DataGridPremium
+              rowHeight={60}
+              apiRef={apiRef}
+              rows={getOrganizedRows()}
+              columns={columns}
+              loading={dataProcessing}
+              disableColumnMenu
+              disableColumnSorting
+              editMode="cell"
+              onCellClick={(params, event) => {
+                // prevent MUI from starting edit automatically
+                event.defaultMuiPrevented = true;
 
-              // Ignore clicks on non-editable cells
-              if (!params.isEditable) return;
+                // Ignore clicks on non-editable cells
+                if (!params.isEditable) return;
 
-              const mode = apiRef.current.getCellMode(params.id, params.field);
+                const mode = apiRef.current.getCellMode(
+                  params.id,
+                  params.field
+                );
 
-              // Already editing? skip
-              if (mode === 'edit') return;
+                // Already editing? skip
+                if (mode === 'edit') return;
 
-              // Trigger edit immediately
-              apiRef.current.startCellEditMode({
-                id: params.id,
-                field: params.field,
-              });
-            }}
-            isRowSelectable={params =>
-              params.row.type !== 'divider' &&
-              params.row.id !== 'second-total-row'
-            }
-            isCellEditable={params => {
-              if (disableView) return false;
-              if (params.id === 'total' || params.row.id === 'divider')
-                return false;
-              return true;
-            }}
-            hideFooter
-            disableRowSelectionOnClick
-            onCellKeyDown={handleCellKeyDown}
-            processRowUpdate={handleProcessRowUpdate}
-            getRowClassName={params => {
-              const isLastRow =
-                params?.row?.id ===
-                getOrganizedRows()[getOrganizedRows().length - 1]?.id;
-              if (!isLastRow && params.row.sectionEnd === 'planned')
-                return 'section-end-planned';
-              if (!isLastRow && params.row.sectionEnd === 'unplanned')
-                return 'section-end-unplanned';
-              if (!isLastRow && params.row.sectionEnd === 'other')
-                return 'section-end-other';
-              if (isLastRow) return 'last-row';
-              return 'first-header-row';
-            }}
-            sx={{
-              fontSize: '0.875rem',
-              ...actualsTableStyles,
-            }}
-            slots={{
-              //@ts-ignore
-              noRowsOverlay: NoActualsRowsOverlay,
-            }}
-            slotProps={{
-              loadingOverlay: {
-                variant: 'skeleton',
-                noRowsVariant: 'skeleton',
-              },
-            }}
-            pinnedRows={{
-              top: [
-                {
-                  id: 'total',
-                  project: 'Total',
-                  planned: totalPlanned,
-                  actuals: totalActuals,
-                  comments: '',
+                // Trigger edit immediately
+                apiRef.current.startCellEditMode({
+                  id: params.id,
+                  field: params.field,
+                });
+              }}
+              isRowSelectable={params =>
+                params.row.type !== 'divider' &&
+                params.row.id !== 'second-total-row'
+              }
+              isCellEditable={params => {
+                if (disableView && !enablePlannedColumn) return false;
+                if (params.id === 'total' || params.row.id === 'divider')
+                  return false;
+                return true;
+              }}
+              hideFooter
+              disableRowSelectionOnClick
+              onCellKeyDown={handleCellKeyDown}
+              processRowUpdate={handleProcessRowUpdate}
+              getRowClassName={params => {
+                const isLastRow =
+                  params?.row?.id ===
+                  getOrganizedRows()[getOrganizedRows().length - 1]?.id;
+                if (!isLastRow && params.row.sectionEnd === 'planned')
+                  return 'section-end-planned';
+                if (!isLastRow && params.row.sectionEnd === 'unplanned')
+                  return 'section-end-unplanned';
+                if (!isLastRow && params.row.sectionEnd === 'other')
+                  return 'section-end-other';
+                if (isLastRow) return 'last-row';
+                return 'first-header-row';
+              }}
+              sx={{
+                fontSize: '0.875rem',
+                ...actualsTableStyles,
+              }}
+              slots={{
+                //@ts-ignore
+                noRowsOverlay: NoActualsRowsOverlay,
+              }}
+              slotProps={{
+                loadingOverlay: {
+                  variant: 'skeleton',
+                  noRowsVariant: 'skeleton',
                 },
-              ],
-            }}
-          />)}
+              }}
+              pinnedRows={{
+                top: [
+                  {
+                    id: 'total',
+                    project: 'Total',
+                    planned: totalPlanned,
+                    actuals: totalActuals,
+                    comments: '',
+                  },
+                ],
+              }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -951,7 +975,7 @@ export default function ActualTable({
           border: '1px solid #E5E7EB',
         }}
       >
-        { !actualsErrorType && (
+        {!actualsErrorType && (
           <Button
             variant="text"
             size="small"
