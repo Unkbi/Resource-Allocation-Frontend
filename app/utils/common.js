@@ -696,6 +696,14 @@ export function isCurrentWeek(date) {
   return isSameWeek(startOfCurrentWeek, startOfDateWeek, { weekStartsOn: 1 });
 }
 
+export function isFutureWeek(date) {
+  const today = new Date();
+  return isBefore(
+    startOfISOWeek(today, { weekStartsOn: 1 }),
+    startOfISOWeek(date, { weekStartsOn: 1 })
+  );
+}
+
 export function isCurrentOrPastWeek(date) {
   const today = new Date();
   return (

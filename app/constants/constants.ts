@@ -331,3 +331,7 @@ export const teamsViewsGrouping = [
   'Flat',
 ];
 export const projectViewsGrouping = ['Portfolio', 'Project'];
+
+export const past = 'past';
+export const future = 'future';
+export const current = 'current';

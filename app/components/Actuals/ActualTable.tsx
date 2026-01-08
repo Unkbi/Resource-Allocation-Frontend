@@ -9,6 +9,8 @@ import {
   ListItemIcon,
   ListItemText,
   IconButton,
+  Skeleton,
+  Link,
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -29,12 +31,23 @@ import ProjectMenu from './ProjectMenu';
 import { fetchAllocationTheme } from '@/app/redux/actions/settingsAction';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { ActualAllocationTableRow } from '@/app/types';
-import { isCurrentWeek } from '@/app/utils/common';
+import { ActualAllocationTableRow, Resource } from '@/app/types';
+import {
+  generateFirstAndLastMonthYear,
+  isCurrentWeek,
+  getMondayOfISO,
+  getSundayOfISO,
+} from '@/app/utils/common';
 //@ts-ignore
-import { getQuarter, getYear, getWeek, parseISO, format } from 'date-fns';
+import { parseISO, format, isSameWeek, startOfWeek, isBefore } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import NoActualsRowsOverlay from '../ResourceAllocation/component/NoActualsRowsOverlay';
 import ProjectActualsStatusCell from './ProjectActualsStatusCell';
+import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
+import ActualsErrorPage from '../ErrorPage/ActualsErrorPage';
+import { current, future, past } from '@/app/constants/constants';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -77,6 +90,7 @@ const roundToOneDecimal = (num: number) => {
 
 interface ActualTableProps {
   data: ActualAllocationTableRow[];
+  currentResource: Resource | undefined;
   dataProcessing: boolean;
   rows: ActualAllocationTableRow[];
   setRows: React.Dispatch<React.SetStateAction<ActualAllocationTableRow[]>>;
@@ -86,10 +100,11 @@ interface ActualTableProps {
       Record<string, { actuals: boolean; comments: boolean }>
     >
   >;
-  startDate: string | null;
-  endDate: string | null;
+  startDate: string | null | any;
+  endDate: string | null | any;
   apiRef: React.RefObject<GridApi>;
   disableView?: boolean;
+  enablePlannedColumn?: boolean;
   onValidationChange?: (hasInvalidRows: boolean) => void;
   setShow?: (val: boolean) => void;
   onModificationChange?: (isModified: boolean) => void;
@@ -98,10 +113,20 @@ interface ActualTableProps {
     newRow: GridValidRowModel,
     oldRow: GridValidRowModel
   ) => GridValidRowModel;
+  formattingActualAllocations: any;
+  handlePrev: () => void;
+  handleNext: () => void;
+  isModified: boolean;
+  setDialogSource: (source: 'prev' | 'next') => void;
+  setDeleteDialogOpen: (open: boolean) => void;
+  actualsErrorType?: any;
+  disablePrev?: boolean;
+  disableNext?: boolean;
 }
 
 export default function ActualTable({
   data,
+  currentResource,
   dataProcessing,
   rows,
   setRows,
@@ -111,12 +136,23 @@ export default function ActualTable({
   endDate,
   apiRef,
   disableView = false,
+  enablePlannedColumn = false,
   setShow,
   onValidationChange,
   onModificationChange,
   confirmSignal,
   handleProcessRowUpdate,
+  formattingActualAllocations,
+  handlePrev,
+  handleNext,
+  isModified,
+  setDialogSource,
+  setDeleteDialogOpen,
+  actualsErrorType,
+  disablePrev = false,
+  disableNext = false,
 }: ActualTableProps) {
+  const router = useRouter();
   const [mainMenuAnchor, setMainMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -126,7 +162,9 @@ export default function ActualTable({
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
-  const { status } = useSelector((state: RootState) => state.actualAllocations);
+  const { actualAllocationsStatuses, actualsStatusLoading } = useSelector(
+    (state: RootState) => state.actualAllocations
+  );
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -146,6 +184,18 @@ export default function ActualTable({
   const [hasPersonalTime, setHasPersonalTime] = useState(false);
   const [baselineRows, setBaselineRows] =
     useState<ActualAllocationTableRow[]>(data);
+
+  function getWeekStatus(periodIso?: string): 'past' | 'current' | 'future' {
+    if (dataProcessing) return current;
+    if (!periodIso) return future;
+    const period = parseISO(periodIso);
+    const now = new Date();
+    if (isSameWeek(period, now, { weekStartsOn: 1 })) return current;
+    const periodStart = startOfWeek(period, { weekStartsOn: 1 });
+    const nowStart = startOfWeek(now, { weekStartsOn: 1 });
+    return isBefore(periodStart, nowStart) ? past : future;
+  }
+
   useEffect(() => {
     if (allocationTheme.length === 1 && allocationTheme[0].__id__ === '') {
       dispatch(fetchAllocationTheme());
@@ -319,7 +369,8 @@ export default function ActualTable({
           params.row.id === 'total' ||
           params.row.type === 'divider' ||
           !isUnplannedRow(params.row) ||
-          (status === 'confirmed' && !isCurrentWeek(startDate))
+          (actualAllocationsStatuses?.[startDate] == 'confirmed' &&
+            !isCurrentWeek(startDate))
         ) {
           return params.value;
         }
@@ -367,10 +418,13 @@ export default function ActualTable({
       headerName: 'Planned',
       type: 'number',
       width: 70,
+      editable: enablePlannedColumn,
       align: 'center',
       headerAlign: 'center',
       headerClassName: 'header-planned',
-      cellClassName: 'col-cell-planned',
+      cellClassName: enablePlannedColumn
+        ? 'col-cell-actuals'
+        : 'col-cell-actuals disabled-cell',
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -419,14 +473,14 @@ export default function ActualTable({
     {
       field: 'comments',
       headerName: 'Comments / Project updates',
-      editable: !disableView,
+      editable: enablePlannedColumn || !disableView,
       flex: 2,
       minWidth: 230,
       headerClassName: 'header-comments',
       cellClassName: params =>
         params.id === 'total'
           ? 'disabled-cell-dark'
-          : `col-cell-comments ${disableView ? 'disabled-cell' : ''} ${
+          : `col-cell-comments ${!enablePlannedColumn && disableView ? 'disabled-cell' : ''} ${
               rowValidationErrors[params.id as string]?.comments &&
               (!params.row.comments || !params.row.comments.trim())
                 ? 'comment-error-cell'
@@ -445,7 +499,7 @@ export default function ActualTable({
           <CommentCell
             {...params}
             readonly={true}
-            disableView={disableView}
+            disableView={!enablePlannedColumn && disableView}
             showInitialError={
               rowValidationErrors[params.id as string]?.comments
             }
@@ -612,112 +666,303 @@ export default function ActualTable({
       disabled: hasPersonalTime,
     },
   ];
+
+  const handleCopyToActuals = () => {
+    apiRef.current
+      .getAllRowIds()
+      .map(id => apiRef.current.getRow(id))
+      .filter(row => row.id !== 'total' && row.project)
+      .forEach(row =>
+        handleProcessRowUpdate(
+          {
+            ...row,
+            actuals: row.planned,
+            projectActualsStatus:
+              !row.projectActualsStatus ||
+              row.projectActualsStatus === 'No Data'
+                ? 'On Track'
+                : row.projectActualsStatus,
+          },
+          row
+        )
+      );
+  };
+
+  const handleDateFieldInternal = (payload: any) => {
+    if (!payload) return;
+    const clickedDate = payload?.startDate ?? payload;
+    if (!clickedDate) return;
+
+    const monday = getMondayOfISO(clickedDate);
+    const sunday = getSundayOfISO(clickedDate);
+    dispatch(
+      updateStartAndEndDate({
+        startDate: monday,
+        endDate: sunday,
+      })
+    );
+
+    router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+  };
+
+  const first = generateFirstAndLastMonthYear(
+    parseISO(startDate),
+    'MMM dd',
+    true
+  );
+  const last = generateFirstAndLastMonthYear(parseISO(endDate), 'MMM dd', true);
+
+  const currentWeekMonday = getMondayOfISO(new Date().toISOString());
+
   return (
     <>
-      <Box borderRadius={1} overflow="hidden" width={730}>
+      <Box overflow="hidden" width={730}>
         <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
-          bgcolor="#1976d2"
+          bgcolor={
+            getWeekStatus(startDate) === past
+              ? 'rgba(202, 213, 226, 0.2)'
+              : getWeekStatus(startDate) === current
+                ? 'rgba(30, 58, 139, 1)'
+                : 'rgba(251, 251, 251, 1)' // future
+          }
+          borderLeft="1px solid rgba(202, 213, 226, 1)"
+          borderRight="1px solid rgba(202, 213, 226, 1)"
+          borderBottom="1px solid rgba(202, 213, 226, 1)"
           color="white"
+          height={60}
           px={2}
           py={1}
         >
-          <Typography fontWeight={600} fontSize=" 0.875rem">
-            {`Q${getQuarter(parseISO(startDate || ''))} ${getYear(startDate || '')}`}
+          <Typography
+            style={{
+              fontWeight: 400,
+              fontSize: '14px',
+              fontFamily: 'Open Sans',
+              color: dataProcessing
+                ? '#FFFFFF'
+                : getWeekStatus(startDate) === current
+                  ? '#FFFFFF'
+                  : '#000000',
+            }}
+          >
+            Status :{' '}
+            {actualsStatusLoading ||
+            dataProcessing ||
+            formattingActualAllocations ? (
+              <Skeleton
+                variant="text"
+                sx={{
+                  display: 'inline-block',
+                  width: '80px',
+                  height: '21px',
+                  marginLeft: '4px',
+                  verticalAlign: 'middle',
+                }}
+              />
+            ) : (
+              <span
+                style={{
+                  color:
+                    actualAllocationsStatuses?.[startDate] === 'Confirmed'
+                      ? '#3CC55F'
+                      : '#FF7912',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  fontFamily: 'Open Sans',
+                }}
+              >
+                {actualAllocationsStatuses?.[startDate] ?? 'Not Started'}
+              </span>
+            )}
           </Typography>
-          <Typography fontWeight={600} fontSize="0.875rem">
-            {`Week ${getWeek(parseISO(startDate || ''), {
-              weekStartsOn: 1,
-            })}`}
-          </Typography>
-          <Typography fontWeight={600} fontSize="0.875rem">
-            {formatWeekRangeFromStrings(startDate, endDate)}
-          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              height: '64px',
+              pt: '6px',
+              px: 1,
+            }}
+          >
+            <IconButton
+              disabled={disablePrev}
+              sx={{
+                marginBottom: '8px',
+                color: dataProcessing
+                  ? '#FFFFFF'
+                  : getWeekStatus(startDate) === current
+                    ? '#FFFFFF'
+                    : '#000000',
+              }}
+              onClick={() => {
+                if (isModified) {
+                  setDialogSource('prev');
+                  setDeleteDialogOpen(true);
+                } else {
+                  handlePrev();
+                }
+              }}
+            >
+              <ChevronLeftIcon />
+            </IconButton>
+            <Box className="rangePicker" sx={{ display: 'flex' }}>
+              <CustomDateRangePicker
+                placeholder={`${first} - ${last}`}
+                isButton={true}
+                value={{ StartDate: startDate, EndDate: endDate }}
+                showCalendarIconOnlyHere
+                showLabel={false}
+                format="MMM DD"
+                handleDateField={handleDateFieldInternal}
+                singleClick={true}
+                minDate={currentResource?.StartDate || null}
+                maxDate={currentResource?.EndDate || null}
+              />
+            </Box>
+            <IconButton
+              disabled={disableNext}
+              sx={{
+                marginLeft: '15px',
+                marginBottom: '8px',
+                color: dataProcessing
+                  ? '#FFFFFF'
+                  : getWeekStatus(startDate) === current
+                    ? '#FFFFFF'
+                    : '#000000',
+              }}
+              onClick={() => {
+                if (isModified) {
+                  setDialogSource('next');
+                  setDeleteDialogOpen(true);
+                } else {
+                  handleNext();
+                }
+              }}
+            >
+              <ChevronRightIcon />
+            </IconButton>
+          </Box>
+          <Link
+            onClick={() => !disableView && handleCopyToActuals()}
+            sx={{ cursor: disableView ? 'not-allowed' : 'pointer' }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 600,
+                fontStyle: 'Medium',
+                fontSize: '14px',
+                lineHeight: '24px',
+                letterSpacing: '0%',
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                textDecoration: 'underline',
+                textDecorationStyle: 'solid',
+                textDecorationOffset: '0%',
+                textDecorationThickness: '0%',
+                color: disableView
+                  ? 'rgba(37, 99, 235, 1)'
+                  : 'rgba(70, 169, 250, 1)',
+              }}
+            >
+              Copy Plan to Actuals
+            </Typography>
+          </Link>
         </Box>
 
         <Box sx={{ height: 350 }}>
-          <DataGridPremium
-            rowHeight={60}
-            apiRef={apiRef}
-            rows={getOrganizedRows()}
-            columns={columns}
-            loading={dataProcessing}
-            disableColumnMenu
-            disableColumnSorting
-            editMode="cell"
-            onCellClick={(params, event) => {
-              // prevent MUI from starting edit automatically
-              event.defaultMuiPrevented = true;
+          {actualsErrorType ? (
+            <ActualsErrorPage
+              type={actualsErrorType}
+              redirectPath={`/actuals?startDate=${currentWeekMonday}`}
+            />
+          ) : (
+            <DataGridPremium
+              rowHeight={60}
+              apiRef={apiRef}
+              rows={getOrganizedRows()}
+              columns={columns}
+              loading={dataProcessing}
+              disableColumnMenu
+              disableColumnSorting
+              editMode="cell"
+              onCellClick={(params, event) => {
+                // prevent MUI from starting edit automatically
+                event.defaultMuiPrevented = true;
 
-              // Ignore clicks on non-editable cells
-              if (!params.isEditable) return;
+                // Ignore clicks on non-editable cells
+                if (!params.isEditable) return;
 
-              const mode = apiRef.current.getCellMode(params.id, params.field);
+                const mode = apiRef.current.getCellMode(
+                  params.id,
+                  params.field
+                );
 
-              // Already editing? skip
-              if (mode === 'edit') return;
+                // Already editing? skip
+                if (mode === 'edit') return;
 
-              // Trigger edit immediately
-              apiRef.current.startCellEditMode({
-                id: params.id,
-                field: params.field,
-              });
-            }}
-            isRowSelectable={params =>
-              params.row.type !== 'divider' &&
-              params.row.id !== 'second-total-row'
-            }
-            isCellEditable={params => {
-              if (disableView) return false;
-              if (params.id === 'total' || params.row.id === 'divider')
-                return false;
-              return true;
-            }}
-            hideFooter
-            disableRowSelectionOnClick
-            onCellKeyDown={handleCellKeyDown}
-            processRowUpdate={handleProcessRowUpdate}
-            getRowClassName={params => {
-              const isLastRow =
-                params?.row?.id ===
-                getOrganizedRows()[getOrganizedRows().length - 1]?.id;
-              if (!isLastRow && params.row.sectionEnd === 'planned')
-                return 'section-end-planned';
-              if (!isLastRow && params.row.sectionEnd === 'unplanned')
-                return 'section-end-unplanned';
-              if (!isLastRow && params.row.sectionEnd === 'other')
-                return 'section-end-other';
-              if (isLastRow) return 'last-row';
-              return 'first-header-row';
-            }}
-            sx={{
-              fontSize: '0.875rem',
-              ...actualsTableStyles,
-            }}
-            slots={{
-              //@ts-ignore
-              noRowsOverlay: NoActualsRowsOverlay,
-            }}
-            slotProps={{
-              loadingOverlay: {
-                variant: 'skeleton',
-                noRowsVariant: 'skeleton',
-              },
-            }}
-            pinnedRows={{
-              top: [
-                {
-                  id: 'total',
-                  project: 'Total',
-                  planned: totalPlanned,
-                  actuals: totalActuals,
-                  comments: '',
+                // Trigger edit immediately
+                apiRef.current.startCellEditMode({
+                  id: params.id,
+                  field: params.field,
+                });
+              }}
+              isRowSelectable={params =>
+                params.row.type !== 'divider' &&
+                params.row.id !== 'second-total-row'
+              }
+              isCellEditable={params => {
+                if (disableView && !enablePlannedColumn) return false;
+                if (params.id === 'total' || params.row.id === 'divider')
+                  return false;
+                return true;
+              }}
+              hideFooter
+              disableRowSelectionOnClick
+              onCellKeyDown={handleCellKeyDown}
+              processRowUpdate={handleProcessRowUpdate}
+              getRowClassName={params => {
+                const isLastRow =
+                  params?.row?.id ===
+                  getOrganizedRows()[getOrganizedRows().length - 1]?.id;
+                if (!isLastRow && params.row.sectionEnd === 'planned')
+                  return 'section-end-planned';
+                if (!isLastRow && params.row.sectionEnd === 'unplanned')
+                  return 'section-end-unplanned';
+                if (!isLastRow && params.row.sectionEnd === 'other')
+                  return 'section-end-other';
+                if (isLastRow) return 'last-row';
+                return 'first-header-row';
+              }}
+              sx={{
+                fontSize: '0.875rem',
+                ...actualsTableStyles,
+              }}
+              slots={{
+                //@ts-ignore
+                noRowsOverlay: NoActualsRowsOverlay,
+              }}
+              slotProps={{
+                loadingOverlay: {
+                  variant: 'skeleton',
+                  noRowsVariant: 'skeleton',
                 },
-              ],
-            }}
-          />
+              }}
+              pinnedRows={{
+                top: [
+                  {
+                    id: 'total',
+                    project: 'Total',
+                    planned: totalPlanned,
+                    actuals: totalActuals,
+                    comments: '',
+                  },
+                ],
+              }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -730,20 +975,22 @@ export default function ActualTable({
           border: '1px solid #E5E7EB',
         }}
       >
-        <Button
-          variant="text"
-          size="small"
-          disabled={disableView}
-          sx={{
-            color: '#2563EB',
-            textTransform: 'none',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-          onClick={handleClick}
-        >
-          + Add Unplanned Actuals
-        </Button>
+        {!actualsErrorType && (
+          <Button
+            variant="text"
+            size="small"
+            disabled={disableView}
+            sx={{
+              color: '#2563EB',
+              textTransform: 'none',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+            onClick={handleClick}
+          >
+            + Add Unplanned Actuals
+          </Button>
+        )}
         <Menu
           anchorEl={mainMenuAnchor}
           open={Boolean(mainMenuAnchor) && !showProjectMenu}
