@@ -30,7 +30,9 @@ import {
   PROJECT_TOTAL_COST_CATEGORIES,
   TOTAL_FUTURE_WEEKS,
   TOTAL_FUTURE_WEEKS_ARROW,
+  USA_DATE_FORMAT,
 } from '../constants/constants';
+import dayjs from 'dayjs';
 
 // Calculate total effort from weekly columns
 export const calculateTotalEffort = row => {
@@ -826,3 +828,6 @@ export function isResourceWithinDate(resource, monday) {
   }
   return resourceStart <= monday;
 }
+
+export const formatDateMMDDYYYY = date =>
+  date ? format(parseISO(date), USA_DATE_FORMAT) : '';
