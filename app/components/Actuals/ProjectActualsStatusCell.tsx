@@ -34,7 +34,7 @@ interface ProjectActualsStatusCellProps {
   ) => void;
   setRowValidationErrors: React.Dispatch<
     React.SetStateAction<
-      Record<string, { actuals: boolean; comments: boolean }>
+      Record<string, { planned: boolean; actuals: boolean; comments: boolean }>
     >
   >;
 }
@@ -92,12 +92,12 @@ const ProjectActualsStatusCell = ({
       if (status === 'On Track') {
         setRowValidationErrors(prev => ({
           ...prev,
-          [row.id]: { actuals: false, comments: false },
+          [row.id]: { planned: false, actuals: false, comments: false },
         }));
       } else if (status === 'At Risk' || status === 'Off Track') {
         setRowValidationErrors(prev => ({
           ...prev,
-          [row.id]: { actuals: false, comments: true },
+          [row.id]: { planned: false, actuals: false, comments: true },
         }));
       }
       handleProcessRowUpdate(
@@ -111,7 +111,7 @@ const ProjectActualsStatusCell = ({
       // If the same status is clicked again, reset to 'No Data'
       setRowValidationErrors(prev => ({
         ...prev,
-        [row.id]: { actuals: false, comments: false },
+        [row.id]: { planned: false, actuals: false, comments: false },
       }));
 
       handleProcessRowUpdate(
