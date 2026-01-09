@@ -108,34 +108,34 @@ const ActualsCard = ({
   );
 
   const isPastWeek = useMemo(() => {
-    if (loading || actualAllocationsStatusesLoading) {
+    if (loading) {
       return false;
     }
     if (!period) {
       return false;
     }
     return getMondayOfISO(new Date().toISOString()) > getMondayOfISO(period);
-  }, [period, loading, actualAllocationsStatusesLoading]);
+  }, [period, loading]);
 
   const isCurrentWeek = useMemo(() => {
-    if (loading || actualAllocationsStatusesLoading) {
+    if (loading) {
       return false;
     }
     if (!period) {
       return false;
     }
     return getMondayOfISO(new Date().toISOString()) === getMondayOfISO(period);
-  }, [period, loading, actualAllocationsStatusesLoading]);
+  }, [period, loading]);
 
   const isFutureWeek = useMemo(() => {
-    if (loading || actualAllocationsStatusesLoading) {
+    if (loading) {
       return false;
     }
     if (!period) {
       return true;
     }
     return getMondayOfISO(new Date().toISOString()) < getMondayOfISO(period);
-  }, [period, loading, actualAllocationsStatusesLoading]);
+  }, [period, loading]);
 
   const isWithinResourceRange = useMemo(() => {
     if (!resourceStartMonday || !resourceEndMonday || !period) {
@@ -195,7 +195,7 @@ const ActualsCard = ({
     }
   };
   const getPeriodPillText = () => {
-    if (loading || actualAllocationsStatusesLoading) {
+    if (loading) {
       return <Skeleton width={40} height={20} />;
     }
 
