@@ -16,6 +16,7 @@ import {
   ActualAllocations,
   ActualAllocationTableRow,
   Resource,
+  Team,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -23,6 +24,7 @@ import {
   getFridayOfISO,
   getMondayOfISO,
   getSundayOfISO,
+  getTeamForResource,
   getUserIdFromEmail,
   isCurrentWeek,
   isFutureWeek,
@@ -63,7 +65,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const {
     actualAllocations,
     actualAllocationsStatuses,
-    actualsStatus,
     status,
     calendarDate,
     dataProcessing,
@@ -79,6 +80,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     lastName = '',
   } = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
+  const { teams, teamsResources } = useSelector(
+    (state: RootState) => state.teams
+  );
   const { loading: resourcesLoading } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
@@ -150,7 +154,13 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     ? ((currentResource as Resource)?.Role ?? '--')
     : '--';
   const userTeam = currentResource
-    ? ((currentResource as Resource)?.Department ?? '--')
+    ? (
+        getTeamForResource(
+          (currentResource as Resource)?.Id,
+          teams,
+          teamsResources
+        ) as Team
+      )?.Name
     : '--';
 
   const ValidResourceStartDate = currentResource
