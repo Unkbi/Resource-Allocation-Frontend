@@ -94,10 +94,13 @@ interface ActualTableProps {
   dataProcessing: boolean;
   rows: ActualAllocationTableRow[];
   setRows: React.Dispatch<React.SetStateAction<ActualAllocationTableRow[]>>;
-  rowValidationErrors: Record<string, { actuals: boolean; comments: boolean }>;
+  rowValidationErrors: Record<
+    string,
+    { planned: boolean; actuals: boolean; comments: boolean }
+  >;
   setRowValidationErrors: React.Dispatch<
     React.SetStateAction<
-      Record<string, { actuals: boolean; comments: boolean }>
+      Record<string, { planned: boolean; actuals: boolean; comments: boolean }>
     >
   >;
   startDate: string | null | any;
@@ -422,9 +425,10 @@ export default function ActualTable({
       align: 'center',
       headerAlign: 'center',
       headerClassName: 'header-planned',
-      cellClassName: enablePlannedColumn
-        ? 'col-cell-actuals'
-        : 'col-cell-actuals disabled-cell',
+      cellClassName: params =>
+        `col-cell-actuals ${!enablePlannedColumn ? 'disabled-cell' : ''} ${
+          rowValidationErrors[params.id as string]?.planned ? 'error-cell' : ''
+        }`,
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -565,7 +569,32 @@ export default function ActualTable({
       return updatedRows;
     });
     // Set validation to true immediately
-    if (
+    // Future Weeks
+    if (enablePlannedColumn) {
+      if (
+        (newRow.planned === 0 || newRow.planned === undefined) &&
+        (!newRow.comments || !newRow.comments.trim())
+      ) {
+        setRowValidationErrors(prev => ({
+          ...prev,
+          [newRow.id]: { planned: true, comments: true },
+        }));
+        if (onValidationChange) {
+          onValidationChange(true);
+        }
+      } else {
+        setRowValidationErrors(prev => ({
+          ...prev,
+          [newRow.id]: {
+            planned: newRow.planned === 0 || newRow.planned === undefined,
+            comments: !newRow.comments || !newRow.comments.trim(),
+          },
+        }));
+      }
+    }
+
+    // Past or Current Weeks
+    else if (
       (newRow.actuals === 0 || newRow.actuals === undefined) &&
       (!newRow.comments || !newRow.comments.trim())
     ) {
@@ -851,6 +880,7 @@ export default function ActualTable({
           >
             <Typography
               sx={{
+                opacity: enablePlannedColumn || disableView ? '0.5' : '1',
                 fontWeight: 600,
                 fontStyle: 'Medium',
                 fontSize: '14px',
@@ -862,9 +892,7 @@ export default function ActualTable({
                 textDecorationStyle: 'solid',
                 textDecorationOffset: '0%',
                 textDecorationThickness: '0%',
-                color: disableView
-                  ? 'rgba(37, 99, 235, 1)'
-                  : 'rgba(70, 169, 250, 1)',
+                color: 'rgba(70, 169, 250, 1)',
               }}
             >
               Copy Plan to Actuals
@@ -979,7 +1007,7 @@ export default function ActualTable({
           <Button
             variant="text"
             size="small"
-            disabled={disableView}
+            disabled={!enablePlannedColumn && disableView}
             sx={{
               color: '#2563EB',
               textTransform: 'none',
@@ -988,7 +1016,9 @@ export default function ActualTable({
             }}
             onClick={handleClick}
           >
-            + Add Unplanned Actuals
+            {enablePlannedColumn
+              ? '+ Add Unplanned Work'
+              : '+ Add Unplanned Actuals'}
           </Button>
         )}
         <Menu

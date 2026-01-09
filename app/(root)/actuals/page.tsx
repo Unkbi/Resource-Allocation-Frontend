@@ -93,7 +93,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     useState<boolean>(true);
   const [rows, setRows] = useState<ActualAllocationTableRow[]>([]);
   const [rowValidationErrors, setRowValidationErrors] = useState<
-    Record<string, { actuals: boolean; comments: boolean }>
+    Record<string, { planned: boolean; actuals: boolean; comments: boolean }>
   >({});
   const apiRef = useGridApiRef();
   const [hasInvalidRows, setHasInvalidRows] = useState(false);
@@ -203,6 +203,13 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     const allRows = apiRef.current
       .getAllRowIds()
       .map(id => apiRef.current.getRow(id));
+
+    // If there are validation errors, block the update
+    if (Object.keys(rowValidationErrors || {}).length > 0) {
+      dispatch(showToastAction(true, 'Must fill required fields.', 'error'));
+      return;
+    }
+
     const modifiedPlannedAllocations = actualAllocations?.[startDate || '']
       ?.map((allocation: ActualAllocations) => {
         const row = allRows.find(
@@ -222,22 +229,46 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       })
       .filter(allocation => allocation !== undefined);
 
-    const allocList = modifiedPlannedAllocations?.map(allocation => ({
-      AllocationEntered: allocation.AllocationEntered,
-      Id: allocation.Id,
-      Period: allocation.Period,
-      Project: allocation.Project,
-      ProjectName: allocation.ProjectName,
-      Resource: allocation.Resource,
-      Notes: allocation.Notes,
-    }));
+    // Include new rows (upsert) - rows that don't have a matching allocation Id
+    const existingIds = new Set(
+      (actualAllocations?.[startDate || ''] || []).map(a => a.Id)
+    );
+    const newRows = allRows
+      .filter(r => r && r.project && !existingIds.has(r.id))
+      .map(r => {
+        const projectId = projects?.find((p: any) => p.Name === r.project)?.Id;
+        return {
+          AllocationEntered: r.planned ?? 0,
+          Period: startDate,
+          Project: projectId || null,
+          ProjectName: r.project,
+          Resource: userId,
+          Notes: r.comments || '',
+        } as any;
+      });
+
+    const allocList = [
+      ...(modifiedPlannedAllocations?.map(allocation => ({
+        AllocationEntered: allocation.AllocationEntered,
+        Id: allocation.Id,
+        Period: allocation.Period,
+        Project: allocation.Project,
+        ProjectName: allocation.ProjectName,
+        Resource: allocation.Resource,
+        Notes: allocation.Notes,
+      })) || []),
+      ...newRows,
+    ];
     if (allocList && allocList.length > 0 && allocList[0].Resource) {
       if (
         allocList.some(
           alloc =>
-            alloc.Notes === null ||
-            alloc.Notes === undefined ||
-            alloc.Notes === ''
+            actualAllocations?.[startDate || ''].find(
+              actualAlloc => actualAlloc.Id === alloc.Id
+            )?.AllocationEntered !== alloc?.AllocationEntered &&
+            (alloc.Notes === null ||
+              alloc.Notes === undefined ||
+              alloc.Notes === '')
         )
       ) {
         dispatch(
@@ -254,7 +285,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           dispatch({
             type: 'UPDATE_BULK_ALLOCATIONS',
             payload: {
-              Resource: allocList[0].Resource,
+              resourceId: allocList[0].Resource,
               allocList: allocList,
               resolve,
               reject,
@@ -760,6 +791,104 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (newRow.id === 'total' || newRow.id === 'second-total') {
       return oldRow;
     }
+    // Handle future Weeks
+    // 1) New rows can be added — for those rows Planned and Comments are mandatory.
+    // 2) Existing rows: if planned changed then Comments are mandatory.
+    if (isFutureWeek(parseISO(startDate || ''))) {
+      const existingAlloc = actualAllocations?.[startDate || '']?.find(
+        (alloc: ActualAllocations) => alloc.Id === newRow.id
+      );
+      const isNewRow = !existingAlloc;
+
+      const plannedChanged =
+        !isNewRow && newRow.planned !== existingAlloc?.AllocationEntered;
+
+      const plannedInvalidForNew =
+        isNewRow &&
+        (newRow.planned === null ||
+          newRow.planned === undefined ||
+          newRow.planned === 0);
+      const commentsInvalidForNew =
+        isNewRow && (!newRow.comments || !newRow.comments.trim());
+      const commentsInvalidForPlannedChange =
+        plannedChanged && (!newRow.comments || !newRow.comments.trim());
+
+      const plannedInvalid = plannedInvalidForNew;
+      const commentsInvalid =
+        commentsInvalidForNew || commentsInvalidForPlannedChange;
+
+      // Planned total validation (same logic as Actuals)
+      const plannedChangedOrNew = isNewRow || plannedChanged;
+      if (plannedChangedOrNew) {
+        const newPlanned =
+          Math.round((parseFloat(newRow.planned) || 0) * 10) / 10;
+        const updatedPlannedTotal = rows.reduce((sum, row) => {
+          if (row.id === newRow.id) {
+            return sum + newPlanned;
+          }
+          if (row.id !== 'total' && row.id !== 'second-total') {
+            return (
+              Math.round(
+                (sum +
+                  (row?.planned ? parseFloat(row?.planned?.toFixed(1)) : 0)) *
+                  10
+              ) / 10
+            );
+          }
+          return sum;
+        }, 0);
+
+        if (updatedPlannedTotal > Number(max_allocation_error)) {
+          dispatch(
+            showToastAction(
+              true,
+              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${updatedPlannedTotal.toFixed(1)})`,
+              'error'
+            )
+          );
+          return oldRow;
+        } else if (updatedPlannedTotal >= Number(max_allocation_warning)) {
+          dispatch(
+            showToastAction(
+              true,
+              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedPlannedTotal.toFixed(1)}`,
+              'warning'
+            )
+          );
+        }
+      }
+
+      setRowValidationErrors(prev => {
+        const updated = { ...prev };
+        if (plannedInvalid || commentsInvalid) {
+          updated[newRow.id] = {
+            planned: Boolean(plannedInvalid),
+            actuals: false,
+            comments: Boolean(commentsInvalid),
+          };
+        } else {
+          delete updated[newRow.id];
+        }
+        return updated;
+      });
+
+      setRows(prev => {
+        const existingRow = prev.find(r => r.id === newRow.id);
+        if (JSON.stringify(existingRow) === JSON.stringify(newRow)) return prev;
+        return prev.map(row =>
+          row.id === newRow.id
+            ? {
+                ...row,
+                ...newRow,
+              }
+            : row
+        );
+      });
+
+      return newRow;
+    }
+
+    // Handle Past and Current Weeks, comments is required, if new row actuals row is added or if status is "At-Risk" and "Off-Track"
     const actualsChanged = newRow.actuals !== oldRow.actuals;
     let newActual = parseFloat(newRow.actuals) || 0;
     if (actualsChanged) {
@@ -793,7 +922,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals is approaching the maximum of ${max_allocation_warning}. Current sum: ${updatedTotal.toFixed(1)}`,
+            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedTotal.toFixed(1)}`,
             'warning'
           )
         );
@@ -840,6 +969,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       if (actualsInvalid || commentsInvalid) {
         // Only update if there are errors
         updated[newRow.id] = {
+          planned: false,
           actuals: actualsInvalid,
           comments: commentsInvalid,
         };
