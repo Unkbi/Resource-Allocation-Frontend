@@ -157,6 +157,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             !row.projectActualsStatus || row.projectActualsStatus === 'No Data'
         );
 
+      if (rowsWithMissingStatus.length === 0 && totalActuals >= 1.0) {
+        // No Errors
+        handleConfirmed();
+      }
       if (rowsWithMissingStatus.length > 0) {
         setShowAlertDialog(prev => [
           ...(prev || []),
