@@ -200,19 +200,9 @@ const projectPeriodColumns: GridColDef[] = [
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'project_manager_email', headerName: 'Project Manager Email', minWidth: 200 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actual_allocation', headerName: 'Actual Allocation', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right',
-    renderCell: (params: any) => (
-      params.value < 0 ? (
-        <span style={{ color: '#26a69a' }}>{params.value}</span>
-      ) : params.value > 0 ? (
-        <span style={{ color: '#ef5350' }}>{params.value}</span>
-      ) : (
-        <span>{params.value}</span>
-      )
-    )
-   },
+  { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'actual_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'health_score', headerName: 'Project Health Score', minWidth: 130, renderCell: renderScoreCell },
   { field: 'adherence_score', headerName: 'Project Adherence Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'engagement_score', headerName: 'Project Engagement Score', minWidth: 150, renderCell: renderScoreCell },
@@ -246,19 +236,9 @@ const resourcePeriodColumns: GridColDef[] = [
     renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
   },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned_allocation', headerName: 'Planned Allocation', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actuals_allocation', headerName: 'Actuals Allocation', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right',
-    renderCell: (params: any) => (
-      params.value < 0 ? (
-        <span style={{ color: '#26a69a' }}>{params.value}</span>
-      ) : params.value > 0 ? (
-        <span style={{ color: '#ef5350' }}>{params.value}</span>
-      ) : (
-        <span>{params.value}</span>
-      )
-    )
-   },
+  { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'actuals_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'planning_score', headerName: 'Planning Score', minWidth: 140, renderCell: renderScoreCell },
   { field: 'actuals_score', headerName: 'Actuals Score', minWidth: 140, renderCell: renderScoreCell },
   { field: 'confirmation_score', headerName: 'Confirmation Score', minWidth: 160, renderCell: renderScoreCell },
@@ -304,19 +284,9 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right',
-    renderCell: (params: any) => (
-      params.value < 0 ? (
-        <span style={{ color: '#26a69a' }}>{params.value}</span>
-      ) : params.value > 0 ? (
-        <span style={{ color: '#ef5350' }}>{params.value}</span>
-      ) : (
-        <span>{params.value}</span>
-      )
-    )
-   },
+  { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   {
     field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
     renderCell: (params: any) => (
@@ -362,19 +332,9 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
-  { field: 'planned', headerName: 'Planned Allocation', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'actual', headerName: 'Actual Allocation', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right',
-    renderCell: (params: any) => (
-      params.value < 0 ? (
-        <span style={{ color: '#26a69a' }}>{params.value}</span>
-      ) : params.value > 0 ? (
-        <span style={{ color: '#ef5350' }}>{params.value}</span>
-      ) : (
-        <span>{params.value}</span>
-      )
-    )
-   },
+  { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
   { field: 'currency', headerName: 'Currency', minWidth: 100 },
   { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
