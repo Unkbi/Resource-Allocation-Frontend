@@ -3431,6 +3431,7 @@ export default function ExecutiveDashboardPage() {
               allocationPercentage={filteredAllocationPercentage}
               hasAccessToQueryKey={hasAccessToQueryKey}
               advancedFilters={advancedFilters}
+              selectedDate={selectedDate}
             />
             <ResponsiveGridLayout
               className="layout"
