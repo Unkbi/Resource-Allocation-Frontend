@@ -1389,6 +1389,24 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   </Button>
                 </Box>
               )}
+              {isFridayOrAfterFriday && (
+                <Box display="flex" justifyContent="center" mt={1}>
+                  <Typography
+                    sx={{
+                      color: 'rgba(21, 46, 117, 1)',
+                      fontWeight: '500',
+                      fontStyle: 'italic',
+                      fontSize: '14px',
+                      leadingTrim: 'NONE',
+                      lineHeight: '100%',
+                      letterSpacing: '0%',
+                    }}
+                  >
+                    <span style={{ fontWeight: '600' }}>Note</span>: Confirmed
+                    Actuals from previous period cannot be modified!
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Box>
         ) : (
