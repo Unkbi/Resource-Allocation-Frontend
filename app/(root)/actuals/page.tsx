@@ -1393,7 +1393,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 <Box display="flex" justifyContent="center" mt={1}>
                   <Typography
                     sx={{
-                      color: 'rgba(21, 46, 117, 1)',
+                      color: theme => theme.palette.info.main,
                       fontWeight: '500',
                       fontStyle: 'italic',
                       fontSize: '14px',
