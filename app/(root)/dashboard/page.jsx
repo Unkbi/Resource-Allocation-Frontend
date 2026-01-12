@@ -298,8 +298,8 @@ export default function ExecutiveDashboardPage() {
     '#4169E1', // Blue
     '#FFD700', // Yellow
     '#00C9A7', // Green
-    '#FFA500', // Orange
     '#FF6B6B', // Red
+    '#FFA500', // Orange
     '#4ECDC4', // Teal
     '#9C27B0', // Purple
     '#53C1DE', // Light Blue
@@ -713,7 +713,7 @@ export default function ExecutiveDashboardPage() {
       'top_projects_by_variance': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'projectFTE': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: threeWeeksBeforeMonday.format('YYYY-MM-DD'),
        customEndDate: twoWeeksAfterSunday.format('YYYY-MM-DD') },
-      'activeProjectsByType': { reportType: 'projectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'activeProjectsByType': { reportType: 'projectsOnly', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'totalHeadcount': { reportType: 'resourceOnly' },
       'allocation_by_project_type_group': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD'), },
       //actuals by category
@@ -749,8 +749,8 @@ export default function ExecutiveDashboardPage() {
     }
 
     // Navigate with advanced filters and chart config
-    navigateToReport(advancedFilters, config, true);
-  }, [advancedFilters]);
+    navigateToReport(advancedFilters, config, false, router);
+  }, [advancedFilters, router]);
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
@@ -980,7 +980,7 @@ export default function ExecutiveDashboardPage() {
           );
 
           // Extract project type groups for x-axis
-          const projectTypeGroups = sortedVarianceData.map(
+          const projectTypeGroupNames = sortedVarianceData.map(
             d => d.project_type_group
           );
 
@@ -1120,7 +1120,7 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   xAxis={[
                     {
-                      data: projectTypeGroups,
+                      data: projectTypeGroupNames,
                       scaleType: 'band',
                       id: 'x-axis',
                       categoryGapRatio: 0.4,
@@ -1141,7 +1141,16 @@ export default function ExecutiveDashboardPage() {
                     },
                   ]}
                   margin={{ left: 45, right: 45, top: 15, bottom: 30 }}
-                  onAxisClick={() => navigateToReportWithFilters('plan_vs_actual_variance')}
+                  onAxisClick={(event, axisData) =>{
+                    const {axisValue} = axisData;
+                    const projectTypeId = projectTypeGroups.find(pt => pt.Name === axisValue)?.Id;
+                  if (projectTypeId) {
+                    navigateToReportWithFilters('plan_vs_actual_variance',{
+                    projectTypeGroup: projectTypeId,
+                    projectStatuses: ['Active', 'Approved']
+                  })}
+                  }
+                }
                 >
                   <BarPlot />
                   <LinePlot />
@@ -1399,19 +1408,14 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !filteredActiveProjectsByType ||
           filteredActiveProjectsByType.length === 0 ||
-          filteredActiveProjectsByType.every(item => Number(item.count || 0) === 0)
+          filteredActiveProjectsByType.every(item => 
+            Number(item.status_breakdown?.Active || 0) === 0 && Number(item.status_breakdown?.Approved || 0) === 0
+          )
         }
-        noDataMessage="No active projects found for the selected filters"
+        noDataMessage="No active or approved projects found for the selected filters"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
-
-          // Define project type categories with consistent colors
-          const projectTypeColors = {
-            Run: '#5B7FFF',
-            Grow: '#FFD666',
-            Transform: '#FF9966',
-          };
 
           // Sort data in Transform -> Grow -> Run order (create copy first)
           const groupOrder = ['Transform', 'Grow', 'Run'];
@@ -1421,15 +1425,15 @@ export default function ExecutiveDashboardPage() {
             return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
           });
 
-          // Extract labels and counts
+          // Extract labels
           const projectTypeLabels = sortedData.map(item => item._type);
-          const projectTypeCounts = sortedData.map(item =>
-            Number(item.count || 0)
+          
+          // Extract counts for each status
+          const activeCounts = sortedData.map(item =>
+            Number(item.status_breakdown?.Active || 0)
           );
-
-          // Assign colors based on type
-          const barColors = sortedData.map(
-            item => projectTypeColors[item._type] || '#CCCCCC'
+          const approvedCounts = sortedData.map(item =>
+            Number(item.status_breakdown?.Approved || 0)
           );
 
           return (
@@ -1449,7 +1453,7 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Active Projects by Project Type Group
+                Active & Approved Projects by Project Type Group
               </Typography>
 
               <Box
@@ -1473,7 +1477,7 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   yAxis={[
                     {
-                      label: 'No. of Active Projects',
+                      label: 'No. of Projects',
                       min: 0,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -1481,21 +1485,34 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   series={[
                     {
-                      data: projectTypeCounts,
+                      data: activeCounts,
                       id: 'activeProjects',
-                      label: 'Active Projects',
-                      valueFormatter: (value) => `${value} projects`,
+                      label: 'Active',
+                      stack: 'total',
+                      color: '#4CAF50',
+                      valueFormatter: (value) => `${value} active`,
+                    },
+                    {
+                      data: approvedCounts,
+                      id: 'approvedProjects',
+                      label: 'Approved',
+                      stack: 'total',
+                      color: '#2196F3',
+                      valueFormatter: (value) => `${value} approved`,
                     },
                   ]}
-                  onAxisClick={(e,val)=>{
-                    const { dataIndex } = val || {};
+                  onItemClick={(event, barItemIdentifier) => {
+                    const { dataIndex, seriesId } = barItemIdentifier || {};
                     if (dataIndex !== undefined && sortedData[dataIndex]) {
                       const projectType = sortedData[dataIndex]._type;
                       const projectTypeId = projectTypeGroups.find(pt => pt.Name === projectType)?.Id;
+
+                      const status = seriesId === 'activeProjects' ? 'Active' : 'Approved';
+                      
                       if (projectTypeId) {
                         navigateToReportWithFilters('activeProjectsByType', {
                           projectTypeGroup: projectTypeId,
-                          projectStatuses: 'Active'
+                          projectStatuses: [status]
                         });
                       }
                     }
@@ -1509,14 +1526,11 @@ export default function ExecutiveDashboardPage() {
                     left: 40,
                     right: 10,
                   }}
-                  colors={barColors}
                   slots={{
                     tooltip: CustomChartTooltip,
                   }}
                   slotProps={{
-                    legend: {
-                      hidden: true,
-                    },
+                    legend: config.legend,
                     tooltip: {
                       trigger: 'item',
                       disablePortal: true,
@@ -1558,20 +1572,36 @@ export default function ExecutiveDashboardPage() {
           // Transform the data structure from API
           // API returns: [{shore_flag: "Onshore", FTE: 55, "Contractor - FT": 10, ...}, {...}]
           // Define employee types and their colors
-          const employeeTypes = [
-            { key: 'FTE', label: 'FTE', color: '#0080FF' },
-            {
-              key: 'Contractor - FT',
-              label: 'Contractor - FT',
-              color: '#00C9A7',
-            },
-            {
-              key: 'Contractor - PT',
-              label: 'Contractor - PT',
-              color: '#FFB6B6',
-            },
-            { key: 'Intern', label: 'Intern', color: '#FF884D' },
-          ];
+          // const employeeTypes = [
+          //   { key: 'FTE', label: 'FTE', color: '#0080FF' },
+          //   {
+          //     key: 'Contractor - FT',
+          //     label: 'Contractor - FT',
+          //     color: '#00C9A7',
+          //   },
+          //   {
+          //     key: 'Contractor - PT',
+          //     label: 'Contractor - PT',
+          //     color: '#FFB6B6',
+          //   },
+          //   { key: 'Intern', label: 'Intern', color: '#FF884D' },
+          
+          // ];
+          // Dynamically extract employee types from the data (excluding shore_flag)
+          const employeeTypes = useMemo(() => {
+            if (!totalHeadcount || totalHeadcount.length === 0) return [];
+            
+            const firstItem = totalHeadcount[0];
+            const types = Object.keys(firstItem)
+              .filter(key => key !== 'shore_flag' && key !== '__typename')
+              .map((key, index) => ({
+                key: key,
+                label: key,
+                color: colorPalette[index % colorPalette.length]
+              }));
+            
+            return types;
+          }, [totalHeadcount]);
 
           // Sort by total headcount (sum of all employee types) descending
           const sortedHeadcount = sortByTotal(
@@ -1872,7 +1902,7 @@ export default function ExecutiveDashboardPage() {
                   ]}
                   width={config.width}
                   height={config.height}
-                  onAxisClick={(event, axisData) => {
+                  onItemClick={(event, axisData) => {
                     const { dataIndex } = axisData || {};
                     if (dataIndex !== undefined && filteredUnapprovedProjectAllocation[dataIndex]) {
                       const category = filteredUnapprovedProjectAllocation[dataIndex].category;
@@ -2008,7 +2038,11 @@ export default function ExecutiveDashboardPage() {
                       fontWeight: 500,
                     },
                   }}
-                  onAxisClick={() => navigateToReportWithFilters('actuals_confirmation_status')}
+                  onAxisClick={() => {
+                    navigateToReportWithFilters('actuals_confirmation_status',{
+                      projectStatuses: ['Active', 'Approved']
+                    })
+                  }}
                 />
               </Box>
             </Box>
