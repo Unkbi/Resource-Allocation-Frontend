@@ -173,6 +173,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           TOTAL_ACTUALS_LESS_THAN_ONE,
         ]);
       }
+    } else {
+      handleConfirmed();
     }
   };
 
