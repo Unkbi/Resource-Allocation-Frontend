@@ -188,7 +188,6 @@ export default function ActualTable({
     useState<ActualAllocationTableRow[]>(data);
 
   function getWeekStatus(periodIso?: string): 'past' | 'current' | 'future' {
-    if (dataProcessing) return current;
     if (!periodIso) return future;
     const period = parseISO(periodIso);
     const now = new Date();
@@ -746,6 +745,22 @@ export default function ActualTable({
     <>
       <Box overflow="hidden" width={730}>
         <Box
+          sx={{
+            width: '100%',
+            height: '2px',
+            backgroundImage: `linear-gradient(to right, rgba(202, 213, 226, 1) 0% 34.25%, ${
+              getWeekStatus(startDate) === past
+                ? 'rgba(202, 213, 226, 0.2)'
+                : getWeekStatus(startDate) === current
+                  ? 'rgba(30, 58, 139, 1)'
+                  : 'rgba(251, 251, 251, 1)'
+            } 34.25% 65.75%,rgba(202, 213, 226, 1) 65.75% 100%)`,
+            backgroundSize: '100% 2px',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'top',
+          }}
+        ></Box>
+        <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
@@ -769,11 +784,8 @@ export default function ActualTable({
               fontWeight: 400,
               fontSize: '14px',
               fontFamily: 'Open Sans',
-              color: dataProcessing
-                ? '#FFFFFF'
-                : getWeekStatus(startDate) === current
-                  ? '#FFFFFF'
-                  : '#000000',
+              color:
+                getWeekStatus(startDate) === current ? '#FFFFFF' : '#000000',
             }}
           >
             Status :{' '}
@@ -819,11 +831,8 @@ export default function ActualTable({
               disabled={disablePrev}
               sx={{
                 marginBottom: '8px',
-                color: dataProcessing
-                  ? '#FFFFFF'
-                  : getWeekStatus(startDate) === current
-                    ? '#FFFFFF'
-                    : '#000000',
+                color:
+                  getWeekStatus(startDate) === current ? '#FFFFFF' : '#000000',
               }}
               onClick={() => {
                 if (isModified) {
@@ -855,11 +864,8 @@ export default function ActualTable({
               sx={{
                 marginLeft: '15px',
                 marginBottom: '8px',
-                color: dataProcessing
-                  ? '#FFFFFF'
-                  : getWeekStatus(startDate) === current
-                    ? '#FFFFFF'
-                    : '#000000',
+                color:
+                  getWeekStatus(startDate) === current ? '#FFFFFF' : '#000000',
               }}
               onClick={() => {
                 if (isModified) {

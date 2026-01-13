@@ -1,4 +1,9 @@
 import { ActualAllocations } from '@/app/types';
+import {
+  isPeriodCurrentWeek,
+  isPeriodFutureWeek,
+  isPeriodPastWeek,
+} from '@/app/utils/actualsUtils';
 import { getMondayOfISO } from '@/app/utils/common';
 import { Box, Skeleton, styled, Typography } from '@mui/material';
 // @ts-ignore
@@ -74,6 +79,7 @@ const WeekCardBox = styled(Box)(({ theme }) => ({
   borderRadius: '8px 8px 0px 0px',
   alignItems: 'center',
   border: '1px solid rgba(202, 213, 226, 1)',
+  borderBottom: 'none',
   backgroundColor: 'rgba(202, 213, 226, 0.2)',
   cursor: 'pointer',
 }));
@@ -111,34 +117,25 @@ const ActualsCard = ({
   );
 
   const isPastWeek = useMemo(() => {
-    if (loading) {
-      return false;
-    }
     if (!period) {
       return false;
     }
-    return getMondayOfISO(new Date().toISOString()) > getMondayOfISO(period);
-  }, [period, loading]);
+    return isPeriodPastWeek(period);
+  }, [period]);
 
   const isCurrentWeek = useMemo(() => {
-    if (loading) {
-      return false;
-    }
     if (!period) {
       return false;
     }
-    return getMondayOfISO(new Date().toISOString()) === getMondayOfISO(period);
-  }, [period, loading]);
+    return isPeriodCurrentWeek(period);
+  }, [period]);
 
   const isFutureWeek = useMemo(() => {
-    if (loading) {
-      return false;
-    }
     if (!period) {
       return true;
     }
-    return getMondayOfISO(new Date().toISOString()) < getMondayOfISO(period);
-  }, [period, loading]);
+    return isPeriodFutureWeek(period);
+  }, [period]);
 
   const isWithinResourceRange = useMemo(() => {
     if (!resourceStartMonday || !resourceEndMonday || !period) {
@@ -220,13 +217,11 @@ const ActualsCard = ({
       onClick={onClick}
       sx={{
         opacity: loading || isWithinResourceRange ? 1 : 0.5,
-        backgroundColor: loading
-          ? backgroundColor
-          : isCurrentWeek
-            ? 'rgba(30, 58, 139, 1)'
-            : isFutureWeek
-              ? 'rgba(251, 251, 251, 1)'
-              : 'rgba(202, 213, 226, 0.2)',
+        backgroundColor: isCurrentWeek
+          ? 'rgba(30, 58, 139, 1)'
+          : isFutureWeek
+            ? 'rgba(251, 251, 251, 1)'
+            : 'rgba(202, 213, 226, 0.2)',
         ...borderStyle,
       }}
     >
@@ -243,11 +238,9 @@ const ActualsCard = ({
       ) : (
         <ActualsPeriodPill
           sx={{
-            ...(loading
-              ? { backgroundColor: periodPillBackgroundColor }
-              : !isCurrentWeek
-                ? { backgroundColor: 'rgba(30, 58, 139, 1)' }
-                : {}),
+            ...(!isCurrentWeek
+              ? { backgroundColor: 'rgba(30, 58, 139, 1)' }
+              : {}),
           }}
         >
           {getPeriodPillText()}
