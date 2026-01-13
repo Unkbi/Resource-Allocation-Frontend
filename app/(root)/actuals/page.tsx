@@ -5,9 +5,8 @@ import {
   Typography,
   Button,
   Skeleton,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
+  Autocomplete,
+  TextField,
 } from '@mui/material';
 import ActualTable from '@/app/components/Actuals/ActualTable';
 import { useEffect, useMemo, useState } from 'react';
@@ -26,7 +25,6 @@ import {
   LoginUser,
   Resource,
   Team,
-  UserResource,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -35,14 +33,10 @@ import {
   getMondayOfISO,
   getSundayOfISO,
   getTeamForResource,
-  getUserIdFromEmail,
   isCurrentWeek,
   isFutureWeek,
 } from '@/app/utils/common';
-import {
-  setActualAllocationsStatus,
-  setCalendarDate,
-} from '@/app/redux/reducers/actualAllocationsReducer';
+import { setCalendarDate } from '@/app/redux/reducers/actualAllocationsReducer';
 // @ts-ignore
 import { format, parseISO, startOfWeek } from 'date-fns';
 import { GridValidRowModel, useGridApiRef } from '@mui/x-data-grid-premium';
@@ -67,7 +61,6 @@ import {
 } from '@/app/constants/constants';
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
 import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
-import { FETCH_USER_RESOURCE } from '@/app/redux/actions/allSettingsActions';
 import { AxiosError } from 'axios';
 
 interface ActualsPageProps {
@@ -95,7 +88,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     (state: RootState) => state.allResourcesDetail
   );
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { scalarSettings, users, userResources } = useSelector(
+  const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
@@ -126,8 +119,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [showNoActualsTracked, setShowNoActualsTracked] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [loadingName, setLoadingName] = useState(true);
-  const [activeUserList, setActiveUserList] = useState<UserResource[]>([]);
-  const [currentUser, setCurrentUser] = useState<UserResource | null>(null);
+  const [resourceList, setResourceList] = useState<Resource[]>([]);
+  const [currentResource, setCurrentResource] = useState<Resource | null>(null);
 
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
@@ -143,41 +136,41 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ? 'noActualsTracked'
       : null;
 
-  const currentResource: Resource | undefined = useMemo(
-    () => resources?.find((r: Resource) => r?.Id === currentUser?.id),
-    [currentUser]
-  );
-
-  useEffect(() => {
-    if (!users.length) {
-      dispatch({ type: FETCH_USER_RESOURCE, payload: {} });
-    }
-  }, []);
-
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (user && userResources && userResources.length > 0) {
+      if (user && resources) {
         const loginUser =
-          userResources?.find(
-            userResource => userResource.UserId === (user as LoginUser).id
+          resources?.find(
+            (resource: Resource) =>
+              resource?.Email === (user as LoginUser).username
           ) || null;
-        setCurrentUser(loginUser);
+        setCurrentResource(loginUser);
 
-        setActiveUserList(
-          userResources.filter(ur => ur.UserId && ur.userStatus === 'Active')
+        // Resources that are Active/Inactive Status
+        setResourceList(
+          resources
+            .filter(
+              (resource: Resource) =>
+                resource.Status === 'Active' || resource.Status === 'Inactive'
+            )
+            .sort((a: Resource, b: Resource) =>
+              (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+                sensitivity: 'base',
+              })
+            )
         );
       }
       setLoadingName(false);
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [user, userResources]);
+  }, [user, resources]);
 
   useEffect(() => {
-    if (currentUser) {
-      setDisplayName(currentUser?.Name);
+    if (currentResource) {
+      setDisplayName(currentResource?.FullName || '');
     }
-  }, [currentUser]);
+  }, [currentResource]);
 
   const userTitle = currentResource
     ? ((currentResource as Resource)?.Role ?? '--')
@@ -626,13 +619,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     router.replace(`/actuals?startDate=${date}`);
   };
 
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
-    const newUserId = e.target?.value;
-    if (!newUserId) return;
-    const currentUser =
-      userResources?.find(userResource => userResource.id === newUserId) ||
-      null;
-    setCurrentUser(currentUser);
+  const handleResourceChange = (_: any, newResource: Resource | null) => {
+    if (!newResource) return;
+    setCurrentResource(newResource);
   };
 
   const loading = useMemo(
@@ -1112,44 +1101,39 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   {loadingName ? (
                     <Skeleton width={100} height={20} />
                   ) : permissions['AdminActuals'].r ? (
-                    <Select
-                      variant="standard"
-                      value={currentUser?.id || ''}
-                      onChange={handleSelectChange}
-                      label="Resource Name"
-                      sx={{ minWidth: '200px' }}
-                      renderValue={selected => {
-                        const sel = activeUserList.find(u => u.id === selected);
-                        return (
-                          <Typography
-                            sx={{
+                    <Autocomplete
+                      options={resourceList}
+                      getOptionLabel={(option: Resource) =>
+                        option.FullName || ''
+                      }
+                      value={currentResource}
+                      onChange={handleResourceChange}
+                      isOptionEqualToValue={(option, value) =>
+                        option.Id === value.Id
+                      }
+                      sx={{ minWidth: '200px', maxWidth: 300, width: '100%' }}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          variant="standard"
+                          fullWidth
+                          sx={{
+                            width: '100%',
+                            '& .MuiInputBase-input': {
                               fontFamily: 'Open Sans',
                               fontWeight: 600,
                               fontStyle: 'SemiBold',
                               fontSize: '18px',
-                            }}
-                          >
-                            {sel?.Name ?? ''}
-                          </Typography>
-                        );
-                      }}
-                      MenuProps={{
-                        anchorOrigin: {
-                          vertical: 'bottom',
-                          horizontal: 'left',
-                        },
-                        transformOrigin: {
-                          vertical: 'top',
-                          horizontal: 'left',
-                        },
-                      }}
-                    >
-                      {activeUserList.map(activeUser => (
-                        <MenuItem value={activeUser.id}>
-                          {activeUser.Name}
-                        </MenuItem>
-                      ))}
-                    </Select>
+                            },
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option.Id}>
+                          {option.FullName}
+                        </li>
+                      )}
+                    />
                   ) : (
                     `${displayName}`
                   )}
