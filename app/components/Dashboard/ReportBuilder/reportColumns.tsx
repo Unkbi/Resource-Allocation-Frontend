@@ -237,7 +237,7 @@ const resourcePeriodColumns: GridColDef[] = [
   },
   { field: 'period', headerName: 'Period', minWidth: 120 },
   {
-    field: 'actuals_status', headerName: 'Resource Actuals Status', minWidth: 150,
+    field: 'actuals_status', headerName: 'Actuals Confirmation', minWidth: 150,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
