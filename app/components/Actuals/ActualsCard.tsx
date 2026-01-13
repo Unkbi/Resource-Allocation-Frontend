@@ -6,6 +6,7 @@ import { getWeek, parseISO } from 'date-fns';
 import { useMemo } from 'react';
 
 interface ActualsCardProps {
+  onClick?: () => void;
   period: string;
   actualAllocationData: ActualAllocations[] | null;
   actualAllocationStatus: string | null;
@@ -74,9 +75,11 @@ const WeekCardBox = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   border: '1px solid rgba(202, 213, 226, 1)',
   backgroundColor: 'rgba(202, 213, 226, 0.2)',
+  cursor: 'pointer',
 }));
 
 const ActualsCard = ({
+  onClick = () => {},
   period,
   actualAllocationData,
   actualAllocationStatus,
@@ -214,6 +217,7 @@ const ActualsCard = ({
 
   return (
     <WeekCardBox
+      onClick={onClick}
       sx={{
         opacity: loading || isWithinResourceRange ? 1 : 0.5,
         backgroundColor: loading

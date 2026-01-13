@@ -1176,6 +1176,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   width={'100%'}
                 >
                   <ActualsCard
+                    onClick={handlePrev}
                     period={
                       generateDateWeekMath(
                         'WEEK_MINUS',
@@ -1226,6 +1227,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     resourceEndMonday={resourceEndMonday}
                   />
                   <ActualsCard
+                    onClick={handleNext}
                     period={
                       generateDateWeekMath(
                         'WEEK_PLUS',
