@@ -403,10 +403,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         .map(id => apiRef.current.getRow(id))
         .filter(row => row.id !== 'total' && row.project);
 
-      if (!startDate || !actualAllocations || !actualAllocations[startDate])
-        return;
+      if (!startDate) return;
       // Set deleted rows, actualAllocations to 0.
-      const modifiedData = actualAllocations[startDate]?.map(
+      const modifiedData = actualAllocations?.[startDate]?.map(
         (allocations: ActualAllocations) => {
           const row = allData.find(
             tabData => tabData.project === allocations.ProjectName
