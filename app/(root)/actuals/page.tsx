@@ -57,6 +57,7 @@ import {
 } from '@/app/constants/constants';
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
 import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
+import { AxiosError } from 'axios';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -519,12 +520,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               },
             });
           })
-          .catch((error: any) => {
+          .catch((error: AxiosError) => {
             console.error('Error confirming actual allocations:', error);
             dispatch(
               showToast({
                 open: true,
-                message: `Failed to confirm Actual alloctions.`,
+                message:
+                  error?.response?.data ??
+                  `Failed to confirm Actual alloctions.`,
                 type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
