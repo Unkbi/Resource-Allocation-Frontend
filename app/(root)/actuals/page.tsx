@@ -65,7 +65,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const {
     actualAllocations,
     actualAllocationsStatuses,
-    status,
     calendarDate,
     dataProcessing,
     actualAllocationsStatusesLoading,
@@ -775,15 +774,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   }, [loadingPermissions, dataProcessing, formattedActualAllocations]);
 
   useEffect(() => {
-    if (loadingPermissions || dataProcessing) return;
+    if (
+      loadingPermissions ||
+      dataProcessing ||
+      actualAllocationsStatusesLoading ||
+      !startDate
+    )
+      return;
     setDisableView(
       (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
         isFutureWeek(parseISO(startDate)) ||
-        (status === 'Confirmed' &&
+        (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
           startDate !== null &&
           !isCurrentWeek(parseISO(startDate)))
     );
-  }, [loadingPermissions, dataProcessing, status]);
+  }, [loadingPermissions, dataProcessing, actualAllocationsStatusesLoading]);
 
   useEffect(() => {
     if (loadingPermissions) return;
