@@ -47,7 +47,17 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import ActualsErrorPage from '../ErrorPage/ActualsErrorPage';
-import { current, future, past } from '@/app/constants/constants';
+import {
+  current,
+  FAR_FUTURE_DATE,
+  FAR_PAST_DATE,
+  future,
+  OTHER_WORK,
+  past,
+  PERSONAL_TIME,
+  UNPLANNED_PROJECT,
+} from '@/app/constants/constants';
+import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -188,7 +198,6 @@ export default function ActualTable({
     useState<ActualAllocationTableRow[]>(data);
 
   function getWeekStatus(periodIso?: string): 'past' | 'current' | 'future' {
-    if (dataProcessing) return current;
     if (!periodIso) return future;
     const period = parseISO(periodIso);
     const now = new Date();
@@ -250,6 +259,18 @@ export default function ActualTable({
       onModificationChange?.(isModified);
     }
   }, [rows, baselineRows, onModificationChange]);
+
+  const isWithinResourceRange = useMemo(() => {
+    return isPeriodWithinRange(
+      parseISO(getMondayOfISO(startDate)),
+      currentResource?.StartDate
+        ? parseISO(getMondayOfISO(currentResource?.StartDate || ''))
+        : parseISO(FAR_PAST_DATE),
+      currentResource?.EndDate
+        ? parseISO(getMondayOfISO(currentResource?.EndDate || ''))
+        : parseISO(FAR_FUTURE_DATE)
+    );
+  }, [startDate, currentResource]);
 
   // Organize rows into sections
   const getOrganizedRows = () => {
@@ -353,7 +374,11 @@ export default function ActualTable({
 
   const isUnplannedRow = (row: any) => {
     if (!row || typeof row !== 'object') return false;
-    return row.planned === 0;
+    return enablePlannedColumn
+      ? row?.type
+        ? [UNPLANNED_PROJECT, OTHER_WORK, PERSONAL_TIME].includes(row?.type)
+        : false
+      : row.planned === 0;
   };
 
   const columns: GridColDef[] = [
@@ -393,7 +418,7 @@ export default function ActualTable({
             <IconButton
               size="small"
               onClick={e => handleActionMenuOpen(e, params.row.id)}
-              disabled={disableView}
+              disabled={!enablePlannedColumn && disableView}
               sx={{
                 padding: '0px',
                 position: 'absolute',
@@ -537,6 +562,7 @@ export default function ActualTable({
             planned: 0,
             actuals: 0,
             comments: '',
+            type: OTHER_WORK,
           };
           addNewRow(newOtherWorkRow);
           setHasOtherWork(true);
@@ -550,6 +576,7 @@ export default function ActualTable({
             planned: 0,
             actuals: 0,
             comments: '',
+            type: PERSONAL_TIME,
           };
           addNewRow(newPersonalTimeRow);
           setHasPersonalTime(true);
@@ -746,6 +773,22 @@ export default function ActualTable({
     <>
       <Box overflow="hidden" width={730}>
         <Box
+          sx={{
+            width: '100%',
+            height: '2px',
+            backgroundImage: `linear-gradient(to right, rgba(202, 213, 226, 1) 0% 34.25%, ${
+              getWeekStatus(startDate) === past
+                ? 'rgba(202, 213, 226, 0.2)'
+                : getWeekStatus(startDate) === current
+                  ? 'rgba(30, 58, 139, 1)'
+                  : 'rgba(251, 251, 251, 1)'
+            } 34.25% 65.75%,rgba(202, 213, 226, 1) 65.75% 100%)`,
+            backgroundSize: '100% 2px',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'top',
+          }}
+        ></Box>
+        <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
@@ -769,11 +812,8 @@ export default function ActualTable({
               fontWeight: 400,
               fontSize: '14px',
               fontFamily: 'Open Sans',
-              color: dataProcessing
-                ? '#FFFFFF'
-                : getWeekStatus(startDate) === current
-                  ? '#FFFFFF'
-                  : '#000000',
+              color:
+                getWeekStatus(startDate) === current ? '#FFFFFF' : '#000000',
             }}
           >
             Status :{' '}
@@ -793,16 +833,19 @@ export default function ActualTable({
             ) : (
               <span
                 style={{
-                  color:
-                    actualAllocationsStatuses?.[startDate] === 'Confirmed'
+                  color: isWithinResourceRange
+                    ? actualAllocationsStatuses?.[startDate] === 'Confirmed'
                       ? '#3CC55F'
-                      : '#FF7912',
+                      : '#FF7912'
+                    : '#000000',
                   fontWeight: 600,
                   fontSize: '14px',
                   fontFamily: 'Open Sans',
                 }}
               >
-                {actualAllocationsStatuses?.[startDate] ?? 'Not Started'}
+                {isWithinResourceRange
+                  ? (actualAllocationsStatuses?.[startDate] ?? 'Not Started')
+                  : 'NA'}
               </span>
             )}
           </Typography>
@@ -819,11 +862,8 @@ export default function ActualTable({
               disabled={disablePrev}
               sx={{
                 marginBottom: '8px',
-                color: dataProcessing
-                  ? '#FFFFFF'
-                  : getWeekStatus(startDate) === current
-                    ? '#FFFFFF'
-                    : '#000000',
+                color:
+                  getWeekStatus(startDate) === current ? '#FFFFFF' : '#000000',
               }}
               onClick={() => {
                 if (isModified) {
@@ -855,11 +895,8 @@ export default function ActualTable({
               sx={{
                 marginLeft: '15px',
                 marginBottom: '8px',
-                color: dataProcessing
-                  ? '#FFFFFF'
-                  : getWeekStatus(startDate) === current
-                    ? '#FFFFFF'
-                    : '#000000',
+                color:
+                  getWeekStatus(startDate) === current ? '#FFFFFF' : '#000000',
               }}
               onClick={() => {
                 if (isModified) {
@@ -874,12 +911,22 @@ export default function ActualTable({
             </IconButton>
           </Box>
           <Link
-            onClick={() => !disableView && handleCopyToActuals()}
-            sx={{ cursor: disableView ? 'not-allowed' : 'pointer' }}
+            onClick={() =>
+              isWithinResourceRange && !disableView && handleCopyToActuals()
+            }
+            sx={{
+              cursor:
+                !isWithinResourceRange || disableView
+                  ? 'not-allowed'
+                  : 'pointer',
+            }}
           >
             <Typography
               sx={{
-                opacity: enablePlannedColumn || disableView ? '0.5' : '1',
+                opacity:
+                  isWithinResourceRange || enablePlannedColumn || disableView
+                    ? '0.5'
+                    : '1',
                 fontWeight: 600,
                 fontStyle: 'Medium',
                 fontSize: '14px',
@@ -891,7 +938,10 @@ export default function ActualTable({
                 textDecorationStyle: 'solid',
                 textDecorationOffset: '0%',
                 textDecorationThickness: '0%',
-                color: 'rgba(70, 169, 250, 1)',
+                color:
+                  !isWithinResourceRange || enablePlannedColumn || disableView
+                    ? 'rgba(121, 134, 162, 1)'
+                    : 'rgba(70, 169, 250, 1)',
               }}
             >
               Copy Plan to Actuals
@@ -899,7 +949,7 @@ export default function ActualTable({
           </Link>
         </Box>
 
-        <Box sx={{ height: 350 }}>
+        <Box sx={{ height: 'calc(100vh - 500px)' }}>
           {actualsErrorType ? (
             <ActualsErrorPage
               type={actualsErrorType}

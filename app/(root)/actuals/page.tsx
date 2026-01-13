@@ -60,10 +60,13 @@ import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import {
   DATE_FORMAT,
+  FAR_FUTURE_DATE,
+  FAR_PAST_DATE,
   MISSING_PROJECT_ACTUALS_STATUS,
   TOTAL_ACTUALS_LESS_THAN_ONE,
 } from '@/app/constants/constants';
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
+import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
 import { FETCH_USER_RESOURCE } from '@/app/redux/actions/allSettingsActions';
 import { AxiosError } from 'axios';
 
@@ -77,7 +80,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const {
     actualAllocations,
     actualAllocationsStatuses,
-    status,
     calendarDate,
     dataProcessing,
     actualAllocationsStatusesLoading,
@@ -301,7 +303,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       if (
         allocList.some(
           alloc =>
-            actualAllocations?.[startDate || ''].find(
+            actualAllocations?.[startDate || ''] &&
+            actualAllocations?.[startDate || '']?.find(
               actualAlloc => actualAlloc.Id === alloc.Id
             )?.AllocationEntered !== alloc?.AllocationEntered &&
             (alloc.Notes === null ||
@@ -480,7 +483,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         resource: (currentResource as Resource)?.Id,
         period:
           actualAllocations?.[startDate]?.length &&
-          actualAllocations[startDate]?.every(
+          actualAllocations?.[startDate]?.every(
             actualAllocation =>
               actualAllocation.Period === actualAllocations[startDate][0].Period
           ) // If Every Row has the same period.
@@ -809,15 +812,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   }, [loadingPermissions, dataProcessing, formattedActualAllocations]);
 
   useEffect(() => {
-    if (loadingPermissions || dataProcessing) return;
+    if (
+      loadingPermissions ||
+      dataProcessing ||
+      actualAllocationsStatusesLoading ||
+      !startDate
+    )
+      return;
     setDisableView(
       (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
         isFutureWeek(parseISO(startDate)) ||
-        (status === 'Confirmed' &&
+        (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
           startDate !== null &&
           !isCurrentWeek(parseISO(startDate)))
     );
-  }, [loadingPermissions, dataProcessing, status]);
+  }, [loadingPermissions, dataProcessing, actualAllocationsStatusesLoading]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -1249,6 +1258,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   width={'100%'}
                 >
                   <ActualsCard
+                    onClick={handlePrev}
                     period={
                       generateDateWeekMath(
                         'WEEK_MINUS',
@@ -1280,8 +1290,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     }
                     backgroundColor="rgba(202, 213, 226, 0.2)"
                     periodPillBackgroundColor="rgba(30, 58, 139, 1)"
-                    resourceStartMonday={resourceStartMonday}
-                    resourceEndMonday={resourceEndMonday}
+                    resourceStartMonday={
+                      resourceStartMonday || parseISO(FAR_PAST_DATE)
+                    }
+                    resourceEndMonday={
+                      resourceEndMonday || parseISO(FAR_FUTURE_DATE)
+                    }
                   />
                   <ActualsCard
                     period={startDate}
@@ -1322,6 +1336,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     resourceEndMonday={resourceEndMonday}
                   />
                   <ActualsCard
+                    onClick={handleNext}
                     period={
                       generateDateWeekMath(
                         'WEEK_PLUS',
@@ -1485,24 +1500,29 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   </Button>
                 </Box>
               )}
-              {isFridayOrAfterFriday && (
-                <Box display="flex" justifyContent="center" mt={1}>
-                  <Typography
-                    sx={{
-                      color: theme => theme.palette.info.main,
-                      fontWeight: '500',
-                      fontStyle: 'italic',
-                      fontSize: '14px',
-                      leadingTrim: 'NONE',
-                      lineHeight: '100%',
-                      letterSpacing: '0%',
-                    }}
-                  >
-                    <span style={{ fontWeight: '600' }}>Note</span>: Confirmed
-                    Actuals from previous period cannot be modified!
-                  </Typography>
-                </Box>
-              )}
+              {isPeriodWithinRange(
+                parseISO(getMondayOfISO(startDate)),
+                resourceStartMonday || parseISO(FAR_PAST_DATE),
+                resourceEndMonday || parseISO(FAR_FUTURE_DATE)
+              ) &&
+                isFridayOrAfterFriday && (
+                  <Box display="flex" justifyContent="center" mt={1}>
+                    <Typography
+                      sx={{
+                        color: theme => theme.palette.info.main,
+                        fontWeight: '500',
+                        fontStyle: 'italic',
+                        fontSize: '14px',
+                        leadingTrim: 'NONE',
+                        lineHeight: '100%',
+                        letterSpacing: '0%',
+                      }}
+                    >
+                      <span style={{ fontWeight: '600' }}>Note</span>: Confirmed
+                      Actuals from previous period cannot be modified!
+                    </Typography>
+                  </Box>
+                )}
             </Box>
           </Box>
         ) : (

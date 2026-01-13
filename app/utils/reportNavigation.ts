@@ -79,18 +79,24 @@ export const buildReportUrl = (
  * Navigate to the report page with filters
  * @param advancedFilters - The advanced filters applied to the dashboard
  * @param config - Chart-specific configuration
- * @param newTab - Whether to open in a new tab (default: true)
+ * @param newTab - Whether to open in a new tab (default: false)
+ * @param router - Next.js router instance for client-side navigation (optional)
  */
 export const navigateToReport = (
   advancedFilters: Record<string, any>,
   config: ChartReportConfig,
-  newTab: boolean = true
+  newTab: boolean = false,
+  router?: { push: (url: string) => void }
 ): void => {
   const url = buildReportUrl(advancedFilters, config);
   
   if (newTab) {
     window.open(url, '_blank', 'noopener,noreferrer');
+  } else if (router) {
+    // Use Next.js router for client-side navigation (no page reload)
+    router.push(url);
   } else {
+    // Fallback to full page navigation
     window.location.href = url;
   }
 };
