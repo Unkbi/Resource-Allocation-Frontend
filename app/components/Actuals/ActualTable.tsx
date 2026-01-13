@@ -49,12 +49,15 @@ import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import ActualsErrorPage from '../ErrorPage/ActualsErrorPage';
 import {
   current,
+  FAR_FUTURE_DATE,
+  FAR_PAST_DATE,
   future,
   OTHER_WORK,
   past,
   PERSONAL_TIME,
   UNPLANNED_PROJECT,
 } from '@/app/constants/constants';
+import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -256,6 +259,18 @@ export default function ActualTable({
       onModificationChange?.(isModified);
     }
   }, [rows, baselineRows, onModificationChange]);
+
+  const isWithinResourceRange = useMemo(() => {
+    return isPeriodWithinRange(
+      parseISO(getMondayOfISO(startDate)),
+      currentResource?.StartDate
+        ? parseISO(getMondayOfISO(currentResource?.StartDate || ''))
+        : parseISO(FAR_PAST_DATE),
+      currentResource?.EndDate
+        ? parseISO(getMondayOfISO(currentResource?.EndDate || ''))
+        : parseISO(FAR_FUTURE_DATE)
+    );
+  }, [startDate, currentResource]);
 
   // Organize rows into sections
   const getOrganizedRows = () => {
@@ -818,16 +833,19 @@ export default function ActualTable({
             ) : (
               <span
                 style={{
-                  color:
-                    actualAllocationsStatuses?.[startDate] === 'Confirmed'
+                  color: isWithinResourceRange
+                    ? actualAllocationsStatuses?.[startDate] === 'Confirmed'
                       ? '#3CC55F'
-                      : '#FF7912',
+                      : '#FF7912'
+                    : '#000000',
                   fontWeight: 600,
                   fontSize: '14px',
                   fontFamily: 'Open Sans',
                 }}
               >
-                {actualAllocationsStatuses?.[startDate] ?? 'Not Started'}
+                {isWithinResourceRange
+                  ? (actualAllocationsStatuses?.[startDate] ?? 'Not Started')
+                  : 'NA'}
               </span>
             )}
           </Typography>
@@ -893,12 +911,22 @@ export default function ActualTable({
             </IconButton>
           </Box>
           <Link
-            onClick={() => !disableView && handleCopyToActuals()}
-            sx={{ cursor: disableView ? 'not-allowed' : 'pointer' }}
+            onClick={() =>
+              isWithinResourceRange && !disableView && handleCopyToActuals()
+            }
+            sx={{
+              cursor:
+                !isWithinResourceRange || disableView
+                  ? 'not-allowed'
+                  : 'pointer',
+            }}
           >
             <Typography
               sx={{
-                opacity: enablePlannedColumn || disableView ? '0.5' : '1',
+                opacity:
+                  isWithinResourceRange || enablePlannedColumn || disableView
+                    ? '0.5'
+                    : '1',
                 fontWeight: 600,
                 fontStyle: 'Medium',
                 fontSize: '14px',
@@ -911,7 +939,7 @@ export default function ActualTable({
                 textDecorationOffset: '0%',
                 textDecorationThickness: '0%',
                 color:
-                  enablePlannedColumn || disableView
+                  !isWithinResourceRange || enablePlannedColumn || disableView
                     ? 'rgba(121, 134, 162, 1)'
                     : 'rgba(70, 169, 250, 1)',
               }}
