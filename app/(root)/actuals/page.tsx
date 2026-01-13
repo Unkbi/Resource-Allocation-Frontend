@@ -452,8 +452,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       const payload = {
         resource: userId,
         period:
-          actualAllocations[startDate]?.length &&
-          actualAllocations[startDate]?.every(
+          actualAllocations?.[startDate]?.length &&
+          actualAllocations?.[startDate]?.every(
             actualAllocation =>
               actualAllocation.Period === actualAllocations[startDate][0].Period
           ) // If Every Row has the same period.
