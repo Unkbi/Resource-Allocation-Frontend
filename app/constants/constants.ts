@@ -335,3 +335,7 @@ export const projectViewsGrouping = ['Portfolio', 'Project'];
 export const past = 'past';
 export const future = 'future';
 export const current = 'current';
+
+export const UNPLANNED_PROJECT = 'UNPLANNED_PROJECT';
+export const OTHER_WORK = 'OTHER_WORK';
+export const PERSONAL_TIME = 'PERSONAL_TIME';

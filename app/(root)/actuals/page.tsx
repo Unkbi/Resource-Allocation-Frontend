@@ -272,7 +272,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       if (
         allocList.some(
           alloc =>
-            actualAllocations?.[startDate || ''].find(
+            actualAllocations?.[startDate || ''] &&
+            actualAllocations?.[startDate || '']?.find(
               actualAlloc => actualAlloc.Id === alloc.Id
             )?.AllocationEntered !== alloc?.AllocationEntered &&
             (alloc.Notes === null ||

@@ -47,7 +47,14 @@ import CustomDateRangePicker from '../DatePicker/CustomDateRangePicker';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { updateStartAndEndDate } from '@/app/redux/reducers/teamsReducer';
 import ActualsErrorPage from '../ErrorPage/ActualsErrorPage';
-import { current, future, past } from '@/app/constants/constants';
+import {
+  current,
+  future,
+  OTHER_WORK,
+  past,
+  PERSONAL_TIME,
+  UNPLANNED_PROJECT,
+} from '@/app/constants/constants';
 
 export function formatWeekRangeFromStrings(
   startDate: string | null,
@@ -352,7 +359,11 @@ export default function ActualTable({
 
   const isUnplannedRow = (row: any) => {
     if (!row || typeof row !== 'object') return false;
-    return row.planned === 0;
+    return enablePlannedColumn
+      ? row?.type
+        ? [UNPLANNED_PROJECT, OTHER_WORK, PERSONAL_TIME].includes(row?.type)
+        : false
+      : row.planned === 0;
   };
 
   const columns: GridColDef[] = [
@@ -392,7 +403,7 @@ export default function ActualTable({
             <IconButton
               size="small"
               onClick={e => handleActionMenuOpen(e, params.row.id)}
-              disabled={disableView}
+              disabled={!enablePlannedColumn && disableView}
               sx={{
                 padding: '0px',
                 position: 'absolute',
@@ -536,6 +547,7 @@ export default function ActualTable({
             planned: 0,
             actuals: 0,
             comments: '',
+            type: OTHER_WORK,
           };
           addNewRow(newOtherWorkRow);
           setHasOtherWork(true);
@@ -549,6 +561,7 @@ export default function ActualTable({
             planned: 0,
             actuals: 0,
             comments: '',
+            type: PERSONAL_TIME,
           };
           addNewRow(newPersonalTimeRow);
           setHasPersonalTime(true);
