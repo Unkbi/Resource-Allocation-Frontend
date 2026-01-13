@@ -3,6 +3,7 @@ import {
   isPeriodCurrentWeek,
   isPeriodFutureWeek,
   isPeriodPastWeek,
+  isPeriodWithinRange,
 } from '@/app/utils/actualsUtils';
 import { getMondayOfISO } from '@/app/utils/common';
 import { Box, Skeleton, styled, Typography } from '@mui/material';
@@ -142,8 +143,10 @@ const ActualsCard = ({
       return true;
     }
     const periodMonday = parseISO(period);
-    return (
-      periodMonday >= resourceStartMonday && periodMonday <= resourceEndMonday
+    return isPeriodWithinRange(
+      periodMonday,
+      resourceStartMonday,
+      resourceEndMonday
     );
   }, [resourceStartMonday, resourceEndMonday, period]);
 
