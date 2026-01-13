@@ -897,7 +897,10 @@ export default function ActualTable({
                 textDecorationStyle: 'solid',
                 textDecorationOffset: '0%',
                 textDecorationThickness: '0%',
-                color: 'rgba(70, 169, 250, 1)',
+                color:
+                  enablePlannedColumn || disableView
+                    ? 'rgba(121, 134, 162, 1)'
+                    : 'rgba(70, 169, 250, 1)',
               }}
             >
               Copy Plan to Actuals
