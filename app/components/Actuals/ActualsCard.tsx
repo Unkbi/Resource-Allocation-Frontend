@@ -217,7 +217,7 @@ const ActualsCard = ({
 
   return (
     <WeekCardBox
-      onClick={onClick}
+      onClick={() => isWithinResourceRange && onClick()}
       sx={{
         opacity: loading || isWithinResourceRange ? 1 : 0.5,
         backgroundColor: isCurrentWeek
@@ -226,6 +226,7 @@ const ActualsCard = ({
             ? 'rgba(251, 251, 251, 1)'
             : 'rgba(202, 213, 226, 0.2)',
         ...borderStyle,
+        ...(!isWithinResourceRange && { cursor: 'not-allowed' }),
       }}
     >
       {loading || (showStatus && actualAllocationStatus) || isPastWeek ? (
