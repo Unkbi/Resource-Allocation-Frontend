@@ -338,7 +338,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               showToastAction(
                 true,
                 error?.response?.data
-                  ? error?.response?.data
+                  ? `Error updating planned allocation. ${error?.response?.data}`
                   : `Error updating planned allocation.`,
                 'error'
               )
