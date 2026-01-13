@@ -236,6 +236,12 @@ const resourcePeriodColumns: GridColDef[] = [
     renderCell: (params) => getAllocationManagerFromPath(params.value, GetResources())?.FullName || params.value,
   },
   { field: 'period', headerName: 'Period', minWidth: 120 },
+  {
+    field: 'actuals_status', headerName: 'Resource Actuals Status', minWidth: 150,
+    renderCell: (params: any) => (
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
+    ),
+  },
   { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actuals_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},

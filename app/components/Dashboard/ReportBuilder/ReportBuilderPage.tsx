@@ -521,7 +521,7 @@ export default function ReportBuilderPage({
     let count = 0;
 
     // Check period as string
-    if (filters.period !== 'last_week') count++;
+    if (filters.period) count++;
 
     // Check arrays - count as active if not empty
     if (Array.isArray(filters.project) && filters.project.length > 0) count++;
