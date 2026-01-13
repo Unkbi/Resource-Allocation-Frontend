@@ -1213,8 +1213,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     }
                     backgroundColor="rgba(202, 213, 226, 0.2)"
                     periodPillBackgroundColor="rgba(30, 58, 139, 1)"
-                    resourceStartMonday={resourceStartMonday}
-                    resourceEndMonday={resourceEndMonday}
+                    resourceStartMonday={
+                      resourceStartMonday || parseISO('1900-01-01')
+                    }
+                    resourceEndMonday={
+                      resourceEndMonday || parseISO('2100-01-01')
+                    }
                   />
                   <ActualsCard
                     period={startDate}
