@@ -107,15 +107,15 @@ export default function CommentCell(props: CommentCellProps) {
       autoFocus={!readonly}
       multiline
       minRows={1}
-      maxRows={!readonly ? 3 : undefined} 
+      maxRows={!readonly ? 3 : undefined}
       error={showError}
-      placeholder={disableView ? '' : 'Enter Comments / Project updates'}
+      placeholder={disableView ? '' : 'Double Click to Enter Comment'}
       InputProps={{
         readOnly: readonly,
         inputProps: {
           onMouseDown: (e: React.MouseEvent) => {
             e.stopPropagation(); //this is to enter edit mode onclick
-            },
+          },
         },
       }}
       // keep your existing styling; tweak if needed

@@ -185,7 +185,7 @@ export interface ActualAllocationsForPeriodPayload {
 
 export interface ActualStatusForPeriodPayload {
   Resource: string;
-  Status: string;
+  Status: string | null;
   StartDate: string;
   EndDate: string;
 }
@@ -227,10 +227,12 @@ export interface ActualStatus {
 }
 
 export interface ActualAllocationsState {
-  actualAllocations: ActualAllocations[] | null;
+  actualAllocations: Record<string, ActualAllocations[]> | null;
+  actualAllocationsStatuses: Record<string, string> | null;
   actualsStatus: ActualStatus[] | null;
   status: string | null;
   dataProcessing: boolean | null;
+  actualAllocationsStatusesLoading: boolean;
   actualsStatusLoading: boolean | null;
   loading: boolean | null;
   calendarDate: {

@@ -8,10 +8,11 @@ import {
   Typography,
 } from '@mui/material';
 import { useState, useMemo } from 'react';
-import { useSelector } from "react-redux";
+import { useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
 import { GridValidRowModel } from '@mui/x-data-grid-premium';
 import SearchIcon from '@mui/icons-material/Search';
+import { UNPLANNED_PROJECT } from '@/app/constants/constants';
 
 interface Project {
   Id: string | number;
@@ -93,15 +94,16 @@ const ProjectMenu = ({
   const [selectedProjects, setSelectedProjects] = useState<Project[]>([]);
 
   const existingProjectIds = existingRows
-    .filter((row) => row.id !== 'divider')
-    .map((row) => row.project);
+    .filter(row => row.id !== 'divider')
+    .map(row => row.project);
 
   const filteredProjects = useMemo(() => {
     const projectList = Array.isArray(projects) ? projects : [];
-    return projectList.filter(project =>
-      project.Name.toLowerCase().includes(searchValue.toLowerCase()) &&
-      !selectedProjects.some(p => p.Id === project.Id) &&
-      !existingProjectIds.includes(project.Name)
+    return projectList.filter(
+      project =>
+        project.Name.toLowerCase().includes(searchValue.toLowerCase()) &&
+        !selectedProjects.some(p => p.Id === project.Id) &&
+        !existingProjectIds.includes(project.Name)
     );
   }, [projects, searchValue, selectedProjects, existingProjectIds]);
 
@@ -125,6 +127,7 @@ const ProjectMenu = ({
       planned: 0,
       actuals: 0,
       comments: '',
+      type: UNPLANNED_PROJECT,
     }));
 
     if (newRows.length > 0) {
@@ -135,7 +138,12 @@ const ProjectMenu = ({
   };
 
   return (
-    <Popper open={open} anchorEl={anchorEl} placement="bottom-start" sx={{ zIndex: 1300 }}>
+    <Popper
+      open={open}
+      anchorEl={anchorEl}
+      placement="bottom-start"
+      sx={{ zIndex: 1300 }}
+    >
       <Box
         sx={{
           width: 231,
@@ -192,7 +200,7 @@ const ProjectMenu = ({
             variant="standard"
             placeholder={selectedProjects.length === 0 ? 'Search' : ''}
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={e => setSearchValue(e.target.value)}
             slotProps={{
               input: {
                 disableUnderline: true,
@@ -210,7 +218,7 @@ const ProjectMenu = ({
         </Box>
 
         <Box sx={scrollStyles}>
-          {filteredProjects.map((project) => {
+          {filteredProjects.map(project => {
             const isSelected = selectedProjects.some(p => p.Id === project.Id);
             return (
               <Box
@@ -220,7 +228,9 @@ const ProjectMenu = ({
                   px: 1,
                   py: 0.5,
                   cursor: 'pointer',
-                  backgroundColor: isSelected ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
+                  backgroundColor: isSelected
+                    ? 'rgba(25, 118, 210, 0.1)'
+                    : 'transparent',
                   '&:hover': { backgroundColor: '#f0f0f0' },
                 }}
               >

@@ -21,6 +21,7 @@ interface MuiDashboardCardProps {
   overallDirection?: string
   subScores: SubScore[]
   hasAccess?: boolean
+  onClick?: () => void
 }
 
 export default function MuiDashboardCard({
@@ -31,13 +32,18 @@ export default function MuiDashboardCard({
   overallDirection,
   subScores,
   hasAccess = true,
+  onClick,
 }: MuiDashboardCardProps) {
 
   const colorPallette = ['#00A63E', '#9810FA', '#155DFC'];
 
   return (
-    <>
-
+    <Box
+      onClick={onClick}
+      sx={{
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+    >
       {/* Header with title and tooltip */}
       <Box
         sx={{
@@ -298,7 +304,6 @@ export default function MuiDashboardCard({
           ))}
         </Grid>
       </Box>
-    </>
-    // </Card>
+    </Box>
   )
 }

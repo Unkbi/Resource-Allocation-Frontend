@@ -353,7 +353,7 @@ export default function ReportBuilderFilters({
   ];
 
   const resourceTypeOptions = [
-    ...sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type: string) => ({
+    ...sortOptions([...new Set(resources?.map((res: any) => res.Type))].map((type) => ({
       value: type,
       label: type.charAt(0).toUpperCase() + type.slice(1),
     }))),
@@ -537,9 +537,9 @@ export default function ReportBuilderFilters({
     Object.entries(filters).forEach(([key, value]) => {
       // Skip default/empty values for report mode
       if (!value || 
-          (typeof value === 'string' && value === 'last_week' && key === 'period') ||
+          (Array.isArray(value) && value.length === 0) ||
           (typeof value === 'string' && value === 'resourceProjectPeriod' && key === 'reportType') ||
-          (Array.isArray(value) && value.length === 0)) {
+          (key === 'period' && (filters.reportType === 'resourceOnly' || filters.reportType === 'projectsOnly'))) {
         return;
       }
       
