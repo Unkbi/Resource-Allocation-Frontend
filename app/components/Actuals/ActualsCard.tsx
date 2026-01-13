@@ -151,6 +151,9 @@ const ActualsCard = ({
     if (loading || actualAllocationsStatusesLoading) {
       return <Skeleton width={16} height={16} sx={{ marginTop: 1 }} />;
     }
+    if (!isWithinResourceRange) {
+      return <></>;
+    }
     switch (actualAllocationStatus) {
       case 'Confirmed':
         return (
