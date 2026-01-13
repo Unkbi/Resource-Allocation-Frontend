@@ -7,6 +7,7 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
   calculateTotalEffort,
+  formatDateMMDDYYYY,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
@@ -397,7 +398,11 @@ function ResourceAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.StartDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(resource?.StartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -422,7 +427,11 @@ function ResourceAllocation({
       },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.EndDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(resource?.EndDate) || ''}
+          />
+        );
       },
     },
     {
@@ -589,9 +598,9 @@ function ResourceAllocation({
           <EllipsisNameCell
             value={
               allocation?.projectOvertimeAllowed === true
-                ? 'True'
+                ? 'Yes'
                 : allocation?.projectOvertimeAllowed === false
-                  ? 'False'
+                  ? 'No'
                   : ''
             }
           />
@@ -661,7 +670,11 @@ function ResourceAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectStartDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectStartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -674,7 +687,11 @@ function ResourceAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectEndDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectEndDate) || ''}
+          />
+        );
       },
     },
     {

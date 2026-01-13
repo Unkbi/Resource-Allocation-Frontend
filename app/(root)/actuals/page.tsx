@@ -2,11 +2,12 @@
 
 import { Box, Typography, Button, Skeleton, Link } from '@mui/material';
 import ActualTable from '@/app/components/Actuals/ActualTable';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
   CONFIRM_ACTUAL_ALLOCATIONS,
   GET_ACTUAL_ALLOCATIONS,
+  GET_ACTUAL_ALLOCATIONS_STATUSES,
   GET_ACTUAL_STATUS,
 } from '@/app/redux/actions/actualAllocationsActions';
 import { AppDispatch, RootState } from '@/app/redux/store';
@@ -14,8 +15,8 @@ import { useSelector } from 'react-redux';
 import {
   ActualAllocations,
   ActualAllocationTableRow,
-  ActualStatus,
   Resource,
+  Team,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -23,9 +24,10 @@ import {
   getFridayOfISO,
   getMondayOfISO,
   getSundayOfISO,
+  getTeamForResource,
   getUserIdFromEmail,
-  getWeekNumber,
   isCurrentWeek,
+  isFutureWeek,
 } from '@/app/utils/common';
 import {
   setActualAllocationsStatus,
@@ -48,9 +50,14 @@ import ErrorPage from '@/app/components/ErrorPage/ErrorPage';
 import { showToastAction } from '@/app/redux/actions/toastAction';
 import {
   DATE_FORMAT,
+  FAR_FUTURE_DATE,
+  FAR_PAST_DATE,
   MISSING_PROJECT_ACTUALS_STATUS,
   TOTAL_ACTUALS_LESS_THAN_ONE,
 } from '@/app/constants/constants';
+import ActualsCard from '@/app/components/Actuals/ActualsCard';
+import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
+import { AxiosError } from 'axios';
 
 interface ActualsPageProps {
   permissions: Record<string, CrudPermissions>;
@@ -61,17 +68,24 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const dispatch: AppDispatch = useDispatch();
   const {
     actualAllocations,
-    actualsStatus,
-    status,
+    actualAllocationsStatuses,
     calendarDate,
     dataProcessing,
+    actualAllocationsStatusesLoading,
     actualsStatusLoading,
   } = useSelector((state: RootState) => state.actualAllocations);
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
   // @ts-ignore
-  const { email = '' } = getLoginUserDetails(user) || {};
+  const {
+    email = '',
+    firstName = '',
+    lastName = '',
+  } = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
+  const { teams, teamsResources } = useSelector(
+    (state: RootState) => state.teams
+  );
   const { loading: resourcesLoading } = useSelector(
     (state: RootState) => state.allResourcesDetail
   );
@@ -86,7 +100,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     useState<boolean>(true);
   const [rows, setRows] = useState<ActualAllocationTableRow[]>([]);
   const [rowValidationErrors, setRowValidationErrors] = useState<
-    Record<string, { actuals: boolean; comments: boolean }>
+    Record<string, { planned: boolean; actuals: boolean; comments: boolean }>
   >({});
   const apiRef = useGridApiRef();
   const [hasInvalidRows, setHasInvalidRows] = useState(false);
@@ -103,6 +117,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const params = useSearchParams();
   const paramsStartDate = params.get('startDate');
   const paramsEndDate = params.get('endDate');
+  const [showNoActualsAvailable, setShowNoActualsAvailable] = useState(false);
+  const [showNoActualsTracked, setShowNoActualsTracked] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [loadingName, setLoadingName] = useState(true);
 
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
@@ -112,16 +130,64 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setIsModified(modified);
   };
 
+  const actualsErrorType = showNoActualsAvailable
+    ? 'noActualsAvailable'
+    : showNoActualsTracked
+      ? 'noActualsTracked'
+      : null;
+
   const userId = getUserIdFromEmail(resources || [], email);
-  const currentResource: Resource[] = resources?.filter(
+  const currentResource: Resource | undefined = resources?.find(
     (r: Resource) => r?.Id === userId
   );
-  const ValidPrevDate = currentResource[0]?.StartDate;
 
-  const resourceValidPrevDate = ValidPrevDate ? parseISO(ValidPrevDate) : null;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (firstName || lastName) {
+        setDisplayName(`${firstName ?? ''} ${lastName ?? ''}`.trim());
+      } else {
+        setDisplayName('User');
+      }
+      setLoadingName(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [user]);
 
-  const resourceStartMonday = resourceValidPrevDate
-    ? startOfWeek(resourceValidPrevDate, { weekStartsOn: 1 })
+  const userTitle = currentResource
+    ? ((currentResource as Resource)?.Role ?? '--')
+    : '--';
+  const userTeam = currentResource
+    ? (
+        getTeamForResource(
+          (currentResource as Resource)?.Id,
+          teams,
+          teamsResources
+        ) as Team
+      )?.Name
+    : '--';
+
+  const ValidResourceStartDate = currentResource
+    ? (currentResource as Resource)?.StartDate
+    : null;
+
+  const ValidResourceEndDate = currentResource
+    ? (currentResource as Resource)?.EndDate
+    : null;
+
+  const resourceValidStartDate = ValidResourceStartDate
+    ? parseISO(ValidResourceStartDate)
+    : null;
+
+  const resourceValidEndDate = ValidResourceEndDate
+    ? parseISO(ValidResourceEndDate)
+    : null;
+
+  const resourceStartMonday = resourceValidStartDate
+    ? startOfWeek(resourceValidStartDate, { weekStartsOn: 1 })
+    : null;
+
+  const resourceEndMonday = resourceValidEndDate
+    ? startOfWeek(resourceValidEndDate, { weekStartsOn: 1 })
     : null;
 
   const currentViewMonday = startDate
@@ -133,6 +199,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ? currentViewMonday <= resourceStartMonday
       : false;
 
+  const disableNext =
+    currentViewMonday && resourceEndMonday
+      ? currentViewMonday >= resourceEndMonday
+      : false;
+
   const handleValidationChange = (hasInvalid: boolean) => {
     setHasInvalidRows(hasInvalid);
   };
@@ -141,7 +212,158 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     setShow(val);
   };
 
+  const updatePlannedAllocationsIfNeeded = () => {
+    const allRows = apiRef.current
+      .getAllRowIds()
+      .map(id => apiRef.current.getRow(id));
+
+    // If there are validation errors, block the update
+    if (Object.keys(rowValidationErrors || {}).length > 0) {
+      dispatch(showToastAction(true, 'Must fill required fields.', 'error'));
+      return;
+    }
+
+    const modifiedPlannedAllocations = actualAllocations?.[startDate || '']
+      ?.map((allocation: ActualAllocations) => {
+        const row = allRows.find(
+          r => r.id === allocation.Id
+        ) as ActualAllocationTableRow;
+        if (
+          row &&
+          (allocation.AllocationEntered !== row.planned ||
+            allocation.Notes !== row.comments)
+        ) {
+          return {
+            ...allocation,
+            AllocationEntered: row.planned ?? 0,
+            Notes: row.comments,
+          };
+        }
+      })
+      .filter(allocation => allocation !== undefined);
+
+    // Include new rows (upsert) - rows that don't have a matching allocation Id
+    const existingIds = new Set(
+      (actualAllocations?.[startDate || ''] || []).map(a => a.Id)
+    );
+    const newRows = allRows
+      .filter(r => r && r.project && !existingIds.has(r.id))
+      .map(r => {
+        const projectId = projects?.find((p: any) => p.Name === r.project)?.Id;
+        return {
+          AllocationEntered: r.planned ?? 0,
+          Period: startDate,
+          Project: projectId || null,
+          ProjectName: r.project,
+          Resource: userId,
+          Notes: r.comments || '',
+        } as any;
+      });
+
+    const allocList = [
+      ...(modifiedPlannedAllocations?.map(allocation => ({
+        AllocationEntered: allocation.AllocationEntered,
+        Id: allocation.Id,
+        Period: allocation.Period,
+        Project: allocation.Project,
+        ProjectName: allocation.ProjectName,
+        Resource: allocation.Resource,
+        Notes: allocation.Notes,
+      })) || []),
+      ...newRows,
+    ];
+    if (allocList && allocList.length > 0 && allocList[0].Resource) {
+      if (
+        allocList.some(
+          alloc =>
+            actualAllocations?.[startDate || ''] &&
+            actualAllocations?.[startDate || '']?.find(
+              actualAlloc => actualAlloc.Id === alloc.Id
+            )?.AllocationEntered !== alloc?.AllocationEntered &&
+            (alloc.Notes === null ||
+              alloc.Notes === undefined ||
+              alloc.Notes === '')
+        )
+      ) {
+        dispatch(
+          showToastAction(
+            true,
+            `Please enter a comment(s) to Update Allocation(s).`,
+            'error'
+          )
+        );
+        return;
+      }
+      try {
+        new Promise((resolve, reject) => {
+          dispatch({
+            type: 'UPDATE_BULK_ALLOCATIONS',
+            payload: {
+              resourceId: allocList[0].Resource,
+              allocList: allocList,
+              resolve,
+              reject,
+            },
+          });
+        })
+          .then(res => {
+            dispatch(
+              showToastAction(
+                true,
+                `Successfully updated allocations.`,
+                'success'
+              )
+            );
+
+            dispatch({
+              type: GET_ACTUAL_ALLOCATIONS,
+              payload: {
+                resource: userId,
+                startDate: generateDateWeekMath(
+                  'WEEK_MINUS',
+                  1,
+                  parseISO(startDate ?? '')
+                ),
+                endDate: generateDateWeekMath(
+                  'WEEK_PLUS',
+                  1,
+                  parseISO(endDate ?? '')
+                ),
+              },
+            });
+          })
+          .catch((error: any) => {
+            console.error('Error updating planned allocations:', error);
+            dispatch(
+              showToastAction(
+                true,
+                error?.response?.data
+                  ? error?.response?.data
+                  : `Error updating planned allocation.`,
+                'error'
+              )
+            );
+          });
+      } catch (error: any) {
+        console.error('Error updating planned allocations:', error);
+        dispatch(
+          showToastAction(
+            true,
+            error?.response?.data
+              ? error?.response?.data
+              : `Error updating planned allocation.`,
+            'error'
+          )
+        );
+      }
+    }
+  };
+
   const validateDataBeforeConfirm = () => {
+    if (isFutureWeek(parseISO(startDate))) {
+      updatePlannedAllocationsIfNeeded();
+      return;
+    }
     if (isFridayOrAfterFriday) {
       const allRows = apiRef.current
         .getAllRowIds()
@@ -156,7 +378,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           row =>
             !row.projectActualsStatus || row.projectActualsStatus === 'No Data'
         );
-
       if (rowsWithMissingStatus.length === 0 && totalActuals >= 1.0) {
         // No Errors
         handleConfirmed();
@@ -187,8 +408,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         .map(id => apiRef.current.getRow(id))
         .filter(row => row.id !== 'total' && row.project);
 
+      if (!startDate) return;
       // Set deleted rows, actualAllocations to 0.
-      const modifiedData = actualAllocations?.map(
+      const modifiedData = actualAllocations?.[startDate]?.map(
         (allocations: ActualAllocations) => {
           const row = allData.find(
             tabData => tabData.project === allocations.ProjectName
@@ -235,12 +457,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       const payload = {
         resource: userId,
         period:
-          actualAllocations?.length &&
-          actualAllocations.every(
+          actualAllocations?.[startDate]?.length &&
+          actualAllocations?.[startDate]?.every(
             actualAllocation =>
-              actualAllocation.Period === actualAllocations[0].Period
+              actualAllocation.Period === actualAllocations[startDate][0].Period
           ) // If Every Row has the same period.
-            ? actualAllocations[0].Period
+            ? actualAllocations[startDate][0].Period
             : startDate,
         status: isFridayOrAfterFriday ? 'Confirmed' : 'In-Progress',
         actuals: [
@@ -255,7 +477,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       };
 
       if (
-        (isCurrentWeek(parseISO(startDate)) || isModified) &&
+        (actualAllocationsStatuses?.[startDate] !== null ||
+          actualAllocationsStatuses?.[startDate] !== 'In-Progress' ||
+          actualAllocationsStatuses?.[startDate] !== 'Not Started' ||
+          isCurrentWeek(parseISO(startDate)) ||
+          isModified) &&
         !hasInvalidRows
       ) {
         new Promise((resolve, reject) => {
@@ -265,11 +491,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           });
         })
           .then(() => {
-            dispatch(
-              setActualAllocationsStatus(
-                isFridayOrAfterFriday ? 'Confirmed' : 'In-Progress'
-              )
-            );
             setIsModified(false);
             setHasInvalidRows(false);
             setConfirmSignal(c => c + 1);
@@ -282,13 +503,31 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 autoHideTimer: 4000,
               })
             );
+            dispatch({
+              type: GET_ACTUAL_ALLOCATIONS_STATUSES,
+              payload: {
+                resource: userId,
+                startDate: generateDateWeekMath(
+                  'WEEK_MINUS',
+                  1,
+                  parseISO(startDate ?? '')
+                ),
+                endDate: generateDateWeekMath(
+                  'WEEK_PLUS',
+                  1,
+                  parseISO(endDate ?? '')
+                ),
+              },
+            });
           })
-          .catch((error: any) => {
+          .catch((error: AxiosError) => {
             console.error('Error confirming actual allocations:', error);
             dispatch(
               showToast({
                 open: true,
-                message: `Failed to confirm Actual alloctions.`,
+                message:
+                  error?.response?.data ??
+                  `Failed to confirm Actual alloctions.`,
                 type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -362,8 +601,19 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     router.replace(`/actuals?startDate=${date}`);
   };
 
+  const loading = useMemo(
+    () =>
+      dataProcessing ||
+      actualsStatusLoading ||
+      formattingActualAllocations ||
+      false,
+    [dataProcessing, actualsStatusLoading, formattingActualAllocations]
+  );
+
   useEffect(() => {
     if (loadingPermissions || resourcesLoading) return;
+    setShowNoActualsAvailable(false);
+    setShowNoActualsTracked(false);
     if (permissions['ActualsStatus'].r) {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -377,34 +627,29 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
       // Validate paramsStartDate and paramsEndDate are in "YYYY-MM-DD" format
       if (paramsStartDate && !dateRegex.test(paramsStartDate)) {
+        // Redirect to current Week.
         router.replace(
           `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
         );
         return;
       }
 
-      // If Week from params is not accessable week redirect to current Week.
-      if (resourceStartMonday) {
+      // If Week from params is not accessable week for Resource, show No Actuals Available Page.
+      if (resourceStartMonday && resourceEndMonday) {
         if (
-          paramsStartDate &&
-          parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday
+          (paramsStartDate &&
+            parseISO(getMondayOfISO(paramsStartDate)) < resourceStartMonday) ||
+          parseISO(getMondayOfISO(paramsStartDate)) > resourceEndMonday
         ) {
-          router.replace(
-            `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
+          setShowNoActualsTracked(true);
+          dispatch(
+            setCalendarDate({
+              startDate: getMondayOfISO(paramsStartDate),
+              endDate: getSundayOfISO(paramsStartDate || startDate),
+            })
           );
           return;
         }
-      }
-
-      // If paramsStartDate for any day greater than today, set to Monday of current Week.
-      if (
-        parseISO(paramsStartDate) >
-        parseISO(getMondayOfISO(new Date().toISOString()))
-      ) {
-        router.replace(
-          `/actuals?startDate=${getMondayOfISO(new Date().toISOString())}`
-        );
-        return;
       }
 
       // If paramsStartDate is not the Monday of the week, set to Monday of that Week.
@@ -433,8 +678,16 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           type: GET_ACTUAL_ALLOCATIONS,
           payload: {
             resource: userId,
-            startDate: startDate,
-            endDate: endDate,
+            startDate: generateDateWeekMath(
+              'WEEK_MINUS',
+              1,
+              parseISO(startDate ?? '')
+            ),
+            endDate: generateDateWeekMath(
+              'WEEK_PLUS',
+              1,
+              parseISO(endDate ?? '')
+            ),
           },
         });
 
@@ -459,6 +712,23 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               '',
           },
         });
+
+        dispatch({
+          type: GET_ACTUAL_ALLOCATIONS_STATUSES,
+          payload: {
+            resource: userId,
+            startDate: generateDateWeekMath(
+              'WEEK_MINUS',
+              1,
+              parseISO(startDate ?? '')
+            ),
+            endDate: generateDateWeekMath(
+              'WEEK_PLUS',
+              1,
+              parseISO(endDate ?? '')
+            ),
+          },
+        });
       }
     }
   }, [
@@ -473,9 +743,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
-    if (actualAllocations) {
+    if (actualAllocations && startDate && actualAllocations[startDate]) {
       setFormattingActualAllocations(true);
-      const formattedData: ActualAllocationTableRow[] = actualAllocations
+      const formattedData: ActualAllocationTableRow[] = actualAllocations[
+        startDate
+      ]
         .filter(
           (alloc: ActualAllocations) =>
             (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
@@ -508,14 +780,21 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   }, [loadingPermissions, dataProcessing, formattedActualAllocations]);
 
   useEffect(() => {
-    if (loadingPermissions || dataProcessing) return;
+    if (
+      loadingPermissions ||
+      dataProcessing ||
+      actualAllocationsStatusesLoading ||
+      !startDate
+    )
+      return;
     setDisableView(
       (!permissions['ActualsStatus'].c && !permissions['ActualsStatus'].u) ||
-        (status === 'Confirmed' &&
+        isFutureWeek(parseISO(startDate)) ||
+        (actualAllocationsStatuses?.[startDate] === 'Confirmed' &&
           startDate !== null &&
           !isCurrentWeek(parseISO(startDate)))
     );
-  }, [loadingPermissions, dataProcessing, status]);
+  }, [loadingPermissions, dataProcessing, actualAllocationsStatusesLoading]);
 
   useEffect(() => {
     if (loadingPermissions) return;
@@ -553,6 +832,104 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     if (newRow.id === 'total' || newRow.id === 'second-total') {
       return oldRow;
     }
+    // Handle future Weeks
+    // 1) New rows can be added — for those rows Planned and Comments are mandatory.
+    // 2) Existing rows: if planned changed then Comments are mandatory.
+    if (isFutureWeek(parseISO(startDate || ''))) {
+      const existingAlloc = actualAllocations?.[startDate || '']?.find(
+        (alloc: ActualAllocations) => alloc.Id === newRow.id
+      );
+      const isNewRow = !existingAlloc;
+
+      const plannedChanged =
+        !isNewRow && newRow.planned !== existingAlloc?.AllocationEntered;
+
+      const plannedInvalidForNew =
+        isNewRow &&
+        (newRow.planned === null ||
+          newRow.planned === undefined ||
+          newRow.planned === 0);
+      const commentsInvalidForNew =
+        isNewRow && (!newRow.comments || !newRow.comments.trim());
+      const commentsInvalidForPlannedChange =
+        plannedChanged && (!newRow.comments || !newRow.comments.trim());
+
+      const plannedInvalid = plannedInvalidForNew;
+      const commentsInvalid =
+        commentsInvalidForNew || commentsInvalidForPlannedChange;
+
+      // Planned total validation (same logic as Actuals)
+      const plannedChangedOrNew = isNewRow || plannedChanged;
+      if (plannedChangedOrNew) {
+        const newPlanned =
+          Math.round((parseFloat(newRow.planned) || 0) * 10) / 10;
+        const updatedPlannedTotal = rows.reduce((sum, row) => {
+          if (row.id === newRow.id) {
+            return sum + newPlanned;
+          }
+          if (row.id !== 'total' && row.id !== 'second-total') {
+            return (
+              Math.round(
+                (sum +
+                  (row?.planned ? parseFloat(row?.planned?.toFixed(1)) : 0)) *
+                  10
+              ) / 10
+            );
+          }
+          return sum;
+        }, 0);
+
+        if (updatedPlannedTotal > Number(max_allocation_error)) {
+          dispatch(
+            showToastAction(
+              true,
+              `Total of Planned cannot exceed ${max_allocation_error} (Current sum: ${updatedPlannedTotal.toFixed(1)})`,
+              'error'
+            )
+          );
+          return oldRow;
+        } else if (updatedPlannedTotal >= Number(max_allocation_warning)) {
+          dispatch(
+            showToastAction(
+              true,
+              `Warning: Total planned is >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedPlannedTotal.toFixed(1)}`,
+              'warning'
+            )
+          );
+        }
+      }
+
+      setRowValidationErrors(prev => {
+        const updated = { ...prev };
+        if (plannedInvalid || commentsInvalid) {
+          updated[newRow.id] = {
+            planned: Boolean(plannedInvalid),
+            actuals: false,
+            comments: Boolean(commentsInvalid),
+          };
+        } else {
+          delete updated[newRow.id];
+        }
+        return updated;
+      });
+
+      setRows(prev => {
+        const existingRow = prev.find(r => r.id === newRow.id);
+        if (JSON.stringify(existingRow) === JSON.stringify(newRow)) return prev;
+        return prev.map(row =>
+          row.id === newRow.id
+            ? {
+                ...row,
+                ...newRow,
+              }
+            : row
+        );
+      });
+
+      return newRow;
+    }
+
+    // Handle Past and Current Weeks, comments is required, if new row actuals row is added or if status is "At-Risk" and "Off-Track"
     const actualsChanged = newRow.actuals !== oldRow.actuals;
     let newActual = parseFloat(newRow.actuals) || 0;
     if (actualsChanged) {
@@ -586,7 +963,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch(
           showToastAction(
             true,
-            `Warning: Total actuals is approaching the maximum of ${max_allocation_warning}. Current sum: ${updatedTotal.toFixed(1)}`,
+            `Warning: Total actuals >= ${max_allocation_warning}, and is approaching the maximum of ${max_allocation_error}. Current sum: ${updatedTotal.toFixed(1)}`,
             'warning'
           )
         );
@@ -633,6 +1010,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       if (actualsInvalid || commentsInvalid) {
         // Only update if there are errors
         updated[newRow.id] = {
+          planned: false,
           actuals: actualsInvalid,
           comments: commentsInvalid,
         };
@@ -645,27 +1023,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     });
 
     return { ...newRow, actuals: actualsChanged ? newActual : newRow.actuals };
-  };
-
-  const handleCopyToActuals = () => {
-    apiRef.current
-      .getAllRowIds()
-      .map(id => apiRef.current.getRow(id))
-      .filter(row => row.id !== 'total' && row.project)
-      .forEach(row =>
-        handleProcessRowUpdate(
-          {
-            ...row,
-            actuals: row.planned,
-            projectActualsStatus:
-              !row.projectActualsStatus ||
-              row.projectActualsStatus === 'No Data'
-                ? 'On Track'
-                : row.projectActualsStatus,
-          },
-          row
-        )
-      );
   };
 
   const validEndDate: string = endDate ?? '';
@@ -685,6 +1042,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     };
   }, [isModified]);
 
+  // Show specific Actuals error pages when flagged
+  // compute current week monday for redirect buttons
+
   return loadingPermissions ? (
     <LoadingScreen />
   ) : permissions['ActualsStatus'].r ? (
@@ -698,24 +1058,70 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           boxSizing: 'border-box',
         }}
       >
-        <Typography
-          variant="body1"
-          mb={2}
-          sx={{ textAlign: 'left', fontSize: '14px' }}
-        >
-          Confirm your actual effort against the pre-filled planned allocation
-          values.
-        </Typography>
-
         {permissions['ActualsStatus'].r ? (
           <Box
             className="tableWithArrow"
             display="flex"
             alignItems="center"
             justifyContent="center"
+            marginTop={5}
           >
             <Box mx={2} maxWidth={780} minHeight={350}>
-              {actualsStatus?.length ? (
+              <Box>
+                <Box
+                  mb={0.2}
+                  sx={{
+                    fontFamily: 'Open Sans',
+                    fontWeight: 600,
+                    fontStyle: 'SemiBold',
+                    fontSize: '18px',
+                  }}
+                >
+                  {loadingName ? (
+                    <Skeleton width={100} height={20} />
+                  ) : (
+                    `${displayName}`
+                  )}
+                </Box>
+                <Box display="flex" gap={4} mb={2}>
+                  <Typography
+                    sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}
+                  >
+                    Title:{' '}
+                    {resourcesLoading ? (
+                      <Skeleton
+                        component="span"
+                        width={120}
+                        sx={{ display: 'inline-block' }}
+                      />
+                    ) : (
+                      <Typography component="span" sx={{ fontWeight: 600 }}>
+                        {userTitle}
+                      </Typography>
+                    )}
+                  </Typography>
+                  <Typography
+                    sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}
+                  >
+                    Team:{' '}
+                    {resourcesLoading ? (
+                      <Skeleton
+                        component="span"
+                        width={100}
+                        sx={{ display: 'inline-block' }}
+                      />
+                    ) : (
+                      <Typography component="span" sx={{ fontWeight: 600 }}>
+                        {userTeam}
+                      </Typography>
+                    )}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Commenting out the older header and Important message displaying week number  */}
+
+              {/* {actualsStatus?.length ? (
                 <Box
                   sx={{
                     display: 'flex',
@@ -771,82 +1177,118 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 </Box>
               ) : (
                 <></>
+                )} */}
+              {actualAllocations && startDate && actualAllocationsStatuses && (
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  gap={2}
+                  width={'100%'}
+                >
+                  <ActualsCard
+                    onClick={handlePrev}
+                    period={
+                      generateDateWeekMath(
+                        'WEEK_MINUS',
+                        1,
+                        parseISO(startDate ?? '')
+                      ) || ''
+                    }
+                    actualAllocationData={
+                      actualAllocations[
+                        generateDateWeekMath(
+                          'WEEK_MINUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    actualAllocationStatus={
+                      actualAllocationsStatuses[
+                        generateDateWeekMath(
+                          'WEEK_MINUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    loading={loading}
+                    actualAllocationsStatusesLoading={
+                      actualAllocationsStatusesLoading
+                    }
+                    backgroundColor="rgba(202, 213, 226, 0.2)"
+                    periodPillBackgroundColor="rgba(30, 58, 139, 1)"
+                    resourceStartMonday={
+                      resourceStartMonday || parseISO(FAR_PAST_DATE)
+                    }
+                    resourceEndMonday={
+                      resourceEndMonday || parseISO(FAR_FUTURE_DATE)
+                    }
+                  />
+                  <ActualsCard
+                    period={startDate}
+                    actualAllocationData={actualAllocations[startDate]}
+                    actualAllocationStatus={
+                      actualAllocationsStatuses[startDate]
+                    }
+                    showStatus={false}
+                    loading={loading}
+                    actualAllocationsStatusesLoading={
+                      actualAllocationsStatusesLoading
+                    }
+                    borderStyle={{ borderWidth: '2px', borderBottom: 'none' }}
+                    resourceStartMonday={resourceStartMonday}
+                    resourceEndMonday={resourceEndMonday}
+                  />
+                  <ActualsCard
+                    onClick={handleNext}
+                    period={
+                      generateDateWeekMath(
+                        'WEEK_PLUS',
+                        1,
+                        parseISO(startDate ?? '')
+                      ) || ''
+                    }
+                    actualAllocationData={
+                      actualAllocations[
+                        generateDateWeekMath(
+                          'WEEK_PLUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    actualAllocationStatus={
+                      actualAllocationsStatuses[
+                        generateDateWeekMath(
+                          'WEEK_PLUS',
+                          1,
+                          parseISO(startDate ?? '')
+                        ) || ''
+                      ]
+                    }
+                    loading={loading}
+                    actualAllocationsStatusesLoading={
+                      actualAllocationsStatusesLoading
+                    }
+                    backgroundColor="rgba(251, 251, 251, 1)"
+                    periodPillBackgroundColor="rgba(30, 58, 139, 1)"
+                    resourceStartMonday={resourceStartMonday}
+                    resourceEndMonday={resourceEndMonday}
+                  />
+                </Box>
               )}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  width: '100%',
-                }}
-              >
-                <Typography
-                  style={{
-                    fontWeight: 700,
-                    fontSize: '14px',
-                  }}
-                >
-                  Current Status :{' '}
-                  {actualsStatusLoading ||
-                  dataProcessing ||
-                  formattingActualAllocations ? (
-                    <Skeleton
-                      variant="text"
-                      sx={{
-                        display: 'inline-block',
-                        width: '80px',
-                        height: '21px',
-                        marginLeft: '4px',
-                        verticalAlign: 'middle',
-                      }}
-                    />
-                  ) : (
-                    <span
-                      style={{
-                        color: status === 'Confirmed' ? '#198F35' : '#FF7912',
-                      }}
-                    >
-                      {status ?? 'Not Started'}
-                    </span>
-                  )}
-                </Typography>
-                <Link
-                  onClick={() => !disableView && handleCopyToActuals()}
-                  sx={{ cursor: disableView ? 'not-allowed' : 'pointer' }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: 500,
-                      fontStyle: 'Medium',
-                      fontSize: '13.6px',
-                      lineHeight: '24px',
-                      letterSpacing: '0%',
-                      textAlign: 'center',
-                      verticalAlign: 'middle',
-                      textDecoration: 'underline',
-                      textDecorationStyle: 'solid',
-                      textDecorationOffset: '0%',
-                      textDecorationThickness: '0%',
-                      color: disableView ? 'rgba(37, 99, 235, 0.5)' : '#2563EB',
-                    }}
-                  >
-                    Copy Plan to Actuals
-                  </Typography>
-                </Link>
-              </Box>
               <ActualTable
                 data={formattedActualAllocations || []}
-                dataProcessing={
-                  dataProcessing ||
-                  actualsStatusLoading ||
-                  formattingActualAllocations ||
-                  false
-                }
+                currentResource={currentResource}
+                dataProcessing={loading}
                 rows={rows}
                 setRows={setRows}
                 rowValidationErrors={rowValidationErrors}
                 setRowValidationErrors={setRowValidationErrors}
                 disableView={disableView}
+                enablePlannedColumn={isFutureWeek(parseISO(startDate || ''))}
                 startDate={startDate}
                 endDate={endDate}
                 apiRef={apiRef}
@@ -855,104 +1297,138 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 onModificationChange={handleModificationChange}
                 confirmSignal={confirmSignal}
                 handleProcessRowUpdate={handleProcessRowUpdate}
+                formattingActualAllocations={formattingActualAllocations}
+                handlePrev={handlePrev}
+                handleNext={handleNext}
+                isModified={isModified}
+                setDialogSource={setDialogSource}
+                setDeleteDialogOpen={setDeleteDialogOpen}
+                actualsErrorType={actualsErrorType}
+                disablePrev={disablePrev}
+                disableNext={disableNext}
               />
-              <Box display="flex" justifyContent="space-between" mt={1}>
-                <Button
-                  startIcon={<ChevronLeftIcon />}
-                  onClick={() => {
-                    if (isModified) {
-                      setDialogSource('prev');
-                      setDeleteDialogOpen(true);
-                    } else {
-                      handlePrev();
-                    }
-                  }}
-                  disabled={disablePrev}
-                  sx={{
-                    fontSize: '14px',
-                    color: '#152e75',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                    },
-                    '& .MuiButton-startIcon': {
-                      marginRight: '0px',
-                    },
-                  }}
-                  variant="text"
-                >
-                  Prev Week
-                </Button>
-
-                <Button
-                  variant="contained"
-                  sx={{
-                    // @ts-ignore
-                    bgcolor: theme => theme.palette.sideBarColor.main,
-                    px: 2,
-                    width: '192px',
-                    height: '36px',
-                    borderRadius: '5px',
-                  }}
-                  disabled={
-                    (!permissions['ActualsStatus'].c &&
-                      !permissions['ActualsStatus'].u) ||
-                    loadingPermissions ||
-                    dataProcessing ||
-                    formattingActualAllocations ||
-                    (status !== null &&
-                      startDate !== null &&
-                      status !== 'In-Progress' &&
-                      status !== 'Not Started' &&
-                      // Enable button if it's the current week even if status is 'Confirmed'
-                      !isCurrentWeek(parseISO(startDate)) &&
-                      (!isModified || show || hasInvalidRows))
-                  }
-                  onClick={validateDataBeforeConfirm}
-                >
-                  <Typography
-                    sx={{
-                      color: '#FFF',
-                      textAlign: 'center',
-                      fontFamily: 'Open Sans',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      textTransform: 'none',
+              {!actualsErrorType && (
+                <Box display="flex" justifyContent="space-between" mt={1}>
+                  <Button
+                    startIcon={<ChevronLeftIcon />}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handlePrev();
+                      }
                     }}
+                    disabled={disablePrev}
+                    sx={{
+                      fontSize: '14px',
+                      color: '#152e75',
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: 'transparent',
+                      },
+                      '& .MuiButton-startIcon': {
+                        marginRight: '0px',
+                      },
+                    }}
+                    variant="text"
                   >
-                    {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
-                  </Typography>
-                </Button>
+                    Prev Week
+                  </Button>
 
-                <Button
-                  endIcon={<ChevronRightIcon />}
-                  onClick={() => {
-                    if (isModified) {
-                      setDialogSource('next');
-                      setDeleteDialogOpen(true);
-                    } else {
-                      handleNext();
+                  <Button
+                    variant="contained"
+                    sx={{
+                      // @ts-ignore
+                      bgcolor: theme => theme.palette.sideBarColor.main,
+                      px: 2,
+                      width: '192px',
+                      height: '36px',
+                      borderRadius: '5px',
+                    }}
+                    disabled={
+                      (!permissions['ActualsStatus'].c &&
+                        !permissions['ActualsStatus'].u) ||
+                      loadingPermissions ||
+                      dataProcessing ||
+                      formattingActualAllocations ||
+                      (startDate !== null &&
+                        actualAllocationsStatuses?.[startDate] !== null &&
+                        actualAllocationsStatuses?.[startDate] !==
+                          'In-Progress' &&
+                        actualAllocationsStatuses?.[startDate] !==
+                          'Not Started' &&
+                        // Enable button if it's the current week even if status is 'Confirmed'
+                        !isCurrentWeek(parseISO(startDate)) &&
+                        (!isModified || show || hasInvalidRows))
                     }
-                  }}
-                  disabled={
-                    startDate ? isCurrentWeek(parseISO(startDate)) : false
-                  }
-                  sx={{
-                    color: '#152e75',
-                    fontSize: '14px',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                    },
-                    '& .MuiButton-endIcon': {
-                      marginLeft: '0px',
-                    },
-                  }}
-                  variant="text"
-                >
-                  Next Week
-                </Button>
-              </Box>
+                    onClick={validateDataBeforeConfirm}
+                  >
+                    <Typography
+                      sx={{
+                        color: '#FFF',
+                        textAlign: 'center',
+                        fontFamily: 'Open Sans',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                      }}
+                    >
+                      {isFridayOrAfterFriday ? 'Save and Confirm' : 'Save'}
+                    </Typography>
+                  </Button>
+
+                  <Button
+                    endIcon={<ChevronRightIcon />}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('next');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handleNext();
+                      }
+                    }}
+                    disabled={disableNext}
+                    sx={{
+                      color: '#152e75',
+                      fontSize: '14px',
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: 'transparent',
+                      },
+                      '& .MuiButton-endIcon': {
+                        marginLeft: '0px',
+                      },
+                    }}
+                    variant="text"
+                  >
+                    Next Week
+                  </Button>
+                </Box>
+              )}
+              {isPeriodWithinRange(
+                parseISO(getMondayOfISO(startDate)),
+                resourceStartMonday || parseISO(FAR_PAST_DATE),
+                resourceEndMonday || parseISO(FAR_FUTURE_DATE)
+              ) &&
+                isFridayOrAfterFriday && (
+                  <Box display="flex" justifyContent="center" mt={1}>
+                    <Typography
+                      sx={{
+                        color: theme => theme.palette.info.main,
+                        fontWeight: '500',
+                        fontStyle: 'italic',
+                        fontSize: '14px',
+                        leadingTrim: 'NONE',
+                        lineHeight: '100%',
+                        letterSpacing: '0%',
+                      }}
+                    >
+                      <span style={{ fontWeight: '600' }}>Note</span>: Confirmed
+                      Actuals from previous period cannot be modified!
+                    </Typography>
+                  </Box>
+                )}
             </Box>
           </Box>
         ) : (
@@ -998,7 +1474,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           onCancel={handleCancel}
           title="Alert"
         >
-          {'Are you sure you want to leave? Your actuals will not be saved.'}
+          {'Are you sure you wan\t to leave? Your actuals will not be saved.'}
         </ConfirmDialog>
       </Box>
     </Box>
