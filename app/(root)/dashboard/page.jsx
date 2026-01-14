@@ -135,6 +135,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'totalHeadcount',
   'allocation_by_project_type_group',
   'unapprovedProjectAllocation',
+  'projectScoreByPM',
   'actuals_confirmation_status',
 ];
 
@@ -145,6 +146,7 @@ const COST_CHART_SEQUENCE = [
 const TEAM_CHART_SEQUENCE = [
   'team_headcount_distribution',
   'teamEngagementScore',
+  'projectScoreByTeam',
   'unapprovedProjectActualsByTeam',
   'resourceCoverage',
   'actualsTrendWeekly',
@@ -229,6 +231,8 @@ export default function ExecutiveDashboardPage() {
     actuals_confirmation_status = [],
     actualsTrendWeekly = [],
     teamEngagementScore = [],
+    projectScoreByTeam = [],
+    projectScoreByPM = [],
     projectHealthOverview = [],
     engagementScoreOverview = [],
   } = useSelector(state => state.dashboard);
@@ -453,6 +457,8 @@ export default function ExecutiveDashboardPage() {
         'actualsConfirmed',
         'actualsTrendWeekly',
         'teamEngagementScore',
+        'projectScoreByTeam',
+        'projectScoreByPM',
         'projectHealthOverview',
         'engagementScoreOverview',
       ];
@@ -721,10 +727,12 @@ export default function ExecutiveDashboardPage() {
       'actuals_confirmation_status': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'engagementScoreOverview': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'projectHealthOverview': { reportType: 'projectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'projectScoreByPM': { reportType: 'projectPeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       
       // Team charts
       'team_headcount_distribution': { reportType: 'resourceOnly'},
-      'teamEngagementScore': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'teamEngagementScore': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
+      'projectScoreByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'actualsTrendWeekly': { reportType: 'resourceProjectPeriod', period: 'custom' },
@@ -2063,24 +2071,24 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Engagement Score"
-              tooltipText="Combines two components: Planning and Actuals. Planning measures allocation entries across a rolling time window, weighted toward the present and near future. Actuals measures timely confirmation of completed work, weighted toward the most recent period. Both components contribute to the total score."
+              tooltipText="Measures manager and team participation in the planning process. Combines Plan Score and Actuals Score. Higher scores indicate better data quality and system adoption"
               overallScore={parseFloat(data.overall_engagement || 0)}
               overallChange={parseFloat(data.overall_engagement_change || 0)}
               overallDirection={data.overall_engagement_direction}
               subScores={[
                 {
-                  score: parseFloat(data.planned_score || 0),
-                  label: 'Planned Score',
-                  tooltipText: `Evaluates allocation entries across a 5-week rolling window centered on the current week. Each week's allocation percentage is weighted, with the current week and near-future weeks carrying the greatest influence. Higher allocation percentages in the weighted window increase score up to full capacity, with overallocation (typically over 1.0 FTE) indicating overburdening. Complete absence of allocation across the entire window triggers an additional penalty.`,
-                  change: parseFloat(data.planned_score_change || 0),
-                  positive: data.planned_score_direction !== 'down',
+                  score: parseFloat(data.planned_engagement || 0),
+                  label: 'Plan Score',
+                  tooltipText: `Reflects whether resource allocations are planned for upcoming weeks. Near-term weeks are typically weighted more heavily than future weeks.`,
+                  change: parseFloat(data.planned_engagement_change || 0),
+                  positive: data.planned_engagement_direction !== 'down',
                 },
                 {
-                  score: parseFloat(data.actual_score || 0),
+                  score: parseFloat(data.actual_engagement || 0),
                   label: 'Actuals Score',
-                  tooltipText: 'Evaluates actuals confirmation status across the 3 most recent completed weeks, weighted toward the most recent week. Confirmed status for the most recent week yields full component points. Any status other than confirmed yields zero base points, with additional penalties applied if older weeks are also unconfirmed. Key action: Confirm actuals for the most recent completed week.',
-                  change: parseFloat(data.actual_score_change || 0),
-                  positive: data.actual_score_direction !== 'down',
+                  tooltipText: 'Measures whether resources confirmed their weekly actuals. On-time confirmations score highest, late confirmations score partially, and missing confirmations score zero.',
+                  change: parseFloat(data.actual_engagement_change || 0),
+                  positive: data.actual_engagement_direction !== 'down',
                 },
               ]}
               hasAccess={true}
@@ -2103,53 +2111,24 @@ export default function ExecutiveDashboardPage() {
           return (
             <ScoreCard
               title="Projects Health Score"
-              tooltipText={`Weighted combination of three components: Alignment (delivery predictability), Actuals Status (contributor status distribution), and Engagement (reporting participation). Each component contributes a configurable percentage of the total. Alignment examines variance between planned and actual allocation. Actuals Status evaluates the mix of 'On-Track', 'At-Risk', and 'Off-Track' statuses. Engagement measures status submission rates.`}
-              overallScore={parseFloat(data.overall_health_score || 0)}
-              overallChange={parseFloat(data.overall_health_score_change || 0)}
-              overallDirection={data.overall_health_score_direction}
+              tooltipText='Measures overall project execution health. Combines Alignment Score and Health Score. Higher scores indicate projects are on track and resourced as planned.'
+              overallScore={parseFloat(data.overall_project_score || 0)}
+              overallChange={parseFloat(data.overall_project_score_change || 0)}
+              overallDirection={data.overall_project_score_direction}
               subScores={[
                 {
                   score: parseFloat(data.alignment_score || 0),
                   label: 'Alignment Score',
-                  tooltipText: `Measures delivery predictability by comparing planned versus actual allocation across all contributors.
-                  Each contributor's variance (actual minus planned) is calculated and weighted by their allocation size—larger allocations impact the score more. The project score is the average of all contributor scores.
-                  SCORING BY DELIVERY CATEGORY:
-                  Under-delivery (actual < planned):
-                    • Transform: steep penalty (1.5x decay) — expects tight adherence
-                    • Grow: moderate penalty (1.0x decay) — expects reasonable control
-                    • Run: gradual penalty (0.5x decay) — most forgiving for stable operations
-                  Over-delivery (actual > planned):
-                    • All categories: equal penalty (0.5x decay)
-                  EXCEPTION:
-                  Contributors with under-delivery AND On-Track status receive full credit—their shortfall does not count against the project.`,
+                  tooltipText: `Measures how closely actual time allocation matches planned allocation. Tolerance zones vary by project category (Run/Grow/Transform)`,
                   change: parseFloat(data.alignment_score_change || 0),
                   positive: data.alignment_score_direction !== 'down',
                 },
                 {
-                  score: parseFloat(data.actuals_score || 0),
-                  label: 'Actuals Status Score',
-                  tooltipText: `Evaluates the distribution of contributor statuses using a weighted formula that rewards healthy delivery signals and penalizes issues.
-                    HOW IT WORKS:
-                    Each contributor's status is assigned a weight:
-                      • On-Track: +1.0 (full positive contribution)
-                      • At-Risk: 0.0 (neutral, no impact)
-                      • Off-Track: -1.0 (full negative contribution)
-                      • No submission: counts as missing and lowers the overall score
-                    The weights are summed and normalized to produce a percentage. A project with all On-Track statuses scores 100%. Mixed statuses reduce the score proportionally.`,
-                  change: parseFloat(data.actuals_score_change || 0),
-                  positive: data.actuals_score_direction !== 'down',
-                },
-                {
-                  score: parseFloat(data.engagement_score || 0),
-                  label: 'Engagement Score',
-                  tooltipText: `Measures what percentage of project contributors submit any status update, regardless of what that status is.
-                    HOW IT WORKS:
-                      • 100% of contributors submit status = 100% engagement score
-                      • 50% of contributors submit status = 50% engagement score
-                      • 0% of contributors submit status = 0% engagement score
-                    The specific status value (On-Track, At-Risk, or Off-Track) does not affect engagement—only whether something was submitted. A contributor who submits Off-Track counts the same as one who submits On-Track for engagement purposes.`,
-                  change: parseFloat(data.engagement_score_change || 0),
-                  positive: data.engagement_score_direction !== 'down',
+                  score: parseFloat(data.project_health_score || 0),
+                  label: 'Health Score',
+                  tooltipText: `Based on contributor-reported project status. On Track status scores highest, At Risk scores partially, Off Track scores lowest, and a lack of status scores minimally.`,
+                  change: parseFloat(data.project_health_score_change || 0),
+                  positive: data.project_health_score_direction !== 'down',
                 },
               ]}
               hasAccess={true}
@@ -2339,6 +2318,113 @@ export default function ExecutiveDashboardPage() {
                   }}
                   grid={{ vertical: true, horizontal: true }}
                   onAxisClick={()=> navigateToReportWithFilters('projectFTE')}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    projectScoreByPM: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !projectScoreByPM ||
+          projectScoreByPM.length === 0 ||
+          hasStackedChartAllZeroValues(projectScoreByPM, [
+            'avg_alignment_score',
+            'avg_project_health_score',
+          ])
+        }
+        noDataMessage="No project score data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Sort by combined (alignment + health) score descending
+          const sortedPMProjectScoreData = sortByTotal(
+            projectScoreByPM || [],
+            ['avg_alignment_score', 'avg_project_health_score']
+          );
+
+          return (
+            <Box
+              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Project Score by Project Manager
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={[
+                    {
+                      data: sortedPMProjectScoreData.map(d =>
+                        Number.parseFloat(d.avg_project_health_score || 0) / 2
+                      ),
+                      label: 'Health Score',
+                      id: 'pmHealthScore',
+                      color: '#00C9A7',
+                      stack: 'total',
+                    },
+                    {
+                      data: sortedPMProjectScoreData.map(d =>
+                        Number.parseFloat(d.avg_alignment_score || 0) / 2
+                      ),
+                      label: 'Alignment Score',
+                      id: 'pmAlignmentScore',
+                      color: '#7C93F5',
+                      stack: 'total',
+                    },
+                  ]}
+                  xAxis={[
+                    {
+                      data: sortedPMProjectScoreData.map(d =>
+                        formatTeamName(
+                          d.pm_name,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedPMProjectScoreData.length
+                        )
+                      ),
+                      label: 'PM',
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      min: 0,
+                      max: 100,
+                      width: config.yAxis?.width || 50,
+                      valueFormatter: value => `${value}%`,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: config.legend,
+                  }}
+                  grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex, axisValue } = axisData || {};
+                    if (dataIndex !== undefined && axisValue) {
+                      const item = sortedPMProjectScoreData[dataIndex];
+                      const pmId = item?.pm_id;
+                      if (pmId) {
+                        navigateToReportWithFilters('projectScoreByPM', {
+                          projectManager: pmId,
+                        });
+                      }
+                    }
+                  }}
                 />
               </Box>
             </Box>
@@ -3152,8 +3238,7 @@ export default function ExecutiveDashboardPage() {
           !teamEngagementScore ||
           teamEngagementScore.length === 0 ||
           hasStackedChartAllZeroValues(teamEngagementScore, [
-            'avg_actuals_score',
-            'avg_planning_score',
+            'avg_engagement_score',
           ])
         }
         noDataMessage="No engagement score data available"
@@ -3164,7 +3249,7 @@ export default function ExecutiveDashboardPage() {
           // Sort by combined (actuals + planning) engagement contribution descending
           const sortedEngagementData = sortByTotal(
             teamEngagementScore || [],
-            ['avg_actuals_score', 'avg_planning_score']
+            ['avg_actuals_engagement', 'avg_planning_engagement']
           );
 
           return (
@@ -3188,7 +3273,7 @@ export default function ExecutiveDashboardPage() {
                   series={[
                     {
                       data: sortedEngagementData.map(d =>
-                        Number.parseFloat(d.avg_planning_score || 0) / 2
+                        Number.parseFloat(d.avg_planning_engagement || 0) / 2
                       ),
                       label: 'Planned Score',
                       id: 'engagementPlannedScore',
@@ -3197,7 +3282,7 @@ export default function ExecutiveDashboardPage() {
                     },
                     {
                       data: sortedEngagementData.map(d =>
-                        Number.parseFloat(d.avg_actuals_score || 0) / 2
+                        Number.parseFloat(d.avg_actuals_engagement || 0) / 2
                       ),
                       label: 'Actuals Score',
                       id: 'engagementActualsScore',
@@ -3237,6 +3322,112 @@ export default function ExecutiveDashboardPage() {
                       const teamId = teams.find(t => t.team_name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('teamEngagementScore', {
+                          team: teamId
+                        });
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    projectScoreByTeam: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !projectScoreByTeam ||
+          projectScoreByTeam.length === 0 ||
+          hasStackedChartAllZeroValues(projectScoreByTeam, [
+            'avg_alignment_score',
+            'avg_project_health_score',
+          ])
+        }
+        noDataMessage="No project score data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Sort by combined (alignment + health) score descending
+          const sortedProjectScoreData = sortByTotal(
+            projectScoreByTeam || [],
+            ['avg_alignment_score', 'avg_project_health_score']
+          );
+
+          return (
+            <Box
+              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Project Score by Teams
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={[
+                    {
+                      data: sortedProjectScoreData.map(d =>
+                        Number.parseFloat(d.avg_alignment_score || 0) / 2
+                      ),
+                      label: 'Alignment Score',
+                      id: 'alignmentScore',
+                      color: '#7C93F5',
+                      stack: 'total',
+                    },
+                    {
+                      data: sortedProjectScoreData.map(d =>
+                        Number.parseFloat(d.avg_project_health_score || 0) / 2
+                      ),
+                      label: 'Health Score',
+                      id: 'healthScore',
+                      color: '#00C9A7',
+                      stack: 'total',
+                    }, 
+                  ]}
+                  xAxis={[
+                    {
+                      data: sortedProjectScoreData.map(d =>
+                        formatTeamName(
+                          d.team_name,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedProjectScoreData.length
+                        )
+                      ),
+                      label: 'Team',
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      min: 0,
+                      max: 100,
+                      width: config.yAxis?.width || 50,
+                      valueFormatter: value => `${value}%`,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: config.legend,
+                  }}
+                  grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex, axisValue } = axisData || {};
+                    if (dataIndex !== undefined && axisValue) {
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
+                      if (teamId) {
+                        navigateToReportWithFilters('projectScoreByTeam', {
                           team: teamId
                         });
                       }

@@ -64,7 +64,12 @@ const CHART_API_MAPPING: Record<string, string> = {
   //Group 7: Team Engagement Analytics
   teamEngagementScore: '/Resource/ExecuteTeamEngagementScoreQuery',
 
-  //Group 8: Project Health Score Analytics
+  //Group 8: Team Project Score Analytics
+  projectScoreByTeam: '/Resource/ExecuteTeamProjectScoreQuery',
+  // PM Project Score Analytics
+  projectScoreByPM: '/Resource/ExecutePMProjectScoreQuery',
+
+  //Group 9: Project Health Score Analytics
   projectHealthOverview: '/Resource/GetProjectHealthOverview',
 
   engagementScoreOverview: '/Resource/GetEngagementOverview',
@@ -240,7 +245,28 @@ const buildChartPayload = (chartKey: string, filters: DashboardFilterPayload): D
       DynamicWhere: '',
     },
 
-    // Group 8: Project Health Score Analytics
+    // Group 8: Team Project Score Analytics
+    projectScoreByTeam: {
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+      TimeBucket: filters.TimeBucket || 'week',
+      ...baseFilters,
+      SelectColumns: '',
+      OrderByClause: '',
+      DynamicWhere: '',
+    },
+    
+    projectScoreByPM: {
+      StartDate: filters.StartDate,
+      EndDate: filters.EndDate,
+      // TimeBucket: filters.TimeBucket || 'week',
+      // ...baseFilters,
+      // SelectColumns: '',
+      // OrderByClause: '',
+      // DynamicWhere: '',
+    },
+
+    // Group 9: Project Health Score Analytics
     projectHealthOverview: {
       StartDate: filters.StartDate,
       EndDate: filters.EndDate,
