@@ -299,6 +299,10 @@ export default function ReportBuilderPage({
       const queryFilters = parseQueryParams(searchParams);
       if (Object.keys(queryFilters).length > 0) {
         setIsInitializing(true);
+        
+        // Clear sessionStorage to prevent Effect 3 from loading old report
+        sessionStorage.removeItem('last_generated_report');
+        
         // Store query params to apply later when data is loaded
         setPendingQueryFilters(queryFilters);
          // Mark that we're initializing with query params
