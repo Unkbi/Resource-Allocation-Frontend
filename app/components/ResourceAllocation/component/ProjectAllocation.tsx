@@ -136,6 +136,9 @@ function ProjectAllocation({
     (state: RootState) => state.allocationView
   );
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+  const { allResourcesDetail } = useSelector(
+    (state: RootState) => state.allResourcesDetail
+  );
 
   useEffect(() => {
     if (projectTypes.length === 0) {
@@ -483,8 +486,8 @@ function ProjectAllocation({
       },
     },
     {
-      field: 'department',
-      headerName: 'Organization',
+      field: 'organisationName',
+      headerName: 'Organization Name',
       width: 170,
       isEditable: 'false',
       sortable: true,
@@ -494,8 +497,13 @@ function ProjectAllocation({
       cellClassName: 'common-NonEditableCells',
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        const Department = resource?.Department || '';
-        return <EllipsisNameCell value={Department} />;
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Id
+        );
+        const organizationName = resourceDetails?.Organization?.Name || '';
+      
+        return <EllipsisNameCell value={organizationName || ''} />;
       },
     },
     {
@@ -1018,6 +1026,114 @@ function ProjectAllocation({
             : null;
         return <EllipsisNameCell value={formattedValue} />;
       },
+    }, 
+    {
+      field: 'department',
+      headerName: 'Department',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        return <EllipsisNameCell value={resource?.Department || ''} />;
+      },
+    },
+    {
+      field: 'manager',
+      headerName: 'Manager',  // Resource page manager detail
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Manager
+        );
+        const Manager = resourceDetails?.Resource?.FullName || '';
+        return resource ? <EllipsisNameCell value={Manager || ''} /> : null;
+      },
+    },
+    {
+      field: 'organisationStatus',
+      headerName: 'Organisation Status',
+      width: 160,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const resource = getResource(params);
+        const resourceDetails = allResourcesDetail?.find(
+          (item: any) =>
+            item.Resource?.Id === resource?.Id
+        );
+        const organizationStatus = resourceDetails?.Organization?.Status || '';
+        return resource ? <EllipsisNameCell value={organizationStatus || ''} /> : null;
+      },
+    },
+    {
+      field: 'portfolioDescription',
+      headerName: 'Portfolio Description',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return <EllipsisNameCell value={firstChild?.portfolioDescription|| ''}/>;
+      },
+    },
+    {
+      field: 'portfolioStatus',
+      headerName: 'Portfolio Status',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const firstChild = getFirstChild(params);
+        return <EllipsisNameCell value={firstChild?.portfolioStatus|| ''}/>;
+      },
+    },
+    {
+      field: 'teamAllocationManager',
+      headerName: 'Allocation Manager',
+      width: 170,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+    },
+     {
+      field: 'teamStatus',
+      headerName: 'Team Status',
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      sortable: true,
+      primaryColumn: true,
+    },
+    {
+      field: 'teams',
+      headerName: 'Team Name',
+      width: 201,
+      headerClassName: 'prime-header',
+      cellClassName: 'prime-cell',
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+      const { rowNode, api, value = '' } = params;
+        return (
+          <EllipsisNameCell
+            value={value as string}
+          />
+        );
+      },
     },
   ];
 
@@ -1070,6 +1186,14 @@ function ProjectAllocation({
                 averageWeeklyHours: false,
                 contractorHourlyRate: false,
                 contractorHourlyRateCurrency: false,
+                organisationName: false,
+                manager: false,
+                organisationStatus: false,
+                portfolioDescription:false,
+                portfolioStatus: false,
+                teamAllocationManager:false,
+                teamStatus: false,
+                teams: false,
               },
             },
           }}
