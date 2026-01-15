@@ -1228,7 +1228,26 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   />
                   <ActualsCard
                     period={startDate}
-                    actualAllocationData={actualAllocations[startDate]}
+                    actualAllocationData={
+                      apiRef?.current &&
+                      typeof apiRef.current.getAllRowIds === 'function'
+                        ? apiRef.current
+                            .getAllRowIds()
+                            .map(id => apiRef.current.getRow(id))
+                            .map((row: ActualAllocationTableRow) => ({
+                              ActualsEntered: row.actuals || 0,
+                              AllocationEntered: row.planned || 0,
+                              Duration: null,
+                              Id: row.id,
+                              Notes: row.comments ?? null,
+                              Period: null,
+                              Project: row.project ?? null,
+                              ProjectName: null,
+                              Resource: null,
+                              ProjectActualsStatus: row.projectActualsStatus,
+                            }))
+                        : []
+                    }
                     actualAllocationStatus={
                       actualAllocationsStatuses[startDate]
                     }
