@@ -319,6 +319,7 @@ export const DASHBOARD_ALL_ACCESS = [
   'unapprovedProjectAllocation',
   'projectHealthOverview',
   'projectFTE',
+  'projectScoreByPM',
 ];
 
 export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';
