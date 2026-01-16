@@ -101,7 +101,7 @@ const roundToOneDecimal = (num: number) => {
 
 interface ActualTableProps {
   data: ActualAllocationTableRow[];
-  currentResource: Resource | null;
+  currentResource: Resource | undefined;
   dataProcessing: boolean;
   rows: ActualAllocationTableRow[];
   setRows: React.Dispatch<React.SetStateAction<ActualAllocationTableRow[]>>;
