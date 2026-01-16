@@ -98,6 +98,7 @@ function AllocationGrid({
   rowGroupingColumnMode = 'single',
   permissions = null,
   loadingPermissions = true,
+  defaultGroupingExpansionDepth = 0,
 }) {
   const apiRef = useGridApiRef();
   const { setApiRef, getApiRef } = useDataGrid();
@@ -150,6 +151,8 @@ function AllocationGrid({
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
   const { getAllRowsForView, setRowsForView } = useAllGridRowsByView();
+  const [rowExpanded, setRowExpanded] = useState(false);
+
   const handleKeyUp = e => {
     if (
       cellSelectionModel &&
@@ -228,7 +231,7 @@ function AllocationGrid({
         }
       });
 
-      setCellSelectionModel({ ...cellSelectionModel, restoreFocus: true });
+      setCellSelectionModel({});
       dispatch(
         openDialog({
           title: 'Update Allocation',
@@ -342,14 +345,35 @@ function AllocationGrid({
   }, [apiRef.current, groupBy, teams]);
 
   useEffect(() => {
+    if (loading) return;
+    if (
+      !expandRowId?.length ||
+      !(
+        groupBy === 'teams' ||
+        groupBy === 'organisationName' ||
+        groupBy === 'resource' ||
+        groupBy === 'portfolioName' ||
+        groupBy === 'project'
+      )
+    ) {
+      return;
+    }
+
     try {
-      if (
-        (groupBy === 'teams' ||
-          groupBy === 'organisationName' ||
-          groupBy === 'portfolioName') &&
-        expandRowId?.length
-      ) {
+      const expandRows = async () => {
+        // Separate parent and child row IDs
+        const parentRowIds = [];
+        const childRowIds = [];
         expandRowId.forEach(rowId => {
+          // Check if it's a parent row (no "-resource/" or "-project/" in the ID)
+          if (!rowId.includes('-resource/') && !rowId.includes('-project/')) {
+            parentRowIds.push(rowId);
+          } else {
+            childRowIds.push(rowId);
+          }
+        });
+        // Expand parent rows first
+        parentRowIds.forEach(rowId => {
           const row = apiRef.current.getRow(rowId);
           if (row) {
             setTimeout(() => {
@@ -365,11 +389,37 @@ function AllocationGrid({
             }, 50);
           }
         });
-      }
-    } catch (error) {
-      console.warn('Error in setting row expansion', error);
+
+        // Then expand child rows (parents must be expanded first)
+        childRowIds.forEach(rowId => {
+          const row = apiRef.current.getRow(rowId);
+          if (row) {
+            setTimeout(() => {
+              apiRef.current.setRowChildrenExpansion(rowId, true);
+            }, 50);
+          } else {
+            // Row not ready yet, retry after small delay
+            setTimeout(() => {
+              const delayedRow = apiRef.current.getRow(rowId);
+              if (delayedRow) {
+                apiRef.current.setRowChildrenExpansion(rowId, true);
+              }
+            }, 50);
+          }
+        });
+        setRowExpanded(true);
+        setExpandRowId(null);
+      };
+
+      expandRows();
+
+      return () => {
+        setRowExpanded(false);
+      };
+    } catch (err) {
+      console.warn('Error expanding rows:', err);
     }
-  }, [expandRowId, groupBy, apiRef]);
+  }, [expandRowId, groupBy, loading, apiRef]);
 
   // Use useEffect to add the key-up listener once
   useEffect(() => {
@@ -386,21 +436,11 @@ function AllocationGrid({
 
   useEffect(() => {
     const handleScrollAndFocus = () => {
-      if (
-        !apiRef.current ||
-        (Object.keys(cellSelectionModel).length === 0 &&
-          Object.keys(cellSelectionData).length === 0)
-      )
+      if (!apiRef.current || Object.keys(cellSelectionData).length === 0)
         return;
-      const [rowId] =
-        Object.keys(cellSelectionModel).length > 0
-          ? Object.keys(cellSelectionModel)
-          : Object.keys(cellSelectionData);
+      const [rowId] = Object.keys(cellSelectionData);
 
-      const field =
-        Object.keys(cellSelectionModel).length > 0
-          ? Object.keys(cellSelectionModel[rowId])
-          : Object.keys(cellSelectionData[rowId]);
+      const field = Object.keys(cellSelectionData[rowId]);
 
       const visibleRowIds = gridExpandedSortedRowIdsSelector(apiRef);
       const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
@@ -408,17 +448,19 @@ function AllocationGrid({
       const colIndex = visibleColumns.findIndex(col =>
         field.includes(col.field)
       );
-
       if (rowIndex === -1 || colIndex === -1) {
         return;
       }
       apiRef.current.scrollToIndexes({ rowIndex, colIndex });
       setCellSelectionModel(cellSelectionData);
     };
-    const timeoutId = setTimeout(handleScrollAndFocus, 100);
-    setExpandRowId(null);
-    return () => clearTimeout(timeoutId);
-  }, [apiRef, cellSelectionData]);
+
+    if (!groupBy || rowExpanded) {
+      const timeoutId = setTimeout(handleScrollAndFocus, 300);
+      setExpandRowId(null);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [apiRef, cellSelectionData, rowExpanded]);
 
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
@@ -1573,7 +1615,7 @@ function AllocationGrid({
         endDate,
         finalColumns
       )}
-      defaultGroupingExpansionDepth={1}
+      defaultGroupingExpansionDepth={defaultGroupingExpansionDepth}
       disableAutosize
       getCellClassName={params => {
         if (
