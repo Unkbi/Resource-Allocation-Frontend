@@ -37,7 +37,6 @@ import {
   isCurrentWeek,
   getMondayOfISO,
   getSundayOfISO,
-  isFutureWeek,
 } from '@/app/utils/common';
 //@ts-ignore
 import { parseISO, format, isSameWeek, startOfWeek, isBefore } from 'date-fns';
@@ -101,7 +100,7 @@ const roundToOneDecimal = (num: number) => {
 
 interface ActualTableProps {
   data: ActualAllocationTableRow[];
-  currentResource: Resource | null;
+  currentResource: Resource | undefined;
   dataProcessing: boolean;
   rows: ActualAllocationTableRow[];
   setRows: React.Dispatch<React.SetStateAction<ActualAllocationTableRow[]>>;
@@ -834,18 +833,17 @@ export default function ActualTable({
             ) : (
               <span
                 style={{
-                  color:
-                    !isFutureWeek(parseISO(startDate)) && isWithinResourceRange
-                      ? actualAllocationsStatuses?.[startDate] === 'Confirmed'
-                        ? '#3CC55F'
-                        : '#FF7912'
-                      : '#000000',
+                  color: isWithinResourceRange
+                    ? actualAllocationsStatuses?.[startDate] === 'Confirmed'
+                      ? '#3CC55F'
+                      : '#FF7912'
+                    : '#000000',
                   fontWeight: 600,
                   fontSize: '14px',
                   fontFamily: 'Open Sans',
                 }}
               >
-                {!isFutureWeek(parseISO(startDate)) && isWithinResourceRange
+                {isWithinResourceRange
                   ? (actualAllocationsStatuses?.[startDate] ?? 'Not Started')
                   : 'NA'}
               </span>
