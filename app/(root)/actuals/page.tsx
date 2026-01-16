@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  Box,
-  Typography,
-  Button,
-  Skeleton,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-} from '@mui/material';
+import { Box, Typography, Button, Skeleton, Link } from '@mui/material';
 import ActualTable from '@/app/components/Actuals/ActualTable';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -23,10 +15,8 @@ import { useSelector } from 'react-redux';
 import {
   ActualAllocations,
   ActualAllocationTableRow,
-  LoginUser,
   Resource,
   Team,
-  UserResource,
 } from '@/app/types';
 import {
   formateToFloat,
@@ -87,6 +77,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   } = useSelector((state: RootState) => state.actualAllocations);
   const { startDate, endDate } = calendarDate || {};
   const { user } = useSelector((state: RootState) => state.user);
+  // @ts-ignore
+  const {
+    email = '',
+    firstName = '',
+    lastName = '',
+  } = getLoginUserDetails(user) || {};
   const { resources } = useSelector((state: RootState) => state.resources);
   const { teams, teamsResources } = useSelector(
     (state: RootState) => state.teams
@@ -95,7 +91,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     (state: RootState) => state.allResourcesDetail
   );
   const { projects } = useSelector((state: RootState) => state.projects);
-  const { scalarSettings, users, userResources } = useSelector(
+  const { scalarSettings } = useSelector(
     (state: RootState) => state.allSettings
   );
   const [formattedActualAllocations, setFormattedActualAllocations] = useState<
@@ -126,8 +122,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   const [showNoActualsTracked, setShowNoActualsTracked] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [loadingName, setLoadingName] = useState(true);
-  const [activeUserList, setActiveUserList] = useState<UserResource[]>([]);
-  const [currentUser, setCurrentUser] = useState<UserResource | null>(null);
 
   let max_allocation_error = scalarSettings?.Max_Allocation_Error || '2.0';
   let max_allocation_warning = scalarSettings?.Max_Allocation_Warning || '1.5';
@@ -143,41 +137,22 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ? 'noActualsTracked'
       : null;
 
-  const currentResource: Resource | undefined = useMemo(
-    () => resources?.find((r: Resource) => r?.Id === currentUser?.id),
-    [currentUser]
+  const userId = getUserIdFromEmail(resources || [], email);
+  const currentResource: Resource | undefined = resources?.find(
+    (r: Resource) => r?.Id === userId
   );
 
   useEffect(() => {
-    if (!users.length) {
-      dispatch({ type: FETCH_USER_RESOURCE, payload: {} });
-    }
-  }, []);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
-      if (user && userResources && userResources.length > 0) {
-        const loginUser =
-          userResources?.find(
-            userResource => userResource.UserId === (user as LoginUser).id
-          ) || null;
-        setCurrentUser(loginUser);
-
-        setActiveUserList(
-          userResources.filter(ur => ur.UserId && ur.userStatus === 'Active')
-        );
+      if (firstName || lastName) {
+        setDisplayName(`${firstName ?? ''} ${lastName ?? ''}`.trim());
+      } else {
+        setDisplayName('User');
       }
       setLoadingName(false);
     }, 3000);
-
     return () => clearTimeout(timer);
-  }, [user, userResources]);
-
-  useEffect(() => {
-    if (currentUser) {
-      setDisplayName(currentUser?.Name);
-    }
-  }, [currentUser]);
+  }, [user]);
 
   const userTitle = currentResource
     ? ((currentResource as Resource)?.Role ?? '--')
@@ -239,7 +214,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const updatePlannedAllocationsIfNeeded = () => {
-    if (!currentResource) return;
     const allRows = apiRef.current
       .getAllRowIds()
       .map(id => apiRef.current.getRow(id));
@@ -282,7 +256,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           Period: startDate,
           Project: projectId || null,
           ProjectName: r.project,
-          Resource: (currentResource as Resource)?.Id,
+          Resource: userId,
           Notes: r.comments || '',
         } as any;
       });
@@ -345,7 +319,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             dispatch({
               type: GET_ACTUAL_ALLOCATIONS,
               payload: {
-                resource: (currentResource as Resource)?.Id,
+                resource: userId,
                 startDate: generateDateWeekMath(
                   'WEEK_MINUS',
                   1,
@@ -427,7 +401,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const handleConfirmed = () => {
-    if (projects && currentResource) {
+    if (projects && resources && user && email) {
+      const userId = getUserIdFromEmail(resources || [], email);
+
       const allData = apiRef.current
         .getAllRowIds()
         .map(id => apiRef.current.getRow(id))
@@ -480,7 +456,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         }));
 
       const payload = {
-        resource: (currentResource as Resource)?.Id,
+        resource: userId,
         period:
           actualAllocations?.[startDate]?.length &&
           actualAllocations?.[startDate]?.every(
@@ -531,7 +507,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             dispatch({
               type: GET_ACTUAL_ALLOCATIONS_STATUSES,
               payload: {
-                resource: (currentResource as Resource)?.Id,
+                resource: userId,
                 startDate: generateDateWeekMath(
                   'WEEK_MINUS',
                   1,
@@ -550,9 +526,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             dispatch(
               showToast({
                 open: true,
-                message:
-                  error?.response?.data ??
-                  `Failed to confirm Actual alloctions.`,
+                message: error?.response?.data
+                  ? `Failed to confirm Actual alloctions. ${error?.response?.data}`
+                  : `Failed to confirm Actual alloctions.`,
                 type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -626,15 +602,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     router.replace(`/actuals?startDate=${date}`);
   };
 
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
-    const newUserId = e.target?.value;
-    if (!newUserId) return;
-    const currentUser =
-      userResources?.find(userResource => userResource.id === newUserId) ||
-      null;
-    setCurrentUser(currentUser);
-  };
-
   const loading = useMemo(
     () =>
       dataProcessing ||
@@ -706,11 +673,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   useEffect(() => {
     if (loadingPermissions || resourcesLoading) return;
     if (permissions['ActualsStatus'].r) {
-      if (currentResource) {
+      if (resources && user && email) {
+        const userId = getUserIdFromEmail(resources || [], email);
         dispatch({
           type: GET_ACTUAL_ALLOCATIONS,
           payload: {
-            resource: (currentResource as Resource)?.Id,
+            resource: userId,
             startDate: generateDateWeekMath(
               'WEEK_MINUS',
               1,
@@ -737,10 +705,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch({
           type: GET_ACTUAL_STATUS,
           payload: {
-            resource: (currentResource as Resource)?.Id,
-            status: (currentResource as Resource)?.Id
-              ? ['In-Progress', 'Not Started']
-              : [''],
+            resource: userId,
+            status: userId ? ['In-Progress', 'Not Started'] : [''],
             startDate: getActualsStatusStartDate || '',
             endDate:
               generateDateWeekMath('WEEK_MINUS', 1, parseISO(endDate ?? '')) ||
@@ -751,7 +717,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         dispatch({
           type: GET_ACTUAL_ALLOCATIONS_STATUSES,
           payload: {
-            resource: (currentResource as Resource)?.Id,
+            resource: userId,
             startDate: generateDateWeekMath(
               'WEEK_MINUS',
               1,
@@ -767,7 +733,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       }
     }
   }, [
-    currentResource,
+    resources,
+    user,
+    email,
     startDate,
     endDate,
     loadingPermissions,
@@ -1111,45 +1079,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 >
                   {loadingName ? (
                     <Skeleton width={100} height={20} />
-                  ) : permissions['AdminActuals'].r ? (
-                    <Select
-                      variant="standard"
-                      value={currentUser?.id || ''}
-                      onChange={handleSelectChange}
-                      label="Resource Name"
-                      sx={{ minWidth: '200px' }}
-                      renderValue={selected => {
-                        const sel = activeUserList.find(u => u.id === selected);
-                        return (
-                          <Typography
-                            sx={{
-                              fontFamily: 'Open Sans',
-                              fontWeight: 600,
-                              fontStyle: 'SemiBold',
-                              fontSize: '18px',
-                            }}
-                          >
-                            {sel?.Name ?? ''}
-                          </Typography>
-                        );
-                      }}
-                      MenuProps={{
-                        anchorOrigin: {
-                          vertical: 'bottom',
-                          horizontal: 'left',
-                        },
-                        transformOrigin: {
-                          vertical: 'top',
-                          horizontal: 'left',
-                        },
-                      }}
-                    >
-                      {activeUserList.map(activeUser => (
-                        <MenuItem value={activeUser.id}>
-                          {activeUser.Name}
-                        </MenuItem>
-                      ))}
-                    </Select>
                   ) : (
                     `${displayName}`
                   )}
@@ -1577,4 +1506,4 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   );
 }
 
-export default withRBAC(ActualsPage, ['ActualsStatus', 'AdminActuals']);
+export default withRBAC(ActualsPage, ['ActualsStatus']);
