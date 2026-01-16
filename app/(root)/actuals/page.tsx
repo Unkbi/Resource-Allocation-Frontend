@@ -1236,27 +1236,22 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   <ActualsCard
                     period={startDate}
                     actualAllocationData={
-                      apiRef?.current &&
-                      typeof apiRef?.current.getAllRowIds === 'function'
-                        ? (apiRef.current.getAllRowIds() ?? [])
-                            .map(id => apiRef.current.getRow(id))
-                            .filter(Boolean)
-                            .map(
-                              (row: ActualAllocationTableRow) =>
-                                ({
-                                  ActualsEntered: row.actuals,
-                                  AllocationEntered: row.planned,
-                                  Duration: null,
-                                  Id: row.id,
-                                  Notes: null,
-                                  Period: null,
-                                  Project: row.project,
-                                  ProjectName: null,
-                                  Resource: null,
-                                  ProjectActualsStatus:
-                                    row.projectActualsStatus,
-                                }) as ActualAllocations
-                            )
+                      rows?.length
+                        ? rows.map(
+                            (row: ActualAllocationTableRow) =>
+                              ({
+                                ActualsEntered: row.actuals,
+                                AllocationEntered: row.planned,
+                                Duration: null,
+                                Id: row.id,
+                                Notes: null,
+                                Period: null,
+                                Project: row.project,
+                                ProjectName: null,
+                                Resource: null,
+                                ProjectActualsStatus: row.projectActualsStatus,
+                              }) as ActualAllocations
+                          )
                         : []
                     }
                     actualAllocationStatus={
