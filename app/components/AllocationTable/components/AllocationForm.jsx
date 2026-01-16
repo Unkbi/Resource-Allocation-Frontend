@@ -720,22 +720,41 @@ const AllocationForm = () => {
       const organisation = allResourcesDetail.find(
         r => r.Resource.Id === resource.Id
       )?.Organization;
+      const teamChildId = `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`;
+      const orgChildId = `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`;
+      const resourceChildId = `auto-generated-row-resource/${resource.FullName}`;
+      const teamParentId = `auto-generated-row-teams/${resource.team?.Name}`;
+      const orgParentId = `auto-generated-row-organisationName/${organisation?.Name}`;
       return [
         ...acc,
-        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`,
-        `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
+        // Add parent IDs first so they expand before children
+        teamParentId,
+        orgParentId,
+        // Then add child IDs
+        teamChildId,
+        orgChildId,
+        resourceChildId,
       ];
     }, []);
     rowIds = projects.reduce((acc, project) => {
       const portfolio = portfolios.find(p => p.Id === project.PortfolioId) ?? {
         Name: 'zzzzz',
       };
+      const portfolioChildId = `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`;
+      const projectChildId = `auto-generated-row-project/${project.Name}`;
+      const portfolioParentId = `auto-generated-row-portfolioName/${portfolio?.Name}`;
       return [
         ...acc,
-        `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`,
+        // Add parent ID first
+        portfolioParentId,
+        // Then add child ID
+        portfolioChildId,
+        projectChildId,
       ];
     }, rowIds);
-    dispatch(setExpandRowId(rowIds));
+    // Remove duplicates while preserving order (parents before children)
+    const uniqueRowIds = Array.from(new Set(rowIds));
+    dispatch(setExpandRowId(uniqueRowIds));
   };
 
   const getTeamByResourceId = resourceId => {
