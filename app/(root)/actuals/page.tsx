@@ -379,7 +379,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           row =>
             !row.projectActualsStatus || row.projectActualsStatus === 'No Data'
         );
-      if (rowsWithMissingStatus.length === 0 && totalActuals >= 1.0) {
+      if (rowsWithMissingStatus.length === 0 && totalActuals > 0.9) {
         // No Errors
         handleConfirmed();
       }
@@ -389,7 +389,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           MISSING_PROJECT_ACTUALS_STATUS,
         ]);
       }
-      if (totalActuals < 1.0) {
+      if (totalActuals <= 0.9) {
         setShowAlertDialog(prev => [
           ...(prev || []),
           TOTAL_ACTUALS_LESS_THAN_ONE,
