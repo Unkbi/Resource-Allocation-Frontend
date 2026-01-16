@@ -2378,7 +2378,7 @@ export default function ExecutiveDashboardPage() {
           const pmIds = sortedProjects.map(item => item.pm_id || 'unknown');
           const pmNames = sortedProjects.map(item => {
             const name = item.pm_name || 'Unknown PM';
-            return name.trim() === '' ? '' : name;
+            return name.trim() === '' ? 'Unassigned' : name;
           });
 
           const series = [
@@ -2443,8 +2443,9 @@ export default function ExecutiveDashboardPage() {
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && pmIds[dataIndex]) {
+                      const isUnassigned = pmNames[dataIndex] === 'Unassigned';
                       navigateToReportWithFilters('projectScoreByPM', {
-                        projectManager: pmIds[dataIndex],
+                        projectManager: isUnassigned ? ['_BLANK_'] : [pmIds[dataIndex]],
                       });
                     }
                   }}
