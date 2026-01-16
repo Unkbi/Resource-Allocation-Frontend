@@ -37,6 +37,7 @@ import {
   isCurrentWeek,
   getMondayOfISO,
   getSundayOfISO,
+  isFutureWeek,
 } from '@/app/utils/common';
 //@ts-ignore
 import { parseISO, format, isSameWeek, startOfWeek, isBefore } from 'date-fns';
@@ -750,14 +751,19 @@ export default function ActualTable({
 
     const monday = getMondayOfISO(clickedDate);
     const sunday = getSundayOfISO(clickedDate);
-    dispatch(
-      updateStartAndEndDate({
-        startDate: monday,
-        endDate: sunday,
-      })
-    );
+    if (isModified) {
+      setDialogSource('prev');
+      setDeleteDialogOpen(true);
+    } else {
+      dispatch(
+        updateStartAndEndDate({
+          startDate: monday,
+          endDate: sunday,
+        })
+      );
 
-    router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+      router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+    }
   };
 
   const first = generateFirstAndLastMonthYear(
@@ -833,17 +839,18 @@ export default function ActualTable({
             ) : (
               <span
                 style={{
-                  color: isWithinResourceRange
-                    ? actualAllocationsStatuses?.[startDate] === 'Confirmed'
-                      ? '#3CC55F'
-                      : '#FF7912'
-                    : '#000000',
+                  color:
+                    !isFutureWeek(parseISO(startDate)) && isWithinResourceRange
+                      ? actualAllocationsStatuses?.[startDate] === 'Confirmed'
+                        ? '#3CC55F'
+                        : '#FF7912'
+                      : '#000000',
                   fontWeight: 600,
                   fontSize: '14px',
                   fontFamily: 'Open Sans',
                 }}
               >
-                {isWithinResourceRange
+                {!isFutureWeek(parseISO(startDate)) && isWithinResourceRange
                   ? (actualAllocationsStatuses?.[startDate] ?? 'Not Started')
                   : 'NA'}
               </span>

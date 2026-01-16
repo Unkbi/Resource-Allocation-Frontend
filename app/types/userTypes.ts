@@ -19,12 +19,17 @@ export interface User {
 }
 
 export interface UserResource {
-  Id: string;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  Role: string;
-  IsActive: boolean;
+  id: string;
+  Name: string;
+  email: string | null;
+  UserId: string | null;
+  location: string | null;
+  resourceStatus: string | null;
+  userStatus: string | null;
+  __created: string | null;
+  __created_by: string | null;
+  __last_modified: string | null;
+  __last_modified_by: string | null;
 }
 
 export interface UserFormValues {

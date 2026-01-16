@@ -57,6 +57,7 @@ import {
 } from '@/app/constants/constants';
 import ActualsCard from '@/app/components/Actuals/ActualsCard';
 import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
+import { FETCH_USER_RESOURCE } from '@/app/redux/actions/allSettingsActions';
 import { AxiosError } from 'axios';
 
 interface ActualsPageProps {
@@ -378,7 +379,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           row =>
             !row.projectActualsStatus || row.projectActualsStatus === 'No Data'
         );
-      if (rowsWithMissingStatus.length === 0 && totalActuals >= 1.0) {
+      if (rowsWithMissingStatus.length === 0 && totalActuals > 0.9) {
         // No Errors
         handleConfirmed();
       }
@@ -388,7 +389,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           MISSING_PROJECT_ACTUALS_STATUS,
         ]);
       }
-      if (totalActuals < 1.0) {
+      if (totalActuals <= 0.9) {
         setShowAlertDialog(prev => [
           ...(prev || []),
           TOTAL_ACTUALS_LESS_THAN_ONE,
@@ -451,7 +452,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           ProjectActualsStatus:
             tabData.projectActualsStatus === 'No Data'
               ? null
-              : tabData.projectActualsStatus,
+              : tabData.projectActualsStatus || null,
         }));
 
       const payload = {
@@ -525,9 +526,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             dispatch(
               showToast({
                 open: true,
-                message:
-                  error?.response?.data ??
-                  `Failed to confirm Actual alloctions.`,
+                message: error?.response?.data
+                  ? `Failed to confirm Actual alloctions. ${error?.response?.data}`
+                  : `Failed to confirm Actual alloctions.`,
                 type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
@@ -743,33 +744,32 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
-    if (actualAllocations && startDate && actualAllocations[startDate]) {
+    if (startDate) {
       setFormattingActualAllocations(true);
-      const formattedData: ActualAllocationTableRow[] = actualAllocations[
-        startDate
-      ]
-        .filter(
-          (alloc: ActualAllocations) =>
-            (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
-            (alloc.ActualsEntered && alloc.ActualsEntered > 0)
-        )
-        .map((allocation: ActualAllocations, index: number) => ({
-          id:
-            allocation.Id ||
-            `${allocation.Resource}${allocation.Project}${index}`,
-          project: allocation.ProjectName,
-          planned: allocation.AllocationEntered,
-          actuals: allocation.ActualsEntered,
-          comments: allocation.Notes,
-          projectActualsStatus: allocation.ProjectActualsStatus ?? 'No Data',
-        }));
+      const formattedData: ActualAllocationTableRow[] =
+        actualAllocations?.[startDate]
+          ?.filter(
+            (alloc: ActualAllocations) =>
+              (alloc.AllocationEntered && alloc.AllocationEntered > 0) ||
+              (alloc.ActualsEntered && alloc.ActualsEntered > 0)
+          )
+          .map((allocation: ActualAllocations, index: number) => ({
+            id:
+              allocation.Id ||
+              `${allocation.Resource}${allocation.Project}${index}`,
+            project: allocation.ProjectName,
+            planned: allocation.AllocationEntered,
+            actuals: allocation.ActualsEntered,
+            comments: allocation.Notes,
+            projectActualsStatus: allocation.ProjectActualsStatus ?? 'No Data',
+          })) || [];
       setFormattedActualAllocations(formattedData);
     }
   }, [loadingPermissions, dataProcessing, actualAllocations]);
 
   useEffect(() => {
     if (loadingPermissions || dataProcessing) return;
-    if (formattedActualAllocations.length) {
+    if (formattedActualAllocations?.length) {
       setFormattingActualAllocations(false);
     } else {
       const timeout = setTimeout(() => {
@@ -1187,7 +1187,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   width={'100%'}
                 >
                   <ActualsCard
-                    onClick={handlePrev}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handlePrev();
+                      }
+                    }}
                     period={
                       generateDateWeekMath(
                         'WEEK_MINUS',
@@ -1228,7 +1235,25 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   />
                   <ActualsCard
                     period={startDate}
-                    actualAllocationData={actualAllocations[startDate]}
+                    actualAllocationData={
+                      rows?.length
+                        ? rows.map(
+                            (row: ActualAllocationTableRow) =>
+                              ({
+                                ActualsEntered: row.actuals,
+                                AllocationEntered: row.planned,
+                                Duration: null,
+                                Id: row.id,
+                                Notes: null,
+                                Period: null,
+                                Project: row.project,
+                                ProjectName: null,
+                                Resource: null,
+                                ProjectActualsStatus: row.projectActualsStatus,
+                              }) as ActualAllocations
+                          )
+                        : []
+                    }
                     actualAllocationStatus={
                       actualAllocationsStatuses[startDate]
                     }
@@ -1242,7 +1267,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     resourceEndMonday={resourceEndMonday}
                   />
                   <ActualsCard
-                    onClick={handleNext}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handleNext();
+                      }
+                    }}
                     period={
                       generateDateWeekMath(
                         'WEEK_PLUS',

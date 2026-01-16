@@ -2335,21 +2335,70 @@ export default function ExecutiveDashboardPage() {
         showNoData={
           !projectScoreByPM ||
           projectScoreByPM.length === 0 ||
-          hasStackedChartAllZeroValues(projectScoreByPM, [
-            'avg_alignment_score',
-            'avg_project_health_score',
-          ])
+          projectScoreByPM.every(item =>
+            Number.parseFloat(item.alignment_score || 0) === 0 &&
+            Number.parseFloat(item.project_health_score || 0) === 0
+          )
         }
         noDataMessage="No project score data available"
       >
         {dimensions => {
           const config = useResponsiveChart(dimensions, 'bar');
 
-          // Sort by combined (alignment + health) score descending
-          const sortedPMProjectScoreData = sortByTotal(
-            projectScoreByPM || [],
-            ['avg_alignment_score', 'avg_project_health_score']
-          );
+          // Aggregate data by PM
+          const aggregatedData = {};
+          (projectScoreByPM || []).forEach(item => {
+            const pmId = item.pm_id || item.pmId || 'unknown';
+            if (!aggregatedData[pmId]) {
+              aggregatedData[pmId] = {
+                pm_id: pmId,
+                pm_name: item.pm_name || item.pmId || 'Unknown PM',
+                alignment_score: 0,
+                project_health_score: 0,
+                count: 0,
+              };
+            }
+            aggregatedData[pmId].alignment_score += Number.parseFloat(item.alignment_score || 0);
+            aggregatedData[pmId].project_health_score += Number.parseFloat(item.project_health_score || 0);
+            aggregatedData[pmId].count += 1;
+          });
+
+          // Calculate averages
+          const aggregatedArray = Object.values(aggregatedData).map(item => ({
+            ...item,
+            alignment_score: item.alignment_score / item.count,
+            project_health_score: item.project_health_score / item.count,
+          }));
+
+          // Sort by PM name
+          const sortedProjects = aggregatedArray.sort((a, b) => {
+            const nameA = a.pm_name || '';
+            const nameB = b.pm_name || '';
+            return nameA.localeCompare(nameB);
+          });
+
+          const pmIds = sortedProjects.map(item => item.pm_id || 'unknown');
+          const pmNames = sortedProjects.map(item => {
+            const name = item.pm_name || 'Unknown PM';
+            return name.trim() === '' ? 'Unassigned' : name;
+          });
+
+          const series = [
+            {
+              data: sortedProjects.map(d => Number.parseFloat(d.alignment_score || 0) / 2),
+              label: 'Project Alignment Score',
+              id: 'alignment',
+              color: '#7C93F5',
+              stack: 'total',
+            },
+            {
+              data: sortedProjects.map(d => Number.parseFloat(d.project_health_score || 0) / 2),
+              label: 'Project Health Score',
+              id: 'health',
+              color: '#00C9A7',
+              stack: 'total',
+            },
+          ];
 
           return (
             <Box
@@ -2369,36 +2418,14 @@ export default function ExecutiveDashboardPage() {
                 <BarChart
                   width={config.width}
                   height={config.height}
-                  series={[
-                    {
-                      data: sortedPMProjectScoreData.map(d =>
-                        Number.parseFloat(d.avg_project_health_score || 0) / 2
-                      ),
-                      label: 'Health Score',
-                      id: 'pmHealthScore',
-                      color: '#00C9A7',
-                      stack: 'total',
-                    },
-                    {
-                      data: sortedPMProjectScoreData.map(d =>
-                        Number.parseFloat(d.avg_alignment_score || 0) / 2
-                      ),
-                      label: 'Alignment Score',
-                      id: 'pmAlignmentScore',
-                      color: '#7C93F5',
-                      stack: 'total',
-                    },
-                  ]}
+                  series={series}
                   xAxis={[
                     {
-                      data: sortedPMProjectScoreData.map(d =>
-                        formatTeamName(
-                          d.pm_name,
-                          dimensions.width < 400 ? 10 : 12,
-                          sortedPMProjectScoreData.length
-                        )
-                      ),
-                      label: 'PM',
+                      data: pmNames,
+                      label: 'Project Manager',
+                      scaleType: 'band',
+                      categoryGapRatio: 0.5,
+                      barGapRatio: 0.1,
                       tickLabelStyle: config.xAxis?.tickLabelStyle,
                     },
                   ]}
@@ -2417,14 +2444,11 @@ export default function ExecutiveDashboardPage() {
                   grid={{ horizontal: true }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
-                    if (dataIndex !== undefined && axisValue) {
-                      const item = sortedPMProjectScoreData[dataIndex];
-                      const pmId = item?.pm_id;
-                      if (pmId) {
-                        navigateToReportWithFilters('projectScoreByPM', {
-                          projectManager: pmId,
-                        });
-                      }
+                    if (dataIndex !== undefined && pmIds[dataIndex]) {
+                      const isUnassigned = pmNames[dataIndex] === 'Unassigned';
+                      navigateToReportWithFilters('projectScoreByPM', {
+                        projectManager: isUnassigned ? ['_BLANK_'] : [pmIds[dataIndex]],
+                      });
                     }
                   }}
                 />
