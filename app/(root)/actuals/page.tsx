@@ -1187,7 +1187,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                   width={'100%'}
                 >
                   <ActualsCard
-                    onClick={handlePrev}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handlePrev();
+                      }
+                    }}
                     period={
                       generateDateWeekMath(
                         'WEEK_MINUS',
@@ -1265,7 +1272,14 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     resourceEndMonday={resourceEndMonday}
                   />
                   <ActualsCard
-                    onClick={handleNext}
+                    onClick={() => {
+                      if (isModified) {
+                        setDialogSource('prev');
+                        setDeleteDialogOpen(true);
+                      } else {
+                        handleNext();
+                      }
+                    }}
                     period={
                       generateDateWeekMath(
                         'WEEK_PLUS',

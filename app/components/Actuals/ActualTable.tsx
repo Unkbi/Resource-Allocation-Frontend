@@ -751,14 +751,19 @@ export default function ActualTable({
 
     const monday = getMondayOfISO(clickedDate);
     const sunday = getSundayOfISO(clickedDate);
-    dispatch(
-      updateStartAndEndDate({
-        startDate: monday,
-        endDate: sunday,
-      })
-    );
+    if (isModified) {
+      setDialogSource('prev');
+      setDeleteDialogOpen(true);
+    } else {
+      dispatch(
+        updateStartAndEndDate({
+          startDate: monday,
+          endDate: sunday,
+        })
+      );
 
-    router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+      router.replace(`/actuals?startDate=${monday}`, { scroll: false });
+    }
   };
 
   const first = generateFirstAndLastMonthYear(
