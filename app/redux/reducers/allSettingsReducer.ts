@@ -141,7 +141,9 @@ const allSettingsSlice = createSlice({
     updateUsers: (state, action) => {
       const updatedUser = action.payload;
       if (!state.users) return;
-      const index = state.users.findIndex(user => user.AppId === updatedUser.AppId);
+      const index = state.users.findIndex(
+        user => user.AppId === updatedUser.AppId
+      );
       if (index !== -1) {
         state.users[index] = {
           ...state.users[index],
@@ -159,7 +161,7 @@ const allSettingsSlice = createSlice({
       const updatedUserResource = action.payload;
       if (!state.userResources) return;
       const index = state.userResources.findIndex(
-        resource => resource.Id === updatedUserResource.Id
+        resource => resource?.id === updatedUserResource.Id
       );
       if (index !== -1) {
         state.userResources[index] = {
