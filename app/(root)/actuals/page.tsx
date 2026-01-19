@@ -137,13 +137,13 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       : null;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (user && resources) {
-        const loginUser =
-          resources?.find(
-            (resource: Resource) =>
-              resource?.Email === (user as LoginUser).username
-          ) || null;
+    if (user && resources) {
+      const loginUser =
+        resources?.find(
+          (resource: Resource) =>
+            resource?.Email === (user as LoginUser).username
+        ) || null;
+      if (loginUser) {
         setCurrentResource(loginUser);
 
         // Resources that are Active/Inactive Status
@@ -159,11 +159,52 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               })
             )
         );
-      }
-      setLoadingName(false);
-    }, 3000);
+      } else {
+        // Some Users do not have Resources created, set minimal details from LoginUser.
+        const loginUserTempResourceDetails = {
+          FirstName: (user as LoginUser)?.firstName,
+          LastName: (user as LoginUser)?.lastName,
+          FullName: `${(user as LoginUser)?.firstName || ''} ${(user as LoginUser)?.lastName || ''}`,
+          Email: (user as LoginUser)?.username || '',
+          PhoneNumber: null,
+          Id: null,
+          StartDate: null,
+          EndDate: null,
+          LocationCategory: null,
+          WorkLocation: null,
+          Department: null,
+          HRLevel: null,
+          Manager: null,
+          Role: null,
+          Type: null,
+          ContractorHourlyRate: null,
+          ContractorHourlyRateCurrency: null,
+          AverageWeeklyHours: null,
+          __path__: null,
+          __parent__: null,
+          Status: null,
+        };
+        // @ts-ignore
+        setCurrentResource(loginUserTempResourceDetails as Resource);
 
-    return () => clearTimeout(timer);
+        // Resources that are Active/Inactive Status
+        setResourceList([
+          // @ts-ignore
+          loginUserTempResourceDetails,
+          ...resources
+            .filter(
+              (resource: Resource) =>
+                resource.Status === 'Active' || resource.Status === 'Inactive'
+            )
+            .sort((a: Resource, b: Resource) =>
+              (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+                sensitivity: 'base',
+              })
+            ),
+        ]);
+      }
+    }
+    setLoadingName(false);
   }, [user, resources]);
 
   useEffect(() => {
