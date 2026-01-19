@@ -358,7 +358,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
               showToastAction(
                 true,
                 error?.response?.data
-                  ? `Failed to confirm Actual alloctions. ${error?.response?.data}`
+                  ? `Error updating planned allocation. ${error?.response?.data}`
                   : `Error updating planned allocation.`,
                 'error'
               )
@@ -370,7 +370,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           showToastAction(
             true,
             error?.response?.data
-              ? error?.response?.data
+              ? `Error updating planned allocation. ${error?.response?.data}`
               : `Error updating planned allocation.`,
             'error'
           )
@@ -543,9 +543,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             dispatch(
               showToast({
                 open: true,
-                message:
-                  error?.response?.data ??
-                  `Failed to confirm Actual alloctions.`,
+                message: error?.response?.data
+                  ? `Failed to confirm Actual alloctions. ${error?.response?.data}`
+                  : `Failed to confirm Actual alloctions.`,
                 type: 'error',
                 position: 'bottom-left',
                 autoHideTimer: 4000,
