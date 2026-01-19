@@ -137,6 +137,7 @@ const OVERVIEW_CHART_SEQUENCE = [
   'unapprovedProjectAllocation',
   'projectScoreByPM',
   'actuals_confirmation_status',
+  'actualsTrendWeekly',
 ];
 
 const COST_CHART_SEQUENCE = [
@@ -149,7 +150,6 @@ const TEAM_CHART_SEQUENCE = [
   'projectScoreByTeam',
   'unapprovedProjectActualsByTeam',
   'resourceCoverage',
-  'actualsTrendWeekly',
   'underAllocated',
   'overAllocated',
 ];
@@ -2132,7 +2132,10 @@ export default function ExecutiveDashboardPage() {
                 },
               ]}
               hasAccess={true}
-              onClick={() => navigateToReportWithFilters('projectHealthOverview')}
+              onClick={() => navigateToReportWithFilters('projectHealthOverview',
+                 {
+                   projectStatuses: ['Active', 'Approved']
+                 })}
             />
           );
         }}
@@ -2446,6 +2449,138 @@ export default function ExecutiveDashboardPage() {
                       const isUnassigned = pmNames[dataIndex] === 'Unassigned';
                       navigateToReportWithFilters('projectScoreByPM', {
                         projectManager: isUnassigned ? ['_BLANK_'] : [pmIds[dataIndex]],
+                      });
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+    actualsTrendWeekly: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !actualsTrendWeekly ||
+          actualsTrendWeekly.length === 0 ||
+          actualsTrendWeekly.every(item =>
+            (item.actuals || []).every(
+              a => parseFloat(a.percentage || 0) === 0
+            )
+          )
+        }
+        noDataMessage="No weekly actuals trend data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          const periodData = (actualsTrendWeekly || [])
+            .map(item => ({
+              period_start: item.period_start,
+              week: getWeekNumber(item.period_start),
+              actuals: item.actuals || [],
+            }))
+            .sort(
+              (a, b) => new Date(a.period_start) - new Date(b.period_start)
+            );
+
+          const weeks = periodData.map(d => d.week);
+
+          // Define categories and their colors matching the image
+          const categories = [
+            { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
+            { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
+            {
+              key: 'Unplanned Projects',
+              label: 'Unplanned Projects',
+              color: '#FF884D',
+            },
+            { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
+          ];
+
+          // Create series data for each category
+          const seriesData = categories.map(category => ({
+            label: category.label,
+            id: category.key,
+            data: periodData.map(weekData => {
+              const match = weekData.actuals.find(
+                a => a.category === category.key
+              );
+              return match ? parseFloat(match.percentage || 0) : 0;
+            }),
+            color: category.color,
+            stack: 'total',
+          }));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Actuals Trend
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={seriesData}
+                  xAxis={[
+                    {
+                      label: 'Previous weeks',
+                      data: weeks,
+                      scaleType: 'band',
+                      categoryGapRatio: 0.3,
+                      barGapRatio: 0.1,
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'Actuals (%)',
+                      min: 0,
+                      max: 100,
+                      valueFormatter: value => `${value}`,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: {
+                      ...config.legend,
+                      direction: 'column',
+                      position: { vertical: 'bottom', horizontal: 'right' },
+                      padding: { right: 5 },
+                      itemmarkwidth: 12,
+                      itemmarkheight: 12,
+                      markgap: 8,
+                      itemgap: 12,
+                    },
+                  }}
+                  margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
+                  grid={{ horizontal: true }}
+                  onAxisClick={(event, axisData)=>{
+                    const { dataIndex } = axisData || {};
+                    if (dataIndex !== undefined && periodData[dataIndex]) {
+                      const periodStart = periodData[dataIndex].period_start;
+                      const endDate = dayjs(periodStart).add(6, 'day').format('YYYY-MM-DD');
+                      navigateToReportWithFilters('actualsTrendWeekly', {
+                        customStartDate: periodStart,
+                        customEndDate: endDate
                       });
                     }
                   }}
@@ -3111,139 +3246,6 @@ export default function ExecutiveDashboardPage() {
                           utilization: 'Over-allocated'
                         });
                       }
-                    }
-                  }}
-                />
-              </Box>
-            </Box>
-          );
-        }}
-      </DashboardWidget>
-    ),
-
-    actualsTrendWeekly: (
-      <DashboardWidget
-        minWidth={320}
-        minHeight={280}
-        showNoData={
-          !actualsTrendWeekly ||
-          actualsTrendWeekly.length === 0 ||
-          actualsTrendWeekly.every(item =>
-            (item.actuals || []).every(
-              a => parseFloat(a.percentage || 0) === 0
-            )
-          )
-        }
-        noDataMessage="No weekly actuals trend data available"
-      >
-        {dimensions => {
-          const config = useResponsiveChart(dimensions, 'bar');
-
-          const periodData = (actualsTrendWeekly || [])
-            .map(item => ({
-              period_start: item.period_start,
-              week: getWeekNumber(item.period_start),
-              actuals: item.actuals || [],
-            }))
-            .sort(
-              (a, b) => new Date(a.period_start) - new Date(b.period_start)
-            );
-
-          const weeks = periodData.map(d => d.week);
-
-          // Define categories and their colors matching the image
-          const categories = [
-            { key: 'Personal Time', label: 'Personal Time', color: '#0080FF' },
-            { key: 'Other Work', label: 'Other Work', color: '#FFC233' },
-            {
-              key: 'Unplanned Projects',
-              label: 'Unplanned Projects',
-              color: '#FF884D',
-            },
-            { key: 'Approved Work', label: 'Approved Work', color: '#00C9A7' },
-          ];
-
-          // Create series data for each category
-          const seriesData = categories.map(category => ({
-            label: category.label,
-            id: category.key,
-            data: periodData.map(weekData => {
-              const match = weekData.actuals.find(
-                a => a.category === category.key
-              );
-              return match ? parseFloat(match.percentage || 0) : 0;
-            }),
-            color: category.color,
-            stack: 'total',
-          }));
-
-          return (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                width: '100%',
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 1,
-                  fontSize: dimensions.width < 400 ? '16px' : '18px',
-                  fontWeight: 600,
-                }}
-              >
-                Actuals Trend
-              </Typography>
-              <Box sx={{ flex: 1, overflow: 'hidden', width: '100%' }}>
-                <BarChart
-                  width={config.width}
-                  height={config.height}
-                  series={seriesData}
-                  xAxis={[
-                    {
-                      label: 'Previous weeks',
-                      data: weeks,
-                      scaleType: 'band',
-                      categoryGapRatio: 0.3,
-                      barGapRatio: 0.1,
-                      tickLabelStyle: config.xAxis?.tickLabelStyle,
-                    },
-                  ]}
-                  yAxis={[
-                    {
-                      label: 'Actuals (%)',
-                      min: 0,
-                      max: 100,
-                      valueFormatter: value => `${value}`,
-                      width: config.yAxis?.width || 50,
-                      labelStyle: config.yAxis?.labelStyle,
-                    },
-                  ]}
-                  slotProps={{
-                    legend: {
-                      ...config.legend,
-                      direction: 'column',
-                      position: { vertical: 'bottom', horizontal: 'right' },
-                      padding: { right: 5 },
-                      itemmarkwidth: 12,
-                      itemmarkheight: 12,
-                      markgap: 8,
-                      itemgap: 12,
-                    },
-                  }}
-                  margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
-                  grid={{ horizontal: true }}
-                  onAxisClick={(event, axisData)=>{
-                    const { dataIndex } = axisData || {};
-                    if (dataIndex !== undefined && periodData[dataIndex]) {
-                      const periodStart = periodData[dataIndex].period_start;
-                      const endDate = dayjs(periodStart).add(6, 'day').format('YYYY-MM-DD');
-                      navigateToReportWithFilters('actualsTrendWeekly', {
-                        customStartDate: periodStart,
-                        customEndDate: endDate
-                      });
                     }
                   }}
                 />
