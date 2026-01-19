@@ -955,7 +955,7 @@ export default function ActualTable({
           </Link>
         </Box>
 
-        <Box sx={{ minHeight: '200px', height: 'calc(100vh - 500px)' }}>
+        <Box sx={{ minHeight: '200px', height: 'calc(100vh - 400px)' }}>
           {actualsErrorType ? (
             <ActualsErrorPage
               type={actualsErrorType}
