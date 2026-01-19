@@ -809,9 +809,8 @@ export default function ActualTable({
           borderRight="1px solid rgba(202, 213, 226, 1)"
           borderBottom="1px solid rgba(202, 213, 226, 1)"
           color="white"
-          height={60}
-          px={2}
-          py={1}
+          height={50}
+          px={1.2}
         >
           <Typography
             style={{
@@ -956,7 +955,7 @@ export default function ActualTable({
           </Link>
         </Box>
 
-        <Box sx={{ height: 'calc(100vh - 500px)' }}>
+        <Box sx={{ minHeight: '200px', height: 'calc(100vh - 500px)' }}>
           {actualsErrorType ? (
             <ActualsErrorPage
               type={actualsErrorType}
@@ -964,7 +963,7 @@ export default function ActualTable({
             />
           ) : (
             <DataGridPremium
-              rowHeight={60}
+              rowHeight={40}
               apiRef={apiRef}
               rows={getOrganizedRows()}
               columns={columns}
@@ -1052,7 +1051,6 @@ export default function ActualTable({
 
       <Box
         px={2}
-        py={1}
         sx={{
           paddingLeft: '0',
           background: '#F9FAFB',
@@ -1069,6 +1067,7 @@ export default function ActualTable({
               textTransform: 'none',
               fontWeight: 600,
               cursor: 'pointer',
+              paddingLeft: '8px',
             }}
             onClick={handleClick}
           >

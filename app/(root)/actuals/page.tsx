@@ -1085,10 +1085,17 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             display="flex"
             alignItems="center"
             justifyContent="center"
-            marginTop={5}
+            marginTop={0}
           >
             <Box mx={2} maxWidth={780} minHeight={350}>
-              <Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 1,
+                }}
+              >
                 <Box
                   mb={0.2}
                   sx={{
@@ -1138,7 +1145,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                     `${displayName}`
                   )}
                 </Box>
-                <Box display="flex" gap={4} mb={2}>
+                <Box display="flex" gap={4}>
                   <Typography
                     sx={{ fontFamily: 'Open Sans', fontSize: '14px' }}
                   >
@@ -1167,7 +1174,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       />
                     ) : (
                       <Typography component="span" sx={{ fontWeight: 600 }}>
-                        {userTeam}
+                        {userTeam ?? '--'}
                       </Typography>
                     )}
                   </Typography>
