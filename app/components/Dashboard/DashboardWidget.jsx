@@ -51,7 +51,7 @@ const DashboardWidget = ({ children, onClick, minWidth = 300, minHeight = 300, a
           top: 0,
           left: 0,
           right: 0,
-          height: '20px',
+          height: '15px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
