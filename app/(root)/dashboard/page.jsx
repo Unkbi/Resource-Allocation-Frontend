@@ -2827,18 +2827,19 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
-                  onAxisClick={(event, barItemIdentifier ) => {
-                    const { dataIndex, axisValue } = barItemIdentifier  || {};
-                    if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
-                      if (teamId ) {
+                  onItemClick={(event, barItemIdentifier ) => {
+                    const { dataIndex, seriesId } = barItemIdentifier  || {};
+                    if (dataIndex !== undefined && seriesId) {
+                      const teamname = sortedTeamHeadcount[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
+                      if (teamId && seriesId) {
                         navigateToReportWithFilters('team_headcount_distribution', {
                           resourceStatuses: 'Active',
                           team: teamId,
+                          resourceType: seriesId,
                         });
                       }
-                    }
-                  }}
+                  }}}
                 />
               </Box>
             </Box>
