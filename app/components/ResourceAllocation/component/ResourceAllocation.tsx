@@ -7,6 +7,7 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
   calculateTotalEffort,
+  formatDateMMDDYYYY,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
@@ -15,10 +16,20 @@ import NoRowsOverlay from './NoRowsOverlay';
 import { Box } from '@mui/material';
 import { AllAllocations, Location } from '@/app/types';
 import { useAllocationGrid } from '@/app/hooks/useAllocationGrid';
-import { injectBlankRows, normalizeRow } from '@/app/utils/allocationUtils';
+import {
+  initSortAllocations,
+  injectBlankRows,
+  normalizeRow,
+} from '@/app/utils/allocationUtils';
 import { setLoading } from '@/app/redux/reducers/allAllocationsReducer';
 import { useAllGridRowsByView } from '@/app/hooks/useAllGridRowsByView';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
+import {
+  compareDateEmptyLast,
+  compareNumberEmptyLast,
+  compareStringEmptyLast,
+  GridComparator,
+} from './TeamAllocation';
 
 interface ResourceAllocationProps {
   startDate: string;
@@ -89,24 +100,39 @@ function ResourceAllocation({
       let filteredResources;
       const allTempRows = getAllRowsForView('teamAllocationtemp');
       if (!loading && allTempRows?.length > 0) {
-        setRows(allTempRows || []);
+        setRows(
+          initSortAllocations(
+            allTempRows as AllAllocations[],
+            'resource',
+            'project'
+          ) || []
+        );
         setRowsForView('teamAllocationtemp', []);
       } else {
-        if (!loading && getAllProjectViewRows().length > 0) {
-          filteredResources = removeResourcesWithNoTeams(
-            injectBlankRows(
-              getAllProjectViewRows() as AllAllocations[],
-              teams || [],
-              // @ts-ignore
-              teamsResources,
-              allResourcesDetail,
-              location,
-              startDate,
-              endDate
-            )
+        const projectViewRows = getAllProjectViewRows();
+        if (!loading && projectViewRows.length > 0) {
+          filteredResources = initSortAllocations(
+            removeResourcesWithNoTeams(
+              injectBlankRows(
+                projectViewRows as AllAllocations[],
+                teams || [],
+                // @ts-ignore
+                teamsResources,
+                allResourcesDetail,
+                location,
+                startDate,
+                endDate
+              )
+            ),
+            'resource',
+            'project'
           );
         } else if (allAllocations) {
-          filteredResources = removeResourcesWithNoTeams(allAllocations || []);
+          filteredResources = initSortAllocations(
+            removeResourcesWithNoTeams(allAllocations || []),
+            'resource',
+            'project'
+          );
           dispatch(setLoading(false));
         }
 
@@ -122,6 +148,8 @@ function ResourceAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Project Related Views, Currently ProjectsView and ProtfolioView.
+      setRowsForView('projectAllocationtemp', []);
     }
   }, [ready, allAllocations, loadingPermissions]);
 
@@ -152,6 +180,12 @@ function ResourceAllocation({
     return null;
   };
 
+  const resourceTypeComparator: GridComparator = ({ p1, p2 }) => {
+    const r1 = getResource(p1)?.Type ?? '';
+    const r2 = getResource(p2)?.Type ?? '';
+    return r1.localeCompare(r2);
+  };
+
   const resourcesColumnConfig = [
     {
       field: 'teams',
@@ -177,10 +211,22 @@ function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       headerClassName: 'prime-header',
       cellClassName: 'secondary-cell',
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const e1 = getResource(p1)?.Email;
+          const e2 = getResource(p2)?.Email;
+          return compareStringEmptyLast(e1, e2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Email || ''} />;
@@ -192,8 +238,28 @@ function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const raw1 = getResource(p1)?.PhoneNumber;
+          const raw2 = getResource(p2)?.PhoneNumber;
+          const n1 =
+            raw1 === null || raw1 === undefined || raw1.trim() === ''
+              ? null
+              : Number(raw1);
+          const n2 =
+            raw2 === null || raw2 === undefined || raw2.trim() === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(n1, n2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.PhoneNumber || ''} />;
@@ -205,8 +271,20 @@ function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const r1 = getResource(p1)?.Department ?? '';
+          const r2 = getResource(p2)?.Department ?? '';
+          return compareStringEmptyLast(r1, r2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Department || ''} />;
@@ -218,8 +296,28 @@ function ResourceAllocation({
       width: 100,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const raw1 = getResource(p1)?.HRLevel;
+          const raw2 = getResource(p2)?.HRLevel;
+          const h1 =
+            raw1 === null || raw1 === undefined || raw1 === ''
+              ? null
+              : Number(raw1);
+          const h2 =
+            raw2 === null || raw2 === undefined || raw2 === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(h1, h2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.HRLevel || ''} />;
@@ -227,12 +325,24 @@ function ResourceAllocation({
     },
     {
       field: 'role',
-      headerName: 'Role',
+      headerName: 'Title',
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const r1 = getResource(p1)?.Role ?? '';
+          const r2 = getResource(p2)?.Role ?? '';
+          return compareStringEmptyLast(r1, r2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Role || ''} />;
@@ -244,8 +354,20 @@ function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const r1 = getResource(p1)?.WorkLocation ?? '';
+          const r2 = getResource(p2)?.WorkLocation ?? '';
+          return compareStringEmptyLast(r1, r2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         const locationDetails = location?.find(
@@ -260,11 +382,27 @@ function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const d1 = getResource(p1)?.StartDate ?? null;
+          const d2 = getResource(p2)?.StartDate ?? null;
+          return compareDateEmptyLast(d1, d2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.StartDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(resource?.StartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -273,11 +411,27 @@ function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const d1 = getResource(p1)?.EndDate ?? null;
+          const d2 = getResource(p2)?.EndDate ?? null;
+          return compareDateEmptyLast(d1, d2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
-        return <EllipsisNameCell value={resource?.EndDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(resource?.EndDate) || ''}
+          />
+        );
       },
     },
     {
@@ -286,8 +440,20 @@ function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const r1 = getResource(p1)?.LocationCategory ?? '';
+          const r2 = getResource(p2)?.LocationCategory ?? '';
+          return compareStringEmptyLast(r1, r2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.LocationCategory || ''} />;
@@ -299,8 +465,28 @@ function ResourceAllocation({
       width: 190,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const raw1 = getResource(p1)?.AverageWeeklyHours;
+          const raw2 = getResource(p2)?.AverageWeeklyHours;
+          const h1 =
+            raw1 === null || raw1 === undefined || raw1 === ''
+              ? null
+              : Number(raw1);
+          const h2 =
+            raw2 === null || raw2 === undefined || raw2 === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(h1, h2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.AverageWeeklyHours || ''} />;
@@ -312,8 +498,28 @@ function ResourceAllocation({
       width: 195,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const raw1 = getResource(p1)?.ContractorHourlyRate;
+          const raw2 = getResource(p2)?.ContractorHourlyRate;
+          const r1 =
+            raw1 === null || raw1 === undefined || raw1 === ''
+              ? null
+              : Number(raw1);
+          const r2 =
+            raw2 === null || raw2 === undefined || raw2 === ''
+              ? null
+              : Number(raw2);
+          return compareNumberEmptyLast(r1, r2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return (
@@ -327,8 +533,20 @@ function ResourceAllocation({
       width: 260,
       type: 'string',
       isEditable: 'false',
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
+      getSortComparator: (sortDirection: 'asc' | 'desc') => {
+        return (
+          _v1: string | null,
+          _v2: string | null,
+          p1: GridCellParams,
+          p2: GridCellParams
+        ) => {
+          const r1 = getResource(p1)?.ContractorHourlyRateCurrency ?? '';
+          const r2 = getResource(p2)?.ContractorHourlyRateCurrency ?? '';
+          return compareStringEmptyLast(r1, r2, sortDirection);
+        };
+      },
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return (
@@ -342,10 +560,12 @@ function ResourceAllocation({
       field: 'resourceType',
       headerName: 'Resource Type',
       width: 135,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       headerClassName: 'secondary-header',
       cellClassName: 'secondary-cell',
+      sortComparator: (_v1: any, _v2: any, p1: any, p2: any) =>
+        resourceTypeComparator({ v1: _v1, v2: _v2, p1, p2 }),
       renderCell: (params: GridCellParams) => {
         const resource = getResource(params);
         return <EllipsisNameCell value={resource?.Type || ''} />;
@@ -357,7 +577,7 @@ function ResourceAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const team = getTeam(params);
@@ -370,7 +590,7 @@ function ResourceAllocation({
       width: 140,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -378,9 +598,9 @@ function ResourceAllocation({
           <EllipsisNameCell
             value={
               allocation?.projectOvertimeAllowed === true
-                ? 'True'
+                ? 'Yes'
                 : allocation?.projectOvertimeAllowed === false
-                  ? 'False'
+                  ? 'No'
                   : ''
             }
           />
@@ -393,7 +613,7 @@ function ResourceAllocation({
       width: 140,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -407,7 +627,7 @@ function ResourceAllocation({
       width: 150,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -420,7 +640,7 @@ function ResourceAllocation({
       width: 180,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -433,7 +653,7 @@ function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -446,11 +666,15 @@ function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectStartDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectStartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -459,11 +683,15 @@ function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectEndDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectEndDate) || ''}
+          />
+        );
       },
     },
     {
@@ -472,7 +700,7 @@ function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -485,7 +713,7 @@ function ResourceAllocation({
       width: 160,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -498,7 +726,7 @@ function ResourceAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -511,7 +739,7 @@ function ResourceAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -524,7 +752,7 @@ function ResourceAllocation({
       width: 130,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
@@ -537,7 +765,7 @@ function ResourceAllocation({
       width: 170,
       type: 'string',
       isEditable: false,
-      sortable: false,
+      sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const { rowNode, api } = params;

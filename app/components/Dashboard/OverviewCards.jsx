@@ -5,6 +5,8 @@ import ShowChartIcon from '@mui/icons-material/ShowChart';
 import GroupIcon from '@mui/icons-material/Group';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PercentIcon from '@mui/icons-material/Percent';
+import { navigateToReport } from '../../utils/reportNavigation';
+import { useRouter } from 'next/navigation';
 
 // Stable icon mapping by label so filtering doesn't shift icons by index
 const iconByLabel = {
@@ -37,8 +39,52 @@ export default function Overview({
   totalResourceCost,
   allocationPercentage,
   hasAccessToQueryKey,
+  advancedFilters,
+  onClick,
+  selectedDate,
 }) {
   const [overview, setOverview] = useState([]);
+ const router = useRouter();
+  // Map card labels to report types
+  const reportTypeMap = {
+    'Active Projects': 'projectsOnly',
+    'Active Resources': 'resourceOnly',
+    'Total Resource Cost': 'resourceProjectPeriodCost',
+    'Allocation %': 'resourceProjectPeriod',
+    'Actuals Confirmed': 'resourceProjectPeriod',
+  };
+
+  
+const getMonday = date => {
+    const day = date.day();
+    return date.subtract(day === 0 ? 6 : day - 1, 'day'); // Adjust for Sunday (day 0)
+  };
+  
+  const handleCardClick = (label) => {
+
+      const currentWeekMonday = getMonday(selectedDate);
+      const currentWeekSunday = currentWeekMonday.add(6, 'day');
+      const lastWeekMonday = currentWeekMonday.subtract(1, 'week');
+      const lastWeekSunday = lastWeekMonday.add(6, 'day');
+
+    if (onClick) {
+      onClick(label);
+    }
+    let additionalFilters = {};
+    if (label === 'Active Resources') {
+      additionalFilters = { resourceStatuses: ['Active'] };
+    }
+    else if (label === 'Active Projects') {
+      additionalFilters = { projectStatuses: ['Active','Approved'] };
+    }
+
+    if (advancedFilters) {
+      const reportType = reportTypeMap[label];
+      if (reportType) {
+        navigateToReport(advancedFilters, { reportType, period: 'custom', customStartDate: label === 'Actuals Confirmed' ? lastWeekMonday.format('YYYY-MM-DD') : currentWeekMonday.format('YYYY-MM-DD'), customEndDate: label === 'Actuals Confirmed' ? lastWeekSunday.format('YYYY-MM-DD') : currentWeekSunday.format('YYYY-MM-DD'), additionalFilters }, false, router );
+      }
+    }
+  };
 
   useEffect(() => {
     const cost = parseInt(totalResourceCost?.[0]?.total_cost) || 0;
@@ -98,8 +144,8 @@ export default function Overview({
         gridTemplateColumns: {
           xs: 'repeat(1, minmax(0, 1fr))',
           sm: 'repeat(2, minmax(0, 1fr))',
-          md: 'repeat(3, minmax(0, 1fr))',
-          lg: 'repeat(5, minmax(0, 1fr))',
+          md: 'repeat(auto-fit, minmax(160px, 1fr))',
+          lg: 'repeat(auto-fit, minmax(200px, 1fr))',
         },
         alignItems: 'stretch',
       }}
@@ -110,6 +156,7 @@ export default function Overview({
           <Paper
             key={item.label || idx}
             elevation={3}
+            onClick={() => handleCardClick(item.label)}
             sx={{
               borderRadius: 3,
               px: 2,
@@ -119,6 +166,7 @@ export default function Overview({
               flexDirection: 'column',
               alignItems: 'flex-start',
               justifyContent: 'center',
+              cursor: 'pointer',
               // minWidth: 220,
             }}
           >
@@ -144,7 +192,7 @@ export default function Overview({
               {item.label === 'Actuals Confirmed' ? (
                 <>
                   {item.label}{' '}
-                  <span style={{ fontSize: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', lineHeight: 0 }}>
                     (Previous week)
                   </span>
                 </>

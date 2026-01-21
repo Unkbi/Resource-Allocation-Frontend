@@ -1,9 +1,9 @@
 import { call, put, takeEvery, select, all } from 'redux-saga/effects';
 import { ChartParams } from '../../types/dashboardTypes';
-import { fetchDashboardChart, fetchInventoryMetrics } from '../actions/dashboardAction';
-import { setDashboardChart, startChartLoading, startMultipleChartsLoading } from '../reducers/dashboardReducer';
+import { fetchDashboardChart, fetchInventoryMetrics, fetchReport } from '../actions/dashboardAction';
+import { setDashboardChart, startChartLoading, startMultipleChartsLoading, startReportLoading, setReportRequestPayload, setReportData, setReportError } from '../reducers/dashboardReducer';
 import { RootState } from '../store';
-import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup } from '../../services/dashboardServices';
+import { fetchDashboardChartData, DashboardFilterPayload, fetchDashboardChartsByGroup, buildReportPayload, fetchReportData } from '../../services/dashboardServices';
 
 
 function* fetchDashboardChartSaga(action: { payload: ChartParams }): Generator<any, void, any> {
@@ -130,10 +130,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
         })),
         put(setDashboardChart({
           chartKey: 'actuals_confirmation_status',
-          data: [
-            { status: 'Actuals', percentage: responseData.actuals_confirmation_status.actuals_percentage },
-            { status: 'Planned', percentage: responseData.actuals_confirmation_status.planned_percentage }
-          ]
+          data: responseData.actuals_confirmation_status ? [responseData.actuals_confirmation_status] : []
         })),
       ]);
     } else {
@@ -169,7 +166,23 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
   }
 }
 
+function* fetchReportSaga(action: { payload: { reportType: string; uiFilters: any } }): Generator<any, void, any> {
+  const { reportType, uiFilters } = action.payload;
+  try {
+    yield put(startReportLoading({ reportType }));
+    const requestPayload = buildReportPayload(uiFilters);
+    yield put(setReportRequestPayload({ reportType, uiFilters, requestPayload }));
+
+    const data: any[] = yield call(fetchReportData, reportType, requestPayload);
+    yield put(setReportData({ reportType, data }));
+  } catch (err: any) {
+    console.error('Report fetch failed', err);
+    yield put(setReportError({ reportType, error: err?.message || 'Report fetch failed' }));
+  }
+}
+
 export function* dashboardSaga() {
   yield takeEvery(fetchDashboardChart, fetchDashboardChartSaga);
   yield takeEvery(fetchInventoryMetrics, fetchInventoryMetricsSaga);
+  yield takeEvery(fetchReport, fetchReportSaga);
 }

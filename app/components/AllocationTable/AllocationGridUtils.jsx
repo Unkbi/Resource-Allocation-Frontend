@@ -7,6 +7,7 @@ import {
   calculateTotalEffort,
   generateDateWeekMath,
   getMondayOfISO,
+  isWeekKey,
   getProjectBudgetCategory,
 } from '@/app/utils/common';
 import { AddRowButton } from './AddRowButton';
@@ -474,6 +475,7 @@ export const getInitialState = (
   sorting: {
     sortModel: [
       { field: GRID_ROW_GROUPING_SINGLE_GROUPING_FIELD, sort: 'asc' },
+      { field: '__row_group_by_columns_group_organisationName__', sort: 'asc' },
     ],
   },
   pinnedColumns: {
@@ -643,7 +645,8 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: groupBy == 'project' ? true : false,
+        // sortable: groupBy == 'project' ? true : false, //Making it sortable in all views 
+        sortable : true ,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
@@ -788,7 +791,8 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: groupBy == 'project' ? true : false,
+        // sortable: groupBy == 'project' ? true : false,
+        sortable :true ,
         primaryColumn: true,
         renderCell: params => {
           const allocationsOfAddedResource =
@@ -908,7 +912,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         cellClassName: () =>
           groupBy === 'project' ? 'common-NonEditableCells' : '',
@@ -936,7 +940,7 @@ export const getFinalColumns = (
         width: 200,
         headerClassName: 'secondary-header',
         cellClassName: 'secondary-cell',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         renderCell: params => {
           const isParent = params.rowNode?.children?.length;
@@ -1022,7 +1026,7 @@ export const getFinalColumns = (
         headerName: 'Resource',
         width: 200,
         headerClassName: 'secondary-header',
-        sortable: false,
+        sortable: true,
         primaryColumn: true,
         cellClassName: () =>
           groupBy === 'project' ? 'common-NonEditableCells' : 'secondary-cell',
@@ -1196,7 +1200,7 @@ export const getCellClassName = (
 
   if (params && params.field && typeof params.field === 'string') {
     if (
-      /^W\d+/.test(params.field) &&
+      isWeekKey(params.field) &&
       type !== 'cost' &&
       params.rowNode?.type === 'group' &&
       (params.rowNode?.groupingField === 'teams' ||
@@ -1215,7 +1219,6 @@ export const getCellClassName = (
       } else if (params.rowNode?.groupingField === 'resource') {
         projectRows = updatedRows.filter(row => row.resource === groupKey);
       }
-
       const uniqueProjectRows = new Set(
         projectRows.map(item => item.resourceId)
       );
@@ -1275,7 +1278,7 @@ export const getCellClassName = (
     } else if (
       params.rowNode?.type === 'group' &&
       params.rowNode?.groupingField === 'project' &&
-      /^W\d+/.test(params.field)
+      isWeekKey(params.field)
     ) {
       const project = allProjects.find(
         row => row.Name === params.rowNode.groupingKey
@@ -1316,7 +1319,7 @@ export const getCellClassName = (
         params.rowNode?.groupingField === 'organisationName' ||
         params.rowNode?.groupingField === 'portfolioName' ||
         (groupBy === 'resource' &&
-          params.rowNode?.groupingField === 'resource'))
+          params.rowNode?.groupingField === 'resource'));
     return isFirstGroup ? 'firstGroupsRow' : 'secondGroupsRow';
   }
   if (!isCellEditable(params)) {

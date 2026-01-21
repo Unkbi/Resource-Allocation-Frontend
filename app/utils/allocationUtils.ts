@@ -31,11 +31,13 @@ import {
   getResourceFromUid,
   getTeamForResource,
   getWeekNumber,
+  isWeekKey,
 } from './common';
 import {
   AllocationForm_Status_Filter,
   DATE_FORMAT,
   PROJECT_ACTIVE_STATUS,
+  teamsViewsGrouping,
 } from '../constants/constants';
 import { GridApi, GridCellParams } from '@mui/x-data-grid-premium';
 import dayjs from 'dayjs';
@@ -140,7 +142,7 @@ function getWeeksInRange(start: string, end: string) {
 
   while (isBefore(current, endDate) || format(current, 'yyyy-MM-dd') === end) {
     weeks.push({
-      key: `W${format(current, 'I')}`,
+      key: getWeekNumber(current),
       period: format(current, 'yyyy-MM-dd'),
     });
     current = addWeeks(current, 1);
@@ -542,7 +544,7 @@ export const hasAllocations = (allocation: AllAllocations) => {
   }
   for (const key in allocation) {
     if (
-      /^W\d+/.test(key) &&
+      isWeekKey(key) &&
       allocation[key] &&
       (allocation[key] as AllocationGridCellData).value &&
       // @ts-ignore
@@ -687,6 +689,8 @@ export const getFormattedAllocationsForUpdate = (
   splitView: boolean,
   bottomTeamAllocationGrid: GridApi,
   teamAllocationGrid: GridApi,
+  projectAllocationGrid: GridApi,
+  groupBy: string,
   startDate: string,
   endDate: string
 ) => {
@@ -700,7 +704,9 @@ export const getFormattedAllocationsForUpdate = (
     const id = `${allocation?.Resource}-${team?.Id}-${allocation?.Project}`;
     const currentRow = splitView
       ? bottomTeamAllocationGrid.getRow(id)
-      : teamAllocationGrid.getRow(id);
+      : teamsViewsGrouping.includes(groupBy)
+        ? teamAllocationGrid.getRow(id)
+        : projectAllocationGrid.getRow(id);
 
     if (acc[id]) {
       if (allocation?.AllocationEntered > 0) {
@@ -838,7 +844,7 @@ export const generateEmptyAllocation = (
 
   // Extract Wxx weeks and set them to empty values with preserved "period"
   Object.entries(template).forEach(([key, value]) => {
-    if (/^W\d+$/.test(key)) {
+    if (isWeekKey(key)) {
       empty[key] = {
         allocationId: null,
         value: null,
@@ -965,4 +971,20 @@ export const getFirstChild = (params: GridCellParams) => {
     return firstChildRow;
   }
   return null;
+};
+
+export const initSortAllocations = (
+  data: AllAllocations[],
+  primaryColumn = 'teams',
+  secondaryColumn = 'resource'
+) => {
+  return data.sort((a, b) =>
+    a?.[primaryColumn] === b?.[primaryColumn]
+      ? (a?.[secondaryColumn] || '') < (b?.[secondaryColumn] || '')
+        ? -1
+        : 1
+      : (a?.[primaryColumn] || '') < (b?.[primaryColumn] || '')
+        ? -1
+        : 1
+  );
 };

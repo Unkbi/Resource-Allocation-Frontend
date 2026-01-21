@@ -15,6 +15,7 @@ interface CommentCellProps extends GridRenderEditCellParams {
  */
 const MAX_CHARS_PER_LAST_LINE = 30;
 const MAX_CHARS = 80;
+const MAX_LINES = 1;
 
 function truncateText(text: string, maxChars: number, maxLines: number) {
   if (!text) return { displayText: '', isTruncated: false };
@@ -92,7 +93,7 @@ export default function CommentCell(props: CommentCellProps) {
   // compute truncation only for readonly mode
   const { displayText, isTruncated } = useMemo(() => {
     if (!readonly) return { displayText: inputValue, isTruncated: false };
-    return truncateText(inputValue ?? '', MAX_CHARS, 3); // 3 rows max
+    return truncateText(inputValue ?? '', MAX_CHARS, MAX_LINES); // 1 row max
   }, [inputValue, readonly]);
 
   // Build the TextField element once so we can conditionally wrap it with Tooltip
@@ -107,15 +108,15 @@ export default function CommentCell(props: CommentCellProps) {
       autoFocus={!readonly}
       multiline
       minRows={1}
-      maxRows={!readonly ? 3 : undefined} 
+      maxRows={!readonly ? MAX_LINES : undefined}
       error={showError}
-      placeholder={disableView ? '' : 'Enter Comments / Project updates'}
+      placeholder={disableView ? '' : 'Double Click to Enter Comment'}
       InputProps={{
         readOnly: readonly,
         inputProps: {
           onMouseDown: (e: React.MouseEvent) => {
             e.stopPropagation(); //this is to enter edit mode onclick
-            },
+          },
         },
       }}
       // keep your existing styling; tweak if needed

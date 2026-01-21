@@ -7,6 +7,7 @@ import { AppDispatch, RootState } from '@/app/redux/store';
 import { GridCellParams } from '@mui/x-data-grid';
 import {
   calculateTotalEffort,
+  formatDateMMDDYYYY,
   getAllocationManagerFromPath,
 } from '@/app/utils/common';
 import EllipsisNameCell from './EllipsisNameCell';
@@ -97,10 +98,11 @@ function FlatAllocation({
         setRows(allTempRows || []);
         setRowsForView('teamAllocationtemp', []);
       } else {
-        if (!loading && getAllProjectViewRows().length > 0) {
+        const projectViewRows = getAllProjectViewRows();
+        if (!loading && projectViewRows.length > 0) {
           filteredResources = removeResourcesWithNoTeams(
             injectBlankRows(
-              getAllProjectViewRows() as AllAllocations[],
+              projectViewRows as AllAllocations[],
               teams || [],
               // @ts-ignore
               teamsResources,
@@ -127,6 +129,8 @@ function FlatAllocation({
 
         setRows(formattedResources || []);
       }
+      // Sahadev : Reset temp View for Project Related Views, Currently ProjectsView and ProtfolioView.
+      setRowsForView('projectAllocationtemp', []);
     }
   }, [ready, allAllocations, loadingPermissions]);
 
@@ -268,7 +272,7 @@ function FlatAllocation({
     },
     {
       field: 'role',
-      headerName: 'Role',
+      headerName: 'Title',
       width: 180,
       type: 'string',
       isEditable: 'false',
@@ -300,7 +304,11 @@ function FlatAllocation({
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
         const resourceStartDate = allocation?.resourceStartDate;
-        return <EllipsisNameCell value={resourceStartDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(resourceStartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -313,7 +321,9 @@ function FlatAllocation({
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
         const resourceEndDate = allocation?.resourceEndDate;
-        return <EllipsisNameCell value={resourceEndDate || ''} />;
+        return (
+          <EllipsisNameCell value={formatDateMMDDYYYY(resourceEndDate) || ''} />
+        );
       },
     },
     {
@@ -486,7 +496,11 @@ function FlatAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectStartDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectStartDate) || ''}
+          />
+        );
       },
     },
     {
@@ -498,7 +512,11 @@ function FlatAllocation({
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
         const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.projectEndDate || ''} />;
+        return (
+          <EllipsisNameCell
+            value={formatDateMMDDYYYY(allocation?.projectEndDate) || ''}
+          />
+        );
       },
     },
     {

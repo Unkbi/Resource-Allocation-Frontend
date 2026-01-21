@@ -162,6 +162,7 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
       permissions['Team'].r ||
       permissions['Organization'].r ||
       permissions['EmployeeRate'].r,
+    Reports: true,
   };
 
   const menuItems = [
@@ -189,11 +190,16 @@ const Sidebar = ({ toggleSidebar, sidebarExpanded, permissions }) => {
       url: '/people',
       disabled: false,
     },
-    // {icon: "/images/icons/PollRounded.svg", url: "/report",text :"Reports", disabled: true },
     {
       icon: '/images/icons/actual_icon.svg',
       url: '/actuals',
       text: 'Actuals',
+      disabled: false,
+    },
+    {
+      icon: "/images/icons/PollRounded.svg", 
+      url: "/report",
+      text :"Reports",
       disabled: false,
     },
   ];
