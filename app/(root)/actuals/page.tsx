@@ -360,6 +360,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const validateDataBeforeConfirm = () => {
+    // If there are validation errors, block the update
+    if (Object.keys(rowValidationErrors || {}).length > 0) {
+      dispatch(showToastAction(true, 'Must fill required fields.', 'error'));
+      return;
+    }
+
     if (isFutureWeek(parseISO(startDate))) {
       updatePlannedAllocationsIfNeeded();
       return;
@@ -1360,7 +1366,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                           'Not Started' &&
                         // Enable button if it's the current week even if status is 'Confirmed'
                         !isCurrentWeek(parseISO(startDate)) &&
-                        (!isModified || show || hasInvalidRows))
+                        disableView &&
+                        !isFutureWeek(parseISO(startDate || '')))
                     }
                     onClick={validateDataBeforeConfirm}
                   >
