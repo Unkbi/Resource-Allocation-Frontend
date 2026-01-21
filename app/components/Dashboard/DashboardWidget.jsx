@@ -31,6 +31,9 @@ const DashboardWidget = ({ children, onClick, minWidth = 300, minHeight = 300, a
       resizeObserver.disconnect()
     }
   }, [minWidth, minHeight])
+  
+  const chartContent = typeof children === "function" ? children(dimensions) : children;
+
   return (
     <Box
       ref={containerRef}
@@ -99,7 +102,7 @@ const DashboardWidget = ({ children, onClick, minWidth = 300, minHeight = 300, a
             </Box>
           </Box>
         ) : (
-          typeof children === "function" ? children(dimensions) : children
+          chartContent
         )}
       </Paper>
     </Box>
