@@ -31,8 +31,10 @@ import {
   generateDateWeekMath,
   getFridayOfISO,
   getMondayOfISO,
+  getResourcesIamManager,
   getSundayOfISO,
   getTeamForResource,
+  getTeamsIamAllocationManager,
   isCurrentWeek,
   isFutureWeek,
 } from '@/app/utils/common';
@@ -136,6 +138,37 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       ? 'noActualsTracked'
       : null;
 
+  const getResourceListBasedOnUserRole = (
+    loginUser: Resource | null,
+    activeAndInactiveResource: Resource[]
+  ) => {
+    if (!loginUser) return [];
+    const teamsUserIsAnAllocationManager = getTeamsIamAllocationManager(
+      loginUser?.Email,
+      resources,
+      teams
+    );
+
+    const resourcesUserIsAManager = getResourcesIamManager(
+      loginUser?.Id,
+      resources
+    );
+
+    if (teamsUserIsAnAllocationManager.length > 0) {
+      return teamsUserIsAnAllocationManager.reduce(
+        (acc: Resource[], team: Team) => {
+          const resourcesInTeam = teamsResources?.[team.Id] || [];
+          return [...acc, ...resourcesInTeam];
+        },
+        []
+      );
+    }
+    if (resourcesUserIsAManager.length > 0) {
+      return resourcesUserIsAManager;
+    }
+    return activeAndInactiveResource;
+  };
+
   useEffect(() => {
     if (user && resources) {
       const loginUser =
@@ -143,22 +176,24 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           (resource: Resource) =>
             resource?.Email === (user as LoginUser).username
         ) || null;
+
+      const resourceListBasedOnRole = getResourceListBasedOnUserRole(
+        loginUser,
+        resources.filter(
+          (resource: Resource) =>
+            resource.Status === 'Active' || resource.Status === 'Inactive'
+        )
+      ).sort((a: Resource, b: Resource) =>
+        (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+          sensitivity: 'base',
+        })
+      );
+
       if (loginUser) {
         setCurrentResource(loginUser);
 
         // Resources that are Active/Inactive Status
-        setResourceList(
-          resources
-            .filter(
-              (resource: Resource) =>
-                resource.Status === 'Active' || resource.Status === 'Inactive'
-            )
-            .sort((a: Resource, b: Resource) =>
-              (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
-                sensitivity: 'base',
-              })
-            )
-        );
+        setResourceList(resourceListBasedOnRole);
       } else {
         // Some Users do not have Resources created, set minimal details from LoginUser.
         const loginUserTempResourceDetails = {
@@ -191,16 +226,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         setResourceList([
           // @ts-ignore
           loginUserTempResourceDetails,
-          ...resources
-            .filter(
-              (resource: Resource) =>
-                resource.Status === 'Active' || resource.Status === 'Inactive'
-            )
-            .sort((a: Resource, b: Resource) =>
-              (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
-                sensitivity: 'base',
-              })
-            ),
+          ...resourceListBasedOnRole,
         ]);
       }
     }
@@ -421,6 +447,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   };
 
   const validateDataBeforeConfirm = () => {
+    // If there are validation errors, block the update
+    if (Object.keys(rowValidationErrors || {}).length > 0) {
+      dispatch(showToastAction(true, 'Must fill required fields.', 'error'));
+      return;
+    }
+
     if (isFutureWeek(parseISO(startDate))) {
       updatePlannedAllocationsIfNeeded();
       return;
@@ -1495,7 +1527,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                           'Not Started' &&
                         // Enable button if it's the current week even if status is 'Confirmed'
                         !isCurrentWeek(parseISO(startDate)) &&
-                        (!isModified || show || hasInvalidRows))
+                        disableView &&
+                        !isFutureWeek(parseISO(startDate || '')))
                     }
                     onClick={validateDataBeforeConfirm}
                   >

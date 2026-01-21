@@ -3480,6 +3480,17 @@ const AllocationForm = () => {
           const postData = {
             users: [...finalData],
           };
+          
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Sending invitation....',
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 8000,
+            })
+          );
+          
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
