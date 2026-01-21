@@ -40,6 +40,11 @@ export default function Allocation({ startDate, endDate }) {
   const { resources } = useSelector(state => state.resources);
   const searchParams = useSearchParams();
   const settingsParam = searchParams.get('settings');
+  console.log(searchParams, 
+    'sp'
+  );
+
+  console.log(settingsParam , "seetings");
 
   useEffect(() => {
     dispatch({ type: FETCH_ALL_RESOURCES_DETAIL, payload: {} });
@@ -70,6 +75,7 @@ export default function Allocation({ startDate, endDate }) {
         );
 
         if (parsedSettings?.GroupBy) {
+          debugger
           dispatch(changeView(parsedSettings?.GroupBy));
         }
         dispatch(updateCurrentView(parsedSettings));

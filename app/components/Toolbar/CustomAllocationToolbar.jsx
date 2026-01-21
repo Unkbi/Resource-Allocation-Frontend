@@ -637,6 +637,9 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   const allDataLoaded =
     projectsLoaded && resourcesLoaded && teamsLoaded && portfoliosLoaded;
 
+  console.log(savedViews, 'saved views');
+  console.log(currentView, 'curr view');
+
   useEffect(() => {
     setAllApiSuccess(allDataLoaded);
   }, [projects, resources, teams, portfolios]);
@@ -1024,10 +1027,19 @@ const CustomToolbar = memo(({ setFilterButtonEl }) => {
   };
 
   useEffect(() => {
-    if (currentView?.Name) {
-      setSelectedView(currentView?.Id);
+    if (!currentView || !savedViews?.length) return;
+    const matchedView = savedViews.find(v =>
+      isObjectEqual(
+        getOnlyFilterSettings(v),
+        getOnlyFilterSettings(currentView)
+      )
+    );
+    if (matchedView) {
+      setSelectedView(matchedView.Id);
+    } else {
+      setSelectedView('0');
     }
-  }, [currentView?.Name]);
+  }, [currentView, savedViews]);
 
   const handleAddMenuToggle = () => {
     setOpenAddMenu(prevOpen => !prevOpen);

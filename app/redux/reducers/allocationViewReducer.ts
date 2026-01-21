@@ -15,6 +15,7 @@ import {
   GetUsersSavedViewsResponse,
 } from '@/app/types';
 import { formatAPIResponse } from '@/app/utils/authUtils';
+import { getOnlyFilterSettings, isObjectEqual } from '@/app/utils/common';
 import { createSlice } from '@reduxjs/toolkit';
 
 export const DEFAULT_VISIBLE_TEAMS_COLUMNS = [
