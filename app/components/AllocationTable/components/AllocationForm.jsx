@@ -100,6 +100,8 @@ import {
   DATE_FORMAT,
   PORTFOLIO_DISPLAY_NAME,
   PROJECT_ACTIVE_STATUS,
+  projectViewsGrouping,
+  teamsViewsGrouping,
 } from '@/app/constants/constants';
 import { setHighlightedRowId } from '@/app/redux/reducers/highlightedRowReducer';
 import {
@@ -718,22 +720,41 @@ const AllocationForm = () => {
       const organisation = allResourcesDetail.find(
         r => r.Resource.Id === resource.Id
       )?.Organization;
+      const teamChildId = `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`;
+      const orgChildId = `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`;
+      const resourceChildId = `auto-generated-row-resource/${resource.FullName}`;
+      const teamParentId = `auto-generated-row-teams/${resource.team?.Name}`;
+      const orgParentId = `auto-generated-row-organisationName/${organisation?.Name}`;
       return [
         ...acc,
-        `auto-generated-row-teams/${resource.team?.Name}-resource/${resource.FullName}`,
-        `auto-generated-row-organisationName/${organisation?.Name}-resource/${resource.FullName}`,
+        // Add parent IDs first so they expand before children
+        teamParentId,
+        orgParentId,
+        // Then add child IDs
+        teamChildId,
+        orgChildId,
+        resourceChildId,
       ];
     }, []);
     rowIds = projects.reduce((acc, project) => {
       const portfolio = portfolios.find(p => p.Id === project.PortfolioId) ?? {
         Name: 'zzzzz',
       };
+      const portfolioChildId = `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`;
+      const projectChildId = `auto-generated-row-project/${project.Name}`;
+      const portfolioParentId = `auto-generated-row-portfolioName/${portfolio?.Name}`;
       return [
         ...acc,
-        `auto-generated-row-portfolioName/${portfolio?.Name}-project/${project.Name}`,
+        // Add parent ID first
+        portfolioParentId,
+        // Then add child ID
+        portfolioChildId,
+        projectChildId,
       ];
     }, rowIds);
-    dispatch(setExpandRowId(rowIds));
+    // Remove duplicates while preserving order (parents before children)
+    const uniqueRowIds = Array.from(new Set(rowIds));
+    dispatch(setExpandRowId(uniqueRowIds));
   };
 
   const getTeamByResourceId = resourceId => {
@@ -1702,8 +1723,10 @@ const AllocationForm = () => {
                   resources,
                   location,
                   splitView,
-                  bottomTeamAllocationGrid,
-                  teamAllocationGrid,
+                  bottomTeamAllocationGrid, // Update these rows when in spitView
+                  teamAllocationGrid, // Update these rows when in teams, organisation, or resources views
+                  projectAllocationGrid, // Update these rows when in portfolio or projects views
+                  currentView?.GroupBy, // Sahadev, Note : When New Views are added revisit this.
                   currentView?.isDynamicRange
                     ? generateDateWeekMath('WEEK_MINUS', currentView?.WeekMinus)
                     : currentView?.isFixedRange
@@ -1799,10 +1822,24 @@ const AllocationForm = () => {
                   updateRowsForView('bottomTeam', allUpdatedRows);
                   updateRowsForView('projectAllocation', allUpdatedRows);
                   updateRowsForView('teamAllocation', allUpdatedRows);
-                } else {
-                  updateRowsForView('projectAllocation', allUpdatedRows);
+                } else if (teamsViewsGrouping.includes(currentView?.GroupBy)) {
                   updateRowsForView('teamAllocation', allUpdatedRows);
+                } else if (
+                  projectViewsGrouping.includes(currentView?.GroupBy)
+                ) {
+                  updateRowsForView('projectAllocation', allUpdatedRows);
+                } else {
+                  dispatch(
+                    showToastAction(
+                      true,
+                      'Unable to update allocation grid for the current view. View grouping not recognized.',
+                      'error',
+                      4000
+                    )
+                  );
+                  return;
                 }
+
                 dispatch(
                   showToastAction(
                     true,
@@ -1820,22 +1857,25 @@ const AllocationForm = () => {
           dispatch(
             showToastAction(
               true,
-              `Failed to create allocation for ${
-                Array.isArray(values.Resource)
-                  ? values.Resource.reduce((acc, resourceId) => {
-                      const resource = resources?.find(
-                        r => r.Id === resourceId
-                      );
-                      if (!resource) return acc;
-                      return (
-                        acc +
-                        resources?.find(resource => resource.Id === resourceId)
-                          ?.FullName +
-                        ', '
-                      );
-                    }, '').slice(0, -2)
-                  : resources?.find(r => r.Id === values.Resource)?.FullName
-              }`,
+              e?.response?.data
+                ? e?.response?.data
+                : `Failed to create allocation for ${
+                    Array.isArray(values.Resource)
+                      ? values.Resource.reduce((acc, resourceId) => {
+                          const resource = resources?.find(
+                            r => r.Id === resourceId
+                          );
+                          if (!resource) return acc;
+                          return (
+                            acc +
+                            resources?.find(
+                              resource => resource.Id === resourceId
+                            )?.FullName +
+                            ', '
+                          );
+                        }, '').slice(0, -2)
+                      : resources?.find(r => r.Id === values.Resource)?.FullName
+                  }`,
               'error',
               4000
             )
@@ -3934,14 +3974,7 @@ const AllocationForm = () => {
               };
               const getDateString = ts => {
                 if (!ts) return '';
-                const date = new Date(ts);
-                return date
-                  .toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric',
-                  })
-                  .replace(/ /g, ' ');
+                return format(parseISO(ts), DATE_FORMAT);
               };
               const getRelativeTime = ts => {
                 if (!ts) return '';
@@ -3958,12 +3991,14 @@ const AllocationForm = () => {
               // Calculate week number from Period
               let weekNumber = '';
               if (Period) {
-                const d = new Date(Period);
+                const d = parseISO(Period);
                 if (!isNaN(d)) {
-                  const temp = new Date(d.getTime());
+                  const temp = parseISO(new Date(d.getTime()).toISOString());
                   temp.setHours(0, 0, 0, 0);
                   temp.setDate(temp.getDate() + 4 - (temp.getDay() || 7));
-                  const yearStart = new Date(temp.getFullYear(), 0, 1);
+                  const yearStart = parseISO(
+                    new Date(temp.getFullYear(), 0, 1).toISOString()
+                  );
                   weekNumber = Math.ceil(
                     ((temp - yearStart) / 86400000 + 1) / 7
                   );

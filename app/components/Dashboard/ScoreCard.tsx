@@ -13,6 +13,53 @@ interface SubScore {
   positive?: boolean
 }
 
+// Health interpretation bands with color schemes
+const getScoreColors = (score: number) => {
+  if (score >= 90) {
+    return {
+      background: '#e8f5e9',
+      number: '#2E7D32',
+      indicator: '#4CAF50',
+      level: 'Excellent'
+    };
+  } else if (score >= 75) {
+    return {
+      background: '#F1F8E9',
+      number: '#558B2F',
+      indicator: '#8BC34A',
+      level: 'Good'
+    };
+  } else if (score >= 60) {
+    return {
+      background: '#FFF8E1',
+      number: '#F9A825',
+      indicator: '#FFC107',
+      level: 'Attention Needed'
+    };
+  } else if (score >= 40) {
+    return {
+      background: '#FFF3E8',
+      number: '#EF6C00',
+      indicator: '#FF9800',
+      level: 'At Risk'
+    };
+  } else if (score >= 20) {
+    return {
+      background: '#FFEBEE',
+      number: '#E53935',
+      indicator: '#EE5746',
+      level: 'Critical'
+    };
+  } else {
+    return {
+      background: '#FFCDD2',
+      number: '#C62828',
+      indicator: '#B71C1C',
+      level: 'Emergency'
+    };
+  }
+};
+
 interface MuiDashboardCardProps {
   title: string
   tooltipText?: string
@@ -21,6 +68,7 @@ interface MuiDashboardCardProps {
   overallDirection?: string
   subScores: SubScore[]
   hasAccess?: boolean
+  onClick?: () => void
 }
 
 export default function MuiDashboardCard({
@@ -31,274 +79,214 @@ export default function MuiDashboardCard({
   overallDirection,
   subScores,
   hasAccess = true,
+  onClick,
 }: MuiDashboardCardProps) {
 
-  const colorPallette = ['#00A63E', '#9810FA', '#155DFC'];
+  // Get colors based on overall score
+  const overallColors = getScoreColors(overallScore);
 
   return (
-    <>
+    <Box
+      onClick={onClick}
+      sx={{
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+    >
 
-      {/* Header with title and tooltip */}
+      {/* Overall Score Section - Dynamic Color Based on Score */}
       <Box
         sx={{
-
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          mb: 1,
+          background: overallColors.background,
+          p: 1.5,
+          borderRadius: '4px',
+          border: `1px solid ${overallColors.indicator}`,
         }}
       >
-        <Typography variant="h6" sx={{ fontSize: "18px", fontWeight: 600, color: "#333" }}>
-          {title}{' '}
-          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-            <span
-              style={{
-                fontSize: "14px",
-                color: 'rgba(0, 0, 0, 0.6)',
-                fontWeight: 400,
+        {/* Previous Week label with info icon */}
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography sx={{ fontSize: '12px', color: 'rgba(0,0,0,0.6)', fontWeight: 500 }}>
+            Previous Week
+          </Typography>
+
+        </Box>
+
+        {/* Title + Score row */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography
+              sx={{
+                color: '#333333',
+                fontSize: "24px",
+                fontWeight: 600,
               }}
             >
-              (Previous week)
-            </span>
+              {title === 'Engagement Score' ? 'Engagement Score' : 'Project Score'}
+            </Typography>
             {tooltipText && (
               <Tooltip title={tooltipText}>
-                <InfoIcon sx={{ fontSize: "18px", color: "#999" }} />
+                <InfoIcon sx={{ fontSize: 16, color: '#333333', mt: '2px' }} />
               </Tooltip>
             )}
           </Box>
-        </Typography>
-      </Box>
 
-      {/* Overall Score Section - Navy Blue */}
-      <Box
-        sx={{
-          background: "#1e3a8a",
-          p: 3,
-          display: "flex",
-          borderRadius: '4px',
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              color: "#ffffff",
-              fontSize: "16px",
-              fontWeight: 500,
-            }}
-          >
-            {title === 'Engagement Overview' ? 'Overall Engagement' : 'Overall Score'}
-          </Typography>
-        </Box>
-
-        {/* Score and Trend Indicator on Right */}
-        <Stack direction="row" alignItems="center" gap={1.5}>
-          <Stack direction="row" alignItems="baseline" gap={0.5}>
+          {/* Score and Trend Indicator on Right */}
+          <Stack direction="row" alignItems="center" gap={1.5}>
             <Typography
               sx={{
-                color: "#ffffff",
-                fontSize: "24px",
+                color: overallColors.number,
+                fontSize: "48px",
                 fontWeight: 700,
                 lineHeight: 1,
               }}
             >
-              {Number(overallScore).toFixed(1)}
+              {Number(overallScore).toFixed(0)}
             </Typography>
-            <Typography
-              sx={{
-                color: "#ffffff",
-                fontSize: "18px",
-                opacity: 0.9,
-                lineHeight: 1,
-              }}
-            >
-              /100
-            </Typography>
-          </Stack>
 
-          {/* Trend Icon and Change */}
-          <Stack direction="row" alignItems="center" gap={0.3}>
-            {overallChange === 0 ? (
-              <ArrowCircleRightOutlinedIcon
-                sx={{
-                  fontSize: "18px",
-                  color: "#9ca3af",
-                }}
-              />
-            ) : overallDirection !== "down" ? (
-              <ArrowCircleUpIcon
-                sx={{
-                  fontSize: "18px",
-                  color: "#00A63E",
-                }}
-              />
-            ) : (
-              <ArrowCircleDownIcon
-                sx={{
-                  fontSize: "18px",
-                  color: "#ef4444",
-                }}
-              />
+            {/* Trend Icon and Change */}
+            <Stack direction="row" alignItems="center" gap={0.3}>
+              {overallChange === 0 ? (
+                <ArrowCircleRightOutlinedIcon
+                  sx={{
+                    fontSize: "20px",
+                    color: "#90A1B9",
+                  }}
+                />
+              ) : overallDirection !== "down" ? (
+                <ArrowCircleUpIcon
+                  sx={{
+                    fontSize: "20px",
+                    color: "#2E7D32",
+                  }}
+                />
+              ) : (
+                <ArrowCircleDownIcon
+                  sx={{
+                    fontSize: "20px",
+                    color: "#C12626",
+                  }}
+                />
 
-            )}
-            <Typography
-              sx={{
-                color: overallChange === 0 ? "#ffffff" : (overallDirection !== "down" ? "#00A63E" : "#ef4444"),
-                fontSize: "14px",
-                fontWeight: 600,
-              }}
-            >
-              {Number(overallChange).toFixed(1)}%
-            </Typography>
-          </Stack>
-        </Stack>
-      </Box>
-
-      {/* Sub Scores Section - Grey Background */}
-      <Box sx={{ backgroundColor: "#ffffff" }}>
-        <Grid container spacing={2}>
-          {subScores.map((subScore, index) => (
-            <Grid item xs={12} sm={6} md={subScores.length === 3 ? 4 : 6} key={index} sx={{ mt: 2 }}>
-              <Card
+              )}
+              <Typography
                 sx={{
-                  p: 1,
-                  // minWidth: "250px",
-                  height: "100%",
-                  backgroundColor: "#f5f5f5",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                  color: overallChange === 0 ? '#90A1B9' : (overallDirection !== "down" ? "#2E7D32" : "#C12626"),
+                  fontSize: "16px",
+                  fontWeight: 600,
                 }}
               >
-                {/* Left side - Label, Score, Change */}
-                <Box>
-                    <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      mb: 0.5,
-                    }}
-                    >
-                    <Typography
-                      sx={{
-                      fontSize: "14px",
-                      color: "#666",
-                      fontWeight: 500,
-                      lineHeight: 1,
-                      }}
-                    >
-                      {subScore.label}
-                    </Typography>
-                    {subScore.tooltipText && (
-                      <Tooltip title={subScore.tooltipText}>
-                      <InfoIcon sx={{ fontSize: "16px", color: "#999", display: "flex" }} />
-                      </Tooltip>
-                    )}
-                    </Box>
+                {Number(overallChange).toFixed(1)}%
+              </Typography>
+            </Stack>
+          </Stack>
+        </Box>
+      </Box>
 
-                  <Stack direction="row" alignItems="center" gap={1}>
-                    <Typography
+      {/* Sub Scores Section - Dynamic Colors */}
+      <Box sx={{ backgroundColor: "#ffffff" }}>
+        <Grid container rowSpacing={2} columnSpacing={2} sx={{mt: 0}}>
+          {subScores.map((subScore, index) => {
+            const subScoreColors = getScoreColors(subScore.score);
+
+            return (
+              <Grid item xs={12} sm={6} md={subScores.length === 3 ? 4 : 6} key={index}>
+                <Card
+                  sx={{
+                    p: 1.5,
+                    height: "100%",
+                    width: "100%",
+                    backgroundColor: subScoreColors.background,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    boxShadow: "none",
+                    border: `1px solid ${subScoreColors.indicator}`,
+                    borderRadius: '4px',
+                  }}
+                >
+                  {/* Left side - Label, Score, Change */}
+                  <Box sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    // mb: 0.5,
+                  }}>
+                    <Box
                       sx={{
-                        fontSize: "18px",
-                        fontWeight: 700,
-                        color: colorPallette[index % colorPallette.length],
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        mb: 0.5,
                       }}
                     >
-                      {Number(subScore.score).toFixed(1)}
-                    </Typography>
-                    <Stack direction="row" alignItems="center" gap={0.25}>
-                      {subScore.change === 0 ? (
-                        <ArrowCircleRightOutlinedIcon
-                          sx={{
-                            fontSize: "16px",
-                            color: "#9ca3af",
-                          }}
-                        />
-                      ) : subScore.positive !== false ? (
-                        <ArrowCircleUpIcon
-                          sx={{
-                            fontSize: "16px",
-                            color: "#00A63E",
-                          }}
-                        />
-                      ) : (
-                        <ArrowCircleDownIcon
-                          sx={{
-                            fontSize: "16px",
-                            color: "#ef4444",
-                          }}
-                        />
-                      )}
                       <Typography
                         sx={{
                           fontSize: "14px",
-                          color: subScore.change === 0 ? "#9ca3af" : (subScore.positive !== false ? "#00A63E" : "#ef4444"),
+                          color: "#333333",
                           fontWeight: 600,
+                          lineHeight: 1,
                         }}
                       >
-                        {Number(subScore.change).toFixed(1)}%
+                        {subScore.label}
                       </Typography>
-                    </Stack>
-                  </Stack>
-                </Box>
+                      {subScore.tooltipText && (
+                        <Tooltip title={subScore.tooltipText}>
+                          <InfoIcon sx={{ fontSize: "16px", color: "#333333", display: "flex" }} />
+                        </Tooltip>
+                      )}
+                    </Box>
 
-                {/* Right side - Circular Progress */}
-                <Box sx={{ position: "relative", display: "flex", justifyContent: "center" }}>
-                  {/* Background circle (grey) */}
-                  <CircularProgress
-                    variant="determinate"
-                    value={100}
-                    size={60}
-                    thickness={4}
-                    sx={{
-                      color: "#e5e7eb",
-                      position: "absolute",
-                    }}
-                  />
-                  {/* Foreground circle (colored progress) */}
-                  <CircularProgress
-                    variant="determinate"
-                    value={subScore.score}
-                    size={60}
-                    thickness={4}
-                    sx={{
-                      color: "#6366f1",
-                      "& .MuiCircularProgress-circle": {
-                        strokeLinecap: "round",
-                      },
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        color: "#1f2937",
-                      }}
-                    >
-                      {Number(subScore.score).toFixed(1)}%
-                    </Typography>
+                    <Stack direction="row" alignItems="center" gap={1}>
+                      <Typography
+                        sx={{
+                          fontSize: "36px",
+                          fontWeight: 700,
+                          color: subScoreColors.number,
+                        }}
+                      >
+                        {Number(subScore.score).toFixed(0)}
+                      </Typography>
+                      <Stack direction="row" alignItems="center" gap={0.25}>
+                        {subScore.change === 0 ? (
+                          <ArrowCircleRightOutlinedIcon
+                            sx={{
+                              fontSize: "20px",
+                              color: "#90A1B9",
+                            }}
+                          />
+                        ) : subScore.positive !== false ? (
+                          <ArrowCircleUpIcon
+                            sx={{
+                              fontSize: "20px",
+                              color: "#2E7D32",
+                            }}
+                          />
+                        ) : (
+                          <ArrowCircleDownIcon
+                            sx={{
+                              fontSize: "20px",
+                              color: "#C12626",
+                            }}
+                          />
+                        )}
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            color: subScore.change === 0 ? "#90A1B9" : (subScore.positive !== false ? "#2E7D32" : "#C12626"),
+                            fontWeight: 600,
+                          }}
+                        >
+                          {Number(subScore.change).toFixed(1)}%
+                        </Typography>
+                      </Stack>
+                    </Stack>
                   </Box>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       </Box>
-    </>
-    // </Card>
+    </Box>
   )
 }

@@ -219,6 +219,7 @@ export const TOTAL_FUTURE_WEEKS = 20; //Configurable weeks count (Previous + Cur
 export const TOTAL_FUTURE_WEEKS_ARROW = 4;
 export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DISPLAY_DATE_FORMAT = 'MMM yyyy';
+export const USA_DATE_FORMAT = 'MM/dd/yyyy';
 
 export const API_PROJECT_PORTFOLIO = '/Resource';
 export const API_AGENTLANG_KERNEL_RBAC = '/agentlang.auth';
@@ -298,6 +299,12 @@ export const AllocationForm_Status_Filter = ['Active', 'Pending'];
 
 export const Resource_Team_Project_Status_Filter = ['Active', 'Not-Planned'];
 
+export const Project_Sponsor_Manager_Status_Filter = [
+  'Active',
+  'Not-Planned',
+  'Unassigned',
+];
+
 export const DASHBOARD_ALL_ACCESS = [
   'activeProjects',
   'allocationPercentage',
@@ -312,4 +319,27 @@ export const DASHBOARD_ALL_ACCESS = [
   'unapprovedProjectAllocation',
   'projectHealthOverview',
   'projectFTE',
+  'projectScoreByPM',
 ];
+
+export const TOTAL_ACTUALS_LESS_THAN_ONE = 'TOTAL_ACTUALS_LESS_THAN_ONE';
+export const MISSING_PROJECT_ACTUALS_STATUS = 'MISSING_PROJECT_ACTUALS_STATUS';
+
+export const teamsViewsGrouping = [
+  'Teams',
+  'Organisations',
+  'Resources',
+  'Flat',
+];
+export const projectViewsGrouping = ['Portfolio', 'Project'];
+
+export const past = 'past';
+export const future = 'future';
+export const current = 'current';
+
+export const UNPLANNED_PROJECT = 'UNPLANNED_PROJECT';
+export const OTHER_WORK = 'OTHER_WORK';
+export const PERSONAL_TIME = 'PERSONAL_TIME';
+
+export const FAR_PAST_DATE = '1900-01-01';
+export const FAR_FUTURE_DATE = '2100-01-01';

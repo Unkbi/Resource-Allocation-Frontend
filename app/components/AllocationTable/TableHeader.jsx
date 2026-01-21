@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import {
   getWeekNumber,
+  isWeekKey,
   formatDate,
   getStartOfPreviousWeek,
 } from '@/app/utils/common';
@@ -35,7 +36,10 @@ export const getStartDate = () => getStartOfPreviousWeek(new Date());
 
 const createBaseColumnConfig = (weekDate, isCurrentWeek) => ({
   field: getWeekNumber(weekDate),
-  headerName: getWeekNumber(weekDate),
+  // Keep the visible header short (legacy format like "W1") while the
+  // internal `field` remains canonical (e.g. "W1-2026"). This prevents the
+  // UI label from showing the ISO-year while preserving canonical keys.
+  headerName: String(getWeekNumber(weekDate)).split('-')[0],
   width: WEEK_CONFIG.COLUMN_WIDTH,
   type: 'number',
   editable: true,
@@ -213,6 +217,6 @@ export const getAllColumnsWithWeek = (
 
 export const aggregationModel = (startDate, endDate, isFormatWithK) => {
   return generateWeeklyColumns(startDate, endDate, undefined, isFormatWithK)
-    .filter(column => /^W\d+/.test(column.field))
+    .filter(column => isWeekKey(column.field))
     .reduce((acc, { field }) => ({ ...acc, [field]: 'sum' }), {});
 };
