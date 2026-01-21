@@ -126,8 +126,8 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
-  'projectHealthOverview',
   'engagementScoreOverview',
+  'projectHealthOverview',
   'plan_vs_actual_variance',
   'top_projects_by_variance',
   'projectFTE',
@@ -499,13 +499,13 @@ export default function ExecutiveDashboardPage() {
       individualCharts.forEach(chartKey => {
         const queryStart =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation') &&
+            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation' || chartKey === 'unapprovedProjectActualsByTeam' || chartKey === 'projectScoreByTeam' || chartKey === 'teamEngagementScore' || chartKey === 'projectScoreByPM') &&
           selectedOption === 'week'
             ? getMonday(selectedDate).subtract(1, 'week').format('YYYY-MM-DD')
             : startDate;
         const queryEnd =
           (chartKey === 'plan_vs_actual_variance' ||
-            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation') &&
+            chartKey === 'actualsConfirmed' || chartKey === 'unapprovedProjectAllocation' || chartKey === 'unapprovedProjectActualsByTeam' || chartKey === 'projectScoreByTeam' || chartKey === 'teamEngagementScore' || chartKey === 'projectScoreByPM') &&
             selectedOption === 'week'
             ?  getMonday(selectedDate)
               .subtract(1, 'week')
@@ -762,7 +762,7 @@ export default function ExecutiveDashboardPage() {
 
   const handleChartClick = chartName => {
     setSelectedChart(chartName);
-    setDialogOpen(true);
+    // setDialogOpen(true);
   };
 
   const handleDialogClose = () => {
@@ -2134,7 +2134,8 @@ export default function ExecutiveDashboardPage() {
               hasAccess={true}
               onClick={() => navigateToReportWithFilters('projectHealthOverview',
                  {
-                   projectStatuses: ['Active', 'Approved']
+                   projectStatuses: ['Active', 'Approved'],
+                   project: data.project_uuids.split(',').map(id => id.trim())
                  })}
             />
           );
@@ -2413,7 +2414,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Project Score by Project Manager
+                Project Score by Project Manager{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -2818,18 +2828,19 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
-                  onAxisClick={(event, barItemIdentifier ) => {
-                    const { dataIndex, axisValue } = barItemIdentifier  || {};
-                    if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
-                      if (teamId ) {
+                  onItemClick={(event, barItemIdentifier ) => {
+                    const { dataIndex, seriesId } = barItemIdentifier  || {};
+                    if (dataIndex !== undefined && seriesId) {
+                      const teamname = sortedTeamHeadcount[dataIndex]?.team_name;
+                      const teamId = teams.find(t => t.Name === teamname)?.Id;
+                      if (teamId && seriesId) {
                         navigateToReportWithFilters('team_headcount_distribution', {
                           resourceStatuses: 'Active',
                           team: teamId,
+                          resourceType: seriesId,
                         });
                       }
-                    }
-                  }}
+                  }}}
                 />
               </Box>
             </Box>
@@ -2886,7 +2897,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Project Actuals Breakdown by Team
+                Project Actuals Breakdown by Team{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -3058,7 +3078,7 @@ export default function ExecutiveDashboardPage() {
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('resourceCoverage', {
                           team: teamId
@@ -3148,7 +3168,7 @@ export default function ExecutiveDashboardPage() {
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('underAllocated', {
                           team: teamId,
@@ -3239,7 +3259,7 @@ export default function ExecutiveDashboardPage() {
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('overAllocated', {
                           team: teamId,
@@ -3290,7 +3310,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Engagement Score by Teams
+                Engagement Score by Teams{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -3345,7 +3374,7 @@ export default function ExecutiveDashboardPage() {
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
-                      const teamId = teams.find(t => t.team_name === axisValue)?.Id;
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('teamEngagementScore', {
                           team: teamId
@@ -3396,7 +3425,16 @@ export default function ExecutiveDashboardPage() {
                   fontWeight: 600,
                 }}
               >
-                Project Score by Teams
+                Project Score by Teams{' '}
+                <span
+                    style={{
+                      fontSize: dimensions.width < 400 ? '12px' : '14px',
+                      color: 'rgba(0, 0, 0, 0.6)',
+                      fontWeight: 400,
+                    }}
+                  >
+                    (Previous week)
+                  </span>
               </Typography>
               <Box sx={{ flex: 1, overflow: 'hidden' }}>
                 <BarChart
@@ -3659,6 +3697,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={(layout, layouts) => handleLayoutChange('overview', layout, layouts)}
               isDraggable
               isResizable
+              draggableHandle=".drag-handle"
               compactType="vertical"
               style={{ padding: '0 16px' }}
             >
@@ -3715,6 +3754,7 @@ export default function ExecutiveDashboardPage() {
               onLayoutChange={(layout, layouts) => handleLayoutChange('teams', layout, layouts)}
               isDraggable
               isResizable
+              draggableHandle=".drag-handle"
               compactType="vertical"
               style={{ padding: '0 16px' }}
             >
@@ -3748,6 +3788,7 @@ export default function ExecutiveDashboardPage() {
             onLayoutChange={(layout, layouts) => handleLayoutChange('costs', layout, layouts)}
             isDraggable
             isResizable
+            draggableHandle=".drag-handle"
             compactType="vertical"
             style={{ padding: '0 16px' }}
           >
