@@ -126,8 +126,8 @@ const sortByProjectTypeGroupOrder = (data, groupKey = 'project_type_group') => {
 // Define chart sequence for each tab - EASY TO CUSTOMIZE
 // Simply reorder the items in these arrays to change the sequence
 const OVERVIEW_CHART_SEQUENCE = [
-  'projectHealthOverview',
   'engagementScoreOverview',
+  'projectHealthOverview',
   'plan_vs_actual_variance',
   'top_projects_by_variance',
   'projectFTE',
@@ -2134,7 +2134,8 @@ export default function ExecutiveDashboardPage() {
               hasAccess={true}
               onClick={() => navigateToReportWithFilters('projectHealthOverview',
                  {
-                   projectStatuses: ['Active', 'Approved']
+                   projectStatuses: ['Active', 'Approved'],
+                   project: data.project_uuids.split(',').map(id => id.trim())
                  })}
             />
           );
