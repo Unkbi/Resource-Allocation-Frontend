@@ -3508,7 +3508,7 @@ const AllocationForm = () => {
               message: 'Users invited successfully.',
               type: 'success',
               position: 'bottom-left',
-              autoHideTimer: null,
+              autoHideTimer: 4000,
             })
           );
           dispatch(closeDialog());
