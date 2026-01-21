@@ -483,6 +483,12 @@ export const getTeamsIamAllocationManager = (userEmail, resources, teams) => {
   return [];
 };
 
+export const getResourcesIamManager = (uid, resources) => {
+  return resources.filter(
+    resource => resource.Manager?.toLowerCase() === uid.toLowerCase()
+  );
+};
+
 export const getResourceFromEmail = (userEmail, resources) => {
   const userResourcePath =
     Array.isArray(resources) && userEmail

@@ -241,6 +241,7 @@ const resourcePeriodColumns: GridColDef[] = [
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
+  { field: 'confirmed_at', headerName: 'Confirmation At', minWidth: 140 }, 
   { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actuals_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},

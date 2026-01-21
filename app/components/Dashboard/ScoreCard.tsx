@@ -174,7 +174,7 @@ export default function MuiDashboardCard({
                   fontWeight: 600,
                 }}
               >
-                {Number(overallChange).toFixed(1)}%
+                {Number(overallChange).toFixed(1)}
               </Typography>
             </Stack>
           </Stack>
@@ -276,7 +276,7 @@ export default function MuiDashboardCard({
                             fontWeight: 600,
                           }}
                         >
-                          {Number(subScore.change).toFixed(1)}%
+                          {Number(subScore.change).toFixed(1)}
                         </Typography>
                       </Stack>
                     </Stack>
