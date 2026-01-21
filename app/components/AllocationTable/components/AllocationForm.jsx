@@ -3480,6 +3480,17 @@ const AllocationForm = () => {
           const postData = {
             users: [...finalData],
           };
+          
+          dispatch(
+            showToast({
+              open: true,
+              message: 'Sending invitation....',
+              type: 'info',
+              position: 'bottom-left',
+              autoHideTimer: 8000,
+            })
+          );
+          
           const response = await new Promise((resolve, reject) => {
             dispatch({
               type: SEND_INVITATION,
@@ -3497,7 +3508,7 @@ const AllocationForm = () => {
               message: 'Users invited successfully.',
               type: 'success',
               position: 'bottom-left',
-              autoHideTimer: 4000,
+              autoHideTimer: null,
             })
           );
           dispatch(closeDialog());
