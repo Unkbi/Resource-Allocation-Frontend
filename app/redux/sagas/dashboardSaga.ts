@@ -90,7 +90,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       yield all([
         put(setDashboardChart({ 
           chartKey: 'activeProjects', 
-          data: responseData.active_project ? [responseData.active_project] : [] 
+          data: responseData.active_project_uuids ? [responseData.active_project_uuids] : [] 
         })),
         put(setDashboardChart({ 
           chartKey: 'activeProjectsByType', 

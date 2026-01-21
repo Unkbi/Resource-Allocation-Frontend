@@ -75,7 +75,7 @@ const getMonday = date => {
       additionalFilters = { resourceStatuses: ['Active'] };
     }
     else if (label === 'Active Projects') {
-      additionalFilters = { projectStatuses: ['Active','Approved'] };
+      additionalFilters = { projectStatuses: ['Active','Approved'], project: activeProjects?.[0]?.project_uuids || [] };
     }
 
     if (advancedFilters) {
@@ -103,7 +103,7 @@ const getMonday = date => {
     const data = [
       {
         label: 'Active Projects',
-        value: activeProjects?.[0]?.active_project ?? 0,
+        value: activeProjects?.[0]?.count ?? 0,
         hasAccess: hasAccessToQueryKey('activeProjects'),
       },
       {
