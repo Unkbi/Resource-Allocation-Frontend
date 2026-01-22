@@ -2968,12 +2968,11 @@ export default function ExecutiveDashboardPage() {
                   grid={{ horizontal: true }}
                   onAxisClick={(event, axisData) =>{
                     const { dataIndex, axisValue } = axisData || {};
-                    if (dataIndex !== undefined && sortedUniqueTeams[dataIndex]) {
-                      const teamId = filteredUnapprovedActualsByTeam.find(d => d.team_name === sortedUniqueTeams[dataIndex])?.team_id;
+                    if (dataIndex !== undefined && axisValue) {
+                      const teamId = teams.find(d => d.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('unapprovedProjectActualsByTeam', {
                          team: teamId,
-                          actualsCategory: axisValue,
                         });
                       }
                     }
