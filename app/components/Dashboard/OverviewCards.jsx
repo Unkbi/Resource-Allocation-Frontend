@@ -103,7 +103,7 @@ const getMonday = date => {
     const data = [
       {
         label: 'Active Projects',
-        value: activeProjects?.[0]?.count ?? 0,
+        value: activeProjects?.[0]?.active_project ?? 0,
         hasAccess: hasAccessToQueryKey('activeProjects'),
       },
       {
