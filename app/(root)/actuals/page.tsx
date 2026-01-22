@@ -142,20 +142,17 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
     loginUser: Resource | null,
     activeAndInactiveResource: Resource[]
   ) => {
-    if (!loginUser) return [];
-    const teamsUserIsAnAllocationManager = getTeamsIamAllocationManager(
-      loginUser?.Email,
-      resources,
-      teams
-    );
+    if (!loginUser || loadingPermissions) return [];
+    if (permissions['AdminActuals']?.r) return activeAndInactiveResource;
 
-    const resourcesUserIsAManager = getResourcesIamManager(
-      loginUser?.Id,
-      resources
-    );
-
-    if (teamsUserIsAnAllocationManager.length > 0) {
-      return teamsUserIsAnAllocationManager.reduce(
+    let resourceList: Resource[] = [];
+    if (permissions['AllocationManagerActuals']?.r) {
+      const teamsUserIsAnAllocationManager = getTeamsIamAllocationManager(
+        loginUser?.Email,
+        resources,
+        teams
+      );
+      resourceList = teamsUserIsAnAllocationManager.reduce(
         (acc: Resource[], team: Team) => {
           const resourcesInTeam = teamsResources?.[team.Id] || [];
           return [...acc, ...resourcesInTeam];
@@ -163,10 +160,15 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         []
       );
     }
-    if (resourcesUserIsAManager.length > 0) {
-      return resourcesUserIsAManager;
+    if (permissions['ManagerActuals']?.r) {
+      const resourcesUserIsAManager = getResourcesIamManager(
+        loginUser?.Id,
+        resources
+      );
+      resourceList = [...resourceList, ...resourcesUserIsAManager];
     }
-    return activeAndInactiveResource;
+
+    return [loginUser, ...resourceList];
   };
 
   useEffect(() => {
@@ -1180,7 +1182,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 >
                   {loadingName ? (
                     <Skeleton width={100} height={20} />
-                  ) : permissions['AdminActuals'].r ? (
+                  ) : (permissions['AdminActuals'].r ||
+                      permissions['AllocationManagerActuals'].r ||
+                      permissions['ManagerActuals'].r) &&
+                    resourceList.length > 1 ? (
                     <Autocomplete
                       options={resourceList}
                       getOptionLabel={(option: Resource) =>
@@ -1651,4 +1656,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
   );
 }
 
-export default withRBAC(ActualsPage, ['ActualsStatus', 'AdminActuals']);
+export default withRBAC(ActualsPage, [
+  'ActualsStatus',
+  'AdminActuals',
+  'AllocationManagerActuals',
+  'ManagerActuals',
+]);
