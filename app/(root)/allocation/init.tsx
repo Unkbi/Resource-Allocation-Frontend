@@ -167,7 +167,7 @@ function AllocationInit({
       ) {
         dispatch(resetAllocations());
         dispatch({
-          type: 'FETCH_ALL_ALLOCATIONS_INIT',
+          type: 'FETCH_ALL_ALLOCATIONS',
           payload: {
             teams: teams,
             projects: projects,
