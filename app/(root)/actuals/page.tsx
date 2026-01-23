@@ -168,7 +168,9 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       resourceList = [...resourceList, ...resourcesUserIsAManager];
     }
 
-    return [loginUser, ...resourceList];
+    return Array.from(
+      new Map([loginUser, ...resourceList].map(r => [r.Id, r])).values()
+    );
   };
 
   useEffect(() => {
