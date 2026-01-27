@@ -592,6 +592,45 @@ function FlatAllocation({
         return <EllipsisNameCell value={allocationManager || ''} />;
       },
     },
+    {
+      field: 'manager',
+      headerName: 'Manager',  // Resource page manager detail
+      width: 130,
+      type: 'string',
+      isEditable: false,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return (
+          <EllipsisNameCell value={allocation.manager || ''} /> )
+      },
+    },
+     {
+      field: 'portfolioStatus',
+      headerName: 'Portfolio Status',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.portfolioStatus || ''} />;
+      },
+    },
+    {
+      field: 'portfolioDescription',
+      headerName: 'Portfolio Description',
+      width: 180,
+      type: 'string',
+      isEditable: 'false',
+      sortable: true,
+      primaryColumn: true,
+      renderCell: (params: GridCellParams) => {
+        const allocation = params.row;
+        return <EllipsisNameCell value={allocation?.portfolioDescription || ''} />;
+      },
+    },
   ];
 
   const removeResourcesWithNoTeams = (allocations: AllAllocations[]) => {
@@ -669,6 +708,9 @@ function FlatAllocation({
                 projectStatus: false,
                 projectType: false,
                 projectTypeGroup: false,
+                manager: false,
+                portfolioStatus: false,
+                portfolioDescription: false,
               },
             },
           }}
