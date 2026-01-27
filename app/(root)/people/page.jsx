@@ -459,7 +459,7 @@ function Resources({ permissions, loadingPermissions }) {
       field: '__created',
       headerName: 'Created On',
       flex: 1,
-      minWidth: 120,
+      minWidth: 160,
       renderCell: params => {
         if (params && params.value) {
           const date = parseISO(params.value);
@@ -502,7 +502,7 @@ function Resources({ permissions, loadingPermissions }) {
       field: '__last_modified',
       headerName: 'Last Modified On',
       flex: 1,
-      minWidth: 120,
+      minWidth: 160,
       renderCell: params => {
         if (params && params.value) {
           const date = parseISO(params.value);
