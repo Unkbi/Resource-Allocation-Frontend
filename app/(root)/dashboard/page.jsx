@@ -1804,7 +1804,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Allocation %',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}%`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2445,7 +2444,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2565,7 +2563,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Actuals (%)',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2958,7 +2955,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: '% of Actuals',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}%`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2970,12 +2966,11 @@ export default function ExecutiveDashboardPage() {
                   grid={{ horizontal: true }}
                   onAxisClick={(event, axisData) =>{
                     const { dataIndex, axisValue } = axisData || {};
-                    if (dataIndex !== undefined && sortedUniqueTeams[dataIndex]) {
-                      const teamId = filteredUnapprovedActualsByTeam.find(d => d.team_name === sortedUniqueTeams[dataIndex])?.team_id;
+                    if (dataIndex !== undefined && axisValue) {
+                      const teamId = teams.find(d => d.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('unapprovedProjectActualsByTeam', {
                          team: teamId,
-                          actualsCategory: axisValue,
                         });
                       }
                     }
@@ -3056,7 +3051,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Allocation %',
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -3363,7 +3357,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -3478,7 +3471,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,

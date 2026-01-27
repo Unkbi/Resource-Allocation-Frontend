@@ -151,7 +151,7 @@ const ActualsCard = ({
   }, [resourceStartMonday, resourceEndMonday, period]);
 
   const getStatusIcon = () => {
-    if (loading || actualAllocationsStatusesLoading) {
+    if (loading) {
       return <Skeleton width={16} height={16} sx={{ marginTop: 1 }} />;
     }
     if (!isWithinResourceRange) {
