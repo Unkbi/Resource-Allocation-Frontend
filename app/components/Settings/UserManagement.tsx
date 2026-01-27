@@ -942,7 +942,7 @@ function UserManagementPage({
       field: '__last_modified',
       headerName: 'Last Modified On',
       flex: 1,
-      minWidth: 140,
+      minWidth: 150,
       renderCell: (params: any) => {
         if (params && params.value) {
           const date = parseISO(params.value);
