@@ -75,7 +75,7 @@ const getMonday = date => {
       additionalFilters = { resourceStatuses: ['Active'] };
     }
     else if (label === 'Active Projects') {
-      additionalFilters = { projectStatuses: ['Active','Approved'] };
+      additionalFilters = { projectStatuses: ['Active','Approved'], project: activeProjects?.[0]?.project_uuids || [] };
     }
 
     if (advancedFilters) {
