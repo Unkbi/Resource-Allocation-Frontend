@@ -1,9 +1,42 @@
 import { GridColDef } from '@mui/x-data-grid';
 import { ReportType } from '@/app/types/dashboardTypes';
-import { Box } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 import { StatusPill, ScorePill } from '../../Settings/styled';
 import { useSelector } from 'react-redux';
 import { getAllocationManagerFromPath } from '@/app/utils/common';
+
+const MAX_COMMENT_CHARS = 30;
+
+const renderCommentCell = (params: any) => {
+  const text = params.value || '';
+  
+  if (!text) return '';
+  
+  const shouldTruncate = text.length > MAX_COMMENT_CHARS;
+  const displayText = shouldTruncate 
+    ? `${text.slice(0, MAX_COMMENT_CHARS)}...` 
+    : text;
+
+  if (shouldTruncate) {
+    return (
+      <Tooltip title={text} placement="bottom" arrow>
+        <Box
+          sx={{
+            width: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+          }}
+        >
+          {displayText}
+        </Box>
+      </Tooltip>
+    );
+  }
+  
+  return displayText;
+};
 
 const renderScoreCell = (params: any) => {
   const rawValue = Number(params.value ?? 0);
@@ -236,12 +269,12 @@ const resourcePeriodColumns: GridColDef[] = [
   },
   { field: 'period', headerName: 'Period', minWidth: 120 },
   {
-    field: 'actuals_status', headerName: 'Actuals Confirmation', minWidth: 150,
+    field: 'actuals_status', headerName: 'Act. Conf. Status', minWidth: 150,
     renderCell: (params: any) => (
       params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
     ),
   },
-  { field: 'confirmed_at', headerName: 'Confirmation At', minWidth: 140 }, 
+  { field: 'confirmed_at', headerName: 'Confirmed At', minWidth: 140 }, 
   { field: 'planned_allocation', headerName: 'Plan', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actuals_allocation', headerName: 'Actuals', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'variance', headerName: 'Variance', minWidth: 170, type: 'number', headerAlign: 'left', align: 'right'},
@@ -290,6 +323,12 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
+  {
+    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
+    renderCell: (params: any) => (
+     params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
+    ),
+  },
   { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
@@ -297,12 +336,7 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Project Health Score', minWidth: 150, renderCell: renderScoreCell },
   { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderScoreCell },
-  {
-    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
-    renderCell: (params: any) => (
-     params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
-    ),
-  },
+  { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   {
     field: 'created_by', headerName: 'Created By', minWidth: 160,
@@ -342,6 +376,12 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'portfolio_name', headerName: 'Portfolio', minWidth: 140 },
   { field: 'project_manager', headerName: 'Project Manager', minWidth: 160 },
   { field: 'period', headerName: 'Period', minWidth: 120 },
+  {
+    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
+    renderCell: (params: any) => (
+      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
+    ),
+  },
   { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
@@ -353,12 +393,7 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   { field: 'currency', headerName: 'Currency', minWidth: 100 },
   { field: 'actual_cost', headerName: 'Actual Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
   { field: 'planned_cost', headerName: 'Planned Cost', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
-  {
-    field: 'project_actuals_status', headerName: 'Project Actuals Status', minWidth: 150,
-    renderCell: (params: any) => (
-      params.value && <StatusPill status={params.value}>{params.value}</StatusPill>
-    ),
-  },
+  { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
   { field: 'created', headerName: 'Created On', minWidth: 120 },
   {
     field: 'created_by', headerName: 'Created By', minWidth: 160,
@@ -452,6 +487,7 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
         confirmation_score: false,
         entry_score: false,
         communication_score: false,
+        six_week_plan: false,
       };
 
     case 'resourceProjectPeriod':
