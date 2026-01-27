@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography, Button, MenuItem, Select, FormControl, InputLabel, Card, CardContent, Chip, Tooltip } from '@mui/material';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
 import { fetchProjectSummary, fetchProjectSummaryHistory } from '@/app/redux/actions/aiSummaryAction';
@@ -12,6 +12,7 @@ import { StyledDataGrid, ColumnManagementStyles } from '../../AllocationTable/st
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
 import { formatAISummaryResponse, getScoreColor, WeekColumn, ProjectSummaryTableRow } from '@/app/utils/aiSummaryFormatter';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
+import AISummaryDetailDialog from './AISummaryDetailDialog';
 
 export default function AISummaryTab() {
   const dispatch = useDispatch();
@@ -21,6 +22,8 @@ export default function AISummaryTab() {
   
   const { projects } = useSelector((state: RootState) => state.projects);
   const [isFullscreenGrid, setIsFullscreenGrid] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSummaryData, setSelectedSummaryData] = useState<any>(null);
   
   // Format the API response for table display
   const formattedData = useMemo(() => {
@@ -38,6 +41,28 @@ export default function AISummaryTab() {
   }, [currentSummary]);
 
   const { rows, weekColumns } = formattedData;
+
+  // Handle click on week score to open summary detail dialog
+  const handleScoreClick = useCallback((row: ProjectSummaryTableRow, weekCol: WeekColumn) => {
+    const weekData = row[weekCol.field];
+    
+    if (!weekData || weekData.score === null) {
+      return; // Don't open dialog if no data
+    }
+
+    setSelectedSummaryData({
+      projectName: row.project_name,
+      projectManager: row.project_manager,
+      weekNumber: weekCol.weekNumber,
+      weekDate: weekCol.date,
+      score: weekData.score,
+      alignmentScore: weekData.alignmentScore,
+      healthScore: weekData.healthScore,
+      scoreBand: weekData.scoreBand,
+      summaryHtml: weekData.summaryHtml,
+    });
+    setDialogOpen(true);
+  }, []);
 
   // Build dynamic columns for the data grid
   const columns: GridColDef[] = useMemo(() => {
@@ -128,17 +153,25 @@ export default function AISummaryTab() {
                       Band: {weekData.scoreBand}
                     </Typography>
                   )}
+                  <Typography sx={{ fontSize: '11px', mt: 0.5, fontStyle: 'italic' }}>
+                    Click to view full summary
+                  </Typography>
                 </Box>
               }
               arrow
             >
               <Typography
+                onClick={() => handleScoreClick(params.row, weekCol)}
                 sx={{
                   fontSize: '16px',
                   textAlign: 'center',
                   fontWeight: 600,
                   color: getScoreColor(weekData.score),
                   cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                    opacity: 0.8,
+                  },
                 }}
               >
                 {weekData.score}
@@ -150,7 +183,7 @@ export default function AISummaryTab() {
     });
     
     return [...baseColumns, ...weekCols];
-  }, [weekColumns]);
+  }, [weekColumns, handleScoreClick]);
   
   const [summaryType, setSummaryType] = useState<'project' | 'resource' | 'team'>('project');
   const [selectedProject, setSelectedProject] = useState<string>('');
@@ -332,6 +365,13 @@ export default function AISummaryTab() {
           </Box>
         )}
       </Box>
+
+      {/* AI Summary Detail Dialog */}
+      <AISummaryDetailDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        data={selectedSummaryData || {}}
+      />
     </Box>
   );
 }
