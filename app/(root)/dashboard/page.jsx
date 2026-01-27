@@ -1802,7 +1802,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Allocation %',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}%`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2443,7 +2442,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2563,7 +2561,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Actuals (%)',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -2956,7 +2953,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: '% of Actuals',
                       min: 0,
-                      max: 100,
                       valueFormatter: value => `${value}%`,
                       width: config.yAxis?.width || 50,
                       labelStyle: config.yAxis?.labelStyle,
@@ -3053,7 +3049,6 @@ export default function ExecutiveDashboardPage() {
                     {
                       label: 'Allocation %',
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -3360,7 +3355,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
@@ -3475,7 +3469,6 @@ export default function ExecutiveDashboardPage() {
                   yAxis={[
                     {
                       min: 0,
-                      max: 100,
                       width: config.yAxis?.width || 50,
                       valueFormatter: value => `${value}%`,
                       labelStyle: config.yAxis?.labelStyle,
