@@ -993,8 +993,11 @@ function TeamAllocation({
       isEditable: false,
       sortable: true,
       renderCell: (params: GridCellParams) => {
-        const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.portfolioName || ''} />;
+        const value =
+          typeof params.value === 'string' && params.value !== 'zzzzz'
+            ? params.value
+            : '';
+        return <EllipsisNameCell value={value} />;
       },
     },
     {
