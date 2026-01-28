@@ -1,7 +1,6 @@
 'use client';
 
 import { Box, Typography, Button } from '@mui/material';
-import { DataGridPremium, GridColDef, GridRowCount } from '@mui/x-data-grid-premium';
 import { useState, useEffect } from 'react';
 import ReportBuilderToolbar from './ReportBuilderToolbar';
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
@@ -16,9 +15,14 @@ import { ColumnManagementStyles, StyledDataGrid } from '../../AllocationTable/st
 import { showToast } from '@/app/redux/reducers/toastReducer';
 import { useSearchParams } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import { decompressFromEncodedURIComponent } from 'lz-string';
+import ErrorPage from '../../ErrorPage/ErrorPage';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface ReportBuilderProps {
   onReportGenerate?: (filters: ReportFilters) => void;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
 /**
@@ -131,8 +135,10 @@ const parseQueryParams = (searchParams: URLSearchParams): Partial<ReportFilters>
   return filters;
 };
 
-export default function ReportBuilderPage({
+function ReportBuilderPage({
   onReportGenerate,
+  permissions,
+  loadingPermissions,
 }: ReportBuilderProps) {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
@@ -166,6 +172,7 @@ export default function ReportBuilderPage({
   const [pendingQueryFilters, setPendingQueryFilters] = useState<(Partial<ReportFilters> & { customStartDate?: string; customEndDate?: string }) | null>(null);
   const [hasAppliedQueryParams, setHasAppliedQueryParams] = useState(false);
   const [isInitializing, setIsInitializing] = useState(hasQueryParams);
+  const [noAccess, setNoAccess] = useState(false);
 
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
@@ -291,12 +298,14 @@ export default function ReportBuilderPage({
 
   // Effect 1: Parse and store query params on mount
   useEffect(() => {
+    if (loadingPermissions) return;
     // Only run once on mount
     if (hasAppliedQueryParams) return;
     
     // Priority 1: Check for query params from dashboard navigation
     if (searchParams && searchParams.toString()) {
-      const queryFilters = parseQueryParams(searchParams);
+      const decodedParams = decompressFromEncodedURIComponent(searchParams.toString() || '') || '';
+      const queryFilters = parseQueryParams(decodedParams ? new URLSearchParams(decodedParams) : new URLSearchParams());
       if (Object.keys(queryFilters).length > 0) {
         setIsInitializing(true);
         
@@ -314,12 +323,20 @@ export default function ReportBuilderPage({
     }
 
     // No query params present
+    // Check if permissions to reports is allowed as only when their are no query params
+    if (permissions && !permissions['Reports'].r) {
+      setNoAccess(true);
+    }
+    else {
+      setNoAccess(false);
+    }
     setIsInitializing(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]); // Only run when searchParams change
+  }, [searchParams, loadingPermissions]); // Only run when searchParams change
   
   // Effect 2: Apply pending query params once data is loaded
   useEffect(() => {
+    if (loadingPermissions) return;
     if (!pendingQueryFilters || hasAppliedQueryParams || !isDataLoaded) return;
     
     // Data is loaded, now apply the query params
@@ -378,10 +395,11 @@ export default function ReportBuilderPage({
     setHasAppliedQueryParams(true);
     setPendingQueryFilters(null);
     // Keep isInitializing true until report loads
-  }, [pendingQueryFilters, hasAppliedQueryParams, isDataLoaded, dispatch]);
+  }, [pendingQueryFilters, hasAppliedQueryParams, isDataLoaded, dispatch, loadingPermissions]);
   
   // Effect 3: Load from sessionStorage if no query params
   useEffect(() => {
+    if (loadingPermissions) return;
     // Only load from sessionStorage if there are no query params and we haven't already applied them
     if (pendingQueryFilters || hasAppliedQueryParams) return;
     
@@ -424,11 +442,12 @@ export default function ReportBuilderPage({
       console.error('Error loading last report:', error);
       }
     }
-  }, [dispatch, pendingQueryFilters, hasAppliedQueryParams]);
+  }, [dispatch, pendingQueryFilters, hasAppliedQueryParams, loadingPermissions]);
 
   // Read report data and loading from Redux
   
   useEffect(() => {
+    if (loadingPermissions) return;
     if (currentReport) {
       setIsLoading(currentReport.loading);
       if (!currentReport.loading) {
@@ -442,7 +461,7 @@ export default function ReportBuilderPage({
         }
       }
     }
-  }, [currentReport, isInitializing]);
+  }, [currentReport, isInitializing, loadingPermissions]);
 
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
@@ -549,7 +568,7 @@ export default function ReportBuilderPage({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       {/* Show loading overlay when initializing from query params */}
-      {isInitializing && (
+      {(isInitializing || loadingPermissions) && (
         <Box
           sx={{
             position: 'absolute',
@@ -562,6 +581,8 @@ export default function ReportBuilderPage({
         </Box>
       )}
 
+      {noAccess ? (<ErrorPage type="accessDenied" redirectPath="/dashboard" />) : (
+      <>
       {/* Toolbar */}
       <ReportBuilderToolbar
         reportType={filters.reportType as ReportType}
@@ -764,6 +785,8 @@ export default function ReportBuilderPage({
       </Box>
        )}
     </Box>
-    </Box>
-  );
+    </>)};
+    </Box>);
 }
+
+export default withRBAC(ReportBuilderPage, ['Reports']);
