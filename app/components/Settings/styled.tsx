@@ -398,6 +398,15 @@ const StatusPill = styled('div')<{ status?: string }>(({ theme, status }) => {
     case 'Off Track':
       textColor = '#C73732';
       break;
+    case 'Confirmed':
+      textColor = '#3CC55F';
+      break;
+    case 'Not-Started':
+      textColor = '#F39A4C';
+      break;
+    case 'In-Progress':
+      textColor = '#FCCE00';
+      break;
     default:
       textColor = '#6c757d';
   }
