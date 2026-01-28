@@ -112,23 +112,26 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
       <StyledDialog open={open} onClose={onClose} TransitionProps={{ timeout: 400 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F9FAFB' }}>
           {/* Header */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              p: 2.5,
-              bgcolor: '#FFFFFF',
-              borderBottom: '1px solid #E5E7EB',
-            }}
-          >
-            <Typography sx={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
-              AI Summary Detail
-            </Typography>
-            <IconButton onClick={onClose} size="small" sx={{ color: '#6B7280' }}>
-              <CloseIcon />
+         <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 2.5,
+            bgcolor: '#1C2D5F',
+            borderBottom: '1px solid #E5E7EB',
+          }}
+        >
+          <Typography sx={{ fontSize: '15px', fontWeight: 600, color: '#FFFFFF' }}>
+            AI Chatbot Development Summary
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+            <IconButton onClick={onClose} size="small" sx={{ color: '#FFFFFF' }}>
+              <CloseIcon sx={{ fontSize: '14px' }} />
             </IconButton>
           </Box>
+        </Box>
+
 
           {/* No Data Message */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
@@ -166,7 +169,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
         </Box>
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
           {/* Project Info Card */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
             <Button
@@ -197,183 +200,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
               border: '1px solid #E5E7EB',
             }}
           >
-            {/* Project Header */}
-            <Box sx={{ mb: 3 }}>
-              <Typography sx={{ fontSize: '15px', fontWeight: 600, color: '#1F2937', mb: 0.5 }}>
-                {projectName}
-              </Typography>
-              {projectManager && (
-                <Typography sx={{ fontSize: '13px', color: '#6B7280' }}>
-                  Project Manager: {projectManager}
-                </Typography>
-              )}
-            </Box>
-
-            <Divider sx={{ mb: 3 }} />
-
-            {/* Week Info */}
-            <Box sx={{ mb: 3 }}>
-              <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#374151', mb: 2 }}>
-                Week {weekNumber} - {weekDate}
-              </Typography>
-            </Box>
-
-            {/* Overall Score - Large Display */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 3,
-                py: 3,
-                bgcolor: '#F9FAFB',
-                borderRadius: '8px',
-              }}
-            >
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography sx={{ fontSize: '13px', color: '#6B7280', mb: 1 }}>
-                  Overall Project Score
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '56px',
-                    fontWeight: 700,
-                    color: getScoreColor(score),
-                    lineHeight: 1,
-                  }}
-                >
-                  {score}
-                  <Typography
-                    component="span"
-                    sx={{ fontSize: '24px', color: '#9CA3AF', ml: 1 }}
-                  >
-                    /100
-                  </Typography>
-                </Typography>
-                {scoreBand && (
-                  <Typography sx={{ fontSize: '12px', color: '#9CA3AF', mt: 1 }}>
-                    {scoreBand}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-
-            <Divider sx={{ mb: 3 }} />
-
-            {/* Component Scores */}
-            <Box sx={{ mb: 3 }}>
-              <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#374151', mb: 2 }}>
-                Component Scores
-              </Typography>
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
-                {/* Alignment Score */}
-                {alignmentScore !== null && alignmentScore !== undefined && (
-                  <Box
-                    sx={{
-                      p: 2,
-                      bgcolor: '#FFFBEB',
-                      borderRadius: '8px',
-                      border: '1px solid #FEF3C7',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: '11px', color: '#92400E', mb: 1 }}>
-                      Alignment Score
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
-                      <Typography
-                        sx={{
-                          fontSize: '28px',
-                          fontWeight: 700,
-                          color: getScoreColor(alignmentScore),
-                        }}
-                      >
-                        {alignmentScore}
-                      </Typography>
-                      <Typography sx={{ fontSize: '14px', color: '#9CA3AF' }}>
-                        /100
-                      </Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: '10px', color: '#92400E', mt: 0.5 }}>
-                      90% weight
-                    </Typography>
-                  </Box>
-                )}
-
-                {/* Health Score */}
-                {healthScore !== null && healthScore !== undefined && (
-                  <Box
-                    sx={{
-                      p: 2,
-                      bgcolor: '#ECFDF5',
-                      borderRadius: '8px',
-                      border: '1px solid #D1FAE5',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: '11px', color: '#065F46', mb: 1 }}>
-                      Health Score
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
-                      <Typography
-                        sx={{
-                          fontSize: '28px',
-                          fontWeight: 700,
-                          color: getScoreColor(healthScore),
-                        }}
-                      >
-                        {healthScore}
-                      </Typography>
-                      <Typography sx={{ fontSize: '14px', color: '#9CA3AF' }}>
-                        /100
-                      </Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: '10px', color: '#065F46', mt: 0.5 }}>
-                      90% weight
-                    </Typography>
-                  </Box>
-                )}
-
-                {/* Engagement Score Placeholder */}
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: '#FEF2F2',
-                    borderRadius: '8px',
-                    border: '1px solid #FECACA',
-                  }}
-                >
-                  <Typography sx={{ fontSize: '11px', color: '#991B1B', mb: 1 }}>
-                    Engagement Score
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
-                    <Typography
-                      sx={{
-                        fontSize: '28px',
-                        fontWeight: 700,
-                        color: '#EF4444',
-                      }}
-                    >
-                      {score ? Math.round(score * 0.25) : 'N/A'}
-                    </Typography>
-                    <Typography sx={{ fontSize: '14px', color: '#9CA3AF' }}>
-                      /100
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ fontSize: '10px', color: '#991B1B', mt: 0.5 }}>
-                    25% weight
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Divider sx={{ mb: 3 }} />
-
-            {/* Summary Content */}
-            <Box>
-              <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#374151', mb: 2 }}>
-                Score Derivation
-              </Typography>
-
+           
               {/* Render HTML content with styling */}
               <Box
                 sx={{
@@ -456,7 +283,6 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
               />
             </Box>
           </Box>
-        </Box>
       </Box>
     </StyledDialog>
   );

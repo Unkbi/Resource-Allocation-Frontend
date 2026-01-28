@@ -165,9 +165,12 @@ export const formatAISummaryResponse = (apiResponse: any[]): {
  */
 export const getScoreColor = (score: number | null): string => {
   if (score === null) return '#9CA3AF';
-  if (score >= 80) return '#10B981'; // Green
-  if (score >= 60) return '#F59E0B'; // Orange
-  return '#EF4444'; // Red
+  if (score >= 90) return '#2E7D32';  // Dark Green
+  if (score >= 75) return '#558B2F'; // Green
+  if (score >= 60) return '#F9A825'; // Orange
+  if (score >= 40) return '#EF6C00';
+  if (score >= 20) return '#E53935';
+  return '#C62828'; // Red
 };
 
 /**
