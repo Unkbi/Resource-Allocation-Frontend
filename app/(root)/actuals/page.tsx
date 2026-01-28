@@ -181,21 +181,20 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
             resource?.Email === (user as LoginUser).username
         ) || null;
 
-      const resourceListBasedOnRole = getResourceListBasedOnUserRole(
-        loginUser,
-        resources.filter(
-          (resource: Resource) =>
-            resource.Status === 'Active' || resource.Status === 'Inactive'
-        )
-      ).sort((a: Resource, b: Resource) =>
-        (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
-          sensitivity: 'base',
-        })
-      );
-
       if (loginUser) {
         setCurrentResource(loginUser);
 
+        const resourceListBasedOnRole = getResourceListBasedOnUserRole(
+          loginUser,
+          resources.filter(
+            (resource: Resource) =>
+              resource.Status === 'Active' || resource.Status === 'Inactive'
+          )
+        ).sort((a: Resource, b: Resource) =>
+          (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+            sensitivity: 'base',
+          })
+        );
         // Resources that are Active/Inactive Status
         setResourceList(resourceListBasedOnRole);
       } else {
@@ -206,7 +205,7 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           FullName: `${(user as LoginUser)?.firstName || ''} ${(user as LoginUser)?.lastName || ''}`,
           Email: (user as LoginUser)?.username || '',
           PhoneNumber: null,
-          Id: null,
+          Id: '0',
           StartDate: null,
           EndDate: null,
           LocationCategory: null,
@@ -226,6 +225,17 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
         // @ts-ignore
         setCurrentResource(loginUserTempResourceDetails as Resource);
 
+        const resourceListBasedOnRole = getResourceListBasedOnUserRole(
+          loginUserTempResourceDetails as Resource,
+          resources.filter(
+            (resource: Resource) =>
+              resource.Status === 'Active' || resource.Status === 'Inactive'
+          )
+        ).sort((a: Resource, b: Resource) =>
+          (a.FullName ?? '').localeCompare(b.FullName ?? '', undefined, {
+            sensitivity: 'base',
+          })
+        );
         // Resources that are Active/Inactive Status
         setResourceList([
           // @ts-ignore
