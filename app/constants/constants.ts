@@ -287,6 +287,8 @@ export const PROJECT_ACTIVE_STATUS = ['Active', 'Approved'];
 
 export const PROJECT_INACTIVE_STATUS = ['Proposed', 'Paused', 'Completed'];
 
+export const PROJECT_ALLOCATION_STATUS = ['Active', 'Approved' , 'Completed'];
+
 export const Resource_All_Status = [
   'Active',
   'Inactive',

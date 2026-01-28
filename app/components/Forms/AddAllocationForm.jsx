@@ -89,15 +89,34 @@ const AddAllocationForm = ({ formikProps, setFormValue }) => {
   }, [initialData, projects]);
 
   useEffect(() => {
-    const avaiableProjects = projects
-      ?.filter(project => PROJECT_ACTIVE_STATUS.includes(project.Status))
-      ?.sort((a, b) => a.Name.localeCompare(b.Name))
-      ?.map(project => ({
+    if (!projects?.length) {
+      setProjectOptions([]);
+      return;
+    }
+    const activeProjects = projects
+      .filter(project => PROJECT_ACTIVE_STATUS.includes(project.Status))
+      .map(project => ({
         value: project.Id,
         label: project.Name,
       }));
-    setProjectOptions(avaiableProjects);
-  }, [projects]);
+
+    const selectedProjects = projects
+      .filter(project => values.Project?.includes(project.Id))
+      .map(project => ({
+        value: project.Id,
+        label: project.Name,
+      }));
+
+    const merged = new Map();
+
+    [...activeProjects, ...selectedProjects].forEach(project => {
+      merged.set(project.value, project);
+    });
+
+    setProjectOptions(
+      Array.from(merged.values()).sort((a, b) => a.label.localeCompare(b.label))
+    );
+  }, [projects, values.Project]);
 
   const resourceTypeOptions =
     resources
