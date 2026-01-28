@@ -364,7 +364,10 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           row =>
             !row.projectActualsStatus || row.projectActualsStatus === 'No Data'
         );
-
+      if (rowsWithMissingStatus.length === 0 && totalActuals >= 1.0) {
+        // No Errors
+        handleConfirmed();
+      }
       if (rowsWithMissingStatus.length > 0) {
         setShowAlertDialog(prev => [
           ...(prev || []),
@@ -377,6 +380,8 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           TOTAL_ACTUALS_LESS_THAN_ONE,
         ]);
       }
+    } else {
+      handleConfirmed();
     }
   };
 
@@ -459,7 +464,11 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
       };
 
       if (
-        (isCurrentWeek(parseISO(startDate)) || isModified) &&
+        (actualAllocationsStatuses?.[startDate] !== null ||
+          actualAllocationsStatuses?.[startDate] !== 'In-Progress' ||
+          actualAllocationsStatuses?.[startDate] !== 'Not Started' ||
+          isCurrentWeek(parseISO(startDate)) ||
+          isModified) &&
         !hasInvalidRows
       ) {
         new Promise((resolve, reject) => {
@@ -469,11 +478,6 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
           });
         })
           .then(() => {
-            dispatch(
-              setActualAllocationsStatus(
-                isFridayOrAfterFriday ? 'Confirmed' : 'In-Progress'
-              )
-            );
             setIsModified(false);
             setHasInvalidRows(false);
             setConfirmSignal(c => c + 1);
@@ -486,6 +490,22 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                 autoHideTimer: 4000,
               })
             );
+            dispatch({
+              type: GET_ACTUAL_ALLOCATIONS_STATUSES,
+              payload: {
+                resource: userId,
+                startDate: generateDateWeekMath(
+                  'WEEK_MINUS',
+                  1,
+                  parseISO(startDate ?? '')
+                ),
+                endDate: generateDateWeekMath(
+                  'WEEK_PLUS',
+                  1,
+                  parseISO(endDate ?? '')
+                ),
+              },
+            });
           })
           .catch((error: any) => {
             console.error('Error confirming actual allocations:', error);
@@ -1305,10 +1325,12 @@ function ActualsPage({ permissions, loadingPermissions }: ActualsPageProps) {
                       loadingPermissions ||
                       dataProcessing ||
                       formattingActualAllocations ||
-                      (status !== null &&
-                        startDate !== null &&
-                        status !== 'In-Progress' &&
-                        status !== 'Not Started' &&
+                      (startDate !== null &&
+                        actualAllocationsStatuses?.[startDate] !== null &&
+                        actualAllocationsStatuses?.[startDate] !==
+                          'In-Progress' &&
+                        actualAllocationsStatuses?.[startDate] !==
+                          'Not Started' &&
                         // Enable button if it's the current week even if status is 'Confirmed'
                         !isCurrentWeek(parseISO(startDate)) &&
                         (!isModified || show || hasInvalidRows))

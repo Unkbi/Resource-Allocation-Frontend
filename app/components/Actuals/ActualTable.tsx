@@ -165,9 +165,8 @@ export default function ActualTable({
   const allocationTheme = useSelector(
     (state: RootState) => state.settings.allocationTheme
   );
-  const { actualAllocationsStatuses, actualsStatusLoading } = useSelector(
-    (state: RootState) => state.actualAllocations
-  );
+  const { actualAllocationsStatuses, actualAllocationsStatusesLoading } =
+    useSelector((state: RootState) => state.actualAllocations);
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
@@ -778,7 +777,7 @@ export default function ActualTable({
             }}
           >
             Status :{' '}
-            {actualsStatusLoading ||
+            {actualAllocationsStatusesLoading ||
             dataProcessing ||
             formattingActualAllocations ? (
               <Skeleton
