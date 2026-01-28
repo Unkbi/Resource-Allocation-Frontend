@@ -342,11 +342,11 @@ const FilterChips: React.FC<FilterChipsProps> = ({
             key={filter.key}
             label={chipLabel}
             onDelete={() => handleRemoveFilter(filter.key)}
-            deleteIcon={<CloseIcon />}
+            deleteIcon={showClearButton ? <CloseIcon /> : <></>}
           />
         );
       })}
-        <ClearAllButton onClick={handleClearAll}>{showClearButton ? 'Clear All' : 'Reset Filters' }</ClearAllButton>
+        {showClearButton && <ClearAllButton onClick={handleClearAll}>{showClearButton ? 'Clear All' : 'Reset Filters' }</ClearAllButton>}
       
     </Box>
   );
