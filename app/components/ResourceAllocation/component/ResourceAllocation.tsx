@@ -923,12 +923,11 @@ function ResourceAllocation({
       sortable: true,
       primaryColumn: true,
       renderCell: (params: GridCellParams) => {
-        const data = getResource(params)
-        const { rowNode, api, value = '' } = params;
-        const isGridTreeNode = 'children' in rowNode;
-        // const projectID = params.rowNode.children 
-        const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.portfolioName || ''} />;
+      const value =
+        typeof params.value === 'string' && params.value !== 'zzzzz'
+          ? params.value
+            : '';
+        return <EllipsisNameCell value={value} />;
       },
     },
     {
