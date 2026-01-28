@@ -221,6 +221,7 @@ export default function ExecutiveDashboardPage() {
     activeProjectsByType = [],
     totalHeadcount = [],
     team_headcount_distribution = [],
+    systemActiveProjects = [],
     activeProjects = [],
     activeResources = [],
     actualsConfirmed = [],
@@ -434,6 +435,7 @@ export default function ExecutiveDashboardPage() {
       // Inventory metrics charts (grouped - single API call)
       const inventoryMetricsCharts = [
         'activeProjects',
+        'systemActiveProjects',
         'activeProjectsByType',
         'activeResources',
         'totalHeadcount',
@@ -636,7 +638,8 @@ export default function ExecutiveDashboardPage() {
       top_projects_by_variance.length > 0 &&
       // Check inventory metrics data
       (activeProjects.length > 0 || activeProjectsByType.length > 0) &&
-      (activeResources.length > 0 || totalHeadcount.length > 0);
+      (activeResources.length > 0 || totalHeadcount.length > 0) &&
+      systemActiveProjects.length > 0;
 
     if (allDataLoaded) {
       if (initialLoad) {
@@ -652,6 +655,7 @@ export default function ExecutiveDashboardPage() {
     allocationPercentage,
     top_projects_by_variance,
     activeProjects,
+    systemActiveProjects,
     activeProjectsByType,
     activeResources,
     resourceFTEContractorRatio,
@@ -1545,6 +1549,7 @@ export default function ExecutiveDashboardPage() {
                     },
                   }}
                   sx={{
+                    cursor: 'pointer',
                     '& .MuiChartsAxis-tickLabel': {
                       fontSize: '12px',
                       fill: '#666',
@@ -1674,6 +1679,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onItemClick={(event, axisData) => {
                     const { dataIndex, seriesId } = axisData || {};
                     if (dataIndex !== undefined && sortedHeadcount[dataIndex]) {
@@ -1817,6 +1825,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 60, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onItemClick={(event, barItemIdentifier) => {
                     const { dataIndex, seriesId } = barItemIdentifier || {};
                     if (dataIndex !== undefined && projectTypeGroupNames[dataIndex] && seriesId) {
@@ -1920,6 +1931,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   slotProps={{
                     legend: config.legend,
+                  }}
+                  sx={{
+                    cursor: 'pointer',
                   }}
                 />
               </Box>
@@ -2036,6 +2050,7 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   sx={{
+                    cursor: 'pointer',
                     '& .MuiChartsAxis-tickLabel': {
                       fontSize: '12px',
                       fill: '#666',
@@ -2134,7 +2149,7 @@ export default function ExecutiveDashboardPage() {
               onClick={() => navigateToReportWithFilters('projectHealthOverview',
                  {
                    projectStatuses: ['Active', 'Approved'],
-                   project: data.project_uuids.split(',').map(id => id.trim())
+                   project: data.project_uuids 
                  })}
             />
           );
@@ -2320,6 +2335,9 @@ export default function ExecutiveDashboardPage() {
                     },
                   }}
                   grid={{ vertical: true, horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={()=> navigateToReportWithFilters('projectFTE')}
                 />
               </Box>
@@ -2451,6 +2469,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && pmIds[dataIndex]) {
@@ -2580,6 +2601,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 60, right: 60, top: 20, bottom: 60 }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData)=>{
                     const { dataIndex } = axisData || {};
                     if (dataIndex !== undefined && periodData[dataIndex]) {
@@ -2687,6 +2711,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={() => navigateToReportWithFilters('budgetVsPlanVsActual')}
                 />
               </Box>
@@ -2825,6 +2852,9 @@ export default function ExecutiveDashboardPage() {
                   }}
                   margin={{ left: 20, right: 20, top: 20, bottom: 80 }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onItemClick={(event, barItemIdentifier ) => {
                     const { dataIndex, seriesId } = barItemIdentifier  || {};
                     if (dataIndex !== undefined && seriesId) {
@@ -2962,6 +2992,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) =>{
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
@@ -3069,6 +3102,9 @@ export default function ExecutiveDashboardPage() {
                     },
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
@@ -3159,6 +3195,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
@@ -3250,6 +3289,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
@@ -3364,6 +3406,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
@@ -3478,6 +3523,9 @@ export default function ExecutiveDashboardPage() {
                     legend: config.legend,
                   }}
                   grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
                   onAxisClick={(event, axisData) => {
                     const { dataIndex, axisValue } = axisData || {};
                     if (dataIndex !== undefined && axisValue) {
@@ -3672,6 +3720,7 @@ export default function ExecutiveDashboardPage() {
 
             <Overview
               activeProjects={activeProjects}
+              systemActiveProjects={systemActiveProjects}
               activeResources={activeResources}
               actualsConfirmed={filteredActualsConfirmed}
               totalResourceCost={totalResourceCost}
