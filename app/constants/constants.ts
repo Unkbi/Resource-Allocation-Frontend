@@ -308,6 +308,7 @@ export const Project_Sponsor_Manager_Status_Filter = [
 export const DASHBOARD_ALL_ACCESS = [
   'activeProjects',
   'allocationPercentage',
+  'systemActiveProjects',
   'actualsConfirmed',
   'plan_vs_actual_variance',
   'engagementScoreOverview',
