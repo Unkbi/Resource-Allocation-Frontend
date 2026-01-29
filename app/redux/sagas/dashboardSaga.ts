@@ -48,7 +48,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
   // Mark all inventory charts as loading
   yield put(startMultipleChartsLoading([
     'activeProjects',
-    'systemActiveProjects',
     'activeProjectsByType', 
     'activeResources',
     'resourceFTEContractorRatio',
@@ -94,10 +93,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
           data: responseData.active_project ? [responseData.active_project] : [] 
         })),
         put(setDashboardChart({ 
-          chartKey: 'systemActiveProjects', 
-          data: responseData.system_active_project ? [responseData.system_active_project] : [] 
-        })),
-        put(setDashboardChart({ 
           chartKey: 'activeProjectsByType', 
           data: responseData.projects_by_type || []
         })),
@@ -140,7 +135,6 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
       ]);
     } else {
       yield all([
-        put(setDashboardChart({ chartKey: 'systemActiveProjects', data: [] })),
         put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
         put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
         put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
@@ -157,8 +151,7 @@ function* fetchInventoryMetricsSaga(action: { payload: ChartParams }): Generator
   } catch (err) {
     console.error('Inventory metrics fetch failed', err);
     yield all([
-      put(setDashboardChart({ chartKey: 'systemActiveProjects', data: [] })),
-      put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),      
+      put(setDashboardChart({ chartKey: 'activeProjects', data: [] })),
       put(setDashboardChart({ chartKey: 'activeProjectsByType', data: [] })),
       put(setDashboardChart({ chartKey: 'activeResources', data: [] })),
       put(setDashboardChart({ chartKey: 'resourceFTEContractorRatio', data: [] })),

@@ -10,8 +10,7 @@ import { useRouter } from 'next/navigation';
 
 // Stable icon mapping by label so filtering doesn't shift icons by index
 const iconByLabel = {
-  'Active/Approved Projects': <img src="/images/icons/FolderFileOpenBlack.svg" alt="Approved Projects" fontSize="inherit" />,
-  'Allocated Projects': <ShowChartIcon fontSize="inherit" />,
+  'Active Projects': <ShowChartIcon fontSize="inherit" />,
   'Active Resources': <GroupIcon fontSize="inherit" />,
   'Total Resource Cost': <AttachMoneyIcon fontSize="inherit" />,
   'Allocation %': <PercentIcon fontSize="inherit" />,
@@ -34,7 +33,6 @@ const formatCurrency = (amount, currency = 'USD', locale = 'en-US') => {
 };
 
 export default function Overview({
-  systemActiveProjects,
   activeProjects,
   activeResources,
   actualsConfirmed,
@@ -49,8 +47,7 @@ export default function Overview({
  const router = useRouter();
   // Map card labels to report types
   const reportTypeMap = {
-    'Active/Approved Projects': 'projectsOnly',
-    'Allocated Projects': 'projectsOnly',
+    'Active Projects': 'projectsOnly',
     'Active Resources': 'resourceOnly',
     'Total Resource Cost': 'resourceProjectPeriodCost',
     'Allocation %': 'resourceProjectPeriod',
@@ -77,10 +74,7 @@ const getMonday = date => {
     if (label === 'Active Resources') {
       additionalFilters = { resourceStatuses: ['Active'] };
     }
-    else if (label === 'Active/Approved Projects') {
-      additionalFilters = { projectStatuses: ['Active','Approved'], project: systemActiveProjects?.[0]?.project_uuids || [] };
-    }
-    else if (label === 'Allocated Projects') {
+    else if (label === 'Active Projects') {
       additionalFilters = { projectStatuses: ['Active','Approved'], project: activeProjects?.[0]?.project_uuids || [] };
     }
 
@@ -108,12 +102,7 @@ const getMonday = date => {
 
     const data = [
       {
-        label: 'Active/Approved Projects',
-        value: systemActiveProjects?.[0]?.system_active_project ?? 0,
-        hasAccess: hasAccessToQueryKey('systemActiveProjects'),
-      },
-      {
-        label: 'Allocated Projects',
+        label: 'Active Projects',
         value: activeProjects?.[0]?.active_project ?? 0,
         hasAccess: hasAccessToQueryKey('activeProjects'),
       },
@@ -140,7 +129,6 @@ const getMonday = date => {
     ];
     setOverview(data);
   }, [
-    systemActiveProjects,
     activeProjects,
     activeResources,
     actualsConfirmed,
