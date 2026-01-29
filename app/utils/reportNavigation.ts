@@ -2,6 +2,8 @@
  * Utility functions for navigating to the report page with filters from dashboard charts
  */
 
+import { compressToEncodedURIComponent } from "lz-string";
+
 export interface ChartReportConfig {
   reportType: string;
   period?: string;
@@ -72,7 +74,10 @@ export const buildReportUrl = (
     });
   }
 
-  return `/report?${params.toString()}`;
+  const encodedParams = compressToEncodedURIComponent(
+    params.toString()
+  );
+  return `/report?${encodedParams}`;
 };
 
 /**

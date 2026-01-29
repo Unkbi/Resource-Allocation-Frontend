@@ -4,6 +4,7 @@ import { Dialog, Box, Typography, IconButton, Button, Divider } from '@mui/mater
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import { styled } from '@mui/material/styles';
+import { useState } from 'react';
 
 interface AISummaryDetailDialogProps {
   open: boolean;
@@ -58,53 +59,140 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
     summaryHtml,
   } = data;
 
-  const handleDownload = () => {
-    // Create HTML content for download
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${projectName} - AI Summary</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-            h1 { color: #1F2937; }
-            .scores { display: flex; gap: 20px; margin: 20px 0; }
-            .score-card { padding: 15px; border-radius: 8px; border: 1px solid #E5E7EB; }
-            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #E5E7EB; }
-            th { background-color: #F9FAFB; font-weight: 600; }
-          </style>
-        </head>
-        <body>
-          <h1>${projectName}</h1>
-          <p><strong>Project Manager:</strong> ${projectManager || 'N/A'}</p>
-          <p><strong>Week:</strong> ${weekNumber} - ${weekDate}</p>
-          <div class="scores">
-            <div class="score-card">
-              <p>Project Score: <strong>${score}</strong></p>
-            </div>
-            <div class="score-card">
-              <p>Alignment Score: <strong>${alignmentScore ?? 'N/A'}</strong></p>
-            </div>
-            <div class="score-card">
-              <p>Health Score: <strong>${healthScore ?? 'N/A'}</strong></p>
-            </div>
-          </div>
-          <h2>Summary</h2>
-          ${summaryHtml || '<p>No summary available</p>'}
-        </body>
-      </html>
-    `;
+  const [isDownloading, setIsDownloading] = useState(false);
 
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${projectName}_Week${weekNumber}_Summary.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    
+    try {
+      // Create complete HTML document with styling
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>${projectName || 'Project'} - AI Summary</title>
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 13px;
+                line-height: 1.7;
+                color: #374151;
+                padding: 20px;
+                background: #FFFFFF;
+              }
+              h1, h2, h3, h4, h5, h6 {
+                font-size: 14px;
+                font-weight: 600;
+                color: #1F2937;
+                margin-top: 16px;
+                margin-bottom: 8px;
+              }
+              p {
+                margin-bottom: 12px;
+              }
+              ul, ol {
+                padding-left: 20px;
+                margin-bottom: 12px;
+              }
+              li {
+                margin-bottom: 6px;
+              }
+              strong {
+                font-weight: 600;
+                color: #1F2937;
+              }
+              em {
+                font-style: italic;
+              }
+              code {
+                background-color: #F3F4F6;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-family: monospace;
+              }
+              pre {
+                background-color: #F3F4F6;
+                padding: 12px;
+                border-radius: 6px;
+                overflow: auto;
+                margin-bottom: 12px;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 16px;
+                font-size: 12px;
+              }
+              th {
+                background-color: #F9FAFB;
+                padding: 10px;
+                text-align: left;
+                font-weight: 600;
+                border-bottom: 2px solid #E5E7EB;
+                color: #374151;
+              }
+              td {
+                padding: 10px;
+                border-bottom: 1px solid #E5E7EB;
+              }
+              a {
+                color: #2563EB;
+                text-decoration: none;
+              }
+              blockquote {
+                border-left: 4px solid #E5E7EB;
+                padding-left: 16px;
+                margin: 12px 0;
+                color: #6B7280;
+                font-style: italic;
+              }
+            </style>
+          </head>
+          <body>
+            ${summaryHtml || '<p>No summary available</p>'}
+          </body>
+        </html>
+      `;
+
+      // Call the API to generate PDF
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: fullHtml,
+          filename: `${projectName || 'Project'}_Week${weekNumber || 'N'}_Summary.pdf`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      // Create a blob from the response and trigger download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${projectName || 'Project'}_Week${weekNumber || 'N'}_Summary.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('PDF download error:', error);
+      alert('Failed to download PDF. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (!summaryHtml) {
@@ -177,6 +265,7 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
               size="small"
               endIcon={<DownloadIcon sx={{ fontSize: '14px', color:'#5D6979' }} />}
               onClick={handleDownload}
+              disabled={isDownloading}
               sx={{
                 textTransform: 'none',
                 color: '#1C2D5F',
@@ -186,9 +275,12 @@ export default function AISummaryDetailDialog({ open, onClose, data }: AISummary
                 '&:hover': {
                   bgcolor: 'rgba(255, 255, 255, 0.1)',
                 },
+                '&:disabled': {
+                  color: '#9CA3AF',
+                },
               }}
             >
-              Download AI Summary
+              {isDownloading ? 'Generating PDF...' : 'Download AI Summary'}
             </Button>
           </Box>
           <Box

@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from 'react';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { ReportType, SummaryType } from '@/app/types/dashboardTypes';
+import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface ReportBuilderToolbarProps {
   reportType?: string;
@@ -25,6 +26,8 @@ interface ReportBuilderToolbarProps {
   tab: string;
   isLoading?: boolean;
   selectedFiltersCount?: number;
+  permissions?: Record<string, CrudPermissions>;
+  loadingPermissions?: boolean;
 }
 
 const commonButtonStyles = {
@@ -63,7 +66,7 @@ const savedReports = [
   { id: 4, name: 'Monthly Revenue Breakdown' },
 ];
 
-export default function ReportBuilderToolbar({
+function ReportBuilderToolbar({
   reportType = 'resourceProjectPeriod',
   onGenerateReport,
   onReportTypeChange,
@@ -73,6 +76,7 @@ export default function ReportBuilderToolbar({
   tab,
   isLoading = false,
   selectedFiltersCount = 0,
+  permissions,
 }: ReportBuilderToolbarProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedReport, setSelectedReport] = useState(reportType);
@@ -155,6 +159,7 @@ export default function ReportBuilderToolbar({
           </Typography>
           {tab === 'reports' ? (
           <Select
+            disabled={permissions?.['Reports'].r === false}
             value={selectedReport}
             onChange={(e) => {setSelectedReport(e.target.value); onReportTypeChange?.(e.target.value as ReportType);}}
             size="small"
@@ -426,3 +431,5 @@ export default function ReportBuilderToolbar({
     </Box>
   );
 }
+
+export default withRBAC(ReportBuilderToolbar, ['Reports']);

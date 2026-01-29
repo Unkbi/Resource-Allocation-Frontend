@@ -1,22 +1,19 @@
 'use client';
 
-import { Box, Typography, Button, MenuItem, Select, FormControl, InputLabel, Card, CardContent, Chip, Tooltip } from '@mui/material';
+import { Box, Typography, Tooltip } from '@mui/material';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/app/redux/store';
-import { fetchProjectSummary, fetchProjectSummaryHistory } from '@/app/redux/actions/aiSummaryAction';
-import dayjs from 'dayjs';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
-import { DataGridPremium, GridColDef } from '@mui/x-data-grid-premium';
+import {GridColDef } from '@mui/x-data-grid-premium';
 import { StyledDataGrid, ColumnManagementStyles } from '../../AllocationTable/styles/StyledDataGrid';
-import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
 import { formatAISummaryResponse, getScoreColor, WeekColumn, ProjectSummaryTableRow } from '@/app/utils/aiSummaryFormatter';
 import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import AISummaryDetailDialog from './AISummaryDetailDialog';
 
 export default function AISummaryTab() {
   const dispatch = useDispatch();
-  const { currentSummary, summaryHistory, loading, error, loadingHistory, historyError } = useSelector(
+  const { currentSummary, loading, error } = useSelector(
     (state: RootState) => state.aiSummary
   );
   
@@ -133,33 +130,6 @@ export default function AISummaryTab() {
           }
 
           return (
-            <Tooltip
-              title={
-                <Box sx={{ p: 0.5 }}>
-                  <Typography sx={{ fontSize: '12px', fontWeight: 600, mb: 0.5 }}>
-                    Score Details
-                  </Typography>
-                  <Typography sx={{ fontSize: '11px' }}>
-                    Project Score: {weekData.score}
-                  </Typography>
-                  <Typography sx={{ fontSize: '11px' }}>
-                    Alignment: {weekData.alignmentScore ?? 'N/A'}
-                  </Typography>
-                  <Typography sx={{ fontSize: '11px' }}>
-                    Health: {weekData.healthScore ?? 'N/A'}
-                  </Typography>
-                  {weekData.scoreBand && (
-                    <Typography sx={{ fontSize: '11px' }}>
-                      Band: {weekData.scoreBand}
-                    </Typography>
-                  )}
-                  <Typography sx={{ fontSize: '11px', mt: 0.5, fontStyle: 'italic' }}>
-                    Click to view full summary
-                  </Typography>
-                </Box>
-              }
-              arrow
-            >
               <Typography
                 onClick={() => handleScoreClick(params.row, weekCol)}
                 sx={{
@@ -176,7 +146,6 @@ export default function AISummaryTab() {
               >
                 {weekData.score}
               </Typography>
-            </Tooltip>
           );
         },
       };
@@ -184,35 +153,6 @@ export default function AISummaryTab() {
     
     return [...baseColumns, ...weekCols];
   }, [weekColumns, handleScoreClick]);
-  
-  const [summaryType, setSummaryType] = useState<'project' | 'resource' | 'team'>('project');
-  const [selectedProject, setSelectedProject] = useState<string>('');
-  const [selectedPeriod, setSelectedPeriod] = useState<string>(
-    dayjs().startOf('week').format('YYYY-MM-DD')
-  );
-  const [viewMode, setViewMode] = useState<'current' | 'history'>('current');
-  
-  // Filters similar to reports
-  const [filters, setFilters] = useState<ReportFilters>({
-    reportType: 'resourceProjectPeriod', // Dummy, not used
-    summaryType: 'project', // Add summaryType for filter visibility
-    period: 'last_week',
-    customDateRange: undefined,
-    team: [],
-    organization: [],
-    resourceType: [],
-    resource: [],
-    projectType: [],
-    projectTypeGroup: [],
-    project: [],
-    portfolio: [],
-    projectManager: [],
-    allocationManager: [],
-    resourceStatuses: [],
-    resourceLocations: [],
-    resourceWorkLocationGroup: [],
-    projectStatuses: [],
-  });
   
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
