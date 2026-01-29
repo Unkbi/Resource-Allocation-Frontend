@@ -12,15 +12,18 @@ import {
   styled,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { ReportType } from '@/app/types/dashboardTypes';
+import { KeyboardArrowDown } from '@mui/icons-material';
+import { ReportType, SummaryType } from '@/app/types/dashboardTypes';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
 
 interface ReportBuilderToolbarProps {
   reportType?: string;
   onGenerateReport: () => void;
   onReportTypeChange?: (reportType: ReportType) => void;
+  onSummaryTypeChange?: (summaryType: SummaryType) => void;
   onExport?: (format: 'pdf' | 'excel') => void;
   onShare?: () => void;
+  tab: string;
   isLoading?: boolean;
   selectedFiltersCount?: number;
   permissions?: Record<string, CrudPermissions>;
@@ -67,14 +70,17 @@ function ReportBuilderToolbar({
   reportType = 'resourceProjectPeriod',
   onGenerateReport,
   onReportTypeChange,
+  onSummaryTypeChange,
   onExport,
   onShare,
+  tab,
   isLoading = false,
   selectedFiltersCount = 0,
   permissions,
 }: ReportBuilderToolbarProps) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedReport, setSelectedReport] = useState(reportType);
+  const [selectedSummary, setSelectedSummary] = useState('project');
   const [selectedSavedReport, setSelectedSavedReport] = useState<number>(1);
 
   // Sync selectedReport with reportType prop when it changes
@@ -136,7 +142,9 @@ function ReportBuilderToolbar({
               color: '#4A5565',
             }}
           >
-            Choose a report type, period and to analyze your data based on your requirements.
+            {tab === 'reports' ?
+            'Choose a report type, period and to analyze your data based on your requirements.'
+            : 'Choose a summary type, period and to analyze your data based on your requirements.'}
           </Typography>
         </Box>
         
@@ -149,8 +157,9 @@ function ReportBuilderToolbar({
               color: '#1C2D5F',
             }}
           >
-            Report Type
+            {tab === 'reports' ? 'Report Type' : 'Summary Type'}
           </Typography>
+          {tab === 'reports' ? (
           <Select
             disabled={permissions?.['Reports'].r === false}
             value={selectedReport}
@@ -208,6 +217,61 @@ function ReportBuilderToolbar({
             <MenuItem value="resourceOnly" sx={{ pl: 4 }}>Resource Roster</MenuItem>
             <MenuItem value="projectsOnly" sx={{ pl: 4 }}>Project Roster</MenuItem>
           </Select>
+          )
+        : (
+          <Select
+            value={selectedSummary}
+            onChange={(e) => {setSelectedSummary(e.target.value); onSummaryTypeChange?.(e.target.value as SummaryType);}}
+            size="small"
+            displayEmpty
+            sx={{
+              minWidth: 200,
+              height: 36,
+              fontSize: '13px',
+              fontWeight: 500,
+              backgroundColor: '#ffffff',
+              borderRadius: '6px',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#E5E7EB',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#D1D5DB',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#152E75',
+                borderWidth: '1px',
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '8px',
+                  mt: 0.1,
+                  '& .MuiMenuItem-root': {
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    py: 1,
+                    px: 2,
+                    '&:hover': {
+                      backgroundColor: '#F3F4F6',
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: '#EEF2FF',
+                      color: '#152E75',
+                      '&:hover': {
+                        backgroundColor: '#E0E7FF',
+                      },
+                    },
+                  },
+                },
+              },
+            }}
+          >
+            <MenuItem value="project" sx={{ pl: 4 }}>Project</MenuItem>
+            <MenuItem value="team" sx={{ pl: 4 }}>Team</MenuItem>
+          </Select>
+          )}
         </Box>
       </Box>
       {/* Right side - Actions */}
@@ -363,7 +427,7 @@ function ReportBuilderToolbar({
             },
           }}
         >
-          {isLoading ? 'Generating...' : 'Generate Report'}
+          {isLoading ? 'Generating...' : tab === 'reports' ? 'Generate Report' : 'Generate Summary'}
         </Button>
       </Box>
     </Box>

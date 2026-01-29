@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Tabs, Tab } from '@mui/material';
 import { useState, useEffect } from 'react';
 import ReportBuilderToolbar from './ReportBuilderToolbar';
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
@@ -8,13 +8,15 @@ import ReportBuilderDataGridToolbar from './ReportBuilderDataGridToolbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchReport } from '@/app/redux/actions/dashboardAction';
 import { RootState } from '@/app/redux/store';
-import { ReportType, ReportUIFilters } from '@/app/types/dashboardTypes';
+import { ReportType, ReportUIFilters, SummaryType } from '@/app/types/dashboardTypes';
 import { getReportColumns, getHiddenColumns } from './reportColumns';
 import dayjs from 'dayjs';
 import { ColumnManagementStyles, StyledDataGrid } from '../../AllocationTable/styles/StyledDataGrid';
 import { showToast } from '@/app/redux/reducers/toastReducer';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import LoadingScreen from '@/app/components/Loading/loadingScreen';
+import AISummaryTab from './AISummaryTab';
+import { fetchProjectSummary } from '@/app/redux/actions/aiSummaryAction';
 import { decompressFromEncodedURIComponent } from 'lz-string';
 import ErrorPage from '../../ErrorPage/ErrorPage';
 import { CrudPermissions, withRBAC } from '../../HOC/withRBAC';
@@ -141,9 +143,18 @@ function ReportBuilderPage({
   loadingPermissions,
 }: ReportBuilderProps) {
   const dispatch = useDispatch();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const hasQueryParams = Boolean(searchParams && searchParams.toString());
+  
+  // Get active tab from URL or default to 'reports'
+  const activeTabFromUrl = searchParams?.get('tab') || 'reports';
+  const [activeTab, setActiveTab] = useState<string>(activeTabFromUrl);
+  
   const [filtersExpanded, setFiltersExpanded] = useState(true);
+  
+  // Separate filter states for Reports and AI Summary
   const [filters, setFilters] = useState<ReportFilters>({
     reportType: 'resourceProjectPeriod',
     period: 'last_week',
@@ -163,6 +174,29 @@ function ReportBuilderPage({
     resourceWorkLocationGroup: [],
     projectStatuses: [],
   });
+  
+  // Separate filter state for AI Summary tab
+  const [summaryFilters, setSummaryFilters] = useState<ReportFilters>({
+    reportType: 'resourceProjectPeriod', // Dummy value, not used in summary mode
+    summaryType: 'project', // Default to project summary
+    period: 'last_week',
+    customDateRange: undefined,
+    team: [],
+    organization: [],
+    resourceType: [],
+    resource: [],
+    projectType: [],
+    projectTypeGroup: [],
+    project: [],
+    portfolio: [],
+    projectManager: [],
+    allocationManager: [],
+    resourceStatuses: [],
+    resourceLocations: [],
+    resourceWorkLocationGroup: [],
+    projectStatuses: [],
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [reportGenerated, setReportGenerated] = useState(false);
   const [showData, setShowData] = useState(false);
@@ -176,6 +210,7 @@ function ReportBuilderPage({
 
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
+  const aiSummaryState = useSelector((state: RootState) => state.aiSummary);
   
   // Get Redux data to check if it's loaded
   const { projectTypeGroups, projectTypes } = useSelector((state: RootState) => state.allSettings);
@@ -254,6 +289,39 @@ function ReportBuilderPage({
     onReportGenerate?.(filters);
   };
 
+  
+  const handleGenerateSummary = async () => {
+    setIsLoading(true);
+    setShowData(false);
+    setFiltersExpanded(false);
+    
+    if (summaryFilters.summaryType === 'project') {
+      // Serialize custom date range for UI filters
+      const [start, end] = summaryFilters.customDateRange || [];
+      
+      const uiFilters: any = {
+        customStartDate: start ? start.format('YYYY-MM-DD') : undefined,
+        customEndDate: end ? end.format('YYYY-MM-DD') : undefined,
+        ...summaryFilters,
+      };
+      
+      // Saga will handle date calculation and payload building
+      try {
+      dispatch(fetchProjectSummary(uiFilters));
+      setShowData(true);
+      } catch (error) {
+        console.error('Error generating AI summary:', error);
+        dispatch(showToast({ message: 'Failed to generate AI summary. Please try again.', severity: 'error' }));
+        setIsLoading(false);
+        setShowData(false);
+      }
+    } 
+    // else if (summaryFilters.summaryType === 'team') {
+    //   dispatch(fetchTeamSummary({ filters: summaryFilters }));
+    // }
+  };
+
+
   const handleExport = (format: 'pdf' | 'excel') => {
     console.log(`Exporting as ${format}...`);
     // TODO: Implement export logic
@@ -295,6 +363,70 @@ function ReportBuilderPage({
       projectStatuses: [],
     });
   };
+  
+  // Handler functions for AI Summary tab
+  const handleSummaryFiltersChange = (newFilters: ReportFilters) => {
+    setSummaryFilters(newFilters);
+  };
+
+  const handleResetSummaryFilters = () => {
+    setSummaryFilters({
+      reportType: 'resourceProjectPeriod',
+      summaryType: summaryFilters.summaryType,
+      period: 'last_week',
+      customDateRange: undefined,
+      team: [],
+      organization: [],
+      resourceType: [],
+      resource: [],
+      projectType: [],
+      projectTypeGroup: [],
+      project: [],
+      portfolio: [],
+      projectManager: [],
+      allocationManager: [],
+      resourceStatuses: [],
+      resourceLocations: [],
+      resourceWorkLocationGroup: [],
+      projectStatuses: [],
+    });
+  };
+
+  const getSummarySelectedFiltersCount = () => {
+    let count = 0;
+    
+    // Count period if it's not the default
+    if (summaryFilters.period && summaryFilters.period !== 'last_week') {
+      count++;
+    }
+    
+    // Count array filters that have selections
+    const arrayFilters: (keyof ReportFilters)[] = [
+      'projectManager',
+      'allocationManager',
+      'team',
+      'organization',
+      'resourceType',
+      'resource',
+      'projectType',
+      'projectTypeGroup',
+      'project',
+      'portfolio',
+      'resourceStatuses',
+      'resourceLocations',
+      'resourceWorkLocationGroup',
+      'projectStatuses',
+    ];
+    
+    arrayFilters.forEach(key => {
+      const value = summaryFilters[key];
+      if (Array.isArray(value) && value.length > 0) {
+        count++;
+      }
+    });
+    
+    return count;
+  };
 
   // Effect 1: Parse and store query params on mount
   useEffect(() => {
@@ -318,6 +450,11 @@ function ReportBuilderPage({
         return; // Skip loading from sessionStorage
       }
       // Query params exist but nothing to apply
+      // Not a valid Drill down scenario
+      // Check if permissions to reports is allowed
+      if (searchParams.get('tab') === 'reports' && permissions && !permissions['Reports'].r) {
+        setNoAccess(true);
+      }
       setIsInitializing(false);
       return;
     }
@@ -463,6 +600,18 @@ function ReportBuilderPage({
     }
   }, [currentReport, isInitializing, loadingPermissions]);
 
+  // Watch AI summary loading state
+  useEffect(() => {
+    if (loadingPermissions) return;
+    if (activeTab === 'aisummary' && aiSummaryState) {
+      setIsLoading(aiSummaryState.loading);
+      if (!aiSummaryState.loading && aiSummaryState.currentSummary) {
+        // Summary has finished loading
+        setReportGenerated(true);
+      }
+    }
+  }, [aiSummaryState, activeTab, loadingPermissions]);
+
   // DataGrid columns based on reportType
   const columns = getReportColumns(filters.reportType as ReportType);
   const hiddenColumns = getHiddenColumns(filters.reportType as ReportType);
@@ -565,10 +714,28 @@ function ReportBuilderPage({
     return count;
   };
 
+  // Handle tab change and update URL
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+    
+    // Update URL with tab parameter
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('tab', newValue);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Sync active tab with URL
+  useEffect(() => {
+    const tabFromUrl = searchParams?.get('tab');
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-      {/* Show loading overlay when initializing from query params */}
-      {(isInitializing || loadingPermissions) && (
+      {/* Show loading overlay when initializing from query params (only for reports tab) */}
+      {(isInitializing || loadingPermissions) && activeTab === 'reports' && (
         <Box
           sx={{
             position: 'absolute',
@@ -583,210 +750,315 @@ function ReportBuilderPage({
 
       {noAccess ? (<ErrorPage type="accessDenied" redirectPath="/dashboard" />) : (
       <>
-      {/* Toolbar */}
-      <ReportBuilderToolbar
-        reportType={filters.reportType as ReportType}
-        onGenerateReport={handleGenerateReport}
-        onExport={handleExport}
-        onShare={handleShare}
-        isLoading={isLoading}
-        onReportTypeChange={(reportType: ReportType) => {
-          setReportGenerated(false);
-          setShowData(false);
-          setReportData([]);
-          setFilters({
-            reportType: reportType,
-            period: 'last_week',
-            customDateRange: undefined,
-            team: [],
-            organization: [],
-            resourceType: [],
-            resource: [],
-            projectType: [],
-            projectTypeGroup: [],
-            project: [],
-            portfolio: [],
-            projectManager: [],
-            allocationManager: [],
-            resourceStatuses: [],
-            resourceLocations: [],
-            resourceWorkLocationGroup: [],
-            projectStatuses: [],
-          });
-          setFiltersExpanded(true);
-        }}
-        selectedFiltersCount={getSelectedFiltersCount()}
-      />
-
-      {/* Filters */}
-      <ReportBuilderFilters
-        expanded={filtersExpanded}
-        onToggle={() => setFiltersExpanded(!filtersExpanded)}
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onResetFilters={handleResetFilters}
-      />
-
-      {/* Content Area */}
+      {/* Tabs */}
       <Box
         sx={{
-          flex: 1,
-          backgroundColor: "#F9FAFB",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
+          borderBottom: 1,
+          borderColor: 'divider',
+          backgroundColor: '#fff',
+          px: 3,
         }}
       >
-        {!reportGenerated && !showData ? (
-          <Box
-            sx={{
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              // p: 3,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "15px",
-                fontWeight: 500,
-                color: "#6B7280",
-                mb: 3,
-              }}
-            >
-              Configure your filters and generate a report to see data here
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={handleGenerateReport}
-              disabled={isLoading}
-              sx={{
-                height: 40,
-                backgroundColor: "#152E75",
-                color: "#fff",
-                textTransform: "none",
-                fontSize: 14,
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontSize: '14px',
+              fontWeight: 500,
+              minHeight: 48,
+              color: '#6B7280',
+              '&.Mui-selected': {
+                color: '#152E75',
                 fontWeight: 600,
-                px: 4,
-                borderRadius: "6px",
-                boxShadow: "none",
-                "&:hover": {
-                  backgroundColor: "#1C3A8C",
-                  boxShadow: "none",
-                },
-                "&:disabled": {
-                  backgroundColor: "#D1D5DB",
-                },
-              }}
-            >
-              {isLoading ? "Generating..." : "Generate Report"}
-            </Button>
-          </Box>
-        ) : (
+              },
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#152E75',
+              height: 3,
+            },
+          }}
+        >
+          <Tab label="Reports" value="reports" />
+          <Tab label="AI Summary" value="aisummary" />
+        </Tabs>
+      </Box>
+
+      {/* Conditional rendering based on active tab */}
+      {activeTab === 'reports' && (
+        <>
+          {/* Toolbar */}
+          <ReportBuilderToolbar
+            reportType={filters.reportType as ReportType}
+            tab='reports'
+            onGenerateReport={handleGenerateReport}
+            onExport={handleExport}
+            onShare={handleShare}
+            isLoading={isLoading}
+            onReportTypeChange={(reportType: ReportType) => {
+              setReportGenerated(false);
+              setShowData(false);
+              setReportData([]);
+              setFilters({
+                reportType: reportType,
+                period: 'last_week',
+                customDateRange: undefined,
+                team: [],
+                organization: [],
+                resourceType: [],
+                resource: [],
+                projectType: [],
+                projectTypeGroup: [],
+                project: [],
+                portfolio: [],
+                projectManager: [],
+                allocationManager: [],
+                resourceStatuses: [],
+                resourceLocations: [],
+                resourceWorkLocationGroup: [],
+                projectStatuses: [],
+              });
+              setFiltersExpanded(true);
+            }}
+            selectedFiltersCount={getSelectedFiltersCount()}
+          />
+
+          {/* Filters */}
+          <ReportBuilderFilters
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onResetFilters={handleResetFilters}
+          />
+
+          {/* Content Area */}
           <Box
             sx={{
-              height: "100%",
+              flex: 1,
+              backgroundColor: "#F9FAFB",
+              overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              overflow: "hidden",
-              p: isFullscreenGrid ? 0 : 0,
             }}
           >
-            <Box
-              sx={{
-                flex: 1,
-                height: isFullscreenGrid ? "100vh" : "100%",
-                minHeight: 400,
-                backgroundColor: "#ffffff",
-                borderRadius: isFullscreenGrid ? 0 : "0px",
-                overflow: "hidden",
-                position: isFullscreenGrid ? "fixed" : "relative",
-                top: isFullscreenGrid ? 0 : "auto",
-                left: isFullscreenGrid ? 0 : "auto",
-                right: isFullscreenGrid ? 0 : "auto",
-                bottom: isFullscreenGrid ? 0 : "auto",
-                zIndex: isFullscreenGrid ? 1300 : "auto",
-              }}
-            >
-              <StyledDataGrid
-                key={filters.reportType}
-                rows={reportData}
-                columns={columns}
-                hideFooter
-                loading={isLoading}
-                initialState={{
-                  pagination: {
-                    paginationModel: { pageSize: 25, page: 0 },
-                  },
-                  sorting: {
-                    sortModel: [
-                      {
-                        field:
-                          columns.find((col) => col.field === "resource_name" || col.field === "project_name")?.field ||
-                          columns[0]?.field ||
-                          "id",
-                        sort: "asc",
-                      },
-                    ],
-                  },
-                  columns: {
-                    columnVisibilityModel: hiddenColumns,
-                  },
-                }}
-                pageSizeOptions={[10, 25, 50, 100]}
-                disableRowSelectionOnClick
-                localeText={{
-                  noRowsLabel: "No data found",
-                }}
-                slots={{
-                  toolbar: ReportBuilderDataGridToolbar,
-                }}
-                slotProps={{
-                  toolbar: {
-                    isFullscreen: isFullscreenGrid,
-                    onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
-                    GridRowCount: reportData.length,
-                  } as any,
-                  columnsPanel: {
-                    className: "styleColumnMenu",
-                    sx: ColumnManagementStyles,
-                  },
-                  loadingOverlay: {
-                    variant: "skeleton",
-                    noRowsVariant: "skeleton",
-                  },
-                }}
+            {!reportGenerated && !showData ? (
+              <Box
                 sx={{
                   height: "100%",
-                  "& .MuiDataGrid-virtualScrollerContent": {
-                    backgroundColor: "#F7FBFF",
-                  },
-                  "& .MuiDataGrid-row:hover": {
-                    backgroundColor: "#F7FBFF",
-                  },
-                  "& .MuiDataGrid-cell": {
-                    border: "0.5px solid #E5E7EB !important",
-                  },
-                  "& .MuiDataGrid-columnHeaders": {
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 3,
-                      backgroundColor: "#F1F6FF",
-                    },
-                  "& .MuiDataGrid-cell--textRight":{
-                    textAlign: "right !important",
-                  }
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
                 }}
-              />
-          </Box>       
-      </Box>
-       )}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "15px",
+                    fontWeight: 500,
+                    color: "#6B7280",
+                    mb: 3,
+                  }}
+                >
+                  Configure your filters and generate a report to see data here
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={handleGenerateReport}
+                  disabled={isLoading}
+                  sx={{
+                    height: 40,
+                    backgroundColor: "#152E75",
+                    color: "#fff",
+                    textTransform: "none",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    px: 4,
+                    borderRadius: "6px",
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "#1C3A8C",
+                      boxShadow: "none",
+                    },
+                    "&:disabled": {
+                      backgroundColor: "#D1D5DB",
+                    },
+                  }}
+                >
+                  {isLoading ? "Generating..." : "Generate Report"}
+                </Button>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                  p: isFullscreenGrid ? 0 : 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: isFullscreenGrid ? "100vh" : "100%",
+                    minHeight: 400,
+                    backgroundColor: "#ffffff",
+                    borderRadius: isFullscreenGrid ? 0 : "0px",
+                    overflow: "hidden",
+                    position: isFullscreenGrid ? "fixed" : "relative",
+                    top: isFullscreenGrid ? 0 : "auto",
+                    left: isFullscreenGrid ? 0 : "auto",
+                    right: isFullscreenGrid ? 0 : "auto",
+                    bottom: isFullscreenGrid ? 0 : "auto",
+                    zIndex: isFullscreenGrid ? 1300 : "auto",
+                  }}
+                >
+                  <StyledDataGrid
+                    key={filters.reportType}
+                    rows={reportData}
+                    columns={columns}
+                    hideFooter
+                    loading={isLoading}
+                    initialState={{
+                      pagination: {
+                        paginationModel: { pageSize: 25, page: 0 },
+                      },
+                      sorting: {
+                        sortModel: [
+                          {
+                            field:
+                              columns.find((col) => col.field === "resource_name" || col.field === "project_name")?.field ||
+                              columns[0]?.field ||
+                              "id",
+                            sort: "asc",
+                          },
+                        ],
+                      },
+                      columns: {
+                        columnVisibilityModel: hiddenColumns,
+                      },
+                    }}
+                    pageSizeOptions={[10, 25, 50, 100]}
+                    disableRowSelectionOnClick
+                    localeText={{
+                      noRowsLabel: "No data found",
+                    }}
+                    slots={{
+                      toolbar: ReportBuilderDataGridToolbar,
+                    }}
+                    slotProps={{
+                      toolbar: {
+                        isFullscreen: isFullscreenGrid,
+                        onToggleFullscreen: () => setIsFullscreenGrid((prev) => !prev),
+                        GridRowCount: reportData.length,
+                      } as any,
+                      columnsPanel: {
+                        className: "styleColumnMenu",
+                        sx: ColumnManagementStyles,
+                      },
+                      loadingOverlay: {
+                        variant: "skeleton",
+                        noRowsVariant: "skeleton",
+                      },
+                    }}
+                    sx={{
+                      height: "100%",
+                      "& .MuiDataGrid-virtualScrollerContent": {
+                        backgroundColor: "#F7FBFF",
+                      },
+                      "& .MuiDataGrid-row:hover": {
+                        backgroundColor: "#F7FBFF",
+                      },
+                      "& .MuiDataGrid-cell": {
+                        border: "0.5px solid #E5E7EB !important",
+                      },
+                      "& .MuiDataGrid-columnHeaders": {
+                          position: "sticky",
+                          top: 0,
+                          zIndex: 3,
+                          backgroundColor: "#F1F6FF",
+                        },
+                      "& .MuiDataGrid-cell--textRight":{
+                        textAlign: "right !important",
+                      }
+                    }}
+                  />
+              </Box>       
+          </Box>
+           )}
+        </Box>
+        </>
+      )}
+
+      {/* AI Summary Tab */}
+      {activeTab === 'aisummary' && (
+        <>
+         <ReportBuilderToolbar
+            reportType={summaryFilters.reportType as ReportType}
+            tab='aisummary'
+            onGenerateReport={handleGenerateSummary}
+            onExport={handleExport}
+            onShare={handleShare}
+            isLoading={isLoading}
+            onSummaryTypeChange={(summaryType: SummaryType) => {
+              setReportGenerated(false);
+              setShowData(false);
+              setReportData([]);
+              setSummaryFilters({
+                reportType: 'resourceProjectPeriod',
+                summaryType: summaryType,
+                period: 'last_week',
+                customDateRange: undefined,
+                team: [],
+                organization: [],
+                resourceType: [],
+                resource: [],
+                projectType: [],
+                projectTypeGroup: [],
+                project: [],
+                portfolio: [],
+                projectManager: [],
+                allocationManager: [],
+                resourceStatuses: [],
+                resourceLocations: [],
+                resourceWorkLocationGroup: [],
+                projectStatuses: [],
+              });
+              setFiltersExpanded(true);
+            }}
+            selectedFiltersCount={getSummarySelectedFiltersCount()}
+          />
+          
+          {/* Filters for AI Summary */}
+          <ReportBuilderFilters
+            expanded={filtersExpanded}
+            onToggle={() => setFiltersExpanded(!filtersExpanded)}
+            filters={summaryFilters}
+            onFiltersChange={handleSummaryFiltersChange}
+            onResetFilters={handleResetSummaryFilters}
+            mode="aisummary"
+          />
+          
+          <Box
+            sx={{ 
+              flex: 1,
+              backgroundColor: "#F9FAFB",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <AISummaryTab />
+          </Box>
+        </>
+      )}
+      </>
+    )}
     </Box>
-    </>)};
-    </Box>);
+  );
 }
 
 export default withRBAC(ReportBuilderPage, ['Reports']);
