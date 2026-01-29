@@ -142,7 +142,9 @@ function ReportBuilderToolbar({
               color: '#4A5565',
             }}
           >
-            Choose a report type, period and to analyze your data based on your requirements.
+            {tab === 'reports' ?
+            'Choose a report type, period and to analyze your data based on your requirements.'
+            : 'Choose a summary type, period and to analyze your data based on your requirements.'}
           </Typography>
         </Box>
         
@@ -425,7 +427,7 @@ function ReportBuilderToolbar({
             },
           }}
         >
-          {isLoading ? 'Generating...' : 'Generate Report'}
+          {isLoading ? 'Generating...' : tab === 'reports' ? 'Generate Report' : 'Generate Summary'}
         </Button>
       </Box>
     </Box>
