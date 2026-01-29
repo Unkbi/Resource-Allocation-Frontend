@@ -946,9 +946,12 @@ function OrganisationAllocation({
       isEditable: false,
       sortable: true,
       primaryColumn: true,
-       renderCell: (params: GridCellParams) => {
-        const allocation = params.row;
-        return <EllipsisNameCell value={allocation?.portfolioName || ''} />;
+      renderCell: (params: GridCellParams) => {
+        const value =
+          typeof params.value === 'string' && params.value !== 'zzzzz'
+            ? params.value
+            : '';
+        return <EllipsisNameCell value={value} />;
       },
     },
     {
