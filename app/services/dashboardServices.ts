@@ -495,6 +495,9 @@ const extractChartData = (chartKey: string, apiResponse: any): any[] => {
     case 'activeProjects':
       return responseData.active_project ? [responseData.active_project] : [];
     
+    case 'systemActiveProjects':
+      return responseData.system_active_project ? [responseData.system_active_project] : [];
+    
     case 'activeProjectsByType':
       return responseData.projects_by_type || [];
     
