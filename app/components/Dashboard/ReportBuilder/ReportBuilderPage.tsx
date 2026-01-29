@@ -1,7 +1,6 @@
 'use client';
 
 import { Box, Typography, Button, Tabs, Tab } from '@mui/material';
-import { DataGridPremium, GridColDef, GridRowCount } from '@mui/x-data-grid-premium';
 import { useState, useEffect } from 'react';
 import ReportBuilderToolbar from './ReportBuilderToolbar';
 import ReportBuilderFilters, { ReportFilters } from './ReportBuilderFilters';
@@ -451,6 +450,11 @@ function ReportBuilderPage({
         return; // Skip loading from sessionStorage
       }
       // Query params exist but nothing to apply
+      // Not a valid Drill down scenario
+      // Check if permissions to reports is allowed
+      if (searchParams.get('tab') === 'reports' && permissions && !permissions['Reports'].r) {
+        setNoAccess(true);
+      }
       setIsInitializing(false);
       return;
     }
