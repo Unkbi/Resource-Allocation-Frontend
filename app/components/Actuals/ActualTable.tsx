@@ -56,6 +56,7 @@ import {
   OTHER_WORK,
   past,
   PERSONAL_TIME,
+  TOTAL_HOURS_IN_WEEK,
   UNPLANNED_PROJECT,
 } from '@/app/constants/constants';
 import { isPeriodWithinRange } from '@/app/utils/actualsUtils';
@@ -338,7 +339,8 @@ export default function ActualTable({
     if (params.row.id === 'total' && allocationTheme.length) {
       const matched = allocationTheme.find(
         range =>
-          value >= parseFloat(range.From) && value <= parseFloat(range.To)
+          value >= parseFloat(range.From) * TOTAL_HOURS_IN_WEEK &&
+          value <= parseFloat(range.To) * TOTAL_HOURS_IN_WEEK
       );
 
       return (
@@ -356,7 +358,7 @@ export default function ActualTable({
             position: 'relative',
           }}
         >
-          {roundToOneDecimal(value)}
+          {value}
           <Box
             sx={{
               position: 'absolute',
@@ -370,7 +372,7 @@ export default function ActualTable({
         </Box>
       );
     }
-    return roundToOneDecimal(value);
+    return value;
   };
 
   const isUnplannedRow = (row: any) => {
@@ -454,6 +456,18 @@ export default function ActualTable({
         `col-cell-actuals ${!enablePlannedColumn ? 'disabled-cell' : ''} ${
           rowValidationErrors[params.id as string]?.planned ? 'error-cell' : ''
         }`,
+      valueParser: value => {
+        if (value == null || value === '') return null;
+
+        const parsed = Math.round(Number(value));
+
+        // prevent NaN and negative values
+        if (isNaN(parsed) || parsed < 0) {
+          return 0;
+        }
+
+        return parsed;
+      },
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {
@@ -469,6 +483,18 @@ export default function ActualTable({
         `col-cell-actuals ${disableView ? 'disabled-cell' : ''} ${
           rowValidationErrors[params.id as string]?.actuals ? 'error-cell' : ''
         }`,
+      valueParser: value => {
+        if (value == null || value === '') return null;
+
+        const parsed = Math.round(Number(value));
+
+        // prevent NaN and negative values
+        if (isNaN(parsed) || parsed < 0) {
+          return 0;
+        }
+
+        return parsed;
+      },
       renderCell: params => renderAllocationCell(params, allocationTheme),
     },
     {

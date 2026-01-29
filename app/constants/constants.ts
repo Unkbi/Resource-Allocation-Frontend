@@ -342,3 +342,5 @@ export const PERSONAL_TIME = 'PERSONAL_TIME';
 
 export const FAR_PAST_DATE = '1900-01-01';
 export const FAR_FUTURE_DATE = '2100-01-01';
+
+export const TOTAL_HOURS_IN_WEEK = 40;
