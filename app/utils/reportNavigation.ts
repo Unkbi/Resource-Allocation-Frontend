@@ -77,7 +77,7 @@ export const buildReportUrl = (
   const encodedParams = compressToEncodedURIComponent(
     params.toString()
   );
-  return `/report?${encodedParams}`;
+  return `/report?tab=reports&filters=${encodedParams}`;
 };
 
 /**
