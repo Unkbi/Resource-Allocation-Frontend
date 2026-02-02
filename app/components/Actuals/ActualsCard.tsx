@@ -316,11 +316,11 @@ const ActualsCard = ({
               >
                 <span style={{ color: 'rgba(150, 154, 162, 1)' }}>
                   {isWithinResourceRange
-                    ? `${totalPlannedAllocation ? totalPlannedAllocation : '--'} /`
+                    ? `${totalPlannedAllocation ? totalPlannedAllocation.toFixed(1) : '--'} /`
                     : 'N/A /'}
                 </span>{' '}
                 {isWithinResourceRange
-                  ? `${totalActualAllocation ? totalActualAllocation : '--'}`
+                  ? `${totalActualAllocation ? totalActualAllocation.toFixed(1) : '--'}`
                   : 'N/A'}
               </Typography>
             )}
