@@ -1,4 +1,4 @@
-import { put, select, takeEvery, call, all } from 'redux-saga/effects';
+import { put, select, takeEvery, call, all, take } from 'redux-saga/effects';
 import { setInitLoading } from '../reducers/authReducer';
 import {
   GET_USER_AND_PRIVILEGES,
@@ -6,7 +6,7 @@ import {
 } from '../actions/rbacActions';
 import {
   FETCH_ALL_RESOURCES_DETAIL,
-  FETCH_RESOURCE_DETAILS,
+  FETCH_ALL_RESOURCES_DETAIL_SUCCESS,
 } from '../actions/allResourcesDetailAction';
 import { FETCH_ALL_SETTINGS } from '../actions/allSettingsActions';
 import { FETCH_PORTFOLIOS } from '../actions/portfolioActions';
@@ -52,16 +52,16 @@ function* initBootstrapSaga(action: any): any {
       }
     }
 
+    // wait for API result
+    const {
+      payload: { resources },
+    } = yield take(FETCH_ALL_RESOURCES_DETAIL_SUCCESS);
+
     // Wait for resources, privileges, projects and teams in parallel.
     // Running the waits concurrently reduces total blocking time
     // (each wait still has its own timeout).
-    let [resources, loginUserPrivileges, projects, teams] = yield all([
-      call(
-        waitForState,
-        (s: any) => s.resources?.resources,
-        (v: any) => Array.isArray(v) && v.length > 0,
-        { interval: 200, timeout: 6000 }
-      ),
+    // Sahadev : All of these have to be converted to the solution above where we yield take the success action.
+    let [loginUserPrivileges, projects, teams] = yield all([
       call(
         waitForState,
         (s: any) => s.rbac?.loginUserPrivileges,

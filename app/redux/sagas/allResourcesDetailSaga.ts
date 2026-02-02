@@ -1,6 +1,7 @@
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import {
   FETCH_ALL_RESOURCES_DETAIL,
+  FETCH_ALL_RESOURCES_DETAIL_SUCCESS,
   FETCH_RESOURCE_DETAILS,
 } from '../actions/allResourcesDetailAction';
 import {
@@ -50,6 +51,14 @@ function* fetchAllResourcesDetailSaga(): Generator<any, void, any> {
       (item: AllResourceDetail) => item.Resource
     );
     yield put(setResources(resources));
+
+    yield put({
+      type: FETCH_ALL_RESOURCES_DETAIL_SUCCESS,
+      payload: {
+        allResourcesDetail: formatedResponse,
+        resources,
+      },
+    });
 
     // Setup TeamResources
     let teams = yield select(state => state.teams.teams);
