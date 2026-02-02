@@ -207,6 +207,7 @@ function ReportBuilderPage({
   const [hasAppliedQueryParams, setHasAppliedQueryParams] = useState(false);
   const [isInitializing, setIsInitializing] = useState(hasQueryParams);
   const [noAccess, setNoAccess] = useState(false);
+  const [lastAppliedFiltersParam, setLastAppliedFiltersParam] = useState<string | null>(null);
 
   const reportSlice = useSelector((state: RootState) => state.dashboard.report);
   const currentReport = reportSlice?.[filters.reportType as ReportType];
@@ -431,12 +432,19 @@ function ReportBuilderPage({
   // Effect 1: Parse and store query params on mount
   useEffect(() => {
     if (loadingPermissions) return;
-    // Only run once on mount
-    if (hasAppliedQueryParams) return;
     
     // Priority 1: Check for query params from dashboard navigation
     if (searchParams && searchParams.toString()) {
-      const decodedParams = decompressFromEncodedURIComponent(searchParams.toString() || '') || '';
+      // Extract the compressed filters parameter (everything except 'tab')
+      const filtersParam = searchParams.get('filters');
+      
+      // Check if this is the same filters we already applied
+      if (filtersParam && filtersParam === lastAppliedFiltersParam) {
+        // Same filters, skip processing
+        return;
+      }
+      
+      const decodedParams = filtersParam ? (decompressFromEncodedURIComponent(filtersParam) || '') : '';
       const queryFilters = parseQueryParams(decodedParams ? new URLSearchParams(decodedParams) : new URLSearchParams());
       if (Object.keys(queryFilters).length > 0) {
         setIsInitializing(true);
@@ -446,6 +454,12 @@ function ReportBuilderPage({
         
         // Store query params to apply later when data is loaded
         setPendingQueryFilters(queryFilters);
+        
+        // Mark this filters param as processed
+        setLastAppliedFiltersParam(filtersParam);
+        
+        // Reset the flag so we can process new navigations
+        setHasAppliedQueryParams(false);
          // Mark that we're initializing with query params
         return; // Skip loading from sessionStorage
       }
@@ -724,13 +738,20 @@ function ReportBuilderPage({
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  // Sync active tab with URL
+  // Sync active tab with URL and set default tab parameter if missing
   useEffect(() => {
     const tabFromUrl = searchParams?.get('tab');
+    
     if (tabFromUrl && tabFromUrl !== activeTab) {
+      // Tab in URL is different from current, sync it
       setActiveTab(tabFromUrl);
+    } else if (!tabFromUrl && activeTab === 'reports') {
+      // No tab parameter in URL and default is 'reports', add it to URL
+      const params = new URLSearchParams(searchParams?.toString() || '');
+      params.set('tab', 'reports');
+      router.replace(`${pathname}?${params.toString()}`);
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab, pathname, router]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
