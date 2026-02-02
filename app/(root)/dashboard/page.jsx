@@ -152,6 +152,7 @@ const TEAM_CHART_SEQUENCE = [
   'resourceCoverage',
   'underAllocated',
   'overAllocated',
+  'weeklyLoggedInUsersByTeam',
 ];
 
 const generateLayouts = chartKeys => {
@@ -236,6 +237,7 @@ export default function ExecutiveDashboardPage() {
     projectScoreByPM = [],
     projectHealthOverview = [],
     engagementScoreOverview = [],
+    weeklyLoggedInUsersByTeam = [],
   } = useSelector(state => state.dashboard);
   // Persisted layouts per tab (overview, teams, costs)
   const [persistedOverviewLayouts, setPersistedOverviewLayouts] = useState(null);
@@ -738,6 +740,7 @@ export default function ExecutiveDashboardPage() {
       'teamEngagementScore': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'projectScoreByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: lastWeekMonday.format('YYYY-MM-DD'), customEndDate: lastWeekSunday.format('YYYY-MM-DD') },
       'unapprovedProjectActualsByTeam': { reportType: 'resourceProjectPeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
+      'weeklyLoggedInUsersByTeam': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'resourceCoverage': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
       'actualsTrendWeekly': { reportType: 'resourceProjectPeriod', period: 'custom' },
       'underAllocated': { reportType: 'resourcePeriod', period: 'custom', customStartDate: currentWeekMonday.format('YYYY-MM-DD'), customEndDate: currentWeekSunday.format('YYYY-MM-DD') },
@@ -3415,6 +3418,113 @@ export default function ExecutiveDashboardPage() {
                       const teamId = teams.find(t => t.Name === axisValue)?.Id;
                       if (teamId) {
                         navigateToReportWithFilters('teamEngagementScore', {
+                          team: teamId
+                        });
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          );
+        }}
+      </DashboardWidget>
+    ),
+
+    weeklyLoggedInUsersByTeam: (
+      <DashboardWidget
+        minWidth={320}
+        minHeight={280}
+        showNoData={
+          !weeklyLoggedInUsersByTeam ||
+          weeklyLoggedInUsersByTeam.length === 0 ||
+          hasBarChartAllZeroValues(weeklyLoggedInUsersByTeam, [
+            'active_users',
+            'logged_in_last_week',
+          ])
+        }
+        noDataMessage="No weekly logged in users data available"
+      >
+        {dimensions => {
+          const config = useResponsiveChart(dimensions, 'bar');
+
+          // Sort by total active users descending
+          const sortedLoggedInData = sortBarChartData(
+            weeklyLoggedInUsersByTeam || [],
+            'active_users'
+          );
+
+          return (
+            <Box
+              sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 1,
+                  fontSize: dimensions.width < 400 ? '16px' : '18px',
+                  fontWeight: 600,
+                }}
+              >
+                Weekly Logged in Users
+              </Typography>
+              <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                <BarChart
+                  width={config.width}
+                  height={config.height}
+                  series={[
+                    {
+                      data: sortedLoggedInData.map(d =>
+                        Number.parseInt(d.active_users || 0)
+                      ),
+                      label: 'Total Active Users',
+                      id: 'totalActiveUsers',
+                      color: '#4169E1',
+                    },
+                    {
+                      data: sortedLoggedInData.map(d =>
+                        Number.parseInt(d.logged_in_last_week || 0)
+                      ),
+                      label: 'Weekly Logged in Users',
+                      id: 'weeklyLoggedInUsers',
+                      color: '#FFD700',
+                    },
+                  ]}
+                  xAxis={[
+                    {
+                      data: sortedLoggedInData.map(d =>
+                        formatTeamName(
+                          d.team_name,
+                          dimensions.width < 400 ? 10 : 12,
+                          sortedLoggedInData.length
+                        )
+                      ),
+                      label: 'Team',
+                      scaleType: 'band',
+                      tickLabelStyle: config.xAxis?.tickLabelStyle,
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: 'No. of Users',
+                      min: 0,
+                      width: config.yAxis?.width || 50,
+                      labelStyle: config.yAxis?.labelStyle,
+                    },
+                  ]}
+                  slotProps={{
+                    legend: config.legend,
+                  }}
+                  grid={{ horizontal: true }}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onAxisClick={(event, axisData) => {
+                    const { dataIndex, axisValue } = axisData || {};
+                    if (dataIndex !== undefined && axisValue) {
+                      const teamId = teams.find(t => t.Name === axisValue)?.Id;
+                      if (teamId) {
+                        navigateToReportWithFilters('weeklyLoggedInUsersByTeam', {
                           team: teamId
                         });
                       }
