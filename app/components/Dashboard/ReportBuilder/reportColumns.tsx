@@ -331,9 +331,9 @@ const resourceProjectPeriodColumns: GridColDef[] = [
   },
   { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, renderCell: renderScoreCell },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
   { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderScoreCell },
   { field: 'comments', headerName: 'Comments / Project updates', minWidth: 200, renderCell: renderCommentCell },
@@ -384,9 +384,9 @@ const resourceProjectPeriodCostColumns: GridColDef[] = [
   },
   { field: 'planned', headerName: 'Plan', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
   { field: 'actual', headerName: 'Actuals', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right' },
+  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'alignment_score', headerName: 'Alignment Score', minWidth: 160, renderCell: renderScoreCell },
   { field: 'project_health_score', headerName: 'Health Score', minWidth: 150, renderCell: renderScoreCell },
-  { field: 'variance', headerName: 'Variance', minWidth: 110, type: 'number', headerAlign: 'left', align: 'right'},
   { field: 'weighted_percent_variance', headerName: 'Weighted % Variance', minWidth: 170, renderCell: renderScoreCell },
   { field: 'percent_variance', headerName: 'Percent Variance', minWidth: 140, renderCell: renderScoreCell },
   { field: 'hourly_rate', headerName: 'Hourly Rate', minWidth: 130, type: 'number', headerAlign: 'left', align: 'right', availableAggregationFunctions: ['min', 'max', 'avg', 'sum'], renderCell: (params: any) => formatCurrency(params.value, params.row?.currency) },
@@ -493,12 +493,16 @@ export const getHiddenColumns = (reportType: ReportType): Record<string, boolean
     case 'resourceProjectPeriod':
       return {
         ...commonHidden,
+        weighted_percent_variance: false,
+        percent_variance: false,
       };
 
     case 'resourceProjectPeriodCost':
       return {
         ...commonHidden,
         currency: false,
+        weighted_percent_variance: false,
+        percent_variance: false,
       };
 
     default:
