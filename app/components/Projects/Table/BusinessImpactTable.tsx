@@ -5,10 +5,13 @@ import {
 } from '../../AllocationTable/styles/StyledDataGrid';
 import { GridApi, GridColDef, GridColumnMenu, GridColumnMenuProps, GridToolbarProps } from '@mui/x-data-grid-premium';
 import ProjectToolbar from '../../Toolbar/ProjectToolbar';
-import { JSXElementConstructor, useState } from 'react';
+import { JSXElementConstructor, useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import {  CrudPermissions ,withRBAC } from '../../HOC/withRBAC';
 import { BusinessImpact } from '@/app/types/businessImpactTypes';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { updatePageFilters } from '@/app/redux/actions/filterAction';
 
 interface BusinessImpactTableProps{
   columns: GridColDef[];
@@ -41,6 +44,32 @@ const BusinessImpactTable = ({
   permissions,
 }: BusinessImpactTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+  const dispatch = useDispatch();
+  const [filterModel, setFilterModel] = useState({
+    items: [],
+  });
+  const globalFilters = useSelector((state: any) => state.filters.BusinessImpact);
+  
+  useEffect(() => {
+    if (globalFilters) {
+      setFilterModel({
+        items: globalFilters?.map((filter: any, index:any) => ({
+          ...filter,
+        })) ?? [],
+      });
+    }
+  }, [globalFilters]);
+
+  const handleFilterModelChange = (newModel: any) => {
+    const filterData = (newModel.items || []).map((item: any) => ({
+      field: item.field,
+      operator: item.operator || item.operatorValue,
+      operatorValue: item.operatorValue || item.operator,
+      value: item.value,
+      id: item.id,
+    }));
+    dispatch(updatePageFilters('BusinessImpact', filterData));
+  };
 
   return (
     <Box
@@ -56,6 +85,8 @@ const BusinessImpactTable = ({
         rows={permissions['BusinessImpact']?.r ? rows : []}
         hideFooter
         loading={loading}
+        filterModel={filterModel}
+        onFilterModelChange={handleFilterModelChange}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Project', sort: 'asc' }],

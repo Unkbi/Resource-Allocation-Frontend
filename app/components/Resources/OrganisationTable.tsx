@@ -12,10 +12,13 @@ import {
 } from '@mui/x-data-grid-premium';
 import ResourceToolbar from '../Toolbar/ResourceToolbar';
 import { Box } from '@mui/material';
-import { useState, JSXElementConstructor } from 'react';
+import { useState, JSXElementConstructor, useEffect } from 'react';
 
 import { Organisation } from '@/app/types';
 import { CrudPermissions, withRBAC } from '../HOC/withRBAC';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { updatePageFilters } from '@/app/redux/actions/filterAction';
 
 interface OrganisationsTableProps {
   columns: GridColDef[];
@@ -49,6 +52,32 @@ const OrganisationsTable = ({
   permissions,
 }: OrganisationsTableProps) => {
   const [filterButtonEl, setFilterButtonEl] = useState(null);
+  const dispatch = useDispatch();
+  const [filterModel, setFilterModel] = useState({
+    items: [],
+  });
+  const globalFilters = useSelector((state: any) => state.filters.Organisations);
+  
+  useEffect(() => {
+    if (globalFilters) {
+      setFilterModel({
+        items: globalFilters?.map((filter: any, index:any) => ({
+          ...filter,
+        })) ?? [],
+      });
+    }
+  }, [globalFilters]);
+
+  const handleFilterModelChange = (newModel: any) => {
+    const filterData = (newModel.items || []).map((item: any) => ({
+      field: item.field,
+      operator: item.operator || item.operatorValue,
+      operatorValue: item.operatorValue || item.operator,
+      value: item.value,
+      id: item.id,
+    }));
+    dispatch(updatePageFilters('Organisations', filterData));
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -59,6 +88,8 @@ const OrganisationsTable = ({
         loading={loading}
         hideFooter={true}
         hideFooterSelectedRowCount={true}
+        filterModel={filterModel}
+        onFilterModelChange={handleFilterModelChange}
         initialState={{
           sorting: {
             sortModel: [{ field: 'Name', sort: 'asc' }],
